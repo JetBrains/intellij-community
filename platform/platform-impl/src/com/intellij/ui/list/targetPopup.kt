@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("TargetPopup")
 
 package com.intellij.ui.list
@@ -14,6 +14,21 @@ import com.intellij.util.concurrency.annotations.RequiresEdt
 import java.util.function.Consumer
 import java.util.function.Function
 import javax.swing.ListCellRenderer
+
+@RequiresEdt
+fun <T> createTargetPopup(
+  @PopupTitle title: String,
+  items: List<T>,
+  presentations: List<TargetPresentation>,
+  processor: Consumer<in T>
+): JBPopup {
+  return createTargetPopup(
+    title = title,
+    items = items.zip(presentations),
+    presentationProvider = { it.second },
+    processor = { processor.accept(it.first) }
+  )
+}
 
 @RequiresEdt
 fun <T> createTargetPopup(
