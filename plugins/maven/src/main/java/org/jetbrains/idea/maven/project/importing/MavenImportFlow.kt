@@ -44,7 +44,6 @@ class MavenImportFlow {
     if (isVeryNewProject == true) {
       ExternalStorageConfigurationManager.getInstance(project).isEnabled = true
     }
-    MavenUtil.setupProjectSdk(project)
 
     val profiles = MavenExplicitProfiles(enabledProfiles, disabledProfiles)
     return MavenInitialImportContext(project, importPaths, profiles, generalSettings, importingSettings, indicator)
@@ -221,8 +220,8 @@ class MavenImportFlow {
 
   fun updateProjectManager(context: MavenReadContext) {
     val projectManager = MavenProjectsManager.getInstance(context.project)
-    projectManager.setProjectsTree(context.projectsTree)
     projectManager.addManagedFilesWithProfiles(context.projectsTree.rootProjectsFiles, context.initialContext.profiles, null)
+    projectManager.setProjectsTree(context.projectsTree)
   }
 
   fun runImportExtensions(context: MavenImportedContext) {

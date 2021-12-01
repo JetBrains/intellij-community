@@ -12,11 +12,10 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
-import org.jetbrains.idea.maven.project.MavenGeneralSettings
-import org.jetbrains.idea.maven.project.MavenImportingSettings
-import org.jetbrains.idea.maven.project.MavenProjectBundle
+import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
+import org.jetbrains.idea.maven.utils.MavenUtil
 
 @ApiStatus.Experimental
 class MavenImportingManager(val project: Project) {
@@ -34,6 +33,7 @@ class MavenImportingManager(val project: Project) {
         throw IllegalStateException("Importing is in progress already")
       }
     }
+    MavenUtil.setupProjectSdk(project)
     ApplicationManager.getApplication().executeOnPooledThread {
       ProgressManager.getInstance().run(object : Task.Backgroundable(project, MavenProjectBundle.message("maven.project.importing")) {
         override fun run(indicator: ProgressIndicator) {
@@ -112,6 +112,15 @@ class MavenImportingManager(val project: Project) {
     val result = AsyncPromise<MavenImportFinishedContext>()
     waitingPromises.add(result)
     return result
+  }
+
+  fun sheduleImportAll(): Promise<MavenImportFinishedContext> {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val manager = MavenProjectsManager.getInstance(project)
+    val settings = MavenWorkspaceSettingsComponent.getInstance(project)
+    return openProjectAndImport(FilesList(manager.collectAllAvailablePomFiles()),
+                                settings.settings.getImportingSettings(),
+                                settings.settings.getGeneralSettings())
   }
 
 

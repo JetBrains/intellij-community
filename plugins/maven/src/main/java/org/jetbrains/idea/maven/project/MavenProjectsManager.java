@@ -246,14 +246,12 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
         return;
       }
       initPreloadMavenServices();
-      if (!Registry.is("maven.new.import")) {
-        initProjectsTree(!isNew);
-        initWorkers();
-        listenForSettingsChanges();
-        listenForProjectsTreeChanges();
-        registerSyncConsoleListener();
-        updateTabTitles();
-      }
+      initProjectsTree(!isNew);
+      initWorkers();
+      listenForSettingsChanges();
+      listenForProjectsTreeChanges();
+      registerSyncConsoleListener();
+      updateTabTitles();
 
 
       MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {

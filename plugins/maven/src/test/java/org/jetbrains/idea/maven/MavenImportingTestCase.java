@@ -465,6 +465,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
                             getMavenImporterSettings(),
                             Arrays.asList(profiles),
                             disabledProfiles);
+    myProjectsManager.initForTests();
     myReadContext = flow.readMavenFiles(initialImportContext, myIgnorePaths, myIgnorePatterns);
     if(failOnReadingError) {
       assertFalse("Failed to import Maven project: " + myReadContext.collectProblems(), myReadContext.hasReadingProblems());
@@ -473,7 +474,9 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     myResolvedContext = flow.resolveDependencies(myReadContext);
     myImportedContext = flow.commitToWorkspaceModel(myResolvedContext);
     myProjectsTree = myReadContext.getProjectsTree();
-    myProjectsManager.initForTests();
+    flow.updateProjectManager(myReadContext);
+
+
 
   }
   protected void doImportProjects(final List<VirtualFile> files, boolean failOnReadingError,
