@@ -146,9 +146,11 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     val executor = ExecutorRegistry.getInstance().getExecutorById(executorId) ?: DefaultRunExecutor.getRunExecutorInstance()
     val project = panel.project
     val virtualFile = panel.virtualFile
-    if (project !=null && virtualFile != null) {
+    if (project != null && virtualFile != null) {
       ApplicationManager.getApplication().invokeLater {
-        runner.run(command, project, virtualFile.parent.canonicalPath, executor)
+        TrustedProjectUtil.executeIfTrusted(project) {
+          runner.run(command, project, virtualFile.parent.canonicalPath, executor)
+        }
       }
     }
   }
@@ -230,10 +232,13 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     fun execute(project: Project, workingDirectory: String?, localSession: Boolean, command: String, executor: Executor): Boolean {
       val dataContext = createDataContext(project, localSession, workingDirectory, executor)
       val trimmedCmd = command.trim()
-      return RunAnythingProvider.EP_NAME.extensionList
-        .any { provider ->
-          provider.findMatchingValue(dataContext, trimmedCmd)?.let { provider.execute(dataContext, it); return true } ?: false
+      for (provider in RunAnythingProvider.EP_NAME.extensionList) {
+        val value = provider.findMatchingValue(dataContext, trimmedCmd) ?: continue
+        return TrustedProjectUtil.executeIfTrusted(project) {
+          provider.execute(dataContext, value)
         }
+      }
+      return false
     }
 
     private fun createDataContext(project: Project, localSession: Boolean, workingDirectory: String?, executor: Executor? = null): DataContext {
