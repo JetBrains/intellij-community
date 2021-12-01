@@ -10,6 +10,7 @@ import org.jetbrains.jps.model.java.impl.compiler.ProcessorConfigProfileImpl;
 import org.junit.Assert;
 
 import static org.jetbrains.idea.maven.importing.configurers.MavenAnnotationProcessorConfigurer.MAVEN_DEFAULT_ANNOTATION_PROFILE;
+import static org.jetbrains.idea.maven.importing.configurers.MavenAnnotationProcessorConfigurer.PROFILE_PREFIX;
 
 public class MavenAnnotationProcessorConfigurerTest extends MavenImportingTestCase {
 
@@ -38,7 +39,7 @@ public class MavenAnnotationProcessorConfigurerTest extends MavenImportingTestCa
     Assert.assertFalse(profile.isEnabled());
   }
 
-  public void testNotRemoveEmptyAnnotationProcessor() {
+  public void testNotRemoveEmptyUserProfile() {
     CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
 
     WriteAction.runAndWait(() -> {
@@ -53,7 +54,24 @@ public class MavenAnnotationProcessorConfigurerTest extends MavenImportingTestCa
                      "<packaging>pom</packaging>" +
                      "<version>1</version>");
 
-
     Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile("test-profile"));
+  }
+
+  public void testRemoveEmptyInnerProfile() {
+    CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
+    final String profileName = PROFILE_PREFIX + " test-profile";
+    WriteAction.runAndWait(() -> {
+      ProcessorConfigProfile moduleProfile = new ProcessorConfigProfileImpl(profileName);
+      moduleProfile.setEnabled(true);
+      compilerConfiguration.addModuleProcessorProfile(moduleProfile);
+    });
+    Assert.assertNotNull(compilerConfiguration.findModuleProcessorProfile(profileName));
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<packaging>pom</packaging>" +
+                  "<version>1</version>");
+
+    Assert.assertNull(compilerConfiguration.findModuleProcessorProfile(profileName));
   }
 }
