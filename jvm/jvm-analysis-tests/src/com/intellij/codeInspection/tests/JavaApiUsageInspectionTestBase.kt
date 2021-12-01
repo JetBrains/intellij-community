@@ -63,9 +63,9 @@ abstract class JavaApiUsageInspectionTestBase : UastInspectionTestBase() {
           }
         }
 
-        fun isDocumentedSinceApi(element: PsiElement): Boolean = (element as? PsiDocCommentOwner)?.docComment?.tags?.find {
+        fun isDocumentedSinceApi(element: PsiElement): Boolean = (element as? PsiDocCommentOwner)?.docComment?.tags?.any {
           tag -> tag.name == "since" && tag.valueElement?.text == VERSION
-        } != null
+        } ?: false
       })
       true
     }
