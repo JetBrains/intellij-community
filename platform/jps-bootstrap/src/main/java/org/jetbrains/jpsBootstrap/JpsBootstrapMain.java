@@ -37,6 +37,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
@@ -225,7 +226,7 @@ public class JpsBootstrapMain {
 
   private static void runBuild(JpsModel model, Path workDir, String moduleName) throws Exception {
     final long buildStart = System.currentTimeMillis();
-    final String[] firstError = {null};
+    final AtomicReference<String> firstError = new AtomicReference<>();
 
     Path dataStorageRoot = workDir.resolve("jps-build-data");
     final Set<String> moduleNames = model.getProject().getModules().stream().map(JpsNamedElement::getName).collect(Collectors.toUnmodifiableSet());
@@ -239,40 +240,41 @@ public class JpsBootstrapMain {
       false,
       msg -> {
         BuildMessage.Kind kind = msg.getKind();
-        String textAndKind = kind + " " + msg.getMessageText();
+        String text = msg.toString();
 
         switch (kind) {
           case PROGRESS:
-            verbose(textAndKind);
+            verbose(text);
             break;
           case WARNING:
-            warn(textAndKind);
+            warn(text);
           case ERROR:
           case INTERNAL_BUILDER_ERROR:
-            error(textAndKind);
+            error(text);
             break;
           default:
             if (!msg.getMessageText().isBlank()) {
               if (moduleNames.contains(msg.getMessageText())) {
-                verbose(textAndKind);
+                verbose(text);
               }
               else {
-                info(textAndKind);
+                info(text);
               }
             }
             break;
         }
 
-        if ((kind == BuildMessage.Kind.ERROR || kind == BuildMessage.Kind.INTERNAL_BUILDER_ERROR) && firstError[0] == null) {
-          firstError[0] = msg.getMessageText();
+        if ((kind == BuildMessage.Kind.ERROR || kind == BuildMessage.Kind.INTERNAL_BUILDER_ERROR)) {
+          firstError.compareAndSet(null, text);
         }
       }
     );
 
     System.out.println("Finished building '" + moduleName + "' in " + (System.currentTimeMillis() - buildStart) + " ms");
 
-    if (firstError[0] != null) {
-      fatal("Build finished with errors. First error: " + firstError[0]);
+    String firstErrorText = firstError.get();
+    if (firstErrorText != null) {
+      fatal("Build finished with errors. First error:\n" + firstErrorText);
     }
   }
 

@@ -64,7 +64,7 @@ public class JpsBootstrapUtil {
     if (underTeamCity) {
       System.out.println(new Message(message, "FAILURE", null).asString());
     } else {
-      System.err.println("FATAL: " + message);
+      System.err.println("\nFATAL: " + message);
     }
 
     System.exit(1);
