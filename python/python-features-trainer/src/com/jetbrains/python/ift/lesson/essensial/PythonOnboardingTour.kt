@@ -270,6 +270,10 @@ class PythonOnboardingTour :
           label(usedInterpreter)
         }
       }
+
+      override val possibleTechnicalIssues: Map<String, @Nls String> = mapOf(
+        "interpreter_issues" to "Interpreter issues"
+      )
     }
   }
 
