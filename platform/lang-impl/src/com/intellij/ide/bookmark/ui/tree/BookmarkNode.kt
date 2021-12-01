@@ -5,8 +5,9 @@ import com.intellij.ide.bookmark.Bookmark
 import com.intellij.ide.bookmark.BookmarkGroup
 import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.ide.projectView.PresentationData
+import com.intellij.ide.projectView.ProjectViewNode
+import com.intellij.ide.projectView.ViewSettings
 import com.intellij.ide.projectView.impl.CompoundIconProvider.findIcon
-import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectFileIndex
 import com.intellij.openapi.util.NlsSafe
@@ -20,7 +21,8 @@ import com.intellij.ui.IconManager
 import com.intellij.ui.SimpleTextAttributes
 import javax.swing.Icon
 
-abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B) : BackgroundSupplier, AbstractTreeNode<B>(project, bookmark) {
+abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B)
+  : BackgroundSupplier, ProjectViewNode<B>(project, bookmark, ViewSettings.DEFAULT) {
 
   val bookmarksView
     get() = parentRootNode?.value
@@ -33,7 +35,8 @@ abstract class BookmarkNode<B : Bookmark>(project: Project, bookmark: B) : Backg
 
   var bookmarkGroup: BookmarkGroup? = null
 
-  public override fun getVirtualFile(): VirtualFile? = null
+  override fun canRepresent(element: Any?) = virtualFile?.equals(element) ?: false
+  override fun contains(file: VirtualFile) = virtualFile?.let { VfsUtil.isAncestor(it, file, true) } ?: false
 
   override fun canNavigate() = value.canNavigate()
   override fun canNavigateToSource() = value.canNavigateToSource()
