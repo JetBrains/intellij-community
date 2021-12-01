@@ -199,7 +199,7 @@ public final class MacOSApplicationProvider {
           URI uri = event.getURI();
           String uriString = uri.toString();
           if ("open".equals(uri.getHost()) && new QueryStringDecoder(uri).parameters().get("file") != null) {
-            uriString = CommandLineProcessor.SCHEME_INTERNAL + ':' + uri.getRawSchemeSpecificPart();
+            uriString = CommandLineProcessor.SCHEME_INTERNAL + uriString;
           }
 
           if (LoadingState.APP_STARTED.isOccurred()) {
