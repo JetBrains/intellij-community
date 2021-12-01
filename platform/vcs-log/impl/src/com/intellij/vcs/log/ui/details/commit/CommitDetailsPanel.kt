@@ -14,14 +14,10 @@ import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vcs.ui.FontUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.BrowserHyperlinkListener
-import com.intellij.ui.ClickListener
-import com.intellij.ui.JBColor
+import com.intellij.ui.ColorUtil
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.ui.ColorIcon
-import com.intellij.util.ui.HtmlPanel
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.CommitId
 import com.intellij.vcs.log.VcsRef
@@ -34,10 +30,8 @@ import net.miginfocom.swing.MigLayout
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
-import javax.swing.JLabel
 import javax.swing.JPanel
 import javax.swing.event.HyperlinkEvent
-import kotlin.properties.Delegates.observable
 
 class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit = {}) : JPanel() {
   companion object {
@@ -51,7 +45,6 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
   data class RootColor(val root: VirtualFile, val color: Color)
 
   private val hashAndAuthorPanel = HashAndAuthorPanel()
-  private val signaturePanel = SignaturePanel()
   private val statusesToolbar = ActionManager.getInstance().createActionToolbar("CommitDetailsPanel", statusesActionGroup, false).apply {
     targetComponent = this@CommitDetailsPanel
     (this as ActionToolbarImpl).setForceShowFirstComponent(true)
@@ -80,7 +73,6 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
         border = JBUI.Borders.empty(INTERNAL_BORDER, SIDE_BORDER, INTERNAL_BORDER, 0)
         addToLeft(rootPanel)
         addToCenter(hashAndAuthorPanel)
-        addToBottom(signaturePanel)
       }
 
       add(messagePanel)
@@ -100,7 +92,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
 
   fun setCommit(presentation: CommitPresentation) {
     messagePanel.updateMessage(presentation)
-    hashAndAuthorPanel.updateHashAndAuthor(presentation)
+    hashAndAuthorPanel.presentation = presentation
   }
 
   fun setRefs(references: List<VcsRef>?) {
@@ -126,7 +118,7 @@ class CommitDetailsPanel @JvmOverloads constructor(navigate: (CommitId) -> Unit 
   }
 
   fun setStatuses(statuses: List<VcsCommitExternalStatusPresentation>) {
-    signaturePanel.signature = statuses.filterIsInstance(VcsCommitExternalStatusPresentation.Signature::class.java).firstOrNull()
+    hashAndAuthorPanel.signature = statuses.filterIsInstance(VcsCommitExternalStatusPresentation.Signature::class.java).firstOrNull()
 
     val nonSignaturesStatuses = statuses.filter { it !is VcsCommitExternalStatusPresentation.Signature }
 
@@ -250,16 +242,49 @@ private class ContainingBranchesPanel : HtmlPanel() {
 }
 
 private class HashAndAuthorPanel : HtmlPanel() {
-  private var presentation: CommitPresentation? = null
-  override fun getBody(): String = presentation?.hashAndAuthor ?: ""
+
+  init {
+    editorKit = HTMLEditorKitBuilder()
+      .withViewFactoryExtensions(ExtendableHTMLViewFactory.Extensions.WORD_WRAP,
+                                 ExtendableHTMLViewFactory.Extensions.icons {
+                                   signature?.icon
+                                 }
+      )
+      .build().apply {
+        //language=css
+        styleSheet.addRule(""".signature {
+            color: ${ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground())};
+        }""".trimMargin())
+      }
+  }
+
+  var presentation: CommitPresentation? = null
+    set(value) {
+      field = value
+      update()
+    }
+
+  var signature: VcsCommitExternalStatusPresentation.Signature? = null
+    set(value) {
+      field = value
+      update()
+    }
+
+  override fun getBody(): String {
+    val presentation = presentation ?: return ""
+    val signature = signature
+
+    @Suppress("HardCodedStringLiteral")
+    return presentation.hashAndAuthor.let {
+      if (signature != null) {
+        it + """<span class='signature'>&nbsp;&nbsp;&nbsp; <icon src='sig'/>&nbsp;${signature.text}</span>"""
+      }
+      else it
+    }
+  }
 
   init {
     border = JBUI.Borders.empty()
-  }
-
-  fun updateHashAndAuthor(commitAndAuthorPresentation: CommitPresentation?) {
-    presentation = commitAndAuthorPresentation
-    update()
   }
 
   public override fun getBodyFont(): Font = FontUtil.getCommitMetadataFont()
@@ -327,36 +352,6 @@ private class RootColorPanel(private val parent: HashAndAuthorPanel) : Wrapper(p
       val metrics = getFontMetrics(parent.bodyFont)
       icon.paintIcon(this, g, 0, metrics.maxAscent - h + (h - icon.iconHeight - 1) / 2)
     }
-  }
-}
-
-private class SignaturePanel : BorderLayoutPanel() {
-  val label = JLabel().apply {
-    foreground = JBColor.GRAY
-  }.also {
-    object : ClickListener() {
-      override fun onClick(event: MouseEvent, clickCount: Int): Boolean {
-        return (signature as? VcsCommitExternalStatusPresentation.Clickable)?.onClick(event) ?: false
-      }
-    }.installOn(it)
-  }
-
-  var signature: VcsCommitExternalStatusPresentation.Signature? by observable(null) { _, _, newValue ->
-    isVisible = newValue != null
-    label.apply {
-      icon = newValue?.icon
-      text = newValue?.text
-      toolTipText = newValue?.description?.toString()
-      cursor =
-        if (newValue is VcsCommitExternalStatusPresentation.Clickable) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-        else Cursor.getDefaultCursor()
-    }
-  }
-
-  init {
-    isVisible = false
-    isOpaque = false
-    addToLeft(label)
   }
 }
 
