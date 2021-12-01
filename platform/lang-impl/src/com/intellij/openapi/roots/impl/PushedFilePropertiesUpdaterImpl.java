@@ -46,6 +46,7 @@ import com.intellij.util.indexing.diagnostic.ChangedFilesPushingStatistics;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
 import com.intellij.util.indexing.roots.*;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
+import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
 import kotlin.sequences.Sequence;
 import kotlin.sequences.SequencesKt;
@@ -354,15 +355,17 @@ public final class PushedFilePropertiesUpdaterImpl extends PushedFilePropertiesU
       tasksStream = moduleEntities.stream()
         .flatMap(moduleEntity -> {
           return ReadAction.compute(() -> {
-            Module module = IndexableEntityProviderMethods.INSTANCE.findModuleForEntity(moduleEntity, project);
+            WorkspaceEntityStorage storage = WorkspaceModel.getInstance(project).getEntityStorage().getCurrent();
+            Module module = IndexableEntityProviderMethods.INSTANCE.findModuleForEntity(moduleEntity, storage, project);
             if (module == null) {
               return Stream.empty();
             }
             ProgressManager.checkCanceled();
-            return ContainerUtil.map(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, project), it -> new Object() {
-                final IndexableFilesIterator files = it;
-                final ContentIteratorEx iterator = iteratorProducer.apply(module);
-              })
+            return ContainerUtil.map(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, project),
+                                     it -> new Object() {
+                                       final IndexableFilesIterator files = it;
+                                       final ContentIteratorEx iterator = iteratorProducer.apply(module);
+                                     })
               .stream()
               .map(pair -> (Runnable)() -> {
                 pair.files.iterateFiles(project, pair.iterator, indexableFilesDeduplicateFilter);

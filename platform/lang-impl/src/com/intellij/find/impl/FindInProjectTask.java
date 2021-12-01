@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.find.impl;
 
 import com.intellij.find.FindBundle;
@@ -320,7 +320,7 @@ final class FindInProjectTask {
     else if (myModule != null) {
       WorkspaceEntityStorage storage = WorkspaceModel.getInstance(myProject).getEntityStorage().getCurrent();
       ModuleEntity moduleEntity = Objects.requireNonNull(storage.resolve(new ModuleId(myModule.getName())));
-      deque.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, myProject));
+      deque.addAll(IndexableEntityProviderMethods.INSTANCE.createIterators(moduleEntity, storage, myProject));
     }
     else {
       deque.addAll(((FileBasedIndexEx)FileBasedIndex.getInstance()).getIndexableFilesProviders(myProject));
