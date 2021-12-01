@@ -18,6 +18,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
@@ -48,10 +49,13 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   private var clearPosition = false
   var seManager: SearchEverywhereManager? = null
 
-
   override fun update(event: AnActionEvent) {
-    if(seManager == null){
-      seManager = SearchEverywhereManager.getInstance(event.project)
+    val project = event.project ?: return
+    if (seManager == null) {
+      seManager = SearchEverywhereManager.getInstance(project)
+      Disposer.register(project) {
+        seManager = null
+      }
     }
     event.presentation.text = if (!showHotkey()) {
       ActionsBundle.message("action.SearchEverywhereToolbar.text")
@@ -61,10 +65,8 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
     }
     event.presentation.icon = AllIcons.Actions.Search
     if (!subscribedForDoubleShift) {
-      event.project?.let {
-        ApplicationManager.getApplication().messageBus.connect(it).subscribe(AnActionListener.TOPIC, this)
-        subscribedForDoubleShift = true
-      }
+      ApplicationManager.getApplication().messageBus.connect(project).subscribe(AnActionListener.TOPIC, this)
+      subscribedForDoubleShift = true
     }
   }
 
