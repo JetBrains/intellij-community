@@ -10,6 +10,7 @@ import com.intellij.ide.KeyboardAwareFocusOwner;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.EdtDataContext;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -582,7 +583,7 @@ public final class IdeKeyEventDispatcher {
   public boolean processAction(@NotNull InputEvent e, @NotNull ActionProcessor processor) {
     boolean result = processAction(
       e, ActionPlaces.KEYBOARD_SHORTCUT, myContext.getDataContext(),
-      new ArrayList<>(myContext.getActions()), processor, myPresentationFactory);
+      new ArrayList<>(myContext.getActions()), processor, myPresentationFactory, myContext.getShortcut());
     if (!result) {
       IdeEventQueue.getInstance().flushDelayedKeyEvents();
     }
@@ -594,11 +595,14 @@ public final class IdeKeyEventDispatcher {
                         @NotNull DataContext context,
                         @NotNull List<AnAction> actions,
                         @NotNull ActionProcessor processor,
-                        @NotNull PresentationFactory presentationFactory) {
+                        @NotNull PresentationFactory presentationFactory,
+                        @NotNull Shortcut shortcut) {
     if (actions.isEmpty()) return false;
     DataContext wrappedContext = Utils.wrapDataContext(context);
     Project project = CommonDataKeys.PROJECT.getData(wrappedContext);
     boolean dumb = project != null && DumbService.getInstance(project).isDumb();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(AnActionListener.TOPIC)
+      .beforeShortcutTriggered(shortcut, Collections.unmodifiableList(actions), context);
 
     List<AnAction> wouldBeEnabledIfNotDumb = ContainerUtil.createLockFreeCopyOnWriteList();
     ProgressIndicator indicator = Registry.is("actionSystem.update.actions.cancelable.beforeActionPerformedUpdate") ?
@@ -650,7 +654,7 @@ public final class IdeKeyEventDispatcher {
         //invokeLater to make sure correct dataContext is taken from focus
         ApplicationManager.getApplication().invokeLater(() ->
           DataManager.getInstance().getDataContextFromFocusAsync().onSuccess(ctx ->
-            processAction(e, place, ctx, actions, processor, presentationFactory)
+            processAction(e, place, ctx, actions, processor, presentationFactory, shortcut)
           )
         );
       }, __ -> e.isConsumed());
@@ -748,12 +752,13 @@ public final class IdeKeyEventDispatcher {
   private KeyEvent lastKeyEventForCurrentContext;
 
   public void updateCurrentContext(@Nullable Component component, @NotNull Shortcut sc) {
-    KeyEvent keyEvent = myContext.getInputEvent();
     myContext.setFoundComponent(null);
     myContext.getSecondStrokeActions().clear();
     myContext.getActions().clear();
+    myContext.setShortcut(null);
 
     if (Registry.is("ide.edt.update.context.only.on.key.pressed.event")) {
+      KeyEvent keyEvent = myContext.getInputEvent();
       if (keyEvent == null || keyEvent.getID() != KeyEvent.KEY_PRESSED) return;
       if (keyEvent == lastKeyEventForCurrentContext) return;
       lastKeyEventForCurrentContext = keyEvent;
@@ -873,6 +878,7 @@ public final class IdeKeyEventDispatcher {
         }
         if (!myContext.getActions().contains(action)) {
           myContext.getActions().add(action);
+          myContext.setShortcut(sc);
         }
       }
     }
