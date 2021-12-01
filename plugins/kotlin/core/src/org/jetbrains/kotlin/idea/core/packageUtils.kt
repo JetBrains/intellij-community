@@ -147,6 +147,9 @@ private fun Module.findExistingNonGeneratedKotlinSourceRootFiles(
     pureKotlinSourceFoldersHolder: PureKotlinSourceFoldersHolder
 ): List<VirtualFile> = findNonGeneratedKotlinSourceFolders().toExistingFiles(project, pureKotlinSourceFoldersHolder)
 
+fun Module.findExistingNonGeneratedKotlinSourceRootFiles(): List<VirtualFile> =
+    findExistingNonGeneratedKotlinSourceRootFiles(PureKotlinSourceFoldersHolder())
+
 private fun Sequence<SourceFolder>.toExistingFiles(
     project: Project,
     pureKotlinSourceFoldersHolder: PureKotlinSourceFoldersHolder,
