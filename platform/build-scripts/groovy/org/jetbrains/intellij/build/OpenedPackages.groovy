@@ -10,6 +10,8 @@ final class OpenedPackages implements Iterable<String> {
     '--add-opens=java.base/java.text=ALL-UNNAMED',
     '--add-opens=java.base/java.time=ALL-UNNAMED',
     '--add-opens=java.base/java.util=ALL-UNNAMED',
+    '--add-opens=java.base/java.util.concurrent=ALL-UNNAMED',
+    '--add-opens=java.base/java.io=ALL-UNNAMED',
     '--add-opens=java.base/jdk.internal.vm=ALL-UNNAMED',
     '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
     '--add-opens=java.desktop/java.awt=ALL-UNNAMED',
