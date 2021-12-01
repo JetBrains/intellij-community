@@ -34,8 +34,6 @@ import java.util.function.Supplier;
 public class DefaultActionGroup extends ActionGroup {
   private static final Logger LOG = Logger.getInstance(DefaultActionGroup.class);
 
-  private static final String CANT_ADD_ITSELF = "Cannot add a group to itself: ";
-
   private final List<AnAction> mySortedChildren = new ArrayList<>();
   private final List<Pair<AnAction, Constraints>> myPairs = new ArrayList<>();
   private int myModificationStamp;
@@ -103,16 +101,22 @@ public class DefaultActionGroup extends ActionGroup {
     Set<AnAction> actionSet = new HashSet<>(actions.size());
     List<AnAction> uniqueActions = new ArrayList<>(actions.size());
     for (AnAction action : actions) {
-      if (action == this) throw new IllegalArgumentException(CANT_ADD_ITSELF + action);
+      if (action == this) {
+        throw newThisGroupToItselfAddedException();
+      }
       if (action instanceof Separator || actionSet.add(action)) {
         uniqueActions.add(action);
       }
       else {
-        throw newDuplicateActionAddedException(action);
+        LOG.error(newDuplicateActionAddedException(action));
       }
     }
     mySortedChildren.addAll(uniqueActions);
     incrementModificationStamp();
+  }
+
+  private IllegalArgumentException newThisGroupToItselfAddedException() {
+    return new IllegalArgumentException("Cannot add a group to itself: " + this + " (" + getTemplateText() + ")");
   }
 
   private static IllegalArgumentException newDuplicateActionAddedException(@NotNull AnAction action) {
@@ -157,7 +161,7 @@ public class DefaultActionGroup extends ActionGroup {
    *                                  <li>action is already in the group
    */
   public final void add(@NotNull AnAction action, @NotNull Constraints constraint) {
-    add(action, constraint, ActionManager.getInstance());
+    addAction(action, constraint, ActionManager.getInstance());
   }
 
   public final @NotNull ActionInGroup addAction(@NotNull AnAction action, @NotNull Constraints constraint) {
@@ -168,14 +172,16 @@ public class DefaultActionGroup extends ActionGroup {
     addAction(action, constraint, actionManager);
   }
 
-  public final synchronized @NotNull ActionInGroup addAction(@NotNull AnAction action, @NotNull Constraints constraint, @NotNull ActionManager actionManager) {
+  public final synchronized @NotNull ActionInGroup addAction(@NotNull AnAction action,
+                                                              @NotNull Constraints constraint,
+                                                              @NotNull ActionManager actionManager) {
     if (action == this) {
-      throw new IllegalArgumentException(CANT_ADD_ITSELF + action);
+      throw newThisGroupToItselfAddedException();
     }
 
-    // check that action isn't already registered
     if (!(action instanceof Separator) && containsAction(action)) {
-      throw newDuplicateActionAddedException(action);
+      LOG.error(newDuplicateActionAddedException(action));
+      remove(action, actionManager.getId(action));
     }
 
     constraint = (Constraints)constraint.clone();
@@ -194,7 +200,7 @@ public class DefaultActionGroup extends ActionGroup {
     return new ActionInGroup(this, action);
   }
 
-  private boolean containsAction(@NotNull AnAction action) {
+  public synchronized boolean containsAction(@NotNull AnAction action) {
     if (mySortedChildren.contains(action)) return true;
     for (Pair<AnAction, Constraints> pair : myPairs) {
       if (action.equals(pair.first)) return true;
