@@ -85,14 +85,6 @@ public class LambdaCanBeMethodCallInspection extends AbstractBaseJavaLocalInspec
         if (typeParameters.length != 2 || !typeParameters[1].isAssignableFrom(typeParameters[0])) return;
         @NlsSafe String replacement = CommonClassNames.JAVA_UTIL_FUNCTION_FUNCTION + ".identity()";
         if (!LambdaUtil.isSafeLambdaReplacement(lambda, replacement)) return;
-        PsiElement parent = PsiUtil.skipParenthesizedExprUp(lambda.getParent());
-        if (parent instanceof PsiAssignmentExpression || parent instanceof PsiReturnStatement ||
-            parent instanceof PsiVariable || parent instanceof PsiLambdaExpression) {
-          if (typeParameters[1] instanceof PsiClassType && typeParameters[0] instanceof PsiClassType &&
-              !typeParameters[0].equals(typeParameters[1])) {
-            return;
-          }
-        }
         registerProblem(lambda, "Function.identity()", replacement);
       }
 
