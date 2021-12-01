@@ -250,7 +250,7 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
         val additionalVisibleSourceSets = LinkedHashMap<String, Set<String>>()
         val extraProperties = HashMap<String, KotlinTaskProperties>()
         val masterMapper = builderContext?.getData(CACHE_MAPPER_BRANCHING) ?: return null
-        val detachableMapper = masterMapper.branchOffDetachable()
+        val detachableMapper = masterMapper.branchOffDetachable(project.name == "buildSrc")
 
         val kotlinCompileTasks = target?.let { it.compilations ?: emptyList() }
                 ?.mapNotNull { compilation -> compilation.getCompileKotlinTaskName(project) }
@@ -284,7 +284,7 @@ class KotlinGradleModelBuilder : AbstractKotlinGradleModelBuilder(), ModelBuilde
             kotlinTarget = platform ?: kotlinPluginId,
             kotlinTaskProperties = extraProperties,
             gradleUserHome = project.gradle.gradleUserHomeDir.absolutePath,
-            partialCacheAware = detachableMapper.detachCacheAware(project.name == "buildSrc")
+            partialCacheAware = detachableMapper.detachCacheAware()
         )
     }
 }
