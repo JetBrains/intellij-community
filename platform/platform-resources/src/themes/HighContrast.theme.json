@@ -457,14 +457,17 @@
     "Lesson": {
       "shortcutBackground": "#333638",
       "stepNumberForeground": "#FEFEFE",
-      "Tooltip.background": "#000080",
-      "Tooltip.borderColor": "#FFFFFF",
-      "Tooltip.spanBackground": "#1AEBFF",
-      "Tooltip.spanForeground": "#000000",
-      "Tooltip.foreground": "#FFFFFF",
-      "Tooltip.stepNumberForeground": "#FFFFFF",
       "Badge.newLessonBackground": "#00E61F",
       "Badge.newLessonForeground": "#000000"
+    },
+
+    "Tooltip.Learning": {
+      "background": "#000080",
+      "borderColor": "#FFFFFF",
+      "spanBackground": "#1AEBFF",
+      "spanForeground": "#000000",
+      "foreground": "#FFFFFF",
+      "stepNumberForeground": "#FFFFFF"
     },
 
     "WelcomeScreen": {

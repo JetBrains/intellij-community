@@ -909,6 +909,22 @@
     "Tag": {
       "background": "#dfdfdf"
     },
-    "textInactiveText" : "#808080"
+    "textInactiveText" : "#808080",
+
+    "Lesson": {
+      "shortcutBackground": "#E6EEF7",
+      "stepNumberForeground": "#808080",
+      "Badge.newLessonBackground": "#62B543",
+      "Badge.newLessonForeground": "#FFFFFF"
+    },
+
+    "Tooltip.Learning": {
+      "background": "#1071E8",
+      "borderColor": "#1071E8",
+      "spanBackground": "#0D5CBD",
+      "spanForeground": "#F5F5F5",
+      "foreground": "#F5F5F5",
+      "stepNumberForeground": "#6CA6ED"
+    }
   }
 }

@@ -521,7 +521,23 @@
     "text": "#bbbbbb",
     "textInactiveText" : "#808080",
     "textText": "#bbbbbb",
-    "window": "#3c3f41"
+    "window": "#3c3f41",
+
+    "Lesson": {
+      "shortcutBackground": "#333638",
+      "stepNumberForeground": "#FEFEFE",
+      "Badge.newLessonBackground": "#499C54",
+      "Badge.newLessonForeground": "#FEFEFE"
+    },
+
+    "Tooltip.Learning": {
+      "background": "#0E62CF",
+      "borderColor": "#0E62CF",
+      "spanBackground": "#0250B0",
+      "spanForeground": "#F5F5F5",
+      "foreground": "#F5F5F5",
+      "stepNumberForeground": "#6A9DDE"
+    }
   },
 
   "WelcomeScreen.Projects.actions.selectionBackground": "#326FC1",
