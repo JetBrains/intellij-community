@@ -30,7 +30,7 @@ final class BundledJreManager {
   private final BuildContext buildContext
 
   @Lazy private String jreBuild = {
-    buildContext.options.bundledJreBuild ?: buildContext.dependenciesProperties.property('jdkBuild')
+    buildContext.options.bundledRuntimeBuild ?: buildContext.dependenciesProperties.property('runtimeBuild')
   }()
 
   BundledJreManager(BuildContext buildContext) {
@@ -78,7 +78,7 @@ final class BundledJreManager {
 
     //noinspection SpellCheckingInspection
     Path jreDir = buildContext.paths.communityHomeDir.resolve("build/dependencies/build/jbre")
-    Path jreArchive = jreDir.resolve(jbrArchiveName(jreBuild, buildContext.options.bundledJreVersion, arch, os, buildContext))
+    Path jreArchive = jreDir.resolve(jbrArchiveName(jreBuild, buildContext.options.bundledRuntimeVersion, arch, os, buildContext))
     if (Files.exists(jreArchive)) {
       return jreArchive
     }
@@ -196,8 +196,8 @@ final class BundledJreManager {
     if (buildContext.productProperties.jbrDistribution.classifier.isEmpty()) {
       prefix = "jbr-"
     }
-    else if (buildContext.options.bundledJrePrefix != null) {
-      prefix = buildContext.options.bundledJrePrefix
+    else if (buildContext.options.bundledRuntimePrefix != null) {
+      prefix = buildContext.options.bundledRuntimePrefix
     }
     else {
       prefix = "jbr_${buildContext.productProperties.jbrDistribution.classifier}-"

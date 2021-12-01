@@ -13,7 +13,7 @@ task setupJbre() {
 def targetOs = System.getProperty("intellij.build.target.os", "all")
 def targetArch = System.getProperty("intellij.build.target.arch")
 def jreVersion = System.getProperty("intellij.build.bundled.jre.version", "11").toInteger()
-def jreBuild = System.getProperty("intellij.build.bundled.jre.build", jdkBuild)
+def jreBuild = System.getProperty("intellij.build.bundled.jre.build", runtimeBuild)
 def forcedPrefix = System.getProperty("intellij.build.bundled.jre.prefix")
 jbrTasks(jreBuild, jreVersion, targetOs, targetArch, forcedPrefix)
 

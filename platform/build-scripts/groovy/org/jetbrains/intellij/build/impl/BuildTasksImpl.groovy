@@ -572,7 +572,7 @@ idea.fatal.error.notification=disabled
           logFreeDiskSpace("before downloading runtime")
           String[] args = [
             "setupJbre", "-Dintellij.build.target.os=$buildContext.options.targetOS",
-            "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion"
+            "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledRuntimeVersion"
           ]
           if (targetArch != null) {
             args += "-Dintellij.build.target.arch=" + targetArch
@@ -581,8 +581,8 @@ idea.fatal.error.notification=disabled
           if (prefix != null) {
             args += "-Dintellij.build.bundled.jre.prefix=" + prefix
           }
-          if (buildContext.options.bundledJreBuild != null) {
-            args += "-Dintellij.build.bundled.jre.build=" + buildContext.options.bundledJreBuild
+          if (buildContext.options.bundledRuntimeBuild != null) {
+            args += "-Dintellij.build.bundled.jre.build=" + buildContext.options.bundledRuntimeBuild
           }
           buildContext.gradle.run(message, args)
           logFreeDiskSpace("after downloading runtime")

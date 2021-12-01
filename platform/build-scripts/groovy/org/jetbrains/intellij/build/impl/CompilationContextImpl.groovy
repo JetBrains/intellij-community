@@ -88,7 +88,7 @@ final class CompilationContextImpl implements CompilationContext {
 
   private static String defineJavaSdk(JpsModel model, String projectHome, BuildOptions options, BuildMessages messages) {
     def sdks = []
-    def jbrDir = jbrDir(projectHome, options)
+    def jbrDir = jbrTargetDir(projectHome, options)
     def jbrVersionName = jbrVersionName(options)
     sdks << jbrVersionName
     def jbrDefaultDir = "$jbrDir/$jbrVersionName"
@@ -126,8 +126,8 @@ final class CompilationContextImpl implements CompilationContext {
     }
   }
 
-  private static String jbrDir(String projectHome, BuildOptions options) {
-    options.jdksTargetDir?.with {
+  static String jbrTargetDir(String projectHome, BuildOptions options) {
+    options.jbrTargetDir?.with {
       new File(it).exists() ? it : null
     } ?: "$projectHome/build/jdk"
   }
@@ -225,7 +225,7 @@ final class CompilationContextImpl implements CompilationContext {
       dependenciesInstalled = true
       String[] args = ['setupJdks']
       if (isKotlinCompilerRequired) args += KotlinBinaries.SET_UP_COMPILER_GRADLE_TASK
-      if (options.jdksTargetDir != null) args += "-D$BuildOptions.JDKS_TARGET_DIR_OPTION=$options.jdksTargetDir".toString()
+      if (options.jbrTargetDir != null) args += "-D$BuildOptions.JBR_TARGET_DIR_OPTION=$options.jbrTargetDir".toString()
       gradle.run('Setting up compilation dependencies', args)
     }
   }
