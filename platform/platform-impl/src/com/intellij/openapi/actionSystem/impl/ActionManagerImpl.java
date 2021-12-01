@@ -918,7 +918,13 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                @Nullable IdeaPluginDescriptor module, boolean secondary) {
     try {
       String actionId = action instanceof ActionStub ? ((ActionStub)action).getId() : actionToId.get(action);
-      ((DefaultActionGroup)group).addAction(action, constraints, this).setAsSecondary(secondary);
+      DefaultActionGroup actionGroup = (DefaultActionGroup)group;
+      if (module != null && actionGroup.containsAction(action)) {
+        reportActionError(module, "Cannot add an action twice: " + actionId + " (" +
+                                  (action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName()) + ")");
+        return;
+      }
+      actionGroup.addAction(action, constraints, this).setAsSecondary(secondary);
       idToGroupId.putValue(actionId, actionToId.get(group));
     }
     catch (IllegalArgumentException e) {
