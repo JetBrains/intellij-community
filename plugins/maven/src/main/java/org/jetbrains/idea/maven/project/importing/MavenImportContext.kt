@@ -46,14 +46,22 @@ class MavenPluginResolvedContext internal constructor(project: Project,
                                                       val unresolvedPlugins: Map<MavenPlugin, Path?>,
                                                       val resolvedContext: MavenResolvedContext) : MavenImportContext(project)
 
-class MavenSourcesGeneratedContext internal constructor(val resolvedContext: MavenResolvedContext, val projectsFoldersResolved: ArrayList<MavenProject>) : MavenImportContext(resolvedContext.project)
+class MavenSourcesGeneratedContext internal constructor(val resolvedContext: MavenResolvedContext,
+                                                        val projectsFoldersResolved: ArrayList<MavenProject>) : MavenImportContext(
+  resolvedContext.project)
+
 class MavenImportedContext internal constructor(project: Project,
                                                 val modulesCreated: MutableList<Module>,
                                                 val postImportTasks: MutableList<MavenProjectsProcessorTask>?,
                                                 val initialContext: MavenInitialImportContext) : MavenImportContext(project)
 
 class MavenImportingExtensionsContext internal constructor(project: Project) : MavenImportContext(project)
-class MavenImportFinishedContext internal constructor(context: MavenImportContext) : MavenImportContext(context.project)
+class MavenImportFinishedContext internal constructor(val context: MavenImportedContext?,
+                                                      val error: Throwable?,
+                                                      project: Project) : MavenImportContext(project) {
+  constructor(e: Throwable, project: Project) : this(null, e, project)
+  constructor(context: MavenImportedContext) : this(context, null, context.project)
+}
 
 
 sealed class ImportPaths

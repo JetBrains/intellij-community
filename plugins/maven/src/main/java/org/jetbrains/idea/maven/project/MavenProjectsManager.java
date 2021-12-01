@@ -55,6 +55,8 @@ import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader.DownloadResult;
+import org.jetbrains.idea.maven.project.importing.FilesList;
+import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
@@ -845,6 +847,11 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
+    if (Registry.is("maven.new.import")) {
+      MavenImportingManager.getInstance(myProject)
+        .openProjectAndImport(new FilesList(collectAllAvailablePomFiles()), getImportingSettings(), getGeneralSettings());
+      return;
+    }
     if (!isMavenizedProject()) {
       addManagedFiles(collectAllAvailablePomFiles());
     }

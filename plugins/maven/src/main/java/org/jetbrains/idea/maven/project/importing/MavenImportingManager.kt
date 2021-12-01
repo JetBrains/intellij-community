@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.project.importing
 
 import com.intellij.build.SyncViewManager
+import com.intellij.build.events.BuildEventsNls
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.concurrency.resolvedPromise
+import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenLog
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator
@@ -21,6 +23,10 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 class MavenImportingManager(val project: Project) {
   var currentContext: MavenImportContext? = null
     private set
+
+  private val console by lazy {
+    project.getService(MavenProjectsManager::class.java).syncConsole
+  }
 
   private val waitingPromises = ArrayList<AsyncPromise<MavenImportFinishedContext>>()
 
@@ -64,29 +70,42 @@ class MavenImportingManager(val project: Project) {
                        generalSettings: MavenGeneralSettings,
                        importingSettings: MavenImportingSettings): MavenImportFinishedContext {
 
-    val mavenImportStatusConsole = MavenImportStatusConsole(project)
     val flow = MavenImportFlow()
-    mavenImportStatusConsole.start()
-    val initialImport = flow.prepareNewImport(project, indicator, importPaths, generalSettings, importingSettings, emptyList(), emptyList())
-    currentContext = initialImport
 
-    val readMavenFiles = flow.readMavenFiles(initialImport)
-    currentContext = readMavenFiles
-    val dependenciesContext = flow.resolveDependencies(readMavenFiles)
-    currentContext = dependenciesContext
-    val resolvePlugins = flow.resolvePlugins(dependenciesContext)
-    currentContext = resolvePlugins
-    val foldersResolved = flow.resolveFolders(dependenciesContext)
-    currentContext = foldersResolved
-    val importContext = flow.commitToWorkspaceModel(dependenciesContext)
-    currentContext = importContext
-    flow.runPostImportTasks(importContext)
-    val finishedContext = MavenImportFinishedContext(importContext)
-    currentContext = finishedContext
-    flow.updateProjectManager(readMavenFiles)
-    mavenImportStatusConsole.finish()
-    flow.runImportExtensions(importContext)
-    return finishedContext
+    return runSync {
+      @Suppress("HardCodedStringLiteral")
+      console.addWarning("New Maven importing flow is enabled", "New Maven importing flow is enabled, it is experimental feature. " +
+                                                                "\n\n" +
+                                                                "To revert to old importing flow, set \"maven.new.import\" registry flag to false");
+      val initialImport = flow.prepareNewImport(project, indicator, importPaths, generalSettings, importingSettings, emptyList(),
+                                                emptyList())
+      currentContext = initialImport
+
+      val readMavenFiles = doTask(MavenProjectBundle.message("maven.reading")) {
+        flow.readMavenFiles(initialImport)
+      }
+      val dependenciesContext = doTask(MavenProjectBundle.message("maven.resolving")) {
+        flow.resolveDependencies(readMavenFiles)
+      }
+      val resolvePlugins = doTask(MavenProjectBundle.message("maven.downloading.plugins")) {
+        flow.resolvePlugins(dependenciesContext)
+      }
+
+      val foldersResolved = doTask(MavenProjectBundle.message("maven.updating.folders")) {
+        flow.resolveFolders(dependenciesContext)
+      }
+
+      val importContext = doTask(MavenProjectBundle.message("maven.project.importing")) {
+        flow.commitToWorkspaceModel(dependenciesContext)
+      }
+
+      return@runSync doTask(MavenProjectBundle.message("maven.post.processing")) {
+        flow.runPostImportTasks(importContext)
+        flow.updateProjectManager(readMavenFiles)
+        return@doTask MavenImportFinishedContext(importContext)
+      }
+    }.also { it.context?.let(flow::runImportExtensions) }
+
   }
 
   private fun getAndClearWaitingPromises(): List<AsyncPromise<MavenImportFinishedContext>> {
@@ -123,6 +142,25 @@ class MavenImportingManager(val project: Project) {
                                 settings.settings.getGeneralSettings())
   }
 
+
+  private fun <Result> doTask(message: @BuildEventsNls.Message String,
+                              init: () -> Result): Result where Result : MavenImportContext {
+    return console.runTask(message, init).also { currentContext = it }
+  }
+
+  private fun runSync(init: () -> MavenImportFinishedContext): MavenImportFinishedContext {
+    console.startImport(project.getService(SyncViewManager::class.java))
+    try {
+      return init()
+    }
+    catch (e: Exception) {
+      console.addException(e, project.getService(SyncViewManager::class.java))
+      return MavenImportFinishedContext(e, project)
+    }
+    finally {
+      console.finishImport()
+    }
+  }
 
   companion object {
     @JvmStatic
