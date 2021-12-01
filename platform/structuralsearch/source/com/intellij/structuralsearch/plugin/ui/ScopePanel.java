@@ -64,6 +64,8 @@ public class ScopePanel extends JPanel {
   private final DirectoryComboBoxWithButtons myDirectoryComboBox;
   private final ScopeChooserCombo myScopesComboBox = new ScopeChooserCombo();
 
+  private String myCurrentNamedScope = null;
+
   public ScopePanel(@NotNull Project project, Disposable parent) {
     super(null);
     myProject = project;
@@ -75,6 +77,10 @@ public class ScopePanel extends JPanel {
     myModulesComboBox.addItemListener(e -> setScopeFromUI(Scopes.Type.MODULE, false));
     myModulesComboBox.setMinimumAndPreferredWidth(JBUIScale.scale(300));
     myScopesComboBox.initialize(project, true, false, "", SCOPE_FILTER).onSuccess(o -> {
+      if (myCurrentNamedScope != null) {
+        myScopesComboBox.selectItem(myCurrentNamedScope);
+        myCurrentNamedScope = null;
+      }
       myScopesComboBox.getComboBox().addItemListener(e -> setScopeFromUI(Scopes.Type.NAMED, false));
     });
     Disposer.register(parent, myScopesComboBox);
@@ -117,6 +123,11 @@ public class ScopePanel extends JPanel {
     );
   }
 
+  private void selectNamedScope(String selectedScope) {
+    myCurrentNamedScope = selectedScope;
+    myScopesComboBox.selectItem(selectedScope);
+  }
+
   private static JComponent shrinkWrap(JComponent component) {
     final JPanel wrapper = new JPanel(new BorderLayout());
     wrapper.add(component, BorderLayout.WEST);
@@ -140,7 +151,7 @@ public class ScopePanel extends JPanel {
       myDirectoryComboBox.setRecursive(directoryScope.isWithSubdirectories());
     }
     else if (selectedScope != null && myScopeType == Scopes.Type.NAMED) {
-      myScopesComboBox.selectItem(selectedScope.getDisplayName());
+      selectNamedScope(selectedScope.getDisplayName());
     }
     showScope(myScopeType);
   }
@@ -174,7 +185,7 @@ public class ScopePanel extends JPanel {
         if (file != null) {
           myDirectoryComboBox.setDirectory(file.getParent());
         }
-        myScopesComboBox.selectItem(PredefinedSearchScopeProviderImpl.getCurrentFileScopeName());
+        selectNamedScope(PredefinedSearchScopeProviderImpl.getCurrentFileScopeName());
         setScope(scope);
         return;
       }
@@ -183,7 +194,7 @@ public class ScopePanel extends JPanel {
       for (FindInProjectExtension extension : FindInProjectExtension.EP_NAME.getExtensionList()) {
         namedScopeFound = extension.initModelFromContext(findModel, context);
         if (namedScopeFound) {
-          myScopesComboBox.selectItem(findModel.getCustomScopeName());
+          selectNamedScope(findModel.getCustomScopeName());
           foundScope = Scopes.Type.NAMED;
           break;
         }
@@ -200,7 +211,7 @@ public class ScopePanel extends JPanel {
         if (!namedScopeFound) {
           final SearchScope selectedFilesScope = PredefinedSearchScopeProviderImpl.getSelectedFilesScope(myProject, context, null);
           if (selectedFilesScope != null) {
-            myScopesComboBox.selectItem(selectedFilesScope.getDisplayName());
+            selectNamedScope(selectedFilesScope.getDisplayName());
           }
         }
         if (files.length == 1) {
