@@ -38,27 +38,24 @@ class SquareStripeButtonLook(val button: ActionButton) : IdeaActionButtonLook() 
   override fun paintIcon(g: Graphics?, actionButton: ActionButtonComponent?, icon: Icon?) {
     val color = UIManager.getColor("ToolWindow.Button.selectedForeground")
     if (actionButton is SquareStripeButton && actionButton.isFocused() && color != null) {
-        try {
-          val fg = ColorUtil.toHtmlColor(color)
-          val map: Map<String, String> = mapOf("#767a8a" to fg,
-                                               "#ced0d6" to fg,
-                                               "#6e6e6e" to fg,
-                                               "#afb1b3" to fg)
-          val alpha: MutableMap<String, Int> = HashMap(map.size)
-          map.forEach { (key: String?, value: String) -> alpha[value] = 255 }
-          SVGLoader.setContextColorPatcher(object : SvgElementColorPatcherProvider {
-            override fun forPath(path: String?): SvgElementColorPatcher? {
-              return SVGLoader.newPatcher(null, map, alpha)
-            }
-          })
-          SVGLoader.setColorRedefinitionContext(true)
-          super.paintIcon(g, actionButton, icon)
-          return
-        } finally {
-          SVGLoader.setColorRedefinitionContext(false)
-          SVGLoader.setContextColorPatcher(null)
+      val fg = ColorUtil.toHtmlColor(color)
+      val map: Map<String, String> = mapOf("#767a8a" to fg,
+                                           "#ced0d6" to fg,
+                                           "#6e6e6e" to fg,
+                                           "#afb1b3" to fg)
+      val alpha: MutableMap<String, Int> = HashMap(map.size)
+      map.forEach { (key: String?, value: String) -> alpha[value] = 255 }
+      SVGLoader.setContextColorPatcher(object : SvgElementColorPatcherProvider {
+        override fun forPath(path: String?): SvgElementColorPatcher? {
+          return SVGLoader.newPatcher(null, map, alpha)
         }
-      }
+      })
+      SVGLoader.setColorRedefinitionContext(true)
+      super.paintIcon(g, actionButton, icon)
+      SVGLoader.setColorRedefinitionContext(false)
+      SVGLoader.setContextColorPatcher(null)
+      return
+    }
 
 
     super.paintIcon(g, actionButton, icon)
