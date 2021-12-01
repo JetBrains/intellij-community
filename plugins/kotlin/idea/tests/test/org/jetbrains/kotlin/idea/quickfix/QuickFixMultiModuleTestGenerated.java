@@ -1411,6 +1411,29 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/multiModuleQuickFix/packageDirectoryMismatch")
+    public static class PackageDirectoryMismatch extends AbstractQuickFixMultiModuleTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("moveFileToAnotherPackage")
+        public void testMoveFileToAnotherPackage() throws Exception {
+            runTest("testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToAnotherPackage/");
+        }
+
+        @TestMetadata("moveFileToCommonSourceRoot")
+        public void testMoveFileToCommonSourceRoot() throws Exception {
+            runTest("testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToCommonSourceRoot/");
+        }
+
+        @TestMetadata("moveFileToJvmSourceRoot")
+        public void testMoveFileToJvmSourceRoot() throws Exception {
+            runTest("testData/multiModuleQuickFix/packageDirectoryMismatch/moveFileToJvmSourceRoot/");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleQuickFix/redundantNullableReturnType")
     public static class RedundantNullableReturnType extends AbstractQuickFixMultiModuleTest {
         private void runTest(String testDataFilePath) throws Exception {
