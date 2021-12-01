@@ -5,7 +5,7 @@ import org.gradle.api.Named
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.*
-import org.jetbrains.kotlin.idea.gradleTooling.getAdditionalVisibleSourceSets
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinLanguageSettingsReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId
 import org.jetbrains.plugins.gradle.model.DefaultExternalLibraryDependency
@@ -17,7 +17,7 @@ class KotlinSourceSetProtoBuilder(val androidDeps: Map<String, List<Any>>?) : Ko
         val gradleSourceSet = origin as Named
 
         val languageSettings = gradleSourceSet["getLanguageSettings"]
-            ?.let { KotlinLanguageSettingsBuilder.buildComponent(it) }
+            ?.let { KotlinLanguageSettingsBuilder.buildComponent(KotlinLanguageSettingsReflection(it)) }
             ?: return null
         val sourceDirs = (gradleSourceSet["getKotlin"] as? SourceDirectorySet)?.srcDirs ?: emptySet()
         val resourceDirs = (gradleSourceSet["getResources"] as? SourceDirectorySet)?.srcDirs ?: emptySet()

@@ -17,8 +17,7 @@ interface KotlinMavenModuleIdentifier : KotlinModuleIdentifier {
     val name: String
 }
 
-
- interface KotlinModule : Serializable {
+interface KotlinModule : Serializable {
     val moduleIdentifier: KotlinModuleIdentifier
     var fragments: Collection<KotlinFragment>
     var variants: Collection<KotlinVariant>

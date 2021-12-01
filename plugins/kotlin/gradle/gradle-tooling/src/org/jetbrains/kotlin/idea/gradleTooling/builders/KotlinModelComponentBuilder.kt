@@ -6,19 +6,21 @@ import org.jetbrains.kotlin.idea.gradleTooling.KotlinProjectModelImportingContex
 import org.jetbrains.kotlin.idea.gradleTooling.MultiplatformModelImportingContext
 import org.jetbrains.plugins.gradle.model.ExternalProjectDependency
 
-interface KotlinModelComponentBuilder<TCtx, TRet> {
-    fun buildComponent(origin: Any, importingContext: TCtx): TRet?
+interface KotlinModelComponentBuilder<TOrigin, TCtx, TRet> {
+    fun buildComponent(origin: TOrigin, importingContext: TCtx): TRet?
 }
 
-interface KotlinModelComponentBuilderBase<TRet> : KotlinModelComponentBuilder<Unit, TRet> {
-    override fun buildComponent(origin: Any, importingContext: Unit): TRet? = buildComponent(origin)
+interface KotlinModelComponentBuilderBase<TOrigin, TRet> : KotlinModelComponentBuilder<TOrigin, Unit, TRet> {
+    override fun buildComponent(origin: TOrigin, importingContext: Unit): TRet? = buildComponent(origin)
 
-    fun buildComponent(origin: Any): TRet?
+    fun buildComponent(origin: TOrigin): TRet?
 }
 
-interface KotlinMultiplatformComponentBuilder<TRet> : KotlinModelComponentBuilder<MultiplatformModelImportingContext, TRet>
+interface KotlinMultiplatformComponentBuilder<TRet> :
+    KotlinModelComponentBuilder<Any, MultiplatformModelImportingContext, TRet>
 
-interface KotlinProjectModelComponentBuilder<TRet> : KotlinModelComponentBuilder<KotlinProjectModelImportingContext, TRet>
+interface KotlinProjectModelComponentBuilder<TOrigin, TRet> :
+    KotlinModelComponentBuilder<TOrigin, KotlinProjectModelImportingContext, TRet>
 
 /**
  * Returns only those dependencies with RUNTIME scope which are not present with compile scope

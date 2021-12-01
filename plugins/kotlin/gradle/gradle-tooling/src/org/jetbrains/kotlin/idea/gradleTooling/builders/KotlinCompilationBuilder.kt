@@ -8,6 +8,7 @@ import org.gradle.api.provider.Property
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.buildCachedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.buildSerializedArgsInfo
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinCompilationOutputReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationOutput
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
@@ -93,7 +94,7 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
             compileKotlinTask: Task
         ): KotlinCompilationOutput? {
             val gradleOutput = gradleCompilation["getOutput"] ?: return null
-            val compilationOutputBase = KotlinCompilationOutputBuilder.buildComponent(gradleOutput) ?: return null
+            val compilationOutputBase = KotlinCompilationOutputBuilder.buildComponent(KotlinCompilationOutputReflection(gradleOutput)) ?: return null
             @Suppress("UNCHECKED_CAST") val destinationDir = compileKotlinTask["getDestinationDir"] as? File
             //TODO: Hack for KotlinNativeCompile
                 ?: (compileKotlinTask["getOutputFile"] as? Property<File>)?.orNull?.parentFile

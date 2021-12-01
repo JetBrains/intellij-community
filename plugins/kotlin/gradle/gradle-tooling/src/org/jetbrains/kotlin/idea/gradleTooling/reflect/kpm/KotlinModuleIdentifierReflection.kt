@@ -1,0 +1,78 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("FunctionName", "RemoveExplicitTypeArguments")
+
+package org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm
+
+import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.callReflective
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinModuleIdentifierReflection.Companion.logger
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.parameters
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.returnType
+
+fun KotlinModuleIdentifierReflection(moduleIdentifier: Any): KotlinModuleIdentifierReflection? {
+    return when (moduleIdentifier.javaClass.name) {
+        "org.jetbrains.kotlin.project.model.LocalModuleIdentifier" ->
+            KotlinLocalModuleIdentifierReflectionImpl(moduleIdentifier)
+        "org.jetbrains.kotlin.project.model.MavenModuleIdentifier" ->
+            KotlinMavenModuleIdentifierReflectionImpl(moduleIdentifier)
+        else -> {
+            logger.error("Unknown module identifier: \"${moduleIdentifier.javaClass.name}\"")
+            null
+        }
+    }
+}
+
+interface KotlinModuleIdentifierReflection {
+    val moduleClassifier: String?
+
+    companion object {
+        internal val logger: Logger = Logging.getLogger(KotlinModuleReflection::class.java)
+    }
+}
+
+interface KotlinLocalModuleIdentifierReflection : KotlinModuleIdentifierReflection {
+    val buildId: String?
+    val projectId: String?
+}
+
+interface KotlinMavenModuleIdentifierReflection : KotlinModuleIdentifierReflection {
+    val group: String?
+    val name: String?
+}
+
+private class KotlinModuleIdentifierReflectionImpl(
+    private val instance: Any
+) : KotlinModuleIdentifierReflection {
+    override val moduleClassifier: String? by lazy {
+        instance.callReflective("getModuleClassifier", parameters(), returnType<String?>(), logger)
+    }
+}
+
+private class KotlinLocalModuleIdentifierReflectionImpl(
+    private val instance: Any
+) : KotlinLocalModuleIdentifierReflection,
+    KotlinModuleIdentifierReflection by KotlinModuleIdentifierReflectionImpl(instance) {
+
+    override val buildId: String? by lazy {
+        instance.callReflective("getBuildId", parameters(), returnType<String>(), logger)
+    }
+
+    override val projectId: String? by lazy {
+        instance.callReflective("getProjectId", parameters(), returnType<String>(), logger)
+    }
+}
+
+private class KotlinMavenModuleIdentifierReflectionImpl(
+    private val instance: Any
+) : KotlinMavenModuleIdentifierReflection,
+    KotlinModuleIdentifierReflection by KotlinModuleIdentifierReflectionImpl(instance) {
+
+    override val group: String? by lazy {
+        instance.callReflective("getGroup", parameters(), returnType<String>(), logger)
+    }
+
+    override val name: String? by lazy {
+        instance.callReflective("getName", parameters(), returnType<String>(), logger)
+    }
+}

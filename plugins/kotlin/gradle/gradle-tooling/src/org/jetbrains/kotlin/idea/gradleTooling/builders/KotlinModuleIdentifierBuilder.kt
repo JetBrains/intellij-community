@@ -4,41 +4,45 @@ package org.jetbrains.kotlin.idea.gradleTooling.builders
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinLocalModuleIdentifierImpl
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMavenModuleIdentifierImpl
-import org.jetbrains.kotlin.idea.gradleTooling.get
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinLocalModuleIdentifierReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinMavenModuleIdentifierReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinModuleIdentifierReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinLocalModuleIdentifier
 import org.jetbrains.kotlin.idea.projectModel.KotlinMavenModuleIdentifier
 import org.jetbrains.kotlin.idea.projectModel.KotlinModuleIdentifier
 
-object KotlinModuleIdentifierBuilder : KotlinModelComponentBuilderBase<KotlinModuleIdentifier> {
-    override fun buildComponent(origin: Any): KotlinModuleIdentifier? = when (origin.javaClass.name) {
-        LOCAL_MODULE_IDENTIFIER_CLASS_NAME -> KotlinLocalModuleIdentifierBuilder.buildComponent(origin)
-        MAVEN_MODULE_IDENTIFIER_CLASS_NAME -> KotlinMavenModuleIdentifierBuilder.buildComponent(origin)
+object KotlinModuleIdentifierBuilder : KotlinModelComponentBuilderBase<KotlinModuleIdentifierReflection, KotlinModuleIdentifier> {
+    override fun buildComponent(origin: KotlinModuleIdentifierReflection): KotlinModuleIdentifier? = when (origin) {
+        is KotlinLocalModuleIdentifierReflection -> KotlinLocalModuleIdentifierBuilder.buildComponent(origin)
+        is KotlinMavenModuleIdentifierReflection -> KotlinMavenModuleIdentifierBuilder.buildComponent(origin)
         else -> {
-            LOGGER.error("Unknown module identifier: \"${origin.javaClass.name}\"")
+            LOGGER.error("Unknown module identifier reflection: \"${origin.javaClass.name}\"")
             null
         }
     }
 
     private val LOGGER = Logging.getLogger(KotlinModuleIdentifierBuilder.javaClass)
 
-    private const val LOCAL_MODULE_IDENTIFIER_CLASS_NAME = "org.jetbrains.kotlin.project.model.LocalModuleIdentifier"
-    private const val MAVEN_MODULE_IDENTIFIER_CLASS_NAME = "org.jetbrains.kotlin.project.model.MavenModuleIdentifier"
 
-    private object KotlinLocalModuleIdentifierBuilder : KotlinModelComponentBuilderBase<KotlinLocalModuleIdentifier> {
-        override fun buildComponent(origin: Any): KotlinLocalModuleIdentifier {
-            val moduleClassifier = origin["getModuleClassifier"] as? String
-            val buildId = origin["getBuildId"] as String
-            val projectId = origin["getProjectId"] as String
-            return KotlinLocalModuleIdentifierImpl(moduleClassifier, buildId, projectId)
+    private object KotlinLocalModuleIdentifierBuilder :
+        KotlinModelComponentBuilderBase<KotlinLocalModuleIdentifierReflection, KotlinLocalModuleIdentifier> {
+        override fun buildComponent(origin: KotlinLocalModuleIdentifierReflection): KotlinLocalModuleIdentifier? {
+            return KotlinLocalModuleIdentifierImpl(
+                moduleClassifier = origin.moduleClassifier,
+                buildId = origin.buildId ?: return null,
+                projectId = origin.projectId ?: return null
+            )
         }
     }
 
-    private object KotlinMavenModuleIdentifierBuilder : KotlinModelComponentBuilderBase<KotlinMavenModuleIdentifier> {
-        override fun buildComponent(origin: Any): KotlinMavenModuleIdentifier {
-            val moduleClassifier = origin["getModuleClassifier"] as? String
-            val group = origin["getGroup"] as String
-            val name = origin["getName"] as String
-            return KotlinMavenModuleIdentifierImpl(moduleClassifier, group, name)
+    private object KotlinMavenModuleIdentifierBuilder :
+        KotlinModelComponentBuilderBase<KotlinMavenModuleIdentifierReflection, KotlinMavenModuleIdentifier> {
+        override fun buildComponent(origin: KotlinMavenModuleIdentifierReflection): KotlinMavenModuleIdentifier? {
+            return KotlinMavenModuleIdentifierImpl(
+                moduleClassifier = origin.moduleClassifier,
+                group = origin.group ?: return null,
+                name = origin.name ?: return null
+            )
         }
     }
 }

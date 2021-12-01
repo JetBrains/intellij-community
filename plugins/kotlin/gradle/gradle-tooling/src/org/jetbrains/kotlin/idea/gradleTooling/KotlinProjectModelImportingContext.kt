@@ -2,73 +2,60 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.Project
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinFragmentReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinIdeFragmentDependencyResolverReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinModuleReflection
+import org.jetbrains.kotlin.idea.projectModel.KotlinFragment
 import org.jetbrains.kotlin.idea.projectModel.KotlinModule
 import org.jetbrains.kotlin.idea.projectModel.KotlinModuleIdentifier
 import org.jetbrains.kotlin.idea.projectModel.KotlinVariantData
-import org.jetbrains.kotlin.idea.projectModel.KotlinFragment
 
-private fun ClassLoader.loadClassOrFail(className: String): Class<*> =
-    loadClassOrNull(className) ?: error("Classloader failed to load class '$className'!")
-
-private const val FRAGMENT_GRANULAR_METADATA_RESOLVER_CLASS = "org.jetbrains.kotlin.gradle.plugin.mpp.pm20.FragmentGranularMetadataResolver"
-
-private val ClassLoader.fragmentGranularMetadataResolverClass: Class<*>
-    get() = loadClassOrFail(FRAGMENT_GRANULAR_METADATA_RESOLVER_CLASS)
-
-class KotlinProjectModelImportingContext(val project: Project) {
-    lateinit var classLoader: ClassLoader
+class KotlinProjectModelImportingContext(
+    val project: Project,
+    val classLoader: ClassLoader
+) {
+    val fragmentDependencyResolver by lazy { KotlinIdeFragmentDependencyResolverReflection.newInstance(project, classLoader) }
     val modulesById: MutableMap<KotlinModuleIdentifier, KotlinModule> = mutableMapOf()
-    val rawModuleById: MutableMap<KotlinModuleIdentifier, Any> = mutableMapOf()
+    val rawModuleById: MutableMap<KotlinModuleIdentifier, KotlinModuleReflection> = mutableMapOf()
     val fragmentStubsByModuleId: MutableMap<KotlinModuleIdentifier, MutableCollection<KotlinGradleFragmentProto>> = mutableMapOf()
-    val rawFragmentsByFragmentStubMap: MutableMap<KotlinGradleFragmentProto, Any> = mutableMapOf()
+    val rawFragmentsByFragmentStubMap: MutableMap<KotlinGradleFragmentProto, KotlinFragmentReflection> = mutableMapOf()
     val kpmFragmentsByFragmentStubMap: MutableMap<KotlinGradleFragmentProto, KotlinFragment> = mutableMapOf()
-    val metadataResolverByFragmentStubMap: MutableMap<KotlinGradleFragmentProto, Any> = mutableMapOf()
     val variantStubsWithData: MutableMap<KotlinGradleFragmentProto, KotlinVariantData> = mutableMapOf()
 }
 
-internal fun KotlinProjectModelImportingContext.initializeModule(module: KotlinModule, rawModule: Any) = with(module.moduleIdentifier) {
-    modulesById[this] = module
-    rawModuleById[this] = rawModule
-    fragmentStubsByModuleId[this] = arrayListOf()
-}
-
-internal fun KotlinProjectModelImportingContext.cleanupModule(module: KotlinModule) = with(module.moduleIdentifier) {
-    modulesById.remove(this)
-    rawModuleById.remove(this)
-    fragmentStubsByModuleId[this]?.forEach { proto ->
-        rawFragmentsByFragmentStubMap.remove(proto)
-        kpmFragmentsByFragmentStubMap.remove(proto)
-        metadataResolverByFragmentStubMap.remove(proto)
-        variantStubsWithData.remove(proto)
+internal fun KotlinProjectModelImportingContext.initializeModule(module: KotlinModule, rawModule: KotlinModuleReflection) =
+    with(module.moduleIdentifier) {
+        modulesById[this] = module
+        rawModuleById[this] = rawModule
+        fragmentStubsByModuleId[this] = arrayListOf()
     }
-    fragmentStubsByModuleId.remove(this)
-}
 
-internal val KotlinProjectModelImportingContext.variantsAsList
+internal fun KotlinProjectModelImportingContext.cleanupModule(module: KotlinModule) =
+    with(module.moduleIdentifier) {
+        modulesById.remove(this)
+        rawModuleById.remove(this)
+        fragmentStubsByModuleId[this]?.forEach { proto ->
+            rawFragmentsByFragmentStubMap.remove(proto)
+            kpmFragmentsByFragmentStubMap.remove(proto)
+            variantStubsWithData.remove(proto)
+        }
+        fragmentStubsByModuleId.remove(this)
+    }
+
+internal val KotlinProjectModelImportingContext.variantsAsList: List<Pair<KotlinFragment, KotlinVariantData>>
     get() = variantStubsWithData.mapKeys { kpmFragmentsByFragmentStubMap.getValue(it.key) }.toList()
 
 
-internal fun KotlinProjectModelImportingContext.initializeFragmentProto(fragmentStub: KotlinGradleFragmentProto, rawFragment: Any) =
-    with(fragmentStub.containingModuleIdentifier) {
-        fragmentStubsByModuleId.getValue(this).add(fragmentStub)
-        rawFragmentsByFragmentStubMap[fragmentStub] = rawFragment
-    }
+internal fun KotlinProjectModelImportingContext.initializeFragmentProto(
+    fragmentStub: KotlinGradleFragmentProto, rawFragment: KotlinFragmentReflection
+) = with(fragmentStub.containingModuleIdentifier) {
+    fragmentStubsByModuleId.getValue(this).add(fragmentStub)
+    rawFragmentsByFragmentStubMap[fragmentStub] = rawFragment
+}
 
 internal fun KotlinProjectModelImportingContext.initializeVariantStub(
     variantStub: KotlinGradleFragmentProto,
     variantData: KotlinVariantData
 ) {
     variantStubsWithData[variantStub] = variantData
-}
-
-fun KotlinProjectModelImportingContext.initializeFragmentGranularMetadataResolvers(refinesMap: Map<KotlinGradleFragmentProto, Collection<KotlinGradleFragmentProto>>) {
-    val fragmentGranularMetadataResolverClass = classLoader.fragmentGranularMetadataResolverClass
-    refinesMap.entries.sortedBy { it.value.size }.forEach { (fragment, refinesFragments) ->
-        val originKotlinGradleFragment = rawFragmentsByFragmentStubMap.getValue(fragment)
-        //After topological sort we expect that resolvers for all refines fragment nodes were already added to map
-        val parentMetadataResolvers = refinesFragments.map { metadataResolverByFragmentStubMap.getValue(it) }
-        val fragmentGranularMetadataResolver = fragmentGranularMetadataResolverClass.constructors.first()
-                .newInstance(originKotlinGradleFragment, lazy { parentMetadataResolvers })
-        metadataResolverByFragmentStubMap[fragment] = fragmentGranularMetadataResolver
-    }
 }

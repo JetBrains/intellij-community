@@ -1,0 +1,65 @@
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("RemoveExplicitTypeArguments")
+
+package org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm
+
+import org.gradle.api.logging.Logger
+import org.gradle.api.logging.Logging
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.callReflective
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.parameters
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.returnType
+import java.io.File
+
+fun KotlinLanguageSettingsReflection(languageSettings: Any): KotlinLanguageSettingsReflection =
+    KotlinLanguageSettingsReflectionImpl(languageSettings)
+
+interface KotlinLanguageSettingsReflection {
+    val languageVersion: String?
+    val apiVersion: String?
+    val progressiveMode: Boolean?
+    val enabledLanguageFeatures: Set<String>?
+    val optInAnnotationsInUse: Set<String>?
+    val compilerPluginArguments: List<String>?
+    val compilerPluginClasspath: Set<File>?
+    val freeCompilerArgs: List<String>?
+}
+
+private class KotlinLanguageSettingsReflectionImpl(private val instance: Any) : KotlinLanguageSettingsReflection {
+    override val languageVersion: String? by lazy {
+        instance.callReflective("getLanguageVersion", parameters(), returnType<String?>(), logger)
+    }
+
+    override val apiVersion: String? by lazy {
+        instance.callReflective("getApiVersion", parameters(), returnType<String?>(), logger)
+    }
+
+    override val progressiveMode: Boolean? by lazy {
+        instance.callReflective("getProgressiveMode", parameters(), returnType<Boolean>(), logger)
+    }
+
+    override val enabledLanguageFeatures: Set<String>? by lazy {
+        instance.callReflective("getEnabledLanguageFeatures", parameters(), returnType<Iterable<String>>(), logger)?.toSet()
+    }
+
+    override val optInAnnotationsInUse: Set<String>? by lazy {
+        instance.callReflective("getOptInAnnotationsInUse", parameters(), returnType<Iterable<String>>(), logger)?.toSet()
+    }
+
+    override val compilerPluginArguments: List<String>? by lazy {
+        instance.callReflective("getCompilerPluginArguments", parameters(), returnType<Iterable<String>>(), logger)?.toList()
+    }
+
+
+    override val compilerPluginClasspath: Set<File>? by lazy {
+        instance.callReflective("getCompilerPluginClasspath", parameters(), returnType<Iterable<File>>(), logger)?.toSet()
+    }
+
+    override val freeCompilerArgs: List<String>? by lazy {
+        instance.callReflective("getFreeCompilerArgs", parameters(), returnType<Iterable<String>>(), logger)?.toList()
+    }
+
+    companion object {
+        val logger: Logger = Logging.getLogger(KotlinLanguageSettingsReflection::class.java)
+    }
+
+}
