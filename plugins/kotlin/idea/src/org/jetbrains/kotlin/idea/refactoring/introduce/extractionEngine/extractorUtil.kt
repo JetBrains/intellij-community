@@ -34,15 +34,16 @@ import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.*
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.UnificationResult.StronglyMatched
 import org.jetbrains.kotlin.idea.util.psi.patternMatching.UnificationResult.WeaklyMatched
-import org.jetbrains.kotlin.idea.util.reformatted
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.KtPsiFactory.CallableBuilder
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.util.getCalleeExpressionIfAny
+import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.isError
 import org.jetbrains.kotlin.types.isFlexible
@@ -68,6 +69,12 @@ private fun buildSignature(config: ExtractionGeneratorConfiguration, renderer: D
         fun TypeParameter.isReified() = originalDeclaration.hasModifier(KtTokens.REIFIED_KEYWORD)
         val shouldBeInline = config.descriptor.typeParameters.any { it.isReified() }
 
+        val optInAnnotation = if (config.generatorOptions.target != ExtractionTarget.FUNCTION || config.descriptor.optInMarkers.isEmpty()) {
+            ""
+        } else {
+            val innerText = config.descriptor.optInMarkers.joinToString(separator = ", ") { "${it.shortName().render()}::class" }
+            "@${OptInNames.OPT_IN_FQ_NAME.shortName().render()}($innerText)\n"
+        }
 
         val annotations = if (config.descriptor.annotations.isEmpty()) {
             ""
@@ -77,7 +84,7 @@ private fun buildSignature(config: ExtractionGeneratorConfiguration, renderer: D
         val extraModifiers = config.descriptor.modifiers.map { it.value } +
                 listOfNotNull(if (shouldBeInline) KtTokens.INLINE_KEYWORD.value else null)
         val modifiers = if (visibility.isNotEmpty()) listOf(visibility) + extraModifiers else extraModifiers
-        modifier(annotations + modifiers.joinToString(separator = " "))
+        modifier(annotations + optInAnnotation + modifiers.joinToString(separator = " "))
 
         typeParams(
             config.descriptor.typeParameters.map {

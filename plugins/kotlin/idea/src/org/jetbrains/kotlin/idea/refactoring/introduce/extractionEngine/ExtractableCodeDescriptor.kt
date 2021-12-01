@@ -345,7 +345,8 @@ data class ExtractableCodeDescriptor(
     val controlFlow: ControlFlow,
     val returnType: KotlinType,
     val modifiers: List<KtKeywordToken> = emptyList(),
-    val annotations: List<AnnotationDescriptor> = emptyList()
+    val annotations: List<AnnotationDescriptor> = emptyList(),
+    val optInMarkers: List<FqName> = emptyList()
 ) {
     val name: String get() = suggestedNames.firstOrNull() ?: ""
     val duplicates: List<DuplicateInfo> by lazy { findDuplicates() }
@@ -382,7 +383,8 @@ fun ExtractableCodeDescriptor.copy(
         controlFlow.copy(oldToNewParameters),
         returnType ?: this.returnType,
         modifiers,
-        annotations
+        annotations,
+        optInMarkers
     )
 }
 
