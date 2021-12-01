@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.indices;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.serviceContainer.AlreadyDisposedException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -28,6 +29,7 @@ import org.jetbrains.idea.maven.server.MavenIndexerWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
+import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.io.File;
 import java.util.*;
@@ -83,16 +85,15 @@ public class MavenIndices implements Disposable {
       RepositoryDiff<MavenIndex> localDiff = getLocalDiff(localRepository, context, localIndex);
       RepositoryDiff<List<MavenIndex>> remoteDiff = getRemoteDiff(remoteRepositoryIdsByUrl, remoteIndices, context);
 
-      boolean disposedBefore = isDisposed;
       myIndexHolder = new MavenIndexHolder(remoteDiff.newIndices, localDiff.newIndices);
       MavenLog.LOG.debug("new indices " + myIndexHolder);
-      boolean disposedAfter = isDisposed;
 
-      if (!disposedBefore && disposedAfter) closeIndices(myIndexHolder.getIndices());
+      if (isDisposed) closeIndices(myIndexHolder.getIndices());
 
       indicesInit = true;
 
       closeIndices(getOldIndices(localDiff, remoteDiff));
+      updateDependencySearchProviders(project);
     }
     finally {
       updateIndicesLock.unlock();
@@ -262,6 +263,13 @@ public class MavenIndices implements Disposable {
       createNewIndexDir(context.indicesDir), MavenSearchIndex.Kind.REMOTE, remoteEntry.getValue(), remoteEntry.getKey()
     );
     return createMavenIndex(propertyHolder, context);
+  }
+
+  private static void updateDependencySearchProviders(@NotNull Project project) {
+    try {
+      DependencySearchService.getInstance(project).updateProviders();
+    }
+    catch (AlreadyDisposedException ignored) {}
   }
 
   @Nullable
