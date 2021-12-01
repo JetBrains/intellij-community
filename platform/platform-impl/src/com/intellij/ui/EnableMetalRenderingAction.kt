@@ -3,6 +3,7 @@
 package com.intellij.ui
 
 import com.intellij.diagnostic.VMOptions
+import com.intellij.ide.ui.RegistryBooleanOptionDescriptor
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.ToggleAction
 import com.intellij.openapi.application.ApplicationManager
@@ -34,7 +35,8 @@ class EnableMetalRenderingAction: ToggleAction(), DumbAware {
                            else ArrayList(vmOptions)
         path.toFile().writeText(newVmOptions.joinToString("\n"))
       }
-      ApplicationManager.getApplication().restart()
+
+      RegistryBooleanOptionDescriptor.suggestRestart(null)
     }
   }
 }
