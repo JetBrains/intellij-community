@@ -6,8 +6,7 @@ import com.intellij.diff.DiffManager
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.util.PsiNavigationSupport
-import com.intellij.openapi.diagnostic.Logger
-import com.intellij.openapi.fileEditor.FileEditor
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -17,14 +16,15 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiExtensibleClass
 import com.intellij.psi.util.PsiFormatUtil.*
 import com.intellij.ui.EditorNotificationPanel
-import com.intellij.ui.EditorNotifications
+import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.LightColors
 import com.intellij.util.diff.Diff
 
-class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNotificationPanel>() {
+class LibrarySourceNotificationProvider : EditorNotificationProvider<EditorNotificationPanel> {
 
   private companion object {
-    private val LOG = Logger.getInstance(LibrarySourceNotificationProvider::class.java)
+
+    private val LOG = logger<LibrarySourceNotificationProvider>()
     private val KEY = Key.create<EditorNotificationPanel>("library.source.mismatch.panel")
     private val ANDROID_SDK_PATTERN = ".*/platforms/android-\\d+/android.jar!/.*".toRegex()
 
@@ -36,7 +36,10 @@ class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNot
 
   override fun getKey(): Key<EditorNotificationPanel> = KEY
 
-  override fun createNotificationPanel(file: VirtualFile, fileEditor: FileEditor, project: Project): EditorNotificationPanel? {
+  override fun collectNotificationData(
+    project: Project,
+    file: VirtualFile,
+  ): EditorNotificationProvider.ComponentProvider<EditorNotificationPanel> {
     if (file.fileType is LanguageFileType && ProjectRootManager.getInstance(project).fileIndex.isInLibrarySource(file)) {
       val psiFile = PsiManager.getInstance(project).findFile(file)
       if (psiFile is PsiJavaFile) {
@@ -44,28 +47,30 @@ class LibrarySourceNotificationProvider : EditorNotifications.Provider<EditorNot
         if (offender != null) {
           val clsFile = offender.originalElement.containingFile?.virtualFile
           if (clsFile != null && !clsFile.path.matches(ANDROID_SDK_PATTERN)) {
-            val panel = EditorNotificationPanel(LightColors.RED)
-            panel.setText(JavaUiBundle.message("library.source.mismatch", offender.name))
-            panel.createActionLabel(JavaUiBundle.message("library.source.open.class")) {
-              if (!project.isDisposed && clsFile.isValid) {
-                PsiNavigationSupport.getInstance().createNavigatable(project, clsFile, -1).navigate(true)
+            return EditorNotificationProvider.ComponentProvider { _ ->
+              val panel = EditorNotificationPanel(LightColors.RED)
+              panel.setText(JavaUiBundle.message("library.source.mismatch", offender.name))
+              panel.createActionLabel(JavaUiBundle.message("library.source.open.class")) {
+                if (!project.isDisposed && clsFile.isValid) {
+                  PsiNavigationSupport.getInstance().createNavigatable(project, clsFile, -1).navigate(true)
+                }
               }
-            }
-            panel.createActionLabel(JavaUiBundle.message("library.source.show.diff")) {
-              if (!project.isDisposed && clsFile.isValid) {
-                val cf = DiffContentFactory.getInstance()
-                val request = SimpleDiffRequest(null, cf.create(project, clsFile), cf.create(project, file), clsFile.path, file.path)
-                DiffManager.getInstance().showDiff(project, request)
+              panel.createActionLabel(JavaUiBundle.message("library.source.show.diff")) {
+                if (!project.isDisposed && clsFile.isValid) {
+                  val cf = DiffContentFactory.getInstance()
+                  val request = SimpleDiffRequest(null, cf.create(project, clsFile), cf.create(project, file), clsFile.path, file.path)
+                  DiffManager.getInstance().showDiff(project, request)
+                }
               }
+              logMembers(offender)
+              return@ComponentProvider panel
             }
-            logMembers(offender)
-            return panel
           }
         }
       }
     }
 
-    return null
+    return EditorNotificationProvider.ComponentProvider.getDummy()
   }
 
   private fun differs(src: PsiClass): Boolean {

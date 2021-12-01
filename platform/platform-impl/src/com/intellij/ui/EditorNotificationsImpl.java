@@ -41,7 +41,11 @@ import java.util.List;
 
 public final class EditorNotificationsImpl extends EditorNotifications {
 
-  public static final ProjectExtensionPointName<Provider<?>> EP_PROJECT = new ProjectExtensionPointName<>("com.intellij.editorNotificationProvider");
+  /**
+   * @deprecated Please use {@link EditorNotificationProvider#EP_NAME} instead.
+   */
+  @Deprecated
+  public static final ProjectExtensionPointName<EditorNotificationProvider<?>> EP_PROJECT = EditorNotificationProvider.EP_NAME;
   private static final Key<Boolean> PENDING_UPDATE = Key.create("pending.notification.update");
 
   private final @NotNull MergingUpdateQueue myUpdateMerger;
@@ -85,24 +89,28 @@ public final class EditorNotificationsImpl extends EditorNotifications {
         updateAllNotifications();
       }
     });
-    connection.subscribe(AdditionalLibraryRootsListener.TOPIC, ((presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> updateAllNotifications()));
+    connection.subscribe(AdditionalLibraryRootsListener.TOPIC,
+                         ((presentableLibraryName, oldRoots, newRoots, libraryNameForDebug) -> updateAllNotifications()));
 
-    EP_PROJECT.getPoint(project).addExtensionPointListener(
-      new ExtensionPointListener<>() {
+    EditorNotificationProvider.EP_NAME
+      .getPoint(project)
+      .addExtensionPointListener(new ExtensionPointListener<>() {
         @Override
-        public void extensionAdded(@NotNull Provider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        public void extensionAdded(@NotNull EditorNotificationProvider<?> extension,
+                                   @NotNull PluginDescriptor pluginDescriptor) {
           updateAllNotifications();
         }
 
         @Override
-        public void extensionRemoved(@NotNull Provider extension, @NotNull PluginDescriptor pluginDescriptor) {
+        public void extensionRemoved(@NotNull EditorNotificationProvider<?> extension,
+                                     @NotNull PluginDescriptor pluginDescriptor) {
           updateNotifications(extension);
         }
       }, false, null);
   }
 
   @Override
-  public void updateNotifications(@NotNull Provider<?> provider) {
+  public void updateNotifications(@NotNull EditorNotificationProvider<?> provider) {
     for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFilesWithRemotes()) {
       List<FileEditor> editors = getEditors(file);
 
@@ -150,19 +158,20 @@ public final class EditorNotificationsImpl extends EditorNotifications {
       return;
     }
 
-    for (Provider<?> provider : EP_PROJECT.getExtensions(myProject)) {
-      ReadAction.nonBlocking(() -> provider.collectNotificationData(file, fileEditor, myProject))
+    for (EditorNotificationProvider<?> provider : EditorNotificationProvider.EP_NAME.getExtensions(myProject)) {
+      ReadAction.nonBlocking(() -> provider.collectNotificationData(myProject, file))
         .expireWith(myProject)
         .expireWhen(() -> !file.isValid() || DumbService.isDumb(myProject) && !DumbService.isDumbAware(provider))
         .coalesceBy(this, provider, file)
-        .finishOnUiThread(ModalityState.any(), supplier -> {
-          updateNotification(fileEditor, provider, supplier.get());
+        .finishOnUiThread(ModalityState.any(), componentProvider -> {
+          JComponent component = componentProvider.apply(fileEditor);
+          updateNotification(fileEditor, provider, component);
         }).submit(NonUrgentExecutor.getInstance());
     }
   }
 
   private void updateNotification(@NotNull FileEditor editor,
-                                  @NotNull Provider<?> provider,
+                                  @NotNull EditorNotificationProvider<?> provider,
                                   @Nullable JComponent component) {
     @SuppressWarnings("unchecked") Key<JComponent> key = (Key<JComponent>)provider.getKey();
     JComponent old = editor.getUserData(key);
@@ -217,7 +226,8 @@ public final class EditorNotificationsImpl extends EditorNotifications {
     });
   }
 
-  public static class RefactoringListenerProvider implements RefactoringElementListenerProvider {
+  static final class RefactoringListenerProvider implements RefactoringElementListenerProvider {
+
     @Override
     public @Nullable RefactoringElementListener getListener(final @NotNull PsiElement element) {
       if (element instanceof PsiFile) {
