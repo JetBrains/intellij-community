@@ -33,19 +33,19 @@ data class KotlinGradleFragmentProto(
     val languageSettings: KotlinLanguageSettings?,
     val directRefinesDependencies: Collection<KotlinGradleFragmentProto>,
     val sourceDirs: Set<File>,
-    val resourceDirs: Set<File>
+    val resourceDirs: Set<File>,
+    val resolvedDependencies: Collection<KotlinFragmentResolvedDependency>
 )
 
 fun KotlinGradleFragmentProto.buildKotlinFragment(
     refinesKotlinFragments: Collection<KotlinFragment>,
-    resolvedModuleDependencies: Collection<KotlinFragmentResolvedDependency>
 ): KotlinFragment = KotlinGradleFragment(
     fragmentName = fragmentName,
     isTestFragment = isTestFragment,
     moduleIdentifier = containingModuleIdentifier,
     languageSettings = languageSettings,
     directRefinesFragments = refinesKotlinFragments,
-    resolvedDependencies = resolvedModuleDependencies,
+    resolvedDependencies = resolvedDependencies,
     sourceDirs = sourceDirs,
     resourceDirs = resourceDirs
 )

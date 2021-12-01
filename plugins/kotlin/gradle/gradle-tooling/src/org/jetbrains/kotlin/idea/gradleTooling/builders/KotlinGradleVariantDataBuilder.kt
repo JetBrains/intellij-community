@@ -3,25 +3,18 @@ package org.jetbrains.kotlin.idea.gradleTooling.builders
 
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinGradleVariantData
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinProjectModelImportingContext
-import org.jetbrains.kotlin.idea.gradleTooling.get
 import org.jetbrains.kotlin.idea.gradleTooling.initializeVariantStub
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinVariantReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinVariantData
 
-object KotlinGradleVariantDataBuilder : KotlinProjectModelComponentBuilder<KotlinVariantData> {
-    override fun buildComponent(origin: Any, importingContext: KotlinProjectModelImportingContext): KotlinVariantData? {
+object KotlinGradleVariantDataBuilder : KotlinProjectModelComponentBuilder<KotlinVariantReflection, KotlinVariantData> {
+    override fun buildComponent(origin: KotlinVariantReflection, importingContext: KotlinProjectModelImportingContext): KotlinVariantData? {
         //TODO if context contains fragment with the same [name + KotlinModuleIdentifier.toString] then just populate attributes
         val fragmentStub = KotlinGradleFragmentProtoBuilder.buildComponent(origin, importingContext) ?: return null
-
-        @Suppress("UNCHECKED_CAST")
-        val variantAttributes = (origin["getVariantAttributes"] as? Map<Any, String>)?.mapNotNull { (k, v) ->
-            (k["getUniqueName"] as? String)?.let { it to v }
-        }?.toMap().orEmpty()
-
-        val compilationOutputs = origin["getCompilationOutputs"]
-        val kotlinCompilationOutput = compilationOutputs?.let { KotlinCompilationOutputBuilder.buildComponent(it) }
+        val kotlinCompilationOutput = origin.compilationOutputs?.let { KotlinCompilationOutputBuilder.buildComponent(it) }
 
         return KotlinGradleVariantData(
-            variantAttributes = variantAttributes,
+            variantAttributes = origin.variantAttributes ?: return null,
             compilationOutputs = kotlinCompilationOutput
         ).also { importingContext.initializeVariantStub(fragmentStub, it) }
     }

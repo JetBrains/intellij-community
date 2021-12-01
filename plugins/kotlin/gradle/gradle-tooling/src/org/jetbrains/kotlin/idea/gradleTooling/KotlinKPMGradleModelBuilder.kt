@@ -1,14 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradleTooling
 
-import org.gradle.api.Named
 import org.gradle.api.Project
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinModuleBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinProjectModelSettingsBuilder
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinKpmExtensionReflection
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
-import java.lang.Exception
 
 class KotlinKPMGradleModelBuilder : ModelBuilderService.Ex {
     override fun canBuild(modelName: String?): Boolean = modelName == KotlinKPMGradleModel::class.java.name
@@ -17,21 +16,31 @@ class KotlinKPMGradleModelBuilder : ModelBuilderService.Ex {
         .create(project, e, "Gradle import errors")
         .withDescription("Unable to build Kotlin PM20 project configuration")
 
-    override fun buildAll(modelName: String?, project: Project?, context: ModelBuilderContext): KotlinKPMGradleModel? =
-        buildAll(project, context)
 
-    override fun buildAll(modelName: String?, project: Project?): KotlinKPMGradleModel? = buildAll(project, null)
+    override fun buildAll(modelName: String?, project: Project?, context: ModelBuilderContext): KotlinKPMGradleModel? {
+        return buildKotlinKPMGradleModel(project ?: return null)
+    }
 
-    private fun buildAll(project: Project?, context: ModelBuilderContext?): KotlinKPMGradleModel? {
-        val kpmExtension = project?.kpmExtension ?: return null
-        val kpmProjectSettings = KotlinProjectModelSettingsBuilder.buildComponent(kpmExtension) ?: return null
-        val kotlinNativeHome = KotlinNativeHomeEvaluator.getKotlinNativeHome(project) ?: KotlinMPPGradleModel.NO_KOTLIN_NATIVE_HOME
+    override fun buildAll(modelName: String?, project: Project?): KotlinKPMGradleModel? {
+        return buildKotlinKPMGradleModel(project ?: return null)
+    }
 
-        @Suppress("UNCHECKED_CAST")
-        val projectModules = (project.kpmExtension?.get("getModules") as? Iterable<Named>)?.toList().orEmpty()
-        val importingContext = KotlinProjectModelImportingContext(project).apply { classLoader = kpmExtension.javaClass.classLoader }
-        val kpmModules = projectModules.mapNotNull { originModule -> KotlinModuleBuilder.buildComponent(originModule, importingContext) }
-        return KotlinKPMGradleModelImpl(kpmModules, kpmProjectSettings, kotlinNativeHome)
+    private fun buildKotlinKPMGradleModel(project: Project): KotlinKPMGradleModel? {
+        try {
+            val kpmExtension = project.kpmExtension ?: return null
+            val kpmExtensionReflection = KotlinKpmExtensionReflection(kpmExtension)
+            val kpmProjectSettings = KotlinProjectModelSettingsBuilder.buildComponent(kpmExtensionReflection) ?: return null
+            val kotlinNativeHome = KotlinNativeHomeEvaluator.getKotlinNativeHome(project) ?: KotlinMPPGradleModel.NO_KOTLIN_NATIVE_HOME
+            val importingContext = KotlinProjectModelImportingContext(project, kpmExtension.javaClass.classLoader)
+            val kpmModules = kpmExtensionReflection.modules.orEmpty().mapNotNull { originModule ->
+                KotlinModuleBuilder.buildComponent(originModule, importingContext)
+            }
+
+            return KotlinKPMGradleModelImpl(kpmModules, kpmProjectSettings, kotlinNativeHome)
+        } catch (throwable: Throwable) {
+            project.logger.error("Failed building KotlinKPMGradleModel", throwable)
+            throw throwable
+        }
     }
 
     companion object {

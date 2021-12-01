@@ -3,13 +3,13 @@ package org.jetbrains.kotlin.idea.gradleTooling.builders
 
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinProjectModelSettings
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinProjectModelSettingsImpl
-import org.jetbrains.kotlin.idea.gradleTooling.get
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinKpmExtensionReflection
 
-object KotlinProjectModelSettingsBuilder : KotlinModelComponentBuilderBase<KotlinProjectModelSettings> {
-    override fun buildComponent(origin: Any): KotlinProjectModelSettings? {
-        val coreLibrariesVersion = (origin["getCoreLibrariesVersion"] as? String) ?: return null
-        val explicitApi = origin["getExplicitApi"]
-        val cliOption = explicitApi?.let { it["getCliOption"] as? String }
-        return KotlinProjectModelSettingsImpl(coreLibrariesVersion, cliOption)
+object KotlinProjectModelSettingsBuilder : KotlinModelComponentBuilderBase<KotlinKpmExtensionReflection, KotlinProjectModelSettings> {
+    override fun buildComponent(origin: KotlinKpmExtensionReflection): KotlinProjectModelSettings? {
+        return KotlinProjectModelSettingsImpl(
+            coreLibrariesVersion = origin.coreLibrariesVersion ?: return null,
+            explicitApiModeCliOption = origin.explicitApiCliOption
+        )
     }
 }

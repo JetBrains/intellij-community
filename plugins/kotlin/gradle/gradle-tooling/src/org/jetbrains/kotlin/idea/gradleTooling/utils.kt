@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling
 
+import java.util.*
+
 fun Class<*>.getMethodOrNull(name: String, vararg parameterTypes: Class<*>) =
     try {
         getMethod(name, *parameterTypes)
@@ -28,3 +30,6 @@ fun ClassLoader.loadClassOrNull(name: String): Class<*>? {
 
 fun compilationFullName(simpleName: String, classifier: String?) =
     if (classifier != null) classifier + simpleName.capitalize() else simpleName
+
+@Suppress("DEPRECATION")
+fun String.capitalize(): String = this.capitalize(Locale.getDefault())
