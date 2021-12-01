@@ -4,14 +4,11 @@ package org.jetbrains.plugins.groovy.codeInspection.utils
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileTypes.FileTypeRegistry
-import com.intellij.openapi.util.Disposer
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.ui.SeparatorFactory
 import com.intellij.ui.components.JBCheckBox
-import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInspection.FileTypeAwareInspection
 import org.jetbrains.plugins.groovy.codeInspection.getDisableableFileTypes
@@ -49,10 +46,6 @@ private fun doEnhanceInspectionToolPanel(tool: LocalInspectionTool, container: M
 
 internal fun <T> checkInspectionEnabledByFileType(tool: T, element: PsiElement) : Boolean
   where T : FileTypeAwareInspection, T: LocalInspectionTool {
-  @Suppress("TestOnlyProblems")
-  if (GroovyDisableableInspections.enableDisableableInspections) {
-    return true
-  }
   val disableableFileTypes = getDisableableFileTypes(tool.javaClass)
   if (disableableFileTypes.isEmpty()) {
     return true
@@ -67,14 +60,4 @@ internal fun <T> checkInspectionEnabledByFileType(tool: T, element: PsiElement) 
     }
   }
   return true
-}
-
-@TestOnly
-object GroovyDisableableInspections {
-  internal var enableDisableableInspections: Boolean = false
-
-  fun forceEnableDisableableInspections(parent: Disposable) {
-    Disposer.register(parent) { enableDisableableInspections = false }
-    enableDisableableInspections = true
-  }
 }
