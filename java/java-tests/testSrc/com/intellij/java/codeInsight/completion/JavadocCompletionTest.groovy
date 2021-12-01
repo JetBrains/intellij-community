@@ -809,7 +809,7 @@ interface Bar<T> extends Foo<T> {
       myFixture.configureByText 'a.java', "/** {@li<caret>} */public class JavadocLink {}"
       myFixture.completeBasic()
       myFixture.type(' ')
-      myFixture.checkResult("/** {@link } */public class JavadocLink {}")
+      myFixture.checkResult("/** {@link <caret>} */public class JavadocLink {}")
     }
     finally {
       CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = old
