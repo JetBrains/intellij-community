@@ -3,12 +3,10 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.util.Disposer;
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.testFramework.NonHeadlessRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.Nullable;
 import org.junit.*;
-import org.junit.rules.TestRule;
 
 /**
  * Tests https://youtrack.jetbrains.com/issue/IDEA-283718
@@ -18,12 +16,20 @@ import org.junit.rules.TestRule;
  * @author tav
  */
 public class IDEA283718Test {
-  @Rule public TestRule nonHeadless = new NonHeadlessRule();
+  static {
+    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
+  }
+
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+  }
+
+  @After
+  public void after() {
+    TestScaleHelper.restoreSystemProperties();
   }
 
   @Test
