@@ -3,6 +3,7 @@ package com.intellij.util.ui
 
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.IconLoader
+import com.intellij.ui.scale.JBUIScale
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -129,6 +130,12 @@ internal constructor(private val extensions: List<(Element, View) -> View?>,
           }
         }
 
+        override fun getAlignment(axis: Int): Float {
+          // 12 is a "standard" font height which has user scale of 1
+          if (axis == Y_AXIS) return JBUIScale.scale(12) / icon.iconHeight.toFloat()
+          return super.getAlignment(axis)
+        }
+
         override fun getToolTipText(x: Float, y: Float, allocation: Shape): String? {
           return element.attributes.getAttribute(HTML.Attribute.ALT) as? String
         }
@@ -137,7 +144,7 @@ internal constructor(private val extensions: List<(Element, View) -> View?>,
           val g2d = g as Graphics2D
           val savedComposite = g2d.composite
           g2d.composite = AlphaComposite.SrcOver // support transparency
-          icon.paintIcon(null, g, allocation.bounds.x, allocation.bounds.y - 4)
+          icon.paintIcon(null, g, allocation.bounds.x, allocation.bounds.y)
           g2d.composite = savedComposite
         }
 
