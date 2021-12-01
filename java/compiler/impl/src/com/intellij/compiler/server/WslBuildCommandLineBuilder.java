@@ -189,6 +189,11 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
     return myCommandLine;
   }
 
+  @Override
+  public void setUnixProcessPriority(int priority) {
+    LocalBuildCommandLineBuilder.setUnixProcessPriority(myCommandLine, priority);
+  }
+
   @Nullable
   public static Path getWslBuildSystemDirectory(WSLDistribution distribution) {
     String pathsSelector = PathManager.getPathsSelector();
