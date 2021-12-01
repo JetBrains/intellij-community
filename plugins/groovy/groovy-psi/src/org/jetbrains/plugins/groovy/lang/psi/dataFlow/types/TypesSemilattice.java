@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.SmartList;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
@@ -22,7 +23,7 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
   private final PsiManager myManager;
   private final Map<VariableDescriptor, Integer> varIndexes;
 
-  private static final TypeDfaState NEUTRAL = new TypeDfaState();
+  static final TypeDfaState NEUTRAL = new TypeDfaState();
 
   public TypesSemilattice(@NotNull PsiManager manager,
                           Map<VariableDescriptor, Integer> varIndexes) {
@@ -62,7 +63,8 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
     List<Map.Entry<VariableDescriptor, DFAType>> newTypes = new SmartList<>();
     for (Map.Entry<VariableDescriptor, DFAType> candidateEntry : another.getRawVarTypes().entrySet()) {
       var descriptor = candidateEntry.getKey();
-      if (another.getProhibitedCachingVars().get(varIndexes.getOrDefault(descriptor, 0)) ||
+      int index = ((Object2IntMap<VariableDescriptor>)varIndexes).getInt(descriptor);
+      if (index == 0 || another.getProhibitedCachingVars().get(index) ||
           (cached.containsKey(descriptor) && checkDfaStatesConsistency(cached, candidateEntry))) {
         continue;
       }
