@@ -104,11 +104,15 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
 
   val technicalIssuesArea = feedbackTextArea("other_issues", "Some other issues?", FEEDBACK_CONTENT_WIDTH - SUB_OFFSET, 65)
 
-  val technicalIssuesPanel = FormBuilder.createFormBuilder()
-    .addComponent(feedbackOption("cannot_pass", "Cannot pass task"))
-    .addComponent(feedbackOption("interpreter_issues","Interpreter issues"))
-    .addComponent(technicalIssuesArea)
-    .panel
+  val technicalIssuesPanel = FormBuilder.createFormBuilder().let { builder ->
+    builder.addComponent(feedbackOption("cannot_pass", "Cannot pass task"))
+    for ((id, label) in onboardingFeedbackData?.possibleTechnicalIssues ?: emptyMap()) {
+      builder.addComponent(feedbackOption(id, label))
+    }
+    builder.addComponent(technicalIssuesArea)
+
+    builder.panel
+  }
   technicalIssuesPanel.isVisible = false
   technicalIssuesPanel.border = JBUI.Borders.emptyLeft(SUB_OFFSET)
 
