@@ -125,7 +125,7 @@ public final class ExperimentalUI {
     paths.put("toolwindows/toolWindowBuild.svg", "/expui/toolwindow/build.svg");
     paths.put("toolwindows/toolWindowCommit.svg", "/expui/toolwindow/commit.svg");
     paths.put("icons/toolWindowDatabase.svg", "/expui/toolwindow/database.svg");
-    paths.put("toolwindows/toolWindowDebugger.svg", "/expui/toolwindow/debug.svg");
+    paths.put("toolwindows/toolWindowDebugger.svg", "/expui/toolwindow/deb ug.svg");
     paths.put("toolwindows/documentation.svg", "/expui/toolwindow/documentation.svg");
     paths.put("icons/toolWindowGradle.svg", "/expui/toolwindow/gradle.svg");
     paths.put("toolwindows/toolWindowHierarchy.svg", "/expui/toolwindow/hierarchy.svg");
@@ -140,15 +140,15 @@ public final class ExperimentalUI {
     paths.put("toolwindows/toolWindowTodo.svg", "/expui/toolwindow/todo.svg");
     paths.put("toolwindows/toolWindowChanges.svg", "/expui/toolwindow/vcs.svg");
     paths.put("toolwindows/webToolWindow.svg", "/expui/toolwindow/web.svg");
-    paths.put("actions/more.svg", "/expui/16x16/general/moreVertical.svg");
-    paths.put("general/hideToolWindow.svg", "/expui/16x16/general/close.svg");
-    paths.put("actions/find.svg", "/expui/16x16/general/search.svg");
-    paths.put("general/gearPlain.svg", "/expui/16x16/general/settings.svg");
-    paths.put("general/chevron-down.svg", "expui/16x16/general/chevronDown.svg");
-    paths.put("general/chevron-left.svg", "expui/16x16/general/chevronLeft.svg");
-    paths.put("general/chevron-right.svg", "expui/16x16/general/chevronRight.svg");
-    paths.put("general/chevron-up.svg", "expui/16x16/general/chevronUp.svg");
-    paths.put("vcs/branch.svg", "expui/16x16/toolwindow/vcs.svg");
+    paths.put("actions/more.svg", "/expui/general/moreVertical.svg");
+    paths.put("general/hideToolWindow.svg", "/expui/general/close.svg");
+    paths.put("actions/find.svg", "/expui/general/search.svg");
+    paths.put("general/gearPlain.svg", "/expui/general/settings.svg");
+    paths.put("general/chevron-down.svg", "expui/general/chevronDown.svg");
+    paths.put("general/chevron-left.svg", "expui/general/chevronLeft.svg");
+    paths.put("general/chevron-right.svg", "expui/general/chevronRight.svg");
+    paths.put("general/chevron-up.svg", "expui/general/chevronUp.svg");
+    paths.put("vcs/branch.svg", "expui/toolwindow/vcs.svg");
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
