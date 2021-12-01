@@ -86,13 +86,14 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
   fun doLayout(component: JComponent) {
     incModificationCount()
 
-    component.removeAll()
     if (component.isEnabled && component.isVisible) {
       CompletableFuture.supplyAsync(
         ::correctedToolbarActions,
         AppExecutorUtil.getAppExecutorService(),
       ).thenAcceptAsync(
-        Consumer { applyTo(it, component) },
+        Consumer {
+          component.removeAll()
+          applyTo(it, component) },
         EdtExecutorService.getInstance(),
       ).exceptionally {
         thisLogger().error(it)
