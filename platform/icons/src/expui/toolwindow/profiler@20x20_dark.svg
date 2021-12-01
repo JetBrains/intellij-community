@@ -1,0 +1,6 @@
+<!-- Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file. -->
+<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+<circle cx="10" cy="11.75" r="1.5" stroke="#CED0D6" stroke-width="1.5"/>
+<path d="M11.1731 10.675L13.8455 8.11255" stroke="#CED0D6" stroke-width="1.7" stroke-linecap="round"/>
+<path fill-rule="evenodd" clip-rule="evenodd" d="M10 4.75C5.99594 4.75 2.75 7.99594 2.75 12C2.75 13.1697 3.02648 14.2731 3.51731 15.25H16.4827C16.9735 14.2731 17.25 13.1697 17.25 12C17.25 7.99594 14.0041 4.75 10 4.75ZM1.25 12C1.25 7.16751 5.16751 3.25 10 3.25C14.8325 3.25 18.75 7.16751 18.75 12C18.75 13.5925 18.3239 15.0878 17.5789 16.3755L17.3623 16.75H16.9297H3.07026H2.63766L2.42105 16.3755C1.67612 15.0878 1.25 13.5925 1.25 12Z" fill="#CED0D6"/>
+</svg>
