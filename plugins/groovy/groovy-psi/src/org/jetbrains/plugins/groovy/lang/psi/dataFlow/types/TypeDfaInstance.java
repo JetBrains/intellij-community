@@ -6,23 +6,19 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentsInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalBlockBeginInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalBlockEndInstruction;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ResolvedVariableDescriptor;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
@@ -71,16 +67,15 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     else {
       newState = state;
     }
-    myCache.publishDescriptor(newState, instruction);
     return newState;
   }
 
   private TypeDfaState handleStartInstruction() {
-    TypeDfaState state = new TypeDfaState();
+    TypeDfaState state = TypesSemilattice.NEUTRAL;
     for (VariableDescriptor descriptor : myFlowInfo.getInterestingDescriptors()) {
       PsiType initialType = myInitialTypeProvider.initialType(descriptor);
       if (initialType != null) {
-        state = state.withNewType(descriptor, DFAType.create(initialType), myFlowInfo.getVarIndexes());
+        state = state.withNewType(descriptor, DFAType.create(initialType, PsiType.NULL), myFlowInfo.getVarIndexes());
       }
     }
     return state;
@@ -90,66 +85,52 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     return state.withNewClosureState(state);
   }
 
-  //private static boolean hasNoChanges(@NotNull TypeDfaState baseDfaState, @NotNull TypeDfaState newDfaState) {
-  //  var oldMap = baseDfaState.getRawVarTypes();
-  //  for (var entry : newDfaState.getRawVarTypes().entrySet()) {
-  //    if (!oldMap.containsKey(entry.getKey()) || !oldMap.get(entry.getKey()).equals(entry.getValue())) {
-  //      return false;
-  //    }
-  //  }
-  //  return true;
-  //}
+  private static boolean hasNoChanges(@NotNull TypeDfaState baseDfaState, @NotNull Map<VariableDescriptor, DFAType> newDfaTypes) {
+    var oldMap = baseDfaState.getRawVarTypes();
+    for (var entry : newDfaTypes.entrySet()) {
+      if (!oldMap.containsKey(entry.getKey()) || !oldMap.get(entry.getKey()).equals(entry.getValue())) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   private TypeDfaState handleFunctionalExpression(@NotNull TypeDfaState state, @NotNull FunctionalBlockEndInstruction instruction) {
-    //GrFunctionalExpression block = instruction.getStartNode().getElement();
-    //ClosureFrame currentClosureFrame = state.popTopClosureFrame();
-    //assert currentClosureFrame != null : "Encountered end of closure without closure start";
-    //List<VariableDescriptor> toRemove = new ArrayList<>();
-    //Map<VariableDescriptor, DFAType> stateTypes = new HashMap<>(state.getRawVarTypes());
-    //for (var newDescriptor : stateTypes.keySet()) {
-    //  if (newDescriptor instanceof ResolvedVariableDescriptor && ((ResolvedVariableDescriptor)newDescriptor).getVariable().getContext() == block) {
-    //    toRemove.add(newDescriptor);
-    //  }
-    //}
-    //for (var descr : toRemove) {
-    //  stateTypes.remove(descr);
-    //}
-    ////if (hasNoChanges(currentClosureFrame.getStartState(), stateTypes)) {
-    ////  return state;
-    ////}
-    //InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
-    //if (kind.equals(InvocationKind.IN_PLACE_ONCE)) {
-    //  // plain inlining
-    //  return state.withNewMap(stateTypes);
-    //}
-    //switch (kind) {
-    //  case IN_PLACE_UNKNOWN:
-    //    List<VariableDescriptor> localDescriptors = new ArrayList<>();
-    //    for (var descriptor : state.getRawVarTypes().keySet()) {
-    //      if (!currentClosureFrame.getStartState().containsVariable(descriptor)) {
-    //        localDescriptors.add(descriptor);
-    //      }
-    //    }
-    //    for (var descr : localDescriptors) {
-    //      state.getRawVarTypes().remove(descr);
-    //    }
-    //    state.joinState(currentClosureFrame.getStartState(), myManager, myFlowInfo.getVarIndexes());
-    //    break;
-    //  case UNKNOWN:
-    //    var reassignments = currentClosureFrame.getReassignments();
-    //    TypeDfaState initialState = currentClosureFrame.getStartState();
-    //    for (var newBinding : reassignments.entrySet()) {
-    //      VariableDescriptor descriptor = newBinding.getKey();
-    //      List<DFAType> assignments = newBinding.getValue();
-    //      PsiType upperBoundByWrites =
-    //        TypesUtil.getLeastUpperBound(assignments.stream().map(dfaType -> dfaType.getResultType(myManager)).filter(it -> it != null).toArray(PsiType[]::new), myManager);
-    //      DFAType existingType = initialState.getVariableType(descriptor, myFlowInfo.getVarIndexes());
-    //      if (existingType == null) existingType = DFAType.create(null);
-    //      DFAType flushedType = existingType.addFlushingType(upperBoundByWrites, myManager);
-    //      state = state.withNewType(descriptor, flushedType, myFlowInfo.getVarIndexes());
-    //    }
-    //    break;
-    //}
+    GrFunctionalExpression block = instruction.getStartNode().getElement();
+    ClosureFrame currentClosureFrame = state.popTopClosureFrame();
+    assert currentClosureFrame != null : "Encountered end of closure without closure start";
+    List<VariableDescriptor> toRemove = new ArrayList<>();
+    Map<VariableDescriptor, DFAType> stateTypes = new HashMap<>(state.getRawVarTypes());
+    for (var newDescriptor : stateTypes.keySet()) {
+      if (newDescriptor instanceof ResolvedVariableDescriptor && ((ResolvedVariableDescriptor)newDescriptor).getVariable().getContext() == block) {
+        toRemove.add(newDescriptor);
+      }
+    }
+    for (var descr : toRemove) {
+      stateTypes.remove(descr);
+    }
+    if (currentClosureFrame.getStartState() == state || hasNoChanges(currentClosureFrame.getStartState(), stateTypes)) {
+      return state;
+    }
+    InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
+    state = state.withNewMap(stateTypes);
+    switch (kind) {
+      case IN_PLACE_ONCE:
+        return state;
+      case UNKNOWN:
+        // todo: separate handling for UNKNOWN
+      case IN_PLACE_UNKNOWN:
+        List<VariableDescriptor> localDescriptors = new ArrayList<>();
+        for (var descriptor : stateTypes.keySet()) {
+          if (!currentClosureFrame.getStartState().containsVariable(descriptor)) {
+            localDescriptors.add(descriptor);
+          }
+        }
+        for (var descr : localDescriptors) {
+          stateTypes.remove(descr);
+        }
+        return state.withMerged(currentClosureFrame.getStartState(), myManager, myFlowInfo.getVarIndexes());
+    }
     return state;
   }
 
@@ -164,9 +145,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         assert !originalInstr.isWrite();
       }
 
-      DFAType original = state.getOrCreateVariableType(descriptor, myFlowInfo.getVarIndexes());
-      original.addMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
-      return original;
+      return state
+        .getOrCreateVariableType(descriptor, myFlowInfo.getVarIndexes())
+        .withMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
     });
   }
 
@@ -184,10 +165,10 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
               TypeInferenceHelper.isSimpleEnoughForAugmenting(myFlow)) {
             GrVariable variable = ((ResolvedVariableDescriptor)descriptor).getVariable();
             PsiType augmentedType = TypeAugmenter.Companion.inferAugmentedType(variable);
-            return DFAType.create(augmentedType);
+            return DFAType.create(augmentedType, PsiType.NULL);
           }
           else {
-            return DFAType.create(initializerType);
+            return DFAType.create(initializerType, PsiType.NULL);
           }
         }
       );
@@ -209,7 +190,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
   private TypeDfaState handleArgument(TypeDfaState state, ArgumentsInstruction instruction, VariableDescriptor descriptor, Collection<Argument> arguments) {
     return updateVariableType(state, instruction, descriptor, () -> {
-      final DFAType result = state.getOrCreateVariableType(descriptor, myFlowInfo.getVarIndexes());
+      DFAType result = state.getOrCreateVariableType(descriptor, myFlowInfo.getVarIndexes());
       final GroovyResolveResult[] results = instruction.getElement().multiResolve(false);
       for (GroovyResolveResult variant : results) {
         if (!(variant instanceof GroovyMethodResult)) continue;
@@ -225,7 +206,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
           if (parameterType == null) continue;
 
           PsiType typeToMixin = variant.getSubstitutor().substitute(parameterType);
-          result.addMixin(typeToMixin, null);
+          result = result.withMixin(typeToMixin, null);
         }
       }
       return result;
@@ -253,7 +234,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
     DFAType existingDfaType = state.getVariableType(descriptor, myFlowInfo.getVarIndexes());
     if (existingDfaType != null) {
-      type = type.addFlushingType(existingDfaType.getFlushingType(), myManager);
+      type = type.withFlushingType(existingDfaType.getFlushingType(), myManager);
     }
     return state.withNewType(descriptor, type, myFlowInfo.getVarIndexes());
   }
@@ -261,7 +242,11 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private TypeDfaState handleNegation(@NotNull TypeDfaState state, @NotNull NegatingGotoInstruction negation) {
     TypeDfaState newState = state;
     for (Map.Entry<VariableDescriptor, DFAType> entry : state.getRawVarTypes().entrySet()) {
-      newState = newState.withNewType(entry.getKey(), entry.getValue().negate(negation), myFlowInfo.getVarIndexes());
+      DFAType before = entry.getValue();
+      DFAType after = before.negate(negation);
+      if (before != after) {
+        newState = newState.withNewType(entry.getKey(), after, myFlowInfo.getVarIndexes());
+      }
     }
     return newState;
   }
