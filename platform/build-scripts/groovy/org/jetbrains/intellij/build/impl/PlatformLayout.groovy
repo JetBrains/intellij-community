@@ -30,10 +30,6 @@ final class PlatformLayout extends BaseLayout {
     body()
   }
 
-  /**
-   * Include all project libraries from dependencies of modules already included into layout to 'lib' directory
-   */
-
   void withProjectLibrary(String libraryName) {
     includedProjectLibraries.add(new ProjectLibraryData(libraryName, "", ProjectLibraryData.PackMode.MERGED))
   }
