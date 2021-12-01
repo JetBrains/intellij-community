@@ -4,6 +4,7 @@ package com.intellij.util.ui
 import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.util.IconLoader
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.text.nullize
 import java.awt.*
 import java.awt.image.BufferedImage
 import java.io.ByteArrayInputStream
@@ -137,7 +138,7 @@ internal constructor(private val extensions: List<(Element, View) -> View?>,
         }
 
         override fun getToolTipText(x: Float, y: Float, allocation: Shape): String? {
-          return element.attributes.getAttribute(HTML.Attribute.ALT) as? String
+          return (element.attributes.getAttribute(HTML.Attribute.ALT) as? String)?.nullize(true)
         }
 
         override fun paint(g: Graphics, allocation: Shape) {

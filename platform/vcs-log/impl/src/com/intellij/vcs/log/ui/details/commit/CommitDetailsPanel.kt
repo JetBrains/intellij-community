@@ -277,7 +277,12 @@ private class HashAndAuthorPanel : HtmlPanel() {
     @Suppress("HardCodedStringLiteral")
     return presentation.hashAndAuthor.let {
       if (signature != null) {
-        it + """<span class='signature'>&nbsp;&nbsp;&nbsp; <icon src='sig'/>&nbsp;${signature.text}</span>"""
+        val tooltip = signature.description?.toString()
+        //language=html
+        it + """<span class='signature'>&nbsp;&nbsp;&nbsp; 
+          |<icon src='sig' alt='${tooltip.orEmpty()}'/>
+          |&nbsp;${signature.text}
+          |</span>""".trimMargin()
       }
       else it
     }
