@@ -33,8 +33,9 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val VENDORS = listOf("JetBrains", "Apple", "Oracle", "Sun", "IBM", "Azul", "Other")
   private val VM_OPTIONS = listOf("Xmx", "Xms", "SoftRefLRUPolicyMSPerMB", "ReservedCodeCacheSize")
   private val SYSTEM_PROPERTIES = listOf("splash", "nosplash")
+  private val RENDERING_PIPELINES = listOf("Metal", "OpenGL")
 
-  private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 15)
+  private val GROUP: EventLogGroup = EventLogGroup("system.runtime", 16)
   private val CORES: EventId1<Int> = GROUP.registerEvent("cores", Int("value"))
   private val MEMORY_SIZE: EventId1<Int> = GROUP.registerEvent("memory.size", Int("gigabytes"))
   private val SWAP_SIZE: EventId1<Int> = GROUP.registerEvent("swap.size", Int("gigabytes"))
@@ -46,6 +47,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
   private val SYSTEM_PROPERTY: EventId2<String?, Boolean> =
     GROUP.registerEvent("jvm.client.properties", String("name", SYSTEM_PROPERTIES), Boolean("value"))
   private val DEBUG_AGENT: EventId1<Boolean> = GROUP.registerEvent("debug.agent", EventFields.Enabled)
+  private val RENDERING: EventId1<String?> = GROUP.registerEvent("rendering.pipeline", String("name", RENDERING_PIPELINES))
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -65,6 +67,7 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     }
 
     result += GC.metric(getGcName())
+    result += RENDERING.metric(getRenderingPipelineName())
 
     result += JVM.metric(
       Version(1, JavaVersion.current().feature, 0),
@@ -122,6 +125,8 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     }
     return "Other"
   }
+
+  private fun getRenderingPipelineName() = if (SystemInfo.isMetalRendering) "Metal" else "OpenGL"
 
   private fun getJavaVendor(): String =
     when {
