@@ -4,6 +4,7 @@ package com.intellij.openapi.ui;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Weighted;
@@ -230,8 +231,11 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     setOpaque(false);
     add(myFirstDivider);
     add(myLastDivider);
-    ApplicationManager.getApplication().getMessageBus().connect(disposable).subscribe(LafManagerListener.TOPIC,
-                                                                                            source -> isLookAndFeelUpdated = true);
+    Application application = ApplicationManager.getApplication();
+    if (application != null) {
+      application.getMessageBus().connect(disposable).subscribe(LafManagerListener.TOPIC,
+                                                                source -> isLookAndFeelUpdated = true);
+    }
   }
 
   public void setShowDividerControls(boolean showDividerControls) {
