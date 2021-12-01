@@ -44,7 +44,10 @@ public final class SvnExecutableChecker extends ExecutableValidator implements D
   @NotNull private final SvnVcs myVcs;
 
   public SvnExecutableChecker(@NotNull Project project) {
-    super(project, message("subversion.executable.notification.title"), message("subversion.executable.notification.description"));
+    super(project,
+          message("subversion.executable.notification.title"),
+          message("subversion.executable.notification.description"),
+          message("subversion.executable.notification.cant.run.in.safe.mode"));
 
     myVcs = SvnVcs.getInstance(project);
     Registry.get(SVN_EXECUTABLE_LOCALE_REGISTRY_KEY).addListener(new RegistryValueListener() {
