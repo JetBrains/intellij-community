@@ -30,12 +30,12 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.GrInspectionUIUtil;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 
 import javax.swing.*;
+import java.util.HashSet;
 import java.util.Set;
 
 public abstract class BaseInspection extends LocalInspectionTool implements FileTypeAwareInspection {
 
-  public @NotNull Set<String> explicitlyDisabledFileTypes =
-    FileTypeInspectionDisablerKt.getDisableableFileNames(this.getClass());
+  public @NotNull Set<String> explicitlyEnabledFileTypes = new HashSet<>();
 
   @Nullable
   @InspectionMessage
@@ -90,6 +90,6 @@ public abstract class BaseInspection extends LocalInspectionTool implements File
   @NotNull
   @Override
   public Set<String> getDisableableFileTypeNamesContainer() {
-    return explicitlyDisabledFileTypes;
+    return explicitlyEnabledFileTypes;
   }
 }

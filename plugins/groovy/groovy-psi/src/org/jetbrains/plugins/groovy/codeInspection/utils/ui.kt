@@ -47,18 +47,22 @@ private fun doEnhanceInspectionToolPanel(tool: LocalInspectionTool, container: M
   return component
 }
 
-internal fun checkInspectionEnabledByFileType(tool: FileTypeAwareInspection, element: PsiElement): Boolean {
+internal fun <T> checkInspectionEnabledByFileType(tool: T, element: PsiElement) : Boolean
+  where T : FileTypeAwareInspection, T: LocalInspectionTool {
   @Suppress("TestOnlyProblems")
   if (GroovyDisableableInspections.enableDisableableInspections) {
     return true
   }
-  val container = tool.getDisableableFileTypeNamesContainer()
-  if (container.isEmpty()) return true
+  val disableableFileTypes = getDisableableFileTypes(tool.javaClass)
+  if (disableableFileTypes.isEmpty()) {
+    return true
+  }
+  val explicitlyAllowedFileTypes = tool.getDisableableFileTypeNamesContainer()
+  val forbiddenFileTypes = disableableFileTypes.filter { it.name !in explicitlyAllowedFileTypes }
   val virtualFile = PsiUtilCore.getVirtualFile(element) ?: return true
   val registry = FileTypeRegistry.getInstance()
-  for (fileTypeName in container) {
-    val fileType = registry.findFileTypeByName(fileTypeName)
-    if (registry.isFileOfType(virtualFile, fileType)) {
+  for (forbiddenFileType in forbiddenFileTypes) {
+    if (registry.isFileOfType(virtualFile, forbiddenFileType)) {
       return false
     }
   }

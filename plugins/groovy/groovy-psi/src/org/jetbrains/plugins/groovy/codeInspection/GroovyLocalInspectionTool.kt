@@ -14,7 +14,7 @@ import javax.swing.JComponent
 abstract class GroovyLocalInspectionTool : LocalInspectionTool(), FileTypeAwareInspection {
 
   @JvmField
-  var explicitlyDisabledFileTypes: MutableSet<String> = getDisableableFileNames(this.javaClass)
+  var explicitlyEnabledFileTypes: MutableSet<String> = HashSet()
 
   final override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
     return object : GroovyPsiElementVisitor(buildGroovyVisitor(holder, isOnTheFly)) {
@@ -35,5 +35,5 @@ abstract class GroovyLocalInspectionTool : LocalInspectionTool(), FileTypeAwareI
 
   protected open fun createGroovyOptionsPanel(): JComponent? = null
 
-  override fun getDisableableFileTypeNamesContainer(): MutableSet<String> = explicitlyDisabledFileTypes
+  override fun getDisableableFileTypeNamesContainer(): MutableSet<String> = explicitlyEnabledFileTypes
 }
