@@ -7,6 +7,7 @@ import com.intellij.psi.PsiIntersectionType;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,6 +23,8 @@ import static java.util.stream.Collectors.toList;
  * @author Max Medvedev
  */
 public final class DFAType {
+
+  private static final DFAType NULL_DFA_TYPE = new DFAType(null, PsiType.NULL);
 
   private static final class Mixin {
 
@@ -91,21 +94,30 @@ public final class DFAType {
     this.flushingType = flushingType == null ? PsiType.NULL : flushingType;
   }
 
-  public void addMixin(@Nullable PsiType mixin, @Nullable ConditionInstruction instruction) {
-    if (mixin == null) {
-      return;
+  @Contract(pure = true)
+  public DFAType withMixin(@Nullable PsiType mixin, @Nullable ConditionInstruction instruction) {
+    if (mixin == null || mixin == PsiType.NULL) {
+      return this;
     }
     Mixin newMixin = new Mixin(mixin, instruction, instruction != null && instruction.isNegated());
     for (var existingMixin : mixins) {
       if (Objects.equals(existingMixin, newMixin)) {
-        return;
+        return this;
       }
     }
-    mixins.add(newMixin);
+    DFAType newDfaType = new DFAType(this.primary, this.flushingType);
+    newDfaType.mixins.add(newMixin);
+    return newDfaType;
   }
 
-  public DFAType addFlushingType(@Nullable PsiType flushingType, @NotNull PsiManager manager) {
+  public DFAType withFlushingType(@Nullable PsiType flushingType, @NotNull PsiManager manager) {
+    if (flushingType == null) {
+      return this;
+    }
     PsiType newFlushingType = GenericsUtil.getLeastUpperBound(this.flushingType, flushingType, manager);
+    if (newFlushingType == this.flushingType) {
+      return this;
+    }
     DFAType newDFAType = new DFAType(primary, newFlushingType);
     newDFAType.mixins.addAll(mixins);
     return newDFAType;
@@ -141,7 +153,7 @@ public final class DFAType {
 
   @Contract("-> new")
   @NotNull
-  public DFAType copy() {
+  private DFAType copy() {
     final DFAType type = new DFAType(primary, flushingType);
     type.mixins.addAll(mixins);
     return type;
@@ -150,8 +162,14 @@ public final class DFAType {
   @Contract("_ -> new")
   @NotNull
   public DFAType negate(@NotNull NegatingGotoInstruction negation) {
-    DFAType result = copy();
+    if (mixins.isEmpty()) {
+      return this;
+    }
     final Set<ConditionInstruction> conditionsToNegate = negation.getCondition().getDependentConditions();
+    if (ContainerUtil.and(mixins, mixin -> !conditionsToNegate.contains(mixin.myCondition))) {
+      return this;
+    }
+    DFAType result = copy();
     for (ListIterator<Mixin> iterator = result.mixins.listIterator(); iterator.hasNext(); ) {
       Mixin mixin = iterator.next();
       if (conditionsToNegate.contains(mixin.myCondition)) {
@@ -183,10 +201,9 @@ public final class DFAType {
     return PsiIntersectionType.createIntersection(types.toArray(PsiType.createArray(types.size())));
   }
 
-  @Contract("_ -> new")
   @NotNull
-  public static DFAType create(@Nullable PsiType type) {
-    return new DFAType(type);
+  public static DFAType create(@Nullable PsiType type, @NotNull PsiType flushingType) {
+    return type == null && flushingType == PsiType.NULL ? NULL_DFA_TYPE : new DFAType(type);
   }
 
   private static boolean eq(PsiType t1, PsiType t2) {
@@ -196,17 +213,28 @@ public final class DFAType {
   @NotNull
   public static DFAType create(DFAType t1, DFAType t2, PsiManager manager) {
     if (t1.equals(t2)) return t1;
-
+    if (dominates(t1, t2)) {
+      return t1;
+    }
+    if (dominates(t2, t1)) {
+      return t2;
+    }
     final PsiType primary = TypesUtil.getLeastUpperBoundNullable(t1.primary, t2.primary, manager);
     final PsiType commonFlushingType = GenericsUtil.getLeastUpperBound(t1.flushingType, t2.flushingType, manager);
-    final DFAType type = new DFAType(primary, commonFlushingType);
     final PsiType type1 = reduce(t1.mixins);
     final PsiType type2 = reduce(t2.mixins);
     if (type1 != null && type2 != null) {
-      type.addMixin(GenericsUtil.getLeastUpperBound(type1, type2, manager), null);
+      return new DFAType(primary, commonFlushingType).withMixin(GenericsUtil.getLeastUpperBound(type1, type2, manager), null);
     }
+    return create(primary, commonFlushingType == null ? PsiType.NULL : commonFlushingType);
+  }
 
-    return type;
+  private static boolean dominates(DFAType t1, DFAType t2) {
+    boolean primaryDominating = t2.primary == null || t2.primary == PsiType.NULL || t2.primary == t1.primary;
+    if (!primaryDominating) return false;
+    boolean flushingDominating = t2.flushingType == PsiType.NULL || t2.flushingType == t1.flushingType;
+    if (!flushingDominating) return false;
+    return t2.mixins.isEmpty() || t2.mixins == t1.mixins;
   }
 
   private static PsiType reduce(List<Mixin> mixins) {
@@ -219,6 +247,6 @@ public final class DFAType {
 
   @Override
   public String toString() {
-    return "{" + primary + " : " + mixins + "}";
+    return "{" + primary + " : " + mixins + " | " + flushingType + "}";
   }
 }
