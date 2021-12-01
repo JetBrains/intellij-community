@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
@@ -261,18 +262,19 @@ class PythonOnboardingTour :
         })
       }
 
-      @Suppress("HardCodedStringLiteral")
       override val addRowsForUserAgreement: Panel.() -> Unit = {
-        row("Found interpreters:") {
-          label(interpreters?.toString() ?: "none")
+        row(PythonLessonsBundle.message("python.onboarding.feedback.system.found.interpreters")) {
+          @Suppress("HardCodedStringLiteral")
+          val interpreters: @NlsSafe String? = interpreters?.toString()
+          label(interpreters ?: PythonLessonsBundle.message("python.onboarding.feedback.system.no.interpreters"))
         }
-        row("Used interpreter:") {
+        row(PythonLessonsBundle.message("python.onboarding.feedback.system.used.interpreter")) {
           label(usedInterpreter)
         }
       }
 
       override val possibleTechnicalIssues: Map<String, @Nls String> = mapOf(
-        "interpreter_issues" to "Interpreter issues"
+        "interpreter_issues" to PythonLessonsBundle.message("python.onboarding.option.interpreter.issues")
       )
     }
   }
