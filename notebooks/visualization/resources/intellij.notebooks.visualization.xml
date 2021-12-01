@@ -2,19 +2,19 @@
   <module value="org.intellij.notebooks.visualization" />
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.datavis.inlays.inlayDescriptorProvider"
-                    interface="org.intellij.datavis.r.inlays.InlayDescriptorProvider"
+                    interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.InlayDescriptorProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.datavis.r.inlays.components.graphicsManagerProvider"
-                    interface="org.intellij.datavis.r.inlays.components.GraphicsManagerProvider"
+                    interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.GraphicsManagerProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.datavis.inlays.components.inlayOutputProvider"
-                    interface="org.intellij.datavis.r.inlays.components.InlayOutputProvider"
+                    interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayOutputProvider"
                     dynamic="true"/>
     <extensionPoint qualifiedName="com.intellij.datavis.inlays.components.multiOutputProvider"
-                    interface="org.intellij.datavis.r.inlays.components.MultiOutputProvider"
+                    interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.MultiOutputProvider"
                     dynamic="true"/>
-    <extensionPoint qualifiedName="org.intellij.datavis.r.inlays.visualisation.uiCustomizer"
-                    interface="org.intellij.datavis.r.ui.UiCustomizer"
+    <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.visualization.r.inlays.visualisation.uiCustomizer"
+                    interface="org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer"
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.jetbrains.plugins.notebooks.editor.notebookEditorAppearanceProvider"
                     interface="org.jetbrains.plugins.notebooks.visualization.NotebookEditorAppearanceProvider"
@@ -40,20 +40,20 @@
                     dynamic="true"/>
 
     <extensionPoint qualifiedName="com.intellij.datavis.inlays.components.inlayStateCustomizer"
-                    interface="org.intellij.datavis.r.inlays.components.InlayStateCustomizer"
+                    interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayStateCustomizer"
                     dynamic="true"/>
   </extensionPoints>
 
   <actions resource-bundle="messages.VisualizationBundle">
-    <group id="org.intellij.datavis.r.inlays.components.InlayOutputToolbarActions">
-      <action id="org.intellij.datavis.r.inlays.components.ClearOutputAction"
-              class="org.intellij.datavis.r.inlays.components.ClearOutputAction"
+    <group id="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.InlayOutputToolbarActions">
+      <action id="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.ClearOutputAction"
+              class="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.ClearOutputAction"
               icon="AllIcons.Actions.GC"/>
-      <action id="org.intellij.datavis.r.inlays.components.SaveOutputAction"
-              class="org.intellij.datavis.r.inlays.components.SaveOutputAction"
+      <action id="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.SaveOutputAction"
+              class="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.SaveOutputAction"
               icon="AllIcons.Actions.MenuSaveall"/>
-      <action id="org.intellij.datavis.r.inlays.components.CopyImageToClipboardAction"
-              class="org.intellij.datavis.r.inlays.components.CopyImageToClipboardAction"
+      <action id="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.CopyImageToClipboardAction"
+              class="org.jetbrains.plugins.notebooks.visualization.r.inlays.components.CopyImageToClipboardAction"
               icon="AllIcons.Actions.Copy"/>
     </group>
 
@@ -72,7 +72,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <notificationGroup displayType="BALLOON" id="Notebook Table" bundle="messages.VisualizationBundle" key="inlay.output.table.notification.group.name"/>
     <notificationGroup id="InlayTable" displayType="BALLOON"/>
-    <editorFactoryListener id="org.intellij.datavis.r.inlays.InlaysManager" implementation="org.intellij.datavis.r.inlays.InlaysManager"/>
+    <editorFactoryListener id="org.jetbrains.plugins.notebooks.visualization.r.inlays.InlaysManager" implementation="org.jetbrains.plugins.notebooks.visualization.r.inlays.InlaysManager"/>
 
     <editorFactoryMouseListener
       implementation="org.jetbrains.plugins.notebooks.visualization.outputs.impl.OutputCollapsingGutterMouseListener"
@@ -88,8 +88,8 @@
       implementation="org.jetbrains.plugins.notebooks.visualization.CellBackgroundGutterController"/>
   </extensions>
 
-  <extensions defaultExtensionNs="org.intellij.datavis.r.inlays.visualisation">
-    <uiCustomizer implementation="org.intellij.datavis.r.ui.DefaultUiCustomizer"/>
+  <extensions defaultExtensionNs="org.jetbrains.plugins.notebooks.visualization.r.inlays.visualisation">
+    <uiCustomizer implementation="org.jetbrains.plugins.notebooks.visualization.r.ui.DefaultUiCustomizer"/>
   </extensions>
 
   <!-- New output inlays -->

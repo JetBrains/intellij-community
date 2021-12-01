@@ -2,7 +2,7 @@ package org.jetbrains.plugins.notebooks.visualization
 
 import com.intellij.openapi.editor.colors.EditorColorsScheme
 import com.intellij.openapi.editor.impl.EditorImpl
-import org.intellij.datavis.r.inlays.EditorInlaysManager
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.EditorInlaysManager
 import java.awt.Color
 
 

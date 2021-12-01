@@ -10,9 +10,9 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import org.intellij.datavis.r.inlays.ResizeController
-import org.intellij.datavis.r.ui.UiCustomizer
 import org.jetbrains.plugins.notebooks.visualization.notebookAppearance
+import org.jetbrains.plugins.notebooks.visualization.r.inlays.ResizeController
+import org.jetbrains.plugins.notebooks.visualization.r.ui.UiCustomizer
 import java.awt.*
 import java.awt.event.MouseAdapter
 import java.awt.event.MouseEvent
