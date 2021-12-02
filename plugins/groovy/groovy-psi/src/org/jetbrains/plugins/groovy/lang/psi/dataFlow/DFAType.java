@@ -54,7 +54,7 @@ public final class DFAType {
   @Contract(pure = true)
   @NotNull
   public DFAType withNewMixin(@Nullable PsiType mixin, @Nullable ConditionInstruction instruction) {
-    if (mixin == null || mixin == PsiType.NULL) {
+    if (mixin == null) {
       return this;
     }
     Mixin newMixin = new Mixin(mixin, instruction, instruction != null && instruction.isNegated());
@@ -64,6 +64,7 @@ public final class DFAType {
       }
     }
     DFAType newDfaType = new DFAType(this.primary, this.flushingType);
+    newDfaType.mixins.addAll(this.mixins);
     newDfaType.mixins.add(newMixin);
     return newDfaType;
   }
@@ -191,7 +192,7 @@ public final class DFAType {
     if (!primaryDominating) return false;
     boolean flushingDominating = dominated.flushingType == PsiType.NULL || dominated.flushingType == dominating.flushingType;
     if (!flushingDominating) return false;
-    return dominated.mixins.isEmpty() || dominated.mixins == dominating.mixins;
+    return dominated.mixins == dominating.mixins;
   }
 
   private static PsiType reduce(List<Mixin> mixins) {
