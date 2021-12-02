@@ -106,7 +106,7 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     val cacheFile = Paths.get(cacheDirectory.absolutePathString(), "$fileHashCode.json").toFile()
 
     if (!cacheFile.exists()) withContext(Dispatchers.IO) {
-        cacheFile.createNewFile()
+        cacheFile.apply { parentFile.mkdirs() }.createNewFile()
     }
 
     val sha256Deferred: Deferred<String> = async(Dispatchers.IO) {

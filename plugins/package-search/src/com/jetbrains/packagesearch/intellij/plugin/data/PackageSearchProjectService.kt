@@ -3,8 +3,6 @@ package com.jetbrains.packagesearch.intellij.plugin.data
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.getProjectDataPath
-import com.intellij.util.io.exists
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.api.PackageSearchApiClient
@@ -26,6 +24,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.modifiedBy
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleTransformers
 import com.jetbrains.packagesearch.intellij.plugin.util.nativeModulesChangesFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectCachesService
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelUpdatedKeys
@@ -59,14 +58,17 @@ import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.job
 import kotlinx.serialization.json.Json
-import java.nio.file.Files
 import java.util.concurrent.Executors
 import kotlin.time.Duration
 
 internal class PackageSearchProjectService(val project: Project) : CoroutineScope by project.lifecycleScope {
 
     private val retryFromErrorChannel = Channel<Unit>()
-    val dataProvider = ProjectDataProvider(PackageSearchApiClient(ServerURLs.base))
+    private val restartChannel = Channel<Unit>()
+    val dataProvider = ProjectDataProvider(
+        PackageSearchApiClient(ServerURLs.base),
+        project.packageSearchProjectCachesService.installedDependencyCache
+    )
 
     private val projectModulesLoadingFlow = MutableStateFlow(false)
     private val knownRepositoriesLoadingFlow = MutableStateFlow(false)
@@ -81,8 +83,8 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 
     private val json = Json { prettyPrint = true }
 
-    private val cacheDirectory = project.getProjectDataPath("pkgs/installedDependencies")
-        .also { if (!it.exists()) Files.createDirectories(it) }
+    private val cacheDirectory = project.packageSearchProjectCachesService.projectCacheDirectory
+        .resolve("installedDependencies")
 
     val isLoadingFlow = combineTransform(
         projectModulesLoadingFlow,
@@ -102,6 +104,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         .replayOnSignals(
             retryFromErrorChannel.receiveAsFlow().throttle(Duration.seconds(10), true),
             project.moduleChangesSignalFlow,
+            restartChannel.receiveAsFlow(),
             timer(Duration.minutes(15))
         )
         .mapLatestTimedWithLoading("projectModulesSharedFlow", projectModulesLoadingFlow) { modules ->
@@ -278,5 +281,9 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
 
     fun notifyOperationExecuted(successes: List<ProjectModule>) {
         operationExecutedChannel.trySend(successes)
+    }
+
+    suspend fun restart() {
+        restartChannel.send(Unit)
     }
 }
