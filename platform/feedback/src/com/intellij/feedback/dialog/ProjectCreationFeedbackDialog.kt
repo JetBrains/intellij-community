@@ -2,6 +2,7 @@
 package com.intellij.feedback.dialog
 
 import com.intellij.feedback.DEFAULT_NO_EMAIL_ZENDESK_REQUESTER
+import com.intellij.feedback.FEEDBACK_REPORT_ID_KEY
 import com.intellij.feedback.bundle.FeedbackBundle
 import com.intellij.feedback.createFeedbackAgreementComponent
 import com.intellij.feedback.state.projectCreation.ProjectCreationInfoService
@@ -142,6 +143,7 @@ class ProjectCreationFeedbackDialog(
 
   private fun createCollectedDataJsonString(): String {
     val collectedData = buildJsonObject {
+      put(FEEDBACK_REPORT_ID_KEY, "new_project_creation_dialog")
       put("rating", ratingProperty.get())
       put("project_type", systemInfoData.createdProjectTypeName)
       putJsonArray("problems") {

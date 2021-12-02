@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Nls
 abstract class OnboardingFeedbackData(val reportTitle: String, // It is ZenDesk title, so should not be translated
                                       val lessonEndInfo: LessonEndInfo,
                                       ) {
+  abstract val feedbackReportId: String
+
   abstract val addAdditionalSystemData: JsonObjectBuilder.() -> Unit
 
   abstract val addRowsForUserAgreement: Panel.() -> Unit

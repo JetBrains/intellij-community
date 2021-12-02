@@ -18,6 +18,9 @@ import java.awt.Dimension
 import java.awt.GridLayout
 import javax.swing.JPanel
 
+/** Should be used inside JSON top-level keys to distinguish reports without any external information */
+const val FEEDBACK_REPORT_ID_KEY: String = "feedback_id"
+
 const val DEFAULT_NO_EMAIL_ZENDESK_REQUESTER: String = "no_mail@jetbrains.com"
 
 private const val PATH_TO_FEEDBACK_FORM_XML = "forms/ProjectCreationFeedbackForm.xml"

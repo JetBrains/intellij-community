@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui
 
+import com.intellij.feedback.FEEDBACK_REPORT_ID_KEY
 import com.intellij.feedback.dialog.CommonFeedbackSystemInfoData
 import com.intellij.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.submitGeneralFeedback
@@ -195,6 +196,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     val jsonConverter = Json { }
 
     val collectedData = buildJsonObject {
+      put(FEEDBACK_REPORT_ID_KEY, onboardingFeedbackData.feedbackReportId)
       for (function in saver) {
         function()
       }
