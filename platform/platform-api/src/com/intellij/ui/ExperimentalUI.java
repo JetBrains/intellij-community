@@ -125,7 +125,7 @@ public final class ExperimentalUI {
     paths.put("toolwindows/toolWindowBuild.svg", "/expui/toolwindow/build.svg");
     paths.put("toolwindows/toolWindowCommit.svg", "/expui/toolwindow/commit.svg");
     paths.put("icons/toolWindowDatabase.svg", "/expui/toolwindow/database.svg");
-    paths.put("toolwindows/toolWindowDebugger.svg", "/expui/toolwindow/deb ug.svg");
+    paths.put("toolwindows/toolWindowDebugger.svg", "/expui/toolwindow/debug.svg");
     paths.put("toolwindows/documentation.svg", "/expui/toolwindow/documentation.svg");
     paths.put("icons/toolWindowGradle.svg", "/expui/toolwindow/gradle.svg");
     paths.put("toolwindows/toolWindowHierarchy.svg", "/expui/toolwindow/hierarchy.svg");
