@@ -185,7 +185,7 @@ public final class EditorActionUtil {
 
     final int newOffset = getNextWordStopOffset(text, wordStop, tokenIterator, offset, maxOffset, isCamel);
     if (newOffset < maxOffset &&
-        handleQuoted &&
+        handleQuoted && !tokenIterator.atEnd() &&
         isTokenStart(tokenIterator, newOffset - 1) &&
         isQuotedToken(tokenIterator, text)) {
       // now at the end of an opening quote: | "word" -> "|word"
@@ -214,7 +214,7 @@ public final class EditorActionUtil {
 
     final int newOffset = getPreviousWordStopOffset(text, wordStop, tokenIterator, offset, minOffset, isCamel);
     if (newOffset > minOffset &&
-        handleQuoted &&
+        handleQuoted && !tokenIterator.atEnd() &&
         isTokenEnd(tokenIterator, newOffset + 1) &&
         isQuotedToken(tokenIterator, text)) {
       // at the start of a closing quote:  "word|" <- "word" |
@@ -262,22 +262,28 @@ public final class EditorActionUtil {
   }
 
   private static boolean advanceTokenOnBoundary(@NotNull HighlighterIterator tokenIterator, @NotNull CharSequence text, int offset) {
+    if (tokenIterator.atEnd()) return false;
     if (isTokenEnd(tokenIterator, offset)) {
       final IElementType leftToken = tokenIterator.getTokenType();
       final boolean wasQuotedToken = isQuotedToken(tokenIterator, text);
       tokenIterator.advance();
-      return wasQuotedToken || isQuotedToken(tokenIterator, text) ||
+      if (wasQuotedToken) return true;
+      if (tokenIterator.atEnd()) return false;
+      return isQuotedToken(tokenIterator, text) ||
              !isBetweenWhitespaces(text, offset) && isLexemeBoundary(leftToken, tokenIterator.getTokenType());
     }
     return isQuotedTokenInnardsBoundary(tokenIterator, text, offset);
   }
 
   private static boolean retreatTokenOnBoundary(@NotNull HighlighterIterator tokenIterator, @NotNull CharSequence text, int offset) {
+    if (tokenIterator.atEnd()) return false;
     if (isTokenStart(tokenIterator, offset)) {
       final IElementType rightToken = tokenIterator.getTokenType();
       final boolean wasQuotedToken = isQuotedToken(tokenIterator, text);
       tokenIterator.retreat();
-      return wasQuotedToken || isQuotedToken(tokenIterator, text) ||
+      if (wasQuotedToken) return true;
+      if (tokenIterator.atEnd()) return false;
+      return isQuotedToken(tokenIterator, text) ||
              !isBetweenWhitespaces(text, offset) && isLexemeBoundary(tokenIterator.getTokenType(), rightToken);
     }
     return isQuotedTokenInnardsBoundary(tokenIterator, text, offset);
