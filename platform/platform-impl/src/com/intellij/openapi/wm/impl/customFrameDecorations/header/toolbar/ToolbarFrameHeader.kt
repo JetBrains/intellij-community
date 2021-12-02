@@ -78,7 +78,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
       }
       ShowMode.TOOLBAR -> {
         res.add(getElementRect(myMenuButton))
-        for (cmp in myToolbar.components) res.add(getElementRect(cmp))
+        myToolbar.components.filter { it.isVisible }.forEach { res.add(getElementRect(it)) }
       }
     }
 
