@@ -85,7 +85,7 @@ class TypeDfaState {
           newFMap.put(descriptorId, candidate);
         }
         else if (candidate != existing) {
-          newFMap.put(descriptorId, DFAType.create(candidate, existing, manager));
+          newFMap.put(descriptorId, DFAType.merge(candidate, existing, manager));
         }
         // todo: flushings
       });

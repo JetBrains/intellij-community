@@ -152,7 +152,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
       return state
         .getOrCreateVariableType(descriptor, myFlowInfo.getVarIndexes())
-        .withMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
+        .withNewMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
     });
   }
 
@@ -211,7 +211,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
           if (parameterType == null) continue;
 
           PsiType typeToMixin = variant.getSubstitutor().substitute(parameterType);
-          result = result.withMixin(typeToMixin, null);
+          result = result.withNewMixin(typeToMixin, null);
         }
       }
       return result;
@@ -253,7 +253,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     TypeDfaState newState = state;
     for (Int2ObjectMap.Entry<DFAType> entry : state.getRawVarTypes().int2ObjectEntrySet()) {
       DFAType before = entry.getValue();
-      DFAType after = before.negate(negation);
+      DFAType after = before.withNegated(negation);
       if (before != after) {
         newState = newState.withNewType(entry.getIntKey(), after, myFlowInfo.getVarIndexes());
       }
