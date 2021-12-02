@@ -13,10 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.converters.MavenConsumerPomUtil;
 import org.jetbrains.idea.maven.model.*;
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
-import org.jetbrains.idea.maven.server.MavenServerExecutionResult;
-import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.server.ProfileApplicationResult;
+import org.jetbrains.idea.maven.server.*;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
 import org.jetbrains.idea.maven.utils.MavenLog;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
@@ -417,11 +414,12 @@ public final class MavenProjectReader {
                                                  File basedir,
                                                  MavenExplicitProfiles explicitProfiles,
                                                  Collection<String> alwaysOnProfiles) {
+    MavenServerConnector connector = MavenServerManager.getInstance().getConnector(myProject, projectPomDir.getAbsolutePath());
     try {
-      return MavenServerManager.getInstance().getConnector(myProject, projectPomDir.getAbsolutePath())
-        .applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
+      return connector.applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
     catch (Exception e) {
+      connector.shutdown(false);
       return MavenServerManager.getInstance().getConnector(myProject, projectPomDir.getAbsolutePath())
         .applyProfiles(model, basedir, explicitProfiles, alwaysOnProfiles);
     }
