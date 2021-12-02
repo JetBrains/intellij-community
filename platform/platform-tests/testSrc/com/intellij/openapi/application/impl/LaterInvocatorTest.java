@@ -32,14 +32,13 @@ import java.util.concurrent.atomic.AtomicReference;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertNotEquals;
 
-@SuppressWarnings({"SSBasedInspection", "SynchronizeOnThis"})
 @SkipInHeadlessEnvironment
 public class LaterInvocatorTest extends HeavyPlatformTestCase {
   private static final Logger LOG = Logger.getInstance(LaterInvocatorTest.class);
   
   private final ArrayList<String> myOrder = new ArrayList<>();
 
-  @SuppressWarnings("FieldAccessedSynchronizedAndUnsynchronized") private Container myWindow1;
+  private Container myWindow1;
   private Container myWindow2;
 
   private final Runnable LEAVE_MODAL = new Runnable() {
@@ -576,7 +575,7 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
   }
 
   public void testStateForComponentIdentity() {
-    ApplicationManager.getApplication().invokeAndWait(() -> {
+    ApplicationManager.getApplication().invokeAndWait(() ->
       UITestUtil.runWithHeadlessProperty(false, () -> {
         myWindow1 = new Frame();
         myWindow2 = new Frame();
@@ -591,8 +590,8 @@ public class LaterInvocatorTest extends HeavyPlatformTestCase {
         LaterInvocator.enterModal(myWindow1);
         assertSame(state1, ModalityState.stateForComponent(panel));
         assertNotSame(state1, ModalityState.stateForComponent(myWindow2));
-      });
-    });
+      })
+    );
   }
 
   public void testProgressModality() {
