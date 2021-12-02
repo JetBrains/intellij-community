@@ -3478,7 +3478,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean isShowing(@NotNull Component component) {
-    if (GraphicsEnvironment.isHeadless() || component.isShowing()) {
+    if (Boolean.getBoolean("java.awt.headless") || component.isShowing()) {
       return true;
     }
 
@@ -3499,7 +3499,7 @@ public final class UIUtil {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public static void markAsShowing(@NotNull JComponent component, boolean value) {
-    if (GraphicsEnvironment.isHeadless()) {
+    if (Boolean.getBoolean("java.awt.headless")) {
       return;
     }
     component.putClientProperty(IS_SHOWING, value ? Boolean.TRUE : null);

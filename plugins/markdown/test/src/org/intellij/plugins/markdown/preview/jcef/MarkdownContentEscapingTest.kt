@@ -4,18 +4,15 @@ package org.intellij.plugins.markdown.preview.jcef
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
-import com.intellij.testFramework.NonHeadlessRule
-import com.intellij.util.ui.UIUtil
+import com.intellij.ui.scale.TestScaleHelper
 import org.intellij.plugins.markdown.MarkdownTestingUtil
 import org.intellij.plugins.markdown.preview.jcef.MarkdownJCEFPreviewTestUtil.collectPageSource
 import org.intellij.plugins.markdown.preview.jcef.MarkdownJCEFPreviewTestUtil.createJcefTestRule
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
+import org.junit.*
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.rules.TestRule
 import org.junit.runner.RunWith
@@ -25,7 +22,7 @@ import java.io.File
 /**
  * Run with:
  * * *intellij.test.standalone=true*
- * * *java.awt.headless=false* (although, this should be set by [NonHeadlessRule],
+ * * *java.awt.headless=false* 
  *   it seems that JCEF initialization will check this property before the rule is applied)
  *
  * Basically, all these tests are checking if the passed to the preview HTML
@@ -35,9 +32,20 @@ import java.io.File
 class MarkdownContentEscapingTest(enableOsr: Boolean) {
   private val disposableRule = DisposableRule()
 
+  @Before
+  fun before() {
+    TestScaleHelper.assumeStandalone();
+    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
+  }
+
+  @After
+  fun after() {
+    TestScaleHelper.restoreProperties();
+  }
+
   @Rule
   @JvmField
-  val ruleChain: TestRule = RuleChain.outerRule(NonHeadlessRule()).around(createJcefTestRule(enableOsr)).around(disposableRule)
+  val ruleChain: TestRule = RuleChain.outerRule(createJcefTestRule(enableOsr)).around(disposableRule)
 
   @Test
   fun `applied patch sanity`() = doTest("appliedPatchSanity")
@@ -70,8 +78,6 @@ class MarkdownContentEscapingTest(enableOsr: Boolean) {
     }
     assertTrue(got.children().isNotEmpty())
     assertEquals(expected.html(), got.child(0).html())
-    Thread.sleep(500) // wait until com.intellij.ui.jcef.JBCefOsrHandler.onPaint is called which call invokeLater()
-    UIUtil.pump()
   }
 
   private fun parseContentBody(html: String): Element {

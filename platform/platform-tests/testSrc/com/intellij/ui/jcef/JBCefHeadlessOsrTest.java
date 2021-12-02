@@ -2,12 +2,13 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.testFramework.HeadlessRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
-import org.junit.rules.TestRule;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 import javax.swing.*;
 import java.awt.*;
@@ -20,7 +21,10 @@ import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
  * @author tav
  */
 public class JBCefHeadlessOsrTest {
-  @Rule public TestRule headless = new HeadlessRule();
+  static {
+    TestScaleHelper.setSystemProperty("java.awt.headless", "true");
+  }
+
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   @Before
@@ -29,9 +33,10 @@ public class JBCefHeadlessOsrTest {
     TestScaleHelper.setRegistryProperty("ide.browser.jcef.headless.enabled", "true");
     TestScaleHelper.setRegistryProperty("ide.browser.jcef.osr.enabled", "true");
   }
+
   @After
   public void after() {
-    TestScaleHelper.restoreRegistryProperties();
+    TestScaleHelper.restoreProperties();
   }
 
   @Test

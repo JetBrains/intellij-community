@@ -4,7 +4,7 @@ package org.intellij.plugins.markdown.preview.jcef
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.ExtensionTestUtil
-import com.intellij.testFramework.NonHeadlessRule
+import com.intellij.ui.scale.TestScaleHelper
 import com.intellij.util.ui.UIUtil
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
@@ -13,9 +13,7 @@ import org.cef.handler.CefLoadHandlerAdapter
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.preview.jcef.MarkdownJCEFPreviewTestUtil.addConsoleMessageHandler
 import org.intellij.plugins.markdown.preview.jcef.MarkdownJCEFPreviewTestUtil.createJcefTestRule
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
+import org.junit.*
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertTrue
 import org.junit.rules.RuleChain
@@ -29,9 +27,20 @@ import java.util.concurrent.TimeUnit
 class MarkdownPreviewSecurityTest(enableOsr: Boolean) {
   private val disposableRule = DisposableRule()
 
+  @Before
+  fun before() {
+    TestScaleHelper.assumeStandalone();
+    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
+  }
+
+  @After
+  fun after() {
+    TestScaleHelper.restoreProperties();
+  }
+
   @Rule
   @JvmField
-  val ruleChain: TestRule = RuleChain.outerRule(NonHeadlessRule()).around(createJcefTestRule(enableOsr)).around(disposableRule)
+  val ruleChain: TestRule = RuleChain.outerRule(createJcefTestRule(enableOsr)).around(disposableRule)
 
   @Test
   fun `test meta redirects are not allowed`() {

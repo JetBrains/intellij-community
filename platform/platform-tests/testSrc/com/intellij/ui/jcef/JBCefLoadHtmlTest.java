@@ -2,7 +2,6 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.testFramework.NonHeadlessRule;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.ui.scale.TestScaleHelper;
 import junit.framework.TestCase;
@@ -11,8 +10,10 @@ import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandler;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
-import org.junit.rules.TestRule;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 import javax.swing.*;
 import java.awt.event.WindowAdapter;
@@ -31,7 +32,10 @@ import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLatch;
  * @author tav
  */
 public class JBCefLoadHtmlTest {
-  @Rule public TestRule nonHeadless = new NonHeadlessRule();
+  static {
+    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
+  }
+
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   static final String JS_FILE_PATH = PlatformTestUtil.getPlatformTestDataPath() + "ui/jcef/JBCefLoadHtmlTest.js";
