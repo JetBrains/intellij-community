@@ -195,9 +195,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
         super.cancel(inputEvent);
         if (inputEvent instanceof MouseEvent && inputEvent.getID() == MouseEvent.MOUSE_PRESSED) {
           MouseEvent e = (MouseEvent)inputEvent;
-          Component realTarget
-            = ObjectUtils.doIfNotNull(e.getComponent(), c -> SwingUtilities.getDeepestComponentAt(e.getComponent(), e.getX(), e.getY()));
-          if (ActionButton.this == realTarget) wasPopupJustClosedByButtonClick = true;
+          Component target = ObjectUtils.doIfNotNull(e.getComponent(), c -> SwingUtilities.getDeepestComponentAt(c, e.getX(), e.getY()));
+          if (ActionButton.this == target) wasPopupJustClosedByButtonClick = true;
         }
       }
     };
