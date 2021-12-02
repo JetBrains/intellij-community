@@ -110,6 +110,7 @@ from _pydevd_bundle.pydevd_tables import exec_table_command
 from pydevd_tracing import get_exception_traceback_str
 from _pydevd_bundle import pydevd_console
 from _pydev_bundle.pydev_monkey import disable_trace_thread_modules, enable_trace_thread_modules
+from _pydevd_bundle.pydevd_console_output import ConsoleOutputHook
 
 try:
     import cStringIO as StringIO #may not always be available @UnusedImport
@@ -1829,6 +1830,10 @@ class InternalConsoleExec(InternalThreadCommand):
 
     def do_it(self, dbg):
         """ Converts request into python variable """
+        out_hook = ConsoleOutputHook(dbg, sys.stdout, is_stderr=False)
+        err_hook = ConsoleOutputHook(dbg, sys.stderr, is_stderr=True)
+        sys.stdout = out_hook
+        sys.stderr = err_hook
         try:
             try:
                 #don't trace new threads created by console command
@@ -1848,7 +1853,8 @@ class InternalConsoleExec(InternalThreadCommand):
                 dbg.writer.add_command(cmd)
         finally:
             enable_trace_thread_modules()
-
+            sys.stdout = out_hook.original_out
+            sys.stderr = err_hook.original_out
             sys.stderr.flush()
             sys.stdout.flush()
 
