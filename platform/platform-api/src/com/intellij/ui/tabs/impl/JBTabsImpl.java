@@ -26,6 +26,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.popup.PopupState;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.ui.tabs.*;
@@ -204,6 +205,8 @@ public class JBTabsImpl extends JComponent
   private MouseMotionListener myTabsLayoutMouseMotionListener;
   private MouseWheelListener myTabsLayoutMouseWheelListener;
   private boolean mySingleRow = true;
+
+  private final PopupState myMorePopupState = PopupState.forPopup();
 
   protected JBTabsBorder createTabBorder() {
     return new JBDefaultTabsBorder(this);
@@ -1063,6 +1066,8 @@ public class JBTabsImpl extends JComponent
 
   @Override
   public void showMorePopup() {
+    if (myMorePopupState.isRecentlyHidden()) return;
+
     Rectangle rect = getMoreRect();
     if (rect == null) return;
 
@@ -1111,6 +1116,7 @@ public class JBTabsImpl extends JComponent
       }
       gridPanel.add(label);
     }
+    myMorePopupState.prepareToShow(popup);
     popup.show(new RelativePoint(this, new Point(rect.x, rect.y + rect.height)));
   }
 
