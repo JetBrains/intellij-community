@@ -5,9 +5,6 @@ import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
-import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 import org.jetbrains.plugins.groovy.util.TypingTest
 import org.junit.Test
@@ -62,7 +59,7 @@ public abstract class MyExtension {
   @TargetVersions("6.0+")
   void highlighting() {
     setupProject()
-    fixture.enableInspections(GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection, GroovyAccessibilityInspection)
+    fixture.enableInspections(getTypecheckingInspections())
     updateProjectFile '''\
 myExt.integerProperty = 42
 <warning descr="Cannot assign 'Object' to 'Integer'">myExt.integerProperty</warning> = new Object()
