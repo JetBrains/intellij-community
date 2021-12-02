@@ -84,4 +84,5 @@ public class JavadocParsingTest extends JavaParsingTestCase {
   public void testUsesTag() { doTest(true); }
   public void testProvidesTag() { doTest(true); }
   public void testInlineTagIndex() { doTest(true); }
+  public void testInlineTagSummary() { doTest(true); }
 }

@@ -45,6 +45,7 @@ import com.intellij.psi.impl.source.tree.JavaDocElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
@@ -93,6 +94,7 @@ public class JavaDocInfoGenerator {
   private static final String DOC_ROOT_TAG = "docRoot";
   private static final String VALUE_TAG = "value";
   private static final String INDEX_TAG = "index";
+  private static final String SUMMARY_TAG = "summary";
   private static final String LT = "&lt;";
   private static final String GT = "&gt;";
   private static final String NBSP = "&nbsp;";
@@ -1550,11 +1552,27 @@ public class JavaDocInfoGenerator {
             buffer.append(text);
           }
         }
+        else if (tagName.equals(SUMMARY_TAG)) {
+          generateSummaryValue(buffer, tag);
+        }
       }
       else {
         appendPlainText(buffer, element.getText());
       }
     }
+  }
+
+  private static void generateSummaryValue(StringBuilder buffer, PsiInlineDocTag tag) {
+    final ASTNode[] summaryTokens = tag.getNode().getChildren(TokenSet.create(JavaDocTokenType.DOC_COMMENT_DATA));
+    if (summaryTokens.length == 0) return;
+
+    final StringJoiner summary = new StringJoiner(" ");
+    for (ASTNode token : summaryTokens) {
+      final String text = token.getText();
+      summary.add(text.strip());
+    }
+
+    buffer.append(summary);
   }
 
   private static boolean isCodeBlock(PsiInlineDocTag tag) {
