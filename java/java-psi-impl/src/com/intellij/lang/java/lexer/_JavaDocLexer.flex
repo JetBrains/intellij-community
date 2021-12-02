@@ -117,7 +117,9 @@ INLINE_TAG_IDENTIFIER=[^\ \t\f\n\r\}]+
   return myTokenTypes.space();
 }
 <INDEX_TAG_COMMENT_DATA> \" { yybegin(INDEX_COMMENT_DATA); return myTokenTypes.tagValueQuote(); }
-<INDEX_COMMENT_DATA> [^\"]+ { return myTokenTypes.tagValueToken(); }
+<INDEX_COMMENT_DATA> [^\n\"]+ { return myTokenTypes.tagValueToken(); }
+<INDEX_COMMENT_DATA> {WHITE_DOC_SPACE_CHAR}+ { return myTokenTypes.space(); }
+<INDEX_COMMENT_DATA> "*"+ { return myTokenTypes.commentLeadingAsterisks(); }
 <INDEX_COMMENT_DATA> \" { yybegin(COMMENT_DATA); return myTokenTypes.tagValueQuote(); }
 <SUMMARY_TAG_DOC_SPACE> {WHITE_DOC_SPACE_CHAR}+ { yybegin(COMMENT_DATA); return myTokenTypes.space(); }
 

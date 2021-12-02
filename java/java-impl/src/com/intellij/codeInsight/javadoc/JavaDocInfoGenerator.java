@@ -55,6 +55,7 @@ import com.intellij.util.containers.ContainerUtil;
 import kotlin.text.StringsKt;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -1544,13 +1545,7 @@ public class JavaDocInfoGenerator {
           generateValueValue(tag, buffer, element);
         }
         else if (tagName.equals(INDEX_TAG)) {
-          final PsiDocTagValue indexTagValue = PsiTreeUtil.findChildOfType(tag, PsiDocTagValue.class);
-          if (indexTagValue != null) {
-            final HtmlChunk.Element text = new HtmlBuilder()
-              .append(indexTagValue.getText())
-              .wrapWith("i");
-            buffer.append(text);
-          }
+          generateIndexValue(buffer, tag);
         }
         else if (tagName.equals(SUMMARY_TAG)) {
           generateSummaryValue(buffer, tag);
@@ -1560,6 +1555,22 @@ public class JavaDocInfoGenerator {
         appendPlainText(buffer, element.getText());
       }
     }
+  }
+
+  @Contract(mutates = "param1")
+  private static void generateIndexValue(@NotNull StringBuilder buffer, @NotNull PsiInlineDocTag tag) {
+    final PsiDocTagValue indexTagValue = PsiTreeUtil.findChildOfType(tag, PsiDocTagValue.class);
+    if (indexTagValue == null) return;
+
+    final ASTNode[] valuesTokens = indexTagValue.getNode().getChildren(TokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_TOKEN));
+    if (valuesTokens.length == 0) return;
+
+    final StringJoiner indexValue = new StringJoiner(" ");
+    for (ASTNode token : valuesTokens) {
+      indexValue.add(token.getText());
+    }
+
+    buffer.append(indexValue);
   }
 
   private static void generateSummaryValue(StringBuilder buffer, PsiInlineDocTag tag) {
