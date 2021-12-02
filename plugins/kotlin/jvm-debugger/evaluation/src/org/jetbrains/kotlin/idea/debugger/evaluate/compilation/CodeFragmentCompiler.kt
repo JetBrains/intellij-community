@@ -204,7 +204,8 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
                                             propertyDescriptor.type,
                                             propertyDescriptor.typeParameters,
                                             propertyDescriptor.dispatchReceiverParameter,
-                                            propertyDescriptor.extensionReceiverParameter
+                                            propertyDescriptor.extensionReceiverParameter,
+                                            propertyDescriptor.contextReceiverParameters
                                         )
                                         fieldDescriptor
                                     }
