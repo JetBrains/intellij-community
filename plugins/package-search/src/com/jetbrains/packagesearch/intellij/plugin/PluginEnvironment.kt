@@ -2,6 +2,7 @@ package com.jetbrains.packagesearch.intellij.plugin
 
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.application.ApplicationInfo
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.extensions.PluginId
 
 internal object PluginEnvironment {
@@ -20,6 +21,9 @@ internal object PluginEnvironment {
     val ideBuildNumber
         get() = ApplicationInfo.getInstance().build
 
+    val isTestEnvironment
+        get() = ApplicationManager.getApplication().isUnitTestMode || ApplicationManager.getApplication().isHeadlessEnvironment
+
     val isNonModalLoadingEnabled
-        get() = System.getProperty("idea.pkgs.disableLoading") != "true" && System.getenv("CI") != "true"
+        get() = System.getProperty("idea.pkgs.disableLoading") != "true" && !isTestEnvironment
 }

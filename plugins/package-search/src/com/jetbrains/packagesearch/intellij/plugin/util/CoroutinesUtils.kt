@@ -41,6 +41,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 import kotlin.math.max
 import kotlin.time.Duration
 import kotlin.time.TimedValue
@@ -261,11 +262,10 @@ internal inline fun <reified T> Flow<T>.batchUntil(duration: Duration) = channel
                 buffer.clear()
             }
         }
-
     }
 }
 
-internal fun CoroutineScope.showBackgroundLoadingBar(
+internal suspend fun showBackgroundLoadingBar(
     project: Project,
     @Nls title: String,
     @Nls upperMessage: String,
@@ -284,6 +284,7 @@ internal fun CoroutineScope.showBackgroundLoadingBar(
             if (isSafe && progressManager is ProgressManagerImpl && indicator is UserDataHolder) {
                 progressManager.markProgressSafe(indicator)
             }
+            indicator.text = upperMessage // ??? why does it work?
             runBlocking {
                 upperMessageChannel.consumeAsFlow().onEach { indicator.text = it }.launchIn(this)
                 lowerMessageChannel.consumeAsFlow().onEach { indicator.text2 = it }.launchIn(this)
