@@ -1548,7 +1548,7 @@ public class JavaDocInfoGenerator {
           generateIndexValue(buffer, tag);
         }
         else if (tagName.equals(SUMMARY_TAG)) {
-          generateSummaryValue(buffer, tag);
+          generateLiteralValue(buffer, tag, false);
         }
       }
       else {
@@ -1571,19 +1571,6 @@ public class JavaDocInfoGenerator {
     }
 
     buffer.append(indexValue);
-  }
-
-  private static void generateSummaryValue(StringBuilder buffer, PsiInlineDocTag tag) {
-    final ASTNode[] summaryTokens = tag.getNode().getChildren(TokenSet.create(JavaDocTokenType.DOC_COMMENT_DATA));
-    if (summaryTokens.length == 0) return;
-
-    final StringJoiner summary = new StringJoiner(" ");
-    for (ASTNode token : summaryTokens) {
-      final String text = token.getText();
-      summary.add(text.strip());
-    }
-
-    buffer.append(summary);
   }
 
   private static boolean isCodeBlock(PsiInlineDocTag tag) {

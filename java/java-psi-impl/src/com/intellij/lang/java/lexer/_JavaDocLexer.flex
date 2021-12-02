@@ -48,7 +48,6 @@ import com.intellij.psi.tree.IElementType;
 %state INDEX_TAG_DOC_SPACE
 %state INDEX_TAG_COMMENT_DATA
 %state INDEX_COMMENT_DATA
-%state SUMMARY_TAG_DOC_SPACE
 
 WHITE_DOC_SPACE_CHAR=[\ \t\f\n\r]
 WHITE_DOC_SPACE_NO_LR=[\ \t\f]
@@ -103,9 +102,8 @@ INLINE_TAG_IDENTIFIER=[^\ \t\f\n\r\}]+
 <INLINE_TAG_NAME> "@code" { yybegin(CODE_TAG_SPACE); return myTokenTypes.tagName(); }
 <INLINE_TAG_NAME> "@literal" { yybegin(CODE_TAG_SPACE); return myTokenTypes.tagName(); }
 <INLINE_TAG_NAME> "@index" { yybegin(INDEX_TAG_DOC_SPACE); return myTokenTypes.tagName(); }
-<INLINE_TAG_NAME> "@summary" { yybegin(SUMMARY_TAG_DOC_SPACE); return myTokenTypes.tagName(); }
 <INLINE_TAG_NAME> "@"{INLINE_TAG_IDENTIFIER} { yybegin(TAG_DOC_SPACE); return myTokenTypes.tagName(); }
-<COMMENT_DATA_START, COMMENT_DATA, TAG_DOC_SPACE, DOC_TAG_VALUE, CODE_TAG, CODE_TAG_SPACE, SUMMARY_TAG_DOC_SPACE> "}" { yybegin(COMMENT_DATA); return myTokenTypes.inlineTagEnd(); }
+<COMMENT_DATA_START, COMMENT_DATA, TAG_DOC_SPACE, DOC_TAG_VALUE, CODE_TAG, CODE_TAG_SPACE> "}" { yybegin(COMMENT_DATA); return myTokenTypes.inlineTagEnd(); }
 
 <COMMENT_DATA_START, COMMENT_DATA, DOC_TAG_VALUE> . { yybegin(COMMENT_DATA); return myTokenTypes.commentData(); }
 <CODE_TAG, CODE_TAG_SPACE> . { yybegin(CODE_TAG); return myTokenTypes.commentData(); }
@@ -121,7 +119,6 @@ INLINE_TAG_IDENTIFIER=[^\ \t\f\n\r\}]+
 <INDEX_COMMENT_DATA> {WHITE_DOC_SPACE_CHAR}+ { return myTokenTypes.space(); }
 <INDEX_COMMENT_DATA> "*"+ { return myTokenTypes.commentLeadingAsterisks(); }
 <INDEX_COMMENT_DATA> \" { yybegin(COMMENT_DATA); return myTokenTypes.tagValueQuote(); }
-<SUMMARY_TAG_DOC_SPACE> {WHITE_DOC_SPACE_CHAR}+ { yybegin(COMMENT_DATA); return myTokenTypes.space(); }
 
 <TAG_DOC_SPACE> {WHITE_DOC_SPACE_CHAR}+ {
   if (checkAhead('<') || checkAhead('\"')) yybegin(COMMENT_DATA);
