@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -183,7 +184,8 @@ public class GitImpl extends GitImplBase {
                                 @NotNull final String clonedDirectoryName, final GitLineHandlerListener @NotNull ... listeners) {
     return runCommand(() -> {
       // do not use per-project executable for 'clone' command
-      GitLineHandler handler = new GitLineHandler(null, parentDirectory, GitCommand.CLONE);
+      Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+      GitLineHandler handler = new GitLineHandler(defaultProject, parentDirectory, GitCommand.CLONE);
       handler.setSilent(false);
       handler.setStderrSuppressed(false);
       handler.setUrl(url);
