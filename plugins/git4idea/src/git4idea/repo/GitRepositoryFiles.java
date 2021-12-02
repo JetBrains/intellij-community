@@ -54,6 +54,7 @@ public final class GitRepositoryFiles {
   private static final @NonNls String SHALLOW = "shallow";
   private static final @NonNls String LOGS = "logs";
   private static final @NonNls String STASH = "stash";
+  private static final @NonNls String WORKTREES_DIR = "worktrees";
 
   private final VirtualFile myRootDir;
   private final VirtualFile myMainDir;
@@ -80,6 +81,7 @@ public final class GitRepositoryFiles {
   private final @NonNls String myHooksDirPath;
   private final @NonNls String myShallow;
   private final @NonNls String myStashReflogPath;
+  private final @NonNls String myWorktreesDirPath;
 
   private @Nullable @NonNls String myCustomHooksDirPath;
 
@@ -100,6 +102,7 @@ public final class GitRepositoryFiles {
     myHooksDirPath = mainPath + slash(HOOKS);
     myShallow = mainPath + slash(SHALLOW);
     myStashReflogPath = mainPath + slash(LOGS) + slash(REFS) + slash(STASH);
+    myWorktreesDirPath = mainPath + slash(WORKTREES_DIR);
 
     String worktreePath = myWorktreeDir.getPath();
     myHeadFilePath = worktreePath + slash(HEAD);
@@ -265,6 +268,11 @@ public final class GitRepositoryFiles {
   @NotNull
   public File getStashReflogFile() {
     return file(myStashReflogPath);
+  }
+
+  @NotNull
+  public File getWorktreesDirFile() {
+    return file(myWorktreesDirPath);
   }
 
   @NotNull
