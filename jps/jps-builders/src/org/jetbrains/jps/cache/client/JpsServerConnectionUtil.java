@@ -1,7 +1,6 @@
 package org.jetbrains.jps.cache.client;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.io.StreamUtil;
@@ -42,8 +41,23 @@ public class JpsServerConnectionUtil {
   private static final String CDN_CACHE_HEADER = "X-Cache";
 
   public static void measureConnectionSpeed(@NotNull JpsNettyClient nettyClient) {
+    long start = System.currentTimeMillis();
+    String initialFile = calculateFileName(null);
+    Long firstChunkConnectionSpeed = measureConnectionSpeedOnFile(nettyClient, initialFile);
+    String nextChunkFileName = calculateFileName(firstChunkConnectionSpeed);
+    if (nextChunkFileName != null) {
+      Long connectionSpeed = measureConnectionSpeedOnFile(nettyClient, nextChunkFileName);
+      long connectionSpeedTime = (System.currentTimeMillis() - start) / 1000;
+      LOG.info("Checking connection speed took: " + connectionSpeedTime + "s");
+    } else {
+      LOG.info("Connection speed is too small");
+    }
+  }
+
+  private static @Nullable Long measureConnectionSpeedOnFile(@NotNull JpsNettyClient nettyClient, @NotNull String fileName) {
     Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders(nettyClient);
-    String url = calculateAddress();
+    String url = calculateURL(fileName);
+    LOG.info("Checking connection speed base on the file: " + fileName);
     long start = System.currentTimeMillis();
     try (CloseableHttpClient client = HttpClientBuilder.create().build()) {
       HttpGet httpRequest = new HttpGet(url);
@@ -60,12 +74,14 @@ public class JpsServerConnectionUtil {
         long bytesPerSecond = fileSize / downloadTime * 1000;
 
         if (header != null && header.getValue().startsWith("Hit")) {
+          // This is an exceptional case and should take place in production because connection speed files don't cached by CDN
           LOG.info("Speed of connection to CDN: " + StringUtil.formatFileSize(bytesPerSecond) + "/s; " + formatInternetSpeed(bytesPerSecond * 8));
         }
         else {
           LOG.info("Speed of connection to S3: " + StringUtil.formatFileSize(bytesPerSecond) + "/s; " + formatInternetSpeed(bytesPerSecond * 8));
         }
         FileUtil.delete(downloadedFile);
+        return bytesPerSecond;
       } else {
         String errorText = StreamUtil.readText(new InputStreamReader(responseEntity.getContent(), StandardCharsets.UTF_8));
         LOG.warn("Request: " + url + " Error: " + response.getStatusLine().getStatusCode() + " body: " + errorText);
@@ -73,6 +89,21 @@ public class JpsServerConnectionUtil {
     } catch (IOException e) {
       LOG.warn("Failed to download file for measurement connection speed", e);
     }
+    return null;
+  }
+
+  private static @Nullable String calculateFileName(@Nullable Long connectionSpeed) {
+    if (connectionSpeed == null) return "2_MB.dat";
+    if (connectionSpeed > 3_000_000) return "75_MB.dat";
+    if (connectionSpeed > 2_000_000) return "50_MB.dat";
+    if (connectionSpeed > 1_300_000) return "25_MB.dat";
+    if (connectionSpeed > 700_000) return "10_MB.dat";
+    return null;
+  }
+
+  private static String calculateURL(@NotNull String fileName) {
+    byte[] decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly9kMWxjNWs5bGVyZzZrbS5jbG91ZGZyb250Lm5ldA==");
+    return new String(decodedBytes, StandardCharsets.UTF_8) + "/speed-test/" + fileName;
   }
 
   public static @NotNull Path saveToFile(@NotNull Path file, HttpEntity responseEntity, @Nullable JpsLoaderContext loaderContext) throws IOException {
@@ -161,15 +192,12 @@ public class JpsServerConnectionUtil {
 //    }
 //  }
 //
+
+  //First convert file size from bytes to bits and then pass to this method
   private static @NotNull String formatInternetSpeed(long fileSize) {
     int rank = (int)((Math.log10(fileSize) + 0.0000021714778384307465) / 3);  // (3 - Math.log10(999.995))
     double value = fileSize / Math.pow(1000, rank);
     String[] units = {"Bit", "Kbit", "Mbit", "Gbit"};
     return new DecimalFormat("0.##").format(value) + units[rank] + "/s";
-  }
-
-  private static @NotNull String calculateAddress() {
-    byte[] decodedBytes = Base64.getDecoder().decode("aHR0cHM6Ly9kMWxjNWs5bGVyZzZrbS5jbG91ZGZyb250Lm5ldC9FWEFNUExFLnR4dA==");
-    return new String(decodedBytes, StandardCharsets.UTF_8);
   }
 }
