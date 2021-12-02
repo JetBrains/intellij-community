@@ -19,14 +19,16 @@ open class TrimmedMiddleLabel : JLabel() {
       x += iconTextGap + it.iconWidth
     }
 
-    if (textW < availableWidth) {
+    val ellipsisWidth = fm.stringWidth(StringUtil.ELLIPSIS)
+    if (textW < availableWidth || width < 3 * ellipsisWidth) {
       super.paintComponent(g)
     }
     else {
       icon?.let {
         icon.paintIcon(this, g, insets.left, 0)
       }
-      availableWidth -= (x + fm.stringWidth(StringUtil.ELLIPSIS))
+
+      availableWidth -= (x + ellipsisWidth)
 
       val charArray = text.toCharArray()
       val stringLength = charArray.size
