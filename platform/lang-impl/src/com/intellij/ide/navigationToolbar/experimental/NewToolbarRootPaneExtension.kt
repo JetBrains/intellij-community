@@ -67,12 +67,6 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
       .connect(this)
 
     connection.subscribe(UISettingsListener.TOPIC, UISettingsListener {
-      logger.info("New toolbar: ui settings changed")
-      doLayoutAndRepaint()
-    })
-
-    connection.subscribe(NewToolbarPaneListener.TOPIC, NewToolbarPaneListener {
-      logger.info("New toolbar: new toolbar topic triggered")
       doLayoutAndRepaint()
     })
 
@@ -83,7 +77,7 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
     runWidgetAvailabilityManager.removeListener(runWidgetListener)
   }
 
-  fun doLayout(component: JComponent) {
+  internal fun doLayout(component: JComponent) {
     incModificationCount()
 
     if (component.isEnabled && component.isVisible) {
@@ -93,7 +87,8 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
       ).thenAcceptAsync(
         Consumer {
           component.removeAll()
-          applyTo(it, component) },
+          applyTo(it, component)
+        },
         EdtExecutorService.getInstance(),
       ).exceptionally {
         thisLogger().error(it)
@@ -137,12 +132,10 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
   }
 
   private fun doLayoutAndRepaint() {
-    logger.info("New toolbar: layout and repaint started")
 
     NewToolbarRootPaneExtension.getInstance(project)?.let {
       doLayout(it.component)
       it.repaint()
-      logger.info("New toolbar: layout and repaint finished")
     }
   }
 }
@@ -168,8 +161,6 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
     init {
       isOpaque = true
       border = BorderFactory.createEmptyBorder(0, JBUI.scale(4), 0, JBUI.scale(4))
-
-      revalidate()
     }
 
     override fun getComponentGraphics(graphics: Graphics?): Graphics {
@@ -179,7 +170,11 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
 
   override fun getKey() = NEW_TOOLBAR_KEY
 
-  override fun getComponent(): JPanel = panel
+  override fun getComponent(): JPanel {
+    project.service<NewToolbarRootPaneManager>().doLayout(panel)
+    repaint()
+    return panel
+  }
 
   override fun uiSettingsChanged(settings: UISettings) {
     logger.info("Show old main toolbar: ${settings.showMainToolbar}; show old navigation bar: ${settings.showNavigationBar}")
@@ -188,6 +183,7 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
     val toolbarSettings = ToolbarSettings.Instance
     panel.isEnabled = toolbarSettings.isEnabled
     panel.isVisible = toolbarSettings.isVisible && !settings.presentationMode
+    project.service<StatusBarWidgetsManager>().updateAllWidgets()
 
     repaint()
   }
@@ -201,26 +197,17 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
     }
 
     if (ToolbarSettings.Instance.isEnabled) {
-      logger.info("New toolbar: revalidation started")
-
-      project.service<NewToolbarRootPaneManager>().doLayout(panel)
-      project.service<StatusBarWidgetsManager>().updateAllWidgets()
-
       val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR) as? CenterToolbarGroup
                   ?: return
       val toolBar = ActionManagerEx.getInstanceEx().createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group, true)
       toolBar.targetComponent = null
       toolBar.layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
       panel.add(toolBar as JComponent, BorderLayout.CENTER)
-      logger.info("New toolbar: revalidation finished")
-
     }
   }
 
   fun repaint() {
     panel.revalidate()
     panel.repaint()
-    logger.info("New toolbar: repainted")
-
   }
 }
