@@ -18,6 +18,7 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.module.GeneralModuleType;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.startup.StartupManager;
@@ -60,6 +61,11 @@ public class GeneralModuleTypeForIdea extends GeneralModuleType {
       @Override
       public boolean isAvailable() {
         return !isNewWizard();
+      }
+
+      @Override
+      public ModuleType<?> getModuleType() {
+        return GeneralModuleTypeForIdea.this;
       }
 
       @Override
