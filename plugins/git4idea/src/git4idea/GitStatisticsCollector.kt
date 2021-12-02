@@ -5,10 +5,12 @@ import com.google.common.collect.HashMultiset
 import com.intellij.internal.statistic.beans.*
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector
+import com.intellij.internal.statistic.utils.StatisticsUtil
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.util.io.URLUtil
+import com.intellij.util.io.exists
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
@@ -21,10 +23,12 @@ import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
 import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
+import java.io.File
+import java.nio.file.Path
 
 class GitStatisticsCollector : ProjectUsagesCollector() {
   override fun getGroupId(): String = "git.configuration"
-  override fun getVersion(): Int = 4
+  override fun getVersion(): Int = 5
 
   override fun getMetrics(project: Project): MutableSet<MetricEvent> {
     val set = HashSet<MetricEvent>()
@@ -58,6 +62,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       metric.data.addData("local_branches", branches.localBranches.size)
       metric.data.addData("remote_branches", branches.remoteBranches.size)
       metric.data.addData("remotes", repository.remotes.size)
+      metric.data.addData("working_copy_size", repository.workingCopySize())
 
       val remoteTypes = HashMultiset.create(repository.remotes.mapNotNull { getRemoteServerType(it) })
       for (remoteType in remoteTypes) {
@@ -123,4 +128,29 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       return null
     }
   }
+}
+
+/**
+ * Calculates size of work tree in given [GitRepository] and rounds it to the power of two
+ *
+ * @return size in bytes or -1 if some IO error occurs
+ */
+private fun GitRepository.workingCopySize(): Long = try {
+  val root = this.root.toNioPath().toFile()
+  val sizeInBytes = root
+    .walk()
+    .onEnter { it.name != GitUtil.DOT_GIT && !isInnerRepo(root, it) }
+    .filter { it.isFile }
+    .sumOf { it.length() }
+  StatisticsUtil.roundToPowerOfTwo(sizeInBytes)
+}
+catch (e: Exception) {
+  // if something goes wrong with file system operations
+  -1
+}
+
+private fun isInnerRepo(root: File, dir: File): Boolean {
+  if (root == dir) return false
+
+  return Path.of(dir.toString(), GitUtil.DOT_GIT).exists()
 }
