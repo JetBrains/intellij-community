@@ -19,6 +19,7 @@ import javax.swing.event.DocumentEvent
 internal class GradleConfigurableContributorDriver(private val project: Project) : ConfigurableContributorDriver {
 
     private var modified: Boolean = false
+
     private val configuration
         get() = PackageSearchGradleConfiguration.getInstance(project)
 
