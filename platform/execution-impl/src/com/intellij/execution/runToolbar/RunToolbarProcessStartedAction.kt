@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.runToolbar
 
+import com.intellij.execution.runToolbar.components.MouseListenerHelper
 import com.intellij.execution.runToolbar.components.TrimmedMiddleLabel
 import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.idea.ActionsBundle
@@ -16,12 +17,9 @@ import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
 import java.awt.Dimension
 import java.awt.Font
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
 import javax.swing.JComponent
 import javax.swing.JLabel
-import javax.swing.SwingUtilities
 
 class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
   companion object {
@@ -89,22 +87,7 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
       }
 
       init {
-        addMouseListener(object : MouseAdapter() {
-          override fun mousePressed(e: MouseEvent) {
-            if (SwingUtilities.isLeftMouseButton(e)) {
-              e.consume()
-              if (e.isShiftDown) {
-                doShiftClick()
-              }
-              else {
-                showPopup()
-              }
-            }
-            else if (SwingUtilities.isRightMouseButton(e)) {
-              doRightClick()
-            }
-          }
-        })
+        MouseListenerHelper.addListener(this, { showPopup() }, { doShiftClick() }, { doRightClick() })
 
         fill()
       }

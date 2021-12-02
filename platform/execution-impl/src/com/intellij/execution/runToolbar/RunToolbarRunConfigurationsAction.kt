@@ -5,6 +5,7 @@ import com.intellij.execution.*
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
 import com.intellij.execution.impl.EditConfigurationsDialog
 import com.intellij.execution.runToolbar.components.ComboBoxArrowComponent
+import com.intellij.execution.runToolbar.components.MouseListenerHelper
 import com.intellij.execution.runToolbar.components.TrimmedMiddleLabel
 import com.intellij.ide.DataManager
 import com.intellij.ide.HelpTooltip
@@ -25,8 +26,6 @@ import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
 import java.awt.Dimension
 import java.awt.Font
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
@@ -98,23 +97,7 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
       private val arrow = ComboBoxArrowComponent().getView()
 
       init {
-        addMouseListener(object : MouseAdapter() {
-          override fun mousePressed(e: MouseEvent) {
-            if (SwingUtilities.isLeftMouseButton(e)) {
-              e.consume()
-              if (e.isShiftDown) {
-                doShiftClick()
-              }
-              else {
-                doClick()
-              }
-            }
-            else if (SwingUtilities.isRightMouseButton(e)) {
-              doRightClick()
-            }
-          }
-        })
-
+        MouseListenerHelper.addListener(this, { doClick() }, { doShiftClick() }, { doRightClick() })
         fill()
 
         background = JBColor.namedColor("ComboBoxButton.background", Gray.xDF)
@@ -124,7 +107,9 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
         setting.icon = presentation.icon
         setting.text = presentation.text
 
-        isEnabled = true
+        isEnabled = presentation.isEnabled
+        setting.isEnabled = isEnabled
+        arrow.isVisible = isEnabled
 
         toolTipText = presentation.description
       }
