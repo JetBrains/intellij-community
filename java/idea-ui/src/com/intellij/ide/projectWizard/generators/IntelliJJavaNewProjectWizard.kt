@@ -2,6 +2,7 @@
 package com.intellij.ide.projectWizard.generators
 
 import com.intellij.ide.highlighter.ModuleFileType
+import com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizardData.Companion.KEY
 import com.intellij.ide.util.projectWizard.JavaModuleBuilder
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -11,8 +12,11 @@ import java.nio.file.Paths
 class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   override val name = "IntelliJ"
 
-  override fun createStep(parent: JavaNewProjectWizard.Step) =
-    object : IntelliJNewProjectWizardStep<JavaNewProjectWizard.Step>(parent) {
+  override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent)
+
+  class Step(parent: JavaNewProjectWizard.Step):
+    IntelliJNewProjectWizardStep<JavaNewProjectWizard.Step>(parent), IntelliJJavaNewProjectWizardData {
+
       override fun setupProject(project: Project) {
         val builder = JavaModuleBuilder()
         val moduleFile = Paths.get(moduleFileLocation, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
@@ -31,6 +35,10 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         }
 
         builder.commit(project)
+      }
+
+      init {
+        data.putUserData(KEY, this)
       }
     }
 }

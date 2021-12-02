@@ -27,7 +27,7 @@ import java.awt.event.KeyListener
 import java.io.File
 
 abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) :
-  AbstractNewProjectWizardStep(parent)
+  AbstractNewProjectWizardStep(parent), IntelliJNewProjectWizardData
   where ParentStep : NewProjectWizardStep,
         ParentStep : NewProjectWizardBaseData {
 
@@ -51,8 +51,8 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   private val contentRootProperty = propertyGraph.graphProperty(pathFromParent)
   private val moduleFileLocationProperty = propertyGraph.graphProperty(pathFromParent)
 
-  protected val sdk by sdkProperty
-  protected var moduleName by moduleNameProperty
+  final override var sdk by sdkProperty
+  final override var moduleName by moduleNameProperty
   protected var contentRoot by contentRootProperty
   protected var moduleFileLocation by moduleFileLocationProperty
 
