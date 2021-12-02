@@ -87,7 +87,7 @@ abstract class DummyDependencyContributor(private val project: Project) : Depend
     }
   }
 
-  override fun getDependencyGroups(externalProjectPath: String): List<DependencyGroup> {
+  override fun getDependencies(externalProjectPath: String): List<Dependency> {
     val dependencies = ArrayList<Dependency>()
     val queue = ArrayDeque<Dependency>()
     queue.add(getRoot(externalProjectPath))
@@ -97,13 +97,7 @@ abstract class DummyDependencyContributor(private val project: Project) : Depend
       getDependencies(dependency)
         .forEach(queue::addLast)
     }
-    val groups = dependencies.groupBy {
-      when (val data = it.data) {
-        is Module -> data.name
-        is Artifact -> data.groupId + ":" + data.artifactId
-      }
-    }
-    return groups.values.map { DependencyGroup(it.first().data, it) }
+    return dependencies
   }
 
   private fun getStatus(data: Dependency.Data, usage: Dependency?): List<Status> {

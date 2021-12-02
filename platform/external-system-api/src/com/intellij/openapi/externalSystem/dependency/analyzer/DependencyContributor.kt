@@ -12,19 +12,23 @@ interface DependencyContributor {
 
   fun getDependencyScopes(externalProjectPath: String): List<Scope>
 
-  fun getDependencyGroups(externalProjectPath: String): List<DependencyGroup>
+  fun getDependencies(externalProjectPath: String): List<Dependency>
 
-  data class ExternalProject(val path: String, val title: @Nls String) {
+  class ExternalProject(val path: String, val title: @Nls String) {
+    override fun equals(other: Any?) = other is ExternalProject && path == other.path
+    override fun hashCode() = path.hashCode()
     override fun toString() = title
   }
 
-  data class Scope(val id: String, val name: @Nls String, val title: @Nls(capitalization = Nls.Capitalization.Title) String) {
-    override fun toString() = id
+  class Scope(val id: String, val name: @Nls String, val title: @Nls(capitalization = Nls.Capitalization.Title) String) {
+    override fun equals(other: Any?) = other is Scope && id == other.id
+    override fun hashCode() = id.hashCode()
+    override fun toString() = title
   }
 
   data class Dependency(val data: Data, val scope: Scope, val usage: Dependency?, val status: List<Status>) {
 
-    override fun toString() = "$data -> $usage"
+    override fun toString() = "($scope) $data -> $usage"
 
     sealed interface Data {
 
@@ -36,10 +40,6 @@ interface DependencyContributor {
         override fun toString() = "$groupId:$artifactId:$version"
       }
     }
-  }
-
-  data class DependencyGroup(val data: Dependency.Data, val variances: List<Dependency>) {
-    override fun toString() = data.toString()
   }
 
   sealed interface Status {

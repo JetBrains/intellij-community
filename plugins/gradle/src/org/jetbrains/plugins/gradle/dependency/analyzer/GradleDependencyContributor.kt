@@ -31,7 +31,7 @@ import java.util.concurrent.ConcurrentHashMap
 class GradleDependencyContributor(private val project: Project) : DependencyContributor {
   private val projects = mutableMapOf<String, GradleModuleData>()
   private val configurationNodesMap = ConcurrentHashMap<String, List<DependencyScopeNode>>()
-  private val dependencies = ConcurrentHashMap<Long, Dependency>()
+  private val dependencyMap = ConcurrentHashMap<Long, Dependency>()
   private lateinit var updateViewTrigger: () -> Unit
 
   override fun whenDataChanged(listener: () -> Unit, parentDisposable: Disposable) {
@@ -43,7 +43,7 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
         if (id.projectSystemId != GradleConstants.SYSTEM_ID) return
         projects.clear()
         configurationNodesMap.clear()
-        dependencies.clear()
+        dependencyMap.clear()
         updateViewTrigger()
       }
     }, parentDisposable)
@@ -66,10 +66,10 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
     return getOrRefreshData(gradleModuleData).map { it.toScope() }
   }
 
-  override fun getDependencyGroups(externalProjectPath: String): List<DependencyContributor.DependencyGroup> {
+  override fun getDependencies(externalProjectPath: String): List<Dependency> {
     val gradleModuleData = projects[externalProjectPath] ?: return emptyList()
     val scopeNodes = getOrRefreshData(gradleModuleData)
-    return toDependencyGroups(gradleModuleData, scopeNodes)
+    return getDependencies(gradleModuleData, scopeNodes)
   }
 
   private fun getOrRefreshData(gradleModuleData: GradleModuleData): List<DependencyScopeNode> {
@@ -85,46 +85,48 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
     }
   }
 
-  private fun toDependencyGroups(moduleData: GradleModuleData,
-                                 scopeNodes: List<DependencyScopeNode>): List<DependencyContributor.DependencyGroup> {
+  private fun getDependencies(moduleData: GradleModuleData,
+                              scopeNodes: List<DependencyScopeNode>): List<Dependency> {
     if (scopeNodes.isEmpty()) return emptyList()
-    val groups = mutableMapOf<Dependency.Data, MutableSet<Dependency>>()
+    val dependencies = ArrayList<Dependency>()
     val root = Dependency.Data.Module(moduleData.moduleName)
 
     val rootDependency = Dependency(root, defaultConfiguration, null, emptyList())
-    groups[root] = mutableSetOf(rootDependency)
+    dependencies.add(rootDependency)
     for (scopeNode in scopeNodes) {
       val scope = scopeNode.toScope()
       for (dependencyNode in scopeNode.dependencies) {
-        addDependencyGroup(rootDependency, scope, dependencyNode, groups, moduleData.gradleProjectDir)
+        addDependencies(rootDependency, scope, dependencyNode, dependencies, moduleData.gradleProjectDir)
       }
     }
-    return groups.map { (data, dependencies) -> DependencyContributor.DependencyGroup(data, dependencies.toList()) }
+    return dependencies
   }
 
-  private fun addDependencyGroup(usage: Dependency,
-                                 scope: DependencyContributor.Scope,
-                                 dependencyNode: DependencyNode,
-                                 groups: MutableMap<Dependency.Data, MutableSet<Dependency>>,
-                                 gradleProjectDir: String) {
-    val dependency = when (dependencyNode) {
-      is ReferenceNode -> dependencies[dependencyNode.id]
-        ?.let { Dependency(it.data, scope, usage, it.status) }
-      else -> createDependency(dependencyNode, scope, usage)
-        ?.also { dependencies[dependencyNode.id] = it }
-    }
-    if (dependency != null) {
-      groups.getOrPut(dependency.data, ::mutableSetOf).add(dependency)
-      for (node in dependencyNode.dependencies) {
-        addDependencyGroup(dependency, scope, node, groups, gradleProjectDir)
-      }
+  private fun addDependencies(usage: Dependency,
+                              scope: DependencyContributor.Scope,
+                              dependencyNode: DependencyNode,
+                              dependencies: MutableList<Dependency>,
+                              gradleProjectDir: String) {
+    val dependency = createDependency(dependencyNode, scope, usage) ?: return
+    dependencies.add(dependency)
+    for (node in dependencyNode.dependencies) {
+      addDependencies(dependency, scope, node, dependencies, gradleProjectDir)
     }
   }
 
   private fun createDependency(dependencyNode: DependencyNode, scope: DependencyContributor.Scope, usage: Dependency): Dependency? {
-    val dependencyData = dependencyNode.getDependencyData() ?: return null
-    val status = dependencyNode.getStatus(dependencyData)
-    return Dependency(dependencyData, scope, usage, status)
+    when (dependencyNode) {
+      is ReferenceNode -> {
+        val dependency = dependencyMap[dependencyNode.id] ?: return null
+        return Dependency(dependency.data, scope, usage, dependency.status)
+      }
+      else -> {
+        val dependencyData = dependencyNode.getDependencyData() ?: return null
+        val status = dependencyNode.getStatus(dependencyData)
+        return Dependency(dependencyData, scope, usage, status)
+          .also { dependencyMap[dependencyNode.id] = it }
+      }
+    }
   }
 
   private fun DependencyNode.getStatus(data: Dependency.Data): List<DependencyContributor.Status> {

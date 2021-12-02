@@ -167,7 +167,9 @@ private class SearchScopeDropDownLink(
 internal class ScopeItem(
   val scope: Scope,
   val isSelected: Boolean
-)
+) {
+  override fun toString() = "$isSelected: $scope"
+}
 
 private sealed interface ScopeProperty {
   class Any(val property: GraphProperty<ThreeStateCheckBox.State>) : ScopeProperty
