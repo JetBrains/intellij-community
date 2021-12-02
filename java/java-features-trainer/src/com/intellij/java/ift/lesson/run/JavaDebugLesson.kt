@@ -18,7 +18,7 @@ import javax.swing.JEditorPane
 
 class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
 
-  override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 30)
+  override val testScriptProperties = TaskTestContext.TestScriptProperties(duration = 60)
 
   private val demoClassName = JavaRunLessonsUtils.demoClassName
   override val configurationName: String = demoClassName
@@ -27,7 +27,6 @@ class JavaDebugLesson : CommonDebugLesson("java.debug.workflow") {
 
   override val confNameForWatches: String = "Application"
   override val quickEvaluationArgument = "Integer.parseInt"
-  override val expressionToBeEvaluated = "result/input.length"
   override val debuggingMethodName = "findAverage"
   override val methodForStepInto: String = "extractNumber"
   override val stepIntoDirectionToRight = true
