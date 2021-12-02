@@ -186,7 +186,7 @@ public final class DFAType {
   /**
    * Fast check that allows to determine if one dfa type contains not less information than the other.
    */
-  private static boolean dominates(DFAType dominating, DFAType dominated) {
+  public static boolean dominates(DFAType dominating, DFAType dominated) {
     boolean primaryDominating = dominated.primary == null || dominated.primary == PsiType.NULL || dominated.primary == dominating.primary;
     if (!primaryDominating) return false;
     boolean flushingDominating = dominated.flushingType == PsiType.NULL || dominated.flushingType == dominating.flushingType;

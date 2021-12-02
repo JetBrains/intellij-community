@@ -214,18 +214,28 @@ class TypeDfaState {
 
   private static @Nullable Int2ObjectMap<DFAType> guessDominantMap(Int2ObjectMap<DFAType> left,
                                                                    Int2ObjectMap<DFAType> right) {
-    if (left.size() == right.size() && left.int2ObjectEntrySet().containsAll(right.int2ObjectEntrySet())) {
+    if (left.size() == right.size() && dominatesAll(left, right)) {
       return left;
     }
-    else if (left.size() > right.size() && left.int2ObjectEntrySet().containsAll(right.int2ObjectEntrySet())) {
+    else if (left.size() > right.size() && dominatesAll(left, right)) {
       return left;
     }
-    else if (left.size() < right.size() && right.int2ObjectEntrySet().containsAll(left.int2ObjectEntrySet())) {
+    else if (left.size() < right.size() && dominatesAll(right, left)) {
       return right;
     }
     else {
       return null;
     }
+  }
+
+  private static boolean dominatesAll(Int2ObjectMap<DFAType> dominator, Int2ObjectMap<DFAType> dominated) {
+    for (Int2ObjectMap.Entry<DFAType> dominatedEntry : dominated.int2ObjectEntrySet()) {
+      DFAType dominatingType = dominator.get(dominatedEntry.getIntKey());
+      if (dominatingType == null || !DFAType.dominates(dominatingType, dominatedEntry.getValue())) {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
