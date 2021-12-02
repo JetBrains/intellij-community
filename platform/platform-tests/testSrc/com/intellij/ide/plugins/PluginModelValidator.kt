@@ -217,7 +217,7 @@ class PluginModelValidator(sourceModules: List<Module>) {
                                 referencingPluginInfo: ModuleInfo,
                                 moduleNameToInfo: Map<String, ModuleInfo>,
                                 sourceModuleNameToFileInfo: Map<String, ModuleDescriptorFileInfo>) {
-    if (referencingModuleInfo.packageName == null) {
+    if (referencingModuleInfo.packageName == null && referencingModuleInfo.pluginId !in knownNotFullyMigratedPluginIds) {
       _errors.add(PluginValidationError(
         "`dependencies` must be specified only for plugin in a new format: package prefix is not specified",
         mapOf(

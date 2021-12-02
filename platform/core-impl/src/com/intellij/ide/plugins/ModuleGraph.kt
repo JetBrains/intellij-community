@@ -176,6 +176,13 @@ private fun getImplicitDependency(descriptor: IdeaPluginDescriptorImpl,
   return idMap.get(PluginManagerCore.JAVA_MODULE_ID.idString)
 }
 
+val knownNotFullyMigratedPluginIds: Set<String> = hashSetOf(
+  // Migration started with converting intellij.notebooks.visualization to a platform plugin, but adding a package prefix to Pythonid
+  // or com.jetbrains.pycharm.ds.customization is a difficult task that can't be done by a single shot.
+  "Pythonid",
+  "com.jetbrains.pycharm.ds.customization",
+)
+
 private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescriptorImpl,
                                                  idMap: Map<String, IdeaPluginDescriptorImpl>,
                                                  result: MutableSet<IdeaPluginDescriptorImpl>) {
@@ -196,6 +203,10 @@ private fun collectDirectDependenciesInOldFormat(rootDescriptor: IdeaPluginDescr
 
         result.add(dep)
       }
+    }
+    
+    if (rootDescriptor.pluginId.idString in knownNotFullyMigratedPluginIds) {
+      idMap.get(PluginManagerCore.CORE_ID.idString)!!.content.modules.mapTo(result) { it.requireDescriptor() }
     }
 
     dependency.subDescriptor?.let {
