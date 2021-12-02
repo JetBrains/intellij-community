@@ -159,8 +159,4 @@
   <xi:include href="/META-INF/ExternalSystem.xml">
     <xi:fallback/>
   </xi:include>
-
-  <xi:include href="intellij.notebooks.visualization.xml">
-    <xi:fallback/>
-  </xi:include>
 </idea-plugin>

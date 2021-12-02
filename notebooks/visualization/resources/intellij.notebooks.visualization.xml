@@ -1,5 +1,9 @@
-<idea-plugin>
-  <module value="org.intellij.notebooks.visualization" />
+<idea-plugin package="org.jetbrains.plugins.notebooks.visualization">
+  <module value="com.intellij.modules.notebooks.visualization" />
+  <dependencies>
+    <plugin id="com.intellij.platform.images"/>
+  </dependencies>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.datavis.inlays.inlayDescriptorProvider"
                     interface="org.jetbrains.plugins.notebooks.visualization.r.inlays.InlayDescriptorProvider"

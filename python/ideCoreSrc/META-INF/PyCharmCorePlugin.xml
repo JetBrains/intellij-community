@@ -3,6 +3,10 @@
   <module value="com.intellij.modules.pycharm.community"/>
   <module value="com.intellij.modules.python-core-capable"/>
 
+  <content>
+    <module name="intellij.notebooks.visualization"/>
+  </content>
+
   <xi:include href="/META-INF/pycharm-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
 
   <extensions defaultExtensionNs="com.intellij">
