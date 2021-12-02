@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -52,7 +53,7 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
           return JavaUiBundle.message("module.sdk.not.defined");
         }
       }
-      else if (sdk.getRootProvider().getFiles(OrderRootType.CLASSES).length == 0) {
+      else if (sdk.getSdkType().equals(JavaSdk.getInstance()) && sdk.getRootProvider().getFiles(OrderRootType.CLASSES).length == 0) {
         return JavaUiBundle.message("project.or.module.jdk.misconfigured", ModuleRootManager.getInstance(module).isSdkInherited() ? 0 : 1);
       }
     }
