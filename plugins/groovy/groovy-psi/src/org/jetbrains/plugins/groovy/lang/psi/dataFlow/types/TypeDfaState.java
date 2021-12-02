@@ -4,6 +4,8 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.FList;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -13,13 +15,12 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 
 import java.util.BitSet;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
 class TypeDfaState {
-  private final Map<VariableDescriptor, DFAType> myVarTypes;
+  private final Int2ObjectMap<DFAType> myVarTypes;
   private FList<ClosureFrame> myPreviousClosureState; // todo: special state for UNINITIALIZED for catching faults
 
   /**
@@ -35,24 +36,18 @@ class TypeDfaState {
   private final BitSet myProhibitedCachingVars;
 
   TypeDfaState() {
-    myVarTypes = new HashMap<>();
+    myVarTypes = new Int2ObjectOpenHashMap<>();
     myProhibitedCachingVars = new BitSet();
     myPreviousClosureState = FList.emptyList();
   }
 
-  //private TypeDfaState(TypeDfaState another) {
-  //  myVarTypes = another.myVarTypes;
-  //  myProhibitedCachingVars = BitSet.valueOf(another.myProhibitedCachingVars.toLongArray());
-  //  myPreviousClosureState = another.myPreviousClosureState;
-  //}
-
-  private TypeDfaState(Map<VariableDescriptor, DFAType> varTypes, BitSet prohibitedCachingVars, FList<ClosureFrame> frame) {
+  private TypeDfaState(Int2ObjectMap<DFAType> varTypes, BitSet prohibitedCachingVars, FList<ClosureFrame> frame) {
     myVarTypes = varTypes;
     myProhibitedCachingVars = prohibitedCachingVars;
     myPreviousClosureState = frame;
   }
 
-  Map<VariableDescriptor, DFAType> getRawVarTypes() {
+  Int2ObjectMap<DFAType> getRawVarTypes() {
     return myVarTypes;
   }
 
@@ -61,11 +56,13 @@ class TypeDfaState {
     if (this == another) {
       return this;
     }
-    boolean mapEqual = this.myVarTypes.equals(another.myVarTypes);
-    if (dominates(this, another, mapEqual)) {
+    boolean eq = this.myVarTypes.size() == another.myVarTypes.size() && this.myVarTypes.int2ObjectEntrySet().containsAll(another.myVarTypes.int2ObjectEntrySet());
+    boolean lcr = this.myVarTypes.size() > another.myVarTypes.size() && this.myVarTypes.int2ObjectEntrySet().containsAll(another.myVarTypes.int2ObjectEntrySet());
+    boolean rcl = another.myVarTypes.size() > this.myVarTypes.size() && another.myVarTypes.int2ObjectEntrySet().containsAll(this.myVarTypes.int2ObjectEntrySet());
+    if (dominates(this, another, eq || lcr)) {
       return this;
     }
-    if (dominates(another, this, mapEqual)) {
+    if (dominates(another, this, eq || rcl)) {
       return another;
     }
 
@@ -74,22 +71,21 @@ class TypeDfaState {
     if (prohibited != myProhibitedCachingVars) {
       prohibited.or(another.myProhibitedCachingVars);
     }
-    Map<VariableDescriptor, DFAType> newMap = getDominantMap(this.myVarTypes, another.myVarTypes, mapEqual);
+    Int2ObjectMap<DFAType> newMap = getDominantMap(this.myVarTypes, another.myVarTypes, eq || lcr, eq || rcl);
     if (newMap == null) {
-      Map<VariableDescriptor, DFAType> newFMap = new HashMap<>();
-      Stream.concat(another.myVarTypes.entrySet().stream(), this.myVarTypes.entrySet().stream()).forEach(entry -> {
-        VariableDescriptor descriptor = entry.getKey();
-        int index = ((Object2IntMap<VariableDescriptor>)varIndexes).getInt(descriptor);
-        if (index == 0 || prohibited.get(index)) {
+      Int2ObjectMap<DFAType> newFMap = new Int2ObjectOpenHashMap<>();
+      Stream.concat(another.myVarTypes.int2ObjectEntrySet().stream(), this.myVarTypes.int2ObjectEntrySet().stream()).forEach(entry -> {
+        int descriptorId = entry.getIntKey();
+        if (descriptorId == 0 || prohibited.get(descriptorId)) {
           return;
         }
         DFAType candidate = entry.getValue();
-        DFAType existing = newFMap.get(descriptor);
+        DFAType existing = newFMap.get(descriptorId);
         if (existing == null) {
-          newFMap.put(descriptor, candidate);
+          newFMap.put(descriptorId, candidate);
         }
         else if (candidate != existing) {
-          newFMap.put(descriptor, DFAType.create(candidate, existing, manager));
+          newFMap.put(descriptorId, DFAType.create(candidate, existing, manager));
         }
         // todo: flushings
       });
@@ -107,47 +103,20 @@ class TypeDfaState {
     return dominator.myPreviousClosureState == dominated.myPreviousClosureState || dominated.myPreviousClosureState.isEmpty();
   }
 
-  private static @Nullable Map<VariableDescriptor, DFAType> getDominantMap(Map<VariableDescriptor, DFAType> left,
-                                                                           Map<VariableDescriptor, DFAType> right,
-                                                                           boolean mapEqual) {
+  private static @Nullable Int2ObjectMap<DFAType> getDominantMap(Int2ObjectMap<DFAType> left,
+                                                                           Int2ObjectMap<DFAType> right,
+                                                                           boolean leftContainsRight,
+                                                                           boolean rightContainsLeft) {
     if (left == right) {
       return left;
     }
-    if (left.size() == right.size()) {
-      if (mapEqual) {
-        return left;
-      }
-      else {
-        return null;
-      }
+    if (leftContainsRight) {
+      return left;
     }
-    else if (left.size() < right.size()) {
-      if (isMapDominated(left, right)) {
-        return right;
-      }
-      else {
-        return null;
-      }
+    if (rightContainsLeft) {
+      return right;
     }
-    else {
-      if (isMapDominated(right, left)) {
-        return left;
-      }
-      else {
-        return null;
-      }
-    }
-  }
-
-  private static boolean isMapDominated(Map<VariableDescriptor, DFAType> left, Map<VariableDescriptor, DFAType> right) {
-    boolean rightDominating = true;
-    for (VariableDescriptor leftDescriptor : left.keySet()) {
-      if (!left.get(leftDescriptor).equals(right.get(leftDescriptor))) {
-        rightDominating = false;
-        break;
-      }
-    }
-    return rightDominating;
+    return null;
   }
 
   boolean contentsEqual(TypeDfaState another) {
@@ -159,7 +128,7 @@ class TypeDfaState {
   @Nullable
   DFAType getVariableType(VariableDescriptor descriptor, Map<VariableDescriptor, Integer> varIndexes) {
     int index = varIndexes.getOrDefault(descriptor, 0);
-    return index == 0 || !myProhibitedCachingVars.get(index) ? myVarTypes.get(descriptor) : null;
+    return index == 0 || !myProhibitedCachingVars.get(index) ? myVarTypes.get(index) : null;
   }
 
   @Contract("_, _ -> new")
@@ -167,16 +136,6 @@ class TypeDfaState {
   DFAType getOrCreateVariableType(VariableDescriptor descriptor, Map<VariableDescriptor, Integer> varIndexes) {
     DFAType result = getVariableType(descriptor, varIndexes);
     return result == null ? DFAType.create(null, PsiType.NULL) : result;
-  }
-
-  private void putType(VariableDescriptor descriptor, @Nullable DFAType type) {
-    myVarTypes.put(descriptor, type);
-    if (type != null && !myPreviousClosureState.isEmpty()) {
-      var topFrame = myPreviousClosureState.getHead();
-      if (topFrame.getStartState().containsVariable(descriptor)) {
-        topFrame.addReassignment(descriptor, type);
-      }
-    }
   }
 
   @Nullable ClosureFrame popTopClosureFrame() {
@@ -198,13 +157,8 @@ class TypeDfaState {
     return myVarTypes.toString() + evicted + frame;
   }
 
-  public boolean containsVariable(@NotNull VariableDescriptor descriptor) {
-    return myVarTypes.containsKey(descriptor);
-  }
-
-  public void removeBinding(@NotNull VariableDescriptor descriptor, Map<VariableDescriptor, Integer> varIndexes) {
-    myProhibitedCachingVars.set(varIndexes.getOrDefault(descriptor, 0));
-    myVarTypes.remove(descriptor);
+  public boolean containsVariable(int varIndex) {
+    return myVarTypes.containsKey(varIndex);
   }
 
   @Contract("_, _ -> new")
@@ -218,8 +172,7 @@ class TypeDfaState {
   }
 
   @Contract("_, _, _ -> new")
-  public TypeDfaState withNewType(@NotNull VariableDescriptor descriptor, DFAType type, Map<VariableDescriptor, Integer> varIndexes) {
-    int index = ((Object2IntMap<VariableDescriptor>)varIndexes).getInt(descriptor);
+  public TypeDfaState withNewType(int index, DFAType type, Map<VariableDescriptor, Integer> varIndexes) {
     BitSet newSet;
     if (index == 0 || !myProhibitedCachingVars.get(index)) {
       newSet = myProhibitedCachingVars;
@@ -228,13 +181,13 @@ class TypeDfaState {
       newSet = (BitSet)myProhibitedCachingVars.clone();
       newSet.set(index, false);
     }
-    Map<VariableDescriptor, DFAType> newTypes;
-    if (myVarTypes.get(descriptor) == type) {
+    Int2ObjectMap<DFAType> newTypes;
+    if (myVarTypes.get(index) == type) {
       newTypes = myVarTypes;
     }
     else {
-      newTypes = new HashMap<>(myVarTypes);
-      newTypes.put(descriptor, type);
+      newTypes = new Int2ObjectOpenHashMap<>(myVarTypes);
+      newTypes.put(index, type);
     }
     if (newSet == myProhibitedCachingVars && newTypes == myVarTypes) {
       return this;
@@ -250,7 +203,7 @@ class TypeDfaState {
   }
 
   @Contract(pure = true)
-  public TypeDfaState withNewMap(@NotNull Map<VariableDescriptor, DFAType> types) {
+  public TypeDfaState withNewMap(@NotNull Int2ObjectMap<DFAType> types) {
     if (Objects.equals(types, myVarTypes)) {
       return this;
     }

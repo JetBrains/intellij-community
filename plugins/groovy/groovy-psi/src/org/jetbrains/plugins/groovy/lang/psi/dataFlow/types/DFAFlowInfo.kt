@@ -9,4 +9,5 @@ internal data class DFAFlowInfo(
   val acyclicInstructions: Set<Instruction>,
   val interestingDescriptors: Set<VariableDescriptor>,
   val varIndexes: Map<VariableDescriptor, Int>,
+  val reverseVarIndexes : Array<VariableDescriptor>,
 )

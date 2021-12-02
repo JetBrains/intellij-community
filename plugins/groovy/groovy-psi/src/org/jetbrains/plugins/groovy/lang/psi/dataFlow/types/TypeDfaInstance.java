@@ -5,6 +5,8 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
@@ -67,6 +69,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     else {
       newState = state;
     }
+    myCache.publishDescriptor(newState, instruction);
     return newState;
   }
 
@@ -75,7 +78,8 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     for (VariableDescriptor descriptor : myFlowInfo.getInterestingDescriptors()) {
       PsiType initialType = myInitialTypeProvider.initialType(descriptor);
       if (initialType != null) {
-        state = state.withNewType(descriptor, DFAType.create(initialType, PsiType.NULL), myFlowInfo.getVarIndexes());
+        int index = myFlowInfo.getVarIndexes().get(descriptor);
+        state = state.withNewType(index, DFAType.create(initialType, PsiType.NULL), myFlowInfo.getVarIndexes());
       }
     }
     return state;
@@ -85,10 +89,10 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     return state.withNewClosureState(state);
   }
 
-  private static boolean hasNoChanges(@NotNull TypeDfaState baseDfaState, @NotNull Map<VariableDescriptor, DFAType> newDfaTypes) {
+  private static boolean hasNoChanges(@NotNull TypeDfaState baseDfaState, @NotNull Int2ObjectMap<DFAType> newDfaTypes) {
     var oldMap = baseDfaState.getRawVarTypes();
-    for (var entry : newDfaTypes.entrySet()) {
-      if (!oldMap.containsKey(entry.getKey()) || !oldMap.get(entry.getKey()).equals(entry.getValue())) {
+    for (var entry : newDfaTypes.int2ObjectEntrySet()) {
+      if (!oldMap.containsKey(entry.getIntKey()) || !oldMap.get(entry.getIntKey()).equals(entry.getValue())) {
         return false;
       }
     }
@@ -99,14 +103,15 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     GrFunctionalExpression block = instruction.getStartNode().getElement();
     ClosureFrame currentClosureFrame = state.popTopClosureFrame();
     assert currentClosureFrame != null : "Encountered end of closure without closure start";
-    List<VariableDescriptor> toRemove = new ArrayList<>();
-    Map<VariableDescriptor, DFAType> stateTypes = new HashMap<>(state.getRawVarTypes());
-    for (var newDescriptor : stateTypes.keySet()) {
+    List<Integer> toRemove = new ArrayList<>();
+    Int2ObjectMap<DFAType> stateTypes = new Int2ObjectOpenHashMap<>(state.getRawVarTypes());
+    for (int newDescriptorId : stateTypes.keySet()) {
+      VariableDescriptor newDescriptor = myFlowInfo.getReverseVarIndexes()[newDescriptorId];
       if (newDescriptor instanceof ResolvedVariableDescriptor && ((ResolvedVariableDescriptor)newDescriptor).getVariable().getContext() == block) {
-        toRemove.add(newDescriptor);
+        toRemove.add(newDescriptorId);
       }
     }
-    for (var descr : toRemove) {
+    for (int descr : toRemove) {
       stateTypes.remove(descr);
     }
     if (currentClosureFrame.getStartState() == state || hasNoChanges(currentClosureFrame.getStartState(), stateTypes)) {
@@ -120,13 +125,13 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       case UNKNOWN:
         // todo: separate handling for UNKNOWN
       case IN_PLACE_UNKNOWN:
-        List<VariableDescriptor> localDescriptors = new ArrayList<>();
+        List<Integer> localDescriptors = new ArrayList<>();
         for (var descriptor : stateTypes.keySet()) {
           if (!currentClosureFrame.getStartState().containsVariable(descriptor)) {
             localDescriptors.add(descriptor);
           }
         }
-        for (var descr : localDescriptors) {
+        for (int descr : localDescriptors) {
           stateTypes.remove(descr);
         }
         return state.withMerged(currentClosureFrame.getStartState(), myManager, myFlowInfo.getVarIndexes());
@@ -228,7 +233,11 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       }
       else {
         // todo bad, don't use raw types here
-        type = TypeInferenceHelper.doInference(new HashMap<>(state.getRawVarTypes()), computation);
+        Map<VariableDescriptor, DFAType> unwrappedVariables = new HashMap<>();
+        for (var entry : state.getRawVarTypes().int2ObjectEntrySet()) {
+          unwrappedVariables.put(myFlowInfo.getReverseVarIndexes()[entry.getIntKey()], entry.getValue());
+        }
+        type = TypeInferenceHelper.doInference(unwrappedVariables, computation);
       }
     }
 
@@ -236,16 +245,17 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     if (existingDfaType != null) {
       type = type.withFlushingType(existingDfaType.getFlushingType(), myManager);
     }
-    return state.withNewType(descriptor, type, myFlowInfo.getVarIndexes());
+    int index = myFlowInfo.getVarIndexes().get(descriptor);
+    return state.withNewType(index, type, myFlowInfo.getVarIndexes());
   }
 
   private TypeDfaState handleNegation(@NotNull TypeDfaState state, @NotNull NegatingGotoInstruction negation) {
     TypeDfaState newState = state;
-    for (Map.Entry<VariableDescriptor, DFAType> entry : state.getRawVarTypes().entrySet()) {
+    for (Int2ObjectMap.Entry<DFAType> entry : state.getRawVarTypes().int2ObjectEntrySet()) {
       DFAType before = entry.getValue();
       DFAType after = before.negate(negation);
       if (before != after) {
-        newState = newState.withNewType(entry.getKey(), after, myFlowInfo.getVarIndexes());
+        newState = newState.withNewType(entry.getIntKey(), after, myFlowInfo.getVarIndexes());
       }
     }
     return newState;

@@ -38,6 +38,7 @@ final class InferenceCache {
   private final Map<PsiElement, List<Instruction>> myFromByElements;
 
   private final Lazy<Object2IntMap<VariableDescriptor>> myVarIndexes;
+  private final Lazy<VariableDescriptor[]> myReverseIndex;
   private final Lazy<List<DefinitionMap>> myDefinitionMaps;
 
   private final AtomicReference<Map<VariableDescriptor, DFAType>>[] myVarTypes;
@@ -52,6 +53,14 @@ final class InferenceCache {
     myScope = scope;
     myFlow = TypeInferenceHelper.getFlatControlFlow(scope);
     myVarIndexes = lazyPub(() -> getVarIndexes(myScope, FunctionalExpressionFlowUtil.isFlatDFAAllowed()));
+    myReverseIndex = lazyPub(() -> {
+      Object2IntMap<VariableDescriptor> varIndexes = myVarIndexes.getValue();
+      VariableDescriptor[] reverseIndex = new VariableDescriptor[varIndexes.size() + 1];
+      for (VariableDescriptor entry : varIndexes.keySet()) {
+        reverseIndex[varIndexes.getInt(entry)] = entry;
+      }
+      return reverseIndex;
+    });
     myDefinitionMaps = lazyPub(() -> getDefUseMaps(myFlow, myVarIndexes.getValue()));
     myFromByElements = Arrays.stream(myFlow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
     //noinspection unchecked
@@ -117,7 +126,7 @@ final class InferenceCache {
   void publishDescriptor(@NotNull TypeDfaState intermediateState, @NotNull Instruction instruction) {
     if (simpleInstructions.contains(instruction) && TypeInferenceHelper.getCurrentContext() == TypeInferenceHelper.getTopContext()) {
       myVarTypes[instruction.num()].getAndUpdate(
-        oldState -> TypesSemilattice.mergeForCaching(oldState, intermediateState, myVarIndexes.getValue()));
+        oldState -> TypesSemilattice.mergeForCaching(oldState, intermediateState, myReverseIndex.getValue()));
     }
   }
 
@@ -150,7 +159,8 @@ final class InferenceCache {
     return new DFAFlowInfo(interestingInstructions,
                            acyclicInstructions,
                            interestingDescriptors,
-                           myVarIndexes.getValue());
+                           myVarIndexes.getValue(),
+                           myReverseIndex.getValue());
   }
 
   @NotNull
@@ -181,7 +191,7 @@ final class InferenceCache {
                               Set<Instruction> storingInstructions) {
     for (var instruction : storingInstructions) {
       int index = instruction.num();
-      myVarTypes[index].getAndUpdate(oldState -> TypesSemilattice.mergeForCaching(oldState, dfaResult.get(index), myVarIndexes.getValue()));
+      myVarTypes[index].getAndUpdate(oldState -> TypesSemilattice.mergeForCaching(oldState, dfaResult.get(index), myReverseIndex.getValue()));
     }
   }
 
