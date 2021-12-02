@@ -16,13 +16,16 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.devkit.dom.ContentDescriptor;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
 
 /**
- * Resolve {@code package} attribute using containing module's scope based on {@code module-descriptor.xml} reference via {@code name}.
+ * Resolve {@code idea-plugin@package} attribute using:
+ * <ol>
+ *   <li>with plugin ID/name: project production scope, as main module may not contain any sources itself</li>
+ *   <li>no plugin ID: module production scope</li>
+ * </ol>
  */
-public class ModuleDescriptorPackageConverter extends PsiPackageConverter {
+public class IdeaPluginPackageConverter extends PsiPackageConverter {
 
   @Override
   public PsiPackage fromString(@Nullable String s, ConvertContext context) {
@@ -39,16 +42,32 @@ public class ModuleDescriptorPackageConverter extends PsiPackageConverter {
     final String s = genericDomValue.getStringValue();
     if (s == null) return PsiReference.EMPTY_ARRAY;
 
-    final GlobalSearchScope searchScope = getResolveScope(genericDomValue);
-    if (searchScope == null) return PsiReference.EMPTY_ARRAY;
+    final GlobalSearchScope scope = getResolveScope(genericDomValue);
+    if (scope == null) return PsiReference.EMPTY_ARRAY;
 
-    return new PackageReferenceSet(s, element, ElementManipulators.getOffsetInElement(element), searchScope) {
+    return new PackageReferenceSet(s, element, ElementManipulators.getOffsetInElement(element), scope) {
       @Override
       protected @NotNull PsiPackageReference createReference(TextRange range, int index) {
         return new MyCreatePackageFixPsiPackageReference(this, range, index, getResolveScope());
       }
     }.getPsiReferences();
   }
+
+  @Nullable
+  private static GlobalSearchScope getResolveScope(DomElement genericDomValue) {
+    final IdeaPlugin ideaPlugin = genericDomValue.getParentOfType(IdeaPlugin.class, true);
+    assert ideaPlugin != null;
+
+    final Module module = ideaPlugin.getModule();
+    if (module == null) return null;
+
+    if (ideaPlugin.hasRealPluginId() || DomUtil.hasXml(ideaPlugin.getName())) {
+      return GlobalSearchScopesCore.projectProductionScope(module.getProject());
+    }
+
+    return module.getModuleScope(false);
+  }
+
 
   private static class MyCreatePackageFixPsiPackageReference extends PsiPackageReference implements LocalQuickFixProvider {
 
@@ -63,7 +82,8 @@ public class ModuleDescriptorPackageConverter extends PsiPackageConverter {
     public LocalQuickFix @Nullable [] getQuickFixes() {
       PsiPackage basePackage = null;
       if (myIndex != 0) {
-        final ResolveResult resolveResult = ArrayUtil.getFirstElement(getReferenceSet().getReference(myIndex - 1).multiResolve(false));
+        final ResolveResult resolveResult =
+          ArrayUtil.getFirstElement(getReferenceSet().getReference(myIndex - 1).multiResolve(false));
         if (resolveResult != null) {
           basePackage = ObjectUtils.tryCast(resolveResult.getElement(), PsiPackage.class);
         }
@@ -74,44 +94,6 @@ public class ModuleDescriptorPackageConverter extends PsiPackageConverter {
         CreateClassOrPackageFix.createFix(qualifiedName, myScope, getElement(), basePackage, null, null, null);
 
       return fix != null ? new CreateClassOrPackageFix[]{fix} : LocalQuickFix.EMPTY_ARRAY;
-    }
-  }
-
-  @Nullable
-  protected GlobalSearchScope getResolveScope(DomElement domElement) {
-    final ContentDescriptor.ModuleDescriptor moduleDescriptor =
-      domElement.getParentOfType(ContentDescriptor.ModuleDescriptor.class, true);
-    assert moduleDescriptor != null;
-
-    final IdeaPlugin ideaPlugin = moduleDescriptor.getName().getValue();
-    if (ideaPlugin == null) return null;
-
-    return getScope(ideaPlugin, false);
-  }
-
-  @Nullable
-  private static GlobalSearchScope getScope(IdeaPlugin ideaPlugin, boolean useProjectProductionScope) {
-    final Module module = ideaPlugin.getModule();
-    if (module == null) return null;
-
-    return useProjectProductionScope ? GlobalSearchScopesCore.projectProductionScope(module.getProject()) : module.getModuleScope(false);
-  }
-
-  /**
-   * Resolve {@code idea-plugin@package} attribute using:
-   * <ol>
-   *   <li>no plugin ID: module production scope</li>
-   *   <li>with plugin ID/name: project production scope, as main module may not contain any sources itself</li>
-   * </ol>.
-   */
-  public static class ForIdeaPlugin extends ModuleDescriptorPackageConverter {
-
-    @Override
-    protected GlobalSearchScope getResolveScope(DomElement genericDomValue) {
-      final IdeaPlugin ideaPlugin = genericDomValue.getParentOfType(IdeaPlugin.class, true);
-      assert ideaPlugin != null;
-
-      return getScope(ideaPlugin, ideaPlugin.hasRealPluginId() || DomUtil.hasXml(ideaPlugin.getName()));
     }
   }
 }
