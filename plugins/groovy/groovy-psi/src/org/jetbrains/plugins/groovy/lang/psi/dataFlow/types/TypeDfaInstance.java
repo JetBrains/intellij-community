@@ -7,6 +7,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyMethodResult;
@@ -118,10 +119,10 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       return state;
     }
     InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
-    state = state.withNewMap(stateTypes).withNewClosureState(currentClosureFrame);
+    TypeDfaState newState = state.withNewMap(stateTypes).withNewClosureState(currentClosureFrame);
     switch (kind) {
       case IN_PLACE_ONCE:
-        return state;
+        return newState;
       case UNKNOWN:
         // todo: separate handling for UNKNOWN
       case IN_PLACE_UNKNOWN:
@@ -134,11 +135,10 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         for (int descr : localDescriptors) {
           stateTypes.remove(descr);
         }
-        return TypeDfaState.merge(state, currentClosureFrame.getStartState(), myManager);
+        return TypeDfaState.merge(newState, currentClosureFrame.getStartState(), myManager);
     }
-    return state;
+    return newState;
   }
-
 
   private TypeDfaState handleMixin(@NotNull final TypeDfaState state, @NotNull final MixinTypeInstruction instruction) {
     final VariableDescriptor descriptor = instruction.getVariableDescriptor();
@@ -150,8 +150,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         assert !originalInstr.isWrite();
       }
 
-      return state.getNotNullDFAType(descriptor, myFlowInfo.getVarIndexes())
-        .withNewMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
+      return state.getNotNullDFAType(descriptor, myFlowInfo.getVarIndexes()).withNewMixin(instruction.inferMixinType(), instruction.getConditionInstruction());
     });
   }
 
@@ -221,7 +220,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
                                           @NotNull Instruction instruction,
                                           @NotNull VariableDescriptor descriptor,
                                           @NotNull Computable<DFAType> computation) {
-    int index = myFlowInfo.getVarIndexes().get(descriptor);
+    int index = ((Object2IntMap<VariableDescriptor>)myFlowInfo.getVarIndexes()).getInt(descriptor);
     if (index == 0) {
       return state;
     }
@@ -235,10 +234,11 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         type = computation.compute();
       }
       else {
-        // todo bad, don't use raw types here
         Map<VariableDescriptor, DFAType> unwrappedVariables = new HashMap<>();
         for (var entry : state.getRawVarTypes().int2ObjectEntrySet()) {
-          unwrappedVariables.put(myFlowInfo.getReverseVarIndexes()[entry.getIntKey()], entry.getValue());
+          if (!state.isProhibited(entry.getIntKey())) {
+            unwrappedVariables.put(myFlowInfo.getReverseVarIndexes()[entry.getIntKey()], entry.getValue());
+          }
         }
         type = TypeInferenceHelper.doInference(unwrappedVariables, computation);
       }

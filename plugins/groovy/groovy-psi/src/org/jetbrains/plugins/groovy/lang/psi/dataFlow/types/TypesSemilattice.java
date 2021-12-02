@@ -7,13 +7,12 @@ import com.intellij.psi.PsiManager;
 import com.intellij.util.SmartList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -49,17 +48,17 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
     return e1 == e2 || e1.contentsEqual(e2);
   }
 
-  public static Int2ObjectMap<DFAType> mergeForCaching(Int2ObjectMap<DFAType> cached,
-                                                       TypeDfaState another) {
-    if (another.getRawVarTypes().isEmpty()) {
+  @Contract(pure = true)
+  public static Int2ObjectMap<DFAType> mergeForCaching(@NotNull Int2ObjectMap<DFAType> cached,
+                                                       @NotNull TypeDfaState candidate) {
+    if (candidate.getRawVarTypes().isEmpty()) {
       return cached;
     }
 
     List<Int2ObjectMap.Entry<DFAType>> newTypes = new SmartList<>();
-    for (Int2ObjectMap.Entry<DFAType> candidateEntry : another.getRawVarTypes().int2ObjectEntrySet()) {
+    for (Int2ObjectMap.Entry<DFAType> candidateEntry : candidate.getRawVarTypes().int2ObjectEntrySet()) {
       int index = candidateEntry.getIntKey();
-      if (index == 0 || another.isProhibited(index) ||
-          (cached.containsKey(index) /*&& checkDfaStatesConsistency(cached, candidateEntry)*/)) {
+      if (candidate.isProhibited(index) || (cached.containsKey(index) && checkDfaStatesConsistency(cached, candidateEntry))) {
         continue;
       }
       newTypes.add(candidateEntry);
@@ -75,17 +74,17 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
     return newState;
   }
 
-  private static boolean checkDfaStatesConsistency(@NotNull Map<VariableDescriptor, DFAType> cached,
-                                                   @NotNull Map.Entry<VariableDescriptor, DFAType> incoming) {
+  private static boolean checkDfaStatesConsistency(@NotNull Int2ObjectMap<DFAType> cached,
+                                                   @NotNull Int2ObjectMap.Entry<DFAType> incoming) {
     if (!ApplicationManager.getApplication().isUnitTestMode() ||
         ApplicationManagerEx.isInStressTest() ||
         DfaCacheConsistencyKt.mustSkipConsistencyCheck()) {
       return true;
     }
-    DFAType cachedType = cached.get(incoming.getKey());
+    DFAType cachedType = cached.get(incoming.getIntKey());
     if (cachedType != null && !Objects.equals(cachedType, incoming.getValue())) {
       throw new IllegalStateException("Attempt to cache different types: for descriptor " +
-                                      incoming.getKey() +
+                                      incoming.getIntKey() +
                                       ", existing was " +
                                       cachedType +
                                       " and incoming is " +

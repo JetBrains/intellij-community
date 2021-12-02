@@ -28,8 +28,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.util.LazyKt.lazyPub;
 import static java.util.Collections.emptyList;
-import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.findReadDependencies;
-import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.getVarIndexes;
+import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.UtilKt.*;
 import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper.getDefUseMaps;
 import static org.jetbrains.plugins.groovy.util.GraphKt.findNodesOutsideCycles;
 import static org.jetbrains.plugins.groovy.util.GraphKt.mapGraph;
@@ -39,7 +38,19 @@ final class InferenceCache {
   private final Instruction[] myFlow;
   private final Map<PsiElement, List<Instruction>> myFromByElements;
 
+  /**
+   * All variables in Groovy Type DFA are mapped to ints.
+   * This is done to improve memory consumption and avoid unnecessary comparisons of PSI elements in hashmaps.
+   * <p>
+   * Note, that there is no variable descriptor that maps to 0.
+   */
   private final Lazy<Object2IntMap<VariableDescriptor>> myVarIndexes;
+
+  /**
+   * Reverse mapping for {@link InferenceCache#myVarIndexes}.
+   * Note, that element with index 0 is always {@code null},
+   * since descriptors' enumeration starts with 1.
+   */
   private final Lazy<VariableDescriptor[]> myReverseIndex;
   private final Lazy<List<DefinitionMap>> myDefinitionMaps;
 
@@ -49,20 +60,13 @@ final class InferenceCache {
    * Instructions outside any cycle. The control flow graph does not have backward edges on these instructions, so it is safe
    * to assume that DFA visits them <b>only once<b/>.
    */
-  private final Set<Instruction> simpleInstructions;
+  private final Lazy<Set<Instruction>> simpleInstructions;
 
   InferenceCache(@NotNull GrControlFlowOwner scope) {
     myScope = scope;
     myFlow = TypeInferenceHelper.getFlatControlFlow(scope);
     myVarIndexes = lazyPub(() -> getVarIndexes(myScope, FunctionalExpressionFlowUtil.isFlatDFAAllowed()));
-    myReverseIndex = lazyPub(() -> {
-      Object2IntMap<VariableDescriptor> varIndexes = myVarIndexes.getValue();
-      VariableDescriptor[] reverseIndex = new VariableDescriptor[varIndexes.size() + 1];
-      for (VariableDescriptor entry : varIndexes.keySet()) {
-        reverseIndex[varIndexes.getInt(entry)] = entry;
-      }
-      return reverseIndex;
-    });
+    myReverseIndex = lazyPub(() -> getReverseIndex(myVarIndexes.getValue()));
     myDefinitionMaps = lazyPub(() -> getDefUseMaps(myFlow, myVarIndexes.getValue()));
     myFromByElements = Arrays.stream(myFlow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
     //noinspection unchecked
@@ -71,11 +75,7 @@ final class InferenceCache {
         basicTypes[i] = new AtomicReference<>(new Int2ObjectOpenHashMap<>());
     }
     myVarTypes = basicTypes;
-    simpleInstructions = findNodesOutsideCycles(mapGraph(Arrays.stream(myFlow).collect(Collectors.toMap(instr -> instr, instr -> {
-      List<Instruction> list = new ArrayList<>();
-      instr.allSuccessors().forEach(list::add);
-      return list;
-    }))));
+    simpleInstructions = lazyPub(() -> getSimpleInstructions(myFlow));
   }
 
   boolean isTooComplexToAnalyze() {
@@ -94,8 +94,8 @@ final class InferenceCache {
     }
 
     Int2ObjectMap<DFAType> cache = myVarTypes[instruction.num()].get();
-    int index = myVarIndexes.getValue().getInt(descriptor);
-    if (index != 0 && !cache.containsKey(index)) {
+    int variableIndex = myVarIndexes.getValue().getInt(descriptor);
+    if (variableIndex != 0 && !cache.containsKey(variableIndex)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
       DFAFlowInfo flowInfo = collectFlowInfo(definitionMaps, instruction, descriptor, mixinPredicate);
       List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, flowInfo);
@@ -130,10 +130,12 @@ final class InferenceCache {
     return myVarTypes[instruction.num()].get().get(index);
   }
 
+  /**
+   * This method helps to reduce number of DFA re-invocations by caching known variable types when it is certain that they won't be changed.
+   */
   void publishDescriptor(@NotNull TypeDfaState intermediateState, @NotNull Instruction instruction) {
-    if (simpleInstructions.contains(instruction) && TypeInferenceHelper.getCurrentContext() == TypeInferenceHelper.getTopContext()) {
-      myVarTypes[instruction.num()].getAndUpdate(
-        oldState -> TypesSemilattice.mergeForCaching(oldState, intermediateState));
+    if (simpleInstructions.getValue().contains(instruction) && TypeInferenceHelper.getCurrentContext() == TypeInferenceHelper.getTopContext()) {
+      myVarTypes[instruction.num()].getAndUpdate(oldState -> TypesSemilattice.mergeForCaching(oldState, intermediateState));
     }
   }
 

@@ -24,19 +24,33 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ArgumentsInstruction
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isExpressionStatement
+import org.jetbrains.plugins.groovy.util.findNodesOutsideCycles
+import org.jetbrains.plugins.groovy.util.mapGraph
 
 private typealias VariablesKey = Key<CachedValue<Object2IntMap<VariableDescriptor>>>
+
 private val smallFlowKey: VariablesKey = Key.create("groovy.dfa.small.flow.var.indexes")
 private val largeFlowKey: VariablesKey = Key.create("groovy.dfa.large.flow.var.indexes")
 
 
-internal fun GrControlFlowOwner.getVarIndexes(large : Boolean): Object2IntMap<VariableDescriptor> {
+internal fun GrControlFlowOwner.getVarIndexes(large: Boolean): Object2IntMap<VariableDescriptor> {
   return CachedValuesManager.getCachedValue(this, if (large) largeFlowKey else smallFlowKey) {
     Result.create(doGetVarIndexes(this, large), PsiModificationTracker.MODIFICATION_COUNT)
   }
 }
 
-private fun doGetVarIndexes(owner: GrControlFlowOwner, isLarge : Boolean): Object2IntMap<VariableDescriptor> {
+internal fun getReverseIndex(enumeration: Object2IntMap<VariableDescriptor>): Array<VariableDescriptor?> {
+  val reverseIndex = arrayOfNulls<VariableDescriptor>(enumeration.size + 1)
+  for (descriptor in enumeration.keys) {
+    reverseIndex[enumeration.getInt(descriptor)] = descriptor
+  }
+  return reverseIndex
+}
+
+internal fun getSimpleInstructions(flow: Array<Instruction>): Set<Instruction> =
+  findNodesOutsideCycles(mapGraph(flow.associateWith { it.allSuccessors().toList() }))
+
+private fun doGetVarIndexes(owner: GrControlFlowOwner, isLarge: Boolean): Object2IntMap<VariableDescriptor> {
   val result = Object2IntOpenHashMap<VariableDescriptor>()
   var num = 1
   val flow = if (isLarge) TypeInferenceHelper.getFlatControlFlow(owner) else owner.controlFlow

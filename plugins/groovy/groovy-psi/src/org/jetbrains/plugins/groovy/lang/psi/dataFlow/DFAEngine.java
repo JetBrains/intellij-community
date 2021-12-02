@@ -79,7 +79,7 @@ public final class DFAEngine<E> {
       final E oldE = info.get(num);                      // saved outbound state
       final List<E> ins = getPrevInfos(curr, info, env); // states from all inbound edges
       final E jointE = join(ins);                        // inbound state
-      final E newE = myDfa.fun(jointE, curr);            // newly modified outbound state
+      final E newE = myDfa.fun(jointE, curr);            // new outbound state
       if (!mySemilattice.eq(newE, oldE)) {               // if outbound state changed
         info.set(num, newE);                             // save new state
         for (Instruction next : getNext(curr, env)) {
