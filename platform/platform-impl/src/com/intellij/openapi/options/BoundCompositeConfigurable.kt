@@ -5,6 +5,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
+import org.jetbrains.annotations.ApiStatus
 
 abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
   @NlsContexts.ConfigurableName displayName: String,
@@ -44,6 +45,8 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
     }
   }
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0", ReplaceWith("appendDslConfigurable"))
   protected fun RowBuilder.appendDslConfigurableRow(configurable: UnnamedConfigurable) {
     if (configurable is UiDslConfigurable) {
       val builder = this

@@ -6,6 +6,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.options.*
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import com.intellij.xml.XmlBundle
 import java.util.function.Function
@@ -38,7 +39,7 @@ internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConf
   XmlBundle.message("configurable.name.html.css")), ConfigurableWithOptionDescriptors, Configurable.WithEpDependencies {
   override fun createPanel(): DialogPanel {
     return panel {
-      titledRow(XmlBundle.message("xml.editor.options.misc.title")) {
+      group(XmlBundle.message("xml.editor.options.misc.title")) {
         row {
           checkBox(myAutomaticallyInsertClosingTagCheckBox)
         }
@@ -61,13 +62,13 @@ internal class WebSmartKeysConfigurable : BoundCompositeConfigurable<UnnamedConf
           checkBox(mySyncTagEditing)
         }
       }
-      titledRow(XmlBundle.message("xml.editor.options.css.title")) {
+      group(XmlBundle.message("xml.editor.options.css.title")) {
         row {
           checkBox(mySelectWholeCssIdentifierOnDoubleClick)
         }
       }
       for (configurable in configurables) {
-        appendDslConfigurableRow(configurable)
+        appendDslConfigurable(configurable)
       }
     }
   }
