@@ -1,4 +1,4 @@
-// "Opt-in for 'A::class' on containing file 'appendFileAnnotationToAnnotationList.kt'" "true"
+// "Opt in for 'A' in containing file 'appendFileAnnotationToAnnotationList.kt'" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
 @file:[

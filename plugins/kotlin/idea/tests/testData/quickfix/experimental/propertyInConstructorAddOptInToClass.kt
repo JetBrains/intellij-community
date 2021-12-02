@@ -1,4 +1,4 @@
-// "Opt in for 'PropertyTypeMarker' on containing class 'PropertyTypeContainer'" "true"
+// "Opt in for 'PropertyTypeMarker' in containing class 'PropertyTypeContainer'" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
 // ACTION: Opt in for 'PropertyTypeMarker' on the constructor
