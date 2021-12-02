@@ -3,6 +3,7 @@ package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.module.GeneralModuleType
+import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
 import com.intellij.ui.dsl.builder.Panel
@@ -20,7 +21,8 @@ class NewEmptyProjectBuilder : AbstractNewProjectWizardBuilder() {
         override fun setupUI(builder: Panel) {}
 
         override fun setupProject(project: Project) {
-          GeneralModuleType.INSTANCE.createModuleBuilder().commit(project)
+          val moduleType = ModuleTypeManager.getInstance().findByID(GeneralModuleType.TYPE_ID)
+          moduleType?.createModuleBuilder()?.commit(project)
         }
       }
     }
