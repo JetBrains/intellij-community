@@ -8,4 +8,6 @@ import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
 
 class KotlinIconProvider : KotlinIconProviderBase() {
     override fun KtDeclaration.isMatchingExpected() = hasActualModifier() && hasMatchingExpected()
+
+    compilation error
 }
