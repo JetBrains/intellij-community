@@ -24,7 +24,6 @@ import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.XmlBundle;
 import org.jetbrains.annotations.NotNull;
@@ -38,6 +37,8 @@ public class XMLColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.comment"), XmlHighlighterColors.XML_COMMENT),
     new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag"), XmlHighlighterColors.XML_TAG),
     new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag.name"), XmlHighlighterColors.XML_TAG_NAME),
+    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag.custom"), XmlHighlighterColors.XML_CUSTOM_TAG),
+    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag.name.custom"), XmlHighlighterColors.XML_CUSTOM_TAG_NAME),
     new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.matched.tag.name"), XmlHighlighterColors.MATCHED_TAG_NAME),
     new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.namespace.prefix"), XmlHighlighterColors.XML_NS_PREFIX),
     new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.attribute.name"), XmlHighlighterColors.XML_ATTRIBUTE_NAME),
@@ -94,14 +95,21 @@ public class XMLColorsPage implements ColorSettingsPage {
            "        ]]>\n" +
            "   </withCData>\n" +
            "   <indexitem text=\"project\" target=\"project.management\"/>\n" +
+           "   <custom_tag><<custom_tag_name>custom-tag</custom_tag_name>></custom_tag>" +
+           "hello" +
+           "<custom_tag></<custom_tag_name>custom_tag</custom_tag_name>></custom_tag>\n" +
            "   <<bg><np>pf</np></bg>:foo <bg><np>pf</np></bg>:bar=\"bar\"/>\n" +
            "</index>";
   }
 
   @Override
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
-    return ContainerUtil.newHashMap(Pair.create("np", XmlHighlighterColors.XML_NS_PREFIX),
-                                    Pair.create("bg", XmlHighlighterColors.XML_TAG),
-                                    Pair.create("matched", XmlHighlighterColors.MATCHED_TAG_NAME));
+    return new ContainerUtil.ImmutableMapBuilder<String, TextAttributesKey>()
+      .put("custom_tag", XmlHighlighterColors.XML_CUSTOM_TAG)
+      .put("custom_tag_name", XmlHighlighterColors.XML_CUSTOM_TAG_NAME)
+      .put("np", XmlHighlighterColors.XML_NS_PREFIX)
+      .put("bg", XmlHighlighterColors.XML_TAG)
+      .put("matched", XmlHighlighterColors.MATCHED_TAG_NAME)
+      .build();
   }
 }

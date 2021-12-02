@@ -17,8 +17,12 @@ public final class XmlHighlighterColors {
     TextAttributesKey.createTextAttributesKey("XML_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
   public static final TextAttributesKey XML_TAG =
     TextAttributesKey.createTextAttributesKey("XML_TAG", DefaultLanguageHighlighterColors.MARKUP_TAG);
+  public static final TextAttributesKey XML_CUSTOM_TAG =
+    TextAttributesKey.createTextAttributesKey("XML_CUSTOM_TAG", XML_TAG);
   public static final TextAttributesKey XML_TAG_NAME =
     TextAttributesKey.createTextAttributesKey("XML_TAG_NAME", DefaultLanguageHighlighterColors.KEYWORD);
+  public static final TextAttributesKey XML_CUSTOM_TAG_NAME =
+    TextAttributesKey.createTextAttributesKey("XML_CUSTOM_TAG_NAME", XML_TAG_NAME);
   public static final TextAttributesKey XML_NS_PREFIX =
     TextAttributesKey.createTextAttributesKey("XML_NS_PREFIX", DefaultLanguageHighlighterColors.INSTANCE_FIELD);
   public static final TextAttributesKey XML_ATTRIBUTE_NAME =
@@ -34,8 +38,15 @@ public final class XmlHighlighterColors {
     TextAttributesKey.createTextAttributesKey("HTML_COMMENT", DefaultLanguageHighlighterColors.LINE_COMMENT);
   public static final TextAttributesKey HTML_TAG =
     TextAttributesKey.createTextAttributesKey("HTML_TAG", DefaultLanguageHighlighterColors.MARKUP_TAG);
+  public static final TextAttributesKey HTML_CUSTOM_TAG =
+    TextAttributesKey.createTextAttributesKey("HTML_CUSTOM_TAG", HTML_TAG);
+  
   public static final TextAttributesKey HTML_TAG_NAME =
     TextAttributesKey.createTextAttributesKey("HTML_TAG_NAME", DefaultLanguageHighlighterColors.KEYWORD);
+  public static final TextAttributesKey HTML_CUSTOM_TAG_NAME = 
+    TextAttributesKey.createTextAttributesKey("HTML_CUSTOM_TAG_NAME", HTML_TAG_NAME);
+  
+  
   public static final TextAttributesKey HTML_ATTRIBUTE_NAME =
     TextAttributesKey.createTextAttributesKey("HTML_ATTRIBUTE_NAME", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
   public static final TextAttributesKey HTML_ATTRIBUTE_VALUE =
