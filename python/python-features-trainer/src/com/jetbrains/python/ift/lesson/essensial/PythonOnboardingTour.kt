@@ -220,12 +220,12 @@ class PythonOnboardingTour :
       if (project.isDisposed) {
         return@invokeLater
       }
-      module.primaryLanguage?.let {
+      module.primaryLanguage?.let { langSupport ->
         // exit link will show notification directly and reset this field to null
-        if (it.onboardingFeedbackData != null) {
-          showOnboardingFeedbackNotification(project, it.onboardingFeedbackData)
-          it.onboardingFeedbackData = null
+        langSupport.onboardingFeedbackData?.let {
+          showOnboardingFeedbackNotification(project, it)
         }
+        langSupport.onboardingFeedbackData = null
       }
     }
   }
