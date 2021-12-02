@@ -174,8 +174,8 @@ public abstract class VcsLogPopupComponent extends JPanel {
                              JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
   }
 
-  private static Border createFocusedBorder() {
-    return new FilledRoundedBorder(UIUtil.getFocusedBorderColor(), ARC_SIZE, BORDER_SIZE);
+  protected Border createFocusedBorder() {
+    return new FilledRoundedBorder(UIUtil.getFocusedBorderColor(), ARC_SIZE, BORDER_SIZE, false);
   }
 
   protected Border createUnfocusedBorder() {
@@ -190,11 +190,13 @@ public abstract class VcsLogPopupComponent extends JPanel {
     private final Color myColor;
     private final int myThickness;
     private final int myArcSize;
+    private final boolean myThinBorder;
 
-    public FilledRoundedBorder(@NotNull Color color, int arcSize, int thickness) {
+    public FilledRoundedBorder(@NotNull Color color, int arcSize, int thickness, boolean thinBorder) {
       myColor = color;
       myThickness = thickness;
       myArcSize = arcSize;
+      myThinBorder = thinBorder;
     }
 
     @Override
@@ -203,7 +205,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
 
       g.setColor(myColor);
 
-      int thickness = JBUI.scale(myThickness);
+      int thickness = JBUI.scale(myThinBorder ? 1 : myThickness);
       int arcSize = JBUI.scale(myArcSize);
       Area area = new Area(new RoundRectangle2D.Double(x, y, width, height, arcSize, arcSize));
       int innerArc = Math.max(arcSize - thickness, 0);
