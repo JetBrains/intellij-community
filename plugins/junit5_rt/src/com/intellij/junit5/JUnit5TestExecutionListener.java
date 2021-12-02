@@ -6,6 +6,7 @@ import com.intellij.rt.execution.junit.ComparisonFailureData;
 import com.intellij.rt.execution.junit.MapSerializerUtil;
 import org.junit.platform.engine.TestExecutionResult;
 import org.junit.platform.engine.TestSource;
+import org.junit.platform.engine.UniqueId;
 import org.junit.platform.engine.reporting.ReportEntry;
 import org.junit.platform.engine.support.descriptor.ClassSource;
 import org.junit.platform.engine.support.descriptor.CompositeTestSource;
@@ -76,20 +77,10 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
   public void testPlanExecutionStarted(TestPlan testPlan) {
     myTestPlan = testPlan;
     if (mySendTree) {
-      if (Boolean.parseBoolean(System.getProperty("idea.junit.show.engines", "true"))) {
-        myTestPlan.getRoots().stream().filter(root1 -> !myTestPlan.getChildren(root1).isEmpty()).forEach(myActiveRoots::add);
-      }
-      if (myActiveRoots.size() > 1) {
-        for (TestIdentifier root : myActiveRoots) {
-          sendTreeUnderRoot(root, new HashSet<>());
-        }
-      }
-      else { //skip engine node when one engine available
-        for (TestIdentifier root : myTestPlan.getRoots()) {
-          assert root.isContainer();
-          for (TestIdentifier testIdentifier : myTestPlan.getChildren(root)) {
-            sendTreeUnderRoot(testIdentifier, new HashSet<>());
-          }
+      for (TestIdentifier root : myTestPlan.getRoots()) {
+        assert root.isContainer();
+        for (TestIdentifier testIdentifier : myTestPlan.getChildren(root)) {
+          sendTreeUnderRoot(testIdentifier, new HashSet<>());
         }
       }
       myPrintStream.println("##teamcity[treeEnded]");
@@ -115,7 +106,8 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
                                  HashSet<TestIdentifier> visited) {
     final String idAndName = idAndName(root);
     if (root.isContainer()) {
-      myPrintStream.println("##teamcity[suiteTreeStarted" + idAndName + " " + getLocationHint(root) + "]");
+      boolean isEngine = isEngine(root);
+      if (!isEngine) myPrintStream.println("##teamcity[suiteTreeStarted" + idAndName + " " + getLocationHint(root) + "]");
       for (TestIdentifier childIdentifier : myTestPlan.getChildren(root)) {
         if (visited.add(childIdentifier)) {
           sendTreeUnderRoot(childIdentifier, visited);
@@ -124,7 +116,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
           System.err.println("Identifier '" + getId(childIdentifier) + "' is reused");
         }
       }
-      myPrintStream.println("##teamcity[suiteTreeEnded" + idAndName + "]");
+      if (!isEngine) myPrintStream.println("##teamcity[suiteTreeEnded" + idAndName + "]");
     }
     else if (root.isTest()) {
       myPrintStream.println("##teamcity[suiteTreeNode " + idAndName + " " + getLocationHint(root) + "]");
@@ -147,7 +139,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       testStarted(testIdentifier);
       myCurrentTestStart = System.currentTimeMillis();
     }
-    else if (hasNonTrivialParent(testIdentifier)) {
+    else if (!isEngine(testIdentifier)) {
       myFinishCount = 0;
       myPrintStream.println("##teamcity[testSuiteStarted" + idAndName(testIdentifier) + getLocationHint(testIdentifier) + "]");
     }
@@ -177,7 +169,7 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
       testFinished(testIdentifier, duration);
       myFinishCount++;
     }
-    else if (hasNonTrivialParent(testIdentifier)){
+    else if (!isEngine(testIdentifier)){
       String messageName = null;
       if (status == TestExecutionResult.Status.FAILED) {
         messageName = MapSerializerUtil.TEST_FAILED;
@@ -212,8 +204,11 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
     }
   }
 
-  private boolean hasNonTrivialParent(TestIdentifier testIdentifier) {
-    return testIdentifier.getParentId().isPresent() || (myActiveRoots.size() > 1 && myActiveRoots.contains(testIdentifier));
+  private static boolean isEngine(TestIdentifier testIdentifier) {
+    UniqueId id = UniqueId.parse(testIdentifier.getUniqueId());
+    List<UniqueId.Segment> segments = id.getSegments();
+    if (segments.isEmpty()) return false;
+    return segments.get(segments.size() - 1).getType().equals("engine");
   }
 
   protected long getDuration() {
@@ -322,12 +317,9 @@ public class JUnit5TestExecutionListener implements TestExecutionListener {
 
   private String getParentId(TestIdentifier testIdentifier) {
     Optional<TestIdentifier> parent = myTestPlan.getParent(testIdentifier);
-    if (myActiveRoots.size() <= 1 && !parent.flatMap(TestIdentifier::getParentId).isPresent()) {
-      return "0";
-    }
-
+    
     return parent
-      .map(identifier -> identifier.getUniqueId() + myIdSuffix)
+      .map(identifier -> isEngine(identifier) ? getParentId(identifier) : identifier.getUniqueId() + myIdSuffix)
       .orElse("0");
   }
 
