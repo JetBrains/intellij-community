@@ -72,7 +72,7 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
     if (file != null && cache != null) {
       getFileFeatures(data, file, project, cache, currentTime)
     }
-    data.putAll(getElementFeatures(item, presentation, currentTime, searchQuery, elementPriority))
+    data.putAll(getElementFeatures(item, presentation, currentTime, searchQuery, elementPriority, cache))
     return data
   }
 
@@ -96,7 +96,8 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
                                             presentation: TargetPresentation?,
                                             currentTime: Long,
                                             searchQuery: String,
-                                            elementPriority: Int): Map<String, Any>
+                                            elementPriority: Int,
+                                            cache: Cache?): Map<String, Any>
 
   /**
    * Creates a deep copy of the file type stats obtained from the [FileTypeUsageLocalSummary],

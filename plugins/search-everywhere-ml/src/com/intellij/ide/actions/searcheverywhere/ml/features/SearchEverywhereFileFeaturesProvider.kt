@@ -41,7 +41,8 @@ internal class SearchEverywhereFileFeaturesProvider
                                   presentation: TargetPresentation?,
                                   currentTime: Long,
                                   searchQuery: String,
-                                  elementPriority: Int): Map<String, Any> {
+                                  elementPriority: Int,
+                                  cache: Cache?): Map<String, Any> {
     val item = (element as? PsiFileSystemItem) ?: return emptyMap()
 
     val data = hashMapOf<String, Any>(
