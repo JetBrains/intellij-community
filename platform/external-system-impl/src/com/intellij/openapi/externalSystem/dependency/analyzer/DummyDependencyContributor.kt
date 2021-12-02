@@ -4,9 +4,8 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.*
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency.Data.Artifact
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency.Data.Module
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.Info.Duplicate
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.Info.Omitted
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.Warning.VersionConflict
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Status.Omitted
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.LocalTimeCounter
@@ -40,49 +39,49 @@ abstract class DummyDependencyContributor(private val project: Project) : Depend
   )
 
   private fun getRoot(externalProjectPath: String): Dependency {
-    return Dependency(Module(PathUtil.getFileName(externalProjectPath)), scope("compile"), null)
+    return createDependency(Module(PathUtil.getFileName(externalProjectPath)), scope("compile"), null)
   }
 
   private fun getDependencies(dependency: Dependency): List<Dependency> {
     return when (dependency.data.id) {
       "parent1" -> listOf(
-        Dependency(Artifact("org.hamcrest", "hamcrest", "2.2"), scope("compile"), dependency),
-        Dependency(Artifact("org.hamcrest", "hamcrest-core", "2.2"), scope("runtime"), dependency),
-        Dependency(Artifact("org.junit.jupiter", "junit-jupiter-api", "5.8.0"), scope("provided"), dependency),
-        Dependency(Artifact("org.junit.jupiter", "junit-jupiter-engine", "5.8.0"), scope("test"), dependency),
-        Dependency(Artifact("org.junit.platform", "junit-platform-commons", "1.8.0"), scope("system"), dependency),
-        Dependency(Artifact("org.junit.platform", "junit-platform-engine", "1.8.0"), scope("import"), dependency)
+        createDependency(Artifact("org.hamcrest", "hamcrest", "2.2"), scope("compile"), dependency),
+        createDependency(Artifact("org.hamcrest", "hamcrest-core", "2.2"), scope("runtime"), dependency),
+        createDependency(Artifact("org.junit.jupiter", "junit-jupiter-api", "5.8.0"), scope("provided"), dependency),
+        createDependency(Artifact("org.junit.jupiter", "junit-jupiter-engine", "5.8.0"), scope("test"), dependency),
+        createDependency(Artifact("org.junit.platform", "junit-platform-commons", "1.8.0"), scope("system"), dependency),
+        createDependency(Artifact("org.junit.platform", "junit-platform-engine", "1.8.0"), scope("import"), dependency)
       )
       "parent2" -> listOf(
-        Dependency(Artifact("org.hamcrest", "hamcrest-core", "1.3"), scope("compile"), dependency)
+        createDependency(Artifact("org.hamcrest", "hamcrest-core", "1.3"), scope("compile"), dependency)
       )
       "module" -> listOf(
-        Dependency(Module("parent1"), scope("compile"), dependency),
-        Dependency(Module("parent2"), scope("compile"), dependency)
+        createDependency(Module("parent1"), scope("compile"), dependency),
+        createDependency(Module("parent2"), scope("compile"), dependency)
       )
       "org.hamcrest:hamcrest-core:2.2" -> listOf(
-        Dependency(Artifact("org.hamcrest", "hamcrest", "2.2"), scope("compile"), dependency)
+        createDependency(Artifact("org.hamcrest", "hamcrest", "2.2"), scope("compile"), dependency)
       )
       "org.hamcrest:hamcrest-core:1.3" -> listOf(
-        Dependency(Artifact("org.hamcrest", "hamcrest", "1.3"), scope("compile"), dependency)
+        createDependency(Artifact("org.hamcrest", "hamcrest", "1.3"), scope("compile"), dependency)
       )
       "org.junit.jupiter:junit-jupiter-api:5.8.0" -> listOf(
-        Dependency(Artifact("org.opentest4j", "opentest4j", "1.2.0"), scope("compile"), dependency),
-        Dependency(Artifact("org.junit.platform", "junit-platform-commons", "1.8.0"), scope("compile"), dependency),
-        Dependency(Artifact("org.apiguardian", "apiguardian-api", "1.1.2"), scope("compile"), dependency)
+        createDependency(Artifact("org.opentest4j", "opentest4j", "1.2.0"), scope("compile"), dependency),
+        createDependency(Artifact("org.junit.platform", "junit-platform-commons", "1.8.0"), scope("compile"), dependency),
+        createDependency(Artifact("org.apiguardian", "apiguardian-api", "1.1.2"), scope("compile"), dependency)
       )
       "org.junit.jupiter:junit-jupiter-engine:5.8.0" -> listOf(
-        Dependency(Artifact("org.junit.platform", "junit-platform-engine", "1.8.0"), scope("compile"), dependency),
-        Dependency(Artifact("org.junit.jupiter", "junit-jupiter-api", "5.8.0"), scope("compile"), dependency),
-        Dependency(Artifact("org.apiguardian", "apiguardian-api", "1.1.2"), scope("compile"), dependency)
+        createDependency(Artifact("org.junit.platform", "junit-platform-engine", "1.8.0"), scope("compile"), dependency),
+        createDependency(Artifact("org.junit.jupiter", "junit-jupiter-api", "5.8.0"), scope("compile"), dependency),
+        createDependency(Artifact("org.apiguardian", "apiguardian-api", "1.1.2"), scope("compile"), dependency)
       )
       "org.junit.platform:junit-platform-commons:1.8.0" -> listOf(
-        Dependency(Artifact("org.apiguardian", "apiguardian-api", "1.1.2"), scope("compile"), dependency)
+        createDependency(Artifact("org.apiguardian", "apiguardian-api", "1.1.2"), scope("compile"), dependency)
       )
       "org.junit.platform:junit-platform-engine:1.8.0" -> listOf(
-        Dependency(Artifact("org.opentest4j", "opentest4j", "1.2.0"), scope("compile"), dependency),
-        Dependency(Artifact("org.junit.platform", "junit-platform-commons", "1.8.0"), scope("compile"), dependency),
-        Dependency(Artifact("org.apiguardian", "apiguardian-api", "1.1.2"), scope("compile"), dependency)
+        createDependency(Artifact("org.opentest4j", "opentest4j", "1.2.0"), scope("compile"), dependency),
+        createDependency(Artifact("org.junit.platform", "junit-platform-commons", "1.8.0"), scope("compile"), dependency),
+        createDependency(Artifact("org.apiguardian", "apiguardian-api", "1.1.2"), scope("compile"), dependency)
       )
       else -> emptyList()
     }
@@ -107,59 +106,65 @@ abstract class DummyDependencyContributor(private val project: Project) : Depend
     return groups.values.map { DependencyGroup(it.first().data, it) }
   }
 
-  override fun getInspectionResult(externalProjectPath: String, dependency: Dependency): List<InspectionResult> {
-    when (dependency.data.id) {
+  private fun getStatus(data: Dependency.Data, usage: Dependency?): List<Status> {
+    when (data.id) {
       "org.hamcrest:hamcrest-core:1.3" ->
-        if (matchesUsagePathPrefix(dependency.usage, "parent2", "module")) {
-          return listOf(VersionConflict(Artifact("org.hamcrest", "hamcrest-core", "2.2")), Omitted)
+        if (matchesUsagePathPrefix(usage, "parent2", "module")) {
+          return listOf(createVersionConflict("2.2"), Omitted)
         }
       "org.hamcrest:hamcrest:1.3" ->
-        if (matchesUsagePathPrefix(dependency.usage, "org.hamcrest:hamcrest-core:1.3", "parent2", "module")) {
-          return listOf(VersionConflict(Artifact("org.hamcrest", "hamcrest", "2.2")), Omitted)
+        if (matchesUsagePathPrefix(usage, "org.hamcrest:hamcrest-core:1.3", "parent2", "module")) {
+          return listOf(createVersionConflict("2.2"), Omitted)
         }
       "org.hamcrest:hamcrest-core:2.2" -> {
-        if (matchesUsagePathPrefix(dependency.usage, "parent1", "module")) {
-          return listOf(VersionConflict(Artifact("org.hamcrest", "hamcrest-core", "1.3")))
+        if (matchesUsagePathPrefix(usage, "parent1", "module")) {
+          return listOf(createVersionConflict("1.3"))
         }
-        if (!matchesUsagePathPrefix(dependency.usage, "parent1")) {
-          return listOf(Duplicate, Omitted)
+        if (!matchesUsagePathPrefix(usage, "parent1")) {
+          return listOf(Omitted)
         }
       }
       "org.hamcrest:hamcrest:2.2" -> {
-        if (matchesUsagePathPrefix(dependency.usage, "org.hamcrest:hamcrest-core:2.2", "parent1", "module")) {
-          return listOf(VersionConflict(Artifact("org.hamcrest", "hamcrest", "1.3")))
+        if (matchesUsagePathPrefix(usage, "org.hamcrest:hamcrest-core:2.2", "parent1", "module")) {
+          return listOf(createVersionConflict("1.3"))
         }
-        if (!matchesUsagePathPrefix(dependency.usage, "parent1")) {
-          return listOf(Duplicate, Omitted)
+        if (!matchesUsagePathPrefix(usage, "parent1")) {
+          return listOf(Omitted)
         }
       }
       "org.junit.jupiter:junit-jupiter-api:5.8.0" ->
-        if (!matchesUsagePathPrefix(dependency.usage, "parent1")) {
-          return listOf(Duplicate, Omitted)
+        if (!matchesUsagePathPrefix(usage, "parent1")) {
+          return listOf(Omitted)
         }
       "org.junit.jupiter:junit-jupiter-engine:5.8.0" ->
-        if (!matchesUsagePathPrefix(dependency.usage, "parent1")) {
-          return listOf(Duplicate, Omitted)
+        if (!matchesUsagePathPrefix(usage, "parent1")) {
+          return listOf(Omitted)
         }
       "org.junit.platform:junit-platform-commons:1.8.0" ->
-        if (!matchesUsagePathPrefix(dependency.usage, "parent1")) {
-          return listOf(Duplicate, Omitted)
+        if (!matchesUsagePathPrefix(usage, "parent1")) {
+          return listOf(Omitted)
         }
       "org.junit.platform:junit-platform-engine:1.8.0" ->
-        if (!matchesUsagePathPrefix(dependency.usage, "parent1")) {
-          return listOf(Duplicate, Omitted)
+        if (!matchesUsagePathPrefix(usage, "parent1")) {
+          return listOf(Omitted)
         }
       "org.opentest4j:opentest4j:1.2.0" ->
-        if (!matchesUsagePathPrefix(dependency.usage, "org.junit.jupiter:junit-jupiter-api:5.8.0", "parent1")) {
-          return listOf(Duplicate, Omitted)
+        if (!matchesUsagePathPrefix(usage, "org.junit.jupiter:junit-jupiter-api:5.8.0", "parent1")) {
+          return listOf(Omitted)
         }
       "org.apiguardian:apiguardian-api:1.1.2" ->
-        if (!matchesUsagePathPrefix(dependency.usage, "org.junit.jupiter:junit-jupiter-api:5.8.0", "parent1")) {
-          return listOf(Duplicate, Omitted)
+        if (!matchesUsagePathPrefix(usage, "org.junit.jupiter:junit-jupiter-api:5.8.0", "parent1")) {
+          return listOf(Omitted)
         }
     }
     return emptyList()
   }
+
+  private fun createDependency(data: Dependency.Data, scope: Scope, usage: Dependency?) =
+    Dependency(data, scope, usage, getStatus(data, usage))
+
+  private fun createVersionConflict(conflictedVersion: String) =
+    Status.Warning(ExternalSystemBundle.message("external.system.dependency.analyzer.warning.version.conflict", conflictedVersion))
 
   private fun matchesUsagePathPrefix(dependency: Dependency?, vararg ids: String): Boolean {
     if (ids.isEmpty()) return true

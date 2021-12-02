@@ -7,9 +7,6 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.*
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.Info.Omitted
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.Warning
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.Warning.VersionConflict
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
@@ -115,7 +112,7 @@ class DependencyAnalyzerViewImpl(
     return items
       .filter { dependencyDataFilter in it.dependency.data.displayText }
       .filter { it.dependency.scope in dependencyScopeFilter }
-      .filter { if (showDependencyWarnings) it.inspectionResult.filterIsInstance<Warning>().isNotEmpty() else true }
+      .filter { item -> if (showDependencyWarnings) item.dependency.status.any { it is Status.Warning } else true }
   }
 
   private fun getDependencyPath(dependencyItem: DependencyItem): List<DependencyItem> {
@@ -149,7 +146,7 @@ class DependencyAnalyzerViewImpl(
     dependencyGroups.clear()
     externalProjectPath?.let { externalProjectPath ->
       contributor.getDependencyGroups(externalProjectPath)
-        .map { DependencyGroupItem(externalProjectPath, it) }
+        .map { DependencyGroupItem(it) }
         .forEach { dependencyGroups.add(it) }
     }
 
@@ -383,10 +380,10 @@ class DependencyAnalyzerViewImpl(
       val item = value ?: return
       val data = item.group.data
       val variances = item.filteredVariances
-      val inspectionResult = variances.flatMap { it.inspectionResult }
-      val scopes = variances.map { it.scope }.toSet()
+      val status = variances.flatMap { it.dependency.status }
+      val scopes = variances.map { it.dependency.scope }.toSet()
       icon = when {
-        inspectionResult.any { it is Warning } -> AllIcons.General.Warning
+        status.any { it is Status.Warning } -> AllIcons.General.Warning
         data is Dependency.Data.Module -> AllIcons.Nodes.Module
         data is Dependency.Data.Artifact -> AllIcons.Nodes.PpLib
         else -> throw UnsupportedOperationException()
@@ -410,20 +407,20 @@ class DependencyAnalyzerViewImpl(
       val node = value as? DefaultMutableTreeNode ?: return
       val item = node.userObject as? DependencyItem ?: return
       val data = item.dependency.data
-      val inspectionResult = item.inspectionResult
+      val status = item.dependency.status
       icon = when {
-        inspectionResult.any { it is Warning } -> AllIcons.General.Warning
+        status.any { it is Status.Warning } -> AllIcons.General.Warning
         data is Dependency.Data.Module -> AllIcons.Nodes.Module
         data is Dependency.Data.Artifact -> AllIcons.Nodes.PpLib
         else -> throw UnsupportedOperationException()
       }
-      if (Omitted in inspectionResult) {
+      if (Status.Omitted in status) {
         append(data.displayText, SimpleTextAttributes.GRAYED_ATTRIBUTES)
       }
       else {
         append(data.displayText)
       }
-      append(" (${item.scope})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
+      append(" (${item.dependency.scope})", SimpleTextAttributes.GRAYED_ATTRIBUTES)
     }
   }
 
@@ -440,33 +437,28 @@ class DependencyAnalyzerViewImpl(
       super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus)
       val node = value as? DefaultMutableTreeNode ?: return
       val item = node.userObject as? DependencyItem ?: return
-      val versionConflict = item.inspectionResult.filterIsInstance<VersionConflict>().firstOrNull()
-      if (versionConflict != null) {
-        val version = versionConflict.conflicted.version
-        val message = ExternalSystemBundle.message("external.system.dependency.analyzer.error.version.conflict", version)
-        append(" $message", SimpleTextAttributes.ERROR_ATTRIBUTES)
+      val warning = item.dependency.status
+        .filterIsInstance<Status.Warning>()
+        .firstOrNull()
+      if (warning != null) {
+        append(" ${warning.message}", SimpleTextAttributes.ERROR_ATTRIBUTES)
       }
     }
   }
 
   private inner class DependencyGroupItem(
-    val externalProjectPath: String,
     val group: DependencyGroup
   ) {
-    val variances by lazy { group.variances.map { DependencyItem(externalProjectPath, this, it) } }
+    val variances by lazy { group.variances.map { DependencyItem(this, it) } }
     val filteredVariances get() = filterDependencyItems(variances)
 
     override fun toString() = group.toString()
   }
 
-  private inner class DependencyItem(
-    val externalProjectPath: String,
+  private class DependencyItem(
     val group: DependencyGroupItem,
     val dependency: Dependency
   ) {
-    val scope by lazy { dependency.scope }
-    val inspectionResult by lazy { contributor.getInspectionResult(externalProjectPath, dependency) }
-
     override fun toString() = dependency.toString()
   }
 

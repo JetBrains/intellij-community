@@ -6,7 +6,6 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency.Data.Artifact
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.InspectionResult.Warning.VersionConflict
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.dependencies.*
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -17,6 +16,7 @@ import com.intellij.openapi.externalSystem.service.notification.ExternalSystemPr
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.concurrency.runAsync
@@ -31,8 +31,7 @@ import java.util.concurrent.ConcurrentHashMap
 class GradleDependencyContributor(private val project: Project) : DependencyContributor {
   private val projects = mutableMapOf<String, GradleModuleData>()
   private val configurationNodesMap = ConcurrentHashMap<String, List<DependencyScopeNode>>()
-  private val inspectionResults = mutableMapOf<Pair<String, Dependency>, List<DependencyContributor.InspectionResult>>()
-  private val dependenciesData = ConcurrentHashMap<Long, Pair<Dependency.Data, List<DependencyContributor.InspectionResult>>>()
+  private val dependencies = ConcurrentHashMap<Long, Dependency>()
   private lateinit var updateViewTrigger: () -> Unit
 
   override fun whenDataChanged(listener: () -> Unit, parentDisposable: Disposable) {
@@ -44,8 +43,7 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
         if (id.projectSystemId != GradleConstants.SYSTEM_ID) return
         projects.clear()
         configurationNodesMap.clear()
-        inspectionResults.clear()
-        dependenciesData.clear()
+        dependencies.clear()
         updateViewTrigger()
       }
     }, parentDisposable)
@@ -74,11 +72,6 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
     return toDependencyGroups(gradleModuleData, scopeNodes)
   }
 
-  override fun getInspectionResult(externalProjectPath: String,
-                                   dependency: Dependency): List<DependencyContributor.InspectionResult> {
-    return inspectionResults.getOrDefault(Pair(externalProjectPath, dependency), emptyList())
-  }
-
   private fun getOrRefreshData(gradleModuleData: GradleModuleData): List<DependencyScopeNode> {
     return configurationNodesMap.computeIfAbsent(gradleModuleData.gradleProjectDir) { path ->
       runAsync { // TODO should be replaced with async loading data by DependencyAnalyzerViewImpl
@@ -98,7 +91,7 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
     val groups = mutableMapOf<Dependency.Data, MutableSet<Dependency>>()
     val root = Dependency.Data.Module(moduleData.moduleName)
 
-    val rootDependency = Dependency(root, defaultConfiguration, null)
+    val rootDependency = Dependency(root, defaultConfiguration, null, emptyList())
     groups[root] = mutableSetOf(rootDependency)
     for (scopeNode in scopeNodes) {
       val scope = scopeNode.toScope()
@@ -114,39 +107,46 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
                                  dependencyNode: DependencyNode,
                                  groups: MutableMap<Dependency.Data, MutableSet<Dependency>>,
                                  gradleProjectDir: String) {
-    if (dependencyNode is ReferenceNode) {
-      dependenciesData[dependencyNode.id]?.let { (data, inspections) ->
-        val dependency = Dependency(data, scope, usage)
-        groups.getOrPut(data, ::mutableSetOf).add(dependency)
-        inspectionResults[gradleProjectDir to dependency] = inspections
+    val dependency = when (dependencyNode) {
+      is ReferenceNode -> dependencies[dependencyNode.id]
+        ?.let { Dependency(it.data, scope, usage, it.status) }
+      else -> createDependency(dependencyNode, scope, usage)
+        ?.also { dependencies[dependencyNode.id] = it }
+    }
+    if (dependency != null) {
+      groups.getOrPut(dependency.data, ::mutableSetOf).add(dependency)
+      for (node in dependencyNode.dependencies) {
+        addDependencyGroup(dependency, scope, node, groups, gradleProjectDir)
       }
-      return
-    }
-
-    val dependencyData = dependencyNode.toDependencyData() ?: return
-    val dependency = Dependency(dependencyData, scope, usage)
-    groups.getOrPut(dependencyData, ::mutableSetOf).add(dependency)
-
-    val inspectionsList = mutableListOf<DependencyContributor.InspectionResult>()
-    // see, org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableDependency.ResolutionState
-    if (dependencyNode.resolutionState == "FAILED" || dependencyNode.resolutionState == "UNRESOLVED") {
-      inspectionsList.add(DependencyContributor.InspectionResult.Warning.Unresolved)
-    }
-    val selectionReason = dependencyNode.selectionReason
-    if (dependencyData is Artifact && selectionReason != null && selectionReason.startsWith("between versions")) {
-      val conflictedVersion = selectionReason.substringAfter("between versions ${dependencyData.version} and ", "")
-      if (conflictedVersion.isNotEmpty()) {
-        inspectionsList.add(VersionConflict(dependencyData.copy(version = conflictedVersion)))
-      }
-    }
-    inspectionResults[gradleProjectDir to dependency] = inspectionsList
-    dependenciesData[dependencyNode.id] = dependencyData to inspectionsList
-    for (node in dependencyNode.dependencies) {
-      addDependencyGroup(dependency, scope, node, groups, gradleProjectDir)
     }
   }
 
-  private fun DependencyNode.toDependencyData(): Dependency.Data? {
+  private fun createDependency(dependencyNode: DependencyNode, scope: DependencyContributor.Scope, usage: Dependency): Dependency? {
+    val dependencyData = dependencyNode.getDependencyData() ?: return null
+    val status = dependencyNode.getStatus(dependencyData)
+    return Dependency(dependencyData, scope, usage, status)
+  }
+
+  private fun DependencyNode.getStatus(data: Dependency.Data): List<DependencyContributor.Status> {
+    val status = mutableListOf<DependencyContributor.Status>()
+    // see, org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableDependency.ResolutionState
+    val resolutionState = resolutionState
+    if (resolutionState == "FAILED" || resolutionState == "UNRESOLVED") {
+      val message = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.unresolved")
+      status.add(DependencyContributor.Status.Warning(message))
+    }
+    val selectionReason = selectionReason
+    if (data is Artifact && selectionReason != null && selectionReason.startsWith("between versions")) {
+      val conflictedVersion = selectionReason.substringAfter("between versions ${data.version} and ", "")
+      if (conflictedVersion.isNotEmpty()) {
+        val message = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.version.conflict", conflictedVersion)
+        status.add(DependencyContributor.Status.Warning(message))
+      }
+    }
+    return status
+  }
+
+  private fun DependencyNode.getDependencyData(): Dependency.Data? {
     return when (this) {
       is ProjectDependencyNode -> {
         Dependency.Data.Module(projectName)

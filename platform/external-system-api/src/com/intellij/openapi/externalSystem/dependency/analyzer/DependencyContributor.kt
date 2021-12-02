@@ -14,8 +14,6 @@ interface DependencyContributor {
 
   fun getDependencyGroups(externalProjectPath: String): List<DependencyGroup>
 
-  fun getInspectionResult(externalProjectPath: String, dependency: Dependency): List<InspectionResult>
-
   data class ExternalProject(val path: String, val title: @Nls String) {
     override fun toString() = title
   }
@@ -24,7 +22,7 @@ interface DependencyContributor {
     override fun toString() = id
   }
 
-  data class Dependency(val data: Data, val scope: Scope, val usage: Dependency?) {
+  data class Dependency(val data: Data, val scope: Scope, val usage: Dependency?, val status: List<Status>) {
 
     override fun toString() = "$data -> $usage"
 
@@ -44,20 +42,10 @@ interface DependencyContributor {
     override fun toString() = data.toString()
   }
 
-  interface InspectionResult {
+  sealed interface Status {
 
-    interface Info: InspectionResult {
+    object Omitted : Status
 
-      object Omitted : Info
-
-      object Duplicate : Info
-    }
-
-    interface Warning : InspectionResult {
-
-      class VersionConflict(val conflicted: Dependency.Data.Artifact) : Warning
-
-      object Unresolved : Warning
-    }
+    class Warning(val message: @Nls String) : Status
   }
 }
