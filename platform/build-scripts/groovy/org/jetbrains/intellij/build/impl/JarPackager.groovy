@@ -55,6 +55,58 @@ final class JarPackager {
     pack(actualModuleJars, outputDir, new BaseLayout() {}, new ModuleOutputPatcher(), false, context)
   }
 
+  private static final Map<String, Predicate<String>> EXTRA_MERGE_RULES = new LinkedHashMap<>();
+
+  static {
+    // kotlinx- and kotlin-reflect libs to one kotlinx.jar
+    EXTRA_MERGE_RULES.put("kotlinx.jar", new Predicate<String>() {
+      @Override
+      boolean test(String name) {
+        return name.startsWith("kotlinx-") || name == "kotlin-reflect"
+      }
+    })
+    EXTRA_MERGE_RULES.put("jsch-agent.jar", new Predicate<String>() {
+      @Override
+      boolean test(String name) {
+        return name.startsWith("jsch-agent")
+      }
+    })
+    // see ClassPathUtil.getUtilClassPath
+    EXTRA_MERGE_RULES.put("3rd-party-rt.jar", new Predicate<String>() {
+      private static final Set<String> libsThatUsedInJps = Set.of(
+        "ASM",
+        "aalto-xml",
+        "netty-buffer",
+        "netty-codec-http",
+        "netty-handler-proxy",
+        "fastutil-min",
+        "gson",
+        "Log4J",
+        "Slf4j",
+        // see getBuildProcessApplicationClasspath - used in JPS
+        "lz4-java",
+        "maven-resolver-provider",
+        "OroMatcher",
+        "jgoodies-forms",
+        "jgoodies-common",
+        "NanoXML",
+        // see ArtifactRepositoryManager.getClassesFromDependencies
+        "plexus-utils",
+        "Guava",
+        "http-client",
+        "commons-codec",
+        "commons-logging",
+        "commons-lang3"
+      )
+
+      @Override
+      boolean test(String name) {
+        return libsThatUsedInJps.contains(name)
+      }
+    }
+    )
+  }
+
   static Collection<DistributionFileEntry> pack(Map<String, List<String>> actualModuleJars,
                                                 Path outputDir,
                                                 BaseLayout layout,
@@ -104,36 +156,9 @@ final class JarPackager {
 
     boolean isRootDir = context.paths.distAllDir == outputDir.parent
     if (isRootDir) {
-      // kotlinx- libs to one kotlinx.jar
-      packager.mergeLibsByPredicate("kotlinx.jar", libraryToMerge, outputDir) { it.startsWith("kotlinx-") }
-
-      // see ClassPathUtil.getUtilClassPath
-      Set<String> libsThatUsedInJps = Set.of(
-        "ASM",
-        "aalto-xml",
-        "netty-buffer",
-        "netty-codec-http",
-        "netty-handler-proxy",
-        "fastutil-min",
-        "gson",
-        "Log4J",
-        "Slf4j",
-        // see getBuildProcessApplicationClasspath - used in JPS
-        "lz4-java",
-        "maven-resolver-provider",
-        "OroMatcher",
-        "jgoodies-forms",
-        "jgoodies-common",
-        "NanoXML",
-        // see ArtifactRepositoryManager.getClassesFromDependencies
-        "plexus-utils",
-        "Guava",
-        "http-client",
-        "commons-codec",
-        "commons-logging",
-        "commons-lang3"
-      )
-      packager.mergeLibsByPredicate("3rd-party-rt.jar", libraryToMerge, outputDir) { libsThatUsedInJps.contains(it) }
+      for (Map.Entry<String, Predicate<String>> rule : EXTRA_MERGE_RULES.entrySet() ) {
+        packager.mergeLibsByPredicate(rule.key, libraryToMerge, outputDir, rule.value)
+      }
     }
 
     List libSources
@@ -344,7 +369,8 @@ final class JarPackager {
           ((PlatformLayout)layout).projectLibrariesWithRemovedVersionFromJarNames.contains(libraryData.libraryName)) {
         packMode = PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME
       }
-      else if (packMode == PackMode.MERGED && !isLibraryMergeable.test(libName)) {
+      else if (packMode == PackMode.MERGED && !EXTRA_MERGE_RULES.values().any { it.test(libName) } &&
+               !isLibraryMergeable.test(libName)) {
         packMode = PackMode.STANDALONE_MERGED
       }
 
