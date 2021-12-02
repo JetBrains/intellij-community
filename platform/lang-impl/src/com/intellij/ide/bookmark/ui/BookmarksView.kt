@@ -201,7 +201,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
         .install()
     }
 
-    tree.emptyText.initialize(tree)
+    tree.emptyText.initialize()
     tree.addTreeSelectionListener(RestoreSelectionListener())
     tree.addTreeSelectionListener { if (tree.hasFocus()) selectionAlarm.cancelAndRequest() }
     tree.addFocusListener(object : FocusListener {
