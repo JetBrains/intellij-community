@@ -81,12 +81,4 @@ public interface XmlElementDescriptor extends PsiMetaData {
   @Nullable
   String getDefaultValue();
 
-  /**
-   * @return true, if the element should be highlighted as "Custom tag name".
-   * For HTML files, there is also independent logic that checks that if no html tags with such name,
-   * then IDE will use "Custom tag name" highlighting
-   */
-  default boolean isCustomElement() {
-    return false;
-  }
 }
