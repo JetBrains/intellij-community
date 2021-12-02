@@ -157,18 +157,20 @@ internal class PackagesListPanel(
         }
 
     private val onlyMultiplatformCheckBox =
-        PackageSearchUI.checkBox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyMpp"))
-            .apply {
-                isOpaque = false
-                border = scaledEmptyBorder(left = 6)
-                isSelected = false
-            }
+        PackageSearchUI.checkBox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyMpp")) {
+            isOpaque = false
+            border = scaledEmptyBorder(left = 6)
+            isSelected = false
+        }
 
-    private val mainToolbar = ActionManager.getInstance().createActionToolbar("Packages.Manage", createActionGroup(), true).apply {
-        targetComponent = toolbar
-        component.background = PackageSearchUI.HeaderBackgroundColor
-        component.border = BorderFactory.createMatteBorder(0, 1.scaled(), 0, 0, JBUI.CurrentTheme.CustomFrameDecorations.paneBackground())
-    }
+    private val mainToolbar = ActionManager.getInstance()
+        .createActionToolbar("Packages.Manage", createActionGroup(), true)
+        .apply {
+            targetComponent = toolbar
+            component.background = PackageSearchUI.HeaderBackgroundColor
+            val paneBackground = JBUI.CurrentTheme.CustomFrameDecorations.paneBackground()
+            component.border = BorderFactory.createMatteBorder(0, 1.scaled(), 0, 0, paneBackground)
+        }
 
     private fun createActionGroup() = DefaultActionGroup().apply {
         add(ComponentActionWrapper { onlyStableCheckBox })
