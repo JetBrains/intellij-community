@@ -15,9 +15,6 @@ class AutoImportOptionsConfigurable(private val project: Project) :
     ApplicationBundle.message("auto.import"), "reference.settingsdialog.IDE.editor.autoimport"),
   EditorOptionsProvider, VariableProjectAppLevel, WithEpDependencies {
 
-  public override val configurables: List<AutoImportOptionsProvider>
-    get() = super.configurables
-
   override fun createConfigurables(): List<AutoImportOptionsProvider> {
     return AutoImportOptionsProviderEP.EP_NAME.getExtensions(project).mapNotNull { it.createConfigurable() }
   }
