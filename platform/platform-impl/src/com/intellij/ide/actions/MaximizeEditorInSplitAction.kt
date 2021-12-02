@@ -85,15 +85,6 @@ class MaximizeEditorInSplitAction : DumbAwareAction() {
     presentation.isEnabled = false
   }
 
-  fun getSplittersToMaximize(e: AnActionEvent): Set<Pair<Splitter, Boolean>> {
-    val project = e.project
-    val editor = e.getData(CommonDataKeys.HOST_EDITOR)
-    if (project == null || editor == null) {
-      return emptySet()
-    }
-    return getSplittersToMaximize(project, editor)
-  }
-
   companion object {
     val CURRENT_STATE_IS_MAXIMIZED_KEY = Key.create<Boolean>("CURRENT_STATE_IS_MAXIMIZED")
     fun getSplittersToMaximize(project: Project, editor: Editor): Set<Pair<Splitter, Boolean>> {
@@ -119,9 +110,21 @@ class MaximizeEditorInSplitAction : DumbAwareAction() {
       return set
     }
 
+    private fun getEditor(e: AnActionEvent) =
+      e.getData(CommonDataKeys.HOST_EDITOR) ?: e.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE)
+
+    fun getSplittersToMaximize(e: AnActionEvent): Set<Pair<Splitter, Boolean>> {
+      val project = e.project
+      val editor = getEditor(e)
+      if (project == null || editor == null) {
+        return emptySet()
+      }
+      return getSplittersToMaximize(project, editor)
+    }
+
     fun getSplittersToNormalize(e: AnActionEvent): Set<Splitter> {
       val project = e.project
-      val editor = e.getData(CommonDataKeys.HOST_EDITOR)
+      val editor = getEditor(e)
       if (project == null || editor == null /*|| !e.isRelatedToSplits()*/) {
         return emptySet()
       }
