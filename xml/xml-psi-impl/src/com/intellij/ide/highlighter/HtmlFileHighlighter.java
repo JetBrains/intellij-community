@@ -35,7 +35,7 @@ import static com.intellij.psi.xml.XmlTokenType.*;
 
 public class HtmlFileHighlighter extends SyntaxHighlighterBase {
   private static final MultiMap<IElementType, TextAttributesKey> ourMap = MultiMap.create();
-  
+
   static {
     ourMap.putValue(XML_TAG_CHARACTERS, XmlHighlighterColors.HTML_TAG);
 
@@ -76,7 +76,7 @@ public class HtmlFileHighlighter extends SyntaxHighlighterBase {
   public Lexer getHighlightingLexer() {
     return new HtmlHighlightingLexer(FileTypeRegistry.getInstance().findFileTypeByName("CSS"));
   }
-  
+
   @Override
   public TextAttributesKey @NotNull [] getTokenHighlights(IElementType tokenType) {
     //noinspection SynchronizationOnGetClass,SynchronizeOnThis

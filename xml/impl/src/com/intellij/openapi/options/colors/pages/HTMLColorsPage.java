@@ -39,7 +39,6 @@ public class HTMLColorsPage implements ColorSettingsPage {
     new AttributesDescriptor(XmlBundle.message("options.html.attribute.descriptor.code"), XmlHighlighterColors.HTML_CODE),
     new AttributesDescriptor(XmlBundle.message("options.html.attribute.descriptor.comment"), XmlHighlighterColors.HTML_COMMENT),
     new AttributesDescriptor(XmlBundle.message("options.html.attribute.descriptor.tag"), XmlHighlighterColors.HTML_TAG),
-    new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag.custom"), XmlHighlighterColors.HTML_CUSTOM_TAG),
     new AttributesDescriptor(XmlBundle.message("options.xml.attribute.descriptor.tag.name.custom"), XmlHighlighterColors.HTML_CUSTOM_TAG_NAME),
     new AttributesDescriptor(XmlBundle.message("options.html.attribute.descriptor.tag.name"), XmlHighlighterColors.HTML_TAG_NAME),
     new AttributesDescriptor(XmlBundle.message("options.html.attribute.descriptor.attribute.name"), XmlHighlighterColors.HTML_ATTRIBUTE_NAME),
@@ -101,9 +100,9 @@ public class HTMLColorsPage implements ColorSettingsPage {
            "<h1>" + FULL_PRODUCT_NAME + "</h1>\n" +
            "<p><br><b><IMG border=0 height=12 src=\"images/hg.gif\" width=18 >\n" +
            "What is " + FULL_PRODUCT_NAME.replaceAll(" ", "&nbsp;") + "? &#x00B7; &Alpha; </b><br><br>\n" +
-           "<custom_tag><<custom_tag_name>custom-tag</custom_tag_name>></custom_tag>" +
+           "<<custom_tag_name>custom-tag</custom_tag_name>>" +
            "hello" +
-           "<custom_tag></<custom_tag_name>custom_tag</custom_tag_name>></custom_tag>\n" +
+           "</<custom_tag_name>custom_tag</custom_tag_name>>\n" +
            "</body>\n" +
            "</html>";
   }
@@ -111,7 +110,6 @@ public class HTMLColorsPage implements ColorSettingsPage {
   @Override
   public Map<String, TextAttributesKey> getAdditionalHighlightingTagToDescriptorMap() {
     return new ContainerUtil.ImmutableMapBuilder<String, TextAttributesKey>()
-      .put("custom_tag", XmlHighlighterColors.HTML_CUSTOM_TAG)
       .put("custom_tag_name", XmlHighlighterColors.HTML_CUSTOM_TAG_NAME)
       .build();
   }
