@@ -115,7 +115,7 @@ public class GitExecutableManager {
     String path = GitVcsApplicationSettings.getInstance().getSavedPathToGit();
     if (path == null) {
       WSLDistribution wslDistribution = WslPath.getDistributionByWindowsUncPath(gitDirectory.getPath());
-      path = myExecutableDetector.detect(wslDistribution);
+      path = myExecutableDetector.getExecutable(wslDistribution, true);
     }
     return getExecutable(path);
   }
@@ -152,12 +152,7 @@ public class GitExecutableManager {
   @Nullable
   public String getDetectedExecutable(@Nullable Project project, boolean detectIfNeeded) {
     WSLDistribution distribution = getProjectWslDistribution(project);
-    if (detectIfNeeded) {
-      return myExecutableDetector.detect(distribution);
-    }
-    else {
-      return myExecutableDetector.getExecutable(distribution);
-    }
+    return myExecutableDetector.getExecutable(distribution, detectIfNeeded);
   }
 
   @RequiresBackgroundThread
