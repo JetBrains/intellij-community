@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.ProjectSdkSetupValidator;
@@ -12,6 +12,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ui.configuration.SdkPopupBuilder;
 import com.intellij.openapi.roots.ui.configuration.SdkPopupFactory;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -50,6 +51,9 @@ public class JavaProjectSdkSetupValidator implements ProjectSdkSetupValidator {
         else {
           return JavaUiBundle.message("module.sdk.not.defined");
         }
+      }
+      else if (sdk.getRootProvider().getFiles(OrderRootType.CLASSES).length == 0) {
+        return JavaUiBundle.message("project.or.module.jdk.misconfigured", ModuleRootManager.getInstance(module).isSdkInherited() ? 0 : 1);
       }
     }
     return null;
