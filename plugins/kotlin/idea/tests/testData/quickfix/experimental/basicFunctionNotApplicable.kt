@@ -2,9 +2,9 @@
 // COMPILER_ARGUMENTS: -opt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
 // ACTION: Propagate 'MyExperimentalAPI' opt-in requirement to containing class 'Bar'
-// ACTION: Opt in for 'MyExperimentalAPI' on 'bar'
-// ACTION: Opt in for 'MyExperimentalAPI' on containing class 'Bar'
-// ACTION: Opt in for 'MyExperimentalAPI' on containing file 'basicFunctionNotApplicable.kt'
+// ACTION: Opt in for 'MyExperimentalAPI' in 'bar'
+// ACTION: Opt in for 'MyExperimentalAPI' in containing class 'Bar'
+// ACTION: Opt in for 'MyExperimentalAPI' in containing file 'basicFunctionNotApplicable.kt'
 // ACTION: Add '-opt-in=MyExperimentalAPI' to module light_idea_test_case compiler arguments
 // ERROR: This declaration is experimental and its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
 // ERROR: This declaration is experimental and its usage must be marked with '@MyExperimentalAPI' or '@OptIn(MyExperimentalAPI::class)'
