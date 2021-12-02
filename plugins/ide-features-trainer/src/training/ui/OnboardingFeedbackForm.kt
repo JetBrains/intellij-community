@@ -49,7 +49,7 @@ private const val FEEDBACK_CONTENT_WIDTH = 500
 private const val SUB_OFFSET = 20
 
 
-fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData: OnboardingFeedbackData?) {
+fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData: OnboardingFeedbackData) {
   StatisticBase.logOnboardingFeedbackNotification(getFeedbackEntryPlace(project))
   val notification = iftNotificationGroup.createNotification(LearnBundle.message("onboarding.feedback.notification.title"),
                                                              LearnBundle.message("onboarding.feedback.notification.message",
@@ -71,7 +71,7 @@ fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData
 }
 
 fun showOnboardingLessonFeedbackForm(project: Project?,
-                                     onboardingFeedbackData: OnboardingFeedbackData?,
+                                     onboardingFeedbackData: OnboardingFeedbackData,
                                      openedViaNotification: Boolean): Boolean {
   val saver = mutableListOf<JsonObjectBuilder.() -> Unit>()
 
@@ -111,7 +111,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
 
   val technicalIssuesPanel = FormBuilder.createFormBuilder().let { builder ->
     builder.addComponent(feedbackOption("cannot_pass", LearnBundle.message("onboarding.feedback.option.cannot.pass.task")))
-    for ((id, label) in onboardingFeedbackData?.possibleTechnicalIssues ?: emptyMap()) {
+    for ((id, label) in onboardingFeedbackData.possibleTechnicalIssues) {
       builder.addComponent(feedbackOption(id, label))
     }
     builder.addComponent(technicalIssuesArea)
@@ -199,18 +199,14 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
         function()
       }
       put("system_info", jsonConverter.encodeToJsonElement(systemInfoData))
-      if (onboardingFeedbackData != null) {
-        onboardingFeedbackData.addAdditionalSystemData.invoke(this)
-        put("lesson_end_info", jsonConverter.encodeToJsonElement(onboardingFeedbackData.lessonEndInfo))
-        put("used_actions", actionsNumber)
-        put("recent_projects", recentProjectsNumber)
-      }
+      onboardingFeedbackData.addAdditionalSystemData.invoke(this)
+      put("lesson_end_info", jsonConverter.encodeToJsonElement(onboardingFeedbackData.lessonEndInfo))
+      put("used_actions", actionsNumber)
+      put("recent_projects", recentProjectsNumber)
     }
 
-    if (onboardingFeedbackData != null) {
-      submitGeneralFeedback(project, onboardingFeedbackData.reportTitle, "",
-                            onboardingFeedbackData.reportTitle, jsonConverter.encodeToString(collectedData))
-    }
+    submitGeneralFeedback(project, onboardingFeedbackData.reportTitle, "",
+                          onboardingFeedbackData.reportTitle, jsonConverter.encodeToString(collectedData))
   }
   StatisticBase.logOnboardingFeedbackDialogResult(
     place = getFeedbackEntryPlace(project),
