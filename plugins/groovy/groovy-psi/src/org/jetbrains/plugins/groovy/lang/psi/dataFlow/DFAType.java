@@ -28,7 +28,7 @@ import static java.util.stream.Collectors.toList;
  */
 public final class DFAType {
 
-  private static final DFAType NULL_DFA_TYPE = new DFAType(null, PsiType.NULL);
+  public static final DFAType NULL_DFA_TYPE = new DFAType(null, PsiType.NULL);
 
   private final @Nullable PsiType primary;
 

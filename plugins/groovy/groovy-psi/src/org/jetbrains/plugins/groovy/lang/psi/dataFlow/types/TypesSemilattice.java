@@ -20,21 +20,17 @@ import java.util.Objects;
  * @author ven
  */
 public class TypesSemilattice implements Semilattice<TypeDfaState> {
+
   private final PsiManager myManager;
-  private final Map<VariableDescriptor, Integer> varIndexes;
 
-  static final TypeDfaState NEUTRAL = new TypeDfaState();
-
-  public TypesSemilattice(@NotNull PsiManager manager,
-                          Map<VariableDescriptor, Integer> varIndexes) {
+  public TypesSemilattice(@NotNull PsiManager manager) {
     myManager = manager;
-    this.varIndexes = varIndexes;
   }
 
   @Override
   @NotNull
   public TypeDfaState initial() {
-    return NEUTRAL;
+    return TypeDfaState.EMPTY_STATE;
   }
 
   @NotNull
@@ -43,7 +39,7 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
     TypeDfaState result = ins.get(0);
 
     for (int i = 1; i < ins.size(); i++) {
-      result = result.withMerged(ins.get(i), myManager, varIndexes);
+      result = TypeDfaState.merge(result, ins.get(i), myManager);
     }
     return result;
   }
@@ -62,7 +58,7 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
     List<Int2ObjectMap.Entry<DFAType>> newTypes = new SmartList<>();
     for (Int2ObjectMap.Entry<DFAType> candidateEntry : another.getRawVarTypes().int2ObjectEntrySet()) {
       int index = candidateEntry.getIntKey();
-      if (index == 0 || another.getProhibitedCachingVars().get(index) ||
+      if (index == 0 || another.isProhibited(index) ||
           (cached.containsKey(index) /*&& checkDfaStatesConsistency(cached, candidateEntry)*/)) {
         continue;
       }
