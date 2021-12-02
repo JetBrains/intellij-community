@@ -199,6 +199,10 @@ public class TaintAnalyzer {
     if (uExpression instanceof UResolvable) return analyze(uExpression);
     UPolyadicExpression uConcatenation = getConcatenation(uExpression);
     if (uConcatenation != null) return StreamEx.of(uConcatenation.getOperands()).collect(joining(true));
+    UIfExpression uIfExpression = ObjectUtils.tryCast(uExpression, UIfExpression.class);
+    if (uIfExpression != null) {
+      return StreamEx.of(uIfExpression.getThenExpression(), uIfExpression.getElseExpression()).collect(joining(true));
+    }
     if (!goDeep) return TaintValue.UNTAINTED;
     PsiExpression javaPsi = ObjectUtils.tryCast(uExpression.getJavaPsi(), PsiExpression.class);
     if (javaPsi == null) return TaintValue.UNTAINTED;
@@ -212,7 +216,6 @@ public class TaintAnalyzer {
   }
 
   private static @NotNull Collection<NonMarkedElement> findArgs(PsiMethod psiMethod, int paramIdx) {
-    Collection<PsiReference> all = ReferencesSearch.search(psiMethod, psiMethod.getUseScope()).findAll();
     return ReferencesSearch.search(psiMethod, psiMethod.getUseScope())
       .mapping(r -> ObjectUtils.tryCast(r.getElement().getParent(), PsiMethodCallExpression.class))
       .mapping(call -> call == null ? null : call.getArgumentList().getExpressions())
