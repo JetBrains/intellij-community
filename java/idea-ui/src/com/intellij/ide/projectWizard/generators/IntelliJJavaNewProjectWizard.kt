@@ -30,7 +30,7 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
           parent.context.projectJdk = sdk
         } else {
           // New module in an existing project: set module JDK
-          val sameSDK = ProjectRootManager.getInstance(project).projectSdk?.homePath == sdk?.homePath
+          val sameSDK = ProjectRootManager.getInstance(project).projectSdk?.name == sdk?.name
           builder.moduleJdk = if (sameSDK) null else sdk
         }
 
