@@ -31,9 +31,9 @@ abstract class OutputEventSplitterBase(private val serviceMessagePrefix: String,
                                        private val bufferTextUntilNewLine: Boolean,
                                        private val cutNewLineBeforeServiceMessage: Boolean) {
 
-  data class OutputType(val name: String, val stream: OutputStream)
+  data class OutputType(val name: String, val streamType: OutputStreamType)
 
-  enum class OutputStream {
+  enum class OutputStreamType {
     STDOUT, STDERR, SYSTEM
   }
 
@@ -41,7 +41,7 @@ abstract class OutputEventSplitterBase(private val serviceMessagePrefix: String,
 
   private var newLinePending = false
 
-  private val prevRefs: Map<OutputStream, AtomicReference<Output>> = OutputStream.values().associateWith { AtomicReference<Output>() }
+  private val prevRefs = OutputStreamType.values().associateWith { AtomicReference<Output>() }
 
   /**
    * For stderr and system [text] is provided as fast as possible unless [bufferTextUntilNewLine].
@@ -51,17 +51,15 @@ abstract class OutputEventSplitterBase(private val serviceMessagePrefix: String,
   abstract fun onTextAvailable(text: String, outputType: OutputType)
 
   /**
-   * Only stdout ([OutputType.stream] == [OutputStream.STDOUT]) accepts Teamcity Messages ([ServiceMessage]).
+   * Only stdout ([OutputType.streamType] == [OutputStreamType.STDOUT]) accepts Teamcity Messages ([ServiceMessage]).
    *
    * Stderr and System are flushed automatically unless [bufferTextUntilNewLine],
    * Stdout may be buffered until the end of the message.
    * Make sure you do not process same type from different threads.
    */
   fun process(text: String, outputType: OutputType) {
-    val prevRef = prevRefs[outputType.stream]
-    if (prevRef == null) {
-      flushInternal(text, outputType)
-      return
+    val prevRef = requireNotNull(prevRefs[outputType.streamType]) {
+      "reference to ${outputType.streamType} stream type is missing"
     }
 
     var mergedText = text
@@ -80,7 +78,7 @@ abstract class OutputEventSplitterBase(private val serviceMessagePrefix: String,
 
   private fun processInternal(text: String, outputType: OutputType): String? {
     var from = 0
-    val processServiceMessages = outputType.stream == OutputStream.STDOUT
+    val processServiceMessages = outputType.streamType == OutputStreamType.STDOUT
     // new line char and teamcity message start are two reasons to flush previous text
     var newLineInd = text.indexOf('\n')
     var teamcityMessageStartInd = if (processServiceMessages) text.indexOf(serviceMessagePrefix) else -1
@@ -145,7 +143,7 @@ abstract class OutputEventSplitterBase(private val serviceMessagePrefix: String,
   }
 
   private fun flushInternal(text: String, outputType: OutputType, lastFlush: Boolean = false) {
-    if (cutNewLineBeforeServiceMessage && outputType.stream == OutputStream.STDOUT) {
+    if (cutNewLineBeforeServiceMessage && outputType.streamType == OutputStreamType.STDOUT) {
       if (newLinePending) { //Prev. flush was "\n".
         if (!text.startsWith(serviceMessagePrefix) || (lastFlush)) {
           onTextAvailable("\n", outputType)

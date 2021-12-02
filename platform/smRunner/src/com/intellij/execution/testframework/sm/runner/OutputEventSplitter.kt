@@ -39,6 +39,10 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
 
   companion object {
     private val USE_CYCLE_BUFFER = ConsoleBuffer.useCycleBuffer()
+
+    private val stdout = OutputType(ProcessOutputType.STDOUT.toString(), OutputStreamType.STDOUT)
+    private val stderr = OutputType(ProcessOutputType.STDERR.toString(), OutputStreamType.STDERR)
+    private val system = OutputType(ProcessOutputType.SYSTEM.toString(), OutputStreamType.SYSTEM)
   }
 
   /**
@@ -81,10 +85,10 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
       ProcessOutputType.STDERR.toString() -> ProcessOutputType.STDERR
       ProcessOutputType.SYSTEM.toString() -> ProcessOutputType.SYSTEM
       else -> {
-        val baseType = when (stream) {
-          OutputStream.STDOUT -> ProcessOutputType.STDOUT
-          OutputStream.STDERR -> ProcessOutputType.STDERR
-          OutputStream.SYSTEM -> ProcessOutputType.SYSTEM
+        val baseType = when (streamType) {
+          OutputStreamType.STDOUT -> ProcessOutputType.STDOUT
+          OutputStreamType.STDERR -> ProcessOutputType.STDERR
+          OutputStreamType.SYSTEM -> ProcessOutputType.SYSTEM
           else -> ProcessOutputType.STDOUT
         }
         return ProcessOutputType(name, baseType)
@@ -93,12 +97,11 @@ abstract class OutputEventSplitter(private val bufferTextUntilNewLine: Boolean =
   }
 
   private fun ProcessOutputType.toOutputType(): OutputType {
-    val stream = when (baseOutputType) {
-      ProcessOutputType.STDOUT -> OutputStream.STDOUT
-      ProcessOutputType.STDERR -> OutputStream.STDERR
-      ProcessOutputType.SYSTEM -> OutputStream.SYSTEM
-      else -> OutputStream.STDOUT
+    return when (baseOutputType) {
+      ProcessOutputType.STDOUT -> stdout
+      ProcessOutputType.STDERR -> stderr
+      ProcessOutputType.SYSTEM -> system
+      else -> OutputType(toString(), OutputStreamType.STDOUT)
     }
-    return OutputType(toString(), stream)
   }
 }
