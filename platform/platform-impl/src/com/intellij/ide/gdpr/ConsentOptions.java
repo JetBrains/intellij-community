@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.gdpr;
 
+import com.fasterxml.jackson.jr.ob.JSON;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -9,7 +10,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -406,12 +406,12 @@ public final class ConsentOptions {
   @NotNull
   private Collection<ConsentAttributes> fromJson(@Nullable String json) {
     try {
-      ConsentAttributes[] data = StringUtilRt.isEmptyOrSpaces(json) ? null : new GsonBuilder().disableHtmlEscaping().create().fromJson(json, ConsentAttributes[].class);
+      List<ConsentAttributes> data = json == null || json.isEmpty() ? null : JSON.std.listOfFrom(ConsentAttributes.class, json);
       if (data != null) {
         for (ConsentAttributes attributes : data) {
           attributes.consentId = lookupConsentID(attributes.consentId);
         }
-        return Arrays.asList(data);
+        return data;
       }
     }
     catch (Throwable e) {
