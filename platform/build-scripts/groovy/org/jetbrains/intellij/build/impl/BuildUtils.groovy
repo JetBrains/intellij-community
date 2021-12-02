@@ -1,8 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtilRt
 import com.intellij.util.XmlDomReader
+import com.intellij.util.lang.UrlClassLoader
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
@@ -52,8 +54,11 @@ final class BuildUtils {
       else if (classLoader instanceof AntClassLoader) {
         classLoader.addPathElement(path)
       }
+      else if (classLoader instanceof UrlClassLoader) {
+        classLoader.addFiles(List.of(Path.of(path)))
+      }
       else if (classLoader.metaClass.respondsTo(classLoader, 'addURL', URL)) {
-        classLoader.addURL(new File(path).toURI().toURL())
+        classLoader.addURL(FileUtil.fileToUri(new File(path)).toURL())
       }
       else {
         throw new BuildException("Cannot add to classpath: non-groovy or ant classloader $classLoader which doesn't have 'addURL' method")
