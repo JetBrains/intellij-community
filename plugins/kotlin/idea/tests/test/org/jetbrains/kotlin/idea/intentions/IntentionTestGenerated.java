@@ -5854,6 +5854,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertLambdaToReference/inner.kt");
         }
 
+        @TestMetadata("javaStaticMethod.kt")
+        public void testJavaStaticMethod() throws Exception {
+            runTest("testData/intentions/convertLambdaToReference/javaStaticMethod.kt");
+        }
+
         @TestMetadata("labeledThis.kt")
         public void testLabeledThis() throws Exception {
             runTest("testData/intentions/convertLambdaToReference/labeledThis.kt");

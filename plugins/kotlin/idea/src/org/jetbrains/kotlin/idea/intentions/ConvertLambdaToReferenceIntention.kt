@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -99,8 +100,13 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             if (dispatchReceiverParameter != null && extensionReceiverParameter != null) return false
             dispatchReceiverParameter != null || extensionReceiverParameter != null
         }
+        val explicitReceiverDescriptor = (explicitReceiver as? KtNameReferenceExpression)?.let { context[REFERENCE_TARGET, it] }
 
-        if (!descriptorHasReceiver && explicitReceiver != null && calleeDescriptor !is ClassConstructorDescriptor) return false
+        if (!descriptorHasReceiver &&
+            explicitReceiver != null &&
+            explicitReceiverDescriptor !is JavaClassDescriptor &&
+            calleeDescriptor !is ClassConstructorDescriptor
+        ) return false
         val noBoundReferences = !languageVersionSettings.supportsFeature(LanguageFeature.BoundCallableReferences)
         if (noBoundReferences && descriptorHasReceiver && explicitReceiver == null) return false
 
@@ -129,9 +135,6 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
                 it.getResolvedCall(context)?.resultingDescriptor in lambdaValueParameterDescriptors
             }
         ) return false
-        val explicitReceiverDescriptor = (explicitReceiver as? KtNameReferenceExpression)?.let {
-            context[REFERENCE_TARGET, it]
-        } as? ValueDescriptor
         val lambdaParameterAsExplicitReceiver = when (noBoundReferences) {
             true -> explicitReceiver != null
             false -> explicitReceiverDescriptor != null && explicitReceiverDescriptor == lambdaValueParameterDescriptors.firstOrNull()
@@ -141,7 +144,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
         val lambdaParametersCount = lambdaValueParameterDescriptors.size
         if (lambdaParametersCount != callableArgumentsCount + explicitReceiverShift) return false
 
-        if (explicitReceiver != null && explicitReceiverDescriptor != null && lambdaParameterAsExplicitReceiver) {
+        if (explicitReceiver != null && explicitReceiverDescriptor is ValueDescriptor && lambdaParameterAsExplicitReceiver) {
             val receiverType = explicitReceiverDescriptor.type
             // No exotic receiver types
             if (receiverType.isTypeParameter() || receiverType.isError || receiverType.isDynamic() ||
