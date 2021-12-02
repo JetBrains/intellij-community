@@ -4,15 +4,15 @@ package org.jetbrains.kotlin.idea.perf.live
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
+import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightVisitor
+import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
+import org.jetbrains.kotlin.idea.perf.suite.*
+import org.jetbrains.kotlin.idea.perf.util.*
 import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.TEST_KEY
-import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.runAndMeasure
-import org.jetbrains.kotlin.idea.perf.util.ExternalProject
-import org.jetbrains.kotlin.idea.perf.util.Metric
-import org.jetbrains.kotlin.idea.perf.util.TeamCity.suite
 import org.jetbrains.kotlin.idea.testFramework.*
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.cleanupCaches
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.isAKotlinScriptFile
@@ -50,7 +50,30 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
         warmUp.warmUp(this)
     }
 
-    protected open fun stats(name: String) = Stats(name)
+    protected open fun profileConfig(): ProfilerConfig = ProfilerConfig()
+
+    protected open fun outputConfig(): OutputConfig = OutputConfig()
+
+    protected open fun suiteWithConfig(suiteName: String, block: PerformanceSuite.StatsScope.() -> Unit) {
+        suite(
+            suiteName,
+            config = StatsScopeConfig(outputConfig = outputConfig(), profilerConfig = profileConfig()),
+            block = block
+        )
+    }
+
+    private fun PerformanceSuite.StatsScope.defaultStatsConfig() {
+        with(config) {
+            warmup = 8
+            iterations = 15
+        }
+    }
+
+    protected fun stats(name: String) = Stats(name, profilerConfig = profileConfig(), outputConfig = outputConfig())
+
+    protected open fun PerformanceSuite.ApplicationScope.kotlinProject(block: PerformanceSuite.ProjectScope.() -> Unit) {
+        project(name = "kotlin", path = ExternalProject.KOTLIN_PROJECT_PATH, openWith = GRADLE_PROJECT, block = block)
+    }
 
     fun testHelloWorldProject() {
         suite("Hello world project") {
@@ -79,238 +102,265 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
     }
 
     fun testKotlinProject() {
-        suite("Kotlin project") {
-            stats("kotlin project").use {
-                perfOpenKotlinProject(it)
+        suiteWithConfig("kotlin project") {
+            app {
+                warmUpProject()
 
-                val filesToHighlight = arrayOf(
-                    "idea/idea-analysis/src/org/jetbrains/kotlin/idea/util/PsiPrecedences.kt",
-                    "compiler/psi/src/org/jetbrains/kotlin/psi/KtElement.kt",
-                    "compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt",
-                    "core/builtins/native/kotlin/Primitives.kt",
+                kotlinProject {
+                    defaultStatsConfig()
 
-                    "compiler/frontend/src/org/jetbrains/kotlin/cfg/ControlFlowProcessor.kt",
-                    "compiler/frontend/src/org/jetbrains/kotlin/cfg/ControlFlowInformationProvider.kt",
+                    val filesToHighlight = arrayOf(
+                        //"idea/idea-analysis/src/org/jetbrains/kotlin/idea/util/PsiPrecedences.kt",
+                        "compiler/psi/src/org/jetbrains/kotlin/psi/KtElement.kt",
+                        "compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt",
+                        "core/builtins/native/kotlin/Primitives.kt",
 
-                    "compiler/backend/src/org/jetbrains/kotlin/codegen/state/KotlinTypeMapper.kt",
-                    "compiler/backend/src/org/jetbrains/kotlin/codegen/inline/MethodInliner.kt"
-                )
+                        "compiler/frontend/cfg/src/org/jetbrains/kotlin/cfg/ControlFlowProcessor.kt",
+                        "compiler/frontend/src/org/jetbrains/kotlin/cfg/ControlFlowInformationProvider.kt",
 
-                filesToHighlight.forEach { file -> perfHighlightFile(file, stats = it) }
-                filesToHighlight.forEach { file -> perfHighlightFileEmptyProfile(file, stats = it) }
+                        "compiler/backend/src/org/jetbrains/kotlin/codegen/state/KotlinTypeMapper.kt",
+                        "compiler/backend/src/org/jetbrains/kotlin/codegen/inline/MethodInliner.kt"
+                    )
 
-                perfTypeAndHighlight(
-                    it,
-                    "compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt",
-                    "override fun getDeclarations(): List<KtDeclaration> {",
-                    "val q = import",
-                    note = "in-method getDeclarations-import"
-                )
+                    profile(EmptyProfile)
 
-                perfTypeAndHighlight(
-                    it,
-                    "compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt",
-                    "override fun getDeclarations(): List<KtDeclaration> {",
-                    "val q = import",
-                    typeAfterMarker = false,
-                    note = "out-of-method import"
-                )
+                    filesToHighlight.forEach {fileToHighlight ->
+                        fixture(fileToHighlight).use { fixture ->
+                            measureHighlight(fixture, "empty profile")
+                        }
+                    }
+
+                    profile(DefaultProfile)
+
+                    filesToHighlight.forEach {fileToHighlight ->
+                        fixture(fileToHighlight).use { fixture ->
+                            measureHighlight(fixture)
+                        }
+                    }
+
+                    fixture("compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt").use { fixture ->
+                        with(fixture.typingConfig) {
+                            marker = "override fun getDeclarations(): List<KtDeclaration> {"
+                            insertString = "val q = import"
+                            typeAfterMarker = true
+                        }
+
+                        measureTypeAndHighlight(fixture, "typeAndHighlight in-method getDeclarations-import")
+
+                        with(fixture.typingConfig) {
+                            typeAfterMarker = false
+                        }
+
+                        measureTypeAndHighlight(fixture, "typeAndHighlight out-of-method import")
+                    }
+                }
             }
         }
     }
 
     fun testKotlinProjectCopyAndPaste() {
-        suite("Kotlin copy-and-paste") {
-            stats("Kotlin copy-and-paste").use { stat ->
-                perfOpenKotlinProjectFast(stat)
+        suiteWithConfig("Kotlin copy-and-paste") {
+            app {
+                warmUpProject()
 
-                perfCopyAndPaste(
-                    stat,
-                    sourceFileName = "compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt",
-                    targetFileName = "compiler/psi/src/org/jetbrains/kotlin/psi/KtImportInfo.kt"
-                )
+                kotlinProject {
+                    profile(DefaultProfile)
+
+                    defaultStatsConfig()
+
+                    fixture("compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt").use { originalFixture ->
+                        fixture("compiler/psi/src/org/jetbrains/kotlin/psi/KtImportInfo.kt").use { targetFixture ->
+                            var copied = false
+                            measure<Unit>(originalFixture) {
+                                before = {
+                                    copied = false
+
+                                    targetFixture.storeText()
+                                    originalFixture.cursorConfig.select()
+                                    targetFixture.cursorConfig.select()
+                                }
+                                test = {
+                                    copied = originalFixture.performEditorAction(IdeActions.ACTION_COPY) &&
+                                            targetFixture.performEditorAction(IdeActions.ACTION_PASTE)
+
+                                    dispatchAllInvocationEvents()
+                                }
+                                after = {
+                                    try {
+                                        commitAllDocuments()
+                                        assertTrue("copy-n-paste has not performed well", copied)
+                                        // files could be different due to spaces
+                                        //assertEquals(it.setUpValue!!.first.document.text, it.setUpValue!!.second.document.text)
+                                    } finally {
+                                        targetFixture.restoreText()
+                                        commitAllDocuments()
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
     fun testKotlinProjectCompletionKtFile() {
-        suite("Kotlin completion ktFile") {
-            stats("Kotlin completion ktFile").use { stat ->
-                perfOpenKotlinProjectFast(stat)
+        suiteWithConfig("Kotlin completion ktFile") {
+            app {
+                warmUpProject()
 
-                perfTypeAndAutocomplete(
-                    stat,
-                    "compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt",
-                    "override fun getDeclarations(): List<KtDeclaration> {",
-                    "val q = import",
-                    lookupElements = listOf("importDirectives"),
-                    note = "in-method getDeclarations-import"
-                )
+                kotlinProject {
+                    profile(DefaultProfile)
 
-                perfTypeAndAutocomplete(
-                    stat,
-                    "compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt",
-                    "override fun getDeclarations(): List<KtDeclaration> {",
-                    "val q = import",
-                    typeAfterMarker = false,
-                    lookupElements = listOf("importDirectives"),
-                    note = "out-of-method import"
-                )
+                    defaultStatsConfig()
 
-                perfTypeAndAutocomplete(
-                    stat,
-                    fileName = "compiler/backend/src/org/jetbrains/kotlin/codegen/state/KotlinTypeMapper.kt",
-                    marker = "fun mapOwner(descriptor: DeclarationDescriptor): Type {",
-                    insertString = "val b = bind",
-                    typeAfterMarker = true,
-                    lookupElements = listOf("bindingContext"),
-                    note = "in-method completion for KotlinTypeMapper"
-                )
+                    fixture("compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt").use { fixture ->
+                        with(fixture.typingConfig) {
+                            marker = "override fun getDeclarations(): List<KtDeclaration> {"
+                            insertString = "val q = import"
+                            typeAfterMarker = true
+                        }
 
-                perfTypeAndAutocomplete(
-                    stat,
-                    fileName = "compiler/backend/src/org/jetbrains/kotlin/codegen/state/KotlinTypeMapper.kt",
-                    marker = "fun mapOwner(descriptor: DeclarationDescriptor): Type {",
-                    insertString = "val b = bind",
-                    typeAfterMarker = false,
-                    lookupElements = listOf("bindingContext"),
-                    note = "out-of-method completion for KotlinTypeMapper"
-                )
+                        measureTypeAndAutoCompletion(fixture, "in-method getDeclarations-import") {
+                            lookupElements = listOf("importDirectives")
+                        }
 
-                perfTypeAndAutocomplete(
-                    stat,
-                    fileName = "compiler/tests/org/jetbrains/kotlin/util/ArgsToParamsMatchingTest.kt",
-                    marker = "fun testMatchNamed() {",
-                    insertString = "testMatch",
-                    typeAfterMarker = true,
-                    lookupElements = listOf("testMatchNamed"),
-                    note = "in-method completion for ArgsToParamsMatchingTest"
-                )
+                        with(fixture.typingConfig) {
+                            typeAfterMarker = false
+                        }
 
-                perfTypeAndAutocomplete(
-                    stat,
-                    fileName = "compiler/tests/org/jetbrains/kotlin/util/ArgsToParamsMatchingTest.kt",
-                    marker = "class ArgsToParamsMatchingTest {",
-                    insertString = "val me = ",
-                    typeAfterMarker = true,
-                    lookupElements = listOf("ArgsToParamsMatchingTest"),
-                    note = "out-of-method completion for ArgsToParamsMatchingTest"
-                )
+                        measureTypeAndAutoCompletion(fixture, "out-of-method import") {
+                            lookupElements = listOf("importDirectives")
+
+                        }
+                    }
+
+                    fixture("compiler/backend/src/org/jetbrains/kotlin/codegen/state/KotlinTypeMapper.kt").use { fixture ->
+                        with(fixture.typingConfig) {
+                            marker = "fun mapOwner(descriptor: DeclarationDescriptor): Type {"
+                            insertString = "val b = bind"
+                            typeAfterMarker = true
+                        }
+
+                        measureTypeAndAutoCompletion(fixture, "in-method completion for KotlinTypeMapper") {
+                            lookupElements = listOf("bindingContext")
+                        }
+
+                        with(fixture.typingConfig) {
+                            typeAfterMarker = false
+                        }
+
+                        measureTypeAndAutoCompletion(fixture, "out-of-method completion for KotlinTypeMapper") {
+                            lookupElements = listOf("bindingContext")
+                        }
+                    }
+
+                    fixture("compiler/tests/org/jetbrains/kotlin/util/ArgsToParamsMatchingTest.kt").use { fixture ->
+                        with(fixture.typingConfig) {
+                            marker = "fun testMatchNamed() {"
+                            insertString = "testMatch"
+                            typeAfterMarker = true
+                        }
+
+                        measureTypeAndAutoCompletion(fixture, "in-method completion for ArgsToParamsMatchingTest") {
+                            lookupElements = listOf("testMatchNamed")
+                        }
+
+                        with(fixture.typingConfig) {
+                            typeAfterMarker = false
+                        }
+
+                        measureTypeAndAutoCompletion(fixture, "out-of-method completion for ArgsToParamsMatchingTest") {
+                            lookupElements = listOf("testMatchNamed")
+                        }
+                    }
+                }
             }
         }
     }
 
     fun testKotlinProjectCompletionBuildGradle() {
-        suite("Kotlin completion gradle.kts") {
-            stats("kotlin completion gradle.kts").use { stat ->
-                runAndMeasure("open kotlin project") {
-                    perfOpenKotlinProjectFast(stat)
-                }
+        suiteWithConfig("kotlin completion gradle.kts") {
+            app {
+                warmUpProject()
 
-                runAndMeasure("type and autocomplete") {
-                    perfTypeAndAutocomplete(
-                        stat,
-                        "build.gradle.kts",
-                        "tasks {",
-                        "reg",
-                        lookupElements = listOf("register"),
-                        note = "tasks-create"
-                    )
-                }
+                kotlinProject {
+                    profile(DefaultProfile)
 
-                runAndMeasure("type and undo") {
-                    perfTypeAndUndo(
-                        project(),
-                        stat,
-                        "build.gradle.kts",
-                        "tasks {",
-                        "register",
-                        note = "type-undo"
-                    )
-                }
+                    defaultStatsConfig()
 
+                    fixture("build.gradle.kts").use { fixture ->
+                        with(fixture.typingConfig) {
+                            marker = "tasks {"
+                            insertString = "reg"
+                            typeAfterMarker = true
+                        }
+
+                        measureTypeAndAutoCompletion(fixture, "tasks-create") {
+                            lookupElements = listOf("register")
+                        }
+
+                        with(fixture.typingConfig) {
+                            marker = "tasks {"
+                            insertString = "register"
+                            typeAfterMarker = true
+                        }
+
+                        measureTypeAndUndo(fixture, "type-undo") {}
+                    }
+                }
             }
         }
     }
 
     fun testKotlinProjectScriptDependenciesBuildGradle() {
-        suite("Kotlin scriptDependencies gradle.kts") {
-            stats("kotlin scriptDependencies gradle.kts").use { stat ->
-                perfOpenKotlinProjectFast(stat)
+        suiteWithConfig("kotlin scriptDependencies gradle.kts") {
+            app {
+                warmUpProject()
 
-                perfScriptDependenciesBuildGradleKts(stat)
-                perfScriptDependenciesIdeaBuildGradleKts(stat)
-//                perfScriptDependenciesJpsGradleKts(stat)
-//                perfScriptDependenciesVersionGradleKts(stat)
+                kotlinProject {
+                    profile(DefaultProfile)
+
+                    defaultStatsConfig()
+
+                    fixture("build.gradle.kts", updateScriptDependenciesIfNeeded = false).use { fixture ->
+                        measure<Unit>(combineNameWithSimpleFileName("updateScriptDependencies", fixture)) {
+                            before = {
+                                fixture.openInEditor()
+                            }
+                            test = {
+                                fixture.updateScriptDependenciesIfNeeded()
+                            }
+                        }
+                    }
+                }
             }
         }
     }
 
     fun testKotlinProjectBuildGradle() {
-        suite("Kotlin gradle.kts") {
-            stats("kotlin gradle.kts").use { stat ->
-                perfOpenKotlinProjectFast(stat)
+        suiteWithConfig("kotlin gradle.kts") {
+            app {
+                warmUpProject()
 
-                perfFileAnalysisBuildGradleKts(stat)
-                perfFileAnalysisIdeaBuildGradleKts(stat)
-//                perfFileAnalysisJpsGradleKts(stat)
-//                perfFileAnalysisVersionGradleKts(stat)
+                kotlinProject {
+                    profile(DefaultProfile)
+
+                    defaultStatsConfig()
+
+                    fixture("build.gradle.kts").use { fixture ->
+                        measure<List<HighlightInfo>>(combineNameWithSimpleFileName("fileAnalysis", fixture)) {
+                            before = {
+                                fixture.openInEditor()
+                            }
+                            test = {
+                                fixture.doHighlighting()
+                            }
+                        }
+                    }
+                }
             }
         }
-    }
-
-    private fun perfOpenKotlinProjectFast(stats: Stats) = perfOpenKotlinProject(stats, fast = true)
-
-    private fun perfOpenKotlinProject(stats: Stats, fast: Boolean = false) {
-        myProject = openProject("kotlin", stats, "", ExternalProject.KOTLIN_PROJECT_PATH, GRADLE_PROJECT, fast)
-    }
-
-    protected open fun openProject(
-        name: String,
-        stats: Stats,
-        note: String,
-        path: String,
-        openAction: ProjectOpenAction,
-        fast: Boolean
-    ) = perfOpenProject(
-        name = name,
-        stats = stats,
-        note = note,
-        path = path,
-        openAction = openAction,
-        fast = fast
-    )
-
-    private fun perfScriptDependenciesBuildGradleKts(it: Stats) {
-        perfScriptDependencies("build.gradle.kts", stats = it)
-    }
-
-    private fun perfScriptDependenciesIdeaBuildGradleKts(it: Stats) {
-        perfScriptDependencies("idea/build.gradle.kts", stats = it, note = "idea/")
-    }
-
-    private fun perfScriptDependenciesJpsGradleKts(it: Stats) {
-        perfScriptDependencies("gradle/jps.gradle.kts", stats = it, note = "gradle/")
-    }
-
-    private fun perfScriptDependenciesVersionGradleKts(it: Stats) {
-        perfScriptDependencies("gradle/versions.gradle.kts", stats = it, note = "gradle/")
-    }
-
-    private fun perfFileAnalysisBuildGradleKts(it: Stats) {
-        perfKtsFileAnalysis("build.gradle.kts", stats = it)
-    }
-
-    private fun perfFileAnalysisIdeaBuildGradleKts(it: Stats) {
-        perfKtsFileAnalysis("idea/build.gradle.kts", stats = it, note = "idea/")
-    }
-
-    private fun perfFileAnalysisJpsGradleKts(it: Stats) {
-        perfKtsFileAnalysis("gradle/jps.gradle.kts", stats = it, note = "gradle/")
-    }
-
-    private fun perfFileAnalysisVersionGradleKts(it: Stats) {
-        perfKtsFileAnalysis("gradle/versions.gradle.kts", stats = it, note = "gradle/")
     }
 
     private fun perfKtsFileAnalysis(
@@ -374,7 +424,7 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
     }
 
     private fun replaceWithCustomHighlighter() {
-        org.jetbrains.kotlin.idea.testFramework.replaceWithCustomHighlighter(
+        replaceWithCustomHighlighter(
             testRootDisposable,
             KotlinHighlightVisitor::class.java.name,
             TestKotlinHighlightVisitor::class.java.name

@@ -1,6 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.idea.perf.util
+package org.jetbrains.kotlin.idea.perf.suite
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.lang.annotation.HighlightSeverity
@@ -19,7 +19,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiManager
 import com.intellij.psi.impl.PsiDocumentManagerBase
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.*
@@ -34,7 +33,7 @@ import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.perf.ProjectBuilder
 import org.jetbrains.kotlin.idea.testFramework.Stats
 import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.runAndMeasure
-import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
+import org.jetbrains.kotlin.idea.perf.util.*
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.disableAllInspections
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.enableAllInspections
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.enableInspections
@@ -43,6 +42,7 @@ import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.initDefaultPro
 import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
 import org.jetbrains.kotlin.idea.testFramework.*
+import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.cleanupCaches
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.close
 import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -51,7 +51,6 @@ import java.io.File
 
 class PerformanceSuite {
     companion object {
-
         fun suite(
             name: String,
             stats: StatsScope,
@@ -97,64 +96,18 @@ class PerformanceSuite {
         fun <T> measure(name: String, f: MeasurementScope<T>.() -> Unit, after: (() -> Unit)?): List<T?> =
             MeasurementScope<T>(name, stats, config, after = after).apply(f).run()
 
+        fun measureTypeAndAutoCompletion(name: String, fixture: Fixture, f: TypeAndAutoCompletionMeasurementScope.() -> Unit, after: (() -> Unit)?): List<String?> =
+            TypeAndAutoCompletionMeasurementScope(fixture, typeTestPrefix = "typeAndAutocomplete", name = name, stats = stats, config = config, after = after).apply(f).run()
+
+        fun measureTypeAndUndo(name: String, fixture: Fixture, f: TypeAndUndoMeasurementScope.() -> Unit, after: (() -> Unit)?): List<String?> =
+            TypeAndUndoMeasurementScope(fixture, typeTestPrefix = "typeAndUndo", name = name, stats = stats, config = config, after = after).apply(f).run()
+
+        fun measureTypeAndHighlight(name: String, fixture: Fixture, f: TypeAndHighlightMeasurementScope.() -> Unit, after: (() -> Unit)?): List<HighlightInfo?> =
+            TypeAndHighlightMeasurementScope(fixture, typeTestPrefix = "", name = name, stats = stats, config = config, after = after).apply(f).run()
+
         fun logStatValue(name: String, value: Any) {
             logMessage { "buildStatisticValue key='${stats.name}: $name' value='$value'" }
             TeamCity.statValue("${stats.name}: $name", value)
-        }
-    }
-
-    data class CursorConfig(
-        val fixture: Fixture,
-        val marker: String
-    ) : AutoCloseable {
-        override fun close() {
-            fixture.close()
-        }
-    }
-
-    data class TypingConfig(
-        val fixture: Fixture,
-        val marker: String,
-        val insertString: String,
-        val surroundItems: String = "\n",
-        val typeAfterMarker: Boolean = true,
-        val note: String = "",
-        val delayMs: Long? = null
-    ) : AutoCloseable {
-        override fun close() {
-            fixture.close()
-        }
-    }
-
-    class MeasurementScope<T>(
-        val name: String,
-        val stats: Stats,
-        val config: StatsScopeConfig,
-        var before: () -> Unit = {},
-        var test: (() -> T?)? = null,
-        var after: (() -> Unit)? = null
-    ) {
-        fun run(): List<T?> {
-            val t = test ?: error("test procedure isn't set")
-            val value = mutableListOf<T?>()
-            performanceTest<Unit, T> {
-                name(name)
-                stats(stats)
-                warmUpIterations(config.warmup)
-                iterations(config.iterations)
-                fastIterations(config.fastIterations)
-                setUp {
-                    before()
-                }
-                test {
-                    value.add(t.invoke())
-                }
-                tearDown {
-                    after?.invoke()
-                }
-                profilerConfig(config.profilerConfig)
-            }
-            return value
         }
     }
 
@@ -168,11 +121,11 @@ class PerformanceSuite {
         fun project(block: ProjectWithDescriptorScope.() -> Unit) =
             ProjectWithDescriptorScope(this).use(block)
 
-        fun project(path: String, openWith: ProjectOpenAction = ProjectOpenAction.EXISTING_IDEA_PROJECT, block: ProjectScope.() -> Unit) =
-            ProjectScope(ProjectScopeConfig(path, openWith), this).use(block)
+        fun project(name: String? = null, path: String, openWith: ProjectOpenAction = ProjectOpenAction.EXISTING_IDEA_PROJECT, block: ProjectScope.() -> Unit) =
+            ProjectScope(ProjectScopeConfig(path, openWith, name = name), this).use(block)
 
-        fun gradleProject(path: String, refresh: Boolean = false, block: ProjectScope.() -> Unit) =
-            ProjectScope(ProjectScopeConfig(path, ProjectOpenAction.GRADLE_PROJECT, refresh), this).use(block)
+        fun gradleProject(name: String? = null, path: String, refresh: Boolean = false, block: ProjectScope.() -> Unit) =
+            ProjectScope(ProjectScopeConfig(path, ProjectOpenAction.GRADLE_PROJECT, refresh, name = name), this).use(block)
 
         fun warmUpProject() = project {
             descriptor {
@@ -235,22 +188,6 @@ class PerformanceSuite {
         }
     }
 
-
-    class StatsScopeConfig(
-        var name: String? = null,
-        var warmup: Int = 2,
-        var iterations: Int = 5,
-        var fastIterations: Boolean = false,
-        var outputConfig: OutputConfig = OutputConfig(),
-        var profilerConfig: ProfilerConfig = ProfilerConfig()
-    )
-
-    class ProjectScopeConfig(val path: String, val openWith: ProjectOpenAction, val refresh: Boolean = false) {
-        val name: String = path.lastPathSegment()
-
-        constructor(externalProject: ExternalProject, refresh: Boolean) : this(externalProject.path, externalProject.openWith, refresh)
-    }
-
     abstract class AbstractProjectScope(val app: ApplicationScope) : AutoCloseable {
         abstract val project: Project
         val openFiles = mutableListOf<VirtualFile>()
@@ -275,58 +212,6 @@ class PerformanceSuite {
 
         fun highlight(editorFile: PsiFile?, toIgnore: IntArray = ArrayUtilRt.EMPTY_INT_ARRAY) =
             editorFile?.highlightFile(toIgnore) ?: error("editor isn't ready for highlight")
-
-        fun moveCursor(config: CursorConfig) {
-            val fixture = config.fixture
-            val editor = fixture.editor
-            updateScriptDependenciesIfNeeded(fixture)
-
-            val marker = config.marker
-            val tasksIdx = fixture.text.indexOf(marker)
-            check(tasksIdx > 0) {
-                "marker '$marker' not found in ${fixture.fileName}"
-            }
-            editor.caretModel.moveToOffset(tasksIdx)
-        }
-
-        fun moveCursor(config: TypingConfig) {
-            val fixture = config.fixture
-            val editor = fixture.editor
-            updateScriptDependenciesIfNeeded(fixture)
-
-            val marker = config.marker
-            val tasksIdx = fixture.text.indexOf(marker)
-            check(tasksIdx > 0) {
-                "marker '$marker' not found in ${fixture.fileName}"
-            }
-            if (config.typeAfterMarker) {
-                editor.caretModel.moveToOffset(tasksIdx + marker.length + 1)
-            } else {
-                editor.caretModel.moveToOffset(tasksIdx - 1)
-            }
-
-            for (surroundItem in config.surroundItems) {
-                EditorTestUtil.performTypingAction(editor, surroundItem)
-            }
-
-            editor.caretModel.moveToOffset(editor.caretModel.offset - if (config.typeAfterMarker) 1 else 2)
-
-            if (!config.typeAfterMarker) {
-                for (surroundItem in config.surroundItems) {
-                    EditorTestUtil.performTypingAction(editor, surroundItem)
-                }
-                editor.caretModel.moveToOffset(editor.caretModel.offset - 2)
-            }
-        }
-
-        fun typeAndHighlight(config: TypingConfig): List<HighlightInfo> {
-            val string = config.insertString
-            for (i in string.indices) {
-                config.fixture.type(string[i])
-                config.delayMs?.let { d -> Thread.sleep(d) }
-            }
-            return config.fixture.doHighlighting()
-        }
 
         fun findUsages(config: CursorConfig): Set<Usage> {
             val offset = config.fixture.editor.caretModel.offset
@@ -353,23 +238,23 @@ class PerformanceSuite {
             this.project.enableAllInspections()
 
         fun editor(path: String) =
-            Fixture.openFileInEditor(project, path).psiFile.also { openFiles.add(it.virtualFile) }
+            Fixture.openInEditor(project, path).psiFile.also { openFiles.add(it.virtualFile) }
 
-        fun fixture(path: String): Fixture {
-            return fixture(Fixture.projectFileByName(project, path).virtualFile)
+        fun fixture(path: String, updateScriptDependenciesIfNeeded: Boolean = true): Fixture {
+            return fixture(Fixture.projectFileByName(project, path).virtualFile, updateScriptDependenciesIfNeeded)
         }
 
-        fun fixture(file: VirtualFile): Fixture {
+        fun fixture(file: VirtualFile, updateScriptDependenciesIfNeeded: Boolean = true): Fixture {
             val fixture = Fixture.openFixture(project, file)
             openFiles.add(fixture.vFile)
             val fileName = file.name
-            if (Fixture.isAKotlinScriptFile(fileName)) {
-                ScriptConfigurationManager.updateScriptDependenciesSynchronously(fixture.psiFile)
-            }
             if (fileName.endsWith(KotlinFileType.EXTENSION)) {
                 assert(fixture.psiFile is KtFile) {
                     "$file expected to be a Kotlin file"
                 }
+            }
+            if (updateScriptDependenciesIfNeeded) {
+                fixture.updateScriptDependenciesIfNeeded()
             }
             return fixture
         }
@@ -385,12 +270,71 @@ class PerformanceSuite {
         }
 
         fun <T> measure(vararg name: String, clearCaches: Boolean = true, f: MeasurementScope<T>.() -> Unit): List<T?> {
-            val after = { if (clearCaches) PsiManager.getInstance(project).dropPsiCaches() }
+            val after = wrapAfter(clearCaches)
             return app.stats.measure(name.joinToString("-"), f, after)
         }
 
-        fun <T> measure(vararg name: String, fixture: Fixture, f: MeasurementScope<T>.() -> Unit): List<T?> =
-            measure("${name.joinToString("-")} ${fixture.fileName}", f = f)
+        private fun wrapAfter(clearCaches: Boolean): () -> Unit {
+            val after = if (clearCaches) {
+                fun() { project.cleanupCaches() }
+            } else {
+                fun() {}
+            }
+            return after
+        }
+
+        fun <T> measure(fixture: Fixture, f: MeasurementScope<T>.() -> Unit): List<T?> =
+            measure(fixture.fileName, f = f)
+
+        fun <T> measure(fixture: Fixture, vararg name: String, f: MeasurementScope<T>.() -> Unit): List<T?> =
+            measure(combineName(fixture, *name), f = f)
+
+        fun measureTypeAndHighlight(
+            fixture: Fixture,
+            vararg name: String,
+            f: TypeAndHighlightMeasurementScope.() -> Unit = {}
+        ): List<HighlightInfo?> {
+            val after = wrapAfter(true)
+            return app.stats.measureTypeAndHighlight(combineName(fixture, *name), fixture, f, after)
+        }
+
+        fun measureHighlight(fixture: Fixture, vararg name: String): List<List<HighlightInfo>?> {
+            return measure(combineNameWithSimpleFileName("highlighting", fixture, *name)) {
+                before = {
+                    fixture.openInEditor()
+                }
+                test = {
+                    val document = FileDocumentManager.getInstance().getDocument(fixture.vFile)!!
+                    val editor = EditorFactory.getInstance().getEditors(document).first()
+                    commitAllDocuments()
+                    CodeInsightTestFixtureImpl.instantiateAndRun(fixture.psiFile, editor, ArrayUtilRt.EMPTY_INT_ARRAY, true)
+                }
+                after = {
+                    fixture.close()
+                    project.cleanupCaches()
+                }
+            }
+        }
+
+        fun measureTypeAndAutoCompletion(fixture: Fixture, vararg name: String, clearCaches: Boolean = true, f: TypeAndAutoCompletionMeasurementScope.() -> Unit): List<String?> {
+            val after = wrapAfter(clearCaches)
+            return app.stats.measureTypeAndAutoCompletion(combineName(fixture, *name), fixture, f, after)
+        }
+
+        fun measureTypeAndUndo(fixture: Fixture, vararg name: String, clearCaches: Boolean = true, f: TypeAndUndoMeasurementScope.() -> Unit): List<String?> {
+            val after = wrapAfter(clearCaches)
+            return app.stats.measureTypeAndUndo(combineName(fixture, *name), fixture, f, after)
+        }
+
+        fun combineName(fixture: Fixture, vararg name: String) =
+            listOf(name.joinToString("-"), fixture.simpleFilename())
+                .filter { it.isNotEmpty() }
+                .joinToString(" ")
+
+        fun combineNameWithSimpleFileName(type: String, fixture: Fixture, vararg name: String): String =
+            listOf(type, name.joinToString("-"), fixture.simpleFilename())
+                .filter { it.isNotEmpty() }
+                .joinToString(" ")
 
         override fun close(): Unit = RunAll(
             { compilerTester?.tearDown() },
@@ -425,7 +369,7 @@ class PerformanceSuite {
 
                 val openProject = OpenProject(
                     projectPath = projectPath,
-                    projectName = config.name,
+                    projectName = config.projectName,
                     jdk = app.jdk,
                     projectOpenAction = config.openWith
                 )
@@ -464,7 +408,7 @@ data class CustomProfile(val inspectionNames: List<String>) : ProjectProfile()
 
 fun UsefulTestCase.suite(
     suiteName: String? = null,
-    config: PerformanceSuite.StatsScopeConfig = PerformanceSuite.StatsScopeConfig(),
+    config: StatsScopeConfig = StatsScopeConfig(),
     block: PerformanceSuite.StatsScope.() -> Unit
 ) {
     val stats = Stats(config.name ?: suiteName ?: name, outputConfig = config.outputConfig, profilerConfig = config.profilerConfig)

@@ -47,6 +47,8 @@ import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.util.toPsiFile
+import org.jetbrains.kotlin.idea.perf.suite.CursorConfig
+import org.jetbrains.kotlin.idea.perf.suite.TypingConfig
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 
@@ -59,7 +61,11 @@ class Fixture(
 ) : AutoCloseable {
     private var delegate = EditorTestFixture(project, editor, vFile)
 
-    private var savedText: String? = null
+    var savedText: String? = null
+        get() = field
+        private set(value) {
+            field = value
+        }
 
     val document: Document
         get() = editor.document
@@ -71,6 +77,11 @@ class Fixture(
         storeText()
     }
 
+    fun simpleFilename(): String {
+        val lastIndexOf = fileName.lastIndexOf('/')
+        return if (lastIndexOf >= 0) fileName.substring(lastIndexOf + 1) else fileName
+    }
+
     fun doHighlighting(): List<HighlightInfo> = delegate.doHighlighting()
 
     fun findUsages(psiElement: PsiElement): Set<Usage> {
@@ -79,12 +90,35 @@ class Fixture(
         return findUsagesManager.doFindUsages(arrayOf(psiElement), emptyArray(), handler, handler.findUsagesOptions, false).usages
     }
 
+    fun type() {
+        val string = typingConfig.insertString ?: error("insertString has to be specified")
+        for (i in string.indices) {
+            type(string[i])
+            typingConfig.delayMs?.let(Thread::sleep)
+        }
+    }
+
     fun type(s: String) {
         delegate.type(s)
     }
 
     fun type(c: Char) {
         delegate.type(c)
+    }
+
+    fun typeAndHighlight(): List<HighlightInfo> {
+        type()
+        return doHighlighting()
+    }
+
+    fun moveCursor() {
+        val tasksIdx = cursorConfig.marker?.let { marker ->
+            text.indexOf(marker).also {
+                check(it > 0) { "marker '$marker' not found in ${fileName}" }
+            }
+        } ?: 0
+
+        editor.caretModel.moveToOffset(tasksIdx)
     }
 
     fun performEditorAction(actionId: String): Boolean {
@@ -144,10 +178,26 @@ class Fixture(
         dispatchAllInvocationEvents()
     }
 
+    fun openInEditor() {
+        openInEditor(project, vFile)
+    }
+
+    fun updateScriptDependenciesIfNeeded() {
+        if (isAKotlinScriptFile(fileName)) {
+            Stats.runAndMeasure("update script dependencies for $fileName") {
+                ScriptConfigurationManager.updateScriptDependenciesSynchronously(psiFile)
+            }
+        }
+    }
+
     override fun close() {
         savedText = null
         project.close(vFile)
     }
+
+    val cursorConfig = CursorConfig(this)
+
+    val typingConfig = TypingConfig(this)
 
     companion object {
         // quite simple impl - good so far
@@ -195,7 +245,7 @@ class Fixture(
 
 
         fun openFixture(project: Project, fileName: String): Fixture {
-            val fileInEditor = openFileInEditor(project, fileName)
+            val fileInEditor = openInEditor(project, fileName)
             val file = fileInEditor.psiFile
             val editorFactory = EditorFactory.getInstance()
             val editor = editorFactory.getEditors(fileInEditor.document, project)[0]
@@ -204,7 +254,7 @@ class Fixture(
         }
 
         fun openFixture(project: Project, file: VirtualFile): Fixture {
-            val fileInEditor = openFileInEditor(project, file)
+            val fileInEditor = openInEditor(project, file)
             val psiFile = fileInEditor.psiFile
             val editorFactory = EditorFactory.getInstance()
             val editor = editorFactory.getEditors(fileInEditor.document, project)[0]
@@ -242,12 +292,12 @@ class Fixture(
             return virtualFiles.iterator().next().toPsiFile(project)!!
         }
 
-        fun openFileInEditor(project: Project, name: String): EditorFile {
+        fun openInEditor(project: Project, name: String): EditorFile {
             val psiFile = projectFileByName(project, name)
-            return openFileInEditor(project, psiFile.virtualFile)
+            return openInEditor(project, psiFile.virtualFile)
         }
 
-        fun openFileInEditor(project: Project, vFile: VirtualFile): EditorFile {
+        fun openInEditor(project: Project, vFile: VirtualFile): EditorFile {
             val fileDocumentManager = FileDocumentManager.getInstance()
             val fileEditorManager = FileEditorManager.getInstance(project)
 
@@ -281,7 +331,7 @@ class Fixture(
             lookupElements: List<String>,
             revertChangesAtTheEnd: Boolean = true
         ) {
-            val fileInEditor = openFileInEditor(project, fileName)
+            val fileInEditor = openInEditor(project, fileName)
             val editor = EditorFactory.getInstance().getEditors(fileInEditor.document, project)[0]
             val fixture = Fixture(fileName, project, editor, fileInEditor.psiFile)
 

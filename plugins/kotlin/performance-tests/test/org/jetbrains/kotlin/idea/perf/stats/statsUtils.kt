@@ -22,9 +22,11 @@ fun compareBenchmarkWithSample(benchmark: Benchmark): Collection<String>? {
         buildId = null
         val statsFile = statsFile()
         buildId = id
+
         statsFile.name
     }
-    val sampleStatFile = File((Benchmark::class as Any).javaClass.getResource("/stats-samples/$statsFileName").path)
+    val resource = (Benchmark::class as Any).javaClass.getResource("/stats-samples/$statsFileName") ?: error("no sample for ${statsFileName}")
+    val sampleStatFile = File(resource.path)
     val sampleBenchmark = sampleStatFile.loadBenchmark()
     return compare(sampleBenchmark, benchmark).takeIf { it.isNotEmpty() }
 }

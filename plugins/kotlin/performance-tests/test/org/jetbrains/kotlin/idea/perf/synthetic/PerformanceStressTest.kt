@@ -2,17 +2,17 @@
 
 package org.jetbrains.kotlin.idea.perf.synthetic
 
-import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.usages.Usage
-import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.perf.Parameter
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
+import org.jetbrains.kotlin.idea.perf.suite.DefaultProfile
+import org.jetbrains.kotlin.idea.perf.suite.PerformanceSuite
+import org.jetbrains.kotlin.idea.perf.suite.StatsScopeConfig
+import org.jetbrains.kotlin.idea.perf.suite.suite
 import org.jetbrains.kotlin.idea.perf.util.*
-import org.jetbrains.kotlin.idea.perf.util.PerformanceSuite.TypingConfig
 import org.jetbrains.kotlin.idea.perf.util.registerLoadingErrorsHeadlessNotifier
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
-import org.jetbrains.kotlin.idea.testFramework.commitAllDocuments
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 
@@ -22,6 +22,14 @@ open class PerformanceStressTest : UsefulTestCase() {
     protected open fun profileConfig(): ProfilerConfig = ProfilerConfig()
 
     protected open fun outputConfig(): OutputConfig = OutputConfig()
+
+    protected open fun suiteWithConfig(suiteName: String, name: String? = null, block: PerformanceSuite.StatsScope.() -> Unit) {
+        suite(
+            suiteName,
+            config = StatsScopeConfig(name = name, outputConfig = outputConfig(), profilerConfig = profileConfig()),
+            block = block
+        )
+    }
 
     override fun setUp() {
         super.setUp()
@@ -44,10 +52,7 @@ open class PerformanceStressTest : UsefulTestCase() {
         val numberOfPackagesWithCandidates = 50
 
         val name = "findUsages${numberOfFuns}_$numberOfPackagesWithCandidates" + if (withCompilerIndex) "_with_cri" else ""
-        suite(
-            suiteName = name,
-            config = PerformanceSuite.StatsScopeConfig(name = name, outputConfig = outputConfig(), profilerConfig = profileConfig()),
-        ) {
+        suiteWithConfig(name) {
             app {
                 warmUpProject()
 
@@ -96,29 +101,26 @@ open class PerformanceStressTest : UsefulTestCase() {
                     }
 
                     fixture("src/pkg1/DataClass.kt").use { fixture ->
-                        val typingConfig = PerformanceSuite.CursorConfig(fixture, marker = "DataClass")
+                        with(fixture.cursorConfig) { marker = "DataClass" }
 
                         with(config) {
                             warmup = 8
                             iterations = 15
                         }
 
-                        measure<Set<Usage>>("findUsages", fixture = fixture) {
+                        measure<Set<Usage>>(fixture, "findUsages") {
                             before = {
-                                moveCursor(typingConfig)
+                                fixture.moveCursor()
                             }
                             test = {
-                                val findUsages = findUsages(typingConfig)
+                                val findUsages = findUsages(fixture.cursorConfig)
                                 // 1 from import
                                 //   + numberOfUsages as function argument
                                 //   + numberOfUsages as return type functions
                                 //   + numberOfUsages as new instance in a body of function
                                 // in a SomeService
-                                TestCase.assertEquals(1 + 3 * numberOfFuns, findUsages.size)
+                                assertEquals(1 + 3 * numberOfFuns, findUsages.size)
                                 findUsages
-                            }
-                            after = {
-
                             }
                         }
                     }
@@ -132,10 +134,7 @@ open class PerformanceStressTest : UsefulTestCase() {
         val generatedTypes = mutableListOf(listOf<String>())
         generateTypes(arrayOf("Int", "String", "Long", "List<Int>", "Array<Int>"), generatedTypes)
 
-        suite(
-            suiteName = "Lots of overloaded method project",
-            config = PerformanceSuite.StatsScopeConfig(name = "kt-35135 project", outputConfig = outputConfig(), profilerConfig = profileConfig()),
-        ) {
+        suiteWithConfig("Lots of overloaded method project", "kt-35135 project") {
             app {
                 warmUpProject()
 
@@ -177,30 +176,18 @@ open class PerformanceStressTest : UsefulTestCase() {
                     profile(DefaultProfile)
 
                     fixture("src/main/java/pkg/SomeClass.kt").use { fixture ->
-                        val typingConfig = TypingConfig(
-                            fixture,
-                            marker = "ov",
-                            insertString = "override fun foo(): String = TODO()",
+                        with(fixture.typingConfig) {
+                            marker = "ov"
+                            insertString = "override fun foo(): String = TODO()"
                             delayMs = 50
-                        )
+                        }
 
                         with(config) {
                             warmup = 8
                             iterations = 15
                         }
 
-                        measure<List<HighlightInfo>>("type override fun foo()", fixture = fixture) {
-                            before = {
-                                moveCursor(typingConfig)
-                            }
-                            test = {
-                                typeAndHighlight(typingConfig)
-                            }
-                            after = {
-                                fixture.restoreText()
-                                commitAllDocuments()
-                            }
-                        }
+                        measureTypeAndHighlight(fixture, "type override fun foo()")
                     }
                 }
             }
