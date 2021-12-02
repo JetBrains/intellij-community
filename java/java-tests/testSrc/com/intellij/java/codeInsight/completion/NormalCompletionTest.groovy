@@ -1661,9 +1661,36 @@ class XInternalError {}
   }
 
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for equals() and hashCode())")
-  void testInvokeGenerateEqualsHashCodeOnOverrideCompletion() { doTest() }
+  void testInvokeGenerateEqualsHashCodeOnOverrideCompletion() {
+    configure()
+    assert myFixture.lookupElementStrings.size() == 2
+    lookup.setSelectedIndex(1)
+    type('\n')
+    checkResult()
+  }
+
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for 'toString()')")
-  void testInvokeGenerateToStringOnOverrideCompletion() { doTest() }
+  void testInvokeGenerateToStringOnOverrideCompletion() {
+    configure()
+    assert myFixture.lookupElementStrings.size() == 2
+    lookup.setSelectedIndex(1)
+    type('\n')
+    checkResult()
+  }
+
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for equals() and hashCode())")
+  void testDontGenerateEqualsHashCodeOnOverrideCompletion() {
+    configure()
+    type('\n')
+    checkResult()
+  }
+
+  @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for 'toString()')")
+  void testDontGenerateToStringOnOverrideCompletion() {
+    configure()
+    type('\n')
+    checkResult()
+  }
 
   @NeedsIndex.SmartMode(reason = "JavaGenerateMemberCompletionContributor.fillCompletionVariants works in smart mode only (for getters and setters)")
   void testAccessorViaCompletion() {
