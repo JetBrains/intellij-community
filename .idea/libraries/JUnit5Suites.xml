@@ -1,0 +1,25 @@
+<component name="libraryTable">
+  <library name="JUnit5Suites" type="repository">
+    <properties maven-id="org.junit.platform:junit-platform-suite:1.8.1">
+      <exclude>
+        <dependency maven-id="org.junit.platform:junit-platform-commons" />
+        <dependency maven-id="org.apiguardian:apiguardian-api" />
+        <dependency maven-id="org.junit.platform:junit-platform-engine" />
+        <dependency maven-id="org.junit.platform:junit-platform-launcher" />
+      </exclude>
+    </properties>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite/1.8.1/junit-platform-suite-1.8.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-api/1.8.1/junit-platform-suite-api-1.8.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-engine/1.8.1/junit-platform-suite-engine-1.8.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-commons/1.8.1/junit-platform-suite-commons-1.8.1.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite/1.8.1/junit-platform-suite-1.8.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-api/1.8.1/junit-platform-suite-api-1.8.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-engine/1.8.1/junit-platform-suite-engine-1.8.1-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/junit/platform/junit-platform-suite-commons/1.8.1/junit-platform-suite-commons-1.8.1-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>
