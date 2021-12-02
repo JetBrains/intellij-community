@@ -4,6 +4,7 @@ package com.intellij.codeInspection.sourceToSink;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.SmartList;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.MoreCollectors;
 import one.util.streamex.StreamEx;
@@ -73,11 +74,11 @@ public class TaintAnalyzer {
     return codeBlock == null ? TaintValue.UNTAINTED : analyze(taintValue, codeBlock, psiVariable);
   }
 
-  private TaintValue analyze(@NotNull TaintValue taintValue, @NotNull UBlockExpression codeBlock, @NotNull PsiVariable psiVariable) {
+  private @NotNull TaintValue analyze(@NotNull TaintValue taintValue, @NotNull UBlockExpression codeBlock, @NotNull PsiVariable psiVariable) {
     class VarAnalyzer extends AbstractUastVisitor {
       private TaintValue myTaintValue;
 
-      VarAnalyzer(TaintValue taintValue) {
+      VarAnalyzer(@NotNull TaintValue taintValue) {
         myTaintValue = taintValue;
       }
 
@@ -110,27 +111,30 @@ public class TaintAnalyzer {
   }
 
   private @Nullable TaintValue fromParam(@Nullable PsiElement target) {
+    PsiParameter psiParameter = ObjectUtils.tryCast(target, PsiParameter.class);
+    if (psiParameter == null) return null;
     UParameter uParameter = UastContextKt.toUElement(target, UParameter.class);
     if (uParameter == null) return null;
-    PsiParameter psiParameter = ObjectUtils.tryCast(uParameter.getSourcePsi(), PsiParameter.class);
-    if (psiParameter == null) return null;
-    UMethod uMethod = ObjectUtils.tryCast(uParameter.getUastParent(), UMethod.class);
-    if (uMethod == null) return TaintValue.UNTAINTED;
-    UBlockExpression uBlock = ObjectUtils.tryCast(uMethod.getUastBody(), UBlockExpression.class);
-    if (uBlock == null) return TaintValue.UNTAINTED;
     // default parameter value
     UExpression uInitializer = uParameter.getUastInitializer();
     TaintValue taintValue = fromExpression(uInitializer, true);
     if (taintValue == TaintValue.TAINTED) return taintValue;
-    taintValue = analyze(taintValue, uBlock, psiParameter);
+    UMethod uMethod = ObjectUtils.tryCast(uParameter.getUastParent(), UMethod.class);
+    if (uMethod == null) return TaintValue.UNTAINTED;
+    UBlockExpression uBlock = ObjectUtils.tryCast(uMethod.getUastBody(), UBlockExpression.class);
+    if (uBlock != null) taintValue = analyze(taintValue, uBlock, psiParameter);
     if (taintValue == TaintValue.TAINTED) return taintValue;
-    int paramIdx = uMethod.getUastParameters().indexOf(uParameter);
+    SmartList<NonMarkedElement> nonMarkedElements = new SmartList<>();
+    // this might happen when we analyze kotlin primary constructor parameter
+    if (uBlock == null) nonMarkedElements.addAll(findAssignments(target));
     PsiMethod psiMethod = ObjectUtils.tryCast(uMethod.getSourcePsi(), PsiMethod.class);
     // TODO: handle varargs
-    if (psiMethod == null || psiMethod.isVarArgs()) return TaintValue.UNTAINTED;
-    Collection<NonMarkedElement> args = findArgs(psiMethod, paramIdx);
-    if (args.isEmpty()) return taintValue;
-    myNonMarkedElements.addAll(args);
+    if (psiMethod != null && !psiMethod.isVarArgs()) {
+      int paramIdx = uMethod.getUastParameters().indexOf(uParameter);
+      nonMarkedElements.addAll(findArgs(psiMethod, paramIdx));
+    }
+    if (nonMarkedElements.isEmpty()) return taintValue;
+    myNonMarkedElements.addAll(nonMarkedElements);
     return TaintValue.UNKNOWN;
   }
 

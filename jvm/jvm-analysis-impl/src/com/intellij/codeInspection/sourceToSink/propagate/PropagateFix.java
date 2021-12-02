@@ -16,13 +16,9 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.ui.content.Content;
 import com.intellij.usageView.UsageViewContentManager;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,11 +55,7 @@ public class PropagateFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     if (reportedElement == null) return;
     TaintAnalyzer analyzer = new TaintAnalyzer();
     if (analyzer.analyze(uExpression) != TaintValue.UNKNOWN) return;
-    PsiModifierListOwner target = ObjectUtils.tryCast(((UResolvable)uExpression).resolve(), PsiModifierListOwner.class);
-    if (target == null) return;
-    // TODO: won't work if we start from kotlin
-    PsiMethod method = PsiTreeUtil.getParentOfType(reportedElement, PsiMethod.class);
-    if (method == null) return;
+    PsiElement target = ((UResolvable)uExpression).resolve();
     String title = JvmAnalysisBundle.message("jvm.inspections.source.unsafe.to.sink.flow.propagate.safe.toolwindow.title");
     TaintNode root = new TaintNode(null, target, reportedElement);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
