@@ -101,7 +101,10 @@ public class GitExecutableManager {
 
   @Nullable
   private String getPathToGit(@Nullable Project project, boolean detectIfNeeded) {
-    String path = project != null && isTrusted(project) ? GitVcsSettings.getInstance(project).getPathToGit() : null;
+    String path = null;
+    if (project != null && (project.isDefault() || isTrusted(project))) {
+      path = GitVcsSettings.getInstance(project).getPathToGit();
+    }
     if (path == null) path = GitVcsApplicationSettings.getInstance().getSavedPathToGit();
     if (path == null) path = getDetectedExecutable(project, detectIfNeeded);
     return path;
