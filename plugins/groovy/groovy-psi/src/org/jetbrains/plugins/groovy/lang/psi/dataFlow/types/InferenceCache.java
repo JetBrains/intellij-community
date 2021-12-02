@@ -5,6 +5,8 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
@@ -41,11 +43,11 @@ final class InferenceCache {
   private final Lazy<VariableDescriptor[]> myReverseIndex;
   private final Lazy<List<DefinitionMap>> myDefinitionMaps;
 
-  private final AtomicReference<Map<VariableDescriptor, DFAType>>[] myVarTypes;
+  private final AtomicReference<Int2ObjectMap<DFAType>>[] myVarTypes;
   private final Set<Instruction> myTooComplexInstructions = ContainerUtil.newConcurrentSet();
   /**
-   * Instructions outside any cycle. The DFA has straightforward direction considering these instructions, so it is safe
-   * to apply certain optimizations on this flow
+   * Instructions outside any cycle. The control flow graph does not have backward edges on these instructions, so it is safe
+   * to assume that DFA visits them <b>only once<b/>.
    */
   private final Set<Instruction> simpleInstructions;
 
@@ -64,9 +66,9 @@ final class InferenceCache {
     myDefinitionMaps = lazyPub(() -> getDefUseMaps(myFlow, myVarIndexes.getValue()));
     myFromByElements = Arrays.stream(myFlow).filter(it -> it.getElement() != null).collect(Collectors.groupingBy(Instruction::getElement));
     //noinspection unchecked
-    AtomicReference<Map<VariableDescriptor, DFAType>>[] basicTypes = new AtomicReference[myFlow.length];
+    AtomicReference<Int2ObjectMap<DFAType>>[] basicTypes = new AtomicReference[myFlow.length];
     for (int i = 0; i < myFlow.length; i++) {
-      basicTypes[i] = new AtomicReference<>(new HashMap<>());
+        basicTypes[i] = new AtomicReference<>(new Int2ObjectOpenHashMap<>());
     }
     myVarTypes = basicTypes;
     simpleInstructions = findNodesOutsideCycles(mapGraph(Arrays.stream(myFlow).collect(Collectors.toMap(instr -> instr, instr -> {
@@ -91,8 +93,9 @@ final class InferenceCache {
       return null;
     }
 
-    Map<VariableDescriptor, DFAType> cache = myVarTypes[instruction.num()].get();
-    if (!cache.containsKey(descriptor)) {
+    Int2ObjectMap<DFAType> cache = myVarTypes[instruction.num()].get();
+    int index = myVarIndexes.getValue().getInt(descriptor);
+    if (index != 0 && !cache.containsKey(index)) {
       Predicate<Instruction> mixinPredicate = mixinOnly ? (e) -> e instanceof MixinTypeInstruction : (e) -> true;
       DFAFlowInfo flowInfo = collectFlowInfo(definitionMaps, instruction, descriptor, mixinPredicate);
       List<TypeDfaState> dfaResult = performTypeDfa(myScope, myFlow, flowInfo);
@@ -120,13 +123,17 @@ final class InferenceCache {
 
   @Nullable
   DFAType getCachedInferredType(@NotNull VariableDescriptor descriptor, @NotNull Instruction instruction) {
-    return myVarTypes[instruction.num()].get().get(descriptor);
+    int index = myVarIndexes.getValue().getInt(descriptor);
+    if (index == 0) {
+      return null;
+    }
+    return myVarTypes[instruction.num()].get().get(index);
   }
 
   void publishDescriptor(@NotNull TypeDfaState intermediateState, @NotNull Instruction instruction) {
     if (simpleInstructions.contains(instruction) && TypeInferenceHelper.getCurrentContext() == TypeInferenceHelper.getTopContext()) {
       myVarTypes[instruction.num()].getAndUpdate(
-        oldState -> TypesSemilattice.mergeForCaching(oldState, intermediateState, myReverseIndex.getValue()));
+        oldState -> TypesSemilattice.mergeForCaching(oldState, intermediateState));
     }
   }
 
@@ -191,7 +198,7 @@ final class InferenceCache {
                               Set<Instruction> storingInstructions) {
     for (var instruction : storingInstructions) {
       int index = instruction.num();
-      myVarTypes[index].getAndUpdate(oldState -> TypesSemilattice.mergeForCaching(oldState, dfaResult.get(index), myReverseIndex.getValue()));
+      myVarTypes[index].getAndUpdate(oldState -> TypesSemilattice.mergeForCaching(oldState, dfaResult.get(index)));
     }
   }
 

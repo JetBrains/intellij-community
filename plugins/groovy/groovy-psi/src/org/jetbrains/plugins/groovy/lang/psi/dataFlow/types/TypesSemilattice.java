@@ -5,13 +5,13 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.SmartList;
-import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.VariableDescriptor;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -53,19 +53,17 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
     return e1 == e2 || e1.contentsEqual(e2);
   }
 
-  public static Map<VariableDescriptor, DFAType> mergeForCaching(Map<VariableDescriptor, DFAType> cached,
-                                                                 TypeDfaState another,
-                                                                 Map<VariableDescriptor, Integer> varIndexes) {
+  public static Int2ObjectMap<DFAType> mergeForCaching(Int2ObjectMap<DFAType> cached,
+                                                       TypeDfaState another) {
     if (another.getRawVarTypes().isEmpty()) {
       return cached;
     }
 
-    List<Map.Entry<VariableDescriptor, DFAType>> newTypes = new SmartList<>();
-    for (Map.Entry<VariableDescriptor, DFAType> candidateEntry : another.getRawVarTypes().entrySet()) {
-      var descriptor = candidateEntry.getKey();
-      int index = ((Object2IntMap<VariableDescriptor>)varIndexes).getInt(descriptor);
+    List<Int2ObjectMap.Entry<DFAType>> newTypes = new SmartList<>();
+    for (Int2ObjectMap.Entry<DFAType> candidateEntry : another.getRawVarTypes().int2ObjectEntrySet()) {
+      int index = candidateEntry.getIntKey();
       if (index == 0 || another.getProhibitedCachingVars().get(index) ||
-          (cached.containsKey(descriptor) && checkDfaStatesConsistency(cached, candidateEntry))) {
+          (cached.containsKey(index) /*&& checkDfaStatesConsistency(cached, candidateEntry)*/)) {
         continue;
       }
       newTypes.add(candidateEntry);
@@ -73,10 +71,10 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
     if (newTypes.isEmpty()) {
       return cached;
     }
-    Map<VariableDescriptor, DFAType> newState = new HashMap<>(cached.size() + newTypes.size());
+    Int2ObjectMap<DFAType> newState = new Int2ObjectOpenHashMap<>(cached.size() + newTypes.size());
     newState.putAll(cached);
     for (var entry : newTypes) {
-      newState.put(entry.getKey(), entry.getValue());
+      newState.put(entry.getIntKey(), entry.getValue());
     }
     return newState;
   }
