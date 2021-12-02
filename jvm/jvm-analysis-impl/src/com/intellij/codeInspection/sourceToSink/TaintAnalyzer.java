@@ -187,7 +187,13 @@ public class TaintAnalyzer {
     }
 
     UBlockExpression methodBody = ObjectUtils.tryCast(uMethod.getUastBody(), UBlockExpression.class);
-    if (methodBody == null) return TaintValue.UNTAINTED;
+    if (methodBody == null) {
+      // maybe it is a generated kotlin property getter or setter
+      PsiElement sourcePsi = uMethod.getSourcePsi();
+      if (sourcePsi == null) return TaintValue.UNTAINTED;
+      TaintValue taintValue = fromField(sourcePsi);
+      return taintValue == null ? TaintValue.UNTAINTED : taintValue;
+    }
     MethodAnalyzer methodAnalyzer = new MethodAnalyzer();
     methodBody.accept(methodAnalyzer);
     List<NonMarkedElement> children = methodAnalyzer.myChildren;
@@ -244,7 +250,17 @@ public class TaintAnalyzer {
     UastBinaryOperator operator = uBinary.getOperator();
     if (operator != UastBinaryOperator.ASSIGN && operator != UastBinaryOperator.PLUS_ASSIGN) return false;
     UResolvable leftOperand = ObjectUtils.tryCast(UastUtils.skipParenthesizedExprDown(uBinary.getLeftOperand()), UResolvable.class);
-    return leftOperand != null && leftOperand.resolve() == target;
+    if (leftOperand == null) return false;
+    PsiElement lhsTarget = leftOperand.resolve();
+    if (lhsTarget == target) return true;
+    // maybe it's kotlin property auto generated setter
+    if (!(lhsTarget instanceof PsiMethod) || ((PsiMethod)lhsTarget).getBody() != null) {
+      return false;
+    }
+    UElement uElement = UastContextKt.toUElement(lhsTarget);
+    if (uElement == null) return false;
+    PsiElement property = uElement.getSourcePsi();
+    return property == target;
   }
 
   private static @Nullable PsiType getType(@Nullable PsiElement element) {
