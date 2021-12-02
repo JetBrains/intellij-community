@@ -94,35 +94,36 @@ public class GitExecutableManager {
 
   @NotNull
   public String getPathToGit(@Nullable Project project) {
-    String pathToGit = getPathToGit(project, true);
+    String pathToGit = getPathToGit(project, null, true);
     if (pathToGit == null) pathToGit = GitExecutableDetector.getDefaultExecutable();
     return pathToGit;
   }
 
   @Nullable
-  private String getPathToGit(@Nullable Project project, boolean detectIfNeeded) {
+  private String getPathToGit(@Nullable Project project, @Nullable File gitDirectory, boolean detectIfNeeded) {
     String path = null;
     if (project != null && (project.isDefault() || isTrusted(project))) {
       path = GitVcsSettings.getInstance(project).getPathToGit();
     }
     if (path == null) path = GitVcsApplicationSettings.getInstance().getSavedPathToGit();
-    if (path == null) path = getDetectedExecutable(project, detectIfNeeded);
+    if (path == null) {
+      WSLDistribution distribution = gitDirectory != null
+                                     ? WslPath.getDistributionByWindowsUncPath(gitDirectory.getPath())
+                                     : getProjectWslDistribution(project);
+      path = myExecutableDetector.getExecutable(distribution, detectIfNeeded);
+    }
     return path;
   }
 
   @NotNull
-  public GitExecutable getExecutableFor(@NotNull File gitDirectory) {
-    String path = GitVcsApplicationSettings.getInstance().getSavedPathToGit();
-    if (path == null) {
-      WSLDistribution wslDistribution = WslPath.getDistributionByWindowsUncPath(gitDirectory.getPath());
-      path = myExecutableDetector.getExecutable(wslDistribution, true);
-    }
-    return getExecutable(path);
+  public GitExecutable getExecutable(@Nullable Project project) {
+    return getExecutable(project, null);
   }
 
   @NotNull
-  public GitExecutable getExecutable(@Nullable Project project) {
-    String path = getPathToGit(project);
+  public GitExecutable getExecutable(@Nullable Project project, @Nullable File gitDirectory) {
+    String path = getPathToGit(project, gitDirectory, true);
+    if (path == null) path = GitExecutableDetector.getDefaultExecutable();
     return getExecutable(path);
   }
 
@@ -168,7 +169,7 @@ public class GitExecutableManager {
   @CalledInAny
   @NotNull
   public GitVersion getVersion(@NotNull Project project) {
-    String pathToGit = getPathToGit(project, false);
+    String pathToGit = getPathToGit(project, null, false);
     if (pathToGit == null) return GitVersion.NULL;
 
     GitExecutable executable = getExecutable(pathToGit);
