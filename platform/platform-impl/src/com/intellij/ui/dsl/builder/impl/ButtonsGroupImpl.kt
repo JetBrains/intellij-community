@@ -16,11 +16,12 @@ internal class ButtonsGroupImpl : ButtonsGroup {
   private val boundRadioButtons = mutableMapOf<Cell<AbstractButton>, Any>()
   private var groupBinding: GroupBinding<*>? = null
 
-  override fun <T> bind(binding: PropertyBinding<T>, type: Class<T>) {
+  override fun <T> bind(binding: PropertyBinding<T>, type: Class<T>): ButtonsGroup {
     if (groupBinding != null) {
       throw UiDslException("The group is bound already")
     }
     groupBinding = GroupBinding(binding, type)
+    return this
   }
 
   fun <T : AbstractButton> add(cell: Cell<T>, value: Any? = null) {
@@ -77,7 +78,7 @@ private class GroupBinding<T>(val binding: PropertyBinding<T>, val type: Class<T
   }
 
   fun validate(value: Any) {
-    if (value::class.java != type) {
+    if (!type.isInstance(value)) {
       throw UiDslException("Value $value is incompatible with button group binding class ${type.simpleName}")
     }
   }
