@@ -9,8 +9,8 @@ UFile (package = ) [public final class ReceiverFunKt {...]
                     UQualifiedReferenceExpression [this.length] : PsiType:int
                         UThisExpression (label = null) [this] : PsiType:String
                         USimpleNameReferenceExpression (identifier = length) [length] : PsiType:int
-        UMethod (name = getRx) [public static final fun getRx(@MyReceiverAnnotation(name = "RegExp") @org.jetbrains.annotations.NotNull $this$getRx: java.lang.String) : kotlin.text.Regex {...}]
-            UParameter (name = $this$getRx) [@MyReceiverAnnotation(name = "RegExp") @org.jetbrains.annotations.NotNull var $this$getRx: java.lang.String]
+        UMethod (name = getRx) [public static final fun getRx(@MyReceiverAnnotation(name = "RegExp") @org.jetbrains.annotations.NotNull $this$rx: java.lang.String) : kotlin.text.Regex {...}]
+            UParameter (name = $this$rx) [@MyReceiverAnnotation(name = "RegExp") @org.jetbrains.annotations.NotNull var $this$rx: java.lang.String]
                 UAnnotation (fqName = MyReceiverAnnotation) [@MyReceiverAnnotation(name = "RegExp")]
                     UNamedExpression (name = name) [name = "RegExp"]
                         ULiteralExpression (value = "RegExp") ["RegExp"] : PsiType:String
