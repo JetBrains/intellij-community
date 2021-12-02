@@ -164,38 +164,39 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
   companion object {
     @Suppress("HardCodedStringLiteral")
     internal val defaultConfiguration = DependencyContributor.Scope("default", "default", "Default")
+
+
+    private fun GradleModuleData.getDependencies(project: Project): List<DependencyScopeNode> {
+      var dependencyScopeNodes: List<DependencyScopeNode> = emptyList()
+      val outputFile = FileUtil.createTempFile("dependencies", ".json", true)
+      val taskConfiguration =
+        """
+        outputFile = project.file("${FileUtil.toCanonicalPath(outputFile.absolutePath)}")
+        configurations = []
+        """.trimIndent()
+      GradleTaskManager.runCustomTask(
+        project, GradleBundle.message("gradle.dependency.analyzer.loading"),
+        DependenciesReport::class.java,
+        directoryToRunTask,
+        fullGradlePath,
+        taskConfiguration,
+        ProgressExecutionMode.NO_PROGRESS_SYNC,
+        object : TaskCallback {
+          override fun onSuccess() {
+            val json = FileUtil.loadFile(outputFile)
+            val gsonBuilder = GsonBuilder()
+            gsonBuilder.registerTypeAdapter(DependencyNode::class.java, DependencyNodeDeserializer())
+            dependencyScopeNodes = gsonBuilder.create().fromJson(json, Array<DependencyScopeNode>::class.java).asList()
+          }
+
+          override fun onFailure() {
+          }
+        }
+      )
+      FileUtil.asyncDelete(outputFile)
+      return dependencyScopeNodes
+    }
+
+    private fun DependencyScopeNode.toScope() = DependencyContributor.Scope(scope, scope, scope)
   }
 }
-
-private fun GradleModuleData.getDependencies(project: Project): List<DependencyScopeNode> {
-  var dependencyScopeNodes: List<DependencyScopeNode> = emptyList()
-  val outputFile = FileUtil.createTempFile("dependencies", ".json", true)
-  val taskConfiguration =
-    """
-    outputFile = project.file("${FileUtil.toCanonicalPath(outputFile.absolutePath)}")
-    configurations = []
-    """.trimIndent()
-  GradleTaskManager.runCustomTask(
-    project, GradleBundle.message("gradle.dependency.analyzer.loading"),
-    DependenciesReport::class.java,
-    directoryToRunTask,
-    fullGradlePath,
-    taskConfiguration,
-    ProgressExecutionMode.NO_PROGRESS_SYNC,
-    object : TaskCallback {
-      override fun onSuccess() {
-        val json = FileUtil.loadFile(outputFile)
-        val gsonBuilder = GsonBuilder()
-        gsonBuilder.registerTypeAdapter(DependencyNode::class.java, DependencyNodeDeserializer())
-        dependencyScopeNodes = gsonBuilder.create().fromJson(json, Array<DependencyScopeNode>::class.java).asList()
-      }
-
-      override fun onFailure() {
-      }
-    }
-  )
-  FileUtil.asyncDelete(outputFile)
-  return dependencyScopeNodes
-}
-
-private fun DependencyScopeNode.toScope() = DependencyContributor.Scope(scope, scope, scope)
