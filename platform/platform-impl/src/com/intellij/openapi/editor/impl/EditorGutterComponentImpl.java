@@ -1645,7 +1645,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
     if (isLineNumbersShown()) {
       return myLineNumberAreaWidth + getAreaWidthWithGap(myAdditionalLineNumberAreaWidth);
     }
-    if (ExperimentalUI.isNewUI()) {
+    if (ExperimentalUI.isNewUI() && isRealEditor()) {
       //todo[kb] recalculate gutters renderers and return 0 if there are none in EditorMouseEventArea.LINE_NUMBERS_AREA
       return 14;
     }
