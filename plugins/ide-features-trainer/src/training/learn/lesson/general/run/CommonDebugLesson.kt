@@ -7,9 +7,11 @@ import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.icons.AllIcons
 import com.intellij.ide.impl.DataManagerImpl
+import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.LogicalPosition
@@ -18,13 +20,16 @@ import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.tasks.TaskBundle
-import com.intellij.util.ui.UIUtil
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil
+import com.intellij.xdebugger.impl.evaluate.XDebuggerEvaluationDialog
 import com.intellij.xdebugger.impl.frame.XDebuggerFramesList
+import com.intellij.xdebugger.impl.ui.XDebuggerEmbeddedComboBox
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree
+import com.intellij.xdebugger.impl.ui.tree.nodes.WatchNodeImpl
+import org.assertj.swing.fixture.JComboBoxFixture
 import org.jetbrains.annotations.Nls
 import training.dsl.*
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
@@ -38,21 +43,19 @@ import training.learn.lesson.LessonManager
 import training.statistic.LessonStartingWay
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
+import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.KeymapUtil
 import training.util.WeakReferenceDelegator
 import training.util.getActionById
 import training.util.invokeActionForFocusContext
 import java.awt.Rectangle
 import java.awt.event.KeyEvent
-import javax.swing.JDialog
-import javax.swing.text.JTextComponent
 
 abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message("debug.workflow.lesson.name")) {
   protected abstract val sample: LessonSample
   protected abstract var logicalPosition: LogicalPosition
   protected abstract val configurationName: String
   protected abstract val quickEvaluationArgument: String
-  protected abstract val expressionToBeEvaluated: String
   protected abstract val confNameForWatches: String
   protected abstract val debuggingMethodName: String
   protected abstract val methodForStepInto: String
@@ -81,13 +84,15 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
     waitBeforeContinue(500)
 
+    evaluateExpressionTasks()
+
     addToWatchTask()
 
     stepIntoTasks()
 
     waitBeforeContinue(500)
 
-    quickEvaluateTask()
+    evaluateArgumentTask()
 
     fixTheErrorTask()
 
@@ -105,9 +110,9 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
 
     runToCursorTask()
 
-    if (TaskTestContext.inTestMode) waitBeforeContinue(1000)
+    waitBeforeContinue(500)
 
-    evaluateExpressionTasks()
+    evaluateResultTask()
 
     stopTask()
 
@@ -211,26 +216,29 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
   }
 
   private fun LessonContext.addToWatchTask() {
-    highlightButtonById("XDebugger.NewWatch")
-
     task("Debugger.AddToWatch") {
       val position = sample.getPosition(1)
       val needAddToWatch = position.selection?.let { pair -> sample.text.substring(pair.first, pair.second) }
                            ?: error("Invalid sample data")
-      caret(position)
       val hasShortcut = KeymapUtil.getShortcutByActionId(it) != null
       val shortcut = if (hasShortcut) "" else " " + LessonsBundle.message("debug.workflow.consider.to.add.a.shortcut")
 
       text(LessonsBundle.message("debug.workflow.use.watches",
-                                 strong(TaskBundle.message("debugger.watches")), icon(AllIcons.General.Add), action(it), shortcut))
+                                 strong(TaskBundle.message("debugger.watches")),
+                                 LessonUtil.rawKeyStroke(XDebuggerEvaluationDialog.ADD_WATCH_KEYSTROKE),
+                                 icon(AllIcons.Debugger.AddToWatch)))
+      text(LessonsBundle.message("debug.workflow.use.watches.shortcut", action(it),
+                                 strong(TaskBundle.message("debugger.watches")), shortcut))
+      val addToWatchActionText = ActionsBundle.actionText(it)
+      triggerByUiComponentAndHighlight(usePulsation = true) { ui: ActionButton ->
+        ui.action.templatePresentation.text == addToWatchActionText
+      }
       stateCheck {
         val watches = (XDebuggerManager.getInstance(project) as XDebuggerManagerImpl).watchesManager.getWatches(confNameForWatches)
         watches.any { watch -> watch.expression == needAddToWatch }
       }
-      proposeRestore {
-        checkPositionOfEditor(LessonSample(sample.text, position)) ?: checkForBreakpoints()
-      }
-      test { actions(it) }
+      proposeSelectionChangeRestore(position)
+      test { invokeActionViaShortcut("CTRL SHIFT ENTER") }
     }
   }
 
@@ -264,19 +272,10 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     }
   }
 
-  private fun LessonContext.quickEvaluateTask() {
-    task("QuickEvaluateExpression") {
-      before {
-        LearningUiHighlightingManager.clearHighlights()
-      }
-      val position = sample.getPosition(2)
-      caret(position)
-      text(LessonsBundle.message("debug.workflow.quick.evaluate", code(quickEvaluationArgument), action(it)))
-      trigger(it)
-      proposeRestore {
-        checkPositionOfEditor(LessonSample(sample.text, position)) ?: checkForBreakpoints()
-      }
-      test { actions(it) }
+  private fun LessonContext.evaluateArgumentTask() {
+    quickEvaluateTask(positionId = 2) { position ->
+      text(LessonsBundle.message("debug.workflow.quick.evaluate", code(quickEvaluationArgument), action("QuickEvaluateExpression")))
+      proposeSelectionChangeRestore(position)
     }
   }
 
@@ -356,42 +355,51 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
   }
 
   private fun LessonContext.evaluateExpressionTasks() {
-    highlightButtonById("EvaluateExpression")
-
-    actionTask("EvaluateExpression") {
-      proposeModificationRestore(afterFixText)
-      LessonsBundle.message("debug.workflow.evaluate.expression", code("result"), code(expressionToBeEvaluated), action(it),
-                            icon(AllIcons.Debugger.EvaluateExpression))
+    task {
+      triggerByUiComponentAndHighlight(highlightInside = false,
+                                       usePulsation = true) { ui: XDebuggerEmbeddedComboBox<XExpression> -> ui.isEditable }
     }
 
-    task(expressionToBeEvaluated) {
-      before {
-        LearningUiHighlightingManager.clearHighlights()
+    val position = sample.getPosition(1)
+    val needToEvaluate = position.selection?.let { pair -> sample.text.substring(pair.first, pair.second) }
+                         ?: error("Invalid sample data")
+    caret(position)
+
+    task {
+      text(LessonsBundle.message("debug.workflow.evaluate.expression"))
+      triggerByUiComponentAndHighlight(false, false) { ui: EditorComponentImpl ->
+        ui.editor.document.text == needToEvaluate
       }
-      text(LessonsBundle.message("debug.workflow.type.result", code(it),
-                                 strong(XDebuggerBundle.message("xdebugger.evaluate.label.expression"))))
-      stateCheck { checkWordInTextField(it) }
-      proposeModificationRestore(afterFixText)
+      proposeSelectionChangeRestore(position)
       test {
-        type(it)
+        invokeActionViaShortcut("CTRL C")
+        ideFrame {
+          val evaluateExpressionField =
+            findComponentWithTimeout(defaultTimeout) { ui: XDebuggerEmbeddedComboBox<XExpression> -> ui.isEditable }
+          JComboBoxFixture(robot(), evaluateExpressionField).click()
+          invokeActionViaShortcut("CTRL V")
+        }
       }
     }
 
     task {
-      before {
-        LearningUiHighlightingManager.clearHighlights()
+      text(LessonsBundle.message("debug.workflow.evaluate.it", LessonUtil.rawEnter()))
+      triggerByUiComponentAndHighlight(false, false) l@{ ui: XDebuggerTree ->
+        val resultNode = ui.root.getChildAt(0) as? WatchNodeImpl ?: return@l false
+        resultNode.expression.expression == needToEvaluate
       }
-      text(LessonsBundle.message("debug.workflow.evaluate.it", LessonUtil.rawEnter(),
-                                 strong(XDebuggerBundle.message("xdebugger.button.evaluate").dropMnemonic())))
-      triggerByUiComponentAndHighlight(highlightBorder = false, highlightInside = false) { debugTree: XDebuggerTree ->
-        val dialog = UIUtil.getParentOfType(JDialog::class.java, debugTree)
-        val root = debugTree.root
-        dialog?.title == XDebuggerBundle.message("xdebugger.evaluate.dialog.title") && root?.children?.size == 1
-      }
-      proposeModificationRestore(afterFixText)
-      test(waitEditorToBeReady = false) {
+      proposeSelectionChangeRestore(position)
+      test {
         invokeActionViaShortcut("ENTER")
-        invokeActionViaShortcut("ESCAPE")
+      }
+    }
+  }
+
+  private fun LessonContext.evaluateResultTask() {
+    quickEvaluateTask(positionId = 4) { position ->
+      text(LessonsBundle.message("debug.workflow.check.result", action("QuickEvaluateExpression")))
+      proposeRestore {
+        checkPositionOfEditor(LessonSample(afterFixText, position))
       }
     }
   }
@@ -439,6 +447,19 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     }
   }
 
+  private fun LessonContext.quickEvaluateTask(positionId: Int, textAndRestore: TaskContext.(LessonSamplePosition) -> Unit) {
+    task("QuickEvaluateExpression") {
+      before {
+        LearningUiHighlightingManager.clearHighlights()
+      }
+      val position = sample.getPosition(positionId)
+      caret(position)
+      trigger(it)
+      textAndRestore(position)
+      test { actions(it) }
+    }
+  }
+
   private fun TaskRuntimeContext.selectedNeedConfiguration(): Boolean {
     val runManager = RunManager.getInstance(project)
     val selectedConfiguration = runManager.selectedConfiguration
@@ -456,9 +477,6 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     return true
   }
 
-  private fun TaskRuntimeContext.checkWordInTextField(expected: String): Boolean =
-    (focusOwner as? JTextComponent)?.text?.replace(" ", "")?.toLowerCase() == expected.toLowerCase().replace(" ", "")
-
   protected fun TaskContext.proposeModificationRestore(restoreText: String) = proposeRestore {
     val caretOffset = editor.caretModel.offset
     val textLength = editor.document.textLength
@@ -466,6 +484,10 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     val offset = caretOffset - (if (restoreLength <= textLength) 0 else restoreLength - textLength)
 
     checkExpectedStateOfEditor(LessonSample(restoreText, offset), false) ?: checkForBreakpoints()
+  }
+
+  private fun TaskContext.proposeSelectionChangeRestore(position: LessonSamplePosition) = proposeRestore {
+    checkPositionOfEditor(LessonSample(sample.text, position)) ?: checkForBreakpoints()
   }
 
   override val suitableTips = listOf("BreakpointSpeedmenu", "QuickEvaluateExpression", "EvaluateExpressionInEditor")
