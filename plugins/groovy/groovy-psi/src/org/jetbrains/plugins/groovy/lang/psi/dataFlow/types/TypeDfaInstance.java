@@ -116,10 +116,10 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       stateTypes.remove(descr);
     }
     if (currentClosureFrame.getStartState() == state || hasNoChanges(currentClosureFrame.getStartState(), stateTypes)) {
-      return state;
+      return currentClosureFrame.getStartState();
     }
     InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
-    TypeDfaState newState = state.withNewMap(stateTypes).withNewClosureState(currentClosureFrame);
+    TypeDfaState newState = state.withNewMap(stateTypes).withoutTopClosureState();
     switch (kind) {
       case IN_PLACE_ONCE:
         return newState;

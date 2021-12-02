@@ -124,9 +124,16 @@ class TypeDfaState {
   public TypeDfaState withNewClosureState(@NotNull ClosureFrame frame) {
     if (frame == myPreviousClosureState.getHead()) {
       return this;
-    } else {
+    }
+    else {
       return new TypeDfaState(myVarTypes, myProhibitedCachingVars, myPreviousClosureState.prepend(frame));
     }
+  }
+
+  @Contract(pure = true)
+  @NotNull
+  public TypeDfaState withoutTopClosureState() {
+    return new TypeDfaState(myVarTypes, myProhibitedCachingVars, myPreviousClosureState.getTail());
   }
 
   @Contract(pure = true)
