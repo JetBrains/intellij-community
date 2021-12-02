@@ -779,6 +779,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return myInstalledPanel
       .getGroups()
       .stream()
+      .filter(group -> !group.excluded)
       .flatMap(group -> group.plugins.stream())
       .map(ListPluginComponent::getPluginDescriptor)
       .collect(Collectors.toList());
