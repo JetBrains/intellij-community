@@ -77,7 +77,7 @@ public class AssignmentUsedAsConditionInspection extends BaseInspection {
         return;
       }
       final PsiExpression lhs = PsiUtil.skipParenthesizedExprDown(expression.getLExpression());
-      if (!(lhs instanceof PsiReferenceExpression)) {
+      if (!(lhs instanceof PsiReferenceExpression) && !(lhs instanceof PsiArrayAccessExpression)) {
         return;
       }
       final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
