@@ -11,6 +11,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Comparing
 import com.intellij.util.io.URLUtil
 import com.intellij.util.io.exists
+import com.intellij.util.io.isDirectory
+import com.intellij.util.io.isFile
 import com.intellij.vcs.log.impl.VcsLogApplicationSettings
 import com.intellij.vcs.log.impl.VcsLogProjectTabsProperties
 import com.intellij.vcs.log.impl.VcsLogUiProperties
@@ -24,6 +26,7 @@ import git4idea.repo.GitRepository
 import git4idea.ui.branch.dashboard.CHANGE_LOG_FILTER_ON_BRANCH_SELECTION_PROPERTY
 import git4idea.ui.branch.dashboard.SHOW_GIT_BRANCHES_LOG_PROPERTY
 import java.io.File
+import java.nio.file.Files
 import java.nio.file.Path
 
 class GitStatisticsCollector : ProjectUsagesCollector() {
@@ -63,6 +66,7 @@ class GitStatisticsCollector : ProjectUsagesCollector() {
       metric.data.addData("remote_branches", branches.remoteBranches.size)
       metric.data.addData("remotes", repository.remotes.size)
       metric.data.addData("working_copy_size", repository.workingCopySize())
+      metric.data.addData("is_worktree_used", repository.isWorkTreeUsed())
 
       val remoteTypes = HashMultiset.create(repository.remotes.mapNotNull { getRemoteServerType(it) })
       for (remoteType in remoteTypes) {
@@ -153,4 +157,29 @@ private fun isInnerRepo(root: File, dir: File): Boolean {
   if (root == dir) return false
 
   return Path.of(dir.toString(), GitUtil.DOT_GIT).exists()
+}
+
+/**
+ * Checks that worktree is used in [GitRepository]
+ *
+ * worktree usage will be detected when:
+ * repo_root/.git is a file
+ * or repo_root/.git/worktrees is not empty
+ */
+private fun GitRepository.isWorkTreeUsed(): Boolean {
+  return try {
+    val rootPath = this.root.toNioPath()
+
+    val dotGit = Path.of(rootPath.toString(), GitUtil.DOT_GIT)
+    if (dotGit.isFile()) return true
+
+    val worktreesPath = repositoryFiles.worktreesDirFile.toPath()
+    if (!worktreesPath.exists()) return false
+    if (!worktreesPath.isDirectory()) return false
+
+    Files.list(worktreesPath).count() > 0
+  }
+  catch (e: Exception) {
+    false
+  }
 }
