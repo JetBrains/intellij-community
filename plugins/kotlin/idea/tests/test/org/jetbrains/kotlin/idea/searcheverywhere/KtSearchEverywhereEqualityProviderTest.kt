@@ -42,7 +42,7 @@ abstract class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixt
             doTest({ it.ktFile to it.facadeClass }, expectedToRemove = { it.facadeClass }, withFacade = true)
         }
 
-        fun `test KtFile and KtClassForFacade shouldn't be deduplicated when non default JvmName is used`() {
+        fun `test KtFile and KtClassForFacade shouldnt be deduplicated when non default JvmName is used`() {
             doTest({ it.ktFile to it.facadeClass }, expectedToRemove = { null }, withFacade = true, facadeName = "Bar")
         }
     }
@@ -53,7 +53,7 @@ abstract class KtSearchEverywhereEqualityProviderTest : LightJavaCodeInsightFixt
             doTest({ it.ktClass to it.facadeClass }, expectedToRemove = { it.facadeClass }, withFacade = true)
         }
 
-        fun `test KtClass and KtClassForFacade shouldn't be deduplicated when non default JvmName is used`() {
+        fun `test KtClass and KtClassForFacade shouldnt be deduplicated when non default JvmName is used`() {
             doTest({ it.ktClass to it.facadeClass }, expectedToRemove = { null }, withFacade = true, facadeName = "Bar")
         }
 
