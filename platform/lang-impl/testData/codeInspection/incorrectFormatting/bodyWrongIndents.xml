@@ -1,0 +1,13 @@
+<root>
+    <head/>
+    <body>
+        <arm>
+<warning descr="Missing line feed">             </warning><hand/>
+        </arm>
+        <arm/>
+        <leg/>
+        <leg>
+            <foot/>
+<warning descr="Missing line feed">         </warning></leg>
+    </body>
+</root>

@@ -1,0 +1,16 @@
+<root>
+    <head/>
+    <body>
+        <arm>
+            <hand/>
+        </arm>
+        <arm/>
+<warning descr="Incorrect whitespace, 2 blank line(s) expected">
+
+
+        </warning><leg/>
+        <leg>
+            <foot/>
+        </leg>
+    </body>
+</root>
