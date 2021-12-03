@@ -16,10 +16,8 @@ import java.util.function.BiConsumer
  */
 @CompileStatic
 abstract class BaseIdeaProperties extends JetBrainsProductProperties {
-  public static final List<String> JAVA_IDE_API_MODULES = List.of(
+  private static final List<String> JAVA_IDE_API_MODULES = List.of(
     "intellij.xml.dom",
-    "intellij.java.testFramework",
-    "intellij.platform.testFramework.core",
     "intellij.platform.uast.tests",
     "intellij.jsp.base"
   )
@@ -141,6 +139,11 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
           for (String name : JAVA_IDE_API_MODULES) {
             if (!productLayout.productApiModules.contains(name)) {
               withModule(name)
+            }
+          }
+          for (String moduleName : List.of("intellij.java.testFramework", "intellij.platform.testFramework.core")) {
+            if (!productLayout.productApiModules.contains(moduleName)) {
+              withModule(moduleName, "testFramework.jar")
             }
           }
           for (String name : JAVA_IDE_IMPLEMENTATION_MODULES) {
