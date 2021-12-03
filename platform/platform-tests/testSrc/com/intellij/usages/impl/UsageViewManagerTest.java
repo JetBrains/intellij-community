@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.testFramework.ProjectExtension;
-import com.intellij.testFramework.TemporaryDirectory;
+import com.intellij.testFramework.TemporaryDirectoryExtension;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewManager;
 import org.junit.jupiter.api.Test;
@@ -22,7 +22,7 @@ public class UsageViewManagerTest {
   public static final ProjectExtension projectRule = new ProjectExtension();
 
   @RegisterExtension
-  public final TemporaryDirectory temporaryDirectory = new TemporaryDirectory();
+  public final TemporaryDirectoryExtension temporaryDirectory = new TemporaryDirectoryExtension();
 
   @Test
   public void scopeCreatedForFindInDirectory() {

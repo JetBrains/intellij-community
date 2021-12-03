@@ -507,7 +507,7 @@ fun loadProjectAndCheckResults(projectPaths: List<Path>, tempDirectory: Temporar
   }
 }
 
-class DisposableRule : ExternalResource(), AfterEachCallback {
+open class DisposableRule : ExternalResource() {
   private var _disposable = lazy { Disposer.newDisposable() }
 
   val disposable: Disposable
@@ -528,7 +528,9 @@ class DisposableRule : ExternalResource(), AfterEachCallback {
       Disposer.dispose(_disposable.value)
     }
   }
-  
+}
+
+class DisposableExtension : DisposableRule(), AfterEachCallback {
   override fun afterEach(context: ExtensionContext?) {
     after()
   }

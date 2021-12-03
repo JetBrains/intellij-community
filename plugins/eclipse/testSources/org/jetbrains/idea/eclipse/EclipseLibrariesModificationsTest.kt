@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.JarFileSystem
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.ApplicationExtension
 import com.intellij.testFramework.PsiTestUtil
-import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.rules.TestNameExtension
 import com.intellij.util.ArrayUtilRt
 import com.intellij.util.io.copy
@@ -25,7 +25,7 @@ import kotlin.io.path.div
 class EclipseLibrariesModificationsTest {
   @JvmField
   @RegisterExtension
-  val tempDirectory = TempDirectory()
+  val tempDirectory = TempDirectoryExtension()
 
   @JvmField
   @RegisterExtension
