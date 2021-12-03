@@ -7,6 +7,10 @@ import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.ui.JBColor
 
 class RunToolbarDebugProcess : RunToolbarProcess {
+  companion object {
+    internal val pillColor = JBColor.namedColor("RunToolbar.Debug.activeBackground", JBColor(0xFFE7A8, 0x604809))
+  }
+
   override val ID: String = ToolWindowId.DEBUG
   override val executorId: String = ID
   override val name: String = ExecutionBundle.message("run.toolbar.debugging")
@@ -17,7 +21,7 @@ class RunToolbarDebugProcess : RunToolbarProcess {
 
   override val showInBar: Boolean = true
 
-  override val pillColor: JBColor = JBColor.namedColor("RunToolbar.Debug.activeBackground", JBColor(0xFAD576, 0x69541C))
+  override val pillColor: JBColor = RunToolbarDebugProcess.pillColor
 }
 
 class RunToolbarAttachDebugProcess : RunToolbarProcess {
@@ -33,5 +37,5 @@ class RunToolbarAttachDebugProcess : RunToolbarProcess {
 
   override fun isTemporaryProcess(): Boolean = true
 
-  override val pillColor: JBColor = JBColor.namedColor("RunToolbar.Debug.activeBackground", JBColor(0xFAD576, 0x69541C))
+  override val pillColor: JBColor = RunToolbarDebugProcess.pillColor
 }
