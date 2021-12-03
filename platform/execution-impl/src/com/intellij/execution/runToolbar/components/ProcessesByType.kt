@@ -31,7 +31,7 @@ class ProcessesByType : JPanel() {
   }
 
   init {
-    layout = MigLayout("novisualpadding, ins 0, gap 0", "[min!][push]")
+    layout = MigLayout("fill, novisualpadding, ins 0, gap 0", "[min!][fill]")
 
     add(processLabel)
     add(settingLabel, "wmin 10")
@@ -39,7 +39,7 @@ class ProcessesByType : JPanel() {
     isOpaque = false
   }
 
-  fun update(process: RunToolbarProcess, environment: List<ExecutionEnvironment>, onlyCount: Boolean = false) {
+  fun update(process: RunToolbarProcess, environment: MutableList<ExecutionEnvironment>, onlyCount: Boolean = false) {
     this.process = process
     this.environment = environment
     this.onlyCount = onlyCount
