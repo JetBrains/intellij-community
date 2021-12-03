@@ -526,6 +526,7 @@ open class DisposableRule : ExternalResource() {
   public override fun after() {
     if (_disposable.isInitialized()) {
       Disposer.dispose(_disposable.value)
+      _disposable = lazy { Disposer.newDisposable() }
     }
   }
 }
