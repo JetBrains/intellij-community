@@ -97,11 +97,13 @@ internal class CombinedEditorSettingsAction(private val settings: TextDiffSettin
 internal class CombinedPrevNextFileAction(private val block: CombinedDiffBlock,
                                           private val toolbar: Component?,
                                           private val next: Boolean) : ToolbarLabelAction(), RightAlignedToolbarAction {
+  private val text = message(if (next) "action.Combined.Diff.NextChange.text" else "action.Combined.Diff.PrevChange.text")
+
   init {
     ActionUtil.copyFrom(this, if (next) NextChangeAction.ID else PrevChangeAction.ID)
-    val text = message(if (next) "action.Combined.Diff.NextChange.text" else "action.Combined.Diff.PrevChange.text")
     templatePresentation.icon = null
     templatePresentation.text = HtmlBuilder().appendLink("", text).toString()
+    templatePresentation.description = null //disable label tooltip
   }
 
   override fun update(e: AnActionEvent) {
@@ -151,6 +153,8 @@ internal class CombinedPrevNextFileAction(private val block: CombinedDiffBlock,
   }
 
   override fun isCopyable(): Boolean = true
+
+  override fun getHyperlinkTooltip(): String = text
 }
 
 internal class CombinedOpenInEditorAction(private val path: FilePath) : OpenInEditorAction() {
