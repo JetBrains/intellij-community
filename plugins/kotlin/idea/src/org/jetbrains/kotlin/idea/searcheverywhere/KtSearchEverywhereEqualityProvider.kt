@@ -24,48 +24,31 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
         newItem: SearchEverywhereFoundElementInfo,
         alreadyFoundItems: List<SearchEverywhereFoundElementInfo>
     ): SEEqualElementsActionType {
-        return compareNativePsiAndUltraLightClass(newItem, alreadyFoundItems).takeIf { it != DoNothing }
-            ?: compareByPriority(newItem, alreadyFoundItems)
-    }
-
-    private fun compareByPriority(
-        newItem: SearchEverywhereFoundElementInfo,
-        alreadyFoundItems: List<SearchEverywhereFoundElementInfo>
-    ): SEEqualElementsActionType {
-        val newItemWithKind = newItem.toPsi()?.let { it.unwrapped ?: it }?.withKind() ?: return DoNothing
-        return alreadyFoundItems
-            .asSequence()
-            .map { alreadyFoundItem ->
-                val alreadyFoundItemWithKind = alreadyFoundItem.toPsi()?.let { it.unwrapped ?: it }?.withKind()
-                    ?: return@map DoNothing
-                if (getGroupLeader(newItemWithKind.first)?.equals(getGroupLeader(alreadyFoundItemWithKind.first)) == true) {
-                    val winner = minOf(newItemWithKind, alreadyFoundItemWithKind, compareBy { it.second })
-                    if (winner === newItemWithKind) Replace(alreadyFoundItem) else Skip
-                } else {
-                    DoNothing
+        fun <T> reduce(
+            transformation: SearchEverywhereFoundElementInfo.() -> T?,
+            isEquivalent: (new: T, old: T) -> Boolean,
+            shouldBeReplaced: (new: T, old: T) -> Boolean,
+        ): SEEqualElementsActionType? {
+            val transformedNewItem = newItem.transformation() ?: return null
+            return alreadyFoundItems
+                .asSequence()
+                .mapNotNull { alreadyFoundItem ->
+                    val transformedOldItem = alreadyFoundItem.transformation() ?: return@mapNotNull null
+                    if (!isEquivalent(transformedNewItem, transformedOldItem)) return@mapNotNull null
+                    if (shouldBeReplaced(transformedNewItem, transformedOldItem)) Replace(alreadyFoundItem) else Skip
                 }
-            }
-            .reduceOrNull { acc, actionType -> acc.combine(actionType) }
-            ?: DoNothing
-    }
+                .reduceOrNull { acc, actionType -> acc.combine(actionType) }
+        }
 
-    private fun compareNativePsiAndUltraLightClass(
-        newItem: SearchEverywhereFoundElementInfo,
-        alreadyFoundItems: List<SearchEverywhereFoundElementInfo>
-    ): SEEqualElementsActionType {
-        val newItemPsi = newItem.toPsi() ?: return DoNothing
-        return alreadyFoundItems
-            .asSequence()
-            .map { alreadyFoundItem ->
-                val alreadyFoundItemPsi = alreadyFoundItem.toPsi() ?: return@map DoNothing
-                if (PsiManager.getInstance(newItemPsi.project).areElementsEquivalent(newItemPsi, alreadyFoundItemPsi)) {
-                    // Prefer to show native Kotlin psi elements
-                    if (newItemPsi is KtElement && alreadyFoundItemPsi !is KtElement) Replace(alreadyFoundItem)
-                    else Skip
-                } else DoNothing
-            }
-            .reduceOrNull { acc, actionType -> acc.combine(actionType) }
-            ?: DoNothing
+        return reduce(
+            transformation = { toPsi() },
+            isEquivalent = { t, old -> PsiManager.getInstance(t.project).areElementsEquivalent(t, old) },
+            shouldBeReplaced = { new, old -> new is KtElement && old !is KtElement },
+        ) ?: reduce(
+            transformation = { toPsi()?.let { it.unwrapped ?: it }?.withKind() },
+            isEquivalent = { t, old -> getGroupLeader(t.first)?.equals(getGroupLeader(old.first)) == true },
+            shouldBeReplaced = { new, old -> minOf(new, old, compareBy { it.second }) === new },
+        ) ?: DoNothing
     }
 
     private fun getGroupLeader(element: PsiElement): KtFile? {
