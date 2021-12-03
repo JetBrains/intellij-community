@@ -846,7 +846,7 @@ public final class ControlFlowUtils {
 
   public static @Nullable GrControlFlowOwner getTopmostOwner(PsiElement place) {
     var owner = findControlFlowOwner(place);
-    if ((place instanceof GrControlFlowOwner && owner instanceof GroovyFile) ||
+    if ((place instanceof GrOpenBlock && owner instanceof GroovyFile) ||
         place == owner ||
         (owner == null && place instanceof GrControlFlowOwner)) {
       return (GrControlFlowOwner)place;
