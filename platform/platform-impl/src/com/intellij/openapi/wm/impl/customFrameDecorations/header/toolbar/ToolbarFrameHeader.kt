@@ -113,7 +113,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
   }
 
   private fun updateHeaderContent(settings: UISettings) {
-    myMode = if (settings.showMainToolbar) ShowMode.MENU else ShowMode.TOOLBAR
+    myMode = if (settings.separateMainMenu) ShowMode.MENU else ShowMode.TOOLBAR
     val layout = myHeaderContent.layout as CardLayout
     layout.show(myHeaderContent, myMode.name)
   }
