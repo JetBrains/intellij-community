@@ -19,6 +19,7 @@ import git4idea.index.repositoryPath
 import org.jetbrains.annotations.NonNls
 
 class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposable {
+  private val disposableFlag = Disposer.newCheckedDisposable()
   private val singleTaskController = MySingleTaskController()
   private var lst: SimpleLocalLineStatusTracker? = null
 
@@ -45,6 +46,7 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
     }, this)
 
     Disposer.register(tracker, this)
+    Disposer.register(this, disposableFlag)
   }
 
   private fun readBaseVersion(file: VirtualFile, repositoryPath: String?) {
@@ -97,7 +99,7 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
   }
 
   private inner class MySingleTaskController :
-    BaseSingleTaskController<Request, BaseVersion>("light.highlighter", this::setBaseVersion, this) {
+    BaseSingleTaskController<Request, BaseVersion>("light.highlighter", this::setBaseVersion, disposableFlag) {
     override fun process(requests: List<Request>, previousResult: BaseVersion?): BaseVersion {
       val request = requests.last()
       try {

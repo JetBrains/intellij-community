@@ -11,6 +11,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
@@ -35,6 +36,7 @@ import org.jetbrains.annotations.NonNls
 import java.util.*
 
 open class GitStageTracker(val project: Project) : Disposable {
+  private val disposableFlag = Disposer.newCheckedDisposable()
   private val eventDispatcher = EventDispatcher.create(GitStageTrackerListener::class.java)
   private val dirtyScopeManager
     get() = VcsDirtyScopeManager.getInstance(project)
@@ -58,7 +60,7 @@ open class GitStageTracker(val project: Project) : Disposable {
       }
     })
     connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, VcsListener {
-      runInEdt(this) {
+      runInEdt(disposableFlag) {
         val roots = gitRoots()
         update { oldState -> State(roots.associateWith { oldState.rootStates[it] ?: RootState.empty(it) }) }
       }
@@ -68,6 +70,8 @@ open class GitStageTracker(val project: Project) : Disposable {
         doUpdateState(repository)
       }
     })
+
+    Disposer.register(this, disposableFlag)
 
     updateTrackerState()
   }
@@ -138,7 +142,7 @@ open class GitStageTracker(val project: Project) : Disposable {
 
     val newRootState = RootState(repository.root, true, status)
 
-    runInEdt(this) {
+    runInEdt(disposableFlag) {
       update { it.updatedWith(repository.root, newRootState) }
     }
   }

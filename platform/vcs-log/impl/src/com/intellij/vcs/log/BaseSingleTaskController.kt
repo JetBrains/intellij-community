@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.util.CheckedDisposable
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -15,7 +16,7 @@ import com.intellij.vcs.log.data.SingleTaskController
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 
-abstract class BaseSingleTaskController<Request, Result>(name: String, resultConsumer: (Result) -> Unit, disposable: Disposable) :
+abstract class BaseSingleTaskController<Request, Result>(name: String, resultConsumer: (Result) -> Unit, disposable: CheckedDisposable) :
   SingleTaskController<Request, Result>(name, Consumer { runInEdt(disposable) { resultConsumer(it) } }, disposable) {
   override fun startNewBackgroundTask(): SingleTask {
     val indicator: ProgressIndicator = createProgressIndicator()
@@ -57,7 +58,10 @@ fun runInEdt(disposable: Disposable, action: () -> Unit) {
 }
 
 fun runInEdtAsync(disposable: Disposable, action: () -> Unit) {
-  ApplicationManager.getApplication().invokeLater(action, { Disposer.isDisposed(disposable) })
+  ApplicationManager.getApplication().invokeLater(action) {
+    if (disposable is CheckedDisposable) disposable.isDisposed
+    else Disposer.isDisposed(disposable)
+  }
 }
 
 fun ExecutorService.submitSafe(log: Logger, task: () -> Unit): Future<*> = this.submit {

@@ -23,9 +23,11 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
                                                                                   protected val logProviders: Map<VirtualFile, VcsLogProvider>,
                                                                                   parentDisposable: Disposable) :
   Disposable, DataGetter<T> {
+  private val disposableFlag = Disposer.newCheckedDisposable()
 
   init {
     Disposer.register(parentDisposable, this)
+    Disposer.register(this, disposableFlag)
   }
 
   override fun loadCommitsData(commits: List<Int>,
@@ -58,7 +60,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
           }
           val result = commits.mapNotNull { detailsFromCache[it] ?: detailsFromProvider[it] }
           notifyLoaded()
-          runInEdt(this@AbstractDataGetter) {
+          runInEdt(disposableFlag) {
             consumer.consume(result)
           }
         }
@@ -66,7 +68,7 @@ abstract class AbstractDataGetter<T : VcsShortCommitDetails> internal constructo
         }
         catch (t: Throwable) {
           if (t !is VcsException) LOG.error(t)
-          runInEdt(this@AbstractDataGetter) { errorConsumer.consume(t) }
+          runInEdt(disposableFlag) { errorConsumer.consume(t) }
         }
       }
     }
