@@ -27,8 +27,10 @@ class SearchEverywhereClassFeaturesProvider : SearchEverywhereClassOrFileFeature
       PRIORITY to elementPriority,
     )
 
-    (element as? PsiNamedElement)?.name?.let { elementName ->
-      data.putAll(getNameMatchingFeatures(elementName, searchQuery))
+    ReadAction.run<Nothing> {
+      (element as? PsiNamedElement)?.name?.let { elementName ->
+        data.putAll(getNameMatchingFeatures(elementName, searchQuery))
+      }
     }
 
     data.putIfValueNotNull(IS_DEPRECATED, isDeprecated(presentation))
