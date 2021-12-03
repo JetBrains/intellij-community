@@ -115,7 +115,7 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
       }
 
       private fun fill() {
-        layout = MigLayout("ins 0, novisualpadding, gap 0, fill, hidemode 3", "4[][min!]2")
+        layout = MigLayout("ins 0 0 0 3, novisualpadding, gap 0, fill, hidemode 3", "4[][min!]")
 
         add(setting, "ay center, growx, wmin 10")
         add(arrow)

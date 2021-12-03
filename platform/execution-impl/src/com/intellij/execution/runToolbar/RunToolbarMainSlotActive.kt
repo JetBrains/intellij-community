@@ -83,7 +83,7 @@ private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCu
   init {
       layout = MigLayout("ins 0 0 0 3, fill, ay center")
       val pane = JPanel().apply {
-        layout = MigLayout("ins 0, fill, novisualpadding, ay center, gap 0", "[pref!][min!]3[shp 1]3[]")
+        layout = MigLayout("ins 0, fill, novisualpadding, ay center, gap 0", "[pref!][min!]3[shp 1, push]3[]push")
         add(JPanel().apply {
           isOpaque = false
           add(arrow)
@@ -102,7 +102,7 @@ private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCu
         isOpaque = false
       }
 
-      add(pane)
+    add(pane, "growx")
     MouseListenerHelper.addListener(this, { doClick() }, { doShiftClick() }, { doRightClick() })
     }
 

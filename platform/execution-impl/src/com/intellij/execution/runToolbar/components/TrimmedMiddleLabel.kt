@@ -8,8 +8,10 @@ import java.awt.Graphics2D
 import javax.swing.JLabel
 
 open class TrimmedMiddleLabel : JLabel() {
+  private val magicConst = 5
+
   override fun paintComponent(g: Graphics) {
-    val fm = g.getFontMetrics(g.font)
+    val fm = getFontMetrics(font)
     g as Graphics2D
     UISettings.setupAntialiasing(g)
     val textW = fm.stringWidth(text)
@@ -17,10 +19,11 @@ open class TrimmedMiddleLabel : JLabel() {
     var x = insets.left
     icon?.let {
       x += iconTextGap + it.iconWidth
+      availableWidth -= x
     }
 
     val ellipsisWidth = fm.stringWidth(StringUtil.ELLIPSIS)
-    if (textW < availableWidth || width < 3 * ellipsisWidth) {
+    if (textW <= availableWidth + (icon?.let { 0 } ?: magicConst) || width < ellipsisWidth) {
       super.paintComponent(g)
     }
     else {
@@ -28,14 +31,13 @@ open class TrimmedMiddleLabel : JLabel() {
         icon.paintIcon(this, g, insets.left, 0)
       }
 
-      availableWidth -= (x + ellipsisWidth)
-
       val charArray = text.toCharArray()
       val stringLength = charArray.size
       var w = 0
+      val avW = availableWidth - ellipsisWidth
       for (nChars in 0 until stringLength) {
         w += fm.charWidth(charArray[nChars])
-        if (w > availableWidth) {
+        if (w > avW) {
           g.drawString(StringUtil.trimMiddle(text, nChars - 1), x, fm.ascent)
           return
         }
