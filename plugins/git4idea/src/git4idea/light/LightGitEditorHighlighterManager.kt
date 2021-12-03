@@ -6,7 +6,6 @@ import com.intellij.ide.lightEdit.LightEditorInfo
 import com.intellij.ide.lightEdit.LightEditorInfoImpl
 import com.intellij.ide.lightEdit.LightEditorListener
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
@@ -119,9 +118,5 @@ class LightGitEditorHighlighterManager(val tracker: LightGitTracker) : Disposabl
     override fun toString(): @NonNls String {
       return "BaseVersion(file=$file, text=${text?.take(10) ?: "null"}"
     }
-  }
-
-  companion object {
-    private val LOG = Logger.getInstance("#git4idea.light.LightGitEditorHighlighterManager")
   }
 }
