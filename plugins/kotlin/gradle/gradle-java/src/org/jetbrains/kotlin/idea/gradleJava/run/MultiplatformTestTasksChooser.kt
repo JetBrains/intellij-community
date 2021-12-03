@@ -11,10 +11,11 @@ import org.jetbrains.kotlin.idea.facet.externalSystemTestRunTasks
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
-import org.jetbrains.plugins.gradle.execution.test.runner.*
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
+import org.jetbrains.plugins.gradle.execution.test.runner.SourcePath
+import org.jetbrains.plugins.gradle.execution.test.runner.TestName
+import org.jetbrains.plugins.gradle.execution.test.runner.TestTasksChooser
+import org.jetbrains.plugins.gradle.execution.test.runner.getSourceFile
 import org.jetbrains.plugins.gradle.util.TasksToRun
-import java.util.*
 
 private typealias TaskFilter = (ExternalSystemTestRunTask) -> Boolean
 
@@ -32,7 +33,7 @@ class MultiplatformTestTasksChooser : TestTasksChooser() {
         contextualSuffix: String? = null, // like "js, browser, HeadlessChrome85.0.4183, MacOSX10.14.6"
         handler: (List<Map<SourcePath, TasksToRun>>) -> Unit
     ) {
-        val testTasks = resolveTestTasks(elements, contextualFilter(contextualSuffix ))
+        val testTasks = resolveTestTasks(elements, contextualFilter(contextualSuffix))
         when {
             testTasks.isEmpty() -> super.chooseTestTasks(project, dataContext, elements, handler)
             testTasks.size == 1 -> handler(testTasks.values.toList())
@@ -40,7 +41,11 @@ class MultiplatformTestTasksChooser : TestTasksChooser() {
         }
     }
 
-    private fun contextualFilter(contextualSuffix: String?): TaskFilter {
+    fun listAvailableTasks(elements: Iterable<PsiElement>): List<TasksToRun> {
+        return resolveTestTasks(elements, contextualFilter()).values.flatMap { it.values }
+    }
+
+    private fun contextualFilter(contextualSuffix: String? = null): TaskFilter {
         val parts = contextualSuffix?.split(", ")
             ?.filter { it.isNotEmpty() }
             ?.takeIf { it.isNotEmpty() }

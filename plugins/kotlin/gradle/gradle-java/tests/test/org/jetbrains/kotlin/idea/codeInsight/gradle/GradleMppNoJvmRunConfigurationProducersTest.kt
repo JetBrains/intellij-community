@@ -8,6 +8,10 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.Tested
 import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.listRepositories
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInDirectoryConfigurationProducer
 import org.jetbrains.kotlin.idea.gradleJava.testing.KotlinMultiplatformAllInPackageConfigurationProducer
+import org.jetbrains.kotlin.idea.gradleJava.testing.js.KotlinMultiplatformJsTestClassGradleConfigurationProducer
+import org.jetbrains.kotlin.idea.gradleJava.testing.js.KotlinMultiplatformJsTestMethodGradleConfigurationProducer
+import org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestClassGradleConfigurationProducer
+import org.jetbrains.kotlin.idea.gradleJava.testing.native.KotlinMultiplatformNativeTestMethodGradleConfigurationProducer
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.plugins.gradle.execution.test.runner.GradleTestRunConfigurationProducerTestCase
 import org.jetbrains.plugins.gradle.frameworkSupport.script.GroovyScriptBuilder
@@ -16,17 +20,81 @@ import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.Test
 
-abstract class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurationProducerTestCase() {
+/**
+ * See paired [GradleMppJvmRunConfigurationProducersTest].
+ * The idea behind "NoJvm" subset of tests is that jvm target test tasks are discovered by gradle plugin, not kotlin.
+ * If a project has no jvm target (as here) and other-ones producers mistakenly delegate to gradle plugin tests are not available.
+ */
+
+abstract class GradleMppNoJvmRunConfigurationProducersTest : GradleTestRunConfigurationProducerTestCase() {
+
     protected lateinit var projectData: ProjectData
 
     override fun setUp() {
         super.setUp()
-        projectData = generateAndImportTemplateMppProject()
+        projectData = generateAndImportMppNoJvmProject()
+    }
+
+    //// ALL IN CLASS /////
+
+    class AllTestsInJsClass : GradleMppNoJvmRunConfigurationProducersTest() {
+        @Test
+        fun allTestsInJsClass() {
+            assertConfigurationFromContext<KotlinMultiplatformJsTestClassGradleConfigurationProducer>(
+                """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest --tests "org.jetbrains.JsTests"""",
+                runReadActionAndWait {
+                    val psiClass = projectData["project.jsTest"]["org.jetbrains.JsTests"].element
+                    psiClass
+                }
+            )
+        }
+    }
+
+    class AllTestsInNativeClass : GradleMppNoJvmRunConfigurationProducersTest() {
+        @Test
+        fun allTestsInNativeClass() {
+            assertConfigurationFromContext<KotlinMultiplatformNativeTestClassGradleConfigurationProducer>(
+                """:cleanNativeTest :nativeTest --tests "org.jetbrains.NativeTests"""",
+                runReadActionAndWait {
+                    val psiClass = projectData["project.nativeTest"]["org.jetbrains.NativeTests"].element
+                    psiClass
+                }
+            )
+        }
+    }
+
+    //// METHOD /////
+
+    class TestForJsMethod : GradleMppNoJvmRunConfigurationProducersTest() {
+        @Test
+        fun testForJsMethod() {
+            assertConfigurationFromContext<KotlinMultiplatformJsTestMethodGradleConfigurationProducer>(
+                """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest --tests "org.jetbrains.JsTests.jsTest"""",
+                runReadActionAndWait {
+                    val psiMethod = projectData["project.jsTest"]["org.jetbrains.JsTests"]["jsTest"].element
+                    psiMethod
+                }
+            )
+        }
+    }
+
+    class TestForNativeMethod : GradleMppNoJvmRunConfigurationProducersTest() {
+        @Test
+        fun testForNativeMethod() {
+            assertConfigurationFromContext<KotlinMultiplatformNativeTestMethodGradleConfigurationProducer>(
+                """:cleanNativeTest :nativeTest --tests "org.jetbrains.NativeTests.nativeTest"""",
+                runReadActionAndWait {
+                    val psiMethod = projectData["project.nativeTest"]["org.jetbrains.NativeTests"]["nativeTest"].element
+                    psiMethod
+                }
+            )
+        }
+
     }
 
     //// ALL IN PACKAGE /////
 
-    class AllTestsInJsPackage : GradleMppRunConfigurationProducersTest() {
+    class AllTestsInJsPackage : GradleMppNoJvmRunConfigurationProducersTest() {
         @Test
         fun allTestsInJsPackage() {
             assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
@@ -39,20 +107,7 @@ abstract class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurati
         }
     }
 
-    class AllTestsInJvmPackage : GradleMppRunConfigurationProducersTest() {
-        @Test
-        fun allTestsInJvmPackage() {
-            assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
-                """:cleanJvmTest :jvmTest --tests "org.jetbrains.*"""",
-                runReadActionAndWait {
-                    val jetBrainsDir = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element.containingFile.containingDirectory
-                    jetBrainsDir
-                }
-            )
-        }
-    }
-
-    class AllTestsInNativePackage : GradleMppRunConfigurationProducersTest() {
+    class AllTestsInNativePackage : GradleMppNoJvmRunConfigurationProducersTest() {
         @Test
         fun allTestsInNativePackage() {
             assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
@@ -68,7 +123,7 @@ abstract class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurati
 
     //// ALL IN DIRECTORY /////
 
-    class AllTestsInJsDirectory : GradleMppRunConfigurationProducersTest() {
+    class AllTestsInJsDirectory : GradleMppNoJvmRunConfigurationProducersTest() {
         @Test
         fun allTestsInJsDirectory() {
             assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
@@ -82,21 +137,7 @@ abstract class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurati
         }
     }
 
-    class AllTestsInJvmDirectory : GradleMppRunConfigurationProducersTest() {
-        @Test
-        fun allTestsInJvmDirectory() {
-            assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
-                """:cleanJvmTest :jvmTest""",
-                runReadActionAndWait {
-                    val jetBrainsDir = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element.containingFile.containingDirectory
-                    val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory!!
-                    kotlinDir
-                }
-            )
-        }
-    }
-
-    class AllTestsInNativeDirectory : GradleMppRunConfigurationProducersTest() {
+    class AllTestsInNativeDirectory : GradleMppNoJvmRunConfigurationProducersTest() {
         @Test
         fun allTestsInNativeDirectory() {
             assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
@@ -113,7 +154,7 @@ abstract class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurati
 
     //// ALL IN MODULE /////
 
-    class AllTestsInJsModule : GradleMppRunConfigurationProducersTest() {
+    class AllTestsInJsModule : GradleMppNoJvmRunConfigurationProducersTest() {
         @Test
         fun allTestsInJsModule() {
             assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
@@ -128,22 +169,7 @@ abstract class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurati
         }
     }
 
-    class AllTestsInJvmModule : GradleMppRunConfigurationProducersTest() {
-        @Test
-        fun allTestsInJvmModule() {
-            assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
-                """:cleanJvmTest :jvmTest""",
-                runReadActionAndWait {
-                    val jetBrainsDir = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element.containingFile.containingDirectory
-                    val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory
-                    val moduleDirectory = kotlinDir?.parentDirectory
-                    moduleDirectory!!
-                }
-            )
-        }
-    }
-
-    class AllTestsInNativeModule : GradleMppRunConfigurationProducersTest() {
+    class AllTestsInNativeModule : GradleMppNoJvmRunConfigurationProducersTest() {
         @Test
         fun allTestsInNativeModule() {
             assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
@@ -168,24 +194,17 @@ abstract class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurati
         ClassData(ktClass.qualifiedName!!, ktClass, methods)
     }
 
-    private fun generateAndImportTemplateMppProject(): ProjectData {
+    private fun generateAndImportMppNoJvmProject(): ProjectData {
         val jsTestsFile = createProjectSubFile(
             "src/jsTest/kotlin/org/jetbrains/JsTests.kt", """ 
         package org.jetbrains
         
         import kotlin.test.Test
 
-        class JsTests { }
-            """.trimIndent()
-        )
-
-        val jvmTestSuiteFile = createProjectSubFile(
-            "src/jvmTest/kotlin/org/jetbrains/JsTests.kt", """ 
-        package org.jetbrains
-        
-        import kotlin.test.Test
-
-        class JvmTests { }
+        class JsTests {
+            @Test
+            fun jsTest() {}
+        }
             """.trimIndent()
         )
 
@@ -195,7 +214,11 @@ abstract class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurati
         
         import kotlin.test.Test
 
-        class NativeTests { }
+        class NativeTests {
+            @Test
+            fun nativeTest() {}
+
+        }
             """.trimIndent()
         )
 
@@ -206,8 +229,7 @@ abstract class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurati
         createProjectSubFile("build.gradle", buildscript {
             withPlugin("org.jetbrains.kotlin.multiplatform", TestedKotlinGradlePluginVersions.ALL_PUBLIC.last().toString())
             withPrefix {
-                code(
-                    """
+                code("""
                 repositories {
                     ${listRepositories(false, gradleVersion.version)}                    
                 }
@@ -219,20 +241,8 @@ abstract class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurati
                 code(
                     """
                 kotlin {
-                    jvm {
-                        compilations.all {
-                            kotlinOptions.jvmTarget = '1.8'
-                        }
-                        withJava()
-                        testRuns["test"].executionTask.configure {
-                            useJUnitPlatform()
-                        }
-                    }
                     js(BOTH) {
                         browser {
-                            commonWebpackConfig {
-                                cssSupport.enabled = true
-                            }
                         }
                     }
                     
@@ -251,8 +261,6 @@ abstract class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurati
                                 implementation kotlin('test')
                             }
                         }
-                        jvmMain { }
-                        jvmTest { }
                         jsMain { }
                         jsTest { }
                         nativeMain { }
@@ -268,8 +276,6 @@ abstract class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurati
         assertModulesContains(
             "project.jsMain",
             "project.jsTest",
-            "project.jvmMain",
-            "project.jvmTest",
             "project.nativeMain",
             "project.nativeTest",
             "project.commonMain",
@@ -280,16 +286,12 @@ abstract class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurati
         val jsTestModuleDir = findPsiDirectory("src/jsTest")
         val jsTestModuleTesSuite = extractClassData(jsTestsFile)
 
-        val jvmTestModuleDir = findPsiDirectory("src/jvmTest")
-        val jvmTestModuleTesSuite = extractClassData(jvmTestSuiteFile)
-
         val nativeTestModuleDir = findPsiDirectory("src/nativeTest")
         val nativeTestModuleTesSuite = extractClassData(nativeTestSuiteFile)
 
         return ProjectData(
             ModuleData("project", projectDir),
             ModuleData("project.jsTest", jsTestModuleDir, jsTestModuleTesSuite),
-            ModuleData("project.jvmTest", jvmTestModuleDir, jvmTestModuleTesSuite),
             ModuleData("project.nativeTest", nativeTestModuleDir, nativeTestModuleTesSuite)
         )
     }
