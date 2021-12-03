@@ -20,7 +20,6 @@ import org.languagetool.ResultCache
 import org.languagetool.Tag
 import org.languagetool.rules.CategoryId
 import org.languagetool.rules.IncorrectExample
-import java.net.Authenticator
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
@@ -127,9 +126,7 @@ object LangTool : GrazieStateLifecycle {
         rule.incorrectExamples = removeVerySimilarExamples(rule.incorrectExamples)
       }
 
-      //Fix problem with Authenticator installed by LT
       this.language.disambiguator
-      Authenticator.setDefault(null)
     }
   }
 
