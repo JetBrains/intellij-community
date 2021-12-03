@@ -107,7 +107,7 @@ fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   }
 
   externalProjectPath = projectPath
-  taskNames = testRunConfigurations.entries.flatMap { listOf(it.key) + it.value }
+  taskNames = testRunConfigurations.entries.flatMap { it.key.split(" ") + it.value }
   scriptParameters = if (testRunConfigurations.size > 1) "--continue" else ""
 
   return true
