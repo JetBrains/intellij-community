@@ -29,7 +29,7 @@ interface CellBase<out T : CellBase<T>> {
 
   /**
    * Sets visibility of the cell and all children recursively.
-   * The cell is invisible while there is an invisible parent
+   * The cell is invisible if there is an invisible parent
    */
   fun visible(isVisible: Boolean): CellBase<T>
 
@@ -40,7 +40,7 @@ interface CellBase<out T : CellBase<T>> {
 
   /**
    * Sets enabled state of the cell and all children recursively.
-   * The cell is disabled while there is a disabled parent
+   * The cell is disabled if there is a disabled parent
    */
   fun enabled(isEnabled: Boolean): CellBase<T>
 
@@ -66,7 +66,7 @@ interface CellBase<out T : CellBase<T>> {
   fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T>
 
   /**
-   * Marks column of the cell as resizable: the column occupies all extra space in parent and changes size together with parent.
+   * Marks column of the cell as resizable: the column occupies all extra horizontal space in parent and changes size together with parent.
    * It's possible to have several resizable columns, which means extra space is shared between them.
    * There is no need to set resizable for cells in different rows but in the same column: it has no additional effect.
    * Note that horizontal size and placement of component in columns are managed by [horizontalAlign]

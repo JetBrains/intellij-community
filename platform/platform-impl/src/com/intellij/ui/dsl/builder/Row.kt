@@ -34,7 +34,7 @@ import javax.swing.*
 enum class RowLayout {
   /**
    * All cells of the row (including label if present) independent of parent grid.
-   * That means the row has own grid
+   * That means this row has its own grid
    */
   INDEPENDENT,
 
@@ -97,7 +97,7 @@ interface Row {
   fun layout(rowLayout: RowLayout): Row
 
   /**
-   * Marks the row as resizable: the row occupies all extra space in parent (for example in [Panel.group] or [Panel.panel])
+   * Marks the row as resizable: the row occupies all extra vertical space in parent (for example in [Panel.group] or [Panel.panel])
    * and changes size together with parent. When resizable is needed in whole [DialogPanel] all row parents should be marked
    * as [resizableRow] as well. It's possible to have several resizable rows, which means extra space is shared between them.
    * Note that vertical size and placement of components in the row are managed by [Cell.verticalAlign]
@@ -108,7 +108,7 @@ interface Row {
 
   /**
    * Adds comment after the row with appropriate color and font size (macOS uses smaller font).
-   * [comment] can contain html tags except &lt;html&gt;, which is added automatically in this method.
+   * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically.
    * \n does not work as new line in html, use &lt;br&gt; instead.
    * Links with href to http/https are automatically marked with additional arrow icon.
    * Visibility and enabled state of the row affects row comment as well.
@@ -126,7 +126,7 @@ interface Row {
 
   /**
    * Adds [component]. Use this method only for custom specific components, all standard components like label, button,
-   * checkbox etc are covered by [Row] factory methods
+   * checkbox etc are covered by dedicated [Row] factory methods
    */
   fun <T : JComponent> cell(component: T): Cell<T>
 
@@ -147,7 +147,7 @@ interface Row {
 
   /**
    * Sets visibility of the row including comment [Row.rowComment] and all children recursively.
-   * The row is invisible while there is an invisible parent
+   * The row is invisible if there is an invisible parent
    */
   fun visible(isVisible: Boolean): Row
 
@@ -158,7 +158,7 @@ interface Row {
 
   /**
    * Sets enabled state of the row including comment [Row.rowComment] and all children recursively.
-   * The row is disabled while there is a disabled parent
+   * The row is disabled if there is a disabled parent
    */
   fun enabled(isEnabled: Boolean): Row
 
@@ -217,7 +217,7 @@ interface Row {
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
 
   /**
-   * Adds text. [text] can contain html tags except &lt;html&gt;, which is added automatically in this method.
+   * Adds text. [text] can contain HTML tags except &lt;html&gt;, which is added automatically.
    * \n does not work as new line in html, use &lt;br&gt; instead.
    * Links with href to http/https are automatically marked with additional arrow icon.
    * It is preferable to use [label] method for short plain single-lined strings because labels use less resources and simpler
@@ -231,7 +231,7 @@ interface Row {
 
   /**
    * Adds comment with appropriate color and font size (macOS uses smaller font).
-   * [comment] can contain html tags except &lt;html&gt;, which is added automatically in this method.
+   * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically.
    * \n does not work as new line in html, use &lt;br&gt; instead.
    * Links with href to http/https are automatically marked with additional arrow icon.
    *
