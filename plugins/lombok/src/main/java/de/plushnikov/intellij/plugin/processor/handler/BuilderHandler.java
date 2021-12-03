@@ -116,9 +116,9 @@ public class BuilderHandler {
     return result;
   }
 
-  private boolean validateBuilderConstructor(@NotNull PsiClass psiClass,
-                                             Collection<BuilderInfo> builderInfos,
-                                             @NotNull ProblemBuilder problemBuilder) {
+  protected boolean validateBuilderConstructor(@NotNull PsiClass psiClass,
+                                               Collection<BuilderInfo> builderInfos,
+                                               @NotNull ProblemBuilder problemBuilder) {
     if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.NO_ARGS_CONSTRUCTOR) &&
         PsiAnnotationSearchUtil.isNotAnnotatedWith(psiClass, LombokClassNames.ALL_ARGS_CONSTRUCTOR)) {
 
