@@ -58,10 +58,6 @@ class TypeDfaState {
     myPreviousClosureState = frame;
   }
 
-  Int2ObjectMap<DFAType> getRawVarTypes() {
-    return myVarTypes;
-  }
-
   @Contract(pure = true)
   @NotNull
   public static TypeDfaState merge(@NotNull TypeDfaState left, @NotNull TypeDfaState right, PsiManager manager) {
@@ -147,6 +143,17 @@ class TypeDfaState {
     }
   }
 
+  @Contract(pure = true)
+  @NotNull
+  public TypeDfaState withRemovedBindings(BitSet newBindings) {
+    if (this.myProhibitedCachingVars.equals(newBindings)) {
+      return this;
+    }
+    else {
+      return new TypeDfaState(this.myVarTypes, newBindings, this.myPreviousClosureState);
+    }
+  }
+
   boolean contentsEqual(TypeDfaState another) {
     return myVarTypes.equals(another.myVarTypes) &&
            myProhibitedCachingVars.equals(another.myProhibitedCachingVars) &&
@@ -157,6 +164,14 @@ class TypeDfaState {
   DFAType getVariableType(VariableDescriptor descriptor, Map<VariableDescriptor, Integer> varIndexes) {
     int index = varIndexes.getOrDefault(descriptor, 0);
     return index != 0 && !myProhibitedCachingVars.get(index) ? myVarTypes.get(index) : null;
+  }
+
+  public BitSet getRemovedBindings() {
+    return myProhibitedCachingVars;
+  }
+
+  Int2ObjectMap<DFAType> getRawVarTypes() {
+    return myVarTypes;
   }
 
   @Contract(pure = true)
