@@ -56,7 +56,7 @@ public final class VariableInitializationChecker {
           ((ReadWriteVariableInstruction)instruction).getDescriptor().equals(myVar)) {
         return true;
       }
-      return false;
+      return e;
     }
 
     private final VariableDescriptor myVar;
@@ -73,7 +73,11 @@ public final class VariableInitializationChecker {
     @NotNull
     @Override
     public Boolean join(@NotNull List<? extends Boolean> ins) {
-      return true;
+      boolean b = true;
+      for (boolean candidate : ins) {
+        b &= candidate;
+      }
+      return b;
     }
 
     @Override
