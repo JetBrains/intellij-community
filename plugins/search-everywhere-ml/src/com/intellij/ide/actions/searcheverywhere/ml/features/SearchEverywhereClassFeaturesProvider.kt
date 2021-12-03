@@ -8,6 +8,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiNamedElement
 
 class SearchEverywhereClassFeaturesProvider : SearchEverywhereClassOrFileFeaturesProvider(ClassSearchEverywhereContributor::class.java) {
   companion object {
@@ -25,6 +26,10 @@ class SearchEverywhereClassFeaturesProvider : SearchEverywhereClassOrFileFeature
     val data = hashMapOf<String, Any>(
       PRIORITY to elementPriority,
     )
+
+    (element as? PsiNamedElement)?.name?.let { elementName ->
+      data.putAll(getNameMatchingFeatures(elementName, searchQuery))
+    }
 
     data.putIfValueNotNull(IS_DEPRECATED, isDeprecated(presentation))
     data.putIfValueNotNull(IS_ACCESSIBLE_FROM_MODULE, isAccessibleFromModule(element, cache?.openedFile))
