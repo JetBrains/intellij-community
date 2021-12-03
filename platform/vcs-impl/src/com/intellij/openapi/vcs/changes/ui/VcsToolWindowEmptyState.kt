@@ -83,6 +83,7 @@ internal class ActivateCommitToolWindowAction : ActivateToolWindowAction(ToolWin
   override fun update(e: AnActionEvent) {
     if (e.project?.isTrusted() == false) {
       e.presentation.isEnabledAndVisible = false
+      return
     }
     super.update(e)
   }
