@@ -113,6 +113,11 @@ public class HighlightExitPointsTestGenerated extends AbstractHighlightExitPoint
         runTest("testData/exitPoints/notInline3.kt");
     }
 
+    @TestMetadata("notReturnedLabeledExpression.kt")
+    public void testNotReturnedLabeledExpression() throws Exception {
+        runTest("testData/exitPoints/notReturnedLabeledExpression.kt");
+    }
+
     @TestMetadata("simple.kt")
     public void testSimple() throws Exception {
         runTest("testData/exitPoints/simple.kt");
