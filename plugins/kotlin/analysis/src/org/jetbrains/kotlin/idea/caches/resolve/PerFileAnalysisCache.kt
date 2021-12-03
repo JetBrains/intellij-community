@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.container.get
 import org.jetbrains.kotlin.context.GlobalContext
 import org.jetbrains.kotlin.context.withModule
 import org.jetbrains.kotlin.context.withProject
+import org.jetbrains.kotlin.descriptors.InvalidModuleException
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.DiagnosticSink
@@ -179,10 +180,12 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
 
                     analysisResult
                 }
+            } catch (e: InvalidModuleException) {
+                clearFileResultCache()
+                throw ProcessCanceledException(e)
             } catch (e: Throwable) {
                 if (e !is ControlFlowException) {
-                    file.clearInBlockModifications()
-                    fileResult = null
+                    clearFileResultCache()
                 }
                 throw e
             }
@@ -280,6 +283,11 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
 
             return AnalysisResult.internalError(BindingContext.EMPTY, e)
         }
+    }
+
+    private fun clearFileResultCache() {
+        file.clearInBlockModifications()
+        fileResult = null
     }
 }
 
