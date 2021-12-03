@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.util
 
-import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import kotlin.io.path.exists
 import kotlin.io.path.readText
