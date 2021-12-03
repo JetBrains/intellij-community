@@ -10,15 +10,17 @@ import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiUtilCore
+import com.intellij.psi.util.parentOfType
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
+import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier.DEF
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeAugmenter
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrVariableEnhancer
 
@@ -67,8 +69,14 @@ class GroovyParameterTypeHintsCollector(editor: Editor,
     return true
   }
 
-  private fun getRepresentableType(variable: GrVariable): PsiType? {
-    val inferredType: PsiType? = GrVariableEnhancer.getEnhancedType(variable) ?: TypeAugmenter.inferAugmentedType(variable)
+  private fun getRepresentableType(variable: GrParameter): PsiType? {
+    var inferredType: PsiType? = GrVariableEnhancer.getEnhancedType(variable)
+    if (inferredType == null) {
+      val ownerFlow = variable.parentOfType<GrControlFlowOwner>()?.controlFlow ?: return null
+      if (TypeInferenceHelper.isSimpleEnoughForAugmenting(ownerFlow)) {
+        inferredType = TypeAugmenter.inferAugmentedType(variable)
+      }
+    }
     return inferredType?.takeIf { !it.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) }
   }
 
