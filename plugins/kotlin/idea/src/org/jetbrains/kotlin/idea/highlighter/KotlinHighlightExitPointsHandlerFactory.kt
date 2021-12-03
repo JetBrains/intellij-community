@@ -9,11 +9,9 @@ import com.intellij.openapi.progress.ProgressIndicatorProvider
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Consumer
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
-import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -25,19 +23,15 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBase() {
     companion object {
-        private val RETURN_AND_THROW = TokenSet.create(KtTokens.RETURN_KEYWORD, KtTokens.THROW_KEYWORD)
-
         private fun getOnReturnOrThrowUsageHandler(editor: Editor, file: PsiFile, target: PsiElement): HighlightUsagesHandlerBase<*>? {
-            if (target !is LeafPsiElement || (target.elementType !in RETURN_AND_THROW && target.parent !is KtLabelReferenceExpression)) {
-                return null
-            }
-
-            val returnOrThrow = PsiTreeUtil.getParentOfType<KtExpression>(
-                target,
-                KtReturnExpression::class.java,
-                KtThrowExpression::class.java
-            ) ?: return null
-
+            val returnOrThrow = when (val parent = target.parent) {
+                is KtReturnExpression, is KtThrowExpression -> parent
+                is KtLabelReferenceExpression ->
+                    PsiTreeUtil.getParentOfType(
+                        target, KtReturnExpression::class.java, KtThrowExpression::class.java, KtFunction::class.java
+                    )?.takeUnless { it is KtFunction }
+                else -> null
+            } as? KtExpression ?: return null
             return OnExitUsagesHandler(editor, file, returnOrThrow)
         }
 
