@@ -13,9 +13,12 @@ import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenArtifactNode;
 import org.jetbrains.idea.maven.model.MavenPlugin;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
+import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenJDOMUtil;
+import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -865,11 +868,11 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                   "<repositories>" +
                   "  <repository>" +
                   "    <id>one</id>" +
-                  "    <url>https://repository.one.com</url>" +
+                  "    <url>http://repository.one.com</url>" +
                   "  </repository>" +
                   "  <repository>" +
                   "    <id>two</id>" +
-                  "    <url>https://repository.two.com</url>" +
+                  "    <url>http://repository.two.com</url>" +
                   "  </repository>" +
                   "</repositories>");
 
@@ -889,14 +892,14 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                   "<repositories>" +
                   "  <repository>" +
                   "    <id>central</id>" +
-                  "    <url>https://my.repository.com</url>" +
+                  "    <url>http://my.repository.com</url>" +
                   "  </repository>" +
                   "</repositories>");
 
     List<MavenRemoteRepository> result = getMavenProject().getRemoteRepositories();
     assertEquals(1, result.size());
     assertEquals("central", result.get(0).getId());
-    assertEquals("https://my.repository.com", result.get(0).getUrl());
+    assertEquals("http://my.repository.com", result.get(0).getUrl());
   }
 
   @Test 
@@ -910,11 +913,11 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                                      "<repositories>" +
                                      "  <repository>" +
                                      "    <id>one</id>" +
-                                     "    <url>https://repository.one.com</url>" +
+                                     "    <url>http://repository.one.com</url>" +
                                      "  </repository>" +
                                      "  <repository>" +
                                      "    <id>two</id>" +
-                                     "    <url>https://repository.two.com</url>" +
+                                     "    <url>http://repository.two.com</url>" +
                                      "  </repository>" +
                                      "</repositories>");
 
@@ -945,7 +948,7 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
   }
 
   @Test
-  public void testResolveRemoteRepositories() throws IOException {
+  public void testResolveRemoteRepositories() throws IOException, MavenProcessCanceledException {
     updateSettingsXml("<mirrors>\n" +
                       "  <mirror>\n" +
                       "    <id>mirror</id>\n" +
@@ -985,20 +988,34 @@ public class MavenProjectTest extends MavenMultiVersionImportingTestCase {
                                               "    <id>repo-pom1</id>" +
                                               "    <url>https://pom/repo1</url>" +
                                               "  </repository>\n" +
+                                              "  <repository>\n" +
+                                              "    <id>repo-http</id>" +
+                                              "    <url>http://pom/http</url>" +
+                                              "  </repository>\n" +
                                               "</repositories>");
     importProject();
 
-    MavenProject project = MavenProjectsManager.getInstance(myProject).findProject(projectPom);
-    Assert.assertNotNull(project);
-    Set<String> repoIds = project.getRemoteRepositories().stream()
+    Set<MavenRemoteRepository> repositories = myProjectsManager.getRemoteRepositories();
+    MavenEmbedderWrapper mavenEmbedderWrapper = myProjectsManager.getEmbeddersManager()
+        .getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, "", "");
+
+    Set<String> repoIds = mavenEmbedderWrapper.resolveRepositories(repositories).stream()
       .map(r -> r.getId())
       .collect(Collectors.toSet());
+
+    MavenProject project = MavenProjectsManager.getInstance(myProject).findProject(projectPom);
+    Assert.assertNotNull(project);
+
     System.out.println(repoIds);
     Assert.assertTrue(repoIds.contains("mirror"));
     Assert.assertTrue(repoIds.contains("repo-pom1"));
     Assert.assertTrue(repoIds.contains("repo1"));
+    Assert.assertTrue(repoIds.contains("central"));
+    Assert.assertTrue(repoIds.contains("maven-default-http-blocker"));
+
     Assert.assertFalse(repoIds.contains("repo-pom"));
     Assert.assertFalse(repoIds.contains("repo"));
+    Assert.assertFalse(repoIds.contains("repo-http"));
   }
 
   @Test 

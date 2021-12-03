@@ -86,8 +86,6 @@ import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 
-import static org.jetbrains.idea.maven.server.MavenModelConverter.convertRemoteRepositories;
-
 /**
  * Overridden maven components:
  * <p/>
@@ -926,9 +924,6 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
     catch (Exception e) {
       validate(mavenProject.getFile(), Collections.singleton(e), problems, null);
     }
-
-    List<MavenRemoteRepository> remoteRepositories = convertRemoteRepositories(mavenProject.getRemoteArtifactRepositories());
-    model.setRemoteRepositories(remoteRepositories);
 
     RemoteNativeMavenProjectHolder holder = new RemoteNativeMavenProjectHolder(mavenProject);
     try {

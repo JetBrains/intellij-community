@@ -18,6 +18,7 @@ package org.jetbrains.idea.maven.server;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.server.security.MavenToken;
 
 import java.io.File;
 import java.rmi.Remote;
@@ -25,7 +26,7 @@ import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Properties;
-import org.jetbrains.idea.maven.server.security.MavenToken;
+import java.util.Set;
 
 public interface MavenServerEmbedder extends Remote {
   String MAVEN_EMBEDDER_VERSION = "idea.maven.embedder.version";
@@ -94,4 +95,7 @@ public interface MavenServerEmbedder extends Remote {
 
   @Nullable
   MavenModel readModel(File file, MavenToken token) throws RemoteException;
+
+  Set<MavenRemoteRepository> resolveRepositories(@NotNull Collection<MavenRemoteRepository> repositories, MavenToken token)
+    throws RemoteException;
 }

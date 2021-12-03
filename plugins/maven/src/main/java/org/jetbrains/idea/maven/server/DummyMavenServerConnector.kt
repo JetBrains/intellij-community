@@ -54,7 +54,6 @@ class DummyMavenServerConnector(project: @NotNull Project,
 class DummyMavenServer(val project: Project) : MavenServer {
 
 
-
   override fun createEmbedder(settings: MavenEmbedderSettings?, token: MavenToken?): MavenServerEmbedder {
     return DummyEmbedder(project)
   }
@@ -156,13 +155,13 @@ class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
                                                 alwaysUpdateSnapshots: Boolean,
                                                 userProperties: Properties?,
                                                 token: MavenToken?): MavenServerPullProgressIndicator {
-    return object: MavenServerPullProgressIndicator {
+    return object : MavenServerPullProgressIndicator {
       override fun pullDownloadEvents(): MutableList<MavenArtifactDownloadServerProgressEvent>? {
         return null
       }
 
       override fun pullConsoleEvents(): MutableList<MavenServerConsoleEvent>? {
-       return null
+        return null
       }
 
       override fun cancel() {
@@ -189,7 +188,7 @@ class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
       object : BuildIssue {
         override val title = SyncBundle.message("maven.sync.not.trusted.title")
         override val description = SyncBundle.message("maven.sync.not.trusted.description") +
-         "\n<a href=\"${TrustProjectQuickFix.ID}\">${SyncBundle.message("maven.sync.trust.project")}</a>"
+                                   "\n<a href=\"${TrustProjectQuickFix.ID}\">${SyncBundle.message("maven.sync.trust.project")}</a>"
         override val quickFixes: List<BuildIssueQuickFix> = listOf(TrustProjectQuickFix())
 
         override fun getNavigatable(project: Project) = null
@@ -253,4 +252,8 @@ class DummyEmbedder(val myProject: Project) : MavenServerEmbedder {
     return null
   }
 
+  override fun resolveRepositories(repositories: MutableCollection<MavenRemoteRepository>,
+                                   token: MavenToken?): MutableSet<MavenRemoteRepository> {
+    return mutableSetOf()
+  }
 }

@@ -63,8 +63,6 @@ import java.rmi.server.UnicastRemoteObject;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static org.jetbrains.idea.maven.server.embedder.Maven2ModelConverter.convertRemoteRepositories;
-
 public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements MavenServerEmbedder {
   private final MavenEmbedder myImpl;
   private final Maven2ServerConsoleWrapper myConsoleWrapper;
@@ -326,9 +324,6 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
                                                          (rootNode == null ? Collections.emptyList() : rootNode.getChildren()),
                                                          mavenProject.getExtensionArtifacts(),
                                                          getLocalRepositoryFile());
-
-    List<MavenRemoteRepository> remoteRepositories = convertRemoteRepositories(mavenProject.getRemoteArtifactRepositories());
-    model.setRemoteRepositories(remoteRepositories);
 
     RemoteNativeMavenProjectHolder holder = new RemoteNativeMavenProjectHolder(mavenProject);
     try {
@@ -771,6 +766,12 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
     catch (Exception e) {
       throw rethrowException(e);
     }
+  }
+
+  @Override
+  public Set<MavenRemoteRepository> resolveRepositories(@NotNull Collection<MavenRemoteRepository> repositories,
+                                                         MavenToken token) throws RemoteException {
+    return Collections.emptySet();
   }
 
   private interface Executor<T> {

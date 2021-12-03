@@ -282,6 +282,12 @@ public abstract class MavenEmbedderWrapper extends MavenRemoteObjectWrapper<Mave
                ourToken));
   }
 
+  @NotNull
+  public Set<MavenRemoteRepository> resolveRepositories(@NotNull Collection<MavenRemoteRepository> repositories)
+    throws MavenProcessCanceledException {
+    return perform(() -> getOrCreateWrappee().resolveRepositories(repositories, ourToken));
+  }
+
   public void reset() {
     MavenServerEmbedder w = getWrappee();
     if (w == null) return;

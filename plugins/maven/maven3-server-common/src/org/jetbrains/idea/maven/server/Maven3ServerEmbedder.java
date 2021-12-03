@@ -65,6 +65,7 @@ import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static org.jetbrains.idea.maven.server.MavenModelConverter.convertRemoteRepositories;
 
 /**
  * @author Vladislav.Soroka
@@ -454,6 +455,13 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     catch (RemoteException e1) {
       throw new RuntimeException(e1);
     }
+  }
+
+  @Override
+  public Set<MavenRemoteRepository> resolveRepositories(@NotNull Collection<MavenRemoteRepository> repositories, MavenToken token)
+    throws RemoteException {
+    MavenServerUtil.checkToken(token);
+    return new HashSet<MavenRemoteRepository>(convertRemoteRepositories(convertRepositories(new ArrayList<MavenRemoteRepository>(repositories))));
   }
 
   /**
