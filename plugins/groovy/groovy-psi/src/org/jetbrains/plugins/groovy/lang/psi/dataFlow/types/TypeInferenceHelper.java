@@ -33,10 +33,8 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefin
 import org.jetbrains.plugins.groovy.lang.psi.impl.InferenceContext;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PartialContext;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Function;
 
 import static com.intellij.psi.util.PsiModificationTracker.MODIFICATION_COUNT;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil.isFlatDFAAllowed;
@@ -157,19 +155,7 @@ public final class TypeInferenceHelper {
     final ReachingDefinitionsDfaInstance dfaInstance = new TypesReachingDefinitionsInstance(flow, varIndexes);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);
-    List<DefinitionMap> defUseMaps = engine.performDFAWithTimeout();
-    if (defUseMaps != null) {
-      internalize(defUseMaps);
-    }
-    return defUseMaps;
-  }
-
-  /**
-   * Optimizes maps for caching by limiting number of different referenced instances.
-   */
-  private static void internalize(@NotNull List<DefinitionMap> maps) {
-    Map<DefinitionMap, DefinitionMap> internedMaps = new HashMap<>();
-    maps.replaceAll(map -> internedMaps.computeIfAbsent(map, Function.identity()));
+    return engine.performDFAWithTimeout();
   }
 
   @Nullable
@@ -240,7 +226,7 @@ public final class TypeInferenceHelper {
     return null;
   }
 
-  static boolean isSimpleEnoughForAugmenting(Instruction @NotNull [] flow) {
+  public static boolean isSimpleEnoughForAugmenting(Instruction @NotNull [] flow) {
     // in large flows there is a lot of variables, so minor inability to infer type for a parameter should not be noticeable.
     // on the other side, people may omit types of parameters in short methods, so augmenting may be useful there
     return flow.length < 50;
