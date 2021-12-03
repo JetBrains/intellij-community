@@ -2,42 +2,21 @@
 
 package org.jetbrains.jpsBootstrap;
 
-import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.FileUtilRt;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.URLUtil;
 import org.apache.commons.cli.*;
 import org.jetbrains.annotations.Contract;
-import org.jetbrains.groovy.compiler.rt.GroovyRtConstants;
-import org.jetbrains.jps.api.GlobalOptions;
-import org.jetbrains.jps.build.Standalone;
-import org.jetbrains.jps.incremental.groovy.JpsGroovycRunner;
-import org.jetbrains.jps.incremental.messages.BuildMessage;
-import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
-import org.jetbrains.jps.model.JpsNamedElement;
-import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.library.JpsLibrary;
-import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsModule;
-import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
-import org.jetbrains.jps.model.serialization.JpsPathVariablesConfiguration;
-import org.jetbrains.jps.model.serialization.JpsProjectLoader;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Properties;
 import java.util.stream.Collectors;
 
 import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
@@ -62,7 +41,7 @@ public class JpsBootstrapMain {
 
   public static void main(String[] args) {
     try {
-      mainImpl(args);
+      new JpsBootstrapMain(args).main();
       System.exit(0);
     }
     catch (Throwable t) {
@@ -72,8 +51,14 @@ public class JpsBootstrapMain {
     }
   }
 
-  @SuppressWarnings("ConfusingArgumentToVarargsMethod")
-  private static void mainImpl(String[] args) throws Throwable {
+  private final Path projectHome;
+  private final Path communityHome;
+  private final String moduleNameToRun;
+  private final String classNameToRun;
+  private final Path jpsBootstrapWorkDir;
+  private final String[] mainArgsToRun;
+
+  public JpsBootstrapMain(String[] args) throws IOException {
     CommandLine cmdline;
     try {
       cmdline = (new DefaultParser()).parse(createCliOptions(), args, true);
@@ -84,27 +69,23 @@ public class JpsBootstrapMain {
       throw new IllegalStateException("NOT_REACHED");
     }
 
-    final String[] freeArgs = cmdline.getArgs();
-    if (cmdline.hasOption(ARG_HELP) || freeArgs.length < 2) {
+    final List<String> freeArgs = Arrays.asList(cmdline.getArgs());
+    if (cmdline.hasOption(ARG_HELP) || freeArgs.size() < 2) {
       showUsagesAndExit();
     }
 
+    moduleNameToRun = freeArgs.get(0);
+    classNameToRun = freeArgs.get(1);
+
     JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(ARG_VERBOSE));
-
-    long startTime = System.currentTimeMillis();
-
-    String moduleName = freeArgs[0];
-    String className = freeArgs[1];
 
     String communityHomeString = System.getenv(COMMUNITY_HOME_ENV);
     if (communityHomeString == null) fatal("Please set " + COMMUNITY_HOME_ENV + " environment variable");
 
-    Path communityHome = Path.of(communityHomeString);
+    communityHome = Path.of(communityHomeString);
 
     Path communityCheckFile = communityHome.resolve("intellij.idea.community.main.iml");
     if (!Files.exists(communityCheckFile)) fatal(COMMUNITY_HOME_ENV + " is incorrect: " + communityCheckFile + " is missing");
-
-    Path projectHome;
 
     Path ultimateCheckFile = communityHome.getParent().resolve("intellij.idea.ultimate.main.iml");
     if (Files.exists(ultimateCheckFile)) {
@@ -115,100 +96,77 @@ public class JpsBootstrapMain {
       projectHome = communityHome;
     }
 
-    // Workaround for KTIJ-19065
-    System.setProperty(PathManager.PROPERTY_HOME_PATH, projectHome.toString());
-
-    Path workDir;
-
     if (System.getenv(JPS_BOOTSTRAP_WORK_DIR_ENV) != null) {
-      workDir = Path.of(System.getenv(JPS_BOOTSTRAP_WORK_DIR_ENV));
+      jpsBootstrapWorkDir = Path.of(System.getenv(JPS_BOOTSTRAP_WORK_DIR_ENV));
     }
     else {
-      workDir = communityHome.resolve("out").resolve("jps-bootstrap");
+      jpsBootstrapWorkDir = communityHome.resolve("out").resolve("jps-bootstrap");
     }
 
-    info("Working directory: " + workDir);
+    info("Working directory: " + jpsBootstrapWorkDir);
+    Files.createDirectories(jpsBootstrapWorkDir);
 
-    Files.createDirectories(workDir);
+    mainArgsToRun = freeArgs.subList(2, freeArgs.size()).toArray(new String[0]);
+  }
 
-    Path m2LocalRepository = Path.of(System.getProperty("user.home"), ".m2", "repository");
-    JpsModel model = JpsElementFactory.getInstance().createModel();
-    JpsPathVariablesConfiguration pathVariablesConfiguration =
-      JpsModelSerializationDataService.getOrCreatePathVariablesConfiguration(model.getGlobal());
-    pathVariablesConfiguration.addPathVariable(
-      "MAVEN_REPOSITORY", FileUtilRt.toSystemIndependentName(m2LocalRepository.toAbsolutePath().toString()));
+  private void main() throws Throwable {
+    JpsModel model = JpsProjectUtils.loadJpsProject(projectHome);
+    JpsModule module = JpsProjectUtils.getModuleByName(model, moduleNameToRun);
 
-    System.setProperty("kotlin.incremental.compilation", "true");
-    System.setProperty("kotlin.daemon.enabled", "false");
-    System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true");
-
-    Map<String, String> pathVariables = JpsModelSerializationDataService.computeAllPathVariables(model.getGlobal());
-    JpsProjectLoader.loadProject(model.getProject(), pathVariables, projectHome.toString());
-    System.out.println(
-      "Loaded project " + projectHome + ": " +
-        model.getProject().getModules().size() + " modules, " +
-        model.getProject().getLibraryCollection().getLibraries().size() + " libraries in " +
-        (System.currentTimeMillis() - startTime) + " ms");
-
-    addSdk(model, "corretto-11", System.getProperty("java.home"));
-
-    String url = "file://" + FileUtilRt.toSystemIndependentName(workDir.resolve("out").toString());
-    JpsJavaExtensionService.getInstance().getOrCreateProjectExtension(model.getProject()).setOutputUrl(url);
-
-    System.setProperty(JpsGroovycRunner.GROOVYC_IN_PROCESS, "true");
-    System.setProperty(GroovyRtConstants.GROOVYC_ASM_RESOLVING_ONLY, "false");
-    System.setProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "true");
-    System.setProperty(GlobalOptions.LOG_DIR_OPTION, workDir.resolve("log").toString());
-    System.out.println("Log: " + System.getProperty(GlobalOptions.LOG_DIR_OPTION));
-
-    // kotlin.util.compiler-dependencies downloads all dependencies required for running Kotlin JPS compiler
-    // see org.jetbrains.kotlin.idea.artifacts.KotlinArtifactsFromSources
-    runBuild(model, workDir, "kotlin.util.compiler-dependencies");
-
-    runBuild(model, workDir, moduleName);
-
-    JpsModule module = model.getProject().getModules()
-      .stream()
-      .filter(m -> moduleName.equals(m.getName()))
-      .findFirst().orElseThrow();
-    JpsJavaDependenciesEnumerator enumerator = JpsJavaExtensionService
-      .dependencies(module)
-      .runtimeOnly()
-      .productionOnly()
-      .recursively()
-      .withoutSdk();
-
-    List<URL> roots = new ArrayList<>();
-    for (File file : enumerator.classes().getRoots()) {
-      URL toURL = file.toURI().toURL();
-      roots.add(toURL);
-    }
-    roots.sort(Comparator.comparing(URL::toString));
-
-    for (URL rootUrl : roots) {
-      verbose("  CLASSPATH " + rootUrl);
-    }
-
+    loadClasses(module, model);
     setSystemPropertiesFromTeamCityBuild();
+    runMainFromModuleRuntimeClasspath(classNameToRun, mainArgsToRun, module);
+  }
 
-    info("Running class " + className + " from module " + moduleName);
+  private void loadClasses(JpsModule module, JpsModel model) throws Throwable {
+    String fromJpsBuildEnvValue = System.getenv(ClassesFromJpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME);
+    boolean jpsBuild = fromJpsBuildEnvValue != null && JpsBootstrapUtil.toBooleanChecked(fromJpsBuildEnvValue);
 
-    try (URLClassLoader classloader = new URLClassLoader(roots.toArray(new URL[0]), ClassLoader.getPlatformClassLoader())) {
+    String manifestJsonUrl = System.getenv(ClassesFromCompileInc.MANIFEST_JSON_URL_ENV_NAME);
+
+    if (jpsBuild && manifestJsonUrl != null) {
+      throw new IllegalStateException("Both env. variables are set, choose only one: " +
+        ClassesFromJpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME + " " +
+        ClassesFromCompileInc.MANIFEST_JSON_URL_ENV_NAME);
+    }
+
+    if (!jpsBuild && manifestJsonUrl == null) {
+      // Nothing specified. It's ok locally, but on buildserver we must be sure
+      if (underTeamCity) {
+        throw new IllegalStateException("On buildserver one of the following env. variables must be set: " +
+          ClassesFromJpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME + " " +
+          ClassesFromCompileInc.MANIFEST_JSON_URL_ENV_NAME);
+      }
+    }
+
+    if (manifestJsonUrl != null) {
+      info("Downloading project classes from " + manifestJsonUrl);
+      ClassesFromCompileInc.downloadProjectClasses(model.getProject(), communityHome);
+    } else {
+      ClassesFromJpsBuild.buildModule(module, projectHome, model, jpsBootstrapWorkDir);
+    }
+  }
+
+  private static void runMainFromModuleRuntimeClasspath(String className, String[] args, JpsModule module) throws Throwable {
+    List<URL> moduleRuntimeClasspath = JpsProjectUtils.getModuleRuntimeClasspath(module);
+    verbose("Module " + module.getName() + " classpath:\n  " + moduleRuntimeClasspath.stream().map(URL::toString).collect(Collectors.joining("\n  ")));
+
+    info("Running class " + className + " from module " + module.getName());
+    try (URLClassLoader classloader = new URLClassLoader(moduleRuntimeClasspath.toArray(new URL[0]), ClassLoader.getPlatformClassLoader())) {
       Class<?> mainClass;
       try {
         mainClass = classloader.loadClass(className);
       }
       catch (ClassNotFoundException ex) {
-        for (URL rootUrl : roots) {
-          info("  CLASSPATH " + rootUrl);
-        }
-
-        throw new IllegalStateException("Class '" + className + "' was not found. See the class path above");
+        final String message = "Class '" + className + "' was not found in runtime classpath of module " + module.getName();
+        info(message + ":\n  " + moduleRuntimeClasspath.stream().map(URL::toString).collect(Collectors.joining("\n  ")));
+        throw new IllegalStateException(message + ". See the class path above");
       }
 
+      //noinspection ConfusingArgumentToVarargsMethod
       MethodHandles.lookup()
         .findStatic(mainClass, "main", MethodType.methodType(Void.TYPE, String[].class))
-        .invokeExact(Arrays.copyOfRange(freeArgs, 2, freeArgs.length));
+        .invokeExact(args);
     }
   }
 
@@ -221,85 +179,6 @@ public class JpsBootstrapMain {
 
       verbose("Setting system property '" + propertyName + "' to '" + value + "' from TeamCity build parameters");
       System.setProperty(propertyName, value);
-    }
-  }
-
-  private static void runBuild(JpsModel model, Path workDir, String moduleName) throws Exception {
-    final long buildStart = System.currentTimeMillis();
-    final AtomicReference<String> firstError = new AtomicReference<>();
-
-    Path dataStorageRoot = workDir.resolve("jps-build-data");
-    final Set<String> moduleNames = model.getProject().getModules().stream().map(JpsNamedElement::getName).collect(Collectors.toUnmodifiableSet());
-    Standalone.runBuild(
-      () -> model,
-      dataStorageRoot.toFile(),
-      false,
-      ContainerUtil.set(moduleName),
-      false,
-      Collections.emptyList(),
-      false,
-      msg -> {
-        BuildMessage.Kind kind = msg.getKind();
-        String text = msg.toString();
-
-        switch (kind) {
-          case PROGRESS:
-            verbose(text);
-            break;
-          case WARNING:
-            warn(text);
-          case ERROR:
-          case INTERNAL_BUILDER_ERROR:
-            error(text);
-            break;
-          default:
-            if (!msg.getMessageText().isBlank()) {
-              if (moduleNames.contains(msg.getMessageText())) {
-                verbose(text);
-              }
-              else {
-                info(text);
-              }
-            }
-            break;
-        }
-
-        if ((kind == BuildMessage.Kind.ERROR || kind == BuildMessage.Kind.INTERNAL_BUILDER_ERROR)) {
-          firstError.compareAndSet(null, text);
-        }
-      }
-    );
-
-    System.out.println("Finished building '" + moduleName + "' in " + (System.currentTimeMillis() - buildStart) + " ms");
-
-    String firstErrorText = firstError.get();
-    if (firstErrorText != null) {
-      fatal("Build finished with errors. First error:\n" + firstErrorText);
-    }
-  }
-
-  private static List<String> readModulesFromReleaseFile(Path jdkDir) throws IOException {
-    Path releaseFile = jdkDir.resolve("release");
-    Properties p = new Properties();
-    try (InputStream is = Files.newInputStream(releaseFile)) {
-      p.load(is);
-    }
-    String jbrBaseUrl = URLUtil.JRT_PROTOCOL + URLUtil.SCHEME_SEPARATOR +
-      FileUtil.toSystemIndependentName(jdkDir.toFile().getAbsolutePath()) +
-      URLUtil.JAR_SEPARATOR;
-    String modules = p.getProperty("MODULES");
-    return ContainerUtil.map(StringUtil.split(StringUtil.unquoteString(modules), " "), s -> jbrBaseUrl + s);
-  }
-
-  private static void addSdk(JpsModel model, String sdkName, String sdkHome) throws IOException {
-    JpsJavaExtensionService.getInstance().addJavaSdk(model.getGlobal(), sdkName, sdkHome);
-    JpsLibrary additionalSdk = model.getGlobal().getLibraryCollection().findLibrary(sdkName);
-    if (additionalSdk == null) {
-      throw new IllegalStateException("SDK " + sdkHome + " was not found");
-    }
-
-    for (String moduleUrl : readModulesFromReleaseFile(Path.of(sdkHome))) {
-      additionalSdk.addRoot(moduleUrl, JpsOrderRootType.COMPILED);
     }
   }
 
