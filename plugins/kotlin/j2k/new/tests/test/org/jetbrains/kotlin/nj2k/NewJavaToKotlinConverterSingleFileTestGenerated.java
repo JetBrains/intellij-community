@@ -1509,6 +1509,21 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             runTest("testData/newJ2k/detectProperties/GetterSetterUsages.java");
         }
 
+        @TestMetadata("GetterSetterUsagesShadowing.java")
+        public void testGetterSetterUsagesShadowing() throws Exception {
+            runTest("testData/newJ2k/detectProperties/GetterSetterUsagesShadowing.java");
+        }
+
+        @TestMetadata("GetterSetterUsagesShadowingWithConstructor.java")
+        public void testGetterSetterUsagesShadowingWithConstructor() throws Exception {
+            runTest("testData/newJ2k/detectProperties/GetterSetterUsagesShadowingWithConstructor.java");
+        }
+
+        @TestMetadata("GetterSetterUsagesShadowingWithRename.java")
+        public void testGetterSetterUsagesShadowingWithRename() throws Exception {
+            runTest("testData/newJ2k/detectProperties/GetterSetterUsagesShadowingWithRename.java");
+        }
+
         @TestMetadata("GetterTypeNotMatch.java")
         public void testGetterTypeNotMatch() throws Exception {
             runTest("testData/newJ2k/detectProperties/GetterTypeNotMatch.java");
