@@ -1,51 +1,46 @@
 package com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.ui
 
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.project.Project
-import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.TitledSeparator
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributorDriver
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.AnalyticsAwareConfigurableContributorDriver
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.PackageSearchGradleConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.PackageSearchGradleConfigurationDefaults
-import javax.swing.JCheckBox
-import javax.swing.JLabel
-import javax.swing.JTextField
-import javax.swing.event.ChangeListener
-import javax.swing.event.DocumentEvent
+import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.addOnTextChangedListener
+import java.awt.event.ItemEvent
 
-internal class GradleConfigurableContributorDriver(private val project: Project) : ConfigurableContributorDriver {
+internal class GradleConfigurableContributorDriver(project: Project) : AnalyticsAwareConfigurableContributorDriver {
 
-    private var modified: Boolean = false
+    private var isScopesModified: Boolean = false
+    private var isDefaultScopeModified: Boolean = false
+    private var isUpdateScopesModified: Boolean = false
 
-    private val configuration
-        get() = PackageSearchGradleConfiguration.getInstance(project)
+    private val configuration = PackageSearchGradleConfiguration.getInstance(project)
 
-    private val textFieldChangeListener = object : DocumentAdapter() {
-        override fun textChanged(e: DocumentEvent) {
-            modified = true
+    private val gradleScopesEditor = PackageSearchUI.textField {
+        addOnTextChangedListener {
+            isScopesModified = text.normalizeScopesList() != configuration.gradleScopes
         }
     }
 
-    private val checkboxFieldChangeListener = ChangeListener { modified = true }
-
-    private val gradleScopesEditor = JTextField()
-        .apply {
-            document.addDocumentListener(textFieldChangeListener)
+    private val gradleDefaultScopeEditor = PackageSearchUI.textField {
+        addOnTextChangedListener {
+            isDefaultScopeModified = text.trim() != configuration.defaultGradleScope
         }
-
-    private val gradleDefaultScopeEditor = JTextField()
-        .apply {
-            document.addDocumentListener(textFieldChangeListener)
-        }
+    }
 
     private val updateScopesOnUsageEditor =
-        JCheckBox(PackageSearchBundle.message("packagesearch.configuration.update.scopes.on.usage"))
-            .apply {
-                addChangeListener(checkboxFieldChangeListener)
+        PackageSearchUI.checkBox(PackageSearchBundle.message("packagesearch.configuration.update.scopes.on.usage")) {
+            addItemListener {
+                val newIsSelected = it.stateChange == ItemEvent.SELECTED
+                isUpdateScopesModified = newIsSelected != configuration.updateScopesOnUsage
             }
+        }
 
     override fun contributeUserInterface(builder: FormBuilder) {
         // Gradle configurations
@@ -60,7 +55,7 @@ internal class GradleConfigurableContributorDriver(private val project: Project)
         builder.addComponentToRightColumn(
             RelativeFont.TINY.install(
                 RelativeFont.ITALIC.install(
-                    JLabel(" " + PackageSearchBundle.message("packagesearch.configuration.gradle.configurations.comma.separated"))
+                    PackageSearchUI.createLabel(PackageSearchBundle.message("packagesearch.configuration.gradle.configurations.comma.separated"))
                 )
             )
         )
@@ -71,33 +66,51 @@ internal class GradleConfigurableContributorDriver(private val project: Project)
         )
     }
 
-    override fun isModified(): Boolean {
-        return modified
-    }
+    override fun isModified(): Boolean = isScopesModified || isDefaultScopeModified || isUpdateScopesModified
 
     override fun reset() {
         gradleScopesEditor.text = configuration.getGradleScopes().joinToString(", ")
         updateScopesOnUsageEditor.isSelected = configuration.updateScopesOnUsage
         gradleDefaultScopeEditor.text = configuration.determineDefaultGradleScope()
 
-        modified = false
+        isScopesModified = false
+        isDefaultScopeModified = false
+        isUpdateScopesModified = false
     }
 
     override fun restoreDefaults() {
-        gradleScopesEditor.text = PackageSearchGradleConfigurationDefaults.GradleScopes.replace(",", ", ")
-        updateScopesOnUsageEditor.isSelected = true
-        gradleDefaultScopeEditor.text = PackageSearchGradleConfigurationDefaults.GradleDefaultScope
+        val defaultScopesText = PackageSearchGradleConfigurationDefaults.GradleScopes.replace(",", ", ")
+        isScopesModified = gradleScopesEditor.text != defaultScopesText
+        gradleScopesEditor.text = defaultScopesText
 
-        modified = true
+        val defaultUpdateScopes = true
+        isUpdateScopesModified = updateScopesOnUsageEditor.isSelected != defaultUpdateScopes
+        updateScopesOnUsageEditor.isSelected = defaultUpdateScopes
+
+        val defaultGradleDefaultScopeName = PackageSearchGradleConfigurationDefaults.GradleDefaultScope
+        isDefaultScopeModified = gradleDefaultScopeEditor.text != defaultGradleDefaultScopeName
+        gradleDefaultScopeEditor.text = defaultGradleDefaultScopeName
     }
 
     override fun apply() {
-        configuration.gradleScopes = gradleScopesEditor.text.replace(", ", ",")
+        configuration.gradleScopes = gradleScopesEditor.text.normalizeScopesList()
         configuration.updateScopesOnUsage = updateScopesOnUsageEditor.isSelected
-        configuration.defaultGradleScope = gradleDefaultScopeEditor.text
+        configuration.defaultGradleScope = gradleDefaultScopeEditor.text.trim()
 
+        isScopesModified = false
+        isDefaultScopeModified = false
+        isUpdateScopesModified = false
+    }
+
+    private fun String.normalizeScopesList() =
+        split(",")
+            .map { it.trim() }
+            .filter { it.isNotEmpty() }
+            .joinToString(",")
+
+    override fun provideApplyEventAnalyticsData(): List<EventPair<*>> {
         val hasChangedDefaultScope = configuration.defaultGradleScope != PackageSearchGradleConfigurationDefaults.GradleDefaultScope
-        PackageSearchEventsLogger.logPreferencesChanged(
+        return listOf(
             PackageSearchEventsLogger.preferencesGradleScopeCountField.with(configuration.getGradleScopes().size),
             PackageSearchEventsLogger.preferencesUpdateScopesOnUsageField.with(configuration.updateScopesOnUsage),
             PackageSearchEventsLogger.preferencesDefaultGradleScopeChangedField.with(hasChangedDefaultScope),
