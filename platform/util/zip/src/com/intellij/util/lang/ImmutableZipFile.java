@@ -25,7 +25,11 @@ import java.util.zip.ZipException;
 
 @ApiStatus.Internal
 public final class ImmutableZipFile implements ZipFile {
-  private static final int MIN_EOCD_SIZE = 22;
+  public static final int MIN_EOCD_SIZE = 22;
+  public static final int EOCD = 0x6054B50;
+
+  private static final int INDEX_FORMAT_VERSION = 3;
+  private static final int COMMENT_SIZE = 5;
 
   private final Ikv.SizeAwareIkv<String> ikv;
   private final int nameDataPosition;
@@ -214,7 +218,7 @@ public final class ImmutableZipFile implements ZipFile {
 
     // first, EOCD
     for (; offset >= 0; offset--) {
-      if (buffer.getInt(offset) == 0x6054B50) {
+      if (buffer.getInt(offset) == EOCD) {
         finished = true;
         break;
       }
@@ -244,8 +248,8 @@ public final class ImmutableZipFile implements ZipFile {
       centralDirPosition = (int)buffer.getLong(offset + 48);
 
       commentSize = (int)(buffer.getLong(offset + 4) + 12) - 56;
-      commentVersion = commentSize == 5 ? buffer.get(offset + 56) : 0;
-      if (commentVersion == 1) {
+      commentVersion = commentSize == COMMENT_SIZE ? buffer.get(offset + 56) : 0;
+      if (commentVersion == INDEX_FORMAT_VERSION) {
         indexDataEnd = buffer.getInt(offset + 56 + 1);
       }
     }
@@ -255,14 +259,13 @@ public final class ImmutableZipFile implements ZipFile {
       centralDirPosition = buffer.getInt(offset + 16);
 
       commentSize = buffer.getShort(offset + 20);
-      commentVersion = commentSize == 9 ? buffer.get(offset + 22) : 0;
-      if (commentVersion == 2) {
-        entryCount = buffer.getInt(offset + 23);
-        indexDataEnd = buffer.getInt(offset + 27);
+      commentVersion = commentSize == COMMENT_SIZE ? buffer.get(offset + 22) : 0;
+      if (commentVersion == INDEX_FORMAT_VERSION) {
+        indexDataEnd = buffer.getInt(offset + 22 + Byte.BYTES /* index format version size */);
       }
     }
 
-    if (forceNonIkv || commentVersion != 2 || entryCount == 0) {
+    if (forceNonIkv || commentVersion != INDEX_FORMAT_VERSION || entryCount == 0) {
       return HashMapZipFile.createHashMapZipFile(buffer, fileSize, entryCount, centralDirSize, centralDirPosition);
     }
 
@@ -273,19 +276,17 @@ public final class ImmutableZipFile implements ZipFile {
 
     buffer.position(indexDataEnd);
     // read package class and resource hashes
-    int n = buffer.getInt();
-    long[] classPackages = new long[n];
-    int n2 = buffer.getInt();
-    long[] resourcePackages = new long[n2];
+    long[] classPackages = new long[buffer.getInt()];
+    long[] resourcePackages = new long[buffer.getInt()];
     LongBuffer longBuffer = buffer.asLongBuffer();
     longBuffer.get(classPackages);
     longBuffer.get(resourcePackages);
     buffer.position(buffer.position() + (longBuffer.position() * Long.BYTES));
 
     // read fingerprints
-    long[] hashes = new long[entryCount];
+    long[] hashes = new long[buffer.getInt()];
     buffer.asLongBuffer().get(hashes);
-    buffer.position(buffer.position() + (entryCount * Long.BYTES));
+    buffer.position(buffer.position() + (hashes.length * Long.BYTES));
 
     int nameDataPosition = buffer.position();
     buffer.clear();

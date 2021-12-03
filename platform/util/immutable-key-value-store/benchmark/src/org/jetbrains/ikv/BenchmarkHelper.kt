@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ikv
 
+import org.jetbrains.ikv.builder.IkvWriter
 import org.jetbrains.xxh3.Xxh3
 import java.nio.channels.FileChannel
 import java.nio.file.Files

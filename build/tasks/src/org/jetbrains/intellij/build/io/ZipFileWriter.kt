@@ -34,15 +34,11 @@ internal class ZipFileWriter(channel: WritableByteChannel, private val deflater:
     : this(channel = channel, deflater = if (compress) Deflater(Deflater.DEFAULT_COMPRESSION, true) else null)
 
   // size is written as part of optimized metadata - so, if compression is enabled, optimized metadata will be incorrect
-  private val resultStream = ZipArchiveOutputStream(channel, withOptimizedMetadataEnabled = deflater == null)
+  val resultStream = ZipArchiveOutputStream(channel, withOptimizedMetadataEnabled = deflater == null)
   private val crc32 = CRC32()
 
   private val bufferAllocator = ByteBufferAllocator()
   private val deflateBufferAllocator = if (deflater == null) null else ByteBufferAllocator()
-
-  fun setPackageIndex(classPackages: LongArray, resourcePackages: LongArray) {
-    resultStream.setPackageIndex(classPackages, resourcePackages)
-  }
 
   @Suppress("DuplicatedCode")
   fun file(nameString: String, file: Path) {
@@ -282,31 +278,4 @@ internal class ZipFileWriter(channel: WritableByteChannel, private val deflater:
       resultStream.close()
     }
   }
-}
-
-private fun writeLocalFileHeader(name: ByteArray, size: Int, compressedSize: Int, crc32: Long, method: Int, buffer: ByteBuffer): Int {
-  buffer.putInt(0x04034b50)
-  // Version needed to extract (minimum)
-  buffer.putShort(0)
-  // General purpose bit flag
-  buffer.putShort(0)
-  // Compression method
-  buffer.putShort(method.toShort())
-  // File last modification time
-  buffer.putShort(0)
-  // File last modification date
-  buffer.putShort(0)
-  // CRC-32 of uncompressed data
-  buffer.putInt((crc32 and 0xffffffffL).toInt())
-  val compressedSizeOffset = buffer.position()
-  // Compressed size
-  buffer.putInt(compressedSize)
-  // Uncompressed size
-  buffer.putInt(size)
-  // File name length
-  buffer.putShort((name.size and 0xffff).toShort())
-  // Extra field length
-  buffer.putShort(0)
-  buffer.put(name)
-  return compressedSizeOffset
 }

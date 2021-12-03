@@ -88,7 +88,7 @@ public final class RecSplitSettings {
     return (index & (SUPPLEMENTAL_HASH_CALLS - 1)) == 0;
   }
 
-  static long getUniversalHashIndex(long index) {
+  public static long getUniversalHashIndex(long index) {
     return index >>> SUPPLEMENTAL_HASH_SHIFT;
   }
 
@@ -100,7 +100,7 @@ public final class RecSplitSettings {
     return averageBucketSize;
   }
 
-  static long supplementalHash(long hash, long index) {
+  public static long supplementalHash(long hash, long index) {
     long x = hash + index;
     // from http://zimbry.blogspot.it/2011/09/better-bit-mixing-improving-on.html
     // also used in it.unimi.dsi.fastutil
@@ -110,11 +110,11 @@ public final class RecSplitSettings {
     return x;
   }
 
-  static int getBucketCount(int size, int averageBucketSize) {
+  public static int getBucketCount(int size, int averageBucketSize) {
     return (size + averageBucketSize - 1) / averageBucketSize;
   }
 
-  static int reduce(long hash, int n) {
+  public static int reduce(long hash, int n) {
     // this trick helps a lot - nearly twice faster as reduce is called very often
     // also, size of serialized key data a little bit smaller
     // http://lemire.me/blog/2016/06/27/a-fast-alternative-to-the-modulo-reduction/

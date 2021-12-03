@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.io
 
-import com.intellij.util.lang.HashMapZipFile
 import org.jetbrains.intellij.build.tasks.PackageIndexBuilder
 import java.nio.file.*
 import java.util.*
@@ -124,18 +123,9 @@ internal fun compressDir(startDir: Path, archiver: ZipArchiver, excludes: List<P
   }
 }
 
-internal fun copyZipRaw(sourceFile: Path,
-                        packageIndexBuilder: PackageIndexBuilder,
-                        zipCreator: ZipFileWriter) {
-  HashMapZipFile.load(sourceFile).use { sourceZipFile ->
-    for (entry in sourceZipFile.entries) {
-      if (entry.isDirectory) {
-        continue
-      }
-
-      val name = entry.name
-      packageIndexBuilder.addFile(name)
-      zipCreator.uncompressedData(name, entry.getByteBuffer(sourceZipFile))
-    }
+internal fun copyZipRaw(sourceFile: Path, packageIndexBuilder: PackageIndexBuilder, zipCreator: ZipFileWriter) {
+  readZipFile(sourceFile) { name, entry ->
+    packageIndexBuilder.addFile(name)
+    zipCreator.uncompressedData(name, entry.getByteBuffer())
   }
 }

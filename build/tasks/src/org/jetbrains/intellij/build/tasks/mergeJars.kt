@@ -3,14 +3,9 @@
 @file:Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 package org.jetbrains.intellij.build.tasks
 
-import com.intellij.util.lang.HashMapZipFile
-import com.intellij.util.lang.ImmutableZipEntry
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.context.Context
-import org.jetbrains.intellij.build.io.ZipArchiver
-import org.jetbrains.intellij.build.io.ZipFileWriter
-import org.jetbrains.intellij.build.io.compressDir
-import org.jetbrains.intellij.build.io.writeNewFile
+import org.jetbrains.intellij.build.io.*
 import java.nio.file.FileSystems
 import java.nio.file.Files
 import java.nio.file.Path
@@ -149,8 +144,8 @@ fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
           }
           is InMemoryContentSource -> {
             if (!uniqueNames.add(source.relativePath)) {
-              throw IllegalStateException("in-memory source must always be first (targetFile=$targetFile, source=${source.relativePath}, " +
-                                          "sources=${sources.joinToString()})")
+              throw IllegalStateException("in-memory source must always be first " +
+                                          "(targetFile=$targetFile, source=${source.relativePath}, sources=${sources.joinToString()})")
             }
 
             packageIndexBuilder.addFile(source.relativePath)
@@ -159,18 +154,25 @@ fun buildJar(targetFile: Path, sources: List<Source>, dryRun: Boolean = false) {
             }
           }
           else -> {
-            val file = (source as ZipSource).file
-            HashMapZipFile.load(file).use { zipFile ->
-              val entries = getFilteredEntries(targetFile, file, zipFile, uniqueNames, includeManifest = sources.size == 1,
-                                               forbidNativeFiles)
-              writeEntries(entries.iterator(), zipCreator, zipFile, packageIndexBuilder)
+            val sourceFile = (source as ZipSource).file
+            val requiresMavenFiles = targetFile.fileName.toString().startsWith("junixsocket-")
+            readZipFile(sourceFile) { name, entry ->
+              if (forbidNativeFiles && (name.endsWith(".jnilib") || name.endsWith(".dylib") || name.endsWith(".so"))) {
+                throw IllegalStateException("Library with native files must be packed separately " +
+                                            "(sourceFile=$sourceFile, targetFile=$targetFile, fileName=${name})")
+              }
+
+              if (checkName(name, uniqueNames, includeManifest = sources.size == 1, requiresMavenFiles = requiresMavenFiles)) {
+                packageIndexBuilder.addFile(name)
+                zipCreator.uncompressedData(name, entry.getByteBuffer())
+              }
             }
           }
         }
 
         source.sizeConsumer?.accept((outChannel.position() - positionBefore).toInt())
       }
-      packageIndexBuilder.writeDirsAndPackageIndex(zipCreator)
+      packageIndexBuilder.writePackageIndex(zipCreator)
     }
   }
 }
@@ -191,6 +193,7 @@ private fun getIgnoredNames(): Set<String> {
   set.add("licenses")
   @Suppress("SpellCheckingInspection")
   set.add(".gitkeep")
+  set.add(INDEX_FILENAME)
   for (originalName in listOf("NOTICE", "README", "LICENSE", "DEPENDENCIES", "CHANGES", "THIRD_PARTY_LICENSES", "COPYING")) {
     for (name in listOf(originalName, originalName.lowercase())) {
       set.add(name)
@@ -206,36 +209,22 @@ private fun getIgnoredNames(): Set<String> {
 
 private val ignoredNames = java.util.Set.copyOf(getIgnoredNames())
 
-private fun getFilteredEntries(targetFile: Path,
-                               sourceFile: Path,
-                               zipFile: HashMapZipFile,
-                               uniqueNames: MutableSet<String>,
-                               includeManifest: Boolean,
-                               forbidNativeFiles: Boolean): Sequence<ImmutableZipEntry> {
-  val targetFileName = targetFile.fileName.toString()
-  return zipFile.entries.asSequence().filter {
-    val name = it.name
-
-    if (forbidNativeFiles && (it.name.endsWith(".jnilib") || it.name.endsWith(".dylib") || it.name.endsWith(".so"))) {
-      throw IllegalStateException("Library with native files must be packed separately (sourceFile=$sourceFile, targetFile=$targetFile, fileName=${it.name})")
-    }
-
-    !ignoredNames.contains(name) &&
-    uniqueNames.add(name) &&
-    !name.endsWith(".kotlin_metadata") &&
-    (includeManifest || name != "META-INF/MANIFEST.MF") &&
-    !name.startsWith("license/") &&
-    !name.startsWith("native-image/") &&
-    !name.startsWith("native/") &&
-    !name.startsWith("licenses/") &&
-    (requiresMavenFiles(targetFileName) || (name != "META-INF/maven" && !name.startsWith("META-INF/maven/"))) &&
-    !name.startsWith("META-INF/INDEX.LIST") &&
-    (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA")))
-  }
+private fun checkName(name: String,
+                      uniqueNames: MutableSet<String>,
+                      includeManifest: Boolean,
+                      requiresMavenFiles: Boolean): Boolean {
+  return !ignoredNames.contains(name) &&
+         uniqueNames.add(name) &&
+         !name.endsWith(".kotlin_metadata") &&
+         (includeManifest || name != "META-INF/MANIFEST.MF") &&
+         !name.startsWith("license/") &&
+         !name.startsWith("native-image/") &&
+         !name.startsWith("native/") &&
+         !name.startsWith("licenses/") &&
+         (requiresMavenFiles || (name != "META-INF/maven" && !name.startsWith("META-INF/maven/"))) &&
+         !name.startsWith("META-INF/INDEX.LIST") &&
+         (!name.startsWith("META-INF/") || (!name.endsWith(".DSA") && !name.endsWith(".SF") && !name.endsWith(".RSA")))
 }
-
-// junixsocket reads pom.properties from class path
-private fun requiresMavenFiles(jarName: String) = jarName.startsWith("junixsocket-")
 
 @Suppress("SpellCheckingInspection")
 private val excludedFromMergeLibs = java.util.Set.of(

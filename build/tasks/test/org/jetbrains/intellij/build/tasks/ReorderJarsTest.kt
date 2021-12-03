@@ -11,14 +11,10 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.assertj.core.api.Assertions.assertThat
-import org.jetbrains.intellij.build.io.RW_CREATE_NEW
-import org.jetbrains.intellij.build.io.ZipFileWriter
 import org.jetbrains.intellij.build.io.zip
-import org.jetbrains.xxh3.Xx3UnencodedString
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
-import java.nio.channels.FileChannel
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
@@ -32,21 +28,6 @@ class ReorderJarsTest {
   @RegisterExtension
   @JvmField
   val fs = InMemoryFsExtension()
-
-  @Test
-  fun `dir to create`() {
-    val packageIndexBuilder = PackageIndexBuilder()
-    packageIndexBuilder.addFile("tsMeteorStubs/meteor-v1.3.1.d.ts")
-    assertThat(packageIndexBuilder._getDirsToCreate()).containsExactlyInAnyOrder("tsMeteorStubs")
-
-    val file = fs.root.resolve("f")
-    Files.createDirectories(file.parent)
-    FileChannel.open(file, RW_CREATE_NEW).use {
-      packageIndexBuilder.writeDirsAndPackageIndex(ZipFileWriter(it, deflater = null))
-    }
-    assertThat(packageIndexBuilder.resourcePackageHashSet)
-      .containsExactlyInAnyOrder(0, Xx3UnencodedString.hashUnencodedString("tsMeteorStubs"))
-  }
 
   @Test
   fun `keep all dirs with resources`() {
@@ -66,14 +47,10 @@ class ReorderJarsTest {
     zip(archiveFile, mapOf(rootDir to ""), compress = false, addDirEntries = true)
 
     doReorderJars(mapOf(archiveFile to emptyList()), archiveFile.parent, archiveFile.parent)
-    ZipFile(Files.newByteChannel(archiveFile)).use { zipFile ->
-      assertThat(zipFile.entriesInPhysicalOrder.asSequence().map { it.name }.sorted().joinToString(separator = "\n")).isEqualTo("""
-        anotherDir/
-        anotherDir/resource2.txt
-        dir2/
-        dir2/dir3/
-        dir2/dir3/resource.txt
-      """.trimIndent())
+    ImmutableZipFile.load(archiveFile).use { zipFile ->
+      assertThat(zipFile.getResource("anotherDir")).isNotNull()
+      assertThat(zipFile.getResource("dir2")).isNotNull()
+      assertThat(zipFile.getResource("dir2/dir3")).isNotNull()
     }
 
     ImmutableZipFile.load(archiveFile).use { zipFile ->

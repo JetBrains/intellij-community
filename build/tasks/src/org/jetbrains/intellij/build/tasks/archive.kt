@@ -3,11 +3,11 @@
 
 package org.jetbrains.intellij.build.tasks
 
-import com.intellij.util.lang.HashMapZipFile
 import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.io.isWindows
+import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.writeNewFile
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -159,11 +159,9 @@ fun crossPlatformZip(macDistDir: Path,
 }
 
 fun consumeDataByPrefix(file: Path, prefixWithEndingSlash: String, consumer: BiConsumer<String, ByteArray>) {
-  HashMapZipFile.load(file).use { zip ->
-    for (entry in zip.entries) {
-      if (entry.name.startsWith(prefixWithEndingSlash)) {
-        consumer.accept(entry.name, entry.getData(zip))
-      }
+  readZipFile(file) { name, entry ->
+    if (name.startsWith(prefixWithEndingSlash)) {
+      consumer.accept(name, entry.getData())
     }
   }
 }

@@ -5,12 +5,19 @@ import com.intellij.execution.JUnitPatcher;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ThrowableComputable;
+import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -29,6 +36,7 @@ import java.util.List;
 final class JUnitDevKitPatcher extends JUnitPatcher {
   private static final Logger LOG = Logger.getInstance(JUnitDevKitPatcher.class);
   private static final String SYSTEM_CL_PROPERTY = "java.system.class.loader";
+  private static final Key<Boolean> LOADER_VALID = Key.create("LOADER_VALID_9");
 
   @Override
   public void patchJavaParameters(@NotNull Project project, @Nullable Module module, JavaParameters javaParameters) {
@@ -41,7 +49,11 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
 
     if (PsiUtil.isIdeaProject(project)) {
       if (!vm.hasProperty(SYSTEM_CL_PROPERTY)) {
-        vm.addProperty(SYSTEM_CL_PROPERTY, "com.intellij.util.lang.UrlClassLoader");
+        // check that UrlClassLoader is available in the test module classpath
+        String qualifiedName = "com.intellij.util.lang.UrlClassLoader";
+        if (loaderValid(project, module, qualifiedName)) {
+          vm.addProperty(SYSTEM_CL_PROPERTY, qualifiedName);
+        }
       }
       String basePath = project.getBasePath();
       if (!vm.hasProperty(PathManager.PROPERTY_SYSTEM_PATH)) {
@@ -108,6 +120,24 @@ final class JUnitDevKitPatcher extends JUnitPatcher {
     javaParameters.getClassPath().addFirst(libPath + File.separator + "idea.jar");
     javaParameters.getClassPath().addFirst(libPath + File.separator + "resources.jar");
     javaParameters.getClassPath().addFirst(((JavaSdkType)jdk.getSdkType()).getToolsPath(jdk));
+  }
+
+  private static boolean loaderValid(Project project, Module module, String qualifiedName) {
+    UserDataHolder holder = module == null ? project : module;
+    Key<Boolean> cacheKey = LOADER_VALID;
+    Boolean result = holder.getUserData(cacheKey);
+    if (result == null) {
+      result = ReadAction.compute(() -> {
+        //noinspection RedundantCast
+        return DumbService.getInstance(project).computeWithAlternativeResolveEnabled((ThrowableComputable<Boolean, RuntimeException>)() -> {
+          GlobalSearchScope scope = module != null ? GlobalSearchScope.moduleRuntimeScope(module, true)
+                                                   : GlobalSearchScope.allScope(project);
+          return JavaPsiFacade.getInstance(project).findClass(qualifiedName, scope) != null;
+        });
+      });
+      holder.putUserData(cacheKey, result);
+    }
+    return result;
   }
 
   private static @Nullable Path getSandboxPath(Sdk jdk) {

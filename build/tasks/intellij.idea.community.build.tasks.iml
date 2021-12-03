@@ -41,10 +41,8 @@
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
     <orderEntry type="library" scope="TEST" name="memoryfilesystem" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.zip" />
-    <orderEntry type="module" module-name="intellij.platform.util.classLoader" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.bootstrap" scope="TEST" />
     <orderEntry type="library" name="fastutil-min" level="project" />
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="library" name="opentelemetry" level="project" />
@@ -58,6 +56,5 @@
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.immutableKeyValueStore" />
     <orderEntry type="module" module-name="intellij.platform.util.rt.java8" />
-    <orderEntry type="module" module-name="intellij.platform.util.rt" scope="TEST" />
   </component>
 </module>

@@ -13,8 +13,8 @@ import io.opentelemetry.api.GlobalOpenTelemetry
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.trace.Span
 import org.apache.batik.transcoder.TranscoderException
-import org.jetbrains.ikv.IkvWriter
-import org.jetbrains.ikv.sizeUnawareIkvWriter
+import org.jetbrains.ikv.builder.IkvWriter
+import org.jetbrains.ikv.builder.sizeUnawareIkvWriter
 import org.jetbrains.intellij.build.io.ByteBufferAllocator
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.module.JpsModule

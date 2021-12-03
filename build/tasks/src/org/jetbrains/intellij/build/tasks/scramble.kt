@@ -3,7 +3,6 @@
 
 package org.jetbrains.intellij.build.tasks
 
-import com.intellij.util.lang.HashMapZipFile
 import org.jetbrains.intellij.build.io.*
 import org.jetbrains.org.objectweb.asm.ClassReader
 import org.jetbrains.org.objectweb.asm.ClassVisitor
@@ -104,25 +103,22 @@ private fun updatePackageIndex(sourceFile: Path, targetFile: Path) {
   writeNewZip(targetFile) { zipCreator ->
     val packageIndexBuilder = PackageIndexBuilder()
     copyZipRaw(sourceFile, packageIndexBuilder, zipCreator)
-    packageIndexBuilder.writeDirsAndPackageIndex(zipCreator)
+    packageIndexBuilder.writePackageIndex(zipCreator)
   }
 }
 
 // Scramble tool may produce invalid class files (see https://youtrack.jetbrains.com/issue/IDEA-188497)
 // so we check validity of the produced class files here
 private fun checkClassFilesValidity(jarFile: Path) {
+  val checkVisitor = object : ClassVisitor(Opcodes.API_VERSION) {}
   tracer.spanBuilder("check class files validity").setAttribute("file", jarFile.toString()).startSpan().use {
-    HashMapZipFile.load(jarFile).use { file ->
-      for (entry in file.entries) {
-        if (!entry.isDirectory && entry.name.endsWith(".class")) {
-          entry.getInputStream(file).use {
-            try {
-              ClassReader(it).accept(object : ClassVisitor(Opcodes.API_VERSION) {}, 0)
-            }
-            catch (e: Throwable) {
-              throw RuntimeException("Scrambler produced invalid class-file ${entry.name}", e)
-            }
-          }
+    readZipFile(jarFile) { name, entry ->
+      if (name.endsWith(".class")) {
+        try {
+          ClassReader(entry.getData()).accept(checkVisitor, ClassReader.SKIP_DEBUG)
+        }
+        catch (e: Throwable) {
+          throw RuntimeException("Scrambler produced invalid class-file $name", e)
         }
       }
     }

@@ -9,13 +9,9 @@ internal class PackageIndexBuilder {
   val classPackageHashSet = LongOpenHashSet()
   val resourcePackageHashSet = LongOpenHashSet()
 
-  private val dirsToCreate = HashSet<String>()
+  private val dirsToRegister = HashSet<String>()
 
   private var wasWritten = false
-
-  // @TestOnly
-  @Suppress("FunctionName")
-  fun _getDirsToCreate(): Set<String> = dirsToCreate
 
   fun addFile(name: String) {
     val i = name.lastIndexOf('/')
@@ -25,16 +21,13 @@ internal class PackageIndexBuilder {
     }
     else {
       resourcePackageHashSet.add(packageNameHash)
-      computeDirsToCreate(name)
+      computeDirsToAddToIndex(name)
     }
   }
 
-  fun writeDirsAndPackageIndex(zipCreator: ZipFileWriter) {
+  fun writePackageIndex(zipCreator: ZipFileWriter) {
     assert(!wasWritten)
     wasWritten = true
-
-    // name in our ImmutableZipEntry doesn't have ending slash
-    dirsToCreate.sorted().forEach(zipCreator::dir)
 
     if (!resourcePackageHashSet.isEmpty()) {
       // add empty package if top-level directory will be requested
@@ -46,11 +39,13 @@ internal class PackageIndexBuilder {
     // same content for same data
     classPackages.sort()
     resourcePackages.sort()
-    zipCreator.setPackageIndex(classPackages, resourcePackages)
+    // no need to sort dirsToRegister - index entries are sorted in any case
+    zipCreator.resultStream.addDirsToIndex(dirsToRegister)
+    zipCreator.resultStream.setPackageIndex(classPackages, resourcePackages)
   }
 
-  // leave only directories where some non-class files are located (as it can be requested in runtime, e.g. stubs, fileTemplates)
-  private fun computeDirsToCreate(name: String) {
+  // add to index only directories where some non-class files are located (as it can be requested in runtime, e.g. stubs, fileTemplates)
+  private fun computeDirsToAddToIndex(name: String) {
     if (name.endsWith("/package.html") || name == "META-INF/MANIFEST.MF") {
       return
     }
@@ -61,7 +56,7 @@ internal class PackageIndexBuilder {
     }
 
     var dirName = name.substring(0, slashIndex)
-    while (dirsToCreate.add(dirName)) {
+    while (dirsToRegister.add(dirName)) {
       resourcePackageHashSet.add(Xx3UnencodedString.hashUnencodedString(dirName))
 
       slashIndex = dirName.lastIndexOf('/')

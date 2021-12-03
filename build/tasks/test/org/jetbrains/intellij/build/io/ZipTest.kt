@@ -17,8 +17,6 @@ import org.junit.jupiter.api.Assumptions
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import org.junit.jupiter.api.io.TempDir
-import java.nio.ByteBuffer
-import java.nio.ByteOrder
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.ForkJoinTask
@@ -31,41 +29,8 @@ class ZipTest {
   // not used in every test because we want to check the real FS behaviour
   val fs = InMemoryFsExtension()
 
-  private val secret = byteArrayOf(0xb8.toByte(), 0xfe.toByte(), 0x6c.toByte(), 0x39.toByte(), 0x23.toByte(), 0xa4.toByte(), 0x4b.toByte(),
-                                   0xbe.toByte(), 0x7c.toByte(), 0x01.toByte(), 0x81.toByte(), 0x2c.toByte(), 0xf7.toByte(), 0x21.toByte(),
-                                   0xad.toByte(), 0x1c.toByte(), 0xde.toByte(), 0xd4.toByte(), 0x6d.toByte(), 0xe9.toByte(), 0x83.toByte(),
-                                   0x90.toByte(), 0x97.toByte(), 0xdb.toByte(), 0x72.toByte(), 0x40.toByte(), 0xa4.toByte(), 0xa4.toByte(),
-                                   0xb7.toByte(), 0xb3.toByte(), 0x67.toByte(), 0x1f.toByte(), 0xcb.toByte(), 0x79.toByte(), 0xe6.toByte(),
-                                   0x4e.toByte(), 0xcc.toByte(), 0xc0.toByte(), 0xe5.toByte(), 0x78.toByte(), 0x82.toByte(), 0x5a.toByte(),
-                                   0xd0.toByte(), 0x7d.toByte(), 0xcc.toByte(), 0xff.toByte(), 0x72.toByte(), 0x21.toByte(), 0xb8.toByte(),
-                                   0x08.toByte(), 0x46.toByte(), 0x74.toByte(), 0xf7.toByte(), 0x43.toByte(), 0x24.toByte(), 0x8e.toByte(),
-                                   0xe0.toByte(), 0x35.toByte(), 0x90.toByte(), 0xe6.toByte(), 0x81.toByte(), 0x3a.toByte(), 0x26.toByte(),
-                                   0x4c.toByte(), 0x3c.toByte(), 0x28.toByte(), 0x52.toByte(), 0xbb.toByte(), 0x91.toByte(), 0xc3.toByte(),
-                                   0x00.toByte(), 0xcb.toByte(), 0x88.toByte(), 0xd0.toByte(), 0x65.toByte(), 0x8b.toByte(), 0x1b.toByte(),
-                                   0x53.toByte(), 0x2e.toByte(), 0xa3.toByte(), 0x71.toByte(), 0x64.toByte(), 0x48.toByte(), 0x97.toByte(),
-                                   0xa2.toByte(), 0x0d.toByte(), 0xf9.toByte(), 0x4e.toByte(), 0x38.toByte(), 0x19.toByte(), 0xef.toByte(),
-                                   0x46.toByte(), 0xa9.toByte(), 0xde.toByte(), 0xac.toByte(), 0xd8.toByte(), 0xa8.toByte(), 0xfa.toByte(),
-                                   0x76.toByte(), 0x3f.toByte(), 0xe3.toByte(), 0x9c.toByte(), 0x34.toByte(), 0x3f.toByte(), 0xf9.toByte(),
-                                   0xdc.toByte(), 0xbb.toByte(), 0xc7.toByte(), 0xc7.toByte(), 0x0b.toByte(), 0x4f.toByte(), 0x1d.toByte(),
-                                   0x8a.toByte(), 0x51.toByte(), 0xe0.toByte(), 0x4b.toByte(), 0xcd.toByte(), 0xb4.toByte(), 0x59.toByte(),
-                                   0x31.toByte(), 0xc8.toByte(), 0x9f.toByte(), 0x7e.toByte(), 0xc9.toByte(), 0xd9.toByte(), 0x78.toByte(),
-                                   0x73.toByte(), 0x64.toByte(), 0xea.toByte(), 0xc5.toByte(), 0xac.toByte(), 0x83.toByte(), 0x34.toByte(),
-                                   0xd3.toByte(), 0xeb.toByte(), 0xc3.toByte(), 0xc5.toByte(), 0x81.toByte(), 0xa0.toByte(), 0xff.toByte(),
-                                   0xfa.toByte(), 0x13.toByte(), 0x63.toByte(), 0xeb.toByte(), 0x17.toByte(), 0x0d.toByte(), 0xdd.toByte(),
-                                   0x51.toByte(), 0xb7.toByte(), 0xf0.toByte(), 0xda.toByte(), 0x49.toByte(), 0xd3.toByte(), 0x16.toByte(),
-                                   0x55.toByte(), 0x26.toByte(), 0x29.toByte(), 0xd4.toByte(), 0x68.toByte(), 0x9e.toByte(), 0x2b.toByte(),
-                                   0x16.toByte(), 0xbe.toByte(), 0x58.toByte(), 0x7d.toByte(), 0x47.toByte(), 0xa1.toByte(), 0xfc.toByte(),
-                                   0x8f.toByte(), 0xf8.toByte(), 0xb8.toByte(), 0xd1.toByte(), 0x7a.toByte(), 0xd0.toByte(), 0x31.toByte(),
-                                   0xce.toByte(), 0x45.toByte(), 0xcb.toByte(), 0x3a.toByte(), 0x8f.toByte(), 0x95.toByte(), 0x16.toByte(),
-                                   0x04.toByte(), 0x28.toByte(), 0xaf.toByte(), 0xd7.toByte(), 0xfb.toByte(), 0xca.toByte(), 0xbb.toByte(),
-                                   0x4b.toByte(), 0x40.toByte(), 0x7e.toByte())
-
   @Test
   fun `interrupt thread`(@TempDir tempDir: Path) {
-    val buffer = ByteBuffer.wrap(secret).order(ByteOrder.LITTLE_ENDIAN).asIntBuffer()
-    val a = IntArray(buffer.limit())
-    buffer.get(12)
-
     val (list, archiveFile) = createLargeArchive(128, tempDir)
     checkZip(archiveFile) { zipFile ->
       val tasks = mutableListOf<ForkJoinTask<*>>()

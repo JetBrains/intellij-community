@@ -3,16 +3,11 @@
 
 package org.jetbrains.intellij.build.tasks
 
-import com.intellij.util.lang.HashMapZipFile
-import com.intellij.util.lang.ImmutableZipEntry
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.context.Context
 import it.unimi.dsi.fastutil.longs.LongSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import org.jetbrains.intellij.build.io.ZipFileWriter
-import org.jetbrains.intellij.build.io.copyZipRaw
-import org.jetbrains.intellij.build.io.transformFile
-import org.jetbrains.intellij.build.io.writeNewZip
+import org.jetbrains.intellij.build.io.*
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
@@ -85,7 +80,7 @@ fun generateClasspath(homeDir: Path, mainJarName: String, antLibDir: Path?): Lis
             Files.delete(productJar)
           }
 
-          packageIndexBuilder.writeDirsAndPackageIndex(zipCreator)
+          packageIndexBuilder.writePackageIndex(zipCreator)
         }
       }
     }
@@ -156,6 +151,9 @@ internal fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path, ma
 
 data class PackageIndexEntry(val path: Path, val classPackageIndex: LongSet, val resourcePackageIndex: LongSet)
 
+
+private class EntryData(@JvmField val name: String, @JvmField val entry: ZipEntry)
+
 fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): PackageIndexEntry {
   val orderedNameToIndex = Object2IntOpenHashMap<String>(orderedNames.size)
   orderedNameToIndex.defaultReturnValue(-1)
@@ -167,9 +165,12 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
 
   val packageIndexBuilder = PackageIndexBuilder()
 
-  HashMapZipFile.load(jarFile).use { zipFile ->
+  mapFileAndUse(jarFile) { sourceBuffer, fileSize ->
+    val entries = mutableListOf<EntryData>()
+    readZipEntries(sourceBuffer, fileSize) { name, entry ->
+      entries.add(EntryData(name, entry))
+    }
     // ignore existing package index on reorder - a new one will be computed even if it is the same, do not optimize for simplicity
-    val entries = zipFile.entries.toMutableList()
     entries.sortWith(Comparator { o1, o2 ->
       val o2p = o2.name
       if ("META-INF/plugin.xml" == o2p) {
@@ -193,8 +194,11 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
     })
 
     writeNewZip(tempJarFile) { zipCreator ->
-      writeEntries(entries.iterator(), zipCreator, zipFile, packageIndexBuilder)
-      packageIndexBuilder.writeDirsAndPackageIndex(zipCreator)
+      for (item in entries) {
+        packageIndexBuilder.addFile(item.name)
+        zipCreator.uncompressedData(item.name, item.entry.getByteBuffer())
+      }
+      packageIndexBuilder.writePackageIndex(zipCreator)
     }
   }
 
@@ -207,28 +211,5 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
   finally {
     Files.deleteIfExists(tempJarFile)
   }
-
   return PackageIndexEntry(path = resultJarFile, packageIndexBuilder.classPackageHashSet, packageIndexBuilder.resourcePackageHashSet)
-}
-
-internal fun writeEntries(entries: Iterator<ImmutableZipEntry>,
-                          zipCreator: ZipFileWriter,
-                          sourceZipFile: HashMapZipFile,
-                          packageIndexBuilder: PackageIndexBuilder?) {
-  for (entry in entries) {
-    if (entry.isDirectory) {
-      continue
-    }
-
-    val name = entry.name
-    packageIndexBuilder?.addFile(name)
-
-    val data = entry.getByteBuffer(sourceZipFile)
-    try {
-      zipCreator.uncompressedData(name, data)
-    }
-    finally {
-      sourceZipFile.releaseBuffer(data)
-    }
-  }
 }

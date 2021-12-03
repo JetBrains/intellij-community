@@ -1,7 +1,9 @@
 // Copyright 2021 Thomas Mueller. Use of this source code is governed by the Apache 2.0 license.
-package org.jetbrains.ikv;
+package org.jetbrains.ikv.builder;
 
 import it.unimi.dsi.fastutil.longs.LongArrayList;
+import org.jetbrains.ikv.RecSplitSettings;
+import org.jetbrains.ikv.UniversalHash;
 
 import java.nio.ByteBuffer;
 import java.nio.IntBuffer;
