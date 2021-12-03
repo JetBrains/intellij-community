@@ -103,18 +103,24 @@ public final class StartupUtil {
 
   /** Called via reflection from {@link Main#bootstrap}. */
   public static void start(@NotNull String mainClass,
+                           boolean isHeadless,
+                           boolean setFlagsAgain,
                            String @NotNull [] args,
                            @NotNull LinkedHashMap<String, Long> startupTimings) throws Exception {
     StartUpMeasurer.addTimings(startupTimings, "bootstrap");
     startupStart = StartUpMeasurer.startActivity("app initialization preparation");
 
+    // required if unified class loader is not used
+    if (setFlagsAgain) {
+      Main.setFlags(args);
+    }
     CommandLineArgs.parse(args);
 
     LoadingState.setStrictMode();
     LoadingState.errorHandler = (message, throwable) -> Logger.getInstance(LoadingState.class).error(message, throwable);
 
     Activity activity = StartUpMeasurer.startActivity("ForkJoin CommonPool configuration");
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(Main.isHeadless());
+    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(isHeadless);
 
     ForkJoinPool forkJoinPool = ForkJoinPool.commonPool();
 
@@ -154,16 +160,16 @@ public final class StartupUtil {
     }
 
     activity = activity.endAndStart("Check graphics environment");
-    if (!Main.isHeadless() && !checkGraphics()) {
+    if (!isHeadless && !checkGraphics()) {
       System.exit(Main.NO_GRAPHICS);
     }
 
     activity = activity.endAndStart("LaF init scheduling");
     Thread busyThread = Thread.currentThread();
     // EndUserAgreement.Document type is not specified to avoid class loading
-    CompletableFuture<?> initUiTask = scheduleInitUi(busyThread);
+    CompletableFuture<?> initUiTask = scheduleInitUi(busyThread, isHeadless);
     CompletableFuture<Boolean> agreementDialogWasShown;
-    if (Main.isHeadless()) {
+    if (isHeadless) {
       agreementDialogWasShown = initUiTask.thenApply(__ -> true);
     }
     else {
@@ -198,7 +204,7 @@ public final class StartupUtil {
     activity = activity.endAndStart("config path existence check");
 
     // this check must be performed before system directories are locked
-    boolean configImportNeeded = !Main.isHeadless() &&
+    boolean configImportNeeded = !isHeadless &&
                                  (!Files.exists(configPath) ||
                                   Files.exists(configPath.resolve(ConfigImportHelper.CUSTOM_MARKER_FILE_NAME)));
 
@@ -242,9 +248,9 @@ public final class StartupUtil {
     // may be called from EDT, but other events in the queue should be processed before the `#patchSystem`
     CompletableFuture<@Nullable Void> prepareUiFuture = agreementDialogWasShown
       .thenRunAsync(() -> {
-        patchSystem(log);
+        patchSystem(log, isHeadless);
 
-        if (!Main.isHeadless()) {
+        if (!isHeadless) {
           // not important
           EventQueue.invokeLater(() -> {
             // may be expensive (~200 ms), so configure only after showing the splash and as invokeLater
@@ -273,7 +279,7 @@ public final class StartupUtil {
       .thenCompose(appStarter -> {
         mainClassLoadingWaitingActivity.end();
 
-        if (!Main.isHeadless() && configImportNeeded) {
+        if (!isHeadless && configImportNeeded) {
           prepareUiFuture.join();
           try {
             importConfig(Arrays.asList(args), log, appStarter, agreementDialogWasShown);
@@ -412,7 +418,7 @@ public final class StartupUtil {
     }
   }
 
-  private static CompletableFuture<?> scheduleInitUi(Thread busyThread) {
+  private static CompletableFuture<?> scheduleInitUi(Thread busyThread, boolean isHeadless) {
     // calls `sun.util.logging.PlatformLogger#getLogger` - it takes enormous time (up to 500 ms)
     // only non-logging tasks can be executed before `setupLogger`
     Activity activityQueue = StartUpMeasurer.startActivity("LaF initialization (schedule)");
@@ -437,7 +443,7 @@ public final class StartupUtil {
 
         Activity activity = null;
         // we don't need Idea LaF to show splash, but we do need some base LaF to compute system font data (see below for what)
-        boolean withUI = !Main.isHeadless();
+        boolean withUI = !isHeadless;
         if (withUI) {
           // IdeaLaF uses AllIcons - icon manager must be activated
           activity = StartUpMeasurer.startActivity("icon manager activation");
@@ -792,7 +798,7 @@ public final class StartupUtil {
       //noinspection CallToPrintStackTrace
       e.printStackTrace();
     }
-    Logger log = Logger.getInstance(Main.class);
+    Logger log = Logger.getInstance(StartupUtil.class);
     log.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
     ShutDownTracker.getInstance().registerShutdownTask(() -> {
       log.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
@@ -917,7 +923,7 @@ public final class StartupUtil {
   }
 
   // must be called from EDT
-  private static void patchSystem(Logger log) {
+  private static void patchSystem(Logger log, boolean isHeadless) {
     assert EventQueue.isDispatchThread() : Thread.currentThread();
 
     Activity activity = StartUpMeasurer.startActivity("event queue replacing");
@@ -929,7 +935,7 @@ public final class StartupUtil {
       ((DarculaLaf)lookAndFeel).ideEventQueueInitialized(eventQueue);
     }
 
-    if (!Main.isHeadless()) {
+    if (!isHeadless) {
       if ("true".equals(System.getProperty("idea.check.swing.threading"))) {
         activity = activity.endAndStart("repaint manager set");
         RepaintManager.setCurrentManager(new AssertiveRepaintManager());

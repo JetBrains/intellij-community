@@ -112,8 +112,10 @@ public final class Main {
 
     WindowsCommandLineProcessor.ourMainRunnerClass = mainClass;
     MethodHandles.lookup()
-      .findStatic(mainClass, "start", MethodType.methodType(void.class, String.class, String[].class, LinkedHashMap.class))
-      .invokeExact(Main.class.getName() + "Impl", args, startupTimings);
+      .findStatic(mainClass, "start", MethodType.methodType(void.class, String.class,
+                                                            boolean.class, boolean.class,
+                                                            String[].class, LinkedHashMap.class))
+      .invokeExact(Main.class.getName() + "Impl", isHeadless, newClassLoader != Main.class.getClassLoader(), args, startupTimings);
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
@@ -148,7 +150,7 @@ public final class Main {
     return isLightEdit;
   }
 
-  private static void setFlags(String @NotNull [] args) {
+  public static void setFlags(String @NotNull [] args) {
     isHeadless = isHeadless(args);
     isCommandLine = isHeadless || (args.length > 0 && GUI_COMMANDS.contains(args[0]));
     if (isHeadless) {
