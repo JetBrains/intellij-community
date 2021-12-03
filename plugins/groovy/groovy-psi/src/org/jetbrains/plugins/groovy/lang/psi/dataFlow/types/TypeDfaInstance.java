@@ -106,39 +106,30 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     GrFunctionalExpression block = instruction.getStartNode().getElement();
     ClosureFrame currentClosureFrame = state.getTopClosureFrame();
     assert currentClosureFrame != null : "Encountered end of closure without closure start";
-    List<Integer> toRemove = new ArrayList<>();
-    DefinitionMap definitionMap = myCache.getDefinitionMaps(currentClosureFrame.getStartInstructionNumber());
-    for (int newDescriptorId : state.getRawVarTypes().keySet()) {
-      if (definitionMap.getDefinitions(newDescriptorId) == null) {
-        // local variable, should be removed
-        toRemove.add(newDescriptorId);
-      }
-    }
-    Int2ObjectMap<DFAType> stateTypes = toRemove.isEmpty() ? state.getRawVarTypes() : new Int2ObjectOpenHashMap<>(state.getRawVarTypes());
-    for (int descr : toRemove) {
-      stateTypes.remove(descr);
-    }
-    if (currentClosureFrame.getStartInstructionState() == state || hasNoChanges(currentClosureFrame.getStartInstructionState(), stateTypes)) {
+    if (currentClosureFrame.getStartInstructionState() == state || hasNoChanges(currentClosureFrame.getStartInstructionState(), state.getRawVarTypes())) {
       return currentClosureFrame.getStartInstructionState().withRemovedBindings(state.getRemovedBindings());
     }
     InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
-    TypeDfaState newState = state.withNewMap(stateTypes).withoutTopClosureState();
+    TypeDfaState newState = state.withoutTopClosureState();
     switch (kind) {
       case IN_PLACE_ONCE:
         return newState;
       case UNKNOWN:
         // todo: separate handling for UNKNOWN
       case IN_PLACE_UNKNOWN:
-        List<Integer> localDescriptors = new ArrayList<>();
-        for (int descriptor : stateTypes.keySet()) {
-          if (!currentClosureFrame.getStartInstructionState().containsVariable(descriptor)) {
-            localDescriptors.add(descriptor);
+        List<Integer> toRemove = new ArrayList<>();
+        DefinitionMap definitionMap = myCache.getDefinitionMaps(currentClosureFrame.getStartInstructionNumber());
+        for (int newDescriptorId : state.getRawVarTypes().keySet()) {
+          if (definitionMap.getDefinitions(newDescriptorId) == null) {
+            // local variable, should be removed
+            toRemove.add(newDescriptorId);
           }
         }
-        for (int descr : localDescriptors) {
+        Int2ObjectMap<DFAType> stateTypes = toRemove.isEmpty() ? state.getRawVarTypes() : new Int2ObjectOpenHashMap<>(state.getRawVarTypes());
+        for (int descr : toRemove) {
           stateTypes.remove(descr);
         }
-        return TypeDfaState.merge(newState, currentClosureFrame.getStartInstructionState(), myManager);
+        return TypeDfaState.merge(newState.withNewMap(stateTypes), currentClosureFrame.getStartInstructionState(), myManager);
     }
     return newState;
   }

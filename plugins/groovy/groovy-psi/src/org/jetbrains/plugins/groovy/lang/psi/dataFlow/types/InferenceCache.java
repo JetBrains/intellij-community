@@ -7,6 +7,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import kotlin.Lazy;
 import org.jetbrains.annotations.NotNull;
@@ -178,7 +179,7 @@ final class InferenceCache {
                                                                       @NotNull VariableDescriptor descriptor) {
     DefinitionMap definitionMap = definitionMaps.get(instruction.num());
     int varIndex = myVarIndexes.getValue().getInt(descriptor);
-    int[] definitions = definitionMap.getDefinitions(varIndex);
+    IntSet definitions = definitionMap.getDefinitions(varIndex);
 
     LinkedHashSet<Pair<Instruction, VariableDescriptor>> pairs = new LinkedHashSet<>();
 
@@ -206,5 +207,9 @@ final class InferenceCache {
 
   private boolean isDescriptorAvailable(@NotNull VariableDescriptor descriptor) {
     return myVarIndexes.getValue().containsKey(descriptor);
+  }
+
+  public DefinitionMap getDefinitionMaps(int instructionNum) {
+    return myDefinitionMaps.getValue().get(instructionNum);
   }
 }

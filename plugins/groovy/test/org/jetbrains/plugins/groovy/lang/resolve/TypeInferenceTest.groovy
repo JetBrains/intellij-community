@@ -722,7 +722,7 @@ def foo(ii) {
   }
 
   void testIndexProperty() {
-    allowNestedContextOnce(testRootDisposable)
+    allowNestedContext(2, testRootDisposable)
     doTest('''\
 private void getCommonAncestor() {
     def c1 = [new File('a')]
@@ -1189,7 +1189,7 @@ for (a in b) {
   }
 
   void 'test no soe with write to iterated variable in cycle'() {
-    allowNestedContext(3, testRootDisposable)
+    allowNestedContext(7, testRootDisposable)
     doTest '''\
 while (u) {
   for (a in b) {
@@ -1784,7 +1784,7 @@ def foo() {
 }''', JAVA_LANG_INTEGER
   }
 
-  void 'test two dangling closures flush type together'() {
+  void '_test two dangling closures flush type together'() {
     doTest '''
 class A {}
 class D extends A{}
@@ -1857,6 +1857,7 @@ class A {
   }
 
   void 'test cyclic flow with closure'() {
+    allowNestedContext(3, testRootDisposable)
     doTest '''
 def x
 for (def i = 0; i < 10; i++) {
@@ -1965,7 +1966,7 @@ protected void onLoadConfig (Map configSection) {
   void 'test soe with large flow'() {
     RecursionManager.disableAssertOnRecursionPrevention(testRootDisposable)
     RecursionManager.disableMissedCacheAssertions(testRootDisposable)
-    allowNestedContext(4, testRootDisposable)
+    allowNestedContext(6, testRootDisposable)
     doTest """
 static _getTreeData() {
     def filterData  = []
