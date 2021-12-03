@@ -943,11 +943,7 @@ public final class LambdaUtil {
     else if (PsiPolyExpressionUtil.isInAssignmentOrInvocationContext(lambda)) {
       PsiType origType = lambda.getFunctionalInterfaceType();
       if (origType != null) {
-        Project project = lambda.getProject();
-        PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-        PsiDeclarationStatement declaration = factory.createVariableDeclarationStatement("$$$", origType, lambda, lambda);
-        PsiLocalVariable variable = (PsiLocalVariable)declaration.getDeclaredElements()[0];
-        PsiLambdaExpression lambdaCopy = (PsiLambdaExpression)variable.getInitializer();
+        PsiLambdaExpression lambdaCopy = (PsiLambdaExpression)copyWithExpectedType(lambda, origType);
         PsiExpression replacement = replacer.apply(lambdaCopy);
         PsiType type = replacement.getType();
         return type != null && origType.isAssignableFrom(type);
