@@ -28,22 +28,20 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.containers.toArray
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.kotlin.idea.perf.ProjectBuilder
-import org.jetbrains.kotlin.idea.testFramework.Stats
-import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.runAndMeasure
-import org.jetbrains.kotlin.idea.perf.util.*
+import org.jetbrains.kotlin.idea.perf.util.ExternalProject
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.disableAllInspections
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.enableAllInspections
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.enableInspections
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.enableSingleInspection
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.initDefaultProfile
+import org.jetbrains.kotlin.idea.perf.util.TeamCity
+import org.jetbrains.kotlin.idea.perf.util.logMessage
 import org.jetbrains.kotlin.idea.test.GradleProcessOutputInterceptor
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
 import org.jetbrains.kotlin.idea.testFramework.*
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.cleanupCaches
-import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.close
 import org.jetbrains.kotlin.idea.util.getProjectJdkTableSafe
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
@@ -96,10 +94,10 @@ class PerformanceSuite {
         fun <T> measure(name: String, f: MeasurementScope<T>.() -> Unit, after: (() -> Unit)?): List<T?> =
             MeasurementScope<T>(name, stats, config, after = after).apply(f).run()
 
-        fun measureTypeAndAutoCompletion(name: String, fixture: Fixture, f: TypeAndAutoCompletionMeasurementScope.() -> Unit, after: (() -> Unit)?): List<String?> =
+        fun typeAndMeasureAutoCompletion(name: String, fixture: Fixture, f: TypeAndAutoCompletionMeasurementScope.() -> Unit, after: (() -> Unit)?): List<String?> =
             TypeAndAutoCompletionMeasurementScope(fixture, typeTestPrefix = "typeAndAutocomplete", name = name, stats = stats, config = config, after = after).apply(f).run()
 
-        fun measureTypeAndUndo(name: String, fixture: Fixture, f: TypeAndUndoMeasurementScope.() -> Unit, after: (() -> Unit)?): List<String?> =
+        fun typeAndMeasureUndo(name: String, fixture: Fixture, f: TypeAndUndoMeasurementScope.() -> Unit, after: (() -> Unit)?): List<String?> =
             TypeAndUndoMeasurementScope(fixture, typeTestPrefix = "typeAndUndo", name = name, stats = stats, config = config, after = after).apply(f).run()
 
         fun measureTypeAndHighlight(name: String, fixture: Fixture, f: TypeAndHighlightMeasurementScope.() -> Unit, after: (() -> Unit)?): List<HighlightInfo?> =
@@ -140,7 +138,7 @@ class PerformanceSuite {
             }
 
             fixture("src/HelloMain.kt").use { fixture ->
-                highlight(fixture).firstOrNull { it.severity == HighlightSeverity.WARNING }
+                fixture.highlight().firstOrNull { it.severity == HighlightSeverity.WARNING }
                     ?: error("`[UNUSED_PARAMETER] Parameter 'args' is never used` has to be highlighted")
             }
         }
@@ -190,7 +188,7 @@ class PerformanceSuite {
 
     abstract class AbstractProjectScope(val app: ApplicationScope) : AutoCloseable {
         abstract val project: Project
-        val openFiles = mutableListOf<VirtualFile>()
+        private val openFiles = mutableListOf<VirtualFile>()
         private var compilerTester: CompilerTester? = null
 
         fun profile(profile: ProjectProfile): Unit = when (profile) {
@@ -208,7 +206,7 @@ class PerformanceSuite {
             compilerTester?.rebuild() ?: error("compiler isn't ready for compilation")
         }
 
-        fun highlight(fixture: Fixture) = highlight(fixture.psiFile)
+        fun Fixture.highlight() = highlight(psiFile)
 
         fun highlight(editorFile: PsiFile?, toIgnore: IntArray = ArrayUtilRt.EMPTY_INT_ARRAY) =
             editorFile?.highlightFile(toIgnore) ?: error("editor isn't ready for highlight")
@@ -220,15 +218,6 @@ class PerformanceSuite {
             val ktDeclaration = PsiTreeUtil.getParentOfType(psiElement, KtDeclaration::class.java)
                 ?: error("KtDeclaration not found at ${psiFile.virtualFile} : $offset")
             return config.fixture.findUsages(ktDeclaration)
-        }
-
-        fun updateScriptDependenciesIfNeeded(fixture: Fixture) {
-            val path = fixture.vFile.path
-            if (Fixture.isAKotlinScriptFile(path)) {
-                runAndMeasure("update script dependencies for $path") {
-                    ScriptConfigurationManager.updateScriptDependenciesSynchronously(fixture.psiFile)
-                }
-            }
         }
 
         fun enableSingleInspection(inspectionName: String) =
@@ -257,16 +246,6 @@ class PerformanceSuite {
                 fixture.updateScriptDependenciesIfNeeded()
             }
             return fixture
-        }
-
-        fun rollbackChanges() =
-            rollbackChanges(*openFiles.toTypedArray())
-
-        fun close(editorFile: PsiFile?) {
-            commitAllDocuments()
-            editorFile?.virtualFile?.let {
-                project.close(it)
-            }
         }
 
         fun <T> measure(vararg name: String, clearCaches: Boolean = true, f: MeasurementScope<T>.() -> Unit): List<T?> {
@@ -304,10 +283,7 @@ class PerformanceSuite {
                     fixture.openInEditor()
                 }
                 test = {
-                    val document = FileDocumentManager.getInstance().getDocument(fixture.vFile)!!
-                    val editor = EditorFactory.getInstance().getEditors(document).first()
-                    commitAllDocuments()
-                    CodeInsightTestFixtureImpl.instantiateAndRun(fixture.psiFile, editor, ArrayUtilRt.EMPTY_INT_ARRAY, true)
+                    fixture.highlight()
                 }
                 after = {
                     fixture.close()
@@ -316,14 +292,14 @@ class PerformanceSuite {
             }
         }
 
-        fun measureTypeAndAutoCompletion(fixture: Fixture, vararg name: String, clearCaches: Boolean = true, f: TypeAndAutoCompletionMeasurementScope.() -> Unit): List<String?> {
+        fun typeAndMeasureAutoCompletion(fixture: Fixture, vararg name: String, clearCaches: Boolean = true, f: TypeAndAutoCompletionMeasurementScope.() -> Unit): List<String?> {
             val after = wrapAfter(clearCaches)
-            return app.stats.measureTypeAndAutoCompletion(combineName(fixture, *name), fixture, f, after)
+            return app.stats.typeAndMeasureAutoCompletion(combineName(fixture, *name), fixture, f, after)
         }
 
-        fun measureTypeAndUndo(fixture: Fixture, vararg name: String, clearCaches: Boolean = true, f: TypeAndUndoMeasurementScope.() -> Unit): List<String?> {
+        fun typeAndMeasureUndo(fixture: Fixture, vararg name: String, clearCaches: Boolean = true, f: TypeAndUndoMeasurementScope.() -> Unit = {}): List<String?> {
             val after = wrapAfter(clearCaches)
-            return app.stats.measureTypeAndUndo(combineName(fixture, *name), fixture, f, after)
+            return app.stats.typeAndMeasureUndo(combineName(fixture, *name), fixture, f, after)
         }
 
         fun combineName(fixture: Fixture, vararg name: String) =

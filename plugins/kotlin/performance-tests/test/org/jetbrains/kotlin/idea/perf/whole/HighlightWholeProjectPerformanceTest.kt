@@ -114,7 +114,7 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
                                     fixture(file).use {
                                         measure<List<HighlightInfo>>(it.fileName, clearCaches = clearPsiCaches) {
                                             test = {
-                                                highlight(it)
+                                                it.highlight()
                                             }
                                         }
                                     }

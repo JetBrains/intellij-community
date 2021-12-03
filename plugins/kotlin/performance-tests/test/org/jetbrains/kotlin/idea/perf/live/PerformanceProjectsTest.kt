@@ -3,22 +3,14 @@
 package org.jetbrains.kotlin.idea.perf.live
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.project.Project
-import com.intellij.psi.PsiFile
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightVisitor
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
 import org.jetbrains.kotlin.idea.perf.suite.*
+import org.jetbrains.kotlin.idea.perf.suite.TypePosition.AFTER_MARKER
+import org.jetbrains.kotlin.idea.perf.suite.TypePosition.IN_FRONT_OF_MARKER
 import org.jetbrains.kotlin.idea.perf.util.*
-import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.TEST_KEY
 import org.jetbrains.kotlin.idea.testFramework.*
-import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.cleanupCaches
-import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.isAKotlinScriptFile
 import org.jetbrains.kotlin.idea.testFramework.ProjectOpenAction.GRADLE_PROJECT
-import java.util.concurrent.atomic.AtomicLong
-import kotlin.test.assertNotEquals
 
 open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
 
@@ -30,19 +22,6 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
         @JvmStatic
         val warmUp = WarmUpProject(hwStats)
 
-        @JvmStatic
-        val timer: AtomicLong = AtomicLong()
-
-        @JvmStatic
-        val diagnosticTimer: AtomicLong = AtomicLong()
-
-        fun resetTimestamp() {
-            timer.set(0)
-        }
-
-        fun markTimestamp() {
-            timer.set(System.nanoTime())
-        }
     }
 
     override fun setUp() {
@@ -142,13 +121,13 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
                         with(fixture.typingConfig) {
                             marker = "override fun getDeclarations(): List<KtDeclaration> {"
                             insertString = "val q = import"
-                            typeAfterMarker = true
+                            typePosition = AFTER_MARKER
                         }
 
                         measureTypeAndHighlight(fixture, "typeAndHighlight in-method getDeclarations-import")
 
                         with(fixture.typingConfig) {
-                            typeAfterMarker = false
+                            typePosition = IN_FRONT_OF_MARKER
                         }
 
                         measureTypeAndHighlight(fixture, "typeAndHighlight out-of-method import")
@@ -189,11 +168,8 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
                                     try {
                                         commitAllDocuments()
                                         assertTrue("copy-n-paste has not performed well", copied)
-                                        // files could be different due to spaces
-                                        //assertEquals(it.setUpValue!!.first.document.text, it.setUpValue!!.second.document.text)
                                     } finally {
                                         targetFixture.restoreText()
-                                        commitAllDocuments()
                                     }
                                 }
                             }
@@ -217,20 +193,20 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
                     fixture("compiler/psi/src/org/jetbrains/kotlin/psi/KtFile.kt").use { fixture ->
                         with(fixture.typingConfig) {
                             marker = "override fun getDeclarations(): List<KtDeclaration> {"
+                            typePosition = AFTER_MARKER
                             insertString = "val q = import"
-                            typeAfterMarker = true
                         }
 
-                        measureTypeAndAutoCompletion(fixture, "in-method getDeclarations-import") {
-                            lookupElements = listOf("importDirectives")
+                        typeAndMeasureAutoCompletion(fixture, "in-method getDeclarations-import") {
+                            lookupElement = "importDirectives"
                         }
 
                         with(fixture.typingConfig) {
-                            typeAfterMarker = false
+                            typePosition = IN_FRONT_OF_MARKER
                         }
 
-                        measureTypeAndAutoCompletion(fixture, "out-of-method import") {
-                            lookupElements = listOf("importDirectives")
+                        typeAndMeasureAutoCompletion(fixture, "out-of-method import") {
+                            lookupElement = "importDirectives"
 
                         }
                     }
@@ -238,40 +214,41 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
                     fixture("compiler/backend/src/org/jetbrains/kotlin/codegen/state/KotlinTypeMapper.kt").use { fixture ->
                         with(fixture.typingConfig) {
                             marker = "fun mapOwner(descriptor: DeclarationDescriptor): Type {"
+                            typePosition = AFTER_MARKER
                             insertString = "val b = bind"
-                            typeAfterMarker = true
                         }
 
-                        measureTypeAndAutoCompletion(fixture, "in-method completion for KotlinTypeMapper") {
-                            lookupElements = listOf("bindingContext")
+                        typeAndMeasureAutoCompletion(fixture, "in-method completion for KotlinTypeMapper") {
+                            lookupElement = "bindingContext"
                         }
 
                         with(fixture.typingConfig) {
-                            typeAfterMarker = false
+                            typePosition = IN_FRONT_OF_MARKER
                         }
 
-                        measureTypeAndAutoCompletion(fixture, "out-of-method completion for KotlinTypeMapper") {
-                            lookupElements = listOf("bindingContext")
+                        typeAndMeasureAutoCompletion(fixture, "out-of-method completion for KotlinTypeMapper") {
+                            lookupElement = "bindingContext"
                         }
                     }
 
                     fixture("compiler/tests/org/jetbrains/kotlin/util/ArgsToParamsMatchingTest.kt").use { fixture ->
                         with(fixture.typingConfig) {
                             marker = "fun testMatchNamed() {"
+                            typePosition = AFTER_MARKER
                             insertString = "testMatch"
-                            typeAfterMarker = true
                         }
 
-                        measureTypeAndAutoCompletion(fixture, "in-method completion for ArgsToParamsMatchingTest") {
-                            lookupElements = listOf("testMatchNamed")
+                        typeAndMeasureAutoCompletion(fixture, "in-method completion for ArgsToParamsMatchingTest") {
+                            lookupElement = "testMatchNamed"
                         }
 
                         with(fixture.typingConfig) {
-                            typeAfterMarker = false
+                            typePosition = IN_FRONT_OF_MARKER
+                            insertString = "fun foo() = testMatch"
                         }
 
-                        measureTypeAndAutoCompletion(fixture, "out-of-method completion for ArgsToParamsMatchingTest") {
-                            lookupElements = listOf("testMatchNamed")
+                        typeAndMeasureAutoCompletion(fixture, "out-of-method completion for ArgsToParamsMatchingTest") {
+                            lookupElement = "testMatchNamed"
                         }
                     }
                 }
@@ -293,20 +270,20 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
                         with(fixture.typingConfig) {
                             marker = "tasks {"
                             insertString = "reg"
-                            typeAfterMarker = true
+                            typePosition = AFTER_MARKER
                         }
 
-                        measureTypeAndAutoCompletion(fixture, "tasks-create") {
-                            lookupElements = listOf("register")
+                        typeAndMeasureAutoCompletion(fixture, "tasks-create") {
+                            lookupElement = "register"
                         }
 
                         with(fixture.typingConfig) {
                             marker = "tasks {"
                             insertString = "register"
-                            typeAfterMarker = true
+                            typePosition = AFTER_MARKER
                         }
 
-                        measureTypeAndUndo(fixture, "type-undo") {}
+                        typeAndMeasureUndo(fixture, "type-undo")
                     }
                 }
             }
@@ -354,6 +331,8 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
                                 fixture.openInEditor()
                             }
                             test = {
+                                // TODO: requires some fine grain measurement till the 1st HL element
+                                //  with a custom KotlinHighlightVisitor
                                 fixture.doHighlighting()
                             }
                         }
@@ -363,139 +342,4 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
         }
     }
 
-    private fun perfKtsFileAnalysis(
-        fileName: String,
-        stats: Stats,
-        note: String = ""
-    ) {
-        val project = myProject!!
-        //val disposable = Disposer.newDisposable("perfKtsFileAnalysis $fileName")
-
-        //enableAllInspectionsCompat(project, disposable)
-
-        replaceWithCustomHighlighter()
-
-        project.highlightFile {
-            val testName = "fileAnalysis ${notePrefix(note)}${simpleFilename(fileName)}"
-            val extraStats = Stats("${stats.name} $testName")
-            val extraTimingsNs = mutableListOf<Map<String, Any>?>()
-            val diagnosticTimingsNs = mutableListOf<Map<String, Any>?>()
-
-            val warmUpIterations = 30
-            val iterations = 50
-
-            performanceTest<Fixture, Pair<Long, List<HighlightInfo>>> {
-                name(testName)
-                stats(stats)
-                warmUpIterations(warmUpIterations)
-                iterations(iterations)
-                setUp(perfKtsFileAnalysisSetUp(project, fileName))
-                test(perfKtsFileAnalysisTest())
-                tearDown(perfKtsFileAnalysisTearDown(extraTimingsNs, diagnosticTimingsNs, project))
-                profilerConfig.enabled = true
-            }
-
-            val metricChildren = mutableListOf<Metric>()
-
-            extraStats.printWarmUpTimings(
-                "annotator",
-                extraTimingsNs.take(warmUpIterations).toTypedArray(),
-                metricChildren
-            )
-
-            extraStats.printWarmUpTimings(
-                "diagnostic",
-                diagnosticTimingsNs.take(warmUpIterations).toTypedArray(),
-                metricChildren
-            )
-
-            extraStats.processTimings(
-                "annotator",
-                extraTimingsNs.drop(warmUpIterations).toTypedArray(),
-                metricChildren
-            )
-
-            extraStats.processTimings(
-                "diagnostic",
-                diagnosticTimingsNs.drop(warmUpIterations).toTypedArray(),
-                metricChildren
-            )
-        }
-    }
-
-    private fun replaceWithCustomHighlighter() {
-        replaceWithCustomHighlighter(
-            testRootDisposable,
-            KotlinHighlightVisitor::class.java.name,
-            TestKotlinHighlightVisitor::class.java.name
-        )
-    }
-
-    fun perfKtsFileAnalysisSetUp(
-        project: Project,
-        fileName: String
-    ): (TestData<Fixture, Pair<Long, List<HighlightInfo>>>) -> Unit {
-        return {
-            val fixture = Fixture.openFixture(project, fileName)
-
-            // Note: Kotlin scripts require dependencies to be loaded
-            if (isAKotlinScriptFile(fileName)) {
-                ScriptConfigurationManager.updateScriptDependenciesSynchronously(fixture.psiFile)
-            }
-
-            resetTimestamp()
-            it.setUpValue = fixture
-        }
-    }
-
-    fun perfKtsFileAnalysisTest(): (TestData<Fixture, Pair<Long, List<HighlightInfo>>>) -> Unit {
-        return {
-            it.value = it.setUpValue?.let { fixture ->
-                val nowNs = System.nanoTime()
-                diagnosticTimer.set(-nowNs)
-                Pair(nowNs, fixture.doHighlighting())
-            }
-        }
-    }
-
-    fun perfKtsFileAnalysisTearDown(
-        extraTimingsNs: MutableList<Map<String, Any>?>,
-        diagnosticTimingsMs: MutableList<Map<String, Any>?>,
-        project: Project
-    ): (TestData<Fixture, Pair<Long, List<HighlightInfo>>>) -> Unit {
-        return {
-            it.setUpValue?.let { fixture ->
-                it.value?.let { v ->
-                    diagnosticTimingsMs.add(mapOf(TEST_KEY to diagnosticTimer.getAndSet(0)))
-                    assertTrue(v.second.isNotEmpty())
-                    assertNotEquals(0, timer.get())
-
-                    extraTimingsNs.add(mapOf(TEST_KEY to (timer.get() - v.first)))
-
-                }
-                fixture.use {
-                    project.cleanupCaches()
-                }
-            }
-        }
-    }
-
-
-    class TestKotlinHighlightVisitor : KotlinHighlightVisitor() {
-        override fun analyze(psiFile: PsiFile, updateWholeFile: Boolean, holder: HighlightInfoHolder, action: Runnable): Boolean {
-            // TODO:
-            //annotationCallback {
-            //    val nowNs = System.nanoTime()
-            //    diagnosticTimer.addAndGet(nowNs)
-            //    resetAnnotationCallback()
-            //}
-            try {
-                return super.analyze(psiFile, updateWholeFile, holder, action)
-            } finally {
-                //resetAnnotationCallback()
-                markTimestamp()
-            }
-        }
-
-    }
 }

@@ -16,6 +16,13 @@ class TypeAndAutoCompletionMeasurementScope(
     var lookupElements: List<String> = listOf(),
     revertChangesAtTheEnd: Boolean = true,
 ): AbstractFixtureMeasurementScope<String>(fixture, typeTestPrefix, name, stats, config, after, revertChangesAtTheEnd) {
+
+    var lookupElement: String
+        get() = lookupElements.single()
+        set(value) {
+            lookupElements = listOf(value)
+        }
+
     override fun run(): List<String?> {
         assertTrue("lookupElements has to be not empty", lookupElements.isNotEmpty())
         var value: Array<LookupElement>? = null

@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.perf.suite
 
 import com.intellij.testFramework.EditorTestUtil
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
+import org.jetbrains.kotlin.idea.perf.suite.TypePosition.*
 import org.jetbrains.kotlin.idea.perf.util.ExternalProject
 import org.jetbrains.kotlin.idea.perf.util.OutputConfig
 import org.jetbrains.kotlin.idea.perf.util.lastPathSegment
@@ -24,15 +25,15 @@ data class CursorConfig(
     }
 }
 
+enum class TypePosition {
+    AFTER_MARKER,
+    IN_FRONT_OF_MARKER
+}
+
 data class TypingConfig(
     val fixture: Fixture,
-    /**
-     * Find the place in a file and place cursor at [marker],
-     * If [typeAfterMarker] is true cursor is placed after the [marker],
-     * otherwise at the beggining of the [marker].
-     */
     var marker: String? = null,
-    var typeAfterMarker: Boolean = true,
+    var typePosition: TypePosition = AFTER_MARKER,
     var insertString: String? = null,
     var surroundItems: String = "\n",
     var note: String = "",
@@ -46,7 +47,7 @@ data class TypingConfig(
                 check(it > 0) { "marker '$marker' not found in ${fixture.fileName}" }
             }
         } ?: 0
-        if (typeAfterMarker || marker == null) {
+        if (typePosition == AFTER_MARKER || marker == null) {
             editor.caretModel.moveToOffset(tasksIdx + (marker?.let { it.length + 1 } ?: 0))
         } else {
             editor.caretModel.moveToOffset(tasksIdx - 1)
@@ -56,9 +57,9 @@ data class TypingConfig(
             EditorTestUtil.performTypingAction(editor, surroundItem)
         }
 
-        editor.caretModel.moveToOffset(editor.caretModel.offset - if (typeAfterMarker) 1 else 2)
+        editor.caretModel.moveToOffset(editor.caretModel.offset - if (typePosition == AFTER_MARKER) 1 else 2)
 
-        if (!typeAfterMarker) {
+        if (typePosition == IN_FRONT_OF_MARKER) {
             for (surroundItem in surroundItems) {
                 EditorTestUtil.performTypingAction(editor, surroundItem)
             }
@@ -80,7 +81,7 @@ class StatsScopeConfig(
     var profilerConfig: ProfilerConfig = ProfilerConfig()
 )
 
-class ProjectScopeConfig(val path: String, val openWith: ProjectOpenAction, val refresh: Boolean = false, private val name: String? = null) {
+class ProjectScopeConfig(val path: String, val openWith: ProjectOpenAction, val refresh: Boolean = false, name: String? = null) {
     val projectName: String = name ?: path.lastPathSegment()
 
     constructor(externalProject: ExternalProject, refresh: Boolean) : this(externalProject.path, externalProject.openWith, refresh)
