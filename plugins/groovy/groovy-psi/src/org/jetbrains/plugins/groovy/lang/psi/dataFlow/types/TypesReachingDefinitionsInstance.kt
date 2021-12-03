@@ -17,29 +17,16 @@ class TypesReachingDefinitionsInstance(
 ) : ReachingDefinitionsDfaInstance(flow, varIndexes) {
 
   override fun `fun`(m: DefinitionMap, instruction: Instruction) : DefinitionMap = when (instruction) {
-    is MixinTypeInstruction -> withRegisteredDef(m, instruction, instruction.variableDescriptor)
+    is MixinTypeInstruction -> m.withRegisteredDef(myVarToIndexMap.getInt(instruction.variableDescriptor), instruction)
     is ArgumentsInstruction -> {
       var newMap = m
       for (descriptor in instruction.variableDescriptors) {
-        newMap = withRegisteredDef(newMap, instruction, descriptor)
+        newMap = newMap.withRegisteredDef(myVarToIndexMap.getInt(descriptor), instruction)
       }
       newMap
     }
-    is FunctionalBlockBeginInstruction -> DefinitionMap().apply { mergeFrom(m); setClosureContext(m) }
-    is FunctionalBlockEndInstruction -> DefinitionMap().apply {
-      mergeFrom(m)
-      mergeDefs(headDefinitionMap)
-      popClosureContext()
-    }
+    is FunctionalBlockBeginInstruction -> m.withNewClosureContext(m)
+    is FunctionalBlockEndInstruction -> m.withMerged(m.topClosureState).withoutClosureContext()
     else -> super.`fun`(m, instruction)
-  }
-
-  private fun withRegisteredDef(m: DefinitionMap, instruction: Instruction, descriptor: VariableDescriptor?) : DefinitionMap {
-    val varIndex = myVarToIndexMap.getInt(descriptor)
-    if (varIndex > 0) {
-      return DefinitionMap().apply { mergeFrom(m); registerDef(varIndex, instruction) }
-    } else {
-      return m
-    }
   }
 }

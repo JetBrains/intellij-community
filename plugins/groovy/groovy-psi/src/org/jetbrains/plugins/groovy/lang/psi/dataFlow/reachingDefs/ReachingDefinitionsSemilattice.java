@@ -6,12 +6,12 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
 import java.util.List;
 
+import static org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap.NEUTRAL;
+
 /**
  * @author ven
  */
 public class ReachingDefinitionsSemilattice implements Semilattice<DefinitionMap> {
-
-  private static final DefinitionMap NEUTRAL = new DefinitionMap();
 
   @Override
   @NotNull
@@ -22,9 +22,12 @@ public class ReachingDefinitionsSemilattice implements Semilattice<DefinitionMap
   @NotNull
   @Override
   public DefinitionMap join(@NotNull List<? extends DefinitionMap> ins) {
-    DefinitionMap result = new DefinitionMap();
-    for (DefinitionMap map : ins) {
-      result.mergeFrom(map);
+    if (ins.size() == 0) {
+      return NEUTRAL;
+    }
+    DefinitionMap result = ins.get(0);
+    for (int i = 1; i < ins.size(); i++) {
+      result = result.withMerged(ins.get(i));
     }
 
     return result;

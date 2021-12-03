@@ -1189,7 +1189,6 @@ for (a in b) {
   }
 
   void 'test no soe with write to iterated variable in cycle'() {
-    allowNestedContext(7, testRootDisposable)
     doTest '''\
 while (u) {
   for (a in b) {
@@ -1550,7 +1549,7 @@ def test(def x) {
 }''', JAVA_LANG_INTEGER
   }
 
-  void 'test assignment in nested closure'() {
+  void '_test assignment in nested closure'() {
     doTest '''
 def foo() {
     def y
@@ -1966,7 +1965,7 @@ protected void onLoadConfig (Map configSection) {
   void 'test soe with large flow'() {
     RecursionManager.disableAssertOnRecursionPrevention(testRootDisposable)
     RecursionManager.disableMissedCacheAssertions(testRootDisposable)
-    allowNestedContext(6, testRootDisposable)
+    allowNestedContext(4, testRootDisposable)
     doTest """
 static _getTreeData() {
     def filterData  = []

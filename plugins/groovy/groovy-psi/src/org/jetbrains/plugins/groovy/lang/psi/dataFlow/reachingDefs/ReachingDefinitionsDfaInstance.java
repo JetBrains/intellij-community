@@ -30,11 +30,7 @@ public class ReachingDefinitionsDfaInstance implements DfaInstance<DefinitionMap
       assert myVarToIndexMap.containsKey(descriptor) : descriptor + "; " + Arrays.asList(myFlow).contains(instruction);
       final int varIndex = myVarToIndexMap.getInt(descriptor);
       if (varInsn.isWrite()) {
-        // todo: shallow copying
-        DefinitionMap newMap = new DefinitionMap();
-        newMap.mergeFrom(m);
-        newMap.registerDef(varIndex, varInsn);
-        return newMap;
+        return m.withRegisteredDef(varIndex, instruction);
       } else {
         return m;
       }
