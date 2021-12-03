@@ -192,7 +192,7 @@ public final class DFAType {
     if (!primaryDominating) return false;
     boolean flushingDominating = dominated.flushingType == PsiType.NULL || dominated.flushingType == dominating.flushingType;
     if (!flushingDominating) return false;
-    return dominated.mixins == dominating.mixins;
+    return dominating.mixins.isEmpty() || dominated.mixins == dominating.mixins;
   }
 
   private static PsiType reduce(List<Mixin> mixins) {
