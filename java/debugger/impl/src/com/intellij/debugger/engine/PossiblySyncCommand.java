@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.jetbrains.jdi.VirtualMachineImpl;
+import com.sun.jdi.VirtualMachine;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,8 +34,9 @@ public abstract class PossiblySyncCommand extends SuspendContextCommandImpl {
     }
     DebugProcess process = suspendContext.getDebugProcess();
     DebuggerManagerThreadImpl managerThread = ((DebuggerManagerThreadImpl)process.getManagerThread());
-    if (!managerThread.hasAsyncCommands() &&
-        ((VirtualMachineImpl)((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).getVirtualMachine()).isIdle()) {
+    VirtualMachine virtualMachine = ((VirtualMachineProxyImpl)process.getVirtualMachineProxy()).getVirtualMachine();
+    if (!(virtualMachine instanceof VirtualMachineImpl) ||
+        !managerThread.hasAsyncCommands() && ((VirtualMachineImpl)virtualMachine).isIdle()) {
       return false;
     }
     else {
