@@ -105,7 +105,6 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private TypeDfaState handleFunctionalExpression(@NotNull TypeDfaState state, @NotNull FunctionalBlockEndInstruction instruction) {
     GrFunctionalExpression block = instruction.getStartNode().getElement();
     ClosureFrame currentClosureFrame = state.getTopClosureFrame();
-    assert currentClosureFrame != null : "Encountered end of closure without closure start";
     if (currentClosureFrame.getStartInstructionState() == state || hasNoChanges(currentClosureFrame.getStartInstructionState(), state.getRawVarTypes())) {
       return currentClosureFrame.getStartInstructionState().withRemovedBindings(state.getRemovedBindings());
     }

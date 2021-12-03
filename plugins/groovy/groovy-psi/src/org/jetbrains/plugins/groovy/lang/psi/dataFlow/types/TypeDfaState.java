@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.containers.FList;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
@@ -21,24 +22,26 @@ import java.util.stream.Stream;
  * State of flow typing in Groovy Type DFA.
  * <p>
  * This class is immutable. Its usage heavily relies on referential equality, so be cautious while creating new instances.
- * Prefer using constructor methods (<b>with*</b>)
+ * Prefer using builder methods (<b>with*</b>)
  */
 class TypeDfaState {
 
-  static final TypeDfaState EMPTY_STATE = new TypeDfaState();
+  private static final Logger LOG = Logger.getInstance(TypeDfaState.class);
+
+  static final TypeDfaState EMPTY_STATE = new TypeDfaState(new Int2ObjectOpenHashMap<>(), new BitSet(), null);
 
   /**
    * Mapping of variable descriptor IDs to their types. The mapping of descriptors to IDs is resides in {@link InferenceCache#myVarIndexes}.
    */
   private final Int2ObjectMap<DFAType> myVarTypes;
 
-  private final FList<ClosureFrame> myPreviousClosureState; // todo: special state for UNINITIALIZED for catching faults
+  private final @Nullable FList<ClosureFrame> myPreviousClosureState;
 
   /**
    * During the DFA process, types of some descriptors become inferred.
    * In the presense of cyclic instructions, these inferred types may become incorrect:
    * a variable may be overwritten at some non-interesting write instruction, and then it would affect the flow before this write.
-   * This scenario requires to erase descriptor types at non-interesting write instruction,
+   * This scenario requires erasing descriptor types at non-interesting write instruction,
    * but the information about erased descriptors should be memoized somewhere --
    * otherwise, semilattice may "restore" erased type while joining state, and then the further flow will be unaffected.
    * This is why we need this field:
@@ -46,13 +49,7 @@ class TypeDfaState {
    */
   private final BitSet myProhibitedCachingVars;
 
-  private TypeDfaState() {
-    myVarTypes = new Int2ObjectOpenHashMap<>();
-    myProhibitedCachingVars = new BitSet();
-    myPreviousClosureState = FList.emptyList();
-  }
-
-  private TypeDfaState(Int2ObjectMap<DFAType> varTypes, BitSet prohibitedCachingVars, FList<ClosureFrame> frame) {
+  private TypeDfaState(Int2ObjectMap<DFAType> varTypes, BitSet prohibitedCachingVars, @Nullable FList<ClosureFrame> frame) {
     myVarTypes = varTypes;
     myProhibitedCachingVars = prohibitedCachingVars;
     myPreviousClosureState = frame;
@@ -73,7 +70,7 @@ class TypeDfaState {
     }
     BitSet resultSet = mergeProhibitedVariables(left.myProhibitedCachingVars, right.myProhibitedCachingVars);
     Int2ObjectMap<DFAType> resultMap = dominantMap != null ? dominantMap : mergeTypeMaps(left.myVarTypes, right.myVarTypes, manager, resultSet);
-    FList<ClosureFrame> frame = left.myPreviousClosureState.isEmpty() ? right.myPreviousClosureState : left.myPreviousClosureState;
+    FList<ClosureFrame> frame = left.myPreviousClosureState == null ? right.myPreviousClosureState : left.myPreviousClosureState;
     return new TypeDfaState(resultMap, resultSet, frame);
   }
 
@@ -118,18 +115,21 @@ class TypeDfaState {
   @Contract(pure = true)
   @NotNull
   public TypeDfaState withNewClosureState(@NotNull ClosureFrame frame) {
-    if (frame == myPreviousClosureState.getHead()) {
+    if (myPreviousClosureState != null && frame == myPreviousClosureState.getHead()) {
       return this;
     }
     else {
-      return new TypeDfaState(myVarTypes, myProhibitedCachingVars, myPreviousClosureState.prepend(frame));
+      FList<ClosureFrame> frames = myPreviousClosureState == null ? FList.emptyList() : myPreviousClosureState;
+      return new TypeDfaState(myVarTypes, myProhibitedCachingVars, frames.prepend(frame));
     }
   }
 
   @Contract(pure = true)
   @NotNull
   public TypeDfaState withoutTopClosureState() {
-    return new TypeDfaState(myVarTypes, myProhibitedCachingVars, myPreviousClosureState.getTail());
+    LOG.assertTrue(myPreviousClosureState != null && !myPreviousClosureState.isEmpty(), "Reached closure end without closure start");
+    FList<ClosureFrame> tail = myPreviousClosureState.getTail();
+    return new TypeDfaState(myVarTypes, myProhibitedCachingVars, tail.isEmpty() ? null : tail);
   }
 
   @Contract(pure = true)
@@ -181,7 +181,8 @@ class TypeDfaState {
     return result == null ? DFAType.NULL_DFA_TYPE : result;
   }
 
-  @Nullable ClosureFrame getTopClosureFrame() {
+  @NotNull ClosureFrame getTopClosureFrame() {
+    LOG.assertTrue(myPreviousClosureState != null && !myPreviousClosureState.isEmpty(), "Reached closure end without closure start");
     return myPreviousClosureState.getHead();
   }
 
@@ -189,7 +190,7 @@ class TypeDfaState {
   @NonNls
   public String toString() {
     String evicted = myProhibitedCachingVars.isEmpty() ? "" : ", (caching prohibited: " + myProhibitedCachingVars + ")";
-    String frame = myPreviousClosureState.isEmpty() ? "" : ", frame size: " + myPreviousClosureState.size();
+    String frame = (myPreviousClosureState == null || myPreviousClosureState.isEmpty()) ? "" : ", frame size: " + myPreviousClosureState.size();
     return myVarTypes.toString() + evicted + frame;
   }
 
@@ -229,7 +230,6 @@ class TypeDfaState {
       else if (candidate != existing) {
         newFMap.put(descriptorId, DFAType.merge(candidate, existing, manager));
       }
-      // todo: flushings
     });
     return newFMap;
   }
@@ -268,7 +268,9 @@ class TypeDfaState {
     if (!dominateByTypes) return false;
     boolean dominateByMask = dominator.myProhibitedCachingVars.equals(dominated.myProhibitedCachingVars);
     if (!dominateByMask) return false;
-    return dominator.myPreviousClosureState == dominated.myPreviousClosureState || dominated.myPreviousClosureState.isEmpty();
+    return dominator.myPreviousClosureState == dominated.myPreviousClosureState ||
+           dominated.myPreviousClosureState == null ||
+           dominated.myPreviousClosureState.isEmpty();
   }
 }
 
