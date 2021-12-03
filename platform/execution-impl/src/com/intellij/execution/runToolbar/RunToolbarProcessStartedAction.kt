@@ -120,7 +120,7 @@ class RunToolbarProcessStartedAction : ComboBoxAction(), RTRunConfiguration {
       }
 
       private fun fill() {
-        layout = MigLayout("ins 0, novisualpadding, gap 0, fill", "4[shp 1]3[grow]4")
+        layout = MigLayout("ins 0 0 0 3, novisualpadding, gap 0, fill", "4[shp 1]3[grow]push")
 
         add(setting, "ay center, pushx, wmin 10")
         add(process, "ay center, pushx, wmin 0")

@@ -3,7 +3,6 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.execution.runToolbar.components.MouseListenerHelper
 import com.intellij.execution.runToolbar.components.ProcessesByType
-import com.intellij.execution.runners.ExecutionEnvironment
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -25,8 +24,8 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
   companion object {
     private val LOG = Logger.getInstance(RunToolbarMainSlotInfoAction::class.java)
     private val PROP_ACTIVE_PROCESS_COLOR = Key<Color>("ACTIVE_PROCESS_COLOR")
-    private val PROP_ACTIVE_PROCESSES_UPDATED = Key<Boolean>("PROP_ACTIVE_PROCESSES_UPDATED")
-    private val PROP_ACTIVE_PROCESSES = Key<MutableMap<RunToolbarProcess, MutableList<ExecutionEnvironment>>>("PROP_ACTIVE_PROCESSES")
+    private val PROP_ACTIVE_PROCESSES_COUNT = Key<Int>("PROP_ACTIVE_PROCESSES_COUNT")
+    private val PROP_ACTIVE_PROCESSES = Key<ActiveProcesses>("PROP_ACTIVE_PROCESSES")
   }
 
   override fun getRightSideType(): RTBarAction.Type = RTBarAction.Type.FLEXIBLE
@@ -42,18 +41,17 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
   override fun update(e: AnActionEvent) {
     e.presentation.isVisible = e.project?.let { project ->
       val manager = RunToolbarSlotManager.getInstance(project)
-      val activeProcesses = manager.activeProcesses.processes
+      val activeProcesses = manager.activeProcesses
 
       manager.getMainOrFirstActiveProcess()?.let {
         e.presentation.putClientProperty(PROP_ACTIVE_PROCESS_COLOR, it.pillColor)
       }
 
       e.presentation.putClientProperty(RunToolbarMainSlotActive.ARROW_DATA, e.arrowIcon())
-      val value = e.presentation.getClientProperty(PROP_ACTIVE_PROCESSES_UPDATED) ?: false
-      e.presentation.putClientProperty(PROP_ACTIVE_PROCESSES_UPDATED, !value)
+      e.presentation.putClientProperty(PROP_ACTIVE_PROCESSES_COUNT, activeProcesses.getActiveCount())
       e.presentation.putClientProperty(PROP_ACTIVE_PROCESSES, activeProcesses)
 
-      activeProcesses.isNotEmpty()
+      activeProcesses.processes.isNotEmpty()
     } ?: false
 
     if (!RunToolbarProcess.isExperimentalUpdatingEnabled) {
@@ -71,10 +69,11 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
 
   private class RunToolbarMainSlotInfo(presentation: Presentation) : SegmentedCustomPanel(presentation), PopupControllerComponent {
     private val arrow = JLabel()
-    private val migLayout = MigLayout("fill, hidemode 3, ins 0, novisualpadding, ay center, flowx, gapx 0")
 
+    private val processComponents = mutableListOf<ProcessesByType>()
+    private val migLayout = MigLayout("fill, hidemode 3, ins 0, novisualpadding, ay center, flowx, gapx 0")
     private val info = JPanel(migLayout)
-    private val processesComponents = mutableListOf<ProcessesByType>()
+    private val one = ProcessesByType()
 
     init {
       layout = MigLayout("ins 0, fill, ay center")
@@ -93,7 +92,11 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
           background = UIManager.getColor("Separator.separatorColor")
         })
 
-        add(info, "pushx, ay center, wmin 0")
+        add(JPanel(MigLayout("ins 0, fill, novisualpadding, ay center, gap 0, hidemode 3")).apply {
+          add(info, "growx")
+          add(one, "growx")
+          isOpaque = false
+        }, "pushx, ay center, wmin 0")
         isOpaque = false
 
       }, "growx, wmin 10")
@@ -147,33 +150,49 @@ class RunToolbarMainSlotInfoAction : SegmentedCustomAction(), RTRunConfiguration
     }
 
     private fun updateActiveProcesses() {
-      presentation.getClientProperty(PROP_ACTIVE_PROCESSES)?.let {
-        if (it.isEmpty()) return
+      presentation.getClientProperty(PROP_ACTIVE_PROCESSES)?.let { activeProcesses ->
+        val processes = activeProcesses.processes
+        val keys = processes.keys.toList()
+        if (activeProcesses.getActiveCount() == 1) {
+          info.isVisible = false
+          one.isVisible = processes.keys.firstOrNull()?.let { process ->
+            processes[process]?.let {
+              one.update(process, it, false)
+              true
+            }
+          } ?: false
 
-        info.removeAll()
-
-        var colConstr = ""
-
-        while (processesComponents.size < it.size) {
-          processesComponents.add(ProcessesByType())
+          return
         }
+        else {
+          info.isVisible = true
+          one.isVisible = false
 
-        var i = 0
-        var showCount = false
-        for (entry in it) {
-          showCount = showCount || entry.value.size > 1 || it.size > 1
-          val processesByType = processesComponents[i]
-          processesByType.update(entry.key, entry.value, showCount)
-          info.add(processesByType, "wmin 0")
-          colConstr += if (showCount) "[pref!]" else "[fill]"
-          i++
+          for (i in processComponents.size..processes.size) {
+            val component = ProcessesByType()
+            processComponents.add(component)
+            info.add(component, "w pref!")
+          }
+
+          var constraint = ""
+          for (i in 0 until processComponents.size) {
+            constraint += "[]"
+            val component = processComponents[i]
+            if (i < keys.size) {
+              val key = keys[i]
+              processes[key]?.let {
+                component.isVisible = true
+                component.update(key, it, true)
+              }
+            }
+            else {
+              component.isVisible = false
+            }
+          }
+          constraint += "push"
+          migLayout.columnConstraints = constraint
         }
-        if (showCount) colConstr += "push"
-        migLayout.columnConstraints = colConstr
       }
-
-      info.revalidate()
-      info.repaint()
     }
 
     private fun updateArrow() {
