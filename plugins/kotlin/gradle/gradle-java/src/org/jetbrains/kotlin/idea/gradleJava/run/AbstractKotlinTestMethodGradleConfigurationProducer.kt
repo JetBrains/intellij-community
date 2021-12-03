@@ -24,6 +24,8 @@ import org.jetbrains.plugins.gradle.execution.test.runner.applyTestConfiguration
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.createTestFilterFrom
+import org.jetbrains.plugins.gradle.util.createTestFilterFromMethod
+import org.jetbrains.plugins.gradle.util.createTestWildcardFilter
 
 abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer : AbstractKotlinTestMethodGradleConfigurationProducer() {
     override val forceGradleRunner: Boolean get() = true
@@ -70,6 +72,16 @@ abstract class AbstractKotlinMultiplatformTestMethodGradleConfigurationProducer 
         }
         if (inheritorChooser.runMethodInAbstractClass(context, performRunnable, psiMethod, psiClass)) return
         chooseTestClassConfiguration(fromContext, context, performRunnable, psiMethod, psiClass)
+    }
+
+    override fun getAllTestsTaskToRun(
+        context: ConfigurationContext,
+        element: PsiMethod,
+        chosenElements: List<PsiClass>
+    ): List<TestTasksToRun> {
+        val tasks = mppTestTasksChooser.listAvailableTasks(listOf(element))
+        val wildcardFilter = createTestFilterFrom(element.containingClass!!, element)
+        return tasks.map { TestTasksToRun(it, wildcardFilter) }
     }
 
     private fun chooseTestClassConfiguration(

@@ -33,14 +33,9 @@ class KotlinMultiplatformAllInDirectoryConfigurationProducer
         if (context.project.allModules().none { it.isMPPModule })
             return emptyList()
 
-        var result: List<TestTasksToRun> = emptyList()
-        mppTestTasksChooser.multiplatformChooseTasks(context.project, context.dataContext, listOf(element)) { tasks ->
-            val wildcardFilter = createTestWildcardFilter()
-            val tasksToRuns = tasks
-                .flatMap { it.values }
-                .map { TestTasksToRun(it, wildcardFilter) }
-            result = tasksToRuns
-        }
-        return result
+        val wildcardFilter = createTestWildcardFilter()
+        val tasks = mppTestTasksChooser.listAvailableTasks(listOf(element))
+
+        return tasks.map { TestTasksToRun(it, wildcardFilter) }
     }
 }

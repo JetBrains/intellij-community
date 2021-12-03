@@ -31,18 +31,11 @@ class KotlinMultiplatformAllInPackageConfigurationProducer: AllInPackageGradleCo
         if (context.project.allModules().none { it.isMPPModule })
             return emptyList()
 
-        var result: List<TestTasksToRun> = emptyList()
+        val psiLocation = context.psiLocation ?: return emptyList()
+        val sourceElement = getSourceElement(context.module, psiLocation) ?: return emptyList()
+        val wildcardFilter = createTestFilterFrom(element)
+        val tasks = mppTestTasksChooser.listAvailableTasks(listOf(sourceElement))
 
-        val psiLocation = context.psiLocation ?: return result
-        val sourceElement = getSourceElement(context.module, psiLocation) ?: return result
-
-        mppTestTasksChooser.multiplatformChooseTasks(context.project, context.dataContext, listOf(sourceElement)) { tasks ->
-            val wildcardFilter = createTestFilterFrom(element)
-            val tasksToRuns = tasks
-                .flatMap { it.values }
-                .map { TestTasksToRun(it, wildcardFilter) }
-            result = tasksToRuns
-        }
-        return result
+        return tasks.map { TestTasksToRun(it, wildcardFilter) }
     }
 }
