@@ -15,11 +15,13 @@ import com.intellij.psi.stubs.StubTreeBuilder
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.BooleanFunction
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
-internal class RescanIndexesAction : RecoveryAction {
+@ApiStatus.Internal
+class RescanIndexesAction : RecoveryAction {
   override val performanceRate: Int
     get() = 9990
   override val presentableName: @Nls(capitalization = Nls.Capitalization.Title) String
