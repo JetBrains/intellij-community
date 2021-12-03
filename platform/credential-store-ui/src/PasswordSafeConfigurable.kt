@@ -203,48 +203,47 @@ class PasswordSafeConfigurableUi(private val settings: PasswordSafeSettings) : C
         }
 
         indent {
-          rowsRange {
-            row(CredentialStoreBundle.message("settings.password.database")) {
-              val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter {
-                it.isDirectory || it.name.endsWith(".kdbx")
-              }
-              keePassDbFile = textFieldWithBrowseButton(CredentialStoreBundle.message("passwordSafeConfigurable.keepass.database.file"),
-                fileChooserDescriptor = fileChooserDescriptor,
-                fileChosen = {
-                  val path = when {
-                    it.isDirectory -> "${it.path}${File.separator}$DB_FILE_NAME"
-                    else -> it.path
-                  }
-                  return@textFieldWithBrowseButton File(path).path
-                })
-                .resizableColumn()
-                .horizontalAlign(HorizontalAlign.FILL)
-                .gap(RightGap.SMALL)
-                .apply {
-                  if (!SystemInfo.isWindows) comment(CredentialStoreBundle.message("passwordSafeConfigurable.weak.encryption"))
-                }.component
-              actionsButton(
-                ClearKeePassDatabaseAction(),
-                ImportKeePassDatabaseAction(),
-                ChangeKeePassDatabaseMasterPasswordAction()
-              )
+          row(CredentialStoreBundle.message("settings.password.database")) {
+            val fileChooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor().withFileFilter {
+              it.isDirectory || it.name.endsWith(".kdbx")
             }
-            row {
-              usePgpKey = checkBox(usePgpKeyText())
-                .bindSelected({ !pgpListModel.isEmpty && settings.state.pgpKeyId != null },
-                  { if (!it) settings.state.pgpKeyId = null })
-                .gap(RightGap.SMALL)
-                .component
+            keePassDbFile = textFieldWithBrowseButton(CredentialStoreBundle.message("passwordSafeConfigurable.keepass.database.file"),
+                                                      fileChooserDescriptor = fileChooserDescriptor,
+                                                      fileChosen = {
+                                                        val path = when {
+                                                          it.isDirectory -> "${it.path}${File.separator}$DB_FILE_NAME"
+                                                          else -> it.path
+                                                        }
+                                                        return@textFieldWithBrowseButton File(path).path
+                                                      })
+              .resizableColumn()
+              .horizontalAlign(HorizontalAlign.FILL)
+              .gap(RightGap.SMALL)
+              .apply {
+                if (!SystemInfo.isWindows) comment(CredentialStoreBundle.message("passwordSafeConfigurable.weak.encryption"))
+              }.component
+            actionsButton(
+              ClearKeePassDatabaseAction(),
+              ImportKeePassDatabaseAction(),
+              ChangeKeePassDatabaseMasterPasswordAction()
+            )
+          }
+          row {
+            usePgpKey = checkBox(usePgpKeyText())
+              .bindSelected({ !pgpListModel.isEmpty && settings.state.pgpKeyId != null },
+                            { if (!it) settings.state.pgpKeyId = null })
+              .gap(RightGap.SMALL)
+              .component
 
-              pgpKeyCombo = comboBox<PgpKey>(pgpListModel, renderer = listCellRenderer { value, _, _ -> setText("${value.userId} (${value.keyId})") }).
-              bindItem({ getSelectedPgpKey() ?: pgpListModel.items.firstOrNull() },
-                { settings.state.pgpKeyId = if (usePgpKey.isSelected) it?.keyId else null })
-                .columns(COLUMNS_MEDIUM)
-                .enabledIf(usePgpKey.selected)
-                .component
-            }
-          }.enabledIf(keepassRadioButton.selected)
-        }
+            pgpKeyCombo = comboBox<PgpKey>(pgpListModel, renderer = listCellRenderer { value, _, _ ->
+              setText("${value.userId} (${value.keyId})")
+            }).bindItem({ getSelectedPgpKey() ?: pgpListModel.items.firstOrNull() },
+                        { settings.state.pgpKeyId = if (usePgpKey.isSelected) it?.keyId else null })
+              .columns(COLUMNS_MEDIUM)
+              .enabledIf(usePgpKey.selected)
+              .component
+          }
+        }.enabledIf(keepassRadioButton.selected)
         row {
           radioButton(CredentialStoreBundle.message("passwordSafeConfigurable.do.not.save"), ProviderType.MEMORY_ONLY)
         }

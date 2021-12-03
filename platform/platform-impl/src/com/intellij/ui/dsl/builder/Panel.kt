@@ -39,7 +39,7 @@ interface Panel : CellBase<Panel> {
   /**
    * Adds standard left indent
    */
-  fun indent(init: Panel.() -> Unit)
+  fun indent(init: Panel.() -> Unit): RowsRange
 
   /**
    * Adds row with [RowLayout.LABEL_ALIGNED] layout and [label]. Use [EMPTY_LABEL] for empty label.

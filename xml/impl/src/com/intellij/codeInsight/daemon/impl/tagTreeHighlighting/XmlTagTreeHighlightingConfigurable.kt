@@ -47,7 +47,6 @@ class XmlTagTreeHighlightingConfigurable : UiDslUnnamedConfigurable.Simple() {
             .horizontalAlign(HorizontalAlign.FILL)
           cell()
         }.layout(RowLayout.PARENT_GRID)
-          .enabledIf(enable.selected)
         row(XmlBundle.message("settings.opacity")) {
           spinner(0.0..1.0, step = 0.05)
             .bind({ ((it.value as Double) * 100).toInt() }, { it, value -> it.value = value * 0.01 },
@@ -56,9 +55,8 @@ class XmlTagTreeHighlightingConfigurable : UiDslUnnamedConfigurable.Simple() {
             .horizontalAlign(HorizontalAlign.FILL)
           cell()
         }.layout(RowLayout.PARENT_GRID)
-          .enabledIf(enable.selected)
           .bottomGap(BottomGap.SMALL)
-      }
+      }.enabledIf(enable.selected)
     }
   }
 

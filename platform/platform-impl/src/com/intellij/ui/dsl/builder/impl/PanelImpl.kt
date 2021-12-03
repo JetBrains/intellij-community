@@ -351,7 +351,8 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     return this
   }
 
-  override fun indent(init: Panel.() -> Unit) {
+  override fun indent(init: Panel.() -> Unit): RowsRangeImpl {
+    val result = RowsRangeImpl(this, _rows.size)
     val prevPanelContext = panelContext
     panelContext = panelContext.copy(indentCount = prevPanelContext.indentCount + 1)
     try {
@@ -360,6 +361,8 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     finally {
       panelContext = prevPanelContext
     }
+    result.endIndex = _rows.size - 1
+    return result
   }
 
   private fun createSeparator(@NlsContexts.BorderTitle title: String?, background: Color? = null): JComponent {
