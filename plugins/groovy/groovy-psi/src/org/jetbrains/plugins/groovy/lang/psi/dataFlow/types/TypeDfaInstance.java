@@ -17,6 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.*;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.*;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
+import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap;
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
@@ -62,7 +63,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       newState = handleNegation(state, (NegatingGotoInstruction)instruction);
     }
     else if (instruction instanceof FunctionalBlockBeginInstruction) {
-      newState = handleStartFunctionalExpression(state);
+      newState = handleStartFunctionalExpression(state, instruction);
     }
     else if (instruction instanceof FunctionalBlockEndInstruction) {
       newState = handleFunctionalExpression(state, (FunctionalBlockEndInstruction)instruction);
@@ -86,8 +87,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     return state;
   }
 
-  private static TypeDfaState handleStartFunctionalExpression(TypeDfaState state) {
-    return state.withNewClosureState(new ClosureFrame(state));
+  private static TypeDfaState handleStartFunctionalExpression(TypeDfaState state,
+                                                              @NotNull Instruction instruction) {
+    return state.withNewClosureState(new ClosureFrame(state, instruction.num()));
   }
 
   private static boolean hasNoChanges(@NotNull TypeDfaState baseDfaState, @NotNull Int2ObjectMap<DFAType> newDfaTypes) {
@@ -105,18 +107,19 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     ClosureFrame currentClosureFrame = state.getTopClosureFrame();
     assert currentClosureFrame != null : "Encountered end of closure without closure start";
     List<Integer> toRemove = new ArrayList<>();
-    Int2ObjectMap<DFAType> stateTypes = new Int2ObjectOpenHashMap<>(state.getRawVarTypes());
-    for (int newDescriptorId : stateTypes.keySet()) {
-      VariableDescriptor newDescriptor = myFlowInfo.getReverseVarIndexes()[newDescriptorId];
-      if (newDescriptor instanceof ResolvedVariableDescriptor && ((ResolvedVariableDescriptor)newDescriptor).getVariable().getContext() == block) {
+    DefinitionMap definitionMap = myCache.getDefinitionMaps(currentClosureFrame.getStartInstructionNumber());
+    for (int newDescriptorId : state.getRawVarTypes().keySet()) {
+      if (definitionMap.getDefinitions(newDescriptorId) == null) {
+        // local variable, should be removed
         toRemove.add(newDescriptorId);
       }
     }
+    Int2ObjectMap<DFAType> stateTypes = toRemove.isEmpty() ? state.getRawVarTypes() : new Int2ObjectOpenHashMap<>(state.getRawVarTypes());
     for (int descr : toRemove) {
       stateTypes.remove(descr);
     }
-    if (currentClosureFrame.getStartState() == state || hasNoChanges(currentClosureFrame.getStartState(), stateTypes)) {
-      return currentClosureFrame.getStartState().withRemovedBindings(state.getRemovedBindings());
+    if (currentClosureFrame.getStartInstructionState() == state || hasNoChanges(currentClosureFrame.getStartInstructionState(), stateTypes)) {
+      return currentClosureFrame.getStartInstructionState().withRemovedBindings(state.getRemovedBindings());
     }
     InvocationKind kind = FunctionalExpressionFlowUtil.getInvocationKind(block);
     TypeDfaState newState = state.withNewMap(stateTypes).withoutTopClosureState();
@@ -128,14 +131,14 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
       case IN_PLACE_UNKNOWN:
         List<Integer> localDescriptors = new ArrayList<>();
         for (int descriptor : stateTypes.keySet()) {
-          if (!currentClosureFrame.getStartState().containsVariable(descriptor)) {
+          if (!currentClosureFrame.getStartInstructionState().containsVariable(descriptor)) {
             localDescriptors.add(descriptor);
           }
         }
         for (int descr : localDescriptors) {
           stateTypes.remove(descr);
         }
-        return TypeDfaState.merge(newState, currentClosureFrame.getStartState(), myManager);
+        return TypeDfaState.merge(newState, currentClosureFrame.getStartInstructionState(), myManager);
     }
     return newState;
   }

@@ -65,9 +65,8 @@ public final class DefinitionMap {
     }
   }
 
-  public int @Nullable [] getDefinitions(int varIndex) {
-    IntSet defs = myMap.get(varIndex);
-    return defs == null ? null : defs.toIntArray();
+  public @Nullable IntSet getDefinitions(int varIndex) {
+    return myMap.get(varIndex);
   }
 
   public void forEachValue(Consumer<IntSet> procedure) {
@@ -92,9 +91,6 @@ public final class DefinitionMap {
 
   public @NotNull DefinitionMap getHeadDefinitionMap() {
     var head = myPreviousClosureContext.getHead();
-    if (head == null) {
-      int x = 1;
-    }
     assert head != null;
     return head;
   }

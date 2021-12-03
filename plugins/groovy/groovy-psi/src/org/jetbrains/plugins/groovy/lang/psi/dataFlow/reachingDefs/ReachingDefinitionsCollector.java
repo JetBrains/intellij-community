@@ -447,11 +447,11 @@ public final class ReachingDefinitionsCollector {
       }
       DefinitionMap definitionMap = dfaResult.get(i);
       int varIndex = varIndexes.getInt(rwInsn.getDescriptor());
-      int[] defs = definitionMap.getDefinitions(varIndex);
+      IntSet defs = definitionMap.getDefinitions(varIndex);
       if (defs == null) {
-        defs = new int[0];
+        defs = IntSet.of();
       }
-      result.put(i, defs);
+      result.put(i, defs.toIntArray());
     }
     return result;
   }
