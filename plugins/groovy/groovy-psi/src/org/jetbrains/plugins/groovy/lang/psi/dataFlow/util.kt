@@ -47,8 +47,8 @@ internal fun getReverseIndex(enumeration: Object2IntMap<VariableDescriptor>): Ar
   return reverseIndex
 }
 
-internal fun getSimpleInstructions(flow: Array<Instruction>): Set<Instruction> =
-  findNodesOutsideCycles(mapGraph(flow.associateWith { it.allSuccessors().toList() }))
+internal fun getSimpleInstructions(flow: Array<Instruction>): Set<Int> =
+  findNodesOutsideCycles(mapGraph(flow.associateWith { it.allSuccessors().toList() })).mapTo(HashSet(), Instruction::num)
 
 private fun doGetVarIndexes(owner: GrControlFlowOwner, isLarge: Boolean): Object2IntMap<VariableDescriptor> {
   val result = Object2IntOpenHashMap<VariableDescriptor>()
