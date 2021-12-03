@@ -113,7 +113,7 @@ internal class PackagesListPanel(
 
     private val searchFieldFocus = Channel<Unit>()
 
-    private val packagesTable = PackagesTable(operationExecutor, ::onSearchResultStateChanged)
+    private val packagesTable = PackagesTable(project, operationExecutor, ::onSearchResultStateChanged)
 
     private val onlyStableMutableStateFlow = MutableStateFlow(true)
     private val selectedPackageMutableStateFlow = packagesTable.selectedPackageStateFlow
@@ -345,6 +345,7 @@ internal class PackagesListPanel(
                 )
 
                 val headerData = project.lifecycleScope.computeHeaderData(
+                    project = project,
                     totalItemsCount = tableItems.size,
                     packageUpdateInfos = filteredPackageUpgrades,
                     hasSearchResults = apiSearchResults?.packages?.isNotEmpty() ?: false,
@@ -522,6 +523,7 @@ internal fun JCheckBox.addSelectionChangedListener(action: (Boolean) -> Unit) =
     addItemListener { e -> action(e.stateChange == ItemEvent.SELECTED) }
 
 private fun CoroutineScope.computeHeaderData(
+    project: Project,
     totalItemsCount: Int,
     packageUpdateInfos: List<PackagesToUpgrade.PackageUpgradeInfo>,
     hasSearchResults: Boolean,
@@ -547,6 +549,7 @@ private fun CoroutineScope.computeHeaderData(
             packageUpdateInfos.parallelFlatMap { packageUpdateInfo ->
                 cache.getOrPut(packageUpdateInfo) {
                     val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
+                        project = project,
                         packageModel = packageUpdateInfo.packageModel,
                         selectedVersion = packageUpdateInfo.targetVersion.originalVersion
                     )

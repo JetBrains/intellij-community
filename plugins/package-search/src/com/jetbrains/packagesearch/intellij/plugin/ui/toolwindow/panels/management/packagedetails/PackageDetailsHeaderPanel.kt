@@ -8,12 +8,14 @@ import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.ide.CopyPasteManager
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
 import com.jetbrains.packagesearch.intellij.plugin.normalizeWhitespace
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
@@ -58,6 +60,7 @@ import javax.swing.text.html.parser.ParserDelegator
 private val minPopupMenuWidth = 175.scaled()
 
 internal class PackageDetailsHeaderPanel(
+    private val project: Project,
     private val operationExecutor: OperationExecutor
 ) : JPanel() {
 
@@ -185,16 +188,23 @@ internal class PackageDetailsHeaderPanel(
     }
 
     private fun updateRepoWarningBanner(repoToInstall: RepositoryModel?) {
-        if (repoToInstall == null) {
-            repoWarningBanner.isVisible = false
-        } else {
-            repoWarningBanner.text = PackageSearchBundle.message(
-                "packagesearch.repository.willBeAddedOnInstall",
-                repoToInstall.displayName
-            )
-            repoWarningBanner.isVisible = true
+        when {
+            repoToInstall == null -> {
+                repoWarningBanner.isVisible = false
+            }
+            willAutomaticallyAddRepo() -> {
+                repoWarningBanner.text = PackageSearchBundle.message(
+                    "packagesearch.repository.willBeAddedOnInstall",
+                    repoToInstall.displayName
+                )
+                repoWarningBanner.isVisible = true
+            }
         }
     }
+
+    private fun willAutomaticallyAddRepo() =
+        PackageSearchGeneralConfiguration.getInstance(project)
+            .autoAddMissingRepositories
 
     private fun updateActions(packageOperations: PackageOperations) {
         overflowButton.isVisible = true
