@@ -1,5 +1,6 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.panels.management.packages.columns
 
+import com.intellij.openapi.project.Project
 import com.intellij.util.ui.ColumnInfo
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
@@ -16,6 +17,7 @@ import javax.swing.table.TableCellEditor
 import javax.swing.table.TableCellRenderer
 
 internal class ActionsColumn(
+    private val project: Project,
     private val operationExecutor: (Deferred<List<PackageSearchOperation<*>>>) -> Unit
 ) : ColumnInfo<PackagesTableItem<*>, Any>(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.columns.actions")) {
 
@@ -77,6 +79,7 @@ internal class ActionsColumn(
         val packageModel = item.packageModel
 
         val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
+            project = project,
             packageModel = packageModel,
             selectedVersion = item.uiPackageModel.selectedVersion.originalVersion
         ) ?: return null

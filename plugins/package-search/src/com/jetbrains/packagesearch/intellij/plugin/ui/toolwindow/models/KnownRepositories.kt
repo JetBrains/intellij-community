@@ -1,5 +1,8 @@
 package com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models
 
+import com.intellij.openapi.project.Project
+import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
+
 internal sealed class KnownRepositories(
     open val repositories: List<RepositoryModel>
 ) : Collection<RepositoryModel> by repositories {
@@ -37,9 +40,12 @@ internal sealed class KnownRepositories(
     ) : KnownRepositories(repositories) {
 
         fun repositoryToAddWhenInstallingOrUpgrading(
+            project: Project,
             packageModel: PackageModel,
             selectedVersion: PackageVersion
         ): RepositoryModel? {
+            if (!PackageSearchGeneralConfiguration.getInstance(project).autoAddMissingRepositories) return null
+
             val versionRepositoryIds = packageModel.remoteInfo?.versions
                 ?.find { it.version == selectedVersion.versionName }
                 ?.repositoryIds ?: return null
