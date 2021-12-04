@@ -1136,6 +1136,17 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Override
+  protected <K, V> boolean processValuesInOneFile(@NotNull ID<K, V> indexId,
+                                                  @NotNull K dataKey,
+                                                  @NotNull VirtualFile restrictToFile,
+                                                  @NotNull GlobalSearchScope scope,
+                                                  @NotNull ValueProcessor<? super V> processor) {
+    Boolean scanResult = FileBasedIndexScanUtil.processValuesInOneFile(indexId, dataKey, restrictToFile, scope, processor);
+    if (scanResult != null) return scanResult;
+    return super.processValuesInOneFile(indexId, dataKey, restrictToFile, scope, processor);
+  }
+
+  @Override
   protected <K, V> boolean processValuesInScope(@NotNull ID<K, V> indexId,
                                                 @NotNull K dataKey,
                                                 boolean ensureValueProcessedOnce,
@@ -1145,6 +1156,26 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     Boolean scanResult = FileBasedIndexScanUtil.processValuesInScope(indexId, dataKey, ensureValueProcessedOnce, scope, idFilter, processor);
     if (scanResult != null) return scanResult;
     return super.processValuesInScope(indexId, dataKey, ensureValueProcessedOnce, scope, idFilter, processor);
+  }
+
+  @Override
+  public <K, V> boolean processFilesContainingAllKeys(@NotNull ID<K, V> indexId,
+                                                      @NotNull Collection<? extends K> dataKeys,
+                                                      @NotNull GlobalSearchScope filter,
+                                                      @Nullable Condition<? super V> valueChecker,
+                                                      @NotNull Processor<? super VirtualFile> processor) {
+    Boolean scanResult = FileBasedIndexScanUtil.processFilesContainingAllKeys(indexId, dataKeys, filter, valueChecker, processor);
+    if (scanResult != null) return scanResult;
+    return super.processFilesContainingAllKeys(indexId, dataKeys, filter, valueChecker, processor);
+  }
+
+  @Override
+  public boolean processFilesContainingAllKeys(@NotNull Collection<? extends AllKeysQuery<?, ?>> queries,
+                                               @NotNull GlobalSearchScope filter,
+                                               @NotNull Processor<? super VirtualFile> processor) {
+    Boolean scanResult = FileBasedIndexScanUtil.processFilesContainingAllKeys(queries, filter, processor);
+    if (scanResult != null) return scanResult;
+    return super.processFilesContainingAllKeys(queries, filter, processor);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
