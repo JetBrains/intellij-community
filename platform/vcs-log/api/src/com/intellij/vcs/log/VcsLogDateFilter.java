@@ -51,8 +51,9 @@ public interface VcsLogDateFilter extends VcsLogDetailsFilter {
   @NotNull
   default String getDisplayTextWithPrefix() {
     if (getBefore() != null && getAfter() != null) {
-      String betweenDates = DateFormatUtil.formatBetweenDates(getAfter().getTime(), getBefore().getTime());
-      return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made", betweenDates);
+      String after = DateFormatUtil.formatDate(getAfter());
+      String before = DateFormatUtil.formatDate(getBefore());
+      return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.between", after, before);
     }
     else if (getAfter() != null) {
       return VcsLogBundle.message("vcs.log.filter.date.presentation.with.prefix.made.after", DateFormatUtil.formatDate(getAfter()));
