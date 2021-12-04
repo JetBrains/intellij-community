@@ -2,6 +2,7 @@
 
 package org.jetbrains.jpsBootstrap;
 
+import com.intellij.util.ExceptionUtil;
 import org.apache.commons.cli.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.jps.model.JpsModel;
@@ -45,8 +46,7 @@ public class JpsBootstrapMain {
       System.exit(0);
     }
     catch (Throwable t) {
-      t.printStackTrace(System.err);
-      fatal("Fatal error occurred, see exception above");
+      fatal("jps-bootstrap exited due to exception:\n" + ExceptionUtil.getThrowableText(t));
       System.exit(1);
     }
   }
