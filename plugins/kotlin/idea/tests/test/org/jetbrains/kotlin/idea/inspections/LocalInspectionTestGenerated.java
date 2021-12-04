@@ -8462,6 +8462,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasConstructorCallOfOuterClassMember3.kt");
         }
 
+        @TestMetadata("hasJUnitNestedAnnotation.kt")
+        public void testHasJUnitNestedAnnotation() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasJUnitNestedAnnotation.kt");
+        }
+
         @TestMetadata("hasOuterClassCompanionObjectReference.kt")
         public void testHasOuterClassCompanionObjectReference() throws Exception {
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassCompanionObjectReference.kt");

@@ -2,12 +2,19 @@
 
 package org.jetbrains.kotlin.idea.inspections
 
-import com.intellij.codeInspection.*
+import com.intellij.codeInspection.LocalQuickFix
+import com.intellij.codeInspection.ProblemDescriptor
+import com.intellij.codeInspection.ProblemHighlightType
+import com.intellij.codeInspection.ProblemsHolder
+import com.intellij.codeInspection.util.SpecialAnnotationsUtil
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.search.searches.ReferencesSearch
 import com.intellij.psi.util.parentsOfType
+import com.intellij.util.containers.OrderedSet
+import com.siyeh.InspectionGadgetsBundle
+import com.siyeh.ig.junit.JUnitCommonClassNames
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.ClassifierDescriptor
@@ -21,6 +28,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.getThisReceiverOwner
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -30,14 +38,23 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.isSubclassOf
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
+import javax.swing.JPanel
 
 class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
+    var ignorableAnnotations = OrderedSet(listOf(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_NESTED))
+
+    override fun createOptionsPanel(): JPanel = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
+        ignorableAnnotations, InspectionGadgetsBundle.message("ignore.if.annotated.by")
+    )
+
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = classVisitor(fun(targetClass) {
         val innerModifier = targetClass.modifierList?.getModifier(KtTokens.INNER_KEYWORD) ?: return
         if (targetClass.containingClassOrObject.safeAs<KtObjectDeclaration>()?.isObjectLiteral() == true) return
         val outerClasses = targetClass.parentsOfType<KtClass>().dropWhile { it == targetClass }.toSet()
         if (outerClasses.isEmpty() || outerClasses.any { it.isLocal || it.isInner() }) return
-        if (targetClass.hasOuterClassMemberReference(outerClasses)) return
+        if (targetClass.hasIgnorableAnnotations() || targetClass.hasOuterClassMemberReference(outerClasses)) {
+            return
+        }
         holder.registerProblem(
             innerModifier,
             KotlinBundle.message("inspection.redundant.inner.class.modifier.descriptor"),
@@ -45,6 +62,19 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
             RemoveInnerModifierFix()
         )
     })
+
+    private fun KtClass.hasIgnorableAnnotations(): Boolean {
+        if (ignorableAnnotations.isEmpty()) return false
+        val ignorableAnnotationFqNames = ignorableAnnotations.associate {
+            val fqName = FqName(it)
+            fqName.shortName().asString() to fqName
+        }
+        return annotationEntries.any {
+            val shortName = it.text.removePrefix("@").split(".").last()
+            val annotationFqNameToDisable = ignorableAnnotationFqNames[shortName] ?: return@any false
+            it.analyze(BodyResolveMode.PARTIAL)[BindingContext.ANNOTATION, it]?.fqName == annotationFqNameToDisable
+        }
+    }
 
     private fun KtClass.hasOuterClassMemberReference(outerClasses: Set<KtClass>): Boolean {
         val targetClass = this
