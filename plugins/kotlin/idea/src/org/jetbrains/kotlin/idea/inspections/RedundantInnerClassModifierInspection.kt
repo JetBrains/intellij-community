@@ -21,6 +21,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.getThisReceiverOwner
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -32,12 +33,21 @@ import org.jetbrains.kotlin.synthetic.SyntheticJavaPropertyDescriptor
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
+    companion object {
+        private val annotationsToDisableInspection = listOf("org.junit.jupiter.api.Nested").associate {
+            val fqName = FqName(it)
+            fqName.shortName().asString() to fqName
+        }
+    }
+
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = classVisitor(fun(targetClass) {
         val innerModifier = targetClass.modifierList?.getModifier(KtTokens.INNER_KEYWORD) ?: return
         if (targetClass.containingClassOrObject.safeAs<KtObjectDeclaration>()?.isObjectLiteral() == true) return
         val outerClasses = targetClass.parentsOfType<KtClass>().dropWhile { it == targetClass }.toSet()
         if (outerClasses.isEmpty() || outerClasses.any { it.isLocal || it.isInner() }) return
-        if (targetClass.hasOuterClassMemberReference(outerClasses)) return
+        if (targetClass.hasAnnotationsToDisableInspection() || targetClass.hasOuterClassMemberReference(outerClasses)) {
+            return
+        }
         holder.registerProblem(
             innerModifier,
             KotlinBundle.message("inspection.redundant.inner.class.modifier.descriptor"),
@@ -45,6 +55,12 @@ class RedundantInnerClassModifierInspection : AbstractKotlinInspection() {
             RemoveInnerModifierFix()
         )
     })
+
+    private fun KtClass.hasAnnotationsToDisableInspection() = annotationEntries.any {
+        val shortName = it.text.removePrefix("@").split(".").last()
+        val annotationFqNameToDisable = annotationsToDisableInspection[shortName] ?: return@any false
+        it.analyze(BodyResolveMode.PARTIAL)[BindingContext.ANNOTATION, it]?.fqName == annotationFqNameToDisable
+    }
 
     private fun KtClass.hasOuterClassMemberReference(outerClasses: Set<KtClass>): Boolean {
         val targetClass = this

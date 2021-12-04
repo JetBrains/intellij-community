@@ -8518,6 +8518,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasConstructorCallOfOuterClassMember3.kt");
             }
 
+            @TestMetadata("hasJUnitNestedAnnotation.kt")
+            public void testHasJUnitNestedAnnotation() throws Exception {
+                runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasJUnitNestedAnnotation.kt");
+            }
+
             @TestMetadata("hasOuterClassCompanionObjectReference.kt")
             public void testHasOuterClassCompanionObjectReference() throws Exception {
                 runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassCompanionObjectReference.kt");
@@ -8562,11 +8567,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             public void testHasOuterClassMemberReferenceFromNotThis3() throws Exception {
                 runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceFromNotThis3.kt");
             }
-
-            @TestMetadata("hasOuterClassMemberReferenceFromNotThis4.kt")
-            public void testHasOuterClassMemberReferenceFromNotThis4() throws Exception {
-                runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceFromNotThis4.kt");
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -8574,6 +8574,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("hasOuterClassMemberReferenceFromNotThis4.kt")
+            public void testHasOuterClassMemberReferenceFromNotThis4() throws Exception {
+                runTest("testData/inspectionsLocal/redundantInnerClassModifier/hasOuterClassMemberReferenceFromNotThis4.kt");
             }
 
             @TestMetadata("hasOuterClassMemberReferenceFromNotThis5.kt")
@@ -8670,11 +8675,6 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             public void testNoOuterClassMemberReference2() throws Exception {
                 runTest("testData/inspectionsLocal/redundantInnerClassModifier/noOuterClassMemberReference2.kt");
             }
-
-            @TestMetadata("noOuterClassMemberReference3.kt")
-            public void testNoOuterClassMemberReference3() throws Exception {
-                runTest("testData/inspectionsLocal/redundantInnerClassModifier/noOuterClassMemberReference3.kt");
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -8682,6 +8682,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public static class TestBucket003 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("noOuterClassMemberReference3.kt")
+            public void testNoOuterClassMemberReference3() throws Exception {
+                runTest("testData/inspectionsLocal/redundantInnerClassModifier/noOuterClassMemberReference3.kt");
             }
 
             @TestMetadata("noOuterClassTypeReference.kt")
