@@ -408,13 +408,9 @@ public class MainFrame extends JPanel implements DataProvider, Disposable {
     @NotNull
     @Override
     protected List<Component> getOrderedComponents() {
-      List<Component> components = ContainerUtil.newArrayList(myGraphTable,
-                                                              myChangesBrowser.getPreferredFocusedComponent(),
-                                                              myFilterUi.getTextFilterComponent().getTextEditor());
-      if (myDiffPreview != null) {
-        components.add(2, myDiffPreview.getPreviewDiff().getPreferredFocusedComponent());
-      }
-      return components;
+      return ContainerUtil.newArrayList(myGraphTable, myChangesBrowser.getPreferredFocusedComponent(),
+                                        myDiffPreview.getPreviewDiff().getPreferredFocusedComponent(),
+                                        myFilterUi.getTextFilterComponent().getTextEditor());
     }
   }
 
