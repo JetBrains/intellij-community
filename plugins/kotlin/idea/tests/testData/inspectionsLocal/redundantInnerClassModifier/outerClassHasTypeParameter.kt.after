@@ -1,0 +1,13 @@
+class Outer<T, U> {
+    fun t(t: T) = t
+    fun u(u: U) = u
+    class Inner
+}
+
+open class C<T>
+
+val c = C<Outer.Inner>()
+
+class F : C<Outer.Inner>()
+
+fun Outer.Inner.extF() {}

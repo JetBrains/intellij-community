@@ -9569,6 +9569,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public void testNoOuterClassTypeReference() throws Exception {
             runTest("testData/inspectionsLocal/redundantInnerClassModifier/noOuterClassTypeReference.kt");
         }
+
+        @TestMetadata("outerClassHasTypeParameter.kt")
+        public void testOuterClassHasTypeParameter() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/outerClassHasTypeParameter.kt");
+        }
+
+        @TestMetadata("outerClassHasTypeParameter2.kt")
+        public void testOuterClassHasTypeParameter2() throws Exception {
+            runTest("testData/inspectionsLocal/redundantInnerClassModifier/outerClassHasTypeParameter2.kt");
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
