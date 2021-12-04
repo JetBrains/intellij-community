@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ui.CommitMessage
 import com.intellij.psi.PsiDocumentManager
-import com.intellij.ui.TextFieldWithAutoCompletionListProvider
 import git4idea.GitUtil
 import git4idea.history.GitLogUtil
 import git4idea.repo.GitRepository
@@ -20,16 +19,15 @@ class GitCommitCompletionContributor : CompletionContributor(), DumbAware {
   override fun fillCompletionVariants(parameters: CompletionParameters, result: CompletionResultSet) {
     val file = parameters.originalFile
     val project = file.project
-    val document = PsiDocumentManager.getInstance(project).getDocument(file) ?: return
+    if (PsiDocumentManager.getInstance(project).getDocument(file)?.getUserData(CommitMessage.DATA_KEY) == null) return
 
-    val commitMessage = document.getUserData(CommitMessage.DATA_KEY) ?: return
-    val completionPrefix = TextFieldWithAutoCompletionListProvider.getCompletionPrefix(parameters)
+    val completionPrefix = file.text.take(parameters.offset)
     val gitPrefixes = listOf(
       GitPrefix("fixup!", "fixu"),
       GitPrefix("squash!", "squ")
     )
     gitPrefixes
-      .filter { prefix -> commitMessage.text.startsWith(prefix.prefixToMatch) }
+      .filter { prefix -> completionPrefix.startsWith(prefix.prefixToMatch) }
       .forEach { prefix ->
         lastCommitsCompletionWithPrefix(project, result, completionPrefix, prefix.value)
       }
@@ -42,7 +40,7 @@ class GitCommitCompletionContributor : CompletionContributor(), DumbAware {
     if (Registry.`is`("git.commit.completion.fixup.squash")) {
       val repository = GitUtil.getRepositories(project).singleOrNull() ?: return
       result.caseInsensitive()
-        .withPrefixMatcher(PlainPrefixMatcher(completionPrefix))
+        .withPrefixMatcher(PlainPrefixMatcher(completionPrefix, true))
         .addAllElements(
           getLastCommits(repository).reversed().mapIndexed { i, oldCommitMessage ->
             PrioritizedLookupElement.withPriority(LookupElementBuilder.create("$gitPrefix $oldCommitMessage"), i.toDouble())
