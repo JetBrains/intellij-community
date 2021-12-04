@@ -30,6 +30,10 @@ import java.util.function.Consumer;
 public final class ContainerUtil {
   private static final int INSERTION_SORT_THRESHOLD = 10;
 
+  static {
+    int i = 3;
+  }
+
   @SafeVarargs
   @Contract(pure=true)
   public static <T> T @NotNull [] ar(T @NotNull ... elements) {

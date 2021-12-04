@@ -52,7 +52,7 @@ internal fun reorderJar(relativePath: String, file: Path, traceContext: Context)
     }
 }
 
-fun generateClasspath(homeDir: Path, mainJarName: String, antLibDir: Path?): List<String> {
+fun generateClasspath(homeDir: Path, mainJarName: String, antTargetFile: Path?): List<String> {
   val libDir = homeDir.resolve("lib")
   val appFile = libDir.resolve("app.jar")
 
@@ -102,13 +102,17 @@ fun generateClasspath(homeDir: Path, mainJarName: String, antLibDir: Path?): Lis
         rootDir = homeDir,
         mainJarName = mainJarName
       )
-      val result = computeAppClassPath(sourceToNames, libDir, antLibDir).map { libDir.relativize(it).toString() }
+      val files = computeAppClassPath(sourceToNames, libDir)
+      if (antTargetFile != null) {
+        files.add(antTargetFile)
+      }
+      val result = files.map { libDir.relativize(it).toString() }
       span.setAttribute(AttributeKey.stringArrayKey("result"), result)
       return result
     }
 }
 
-private fun computeAppClassPath(sourceToNames: Map<Path, List<String>>, libDir: Path, antLibDir: Path?): LinkedHashSet<Path> {
+private fun computeAppClassPath(sourceToNames: Map<Path, List<String>>, libDir: Path): LinkedHashSet<Path> {
   // sorted to ensure stable performance results
   val existing = TreeSet<Path>()
   addJarsFromDir(libDir) { paths ->
@@ -119,14 +123,6 @@ private fun computeAppClassPath(sourceToNames: Map<Path, List<String>>, libDir: 
   // add first - should be listed first
   sourceToNames.keys.filterTo(result) { it.parent == libDir && existing.contains(it) }
   result.addAll(existing)
-
-  if (antLibDir != null) {
-    val distAntLib = libDir.resolve("ant/lib")
-    addJarsFromDir(antLibDir) { paths ->
-      // sort to ensure stable performance results
-      result.addAll(paths.map { distAntLib.resolve(antLibDir.relativize(it)) }.sorted())
-    }
-  }
   return result
 }
 

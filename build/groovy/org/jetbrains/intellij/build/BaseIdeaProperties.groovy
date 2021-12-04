@@ -180,13 +180,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
   @Override
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
-    if (isAntRequired) {
-      buildHelper.copyDir(Path.of("$context.paths.communityHome/lib/ant"), Path.of("$targetDirectory/lib/ant")) {
-        !it.endsWith("src")
-      }
-    }
-
     Path targetDir = Path.of(targetDirectory)
     Path java8AnnotationsJar = targetDir.resolve("lib/annotations.jar")
     BuildHelper.moveFile(java8AnnotationsJar, targetDir.resolve("redist/annotations-java8.jar"))

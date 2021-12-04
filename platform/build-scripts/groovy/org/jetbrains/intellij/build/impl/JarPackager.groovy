@@ -65,6 +65,12 @@ final class JarPackager {
         return name.startsWith("kotlinx-") || name == "kotlin-reflect"
       }
     })
+    EXTRA_MERGE_RULES.put("groovy.jar", new Predicate<String>() {
+      @Override
+      boolean test(String name) {
+        return name.startsWith("org.codehaus.groovy:")
+      }
+    })
     EXTRA_MERGE_RULES.put("jsch-agent.jar", new Predicate<String>() {
       @Override
       boolean test(String name) {

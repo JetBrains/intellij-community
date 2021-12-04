@@ -14,6 +14,7 @@ import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import it.unimi.dsi.fastutil.Hash
 import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenCustomHashSet
+import kotlin.Triple
 import org.apache.tools.ant.types.FileSet
 import org.apache.tools.ant.types.resources.FileProvider
 import org.jetbrains.annotations.NotNull
@@ -38,6 +39,7 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZonedDateTime
+import java.util.concurrent.Callable
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
 import java.util.function.*
@@ -218,6 +220,9 @@ final class DistributionJARsBuilder {
 
     Set<PluginLayout> pluginLayouts = getPluginsByModules(context, context.productProperties.productLayout.bundledPluginModules)
 
+    Path antDir = context.productProperties.isAntRequired ? context.paths.distAllDir.resolve("lib/ant") : null
+    Path antTargetFile = antDir == null ? null : antDir.resolve("lib/ant.jar")
+
     ModuleOutputPatcher moduleOutputPatcher = new ModuleOutputPatcher()
     ForkJoinTask<List<DistributionFileEntry>> buildPlatformTask =
       buildHelper.createTask(spanBuilder("build platform lib"), new Supplier<List<DistributionFileEntry>>() {
@@ -249,7 +254,7 @@ final class DistributionJARsBuilder {
           context.bootClassPathJarNames = (List<String>)buildHelper.generateClasspath
             .invokeWithArguments(context.paths.distAllDir,
                                  context.productProperties.productLayout.mainJarName,
-                                 context.productProperties.isAntRequired ? context.paths.communityHomeDir.resolve("lib/ant/lib") : null)
+                                 antTargetFile)
           return result
         }
       })
@@ -258,6 +263,46 @@ final class DistributionJARsBuilder {
       createBuildBundledPluginTask(pluginLayouts, buildPlatformTask, context),
       createBuildOsSpecificBundledPluginsTask(pluginLayouts, isUpdateFromSources, buildPlatformTask, context),
       createBuildNonBundledPluginsTask(!isUpdateFromSources, buildPlatformTask, context),
+      ForkJoinTask.adapt(new Callable<List<DistributionFileEntry>>() {
+        @Override
+        List<DistributionFileEntry> call() throws Exception {
+          if (antDir == null) {
+            return Collections.emptyList()
+          }
+
+          List sources = new ArrayList<>()
+          BiFunction<Path, IntConsumer, ?> createZipSource = buildHelper.createZipSource
+          List<DistributionFileEntry> result = new ArrayList<>()
+          buildHelper.copyDir(context.paths.communityHomeDir.resolve("lib/ant"), antDir,
+                              new Predicate<Path>() {
+                                @Override
+                                boolean test(Path path) {
+                                  return !path.endsWith("src")
+                                }
+                              },
+                              new Predicate<Path>() {
+                                @Override
+                                boolean test(Path file) {
+                                  if (!file.toString().endsWith(".jar")) {
+                                    return true
+                                  }
+
+                                  sources.add(createZipSource.apply(file, new IntConsumer() {
+                                    @Override
+                                    void accept(int size) {
+                                      result.add(new ProjectLibraryEntry(antTargetFile, "Ant", file, size))
+                                    }
+                                  }))
+                                  return false
+                                }
+                              })
+
+          // path in class log - empty, do not reorder, doesn't matter
+          sources.sort(null)
+          buildHelper.buildJars.accept(List.of(new Triple(antTargetFile, "", sources)), false)
+          return result
+        }
+      })
       ).findAll { it != null })
       .collectMany {
         Object result = it.rawResult
