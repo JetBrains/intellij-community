@@ -5,7 +5,7 @@
   <version>1.0</version>
 
   <properties>
-    <gradle.version>7.3</gradle.version>
+    <gradle.version>7.3.1</gradle.version>
     <junit.version>5.8.1</junit.version>
     <kotlin.version>1.5.31</kotlin.version>
 
