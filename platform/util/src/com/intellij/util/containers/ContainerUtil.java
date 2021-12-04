@@ -4,7 +4,6 @@ package com.intellij.util.containers;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.*;
 import com.intellij.util.*;
-import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
@@ -29,10 +28,6 @@ import java.util.function.Consumer;
 @ApiStatus.NonExtendable
 public final class ContainerUtil {
   private static final int INSERTION_SORT_THRESHOLD = 10;
-
-  static {
-    int i = 3;
-  }
 
   @SafeVarargs
   @Contract(pure=true)
@@ -326,27 +321,6 @@ public final class ContainerUtil {
   @Contract(pure = true)
   public static @NotNull <T> THashSet<T> newTroveSet() {
     return new THashSet<>();
-  }
-
-  /**
-   * @deprecated Use {@link Set#of(Object[])}
-   */
-  @SafeVarargs
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(pure = true)
-  public static @NotNull <T> THashSet<T> newTroveSet(T @NotNull ... elements) {
-    return new THashSet<>(Arrays.asList(elements));
-  }
-
-  /**
-   * @deprecated Use {@link it.unimi.dsi.fastutil.objects.Reference2ObjectOpenHashMap}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(pure = true)
-  public static @NotNull <K,V> THashMap<K,V> newIdentityTroveMap() {
-    return new THashMap<>(identityStrategy());
   }
 
   @Contract(pure = true)

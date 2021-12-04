@@ -3,22 +3,21 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeList;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.function.Supplier;
 
-public class ChangeListChangesSupplier implements Supplier<Iterable<Change>> {
+public final class ChangeListChangesSupplier implements Supplier<Iterable<Change>> {
   private final @NotNull List<ChangeList> myChangeLists;
 
   public ChangeListChangesSupplier(@NotNull List<ChangeList> changeLists) {
-    myChangeLists = ContainerUtil.newUnmodifiableList(changeLists);
+    myChangeLists = List.copyOf(changeLists);
   }
 
   public ChangeListChangesSupplier(@NotNull ChangeList changeList) {
-    this(ContainerUtil.immutableSingletonList(changeList));
+    myChangeLists = List.of(changeList);
   }
 
   @Override
