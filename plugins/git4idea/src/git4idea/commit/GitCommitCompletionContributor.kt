@@ -48,7 +48,6 @@ class GitCommitCompletionContributor : CompletionContributor(), DumbAware {
             PrioritizedLookupElement.withPriority(LookupElementBuilder.create("$gitPrefix $oldCommitMessage"), i.toDouble())
           }
         )
-      result.stopHere()
     }
   }
 
