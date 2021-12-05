@@ -37,7 +37,9 @@ public interface VcsLogDateFilter extends VcsLogDetailsFilter {
   @Override
   default String getDisplayText() {
     if (getBefore() != null && getAfter() != null) {
-      return DateFormatUtil.formatBetweenDates(getAfter().getTime(), getBefore().getTime());
+      String after = DateFormatUtil.formatDate(getAfter());
+      String before = DateFormatUtil.formatDate(getBefore());
+      return VcsLogBundle.message("vcs.log.filter.date.display.name.between", after, before);
     }
     else if (getAfter() != null) {
       return VcsLogBundle.message("vcs.log.filter.date.display.name.after", DateFormatUtil.formatDate(getAfter()));
