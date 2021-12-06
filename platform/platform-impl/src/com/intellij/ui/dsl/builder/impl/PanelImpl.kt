@@ -41,7 +41,7 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun row(label: String, init: Row.() -> Unit): RowImpl {
     if (label === EMPTY_LABEL) {
-      val result = RowImpl(dialogPanelConfig, panelContext, this, false, RowLayout.LABEL_ALIGNED)
+      val result = RowImpl(dialogPanelConfig, panelContext, this, RowLayout.LABEL_ALIGNED)
       result.cell()
       result.init()
       _rows.add(result)
@@ -59,10 +59,10 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   override fun row(label: JLabel?, init: Row.() -> Unit): RowImpl {
     val result: RowImpl
     if (label == null) {
-      result = RowImpl(dialogPanelConfig, panelContext, this, false, RowLayout.INDEPENDENT)
+      result = RowImpl(dialogPanelConfig, panelContext, this, RowLayout.INDEPENDENT)
     } else {
       label.putClientProperty(DslComponentProperty.ROW_LABEL, true)
-      result = RowImpl(dialogPanelConfig, panelContext, this, true, RowLayout.LABEL_ALIGNED)
+      result = RowImpl(dialogPanelConfig, panelContext, this, RowLayout.LABEL_ALIGNED)
       result.cell(label)
     }
     result.init()

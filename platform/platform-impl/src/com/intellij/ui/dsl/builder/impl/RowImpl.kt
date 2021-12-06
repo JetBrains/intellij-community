@@ -48,7 +48,6 @@ import javax.swing.*
 internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                        private val panelContext: PanelContext,
                        private val parent: PanelImpl,
-                       val firstCellLabel: Boolean,
                        rowLayout: RowLayout) : Row {
 
   var rowLayout = rowLayout

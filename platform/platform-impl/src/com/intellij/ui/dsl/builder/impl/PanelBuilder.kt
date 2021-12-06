@@ -58,7 +58,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
           buildLabelRow(cells, 0, cells.size, row.rowLayout, subGridBuilder)
 
           subGridBuilder.resizableRow()
-          buildRow(cells, row.firstCellLabel, 0, cells.size, panel, subGridBuilder)
+          buildRow(cells, 0, cells.size, panel, subGridBuilder)
           subGridBuilder.row()
 
           buildCommentRow(cells, 0, cells.size, row.rowLayout, subGridBuilder)
@@ -80,7 +80,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
               verticalAlign = subRowVerticalAlign)
               .resizableRow()
             val cells = row.cells.subList(1, row.cells.size)
-            buildRow(cells, false, 0, cells.size, panel, subGridBuilder)
+            buildRow(cells, 0, cells.size, panel, subGridBuilder)
             setLastColumnResizable(subGridBuilder)
           }
           if (row.resizableRow) {
@@ -94,7 +94,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         RowLayout.PARENT_GRID -> {
           buildLabelRow(row.cells, row.getIndent(), maxColumnsCount, row.rowLayout, rowsGridBuilder)
 
-          buildRow(row.cells, row.firstCellLabel, row.getIndent(), maxColumnsCount, panel, rowsGridBuilder)
+          buildRow(row.cells, row.getIndent(), maxColumnsCount, panel, rowsGridBuilder)
           if (row.resizableRow) {
             rowsGridBuilder.resizableRow()
           }
@@ -175,7 +175,6 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
   }
 
   private fun buildRow(cells: List<CellBaseImpl<*>?>,
-                       firstCellLabel: Boolean,
                        firstCellIndent: Int,
                        maxColumnsCount: Int,
                        panel: DialogPanel,
@@ -184,7 +183,8 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
       val lastCell = cellIndex == cells.size - 1
       val width = if (lastCell) maxColumnsCount - cellIndex else 1
       val leftGap = if (cellIndex == 0) firstCellIndent else 0
-      buildCell(cell, firstCellLabel && cellIndex == 0, leftGap, lastCell, width, panel, builder)
+      val rowLabel = cell is CellImpl<*> && cell.component.getClientProperty(DslComponentProperty.ROW_LABEL) == true
+      buildCell(cell, rowLabel, leftGap, lastCell, width, panel, builder)
     }
   }
 
