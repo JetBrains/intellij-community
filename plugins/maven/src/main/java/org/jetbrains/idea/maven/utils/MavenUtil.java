@@ -71,11 +71,7 @@ import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.CleanBrokenArtifactsAndReimportQuickFix;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.server.MavenServerEmbedder;
-import org.jetbrains.idea.maven.server.MavenServerManager;
-import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
-import org.jetbrains.idea.maven.server.MavenServerUtil;
-import org.jetbrains.idea.maven.wizards.MavenProjectBuilder;
+import org.jetbrains.idea.maven.server.*;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -105,6 +101,7 @@ import static com.intellij.openapi.util.io.JarUtil.loadProperties;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
 import static icons.ExternalSystemIcons.Task;
+import static org.apache.commons.lang.StringUtils.EMPTY;
 
 public class MavenUtil {
   public static final String INTELLIJ_PLUGIN_ID = "org.jetbrains.idea.maven";
@@ -1531,5 +1528,20 @@ public class MavenUtil {
       .filter(it -> MavenWslUtil.tryGetWslDistributionForPath(it.getHomePath()) == MavenWslUtil.tryGetWslDistribution(project))
       .max(sdkType.versionComparator())
       .orElse(null);
+  }
+
+  @NotNull
+  public static Set<MavenRemoteRepository> getRemoteResolvedRepositories(@NotNull Project project) {
+    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
+    Set<MavenRemoteRepository> repositories = projectsManager.getRemoteRepositories();
+    try {
+      MavenEmbedderWrapper mavenEmbedderWrapper = projectsManager.getEmbeddersManager()
+        .getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, EMPTY, EMPTY);
+      Set<MavenRemoteRepository> resolvedRepositories = mavenEmbedderWrapper.resolveRepositories(repositories);
+      return resolvedRepositories.isEmpty() ? repositories : resolvedRepositories;
+    } catch (Exception e) {
+      MavenLog.LOG.warn("resolve remote repo error", e);
+    }
+    return repositories;
   }
 }

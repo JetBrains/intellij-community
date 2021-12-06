@@ -774,6 +774,31 @@ public final class Maven2ServerEmbedderImpl extends MavenRemoteObject implements
     return Collections.emptySet();
   }
 
+  @Override
+  public Collection<MavenArchetype> getArchetypes(MavenToken token) throws RemoteException {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public Collection<MavenArchetype> getLocalArchetypes(MavenToken token, @NotNull String path) throws RemoteException {
+    return Collections.emptyList();
+  }
+
+  @Override
+  public Collection<MavenArchetype> getRemoteArchetypes(MavenToken token, @NotNull String url) throws RemoteException {
+    return Collections.emptyList();
+  }
+
+  @Nullable
+  @Override
+  public Map<String, String> resolveAndGetArchetypeDescriptor(@NotNull String groupId,
+                                                              @NotNull String artifactId,
+                                                              @NotNull String version,
+                                                              @NotNull List<MavenRemoteRepository> repositories,
+                                                              @Nullable String url, MavenToken token) throws RemoteException {
+    return Collections.emptyMap();
+  }
+
   private interface Executor<T> {
     @NotNull
     T execute() throws Exception;

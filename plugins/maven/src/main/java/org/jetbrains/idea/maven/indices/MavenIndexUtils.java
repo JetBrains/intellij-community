@@ -7,10 +7,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
-import org.jetbrains.idea.maven.project.MavenEmbeddersManager;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -120,9 +119,8 @@ public class MavenIndexUtils {
   }
 
   private static Map<String, Set<String>> getRemoteRepositoriesMap(Project project) {
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
     if (project.isDisposed()) return Collections.emptyMap();
-    Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(getRemoteResolvedRepositories(projectsManager));
+    Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(MavenUtil.getRemoteResolvedRepositories(project));
     for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensions()) {
       remoteRepositories.addAll(repositoryProvider.getRemoteRepositories(project));
     }
@@ -130,19 +128,6 @@ public class MavenIndexUtils {
     return groupRemoteRepositoriesByUrl(remoteRepositories);
   }
 
-  @NotNull
-  private static Set<MavenRemoteRepository> getRemoteResolvedRepositories(MavenProjectsManager projectsManager) {
-    Set<MavenRemoteRepository> repositories = projectsManager.getRemoteRepositories();
-    try {
-      MavenEmbedderWrapper mavenEmbedderWrapper = projectsManager.getEmbeddersManager()
-        .getEmbedder(MavenEmbeddersManager.FOR_POST_PROCESSING, "", "");
-      Set<MavenRemoteRepository> resolvedRepositories = mavenEmbedderWrapper.resolveRepositories(repositories);
-      return resolvedRepositories.isEmpty() ? repositories : resolvedRepositories;
-    } catch (Exception e) {
-      MavenLog.LOG.warn("resolve remote repo error", e);
-    }
-    return repositories;
-  }
 
   @VisibleForTesting
   static Map<String, Set<String>> groupRemoteRepositoriesByUrl(Collection<MavenRemoteRepository> remoteRepositories) {
