@@ -11,6 +11,7 @@ import com.intellij.lang.documentation.ide.impl.DocumentationToolWindowManager
 import com.intellij.lang.documentation.ide.ui.DocumentationToolWindowUI
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
+import com.intellij.lang.documentation.psi.psiDocumentationTarget
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -87,7 +88,7 @@ private fun documentationTargetsInner(dc: DataContext): List<DocumentationTarget
   }
   val targetElement = dc.getData(CommonDataKeys.PSI_ELEMENT)
   if (targetElement != null) {
-    return listOf(PsiElementDocumentationTarget(project, targetElement))
+    return listOf(psiDocumentationTarget(targetElement) ?: PsiElementDocumentationTarget(project, targetElement))
   }
   return emptyList()
 }
