@@ -4640,14 +4640,29 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/emptyRange/unsignedInt.kt");
         }
 
+        @TestMetadata("unsignedIntMinMax.kt")
+        public void testUnsignedIntMinMax() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/unsignedIntMinMax.kt");
+        }
+
         @TestMetadata("unsignedLong.kt")
         public void testUnsignedLong() throws Exception {
             runTest("testData/inspectionsLocal/emptyRange/unsignedLong.kt");
         }
 
+        @TestMetadata("unsignedLongMinMax.kt")
+        public void testUnsignedLongMinMax() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/unsignedLongMinMax.kt");
+        }
+
         @TestMetadata("unsignedShort.kt")
         public void testUnsignedShort() throws Exception {
             runTest("testData/inspectionsLocal/emptyRange/unsignedShort.kt");
+        }
+
+        @TestMetadata("unsignedShortAribtrary.kt")
+        public void testUnsignedShortAribtrary() throws Exception {
+            runTest("testData/inspectionsLocal/emptyRange/unsignedShortAribtrary.kt");
         }
 
         @TestMetadata("until.kt")
