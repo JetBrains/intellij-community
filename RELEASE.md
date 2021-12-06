@@ -11,6 +11,7 @@
       <version major="1" minor="4" micro="0" patch="7" full="{0}.{1} RC 1" eap="false" />
                      ~~~       ~~~       ~~~       ~~~      ~~~~~~~~~~~~~~
     ```
+    Make sure `version.full` value contains words `beta` or `RC` (case doesn't matter) for beta, RC releases, and don't have either for stable releases.
 
  2. Also make sure that the `eap=` flag in the same file is correct.
     It should be `true` for canary and beta builds, `false` for rc and final:
@@ -21,6 +22,11 @@
     ```
     Among other things, in `VmOptionsGenerator.groovy` this causes the `isEAP`
     conditional to disable assertions.
+
+    Code in AndroidStudioUpdateStrategyCustomization.java computes update channel from `version.eap` and `version.full` values:
+      * If ```eap="true"``` or `version` contains words `canary` or `dev` then update channel is `EAP`
+      * If ```eap="false"``` and `version` contains words `RC` or `beta` then update channel is `BETA`
+      * If ```eap="false"``` and there is neither `canary`, `dev`, `RC` or`beta` in full versions then update channel is `RELEASE`
 
  1. Replace `dev` with the appropriate release designator in
     ../buildSrc/base/version.properties:
@@ -61,18 +67,6 @@ When a new dev branch (like studio-3.1-dev) is created, update studio-master-dev
     ```
 
  1. Add an entry for the new version in [Kotlin compatibility metadata](https://dl.google.com/android/studio/plugins/compatibility.xml)
---------------------------------------------------------------------------------
-For stable, RC, beta builds :
-
- 1. Ensure that the default update channel is set to RELEASE for stable build,
-    or BETA for beta or RC builds. This is so that new users of beta, RC, stable
-    builds are not prompted to upgrade to canary by default.
-
-    Edit platform/platform-impl/src/com/intellij/openapi/updateSettings/impl/UpdateOptions.kt
-    to make sure `updateChannelType` is set to:
-    * `ChannelStatus.RELEASE.code` for stable releases, or
-    * `ChannelStatus.BETA.code` for beta, RC releases, or
-    * `ChannelStatus.EAP.code` otherwise.
 
 --------------------------------------------------------------------------------
 For AOSP push:
