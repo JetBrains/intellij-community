@@ -23,8 +23,7 @@ internal class MavenKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizard {
                     buildSystemType = BuildSystemType.Maven,
                     projectGroupId = groupId,
                     artifactId = artifactId,
-                    version = version,
-                    wizardContext = parent.context
+                    version = version
                 )
             }
         }

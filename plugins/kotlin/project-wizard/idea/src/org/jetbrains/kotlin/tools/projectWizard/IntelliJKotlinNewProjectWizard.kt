@@ -54,8 +54,7 @@ internal class IntelliJKotlinNewProjectWizard : BuildSystemKotlinNewProjectWizar
                 projectPath = parent.projectPath.systemIndependentPath,
                 projectName = parent.name,
                 sdk = sdk,
-                buildSystemType = BuildSystemType.Jps,
-                wizardContext = parent.context
+                buildSystemType = BuildSystemType.Jps
             )
     }
 }
