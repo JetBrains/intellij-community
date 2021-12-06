@@ -84,7 +84,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
 
     override fun isAvailable(): Boolean = isCreatingNewProject()
 
-    lateinit var wizardContext: WizardContext
+    private lateinit var wizardContext: WizardContext
     private var finishButtonClicked: Boolean = false
 
     override fun getModuleType(): ModuleType<*> = NewProjectWizardModuleType()
@@ -112,7 +112,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
             services = buildList {
                 +IdeaServices.createScopeDependent(project)
                 +IdeaServices.PROJECT_INDEPENDENT
-                +IdeaJpsWizardService(project, modulesModel, this@NewProjectWizardModuleBuilder, wizard, wizardContext)
+                +IdeaJpsWizardService(project, modulesModel, this@NewProjectWizardModuleBuilder, wizard)
             },
             phases = GenerationPhase.startingFrom(GenerationPhase.FIRST_STEP)
         ).onFailure { errors ->

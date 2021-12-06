@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.tools.projectWizard.wizard.service
 
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix
 import com.intellij.ide.util.projectWizard.ModuleBuilder
-import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.jarRepository.JarRepositoryManager
 import com.intellij.jarRepository.RemoteRepositoryDescription
 import com.intellij.jarRepository.RepositoryLibraryType
@@ -48,7 +47,6 @@ class IdeaJpsWizardService(
     private val modulesModel: ModifiableModuleModel,
     private val modulesBuilder: NewProjectWizardModuleBuilder,
     private val ideWizard: IdeWizard,
-    private val wizardContext: WizardContext
 ) : ProjectImportingWizardService, IdeaWizardService {
     override fun isSuitableFor(buildSystemType: BuildSystemType): Boolean =
         buildSystemType == BuildSystemType.Jps
@@ -61,13 +59,12 @@ class IdeaJpsWizardService(
     ): TaskResult<Unit> {
         KotlinSdkType.setUpIfNeeded()
         val projectImporter = ProjectImporter(project, modulesModel, path, modulesIrs)
-        val libraryOptionsPanel = ideWizard.jpsData.libraryOptionsPanel
-        Disposer.register(wizardContext.disposable, libraryOptionsPanel)
         modulesBuilder.addModuleConfigurationUpdater(
             JpsModuleConfigurationUpdater(ideWizard.jpsData, projectImporter, project, reader)
         )
 
         projectImporter.import()
+        Disposer.dispose(ideWizard.jpsData.libraryOptionsPanel)
         return UNIT_SUCCESS
     }
 }
