@@ -1,5 +1,6 @@
 // "Replace usages of 'maxBy((T) -> R) on Iterable<T>: T?' in whole project" "true"
 // WITH_RUNTIME
+// LANGUAGE_VERSION: 1.5
 import java.util.Collections
 
 fun test() {
