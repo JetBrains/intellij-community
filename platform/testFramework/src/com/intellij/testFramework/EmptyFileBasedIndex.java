@@ -11,6 +11,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.AbstractUpdateData;
+import com.intellij.util.indexing.impl.InputData;
 import com.intellij.util.indexing.impl.InputDataDiffBuilder;
 import com.intellij.util.indexing.snapshot.SnapshotSingleValueIndexStorage;
 import org.jetbrains.annotations.NotNull;
@@ -270,6 +271,11 @@ public final class EmptyFileBasedIndex extends FileBasedIndexEx {
 
     @Override
     public @NotNull Computable<Boolean> mapInputAndPrepareUpdate(int inputId, @Nullable FileContent content) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public @NotNull Computable<Boolean> prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
       throw new UnsupportedOperationException();
     }
 
