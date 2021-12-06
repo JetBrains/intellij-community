@@ -4,8 +4,7 @@
 package org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm
 
 import org.gradle.api.artifacts.component.BuildIdentifier
-import org.gradle.api.logging.Logger
-import org.gradle.api.logging.Logging
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.ReflectionLogger
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.callReflective
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinModuleIdentifierReflection.Companion.logger
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.parameters
@@ -17,7 +16,7 @@ fun KotlinIdeFragmentDependencyReflection(dependency: Any): KotlinIdeFragmentDep
         "IdeLocalSourceFragmentDependency" -> KotlinIdeLocalSourceFragmentDependencyReflectionImpl(dependency)
         "IdeMavenBinaryFragmentDependency" -> KotlinIdeMavenBinaryFragmentDependencyReflectionImpl(dependency)
         else -> {
-            logger.warn("Unknown IdeFragmentDependency class: ${dependency.javaClass.simpleName}")
+            logger.logIssue("Unknown IdeFragmentDependency class: ${dependency.javaClass.simpleName}")
             null
         }
     }
@@ -66,12 +65,12 @@ private class KotlinIdeLocalSourceFragmentDependencyReflectionImpl(private val i
     }
 
     companion object {
-        val logger: Logger = Logging.getLogger(KotlinIdeLocalSourceFragmentDependencyReflection::class.java)
+        val logger = ReflectionLogger(KotlinIdeLocalSourceFragmentDependencyReflection::class.java)
     }
 }
 
 private class KotlinIdeMavenBinaryFragmentDependencyReflectionImpl(private val instance: Any) :
-    KotlinIdeMavenBinaryFragmentDependencyReflection{
+    KotlinIdeMavenBinaryFragmentDependencyReflection {
     override val mavenGroup: String? by lazy {
         instance.callReflective("getMavenGroup", parameters(), returnType<String>(), logger)
     }
@@ -94,6 +93,6 @@ private class KotlinIdeMavenBinaryFragmentDependencyReflectionImpl(private val i
     }
 
     companion object {
-        val logger: Logger = Logging.getLogger(KotlinIdeMavenBinaryFragmentDependencyReflection::class.java)
+        val logger = ReflectionLogger(KotlinIdeMavenBinaryFragmentDependencyReflection::class.java)
     }
 }

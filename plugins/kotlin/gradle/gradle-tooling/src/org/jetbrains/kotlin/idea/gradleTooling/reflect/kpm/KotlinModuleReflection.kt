@@ -3,7 +3,7 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm
 
-import org.gradle.api.logging.Logging
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.ReflectionLogger
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.callReflective
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.parameters
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.returnType
@@ -48,6 +48,6 @@ private class KotlinModuleReflectionImpl(private val instance: Any) : KotlinModu
 
 
     companion object {
-        val logger = Logging.getLogger(KotlinModuleReflection::class.java)
+        val logger = ReflectionLogger(KotlinModuleReflection::class.java)
     }
 }
