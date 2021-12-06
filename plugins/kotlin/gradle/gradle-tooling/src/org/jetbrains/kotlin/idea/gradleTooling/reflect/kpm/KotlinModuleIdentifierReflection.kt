@@ -3,8 +3,7 @@
 
 package org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm
 
-import org.gradle.api.logging.Logger
-import org.gradle.api.logging.Logging
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.ReflectionLogger
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.callReflective
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinModuleIdentifierReflection.Companion.logger
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.parameters
@@ -17,7 +16,7 @@ fun KotlinModuleIdentifierReflection(moduleIdentifier: Any): KotlinModuleIdentif
         "org.jetbrains.kotlin.project.model.MavenModuleIdentifier" ->
             KotlinMavenModuleIdentifierReflectionImpl(moduleIdentifier)
         else -> {
-            logger.error("Unknown module identifier: \"${moduleIdentifier.javaClass.name}\"")
+            logger.logIssue("Unknown module identifier: \"${moduleIdentifier.javaClass.name}\"")
             null
         }
     }
@@ -27,7 +26,7 @@ interface KotlinModuleIdentifierReflection {
     val moduleClassifier: String?
 
     companion object {
-        internal val logger: Logger = Logging.getLogger(KotlinModuleReflection::class.java)
+        internal val logger = ReflectionLogger(KotlinModuleReflection::class.java)
     }
 }
 

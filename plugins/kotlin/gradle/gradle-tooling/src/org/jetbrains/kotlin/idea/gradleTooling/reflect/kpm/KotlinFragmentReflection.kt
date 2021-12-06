@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm
 
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.logging.Logging
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.ReflectionLogger
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.callReflective
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.parameters
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.returnType
@@ -50,6 +51,6 @@ private class KotlinFragmentReflectionImpl(
     }
 
     companion object {
-        val logger = Logging.getLogger(KotlinFragmentReflection::class.java)
+        val logger = ReflectionLogger(KotlinFragmentReflection::class.java)
     }
 }

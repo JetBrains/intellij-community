@@ -5,6 +5,7 @@ package org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm
 
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.ReflectionLogger
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.callReflective
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.parameters
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.returnType
@@ -59,7 +60,7 @@ private class KotlinLanguageSettingsReflectionImpl(private val instance: Any) : 
     }
 
     companion object {
-        val logger: Logger = Logging.getLogger(KotlinLanguageSettingsReflection::class.java)
+        val logger = ReflectionLogger(KotlinLanguageSettingsReflection::class.java)
     }
 
 }
