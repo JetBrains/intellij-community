@@ -18,14 +18,17 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
+import org.jetbrains.kotlin.idea.caches.resolve.returnIfNoDescriptorForDeclarationException
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.roots.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPlain
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.callUtil.getParentResolvedCall
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ArgumentMatch
@@ -51,7 +54,14 @@ private fun KtExpression.getBundleNameByContext(): String? {
 
     (parent as? KtProperty)?.let { return it.resolveToDescriptorIfAny()?.getBundleNameByAnnotation() }
 
-    val bindingContext = expression.analyze(BodyResolveMode.PARTIAL)
+    val bindingContext =
+        try {
+            expression.analyze(BodyResolveMode.PARTIAL)
+        } catch (e: Exception) {
+            e.returnIfNoDescriptorForDeclarationException(condition = {
+                it && (!expression.isPhysical || !isUnderKotlinSourceRootTypes(expression.containingFile))
+            }) { BindingContext.EMPTY }
+        }
     val resolvedCall = if (parent is KtQualifiedExpression && expression == parent.receiverExpression) {
         parent.selectorExpression.getResolvedCall(bindingContext)
     } else {

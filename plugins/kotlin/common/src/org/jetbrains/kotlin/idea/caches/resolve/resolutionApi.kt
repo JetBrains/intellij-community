@@ -223,8 +223,12 @@ fun KtElement.analyzeFully(): BindingContext = analyzeWithAllCompilerChecks().bi
 val Exception.isItNoDescriptorForDeclarationException: Boolean
     get() = this is NoDescriptorForDeclarationException || cause?.safeAs<Exception>()?.isItNoDescriptorForDeclarationException == true
 
-inline fun <T> Exception.returnIfNoDescriptorForDeclarationException(crossinline computable: () -> T): T {
-    if (this.isItNoDescriptorForDeclarationException)
-        return computable()
-    else throw this
-}
+inline fun <T> Exception.returnIfNoDescriptorForDeclarationException(
+    crossinline condition: (Boolean) -> Boolean = { v -> v },
+    crossinline computable: () -> T
+): T =
+    if (condition(this.isItNoDescriptorForDeclarationException)) {
+        computable()
+    } else {
+        throw this
+    }
