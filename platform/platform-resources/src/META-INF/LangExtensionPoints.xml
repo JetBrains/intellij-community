@@ -614,6 +614,8 @@
                     interface="com.intellij.lang.documentation.DocumentationLinkResolver"/>
     <extensionPoint name="lang.symbolDocumentation" dynamic="true"
                     interface="com.intellij.lang.documentation.symbol.SymbolDocumentationTargetFactory"/>
+    <extensionPoint name="lang.psiDocumentation" dynamic="true"
+                    interface="com.intellij.lang.documentation.psi.PsiDocumentationTargetFactory"/>
   </extensionPoints>
 </idea-plugin>
 
