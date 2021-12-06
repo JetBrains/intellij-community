@@ -463,10 +463,14 @@ final class CompilationContextImpl implements CompilationContext {
 @CompileStatic
 final class BuildPathsImpl extends BuildPaths {
   BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, Path logDir) {
-    super(Path.of(communityHome).toAbsolutePath().normalize(), Path.of(buildOutputRoot).toAbsolutePath().normalize(), logDir.toAbsolutePath().normalize())
+    super(Path.of(communityHome).toAbsolutePath().normalize(),
+          Path.of(buildOutputRoot).toAbsolutePath().normalize(),
+          logDir.toAbsolutePath().normalize())
+
     this.projectHome = projectHome
     this.projectHomeDir = Path.of(projectHome).toAbsolutePath().normalize()
     this.jdkHome = jdkHome
-    artifacts = "${this.buildOutputRoot}/artifacts"
+    artifactDir = buildOutputDir.resolve("artifacts")
+    artifacts = FileUtilRt.toSystemIndependentName(artifactDir.toString())
   }
 }

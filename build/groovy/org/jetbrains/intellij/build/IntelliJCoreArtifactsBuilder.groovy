@@ -8,7 +8,6 @@ import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructur
 
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 /**
  * Builds artifacts which are used in Kotlin Compiler and UpSource
  *
@@ -49,21 +48,21 @@ final class IntelliJCoreArtifactsBuilder {
 
   void layoutIntelliJCore() {
     buildContext.messages.block("Build intellij-core") {
-      Path coreArtifactDir = Paths.get(buildContext.paths.artifacts, "core")
-      AntBuilder ant = buildContext.ant
+      Path coreArtifactDir = buildContext.paths.artifactDir.resolve("core")
       Files.createDirectories(coreArtifactDir)
 
+      AntBuilder ant = buildContext.ant
       ant.echo(message: "These artifacts are deprecated, use artifacts from IntelliJ Artifacts Repository (http://www.jetbrains.org/intellij/sdk/docs/reference_guide/intellij_artifacts.html) instead",
                file: "$coreArtifactDir/README.txt")
       processCoreLayout(coreArtifactDir, new ProjectStructureMapping(), true)
       ant.move(file: "$coreArtifactDir/annotations-java5.jar", tofile: "$coreArtifactDir/annotations.jar")
       buildContext.notifyArtifactWasBuilt(coreArtifactDir)
 
-      def intellijCoreZip = "${buildContext.paths.artifacts}/intellij-core-${buildContext.buildNumber}.zip"
-      ant.zip(destfile: intellijCoreZip) {
+      Path intellijCoreZip = buildContext.paths.artifactDir.resolve("intellij-core-${buildContext.buildNumber}.zip")
+      ant.zip(destfile: intellijCoreZip.toString()) {
         fileset(dir: coreArtifactDir.toString())
       }
-      buildContext.notifyArtifactBuilt(intellijCoreZip)
+      buildContext.notifyArtifactWasBuilt(intellijCoreZip)
     }
   }
 

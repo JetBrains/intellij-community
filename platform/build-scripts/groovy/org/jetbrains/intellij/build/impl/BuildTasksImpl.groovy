@@ -56,7 +56,7 @@ final class BuildTasksImpl extends BuildTasks {
 
   @Override
   void zipProjectSources() {
-    Path targetFile = Path.of("$buildContext.paths.artifacts/sources.zip")
+    Path targetFile = buildContext.paths.artifactDir.resolve("sources.zip")
     buildContext.executeStep(spanBuilder("build sources zip archive")
                                .setAttribute("path", buildContext.paths.buildOutputDir.relativize(targetFile).toString()),
                              BuildOptions.SOURCES_ARCHIVE_STEP, new Runnable() {
@@ -65,7 +65,6 @@ final class BuildTasksImpl extends BuildTasks {
         Files.createDirectories(Path.of(buildContext.paths.artifacts))
         Files.deleteIfExists(targetFile)
         doZipProjectSources(targetFile, buildContext)
-        buildContext.notifyArtifactBuilt(targetFile)
       }
     })
     logFreeDiskSpace("after building sources archive")

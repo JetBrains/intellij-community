@@ -67,15 +67,17 @@ abstract class BuildContext implements CompilationContext {
    */
   abstract @NotNull List<String> getAdditionalJvmArguments()
 
-  abstract void notifyArtifactBuilt(String artifactPath)
-
   abstract void notifyArtifactBuilt(Path artifactPath)
 
   abstract JpsModule findApplicationInfoModule()
 
   abstract @Nullable Path findFileInModuleSources(@NotNull String moduleName, @NotNull String relativePath)
 
-  abstract void signFile(String path, Map<String, String> options = Collections.emptyMap())
+  void signFile(@NotNull Path file, Map<String, String> options = Collections.emptyMap()) {
+    signFiles(List.of(file), options)
+  }
+
+  abstract void signFiles(@NotNull List<Path> files, Map<String, String> options = Collections.emptyMap())
 
   /**
    * Execute a build step or skip it if {@code stepId} is included into {@link BuildOptions#buildStepsToSkip}

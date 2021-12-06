@@ -85,7 +85,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         boolean process(File file) {
           if (signFileFilter.accept(file)) {
             buildContext.executeStep(TracerManager.spanBuilder("sign").setAttribute("file", file.toString()), BuildOptions.WIN_SIGN_STEP) {
-              buildContext.signFile(file.absolutePath, BuildOptions.WIN_SIGN_OPTIONS)
+              buildContext.signFile(file.toPath(), BuildOptions.WIN_SIGN_OPTIONS)
             }
           }
           return true
@@ -135,7 +135,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
         Path productJsonDir = buildContext.paths.tempDir.resolve("win.dist.product-info.json.exe")
         generateProductJson(productJsonDir, jreDir != null, buildContext)
         new ProductInfoValidator(buildContext).validateInDirectory(productJsonDir, "", List.of(winDistPath, jreDir), [])
-        exePath = new WinExeInstallerBuilder(buildContext, customizer, jreDir).buildInstaller(winDistPath, productJsonDir, '')
+        exePath = new WinExeInstallerBuilder(buildContext, customizer, jreDir).buildInstaller(winDistPath, productJsonDir, "", buildContext).toString()
       }
     })
 

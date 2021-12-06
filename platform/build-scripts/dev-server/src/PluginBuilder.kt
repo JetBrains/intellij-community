@@ -6,6 +6,8 @@ import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
+import org.jetbrains.intellij.build.impl.TracerManager
+import org.jetbrains.intellij.build.tasks.useWithScope
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -90,17 +92,23 @@ private fun buildPlugin(plugin: BuildItem, buildContext: BuildContext, projectOu
   }
 
   val moduleOutputPatcher = ModuleOutputPatcher()
-  Span.current().addEvent("build ${mainModule}")
+  TracerManager.spanBuilder("build plugin")
+    .setAttribute("mainModule", mainModule)
+    .setAttribute("dir", plugin.dir.fileName.toString())
+    .startSpan()
+    .useWithScope {
+      Span.current().addEvent("build ${mainModule}")
 
-  if (mainModule != "intellij.platform.builtInHelp") {
-    DistributionJARsBuilder.checkOutputOfPluginModules(mainModule, plugin.layout.moduleJars, plugin.layout.moduleExcludes, buildContext)
-  }
+      if (mainModule != "intellij.platform.builtInHelp") {
+        DistributionJARsBuilder.checkOutputOfPluginModules(mainModule, plugin.layout.moduleJars, plugin.layout.moduleExcludes, buildContext)
+      }
 
-  DistributionJARsBuilder.processLayout(plugin.layout,
-                                        plugin.dir,
-                                        true,
-                                        moduleOutputPatcher,
-                                        plugin.layout.moduleJars,
-                                        buildContext).fork().join()
-  plugin.markAsBuilt(projectOutDir)
+      DistributionJARsBuilder.layout(plugin.layout,
+                                     plugin.dir,
+                                     true,
+                                     moduleOutputPatcher,
+                                     plugin.layout.moduleJars,
+                                     buildContext)
+      plugin.markAsBuilt(projectOutDir)
+    }
 }

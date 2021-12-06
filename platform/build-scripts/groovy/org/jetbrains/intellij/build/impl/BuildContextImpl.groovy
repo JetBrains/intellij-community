@@ -285,13 +285,12 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  void signFile(String path, Map<String, String> options) {
-    if (proprietaryBuildTools.signTool != null) {
-      proprietaryBuildTools.signTool.signFile(path, this, options)
-      messages.info("Signed $path")
+  void signFiles(@NotNull List<Path> files, Map<String, String> options) {
+    if (proprietaryBuildTools.signTool == null) {
+      messages.warning("Sign tool isn't defined, $files won't be signed")
     }
     else {
-      messages.warning("Sign tool isn't defined, $path won't be signed")
+      proprietaryBuildTools.signTool.signFiles(files, this, options)
     }
   }
 
@@ -381,6 +380,7 @@ final class BuildContextImpl extends BuildContext {
     BuildContextImpl copy = new BuildContextImpl(compilationContextCopy, productProperties,
                                                  windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
                                                  proprietaryBuildTools, new ConcurrentLinkedQueue<>())
+    copy.paths.artifactDir = paths.artifactDir.resolve(productProperties.productCode)
     copy.paths.artifacts = paths.artifacts + "/" + productProperties.productCode
     copy.compilationContext.prepareForBuild()
     return copy

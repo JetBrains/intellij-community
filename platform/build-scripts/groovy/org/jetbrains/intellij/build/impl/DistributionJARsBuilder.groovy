@@ -534,12 +534,12 @@ final class DistributionJARsBuilder {
       .forEach(new Consumer<PluginLayout>() {
         @Override
         void accept(PluginLayout plugin) {
-          entries.addAll(processLayout(plugin,
-                                       context.paths.tempDir,
-                                       false,
-                                       moduleOutputPatcher,
-                                       plugin.moduleJars,
-                                       context).fork().join())
+          entries.addAll(layout(plugin,
+                                context.paths.tempDir,
+                                false,
+                                moduleOutputPatcher,
+                                plugin.moduleJars,
+                                context))
         }
       })
     entries.addAll(libDirLayout.join())
@@ -608,12 +608,15 @@ final class DistributionJARsBuilder {
                                                                              PlatformLayout platform,
                                                                              BuildContext context,
                                                                              boolean copyFiles) {
-    return processLayout(platform,
-                         context.paths.distAllDir,
-                         copyFiles,
-                         moduleOutputPatcher,
-                         platform.moduleJars,
-                         context)
+    return BuildHelper.getInstance(context).createTask(
+      spanBuilder("layout").setAttribute("path", context.paths.buildOutputDir.relativize(context.paths.distAllDir).toString()),
+      new Supplier<List<DistributionFileEntry>>() {
+        @Override
+        List<DistributionFileEntry> get() {
+          return layout(platform, context.paths.distAllDir, copyFiles, moduleOutputPatcher, platform.moduleJars, context)
+        }
+      }
+    )
   }
 
   ForkJoinTask<List<DistributionFileEntry>> createBuildBundledPluginTask(@NotNull Collection<PluginLayout> plugins,
@@ -635,7 +638,7 @@ final class DistributionJARsBuilder {
           }
           Span.current().setAttribute("satisfiableCount", pluginsToBundle.size())
           return buildPlugins(new ModuleOutputPatcher(), pluginsToBundle,
-                              context.paths.distAllDir.resolve(PLUGINS_DIRECTORY), context, buildPlatformTask, null)
+                              context.paths.distAllDir.resolve(PLUGINS_DIRECTORY), context, buildPlatformTask, null, false)
         }
       }
     )
@@ -685,7 +688,7 @@ final class DistributionJARsBuilder {
                                           .setAttribute("outDir", outDir.toString()), new Supplier<List<DistributionFileEntry>>() {
             @Override
             List<DistributionFileEntry> get() {
-              return buildPlugins(new ModuleOutputPatcher(), osSpecificPlugins, outDir, context, buildPlatformTask, null)
+              return buildPlugins(new ModuleOutputPatcher(), osSpecificPlugins, outDir, context, buildPlatformTask, null, true)
             }
           })
         }).collectMany { it.rawResult }
@@ -749,16 +752,14 @@ final class DistributionJARsBuilder {
       return null
     }
 
-    ProductModulesLayout productLayout = context.productProperties.productLayout
     return BuildHelper.getInstance(context).createSkippableTask(spanBuilder("build non-bundled plugins")
                                                                   .setAttribute("count", pluginsToPublish.size()),
                                                                 BuildOptions.NON_BUNDLED_PLUGINS_STEP,
                                                                 context, new Runnable() {
       @Override
       void run() {
-        Path nonBundledPluginsArtifacts = Path.of(context.paths.artifacts, "${context.applicationInfo.productCode}-plugins")
+        Path nonBundledPluginsArtifacts = context.paths.artifactDir.resolve(context.applicationInfo.productCode + "-plugins")
         Path autoUploadingDir = nonBundledPluginsArtifacts.resolve("auto-uploading")
-        boolean prepareCustomPluginRepositoryForPublishedPlugins = productLayout.prepareCustomPluginRepositoryForPublishedPlugins
 
         ForkJoinTask<List<kotlin.Pair<Path, byte[]>>> buildKeymapPluginsTask = buildKeymapPlugins(autoUploadingDir, context).fork()
 
@@ -774,6 +775,8 @@ final class DistributionJARsBuilder {
         List<PluginRepositorySpec> pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
         Predicate<PluginLayout> autoPublishPluginChecker = loadPluginAutoPublishList(context)
 
+        boolean prepareCustomPluginRepositoryForPublishedPlugins = context.productProperties.productLayout
+          .prepareCustomPluginRepositoryForPublishedPlugins
         buildPlugins(moduleOutputPatcher, pluginsToPublish, stageDir, context, buildPlatformLibTask, new BiConsumer<PluginLayout, Path>() {
           @Override
           void accept(PluginLayout plugin, Path pluginDir) {
@@ -783,9 +786,9 @@ final class DistributionJARsBuilder {
             Path moduleOutput = context.getModuleOutputDir(context.findRequiredModule(plugin.mainModule))
             Path pluginXmlPath = moduleOutput.resolve("META-INF/plugin.xml")
 
-            String pluginVersion =
-              Files.exists(pluginXmlPath) ? plugin.versionEvaluator.evaluate(pluginXmlPath, defaultPluginVersion, context) :
-              defaultPluginVersion
+            String pluginVersion = Files.exists(pluginXmlPath)
+              ? plugin.versionEvaluator.evaluate(pluginXmlPath, defaultPluginVersion, context)
+              : defaultPluginVersion
 
             Path destFile = targetDirectory.resolve("$pluginDirName-${pluginVersion}.zip")
             if (prepareCustomPluginRepositoryForPublishedPlugins) {
@@ -794,13 +797,10 @@ final class DistributionJARsBuilder {
             }
             dirToJar.add(Map.entry(pluginDirName, destFile))
           }
-        })
+        }, true)
 
         BuildHelper buildHelper = BuildHelper.getInstance(context)
         buildHelper.bulkZipWithPrefix(stageDir, dirToJar, compressPluginArchive)
-        for (Map.Entry<String, Path> item : dirToJar) {
-          context.notifyArtifactWasBuilt(item.value)
-        }
 
         PluginLayout helpPlugin = BuiltInHelpPlugin.helpPlugin(context, defaultPluginVersion)
         if (helpPlugin != null) {
@@ -811,17 +811,14 @@ final class DistributionJARsBuilder {
         }
 
         if (prepareCustomPluginRepositoryForPublishedPlugins) {
-          context.notifyArtifactWasBuilt(PluginRepositoryXmlGenerator.generate(pluginsToIncludeInCustomRepository,
-                                                                               nonBundledPluginsArtifacts,
-                                                                               context))
+          PluginRepositoryXmlGenerator.generate(pluginsToIncludeInCustomRepository, nonBundledPluginsArtifacts, context)
 
           List<PluginRepositorySpec> autoUploadingPlugins = pluginsToIncludeInCustomRepository
             .findAll { it.pluginZip.startsWith(autoUploadingDir) }
-          context.notifyArtifactWasBuilt(PluginRepositoryXmlGenerator.generate(autoUploadingPlugins, autoUploadingDir, context))
+          PluginRepositoryXmlGenerator.generate(autoUploadingPlugins, autoUploadingDir, context)
         }
 
         for (kotlin.Pair<Path, byte[]> item in buildKeymapPluginsTask.join()) {
-          context.notifyArtifactWasBuilt(item.first)
           if (prepareCustomPluginRepositoryForPublishedPlugins) {
             pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(item.first, item.second))
           }
@@ -847,13 +844,11 @@ final class DistributionJARsBuilder {
     context.messages.block(spanBuilder("build help plugin").setAttribute("dir", directory), new Supplier<Void>() {
       @Override
       Void get() {
-        buildPlugins(moduleOutputPatcher, List.of(helpPlugin), pluginsToPublishDir, context, null, null)
+        buildPlugins(moduleOutputPatcher, List.of(helpPlugin), pluginsToPublishDir, context, null, null, true)
         BuildHelper.zipWithPrefix(context, destFile, List.of(pluginsToPublishDir.resolve(directory)), directory, true)
         return null
       }
     })
-
-    context.notifyArtifactBuilt(destFile)
     return new PluginRepositorySpec(destFile, moduleOutputPatcher.getPatchedPluginXml(helpPlugin.mainModule))
   }
 
@@ -930,63 +925,85 @@ final class DistributionJARsBuilder {
   // you must not do use plugin content as a final result in a consumer, only after this method will be finished.
   // It will be changed once will be safe to build plugins in parallel.
   @NotNull
-  List<DistributionFileEntry> buildPlugins(ModuleOutputPatcher moduleOutputPatcher,
-                                           Collection<PluginLayout> pluginsToInclude,
-                                           Path targetDirectory,
-                                           BuildContext context,
-                                           @Nullable ForkJoinTask<?> buildPlatformTask,
-                                           @Nullable BiConsumer<PluginLayout, Path> pluginBuilt) {
-    List<DistributionFileEntry> entries = new ArrayList<>()
-
+  private List<DistributionFileEntry> buildPlugins(ModuleOutputPatcher moduleOutputPatcher,
+                                                   Collection<PluginLayout> pluginsToInclude,
+                                                   Path targetDirectory,
+                                                   BuildContext context,
+                                                   @Nullable ForkJoinTask<?> buildPlatformTask,
+                                                   @Nullable BiConsumer<PluginLayout, Path> pluginBuilt,
+                                                   boolean isParallel) {
     ScrambleTool scrambleTool = context.proprietaryBuildTools.scrambleTool
     boolean isScramblingSkipped = context.options.buildStepsToSkip.contains(BuildOptions.SCRAMBLING_STEP)
 
     List<ForkJoinTask<?>> scrambleTasks = new ArrayList<>()
 
-    for (PluginLayout plugin in pluginsToInclude) {
+    List<ForkJoinTask<List<DistributionFileEntry>>> tasks = new ArrayList<>()
+
+
+    BuildHelper buildHelper = BuildHelper.getInstance(context)
+    // must be as a closure, dont' use "for in" here - to capture supplier variables.
+    pluginsToInclude.each { PluginLayout plugin ->
       boolean isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
       if (!isHelpPlugin) {
         checkOutputOfPluginModules(plugin.mainModule, plugin.moduleJars, plugin.moduleExcludes, context)
-        PluginXmlPatcher.patchPluginXml(moduleOutputPatcher, plugin, pluginsToPublish, pluginXmlPatcher,  context)
+        PluginXmlPatcher.patchPluginXml(moduleOutputPatcher, plugin, pluginsToPublish, pluginXmlPatcher, context)
       }
 
       String directoryName = getActualPluginDirectoryName(plugin, context)
       Path pluginDir = targetDirectory.resolve(directoryName)
 
-      List<DistributionFileEntry> result = processLayout(plugin,
-                                                         pluginDir,
-                                                         true,
-                                                         moduleOutputPatcher,
-                                                         plugin.moduleJars,
-                                                         context).fork().join()
-      entries.addAll(result)
-
-      if (!plugin.pathsToScramble.isEmpty()) {
-        Attributes attributes = Attributes.of(AttributeKey.stringKey("plugin"), directoryName)
-        if (scrambleTool == null) {
-          Span.current().addEvent("skip scrambling plugin because scrambleTool isn't defined, but plugin defines paths to be scrambled",
-                                  attributes)
-        }
-        else if (isScramblingSkipped) {
-          Span.current().addEvent("skip scrambling plugin because step is disabled", attributes)
-        }
-        else {
-          ForkJoinTask<?> scrambleTask = scrambleTool.scramblePlugin(context, plugin, pluginDir, targetDirectory)
-          if (scrambleTask != null) {
-            // we can not start executing right now because the plugin can use other plugins in a scramble classpath
-            scrambleTasks.add(scrambleTask)
+      Supplier<List<DistributionFileEntry>> task = new Supplier<List<DistributionFileEntry>>() {
+        @Override
+        List<DistributionFileEntry> get() throws Exception {
+          List<DistributionFileEntry> result = layout(plugin,
+                                                      pluginDir,
+                                                      true,
+                                                      moduleOutputPatcher,
+                                                      plugin.moduleJars,
+                                                      context)
+          if (!plugin.pathsToScramble.isEmpty()) {
+            Attributes attributes = Attributes.of(AttributeKey.stringKey("plugin"), directoryName)
+            if (scrambleTool == null) {
+              Span.current().addEvent("skip scrambling plugin because scrambleTool isn't defined, but plugin defines paths to be scrambled",
+                                      attributes)
+            }
+            else if (isScramblingSkipped) {
+              Span.current().addEvent("skip scrambling plugin because step is disabled", attributes)
+            }
+            else {
+              ForkJoinTask<?> scrambleTask = scrambleTool.scramblePlugin(context, plugin, pluginDir, targetDirectory)
+              if (scrambleTask != null) {
+                // we can not start executing right now because the plugin can use other plugins in a scramble classpath
+                scrambleTasks.add(scrambleTask)
+              }
+            }
           }
+
+          if (pluginBuilt != null) {
+            pluginBuilt.accept(plugin, pluginDir)
+          }
+          return result
         }
       }
 
-      if (pluginBuilt != null) {
-        pluginBuilt.accept(plugin, pluginDir)
+      if (isParallel) {
+        tasks.add(buildHelper.createTask(spanBuilder("plugin")
+                                           .setAttribute("path", context.paths.buildOutputDir.relativize(targetDirectory).toString()),
+                                         task))
       }
+      else {
+        task.get()
+      }
+    }
+
+    List<DistributionFileEntry> entries = new ArrayList<>(tasks.size() * 2)
+    for (ForkJoinTask<List<DistributionFileEntry>> task : ForkJoinTask.invokeAll(tasks)) {
+      entries.addAll(task.rawResult)
     }
 
     if (!scrambleTasks.isEmpty()) {
       // scrambling can require classes from platform
-      BuildHelper.getInstance(context).span(spanBuilder("wait for platform lib for scrambling"), new Runnable() {
+      buildHelper.span(spanBuilder("wait for platform lib for scrambling"), new Runnable() {
         @Override
         void run() {
           buildPlatformTask?.join()
@@ -1064,78 +1081,71 @@ final class DistributionJARsBuilder {
    * @param moduleJars mapping from JAR path relative to 'lib' directory to names of modules
    * @param additionalResources pairs of resources files and corresponding relative output paths
    */
-  static ForkJoinTask<List<DistributionFileEntry>> processLayout(BaseLayout layout,
-                                                                 Path targetDirectory,
-                                                                 boolean copyFiles,
-                                                                 ModuleOutputPatcher moduleOutputPatcher,
-                                                                 MultiMap<String, String> moduleJars,
-                                                                 BuildContext context) {
+
+  static List<DistributionFileEntry> layout(BaseLayout layout,
+                                            Path targetDirectory,
+                                            boolean copyFiles,
+                                            ModuleOutputPatcher moduleOutputPatcher,
+                                            MultiMap<String, String> moduleJars,
+                                            BuildContext context) {
     BuildHelper buildHelper = BuildHelper.getInstance(context)
-    return buildHelper.createTask(
-      spanBuilder("layout").setAttribute("path", context.paths.buildOutputDir.relativize(targetDirectory).toString()),
-      new Supplier<List<DistributionFileEntry>>() {
+    if (copyFiles) {
+      checkModuleExcludes(layout.moduleExcludes, context)
+    }
+
+    Collection<ForkJoinTask<Collection<DistributionFileEntry>>> tasks =
+      new ArrayList<ForkJoinTask<Collection<DistributionFileEntry>>>(3)
+
+    // patchers must be executed _before_ pack because patcher patches module output
+    if (copyFiles && layout instanceof PluginLayout && !layout.patchers.isEmpty()) {
+      List<BiConsumer<ModuleOutputPatcher, BuildContext>> patchers = layout.patchers
+      buildHelper.span(spanBuilder("execute custom patchers").setAttribute("count", patchers.size()), new Runnable() {
         @Override
-        List<DistributionFileEntry> get() {
-          if (copyFiles) {
-            checkModuleExcludes(layout.moduleExcludes, context)
+        void run() {
+          for (BiConsumer<ModuleOutputPatcher, BuildContext> patcher : patchers) {
+            patcher.accept(moduleOutputPatcher, context)
           }
-
-          Collection<ForkJoinTask<Collection<DistributionFileEntry>>> tasks =
-            new ArrayList<ForkJoinTask<Collection<DistributionFileEntry>>>(3)
-
-          // patchers must be executed _before_ pack because patcher patches module output
-          if (copyFiles && layout instanceof PluginLayout && !layout.patchers.isEmpty()) {
-            List<BiConsumer<ModuleOutputPatcher, BuildContext>> patchers = layout.patchers
-            buildHelper.span(spanBuilder("execute custom patchers").setAttribute("count", patchers.size()), new Runnable() {
-              @Override
-              void run() {
-                for (BiConsumer<ModuleOutputPatcher, BuildContext> patcher : patchers) {
-                  patcher.accept(moduleOutputPatcher, context)
-                }
-              }
-            })
-          }
-
-          tasks.add(buildHelper.createTask(spanBuilder("pack"), new Supplier<Collection<DistributionFileEntry>>() {
-            @Override
-            Collection<DistributionFileEntry> get() {
-              Map<String, List<String>> actualModuleJars = new LinkedHashMap<>()
-              for (Map.Entry<String, Collection<String>> entry in moduleJars.entrySet()) {
-                Collection<String> modules = entry.value
-                String jarPath = getActualModuleJarPath(entry.key, modules, layout.explicitlySetJarPaths, context)
-                actualModuleJars.computeIfAbsent(jarPath, { new ArrayList<>() }).addAll(modules)
-              }
-              return JarPackager.pack(actualModuleJars,
-                                      targetDirectory.resolve("lib"),
-                                      layout,
-                                      moduleOutputPatcher,
-                                      !copyFiles,
-                                      context)
-            }
-          }))
-
-          if (copyFiles && (!layout.resourcePaths.isEmpty() || (layout instanceof PluginLayout && !layout.resourceGenerators.isEmpty()))) {
-            tasks.add(buildHelper.createTask(spanBuilder("pack additional resources"), new Supplier<Collection<DistributionFileEntry>>() {
-              @Override
-              Collection<DistributionFileEntry> get() {
-                layoutAdditionalResources(layout, context, targetDirectory, buildHelper)
-                return Collections.<DistributionFileEntry> emptyList()
-              }
-            }))
-          }
-
-          if (!layout.includedArtifacts.isEmpty()) {
-            tasks.add(buildHelper.createTask(spanBuilder("pack artifacts"), new Supplier<Collection<DistributionFileEntry>>() {
-              @Override
-              Collection<DistributionFileEntry> get() {
-                return layoutArtifacts(layout, context, copyFiles, targetDirectory)
-              }
-            }))
-          }
-          return ForkJoinTask.invokeAll(tasks).collectMany { it.rawResult }
         }
+      })
+    }
+
+    tasks.add(buildHelper.createTask(spanBuilder("pack"), new Supplier<Collection<DistributionFileEntry>>() {
+      @Override
+      Collection<DistributionFileEntry> get() {
+        Map<String, List<String>> actualModuleJars = new LinkedHashMap<>()
+        for (Map.Entry<String, Collection<String>> entry in moduleJars.entrySet()) {
+          Collection<String> modules = entry.value
+          String jarPath = getActualModuleJarPath(entry.key, modules, layout.explicitlySetJarPaths, context)
+          actualModuleJars.computeIfAbsent(jarPath, { new ArrayList<>() }).addAll(modules)
+        }
+        return JarPackager.pack(actualModuleJars,
+                                targetDirectory.resolve("lib"),
+                                layout,
+                                moduleOutputPatcher,
+                                !copyFiles,
+                                context)
       }
-    )
+    }))
+
+    if (copyFiles && (!layout.resourcePaths.isEmpty() || (layout instanceof PluginLayout && !layout.resourceGenerators.isEmpty()))) {
+      tasks.add(buildHelper.createTask(spanBuilder("pack additional resources"), new Supplier<Collection<DistributionFileEntry>>() {
+        @Override
+        Collection<DistributionFileEntry> get() {
+          layoutAdditionalResources(layout, context, targetDirectory, buildHelper)
+          return Collections.<DistributionFileEntry> emptyList()
+        }
+      }))
+    }
+
+    if (!layout.includedArtifacts.isEmpty()) {
+      tasks.add(buildHelper.createTask(spanBuilder("pack artifacts"), new Supplier<Collection<DistributionFileEntry>>() {
+        @Override
+        Collection<DistributionFileEntry> get() {
+          return layoutArtifacts(layout, context, copyFiles, targetDirectory)
+        }
+      }))
+    }
+    return ForkJoinTask.invokeAll(tasks).collectMany { it.rawResult }
   }
 
   private static void layoutAdditionalResources(BaseLayout layout,

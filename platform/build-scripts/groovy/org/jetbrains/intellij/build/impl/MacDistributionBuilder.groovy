@@ -203,16 +203,11 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                               .setAttribute("arch", arch.name()), BuildOptions.MAC_SIGN_STEP, new Runnable() {
           @Override
           void run() {
-            binariesToSign.each { relativePath ->
-              context.messages.progress("Signing $relativePath")
-              def fullPath = additional.resolve(relativePath)
-              Map<String, String> options = [
-                "mac_codesign_options": "runtime",
-                "mac_codesign_force"  : "true",
-                "mac_codesign_deep"   : "true",
-              ]
-              context.signFile(fullPath.toString(), options)
-            }
+            context.signFiles(binariesToSign.collect { additional.resolve(it) }, Map.of(
+              "mac_codesign_options", "runtime",
+              "mac_codesign_force", "true",
+              "mac_codesign_deep", "true",
+              ))
           }
         })
       }
