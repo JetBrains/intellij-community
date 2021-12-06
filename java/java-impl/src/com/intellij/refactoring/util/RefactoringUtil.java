@@ -9,6 +9,7 @@ import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.java.refactoring.JavaRefactoringBundle;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -24,6 +25,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.javadoc.PsiDocTagValue;
@@ -1177,8 +1179,12 @@ public final class RefactoringUtil {
       paramTag.delete();
     }
     for (PsiDocTag psiDocTag : newTags) {
-      anchor = anchor != null && anchor.isValid() ? docComment.addAfter(psiDocTag, anchor) : docComment.add(psiDocTag);
+      anchor = anchor != null && anchor.isValid()
+               ? docComment.addAfter(psiDocTag, anchor)
+               : docComment.add(psiDocTag);
     }
+    CommentFormatter formatter = new CommentFormatter(method.getContainingFile());
+    formatter.processComment(docComment.getNode());
   }
 
   @NotNull

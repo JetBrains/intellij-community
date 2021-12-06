@@ -2,7 +2,8 @@ class X {
 
   /**
    * documentation
+   *
    * @return
    */
-  public int <caret>mymethod() { }
+  public int mymethod() { }
 }

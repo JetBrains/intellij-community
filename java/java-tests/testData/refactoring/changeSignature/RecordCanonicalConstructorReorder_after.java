@@ -1,12 +1,14 @@
 /**
- * Record javadoc 
+ * Record javadoc
+ *
  * @param y y
  * @param z z
  * @param x x
  */
 record Rec(int y, int z, int x) {
   /**
-   * Constructor javadoc 
+   * Constructor javadoc
+   *
    * @param y y
    * @param z z
    * @param x x

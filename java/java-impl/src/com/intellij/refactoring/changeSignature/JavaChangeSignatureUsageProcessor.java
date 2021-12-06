@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.impl.source.codeStyle.javadoc.CommentFormatter;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -1078,6 +1079,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
           methodDocComment.add(JavaPsiFacade.getElementFactory(method.getProject()).createDocTagFromText("@return"));
         }
       }
+      CommentFormatter formatter = new CommentFormatter(method.getContainingFile());
+      formatter.processComment(methodDocComment.getNode());
     }
   }
 
