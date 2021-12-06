@@ -61,7 +61,7 @@ internal class DocumentationUI(
     scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(editorPane::applyFontProps))
     linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, browser::navigateByLink)
 
-    browser.snapshooter = ::uiSnapshot
+    browser.ui = this
     Disposer.register(this, browser)
     Disposer.register(this, browser.addStateListener { request, result, _ ->
       applyStateLater(request, result)
@@ -195,7 +195,7 @@ internal class DocumentationUI(
     }
   }
 
-  private fun uiSnapshot(): UISnapshot {
+  fun uiSnapshot(): UISnapshot {
     val viewRect = scrollPane.viewport.viewRect
     val highlightedLink = linkHandler.highlightedLink
     return {
