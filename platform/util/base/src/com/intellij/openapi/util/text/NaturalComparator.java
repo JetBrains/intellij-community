@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.text;
 
 import org.jetbrains.annotations.Contract;
@@ -33,7 +33,7 @@ public final class NaturalComparator implements Comparator<String> {
     for (; i < length1 && j < length2; i++, j++) {
       final char ch1 = s1.charAt(i);
       final char ch2 = s2.charAt(j);
-      if ((StringUtil.isDecimalDigit(ch1) || ch1 == ' ') && (StringUtil.isDecimalDigit(ch2) || ch2 == ' ')) {
+      if ((Strings.isDecimalDigit(ch1) || ch1 == ' ') && (Strings.isDecimalDigit(ch2) || ch2 == ' ')) {
         final int start1 = skipChar(s1, skipChar(s1, i, length1, ' '), length1, '0');
         final int start2 = skipChar(s2, skipChar(s2, j, length2, ' '), length2, '0');
 
@@ -87,11 +87,11 @@ public final class NaturalComparator implements Comparator<String> {
     // transitivity fix, otherwise can fail when comparing strings with characters between ' ' and '0' (e.g. '#')
     if (ch1 == ' ' && ch2 > ' ' && ch2 < '0') return +1;
     if (ch2 == ' ' && ch1 > ' ' && ch1 < '0') return -1;
-    return StringUtil.compare(ch1, ch2, ignoreCase);
+    return Strings.compare(ch1, ch2, ignoreCase);
   }
 
   private static int skipDigits(String s, int start, int end) {
-    while (start < end && StringUtil.isDecimalDigit(s.charAt(start))) start++;
+    while (start < end && Strings.isDecimalDigit(s.charAt(start))) start++;
     return start;
   }
 
