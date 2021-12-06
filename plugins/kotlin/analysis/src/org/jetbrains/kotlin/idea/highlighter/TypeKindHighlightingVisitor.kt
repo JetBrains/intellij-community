@@ -6,13 +6,22 @@ import com.intellij.codeInsight.daemon.impl.analysis.HighlightInfoHolder
 import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.psi.util.parentOfType
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.highlighter.KotlinHighlightingColors.*
+import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
+import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
+import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypeAndBranch
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.FakeCallableDescriptorForObject
+import org.jetbrains.kotlin.types.DefinitelyNotNullType
 
 internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingContext: BindingContext) :
     AfterAnalysisHighlightingVisitor(holder, bindingContext) {
@@ -21,6 +30,14 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
         val parent = expression.parent
         if (parent is KtSuperExpression || parent is KtThisExpression) {
             // Do nothing: 'super' and 'this' are highlighted as a keyword
+            return
+        }
+
+        val intersectionType = expression.getParentOfType<KtIntersectionType>(strict = true)
+        val resolvedType = bindingContext[BindingContext.TYPE, intersectionType?.parent as? KtTypeReference]
+        if (intersectionType != null && resolvedType is DefinitelyNotNullType) {
+            // Do nothing: this name is a component of a definitely non-nullable type
+            // that will be highlighted as a whole in `visitIntersectionType`
             return
         }
 
@@ -95,6 +112,15 @@ internal class TypeKindHighlightingVisitor(holder: HighlightInfoHolder, bindingC
 
     override fun visitDynamicType(type: KtDynamicType) {
         // Do nothing: 'dynamic' is highlighted as a keyword
+    }
+
+    override fun visitIntersectionType(type: KtIntersectionType) {
+        val parent = type.parent as? KtTypeReference
+        val kotlinType = bindingContext[BindingContext.TYPE, parent]
+        if (parent != null && kotlinType is DefinitelyNotNullType) {
+            highlightName(parent, TYPE_PARAMETER)
+        }
+        super.visitIntersectionType(type)
     }
 
     private fun calculateClassReferenceAttributes(target: ClassDescriptor): TextAttributesKey {
