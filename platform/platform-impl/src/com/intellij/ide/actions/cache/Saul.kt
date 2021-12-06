@@ -16,6 +16,7 @@ import com.intellij.openapi.util.ModificationTracker
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
+import java.util.concurrent.ConcurrentLinkedQueue
 
 @Service
 internal class Saul {
@@ -47,9 +48,7 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
     val LOG = logger<RecoveryWorker>()
   }
 
-  private val actionSeq: Iterator<RecoveryAction> = actions.iterator()
-  @Volatile
-  private var next: RecoveryAction? = null
+  private val actionSeq = ConcurrentLinkedQueue(actions)
 
   fun start(project: Project) {
     // we expect that at least one action recovery exist: cache invalidation
@@ -66,7 +65,7 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
 
   private fun askUserToContinue(project: Project, previousRecoveryAction: RecoveryAction, idx: Int) {
     if (!hasNextRecoveryAction(project)) return
-    val recoveryAction = actionSeq.next()
+    val recoveryAction = nextRecoveryAction(project)
     val next = idx + 1
 
     val notification = NotificationGroupManager.getInstance().getNotificationGroup("Cache Recovery")
@@ -92,20 +91,18 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
   }
 
   private fun hasNextRecoveryAction(project: Project): Boolean {
-    if (next != null) return true
-    while (actionSeq.hasNext()) {
-      next = actionSeq.next()
-      if (next!!.canBeApplied(project)) {
+    while (actionSeq.isNotEmpty()) {
+      if (actionSeq.peek().canBeApplied(project)) {
         return true
       }
+      actionSeq.poll()
     }
-    next = null
     return false
   }
 
   private fun nextRecoveryAction(project: Project): RecoveryAction {
     assert(hasNextRecoveryAction(project))
-    return next!!
+    return actionSeq.poll()
   }
 
   private fun reportStoppedToFus(project: Project) = CacheRecoveryUsageCollector.recordGuideStoppedEvent(project)
