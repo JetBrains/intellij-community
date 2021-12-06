@@ -157,8 +157,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       return
     }
 
-    boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true) &&
-                       !SystemProperties.getBooleanProperty("build.is.personal", false)
+    boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true)
     BuildHelper.invokeAllSettled(List.of(
       createBuildForArchTask(JvmArchitecture.x64, macZip, notarize, customizer, context),
       createBuildForArchTask(JvmArchitecture.aarch64, macZip, notarize, customizer, context),
