@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.perf.synthetic
 
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.usages.Usage
-import org.jetbrains.kotlin.idea.perf.Parameter
+import org.jetbrains.kotlin.idea.testFramework.Parameter
 import org.jetbrains.kotlin.idea.perf.profilers.ProfilerConfig
 import org.jetbrains.kotlin.idea.perf.suite.DefaultProfile
 import org.jetbrains.kotlin.idea.perf.suite.PerformanceSuite
@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.idea.perf.suite.StatsScopeConfig
 import org.jetbrains.kotlin.idea.perf.suite.suite
 import org.jetbrains.kotlin.idea.perf.util.*
 import org.jetbrains.kotlin.idea.perf.util.registerLoadingErrorsHeadlessNotifier
-import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 
@@ -61,32 +60,36 @@ open class PerformanceStressTest : UsefulTestCase() {
                     descriptor {
                         name(name)
 
-                        for (index in 1..2) {
-                            kotlinFile("DataClass") {
-                                pkg("pkg$index")
+                        module {
+                            kotlinStandardLibrary()
 
-                                topClass("DataClass") {
-                                    dataClass()
+                            for (index in 1..2) {
+                                kotlinFile("DataClass") {
+                                    pkg("pkg$index")
 
-                                    ctorParameter(Parameter("name", "String"))
-                                    ctorParameter(Parameter("value", "Int"))
+                                    topClass("DataClass") {
+                                        dataClass()
+
+                                        ctorParameter(Parameter("name", "String"))
+                                        ctorParameter(Parameter("value", "Int"))
+                                    }
                                 }
                             }
-                        }
 
-                        for (pkgIndex in 1..numberOfPackagesWithCandidates) {
-                            kotlinFile("SomeService") {
-                                pkg("pkgX$pkgIndex")
-                                // use pkg1 for `pkgX1.SomeService`, and pkg2 for all other `pkgX*.SomeService`
-                                import("pkg${if (pkgIndex == 1) 1 else 2}.DataClass")
+                            for (pkgIndex in 1..numberOfPackagesWithCandidates) {
+                                kotlinFile("SomeService") {
+                                    pkg("pkgX$pkgIndex")
+                                    // use pkg1 for `pkgX1.SomeService`, and pkg2 for all other `pkgX*.SomeService`
+                                    import("pkg${if (pkgIndex == 1) 1 else 2}.DataClass")
 
-                                topClass("SomeService") {
-                                    for (index in 1..numberOfFuns) {
-                                        function("foo$index") {
-                                            returnType("DataClass")
-                                            param("data", "DataClass")
+                                    topClass("SomeService") {
+                                        for (index in 1..numberOfFuns) {
+                                            function("foo$index") {
+                                                returnType("DataClass")
+                                                param("data", "DataClass")
 
-                                            body("return DataClass(data.name, data.value + $index)")
+                                                body("return DataClass(data.name, data.value + $index)")
+                                            }
                                         }
                                     }
                                 }
@@ -100,7 +103,7 @@ open class PerformanceStressTest : UsefulTestCase() {
                         rebuildProject()
                     }
 
-                    fixture("src/pkg1/DataClass.kt").use { fixture ->
+                    fixture("pkg1/DataClass.kt").use { fixture ->
                         with(fixture.cursorConfig) { marker = "DataClass" }
 
                         with(config) {
@@ -141,34 +144,39 @@ open class PerformanceStressTest : UsefulTestCase() {
                 project {
                     descriptor {
                         name("kt-35135")
-                        buildGradle(IDEA_TEST_DATA_DIR.resolve("perfTest/simpleTemplate/"))
 
-                        kotlinFile("OverloadX") {
-                            pkg("pkg")
+                        module {
+                            kotlinStandardLibrary()
 
-                            topClass("OverloadX") {
-                                openClass()
+                            src("src/main/java/")
 
-                                for (types in generatedTypes) {
-                                    function("foo") {
-                                        openFunction()
-                                        returnType("String")
-                                        for ((index, type) in types.withIndex()) {
-                                            param("arg$index", type)
+                            kotlinFile("OverloadX") {
+                                pkg("pkg")
+
+                                topClass("OverloadX") {
+                                    openClass()
+
+                                    for (types in generatedTypes) {
+                                        function("foo") {
+                                            openFunction()
+                                            returnType("String")
+                                            for ((index, type) in types.withIndex()) {
+                                                param("arg$index", type)
+                                            }
+                                            body("TODO()")
                                         }
-                                        body("TODO()")
                                     }
                                 }
                             }
-                        }
 
-                        kotlinFile("SomeClass") {
-                            pkg("pkg")
+                            kotlinFile("SomeClass") {
+                                pkg("pkg")
 
-                            topClass("SomeClass") {
-                                superClass("OverloadX")
+                                topClass("SomeClass") {
+                                    superClass("OverloadX")
 
-                                body("ov")
+                                    body("ov")
+                                }
                             }
                         }
                     }
@@ -211,5 +219,36 @@ open class PerformanceStressTest : UsefulTestCase() {
         }
         results.addAll(newResults)
         generateTypes(types, results, index + 1, maxCount)
+    }
+
+    fun testManyModulesExample() {
+        suiteWithConfig("10 modules", "10 modules") {
+            app {
+                warmUpProject()
+
+                project {
+                    descriptor {
+                        name("ten_modules")
+
+                        for(index in 0 until 10) {
+                            module("module$index") {
+                                kotlinStandardLibrary()
+
+                                for (libIndex in 0 until 10) {
+                                    library("log4j$libIndex", "log4j:log4j:1.2.17")
+                                }
+
+                                kotlinFile("SomeService$index") {
+                                    pkg("pkg")
+
+                                    topClass("SomeService$index") {
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }

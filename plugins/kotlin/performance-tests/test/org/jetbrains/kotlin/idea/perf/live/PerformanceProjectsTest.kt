@@ -59,17 +59,21 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
             myProject = perfOpenProject(stats = hwStats) {
                 name("helloKotlin")
 
-                kotlinFile("HelloMain") {
-                    topFunction("main") {
-                        param("args", "Array<String>")
-                        body("""println("Hello World!")""")
-                    }
-                }
+                module {
+                    kotlinStandardLibrary()
 
-                kotlinFile("HelloMain2") {
-                    topFunction("main") {
-                        param("args", "Array<String>")
-                        body("""println("Hello World!")""")
+                    kotlinFile("HelloMain") {
+                        topFunction("main") {
+                            param("args", "Array<String>")
+                            body("""println("Hello World!")""")
+                        }
+                    }
+
+                    kotlinFile("HelloMain2") {
+                        topFunction("main") {
+                            param("args", "Array<String>")
+                            body("""println("Hello World!")""")
+                        }
                     }
                 }
             }

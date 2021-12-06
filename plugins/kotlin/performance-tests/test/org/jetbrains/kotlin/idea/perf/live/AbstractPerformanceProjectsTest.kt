@@ -23,7 +23,6 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.perf.ProjectBuilder
 import org.jetbrains.kotlin.idea.testFramework.Stats
 import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP
 import org.jetbrains.kotlin.idea.perf.suite.PerformanceSuite.ApplicationScope.Companion.initApp

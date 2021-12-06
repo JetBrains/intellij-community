@@ -253,13 +253,12 @@ class Fixture(
             return Fixture(fileName, project, editor, file)
         }
 
-        fun openFixture(project: Project, file: VirtualFile): Fixture {
+        fun openFixture(project: Project, file: VirtualFile, fileName: String? = null): Fixture {
             val fileInEditor = openInEditor(project, file)
             val psiFile = fileInEditor.psiFile
             val editorFactory = EditorFactory.getInstance()
             val editor = editorFactory.getEditors(fileInEditor.document, project)[0]
-            val fileName = project.relativePath(file)
-            return Fixture(fileName, project, editor, psiFile)
+            return Fixture(fileName ?: project.relativePath(file), project, editor, psiFile)
         }
 
         private fun baseName(name: String): String {

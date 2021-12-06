@@ -3,7 +3,6 @@
 package org.jetbrains.kotlin.idea.testFramework
 
 import org.jetbrains.kotlin.idea.perf.live.AbstractPerformanceProjectsTest
-import org.jetbrains.kotlin.idea.perf.openProject
 
 /**
  * warm up: open simple `hello world` project
@@ -17,10 +16,14 @@ class WarmUpProject(private val stats: Stats) {
             openProject {
                 name("helloWorld")
 
-                kotlinFile("HelloMain") {
-                    topFunction("main") {
-                        param("args", "Array<String>")
-                        body("""println("Hello World!")""")
+                module {
+                    kotlinStandardLibrary()
+
+                    kotlinFile("HelloMain") {
+                        topFunction("main") {
+                            param("args", "Array<String>")
+                            body("""println("Hello World!")""")
+                        }
                     }
                 }
             }

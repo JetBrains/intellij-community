@@ -29,7 +29,7 @@ import com.intellij.util.containers.toArray
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
-import org.jetbrains.kotlin.idea.perf.ProjectBuilder
+import org.jetbrains.kotlin.idea.testFramework.ProjectBuilder
 import org.jetbrains.kotlin.idea.perf.util.ExternalProject
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.disableAllInspections
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.enableAllInspections
@@ -129,10 +129,14 @@ class PerformanceSuite {
             descriptor {
                 name("helloWorld")
 
-                kotlinFile("HelloMain") {
-                    topFunction("main") {
-                        param("args", "Array<String>")
-                        body("""println("Hello World!")""")
+                module {
+                    kotlinStandardLibrary()
+
+                    kotlinFile("HelloMain") {
+                        topFunction("main") {
+                            param("args", "Array<String>")
+                            body("""println("Hello World!")""")
+                        }
                     }
                 }
             }
@@ -230,14 +234,13 @@ class PerformanceSuite {
             Fixture.openInEditor(project, path).psiFile.also { openFiles.add(it.virtualFile) }
 
         fun fixture(path: String, updateScriptDependenciesIfNeeded: Boolean = true): Fixture {
-            return fixture(Fixture.projectFileByName(project, path).virtualFile, updateScriptDependenciesIfNeeded)
+            return fixture(Fixture.projectFileByName(project, path).virtualFile, path, updateScriptDependenciesIfNeeded)
         }
 
-        fun fixture(file: VirtualFile, updateScriptDependenciesIfNeeded: Boolean = true): Fixture {
-            val fixture = Fixture.openFixture(project, file)
+        fun fixture(file: VirtualFile, fileName: String? = null, updateScriptDependenciesIfNeeded: Boolean = true): Fixture {
+            val fixture = Fixture.openFixture(project, file, fileName)
             openFiles.add(fixture.vFile)
-            val fileName = file.name
-            if (fileName.endsWith(KotlinFileType.EXTENSION)) {
+            if (file.name.endsWith(KotlinFileType.EXTENSION)) {
                 assert(fixture.psiFile is KtFile) {
                     "$file expected to be a Kotlin file"
                 }
@@ -303,7 +306,7 @@ class PerformanceSuite {
         }
 
         fun combineName(fixture: Fixture, vararg name: String) =
-            listOf(name.joinToString("-"), fixture.simpleFilename())
+            listOf(name.joinToString("-"), fixture.fileName)
                 .filter { it.isNotEmpty() }
                 .joinToString(" ")
 
@@ -332,6 +335,7 @@ class PerformanceSuite {
         fun descriptor(descriptor: ProjectBuilder.() -> Unit) {
             this.descriptor = ProjectBuilder().apply(descriptor)
         }
+
     }
 
     class ProjectScope(config: ProjectScopeConfig, app: ApplicationScope) : AbstractProjectScope(app) {
