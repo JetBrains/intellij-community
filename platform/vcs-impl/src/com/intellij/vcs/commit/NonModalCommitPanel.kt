@@ -6,8 +6,6 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.editor.colors.EditorColorsListener
 import com.intellij.openapi.editor.colors.EditorColorsScheme
-import com.intellij.openapi.editor.event.DocumentEvent
-import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComponentContainer
@@ -35,7 +33,6 @@ import com.intellij.util.ui.JBUI.scale
 import com.intellij.util.ui.UIUtil.getTreeBackground
 import com.intellij.util.ui.UIUtil.uiTraverser
 import com.intellij.util.ui.components.BorderLayoutPanel
-import org.jetbrains.annotations.Nls
 import java.awt.LayoutManager
 import java.awt.Point
 import javax.swing.JComponent
@@ -69,7 +66,7 @@ abstract class NonModalCommitPanel(
     component.isOpaque = false
   }
 
-  val commitMessage: CommitMessage = LoggingCommitMessage(project, false, false, true, message("commit.message.placeholder")).apply {
+  val commitMessage = CommitMessage(project, false, false, true, message("commit.message.placeholder")).apply {
     editorField.addSettingsProvider { it.setBorder(emptyLeft(6)) }
   }
 
@@ -174,33 +171,3 @@ private fun ActionToolbar.getShowCommitOptionsButton(): JComponent? =
   uiTraverser(component)
     .filter(ActionButton::class.java)
     .find { it.action is ShowCommitOptionsAction }
-
-private class LoggingCommitMessage(
-  project: Project,
-  withSeparator: Boolean,
-  showToolbar: Boolean,
-  runInspections: Boolean,
-  messagePlaceholder: @Nls String?
-) : CommitMessage(project, withSeparator, showToolbar, runInspections, messagePlaceholder) {
-  private var isDuringModelUpdate = false
-
-  init {
-    editorField.addDocumentListener(object : DocumentListener {
-      override fun beforeDocumentChange(event: DocumentEvent) {
-        if (!isDuringModelUpdate) {
-          CommitSessionCollector.getInstance(project).logCommitMessageTyped()
-        }
-      }
-    })
-  }
-
-  override fun setText(text: String?) {
-    isDuringModelUpdate = true
-    try {
-      super.setText(text)
-    }
-    finally {
-      isDuringModelUpdate = false
-    }
-  }
-}

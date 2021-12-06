@@ -35,19 +35,18 @@ import javax.swing.JTree
 
 class CommitSessionCounterUsagesCollector : CounterUsagesCollector() {
   companion object {
-    val GROUP = EventLogGroup("commit.interactions", 1)
+    val GROUP = EventLogGroup("commit.interactions", 2)
 
-    val FILES_TOTAL = EventFields.Int("files_total")
-    val FILES_INCLUDED = EventFields.Int("files_included")
-    val UNVERSIONED_TOTAL = EventFields.Int("unversioned_total")
-    val UNVERSIONED_INCLUDED = EventFields.Int("unversioned_included")
+    val FILES_TOTAL = EventFields.RoundedInt("files_total")
+    val FILES_INCLUDED = EventFields.RoundedInt("files_included")
+    val UNVERSIONED_TOTAL = EventFields.RoundedInt("unversioned_total")
+    val UNVERSIONED_INCLUDED = EventFields.RoundedInt("unversioned_included")
 
     val SESSION = GROUP.registerIdeActivity("session",
                                             startEventAdditionalFields = arrayOf(FILES_TOTAL, FILES_INCLUDED,
                                                                                  UNVERSIONED_TOTAL, UNVERSIONED_INCLUDED),
                                             finishEventAdditionalFields = arrayOf())
 
-    val COMMIT_MESSAGE_TYPING = GROUP.registerEvent("typing")
     val EXCLUDE_FILE = GROUP.registerEvent("exclude.file", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
     val INCLUDE_FILE = GROUP.registerEvent("include.file", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
     val SELECT_FILE = GROUP.registerEvent("select.item", EventFields.InputEventByAnAction, EventFields.InputEventByMouseEvent)
@@ -109,11 +108,6 @@ class CommitSessionCollector(val project: Project) {
   fun logFileSelected(event: AnActionEvent) {
     if (!shouldTrackEvents()) return
     CommitSessionCounterUsagesCollector.SELECT_FILE.log(project, event, null)
-  }
-
-  fun logCommitMessageTyped() {
-    if (!shouldTrackEvents()) return
-    CommitSessionCounterUsagesCollector.COMMIT_MESSAGE_TYPING.log(project)
   }
 
   fun logInclusionToggle(excluded: Boolean, event: AnActionEvent) {
