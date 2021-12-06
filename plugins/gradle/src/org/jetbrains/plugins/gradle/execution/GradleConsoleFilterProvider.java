@@ -39,10 +39,10 @@ import static java.lang.String.format;
 
 public class GradleConsoleFilterProvider implements ConsoleFilterProvider {
   /*
-   * `file:line`.
+   * `file:line` or `file:line:column`.
    */
   @Language("RegExp")
-  private static final @NonNls String EXPRESSION = format("%s:%s", FILE_PATH_MACROS, LINE_MACROS);
+  private static final @NonNls String EXPRESSION = format("%s:%s(?::%s)?", FILE_PATH_MACROS, LINE_MACROS, COLUMN_MACROS);
 
   @Override
   public @NotNull Filter @NotNull [] getDefaultFilters(final @NotNull Project project) {

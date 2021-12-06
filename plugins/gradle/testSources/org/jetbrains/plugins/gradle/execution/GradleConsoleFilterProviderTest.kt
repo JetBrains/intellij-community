@@ -113,6 +113,14 @@ class GradleConsoleFilterProviderTest : LightPlatform4TestCase() {
           assertThat(resultItem.highlightStartOffset).isZero
           assertThat(resultItem.highlightEndOffset).isEqualTo(absolutePath.length + 3)
         })
+
+        val line1 = message(absolutePath, line = 42, column = 42, errorText)
+        val result1 = regexpFilter.applyFilter(line1, line1.length)
+        assertThat(result1.assertNotNull().resultItems[0]).satisfies(Consumer { resultItem ->
+          assertThat(resultItem).isNotNull
+          assertThat(resultItem.highlightStartOffset).isZero
+          assertThat(resultItem.highlightEndOffset).isEqualTo(absolutePath.length + 6)
+        })
       }
     }
   }
@@ -120,8 +128,12 @@ class GradleConsoleFilterProviderTest : LightPlatform4TestCase() {
   private companion object {
     private fun message(absolutePath: @NlsSafe String,
                         line: Int,
+                        column: Int = -1,
                         errorText: @Nls String? = null): @Nls String {
-      val prefix = "$absolutePath:$line"
+      val prefix = when (column) {
+        -1 -> "$absolutePath:$line"
+        else -> "$absolutePath:$line:$column"
+      }
 
       return when (errorText) {
         null -> prefix
