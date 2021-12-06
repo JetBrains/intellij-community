@@ -2,7 +2,6 @@
 package org.jetbrains.kotlin.tools.projectWizard
 
 import com.intellij.ide.JavaUiBundle
-import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
@@ -28,7 +27,6 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
         private const val DEFAULT_GROUP_ID = "me.user"
 
         fun generateProject(
-            wizardContext: WizardContext,
             project: Project,
             projectPath: String,
             projectName: String,
@@ -41,8 +39,6 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             NewProjectWizardModuleBuilder()
                 .apply {
                     wizard.apply(emptyList(), setOf(GenerationPhase.PREPARE))
-                    this.wizardContext = wizardContext
-
                     wizard.jdk = sdk
                     wizard.context.writeSettings {
                         StructurePlugin.name.reference.setValue(projectName)
