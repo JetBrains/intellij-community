@@ -2,7 +2,7 @@ public abstract interface Pizza {
     public abstract fun getSize() : int = UastEmptyExpression
     public abstract fun getName() : java.lang.String = UastEmptyExpression
     public abstract fun contains(@org.jetbrains.annotations.NotNull ingredient: Pizza.Ingredient) : boolean = UastEmptyExpression
-    public abstract interface Ingredient {
+    public static abstract interface Ingredient {
     }
     public static abstract class Builder {
         @org.jetbrains.annotations.NotNull private final var ingredients: java.util.Set<Pizza.Ingredient> = mutableSetOf()
