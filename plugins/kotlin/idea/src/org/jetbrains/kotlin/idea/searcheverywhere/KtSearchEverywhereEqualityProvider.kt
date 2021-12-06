@@ -24,56 +24,79 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
         newItem: SearchEverywhereFoundElementInfo,
         alreadyFoundItems: List<SearchEverywhereFoundElementInfo>
     ): SEEqualElementsActionType {
-        fun <T> reduce(
-            transformation: SearchEverywhereFoundElementInfo.() -> T?,
-            isEquivalent: (new: T, old: T) -> Boolean,
-            shouldBeReplaced: (new: T, old: T) -> Boolean,
-        ): SEEqualElementsActionType? {
-            val transformedNewItem = newItem.transformation() ?: return null
-            return alreadyFoundItems
-                .asSequence()
-                .mapNotNull { alreadyFoundItem ->
-                    val transformedOldItem = alreadyFoundItem.transformation() ?: return@mapNotNull null
-                    if (!isEquivalent(transformedNewItem, transformedOldItem)) return@mapNotNull null
-                    if (shouldBeReplaced(transformedNewItem, transformedOldItem)) Replace(alreadyFoundItem) else Skip
-                }
-                .reduceOrNull { acc, actionType -> acc.combine(actionType) }
+        val newPsiElement = newItem.toPsi() ?: return DoNothing
+        val result = compareElements(newPsiElement) {
+            alreadyFoundItems.asSequence().mapNotNull { it.toPsi() }
         }
 
-        return reduce(
-            transformation = { toPsi() },
-            isEquivalent = { t, old -> PsiManager.getInstance(t.project).areElementsEquivalent(t, old) },
-            shouldBeReplaced = { new, old -> new is KtElement && old !is KtElement },
-        ) ?: reduce(
-            transformation = { toPsi()?.let { it.unwrapped ?: it }?.withKind() },
-            isEquivalent = { t, old -> getGroupLeader(t.first)?.equals(getGroupLeader(old.first)) == true },
-            shouldBeReplaced = { new, old -> minOf(new, old, compareBy { it.second }) === new },
-        ) ?: DoNothing
+        return when (result) {
+            null -> DoNothing
+            -1 -> Skip
+            else -> Replace(alreadyFoundItems[result])
+        }
     }
 
-    private fun getGroupLeader(element: PsiElement): KtFile? {
-        if (element is KtFile) {
-            return element
-        }
-        if (element is KtLightClassForFacade &&
-            element.fqName.shortName().asString().removeSuffix("Kt") == element.containingFile.virtualFile.nameWithoutExtension
-        ) {
-            return element.containingFile.ktFile
-        }
-        if (element is KtClass && element.isTopLevel()) {
-            val file = element.parent
-            if (file is KtFile &&
-                element.name == file.virtualFile.nameWithoutExtension
-            ) {
-                return file
+    companion object {
+        /**
+         * @return
+         * null if a rule is not applicable,
+         * -1 if [newItem] should be skipped,
+         * the index of [alreadyFoundItems] if an existent element should be replaced
+         */
+        fun compareElements(
+            newItem: PsiElement,
+            alreadyFoundItems: () -> Sequence<PsiElement>,
+        ): Int? {
+            fun <T> reduce(
+                transformation: PsiElement.() -> T?,
+                isEquivalent: (new: T, old: T) -> Boolean,
+                shouldBeReplaced: (new: T, old: T) -> Boolean,
+            ): Int? {
+                val transformedNewItem = newItem.transformation() ?: return null
+                return alreadyFoundItems().mapIndexedNotNull(fun(index: Int, alreadyFoundItem: PsiElement): Int? {
+                    val transformedOldItem = alreadyFoundItem.transformation() ?: return null
+                    if (!isEquivalent(transformedNewItem, transformedOldItem)) return null
+                    return if (shouldBeReplaced(transformedNewItem, transformedOldItem)) index else -1
+                }).firstOrNull()
             }
+
+            return reduce(
+                transformation = { this },
+                isEquivalent = { new, old -> PsiManager.getInstance(new.project).areElementsEquivalent(new, old) },
+                shouldBeReplaced = { new, old -> new is KtElement && old !is KtElement },
+            ) ?: reduce(
+                transformation = { (this.unwrapped ?: this).withKind() },
+                isEquivalent = { new, old -> getGroupLeader(new.first)?.equals(getGroupLeader(old.first)) == true },
+                shouldBeReplaced = { new, old -> minOf(new, old, compareBy { it.second }) === new },
+            )
         }
-        return null
     }
 }
 
-private fun SearchEverywhereFoundElementInfo.toPsi() =
-    PSIPresentationBgRendererWrapper.toPsi(element)
+private fun getGroupLeader(element: PsiElement): KtFile? {
+    if (element is KtFile) {
+        return element
+    }
+
+    if (element is KtLightClassForFacade &&
+        element.fqName.shortName().asString().removeSuffix("Kt") == element.containingFile.virtualFile.nameWithoutExtension
+    ) {
+        return element.containingFile.ktFile
+    }
+
+    if (element is KtClass && element.isTopLevel()) {
+        val file = element.parent
+        if (file is KtFile &&
+            element.name == file.virtualFile.nameWithoutExtension
+        ) {
+            return file
+        }
+    }
+
+    return null
+}
+
+private fun SearchEverywhereFoundElementInfo.toPsi() = PSIPresentationBgRendererWrapper.toPsi(element)
 
 private enum class Kind {
     KtClass, KtFile, KtFacade
