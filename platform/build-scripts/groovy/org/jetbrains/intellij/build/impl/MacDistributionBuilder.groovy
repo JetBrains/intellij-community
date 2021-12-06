@@ -136,7 +136,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
     boolean publishArchive = context.proprietaryBuildTools.macHostProperties == null
 
-    Path macZip = ((publishArchive || customizer.publishArchive) ? Path.of(context.paths.artifacts) : context.paths.tempDir)
+    Path macZip = ((publishArchive || customizer.publishArchive) ? context.paths.artifactDir : context.paths.tempDir)
       .resolve(baseName + ".mac.zip")
     String zipRoot = getZipRoot(context, customizer)
 

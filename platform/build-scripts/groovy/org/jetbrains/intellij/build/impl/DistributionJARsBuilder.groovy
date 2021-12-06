@@ -50,7 +50,7 @@ import static org.jetbrains.intellij.build.impl.TracerManager.spanBuilder
 /**
  * Assembles output of modules to platform JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAllDir}/lib directory),
  * bundled plugins' JARs (in {@link org.jetbrains.intellij.build.BuildPaths#distAllDir distAll}/plugins directory) and zip archives with
- * non-bundled plugins (in {@link org.jetbrains.intellij.build.BuildPaths#artifacts artifacts}/plugins directory).
+ * non-bundled plugins (in {@link org.jetbrains.intellij.build.BuildPaths#artifactDir artifacts}/plugins directory).
  */
 @CompileStatic
 final class DistributionJARsBuilder {
@@ -324,10 +324,9 @@ final class DistributionJARsBuilder {
     tasks.add(buildHelper.createTask(spanBuilder("generate content report"), new Supplier<Void>() {
       @Override
       Void get() {
-        Path artifactOut = Path.of(context.paths.artifacts)
-        Files.createDirectories(artifactOut)
-        ProjectStructureMapping.writeReport(entries, artifactOut.resolve("content-mapping.json"), context.paths)
-        Files.newOutputStream(artifactOut.resolve("content.json")).withCloseable {
+        Files.createDirectories(context.paths.artifactDir)
+        ProjectStructureMapping.writeReport(entries, context.paths.artifactDir.resolve("content-mapping.json"), context.paths)
+        Files.newOutputStream(context.paths.artifactDir.resolve("content.json")).withCloseable {
           ProjectStructureMapping.buildJarContentReport(entries, it, context.paths)
         }
       }
@@ -504,7 +503,7 @@ final class DistributionJARsBuilder {
     if (productProperties.generateLibrariesLicensesTable &&
         !buildContext.options.buildStepsToSkip.contains(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP)) {
       String artifactNamePrefix = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-      Path artifactDir = Path.of(buildContext.paths.artifacts)
+      Path artifactDir = buildContext.paths.artifactDir
       Files.createDirectories(artifactDir)
       Files.copy(getThirdPartyLibrariesHtmlFilePath(buildContext), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.html"))
       Files.copy(getThirdPartyLibrariesJsonFilePath(buildContext), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.json"))
@@ -515,7 +514,7 @@ final class DistributionJARsBuilder {
       def modulesFromCommunity = projectStructureMapping.includedModules.findAll { moduleName ->
         productProperties.includeIntoSourcesArchiveFilter.test(buildContext.findRequiredModule(moduleName), buildContext)
       }
-      BuildTasks.create(buildContext).zipSourcesOfModules(modulesFromCommunity, Path.of(buildContext.paths.artifacts, archiveName), true)
+      BuildTasks.create(buildContext).zipSourcesOfModules(modulesFromCommunity, buildContext.paths.artifactDir.resolve(archiveName), true)
     }
   }
 

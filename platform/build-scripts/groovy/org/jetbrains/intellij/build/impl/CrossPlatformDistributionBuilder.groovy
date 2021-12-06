@@ -23,9 +23,8 @@ final class CrossPlatformDistributionBuilder {
       new ProductInfoLaunchData(OsFamily.MACOS.osName, "MacOS/$executableName", null, "bin/mac/${executableName}.vmoptions", null)
     ))
 
-    Path artifactDir = Path.of(context.paths.artifacts)
     String zipFileName = context.productProperties.getCrossPlatformZipFileName(context.applicationInfo, context.buildNumber)
-    Path targetFile = artifactDir.resolve(zipFileName)
+    Path targetFile = context.paths.artifactDir.resolve(zipFileName)
 
     BuildHelper.getInstance(context).crossPlatformArchive.invokeWithArguments(
       distDirs.get(OsFamily.MACOS), distDirs.get(OsFamily.LINUX), distDirs.get(OsFamily.WINDOWS),

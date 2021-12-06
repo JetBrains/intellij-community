@@ -28,7 +28,6 @@ final class MacDmgBuilder {
                               @Nullable Path jreArchivePath,
                               String suffix,
                               boolean notarize) {
-    Path artifactDir = Path.of(context.paths.artifacts)
     String javaExePath = null
     if (jreArchivePath != null) {
       String rootDir = BundledJreManager.jbrRootDir(jreArchivePath) ?: "jdk"
@@ -49,7 +48,7 @@ final class MacDmgBuilder {
     new ProductInfoValidator(context).validateInDirectory(productJson, "Resources/", installationDirectories, installationArchives)
 
     String targetName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + suffix
-    Path sitFile = (customizer.publishArchive ? artifactDir : context.paths.tempDir).resolve(targetName + ".sit")
+    Path sitFile = (customizer.publishArchive ? context.paths.artifactDir : context.paths.tempDir).resolve(targetName + ".sit")
 
     BuildHelper buildHelper = BuildHelper.getInstance(context)
     buildHelper.prepareMacZip.invokeWithArguments(macZip, sitFile, productJson, additionalDir, zipRoot)

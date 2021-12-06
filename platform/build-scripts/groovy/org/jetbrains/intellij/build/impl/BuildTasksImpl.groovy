@@ -361,7 +361,7 @@ idea.fatal.error.notification=disabled
       DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish))
 
     if (buildContext.shouldBuildDistributions()) {
-      Path providedModulesFile = Path.of(buildContext.paths.artifacts, "${buildContext.applicationInfo.productCode}-builtinModules.json")
+      Path providedModulesFile = buildContext.paths.artifactDir.resolve("${buildContext.applicationInfo.productCode}-builtinModules.json")
       buildProvidedModuleList(buildContext, providedModulesFile, moduleNames)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
@@ -591,7 +591,7 @@ idea.fatal.error.notification=disabled
   }
 
   private void setupBundledMaven() {
-    buildContext.executeStep("set-up bundled maven", BuildOptions.SETUP_BUNDLED_MAVE, new Runnable() {
+    buildContext.executeStep("set-up bundled maven", BuildOptions.SETUP_BUNDLED_MAVEN, new Runnable() {
       @Override
       void run() {
         logFreeDiskSpace("before downloading Maven")
@@ -643,7 +643,7 @@ idea.fatal.error.notification=disabled
   }
 
   private static void copyDependenciesFile(BuildContext context) {
-    Path outputFile = Path.of(context.paths.artifacts, "dependencies.txt")
+    Path outputFile = context.paths.artifactDir.resolve("dependencies.txt")
     Files.createDirectories(outputFile.parent)
     Files.copy(context.dependenciesProperties.file, outputFile, StandardCopyOption.REPLACE_EXISTING)
     context.notifyArtifactWasBuilt(outputFile)

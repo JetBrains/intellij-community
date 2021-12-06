@@ -311,7 +311,7 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
                                                           WindowsDistributionCustomizer customizer,
                                                           BuildContext context) {
     String baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
-    Path targetFile = Path.of(context.paths.artifacts, "${baseName}${zipNameSuffix}.zip")
+    Path targetFile = context.paths.artifactDir.resolve("${baseName}${zipNameSuffix}.zip")
     return BuildHelper.getInstance(context).createTask(TracerManager.spanBuilder("build Windows ${zipNameSuffix}.zip distribution")
                                                          .setAttribute("targetFile", targetFile.toString()), new Supplier<Path>() {
       @Override

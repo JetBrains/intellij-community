@@ -29,7 +29,7 @@ final class WinExeInstallerBuilder {
   }
 
   private void generateInstallationConfigFileForSilentMode() {
-    Path targetFilePath = Paths.get(buildContext.paths.artifacts, "silent.config")
+    Path targetFilePath = buildContext.paths.artifactDir.resolve("silent.config")
     if (Files.exists(targetFilePath)) {
       return
     }

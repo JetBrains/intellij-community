@@ -407,14 +407,13 @@ final class CompilationContextImpl implements CompilationContext {
       return
     }
 
-    Path artifactsDir = Path.of(paths.artifacts)
     boolean isRegularFile = Files.isRegularFile(file)
     if (isRegularFile) {
       //temporary workaround until TW-54541 is fixed: if build is going to produce big artifacts and we have lack of free disk space it's better not to send 'artifactBuilt' message to avoid "No space left on device" errors
       long fileSize = Files.size(file)
       if (fileSize > 1_000_000) {
         long producedSize = totalSizeOfProducedArtifacts.addAndGet(fileSize)
-        boolean willBePublishedWhenBuildFinishes = FileUtil.isAncestor(artifactsDir.toString(), file.toString(), true)
+        boolean willBePublishedWhenBuildFinishes = FileUtil.isAncestor(paths.artifactDir.toString(), file.toString(), true)
 
         long oneGb = 1024L * 1024 * 1024
         long requiredAdditionalSpace = oneGb * 6
@@ -435,8 +434,8 @@ final class CompilationContextImpl implements CompilationContext {
     }
 
     String targetDirectoryPath = ""
-    if (file.parent.startsWith(artifactsDir)) {
-      targetDirectoryPath = FileUtilRt.toSystemIndependentName(artifactsDir.relativize(file.parent).toString())
+    if (file.parent.startsWith(paths.artifactDir)) {
+      targetDirectoryPath = FileUtilRt.toSystemIndependentName(paths.artifactDir.relativize(file.parent).toString())
     }
 
     if (!isRegularFile) {

@@ -7,7 +7,7 @@ import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 
 @CompileStatic
-class BuildOptions {
+final class BuildOptions {
   /**
    * By default build scripts compile project classes to a special output directory (to not interfere with the default project output if
    * invoked on a developer machine). Pass 'true' to this system property to skip compilation step and use compiled classes from the project output instead.
@@ -87,7 +87,7 @@ class BuildOptions {
   /** Build community distributives */
   static final String COMMUNITY_DIST_STEP = "community_dist"
   public static final String PREBUILD_SHARED_INDEXES = "prebuild_shared_indexes"
-  public static final String SETUP_BUNDLED_MAVE = "setup_bundled_maven"
+  public static final String SETUP_BUNDLED_MAVEN = "setup_bundled_maven"
   /**
    * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
    * Comprises many small publication steps.
