@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.stream.Stream;
@@ -122,6 +123,9 @@ public final class MavenArtifactUtil {
           versions.add(path.getFileName().toString());
         }
       });
+    }
+    catch (NoSuchFileException e) {
+      return "";
     }
     catch (Exception e) {
       MavenLog.LOG.warn(e.getMessage());
