@@ -433,6 +433,8 @@ final class CommunityLibraryLicenses {
                        url: "https://github.com/JetBrains/JetBrainsRuntime",
                        licenseUrl: "https://github.com/JetBrains/JetBrainsRuntime/blob/master/LICENSE"),
     new LibraryLicense(name: "jetCheck", libraryName: "jetCheck", url: "https://github.com/JetBrains/jetCheck").apache(),
+    new LibraryLicense(name: "JGit", libraryName: "JGit", license: "Eclipse Distribution License 1.0",
+                       licenseUrl: "https://www.eclipse.org/org/documents/edl-v10.php", url: "https://www.eclipse.org/jgit/"),
     new LibraryLicense(name: "JGit (develar's fork)", libraryName: "jgit-develar", version: "4.0", license: "Eclipse Distribution License 1.0",
                        licenseUrl: "https://www.eclipse.org/org/documents/edl-v10.php", url: "https://github.com/develar/jgit"),
     new LibraryLicense(name: "JGoodies Common", libraryName: "jgoodies-common",
@@ -713,6 +715,7 @@ final class CommunityLibraryLicenses {
                        url: "https://raw.githubusercontent.com/luben/zstd-jni/master/LICENSE").simplifiedBsd(),
 
     jetbrainsLibrary("change-reminder-prediction-model"),
+    jetbrainsLibrary("cloud-config-client"),
     jetbrainsLibrary("completion-log-events"),
     jetbrainsLibrary("completion-ranking-cpp-exp"),
     jetbrainsLibrary("completion-ranking-dart-exp"),
