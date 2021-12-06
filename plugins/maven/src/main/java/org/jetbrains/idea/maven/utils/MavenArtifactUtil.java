@@ -124,7 +124,7 @@ public final class MavenArtifactUtil {
       });
     }
     catch (Exception e) {
-      MavenLog.LOG.warn(e);
+      MavenLog.LOG.warn(e.getMessage());
       return "";
     }
 
