@@ -10,7 +10,7 @@ import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Supplier
 
 @VisibleForTesting
-class DocumentationData(
+class DocumentationData internal constructor(
   val html: @Nls String,
   val anchor: String?,
   val externalUrl: String?,
