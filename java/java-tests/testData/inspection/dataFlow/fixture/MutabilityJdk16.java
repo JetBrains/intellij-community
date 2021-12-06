@@ -1,23 +1,40 @@
 package java.util.stream;
 
 import java.util.List;
+import java.util.Iterator;
+import java.util.Spliterator;
 
 //mock
-class Stream<T> implements BaseStream<T> {
-  public static native <T> Stream<T> of(T t);
-  native List<T> toList();
+class Stream<T> implements BaseStream<T, Stream<T>>{
+  public native List<T> toList();
+
+  public native Iterator<T> iterator();
+
+  public native Spliterator<T> spliterator();
+
+  public native boolean isParallel();
+
+  public native Stream<T> sequential();
+
+  public native Stream<T> parallel();
+
+  public native Stream<T> unordered();
+
+  public native Stream<T> onClose(Runnable var1);
+
+  public native void close();
 }
-interface BaseStream<T>{}
 
 public class MutabilityJdk16 {
-  static final List<Integer> list = Stream.of(1).toList();
+
+  private final List<Integer> list = new Stream<Integer>().toList();
 
   void testFieldList(){
     list.<warning descr="Immutable object is modified">add</warning>(4);
   }
 
   void testToList() {
-    List<Integer> l = Stream.of(1)
+    List<Integer> l = new Stream<Integer>()
       .toList();
     l.<warning descr="Immutable object is modified">add</warning>(4);
   }

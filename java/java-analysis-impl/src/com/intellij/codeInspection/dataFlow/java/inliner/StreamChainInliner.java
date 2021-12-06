@@ -28,6 +28,7 @@ import com.intellij.codeInspection.dataFlow.types.DfType;
 import com.intellij.codeInspection.dataFlow.types.DfTypes;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.codeInspection.dataFlow.value.RelationType;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -69,7 +70,8 @@ public class StreamChainInliner implements CallInliner {
     instanceCall(JAVA_UTIL_STREAM_STREAM, "reduce").parameterTypes("T", "java.util.function.BinaryOperator");
   private static final CallMatcher COLLECT_TERMINAL =
     instanceCall(JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.stream.Collector");
-  private static final CallMatcher COLLECT_TO_LIST_TERMINAL = instanceCall(JAVA_UTIL_STREAM_STREAM, "toList");
+  private static final CallMatcher TO_LIST_TERMINAL = instanceCall(JAVA_UTIL_STREAM_STREAM, "toList")
+    .withLanguageLevelAtLeast(LanguageLevel.JDK_16);
   private static final CallMatcher COLLECT3_TERMINAL =
     instanceCall(JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.function.Supplier",
                                                                     "java.util.function.BiConsumer", "java.util.function.BiConsumer");
@@ -143,7 +145,7 @@ public class StreamChainInliner implements CallInliner {
     .register(TO_ARRAY_TERMINAL, call -> new ToArrayStep(call))
     .register(COLLECT3_TERMINAL, call -> new Collect3TerminalStep(call))
     .register(COLLECT_TERMINAL, call -> createTerminalFromCollector(call))
-    .register(COLLECT_TO_LIST_TERMINAL, call -> new ToCollectionStep(call, null, true))
+    .register(TO_LIST_TERMINAL, call -> new ToCollectionStep(call, null, true))
     .register(TWO_ARG_REDUCE, call -> new TwoArgReduceStep(call));
 
   private static final Step NULL_TERMINAL_STEP = new Step(null, null, null) {

@@ -12,6 +12,7 @@ import com.intellij.java.analysis.JavaAnalysisBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ModificationTracker;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.impl.source.PsiMethodImpl;
@@ -64,8 +65,8 @@ public enum Mutability {
   public static final @NotNull String UNMODIFIABLE_VIEW_ANNOTATION = UNMODIFIABLE_VIEW.myAnnotation;
   private static final @NotNull CallMatcher STREAM_COLLECT = CallMatcher.instanceCall(
     CommonClassNames.JAVA_UTIL_STREAM_STREAM, "collect").parameterTypes("java.util.stream.Collector");
-  private static final @NotNull CallMatcher STREAM_COLLECT_TO_LIST = CallMatcher.instanceCall(
-    CommonClassNames.JAVA_UTIL_STREAM_STREAM, "toList");
+  private static final @NotNull CallMatcher STREAM_TO_LIST = CallMatcher.instanceCall(
+    CommonClassNames.JAVA_UTIL_STREAM_STREAM, "toList").withLanguageLevelAtLeast(LanguageLevel.JDK_16);
   private static final @NotNull CallMatcher UNMODIFIABLE_COLLECTORS = CallMatcher.staticCall(
     CommonClassNames.JAVA_UTIL_STREAM_COLLECTORS, "toUnmodifiableList", "toUnmodifiableSet", "toUnmodifiableMap");
   private final @PropertyKey(resourceBundle = JavaAnalysisBundle.BUNDLE) String myResourceKey;
@@ -189,7 +190,7 @@ public enum Mutability {
           if (STREAM_COLLECT.test(call)) {
             PsiExpression collector = call.getArgumentList().getExpressions()[0];
             newMutability = UNMODIFIABLE_COLLECTORS.matches(collector) ? UNMODIFIABLE : UNKNOWN;
-          } else if (STREAM_COLLECT_TO_LIST.test(call)) {
+          } else if (STREAM_TO_LIST.test(call)) {
             newMutability = UNMODIFIABLE;
           } else {
             PsiMethod method = call.resolveMethod();
