@@ -152,10 +152,11 @@ public final class VfsRootAccess {
           allowed.add(FileUtil.toSystemIndependentName("\\\\wsl$\\" + wslName));
         }
       }
-
-      // see IDEA-167037 (The assertion "File accessed outside allowed root" is triggered by files symlinked from a JDK directory)
-      allowed.add("/etc");
-      allowed.add("/private/etc");
+      else {
+        // see IDEA-167037 (The assertion "File accessed outside allowed root" is triggered by files symlinked from a JDK directory)
+        allowed.add("/etc");
+        allowed.add("/private/etc");
+      }
 
       for (final Project project : openProjects) {
         if (!project.isInitialized()) {
