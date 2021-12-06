@@ -165,8 +165,12 @@
       <action id="ShowTypeBookmarks" class="com.intellij.ide.bookmark.actions.ShowTypeBookmarksAction"/>
       <action id="GotoNextBookmark" icon="AllIcons.Actions.NextOccurence"
               class="com.intellij.ide.bookmark.actions.NextBookmarkAction"/>
+      <action id="GotoNextBookmarkInEditor" icon="AllIcons.Actions.NextOccurence"
+              class="com.intellij.ide.bookmark.actions.NextBookmarkInEditorAction"/>
       <action id="GotoPreviousBookmark" icon="AllIcons.Actions.PreviousOccurence"
               class="com.intellij.ide.bookmark.actions.PreviousBookmarkAction"/>
+      <action id="GotoPreviousBookmarkInEditor" icon="AllIcons.Actions.PreviousOccurence"
+              class="com.intellij.ide.bookmark.actions.PreviousBookmarkInEditorAction"/>
 
       <group id="Bookmarks.Goto" popup="true">
         <action id="GotoBookmark0" class="com.intellij.ide.bookmark.actions.GotoBookmark0Action"/>
