@@ -4,6 +4,7 @@ package com.intellij.lang.documentation.ide.impl
 import com.intellij.lang.documentation.DocumentationData
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.DocumentationBrowserFacade
+import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.lang.documentation.impl.InternalLinkResult
@@ -42,7 +43,7 @@ internal class DocumentationBrowser private constructor(
     forwardStack.clear()
   }
 
-  var snapshooter: () -> UISnapshot by lateinitVal()
+  var ui: DocumentationUI by lateinitVal()
 
   override val targetPointer: Pointer<out DocumentationTarget> get() = state.request.targetPointer
 
@@ -148,7 +149,7 @@ internal class DocumentationBrowser private constructor(
     EDT.assertIsEdt()
     return HistorySnapshot(
       state = state,
-      ui = snapshooter(),
+      ui = ui.uiSnapshot(),
     )
   }
 
