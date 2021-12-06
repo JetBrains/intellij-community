@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.gradleTooling.builders
 
 import org.jetbrains.kotlin.idea.gradleTooling.*
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinModuleReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinModuleReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinModule
 
 object KotlinModuleBuilder : KotlinProjectModelComponentBuilder<KotlinModuleReflection, KotlinModule> {

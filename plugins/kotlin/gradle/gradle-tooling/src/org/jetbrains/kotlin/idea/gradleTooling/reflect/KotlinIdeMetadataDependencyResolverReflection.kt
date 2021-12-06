@@ -1,17 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("RemoveExplicitTypeArguments")
 
-package org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm
+package org.jetbrains.kotlin.idea.gradleTooling.reflect
 
 import org.gradle.api.Project
 import org.jetbrains.kotlin.idea.gradleTooling.getMethodOrNull
 import org.jetbrains.kotlin.idea.gradleTooling.loadClassOrNull
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.*
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.callReflective
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinIdeFragmentDependencyResolverReflection.Companion.logger
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.parameter
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.parameters
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.returnType
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinIdeFragmentDependencyResolverReflection.Companion.logger
 
 interface KotlinIdeFragmentDependencyResolverReflection {
     fun resolveDependencies(fragment: KotlinFragmentReflection): List<KotlinIdeFragmentDependencyReflection>?

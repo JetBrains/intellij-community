@@ -4,14 +4,14 @@ package org.jetbrains.kotlin.idea.gradleTooling.builders
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinGradleFragmentProto
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinProjectModelImportingContext
 import org.jetbrains.kotlin.idea.gradleTooling.initializeFragmentProto
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinFragmentReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinFragmentReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinModule.Companion.TEST_MODULE_NAME
 import java.io.File
 
 object KotlinGradleFragmentProtoBuilder : KotlinProjectModelComponentBuilder<KotlinFragmentReflection, KotlinGradleFragmentProto> {
     override fun buildComponent(
-        origin: KotlinFragmentReflection,
-        importingContext: KotlinProjectModelImportingContext
+      origin: KotlinFragmentReflection,
+      importingContext: KotlinProjectModelImportingContext
     ): KotlinGradleFragmentProto? {
         val fragmentName = origin.fragmentName ?: return null
 

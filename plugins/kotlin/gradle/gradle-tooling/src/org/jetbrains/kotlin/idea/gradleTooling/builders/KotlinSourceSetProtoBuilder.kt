@@ -5,7 +5,7 @@ import org.gradle.api.Named
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.*
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinLanguageSettingsReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinLanguageSettingsReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
 import org.jetbrains.plugins.gradle.DefaultExternalDependencyId
 import org.jetbrains.plugins.gradle.model.DefaultExternalLibraryDependency

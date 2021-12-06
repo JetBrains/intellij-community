@@ -1,13 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("FunctionName", "RemoveExplicitTypeArguments")
 
-package org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm
+package org.jetbrains.kotlin.idea.gradleTooling.reflect
 
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.ReflectionLogger
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.callReflective
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinModuleIdentifierReflection.Companion.logger
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.parameters
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.returnType
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinModuleIdentifierReflection.Companion.logger
 
 fun KotlinModuleIdentifierReflection(moduleIdentifier: Any): KotlinModuleIdentifierReflection? {
     return when (moduleIdentifier.javaClass.name) {

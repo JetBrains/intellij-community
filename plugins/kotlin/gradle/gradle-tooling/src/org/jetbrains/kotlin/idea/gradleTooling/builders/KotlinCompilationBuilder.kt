@@ -8,7 +8,7 @@ import org.gradle.api.provider.Property
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.buildCachedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.buildSerializedArgsInfo
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinCompilationOutputReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinCompilationOutputReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationOutput
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform

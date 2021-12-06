@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.gradleTooling
 import org.gradle.api.Project
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinModuleBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinProjectModelSettingsBuilder
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinKpmExtensionReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinKpmExtensionReflection
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService

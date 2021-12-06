@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.gradleTooling.builders
 
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinProjectModelSettings
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinProjectModelSettingsImpl
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinKpmExtensionReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinKpmExtensionReflection
 
 object KotlinProjectModelSettingsBuilder : KotlinModelComponentBuilderBase<KotlinKpmExtensionReflection, KotlinProjectModelSettings> {
     override fun buildComponent(origin: KotlinKpmExtensionReflection): KotlinProjectModelSettings? {

@@ -1,14 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("RemoveExplicitTypeArguments")
 
-package org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm
+package org.jetbrains.kotlin.idea.gradleTooling.reflect
 
-import org.gradle.api.logging.Logger
-import org.gradle.api.logging.Logging
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.ReflectionLogger
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.callReflective
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.parameters
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.returnType
 import java.io.File
 
 fun KotlinLanguageSettingsReflection(languageSettings: Any): KotlinLanguageSettingsReflection =

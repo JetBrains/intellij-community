@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.gradleTooling.builders
 
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinCompilationOutputImpl
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinCompilationOutputReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinCompilationOutputReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationOutput
 
 object KotlinCompilationOutputBuilder : KotlinModelComponentBuilderBase<KotlinCompilationOutputReflection, KotlinCompilationOutput> {

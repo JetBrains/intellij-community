@@ -4,9 +4,9 @@ package org.jetbrains.kotlin.idea.gradleTooling.builders
 import org.gradle.api.logging.Logging
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinLocalModuleIdentifierImpl
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMavenModuleIdentifierImpl
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinLocalModuleIdentifierReflection
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinMavenModuleIdentifierReflection
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinModuleIdentifierReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinLocalModuleIdentifierReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinMavenModuleIdentifierReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinModuleIdentifierReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinLocalModuleIdentifier
 import org.jetbrains.kotlin.idea.projectModel.KotlinMavenModuleIdentifier
 import org.jetbrains.kotlin.idea.projectModel.KotlinModuleIdentifier

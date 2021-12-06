@@ -5,7 +5,10 @@ import org.jetbrains.kotlin.idea.gradleTooling.KotlinFragmentResolvedBinaryDepen
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinFragmentResolvedSourceDependency
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinProjectModelImportingContext
 import org.jetbrains.kotlin.idea.gradleTooling.capitalize
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.*
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinFragmentReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinIdeFragmentDependencyReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinIdeLocalSourceFragmentDependencyReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinIdeMavenBinaryFragmentDependencyReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinFragmentResolvedDependency
 
 object KotlinFragmentDependencyResolutionBuilder :
