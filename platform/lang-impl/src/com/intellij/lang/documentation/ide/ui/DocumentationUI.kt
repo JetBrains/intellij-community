@@ -174,7 +174,7 @@ internal class DocumentationUI(
     update(element.toString(), ScrollingPosition.Reset)
   }
 
-  private fun update(text: @Nls String, scrollingPosition: ScrollingPosition) {
+  fun update(text: @Nls String, scrollingPosition: ScrollingPosition) {
     EDT.assertIsEdt()
     if (editorPane.text == text) {
       return

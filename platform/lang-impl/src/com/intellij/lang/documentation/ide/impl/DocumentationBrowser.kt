@@ -5,6 +5,7 @@ import com.intellij.lang.documentation.DocumentationData
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.DocumentationBrowserFacade
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
+import com.intellij.lang.documentation.ide.ui.ScrollingPosition
 import com.intellij.lang.documentation.ide.ui.UISnapshot
 import com.intellij.lang.documentation.impl.DocumentationRequest
 import com.intellij.lang.documentation.impl.InternalLinkResult
@@ -22,6 +23,9 @@ import com.intellij.util.containers.Stack
 import com.intellij.util.lateinitVal
 import com.intellij.util.ui.EDT
 import kotlinx.coroutines.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.flowOn
 
 internal class DocumentationBrowser private constructor(
   private val project: Project
@@ -124,7 +128,18 @@ internal class DocumentationBrowser private constructor(
         forwardStack.clear()
         browseDocumentation(internalResult.request, byLink = true)
       }
+      is InternalLinkResult.Updates -> {
+        handleContentUpdates(internalResult.updates)
+      }
     }
+  }
+
+  private suspend fun handleContentUpdates(updates: Flow<String>) {
+    updates
+      .flowOn(Dispatchers.IO) // run flow in IO
+      .collectLatest { // handle results in EDT
+        ui.update(it, ScrollingPosition.Keep)
+      }
   }
 
   fun currentExternalUrl(): String? {

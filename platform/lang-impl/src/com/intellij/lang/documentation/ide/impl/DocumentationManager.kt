@@ -6,10 +6,7 @@ import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.propComponentProperty
-import com.intellij.lang.documentation.DocumentationTarget
-import com.intellij.lang.documentation.InlineDocumentation
-import com.intellij.lang.documentation.LinkResult
-import com.intellij.lang.documentation.ResolvedTarget
+import com.intellij.lang.documentation.*
 import com.intellij.lang.documentation.ide.actions.documentationTargets
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.lang.documentation.impl.DocumentationRequest
@@ -255,6 +252,10 @@ internal class DocumentationManager(private val project: Project) : Disposable {
                                  ?: return null
     return when (linkResult) {
       is ResolvedTarget -> linkResult.target
+      is ContentUpdates -> {
+        LOG.warn("Content updates are not supported in inline documentation")
+        null
+      }
     }
   }
 }
