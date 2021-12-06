@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2021 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,6 @@ import com.intellij.testFramework.LightIdeaTestCase
 import com.intellij.testFramework.configureInspections
 import com.intellij.testFramework.createProfile
 import com.intellij.testFramework.runInInitMode
-import junit.framework.TestCase
 import org.assertj.core.api.Assertions.assertThat
 
 class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
@@ -44,11 +43,11 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
       panel.reset()
 
       val tool = getInspection(model)
-      assertEquals("", tool.myAdditionalJavadocTags)
+      assertThat(tool.myAdditionalJavadocTags).isEqualTo("")
       tool.myAdditionalJavadocTags = "foo"
       model.setModified(true)
       panel.apply()
-      assertThat(InspectionProfileTest.countInitializedTools(model)).isEqualTo(1)
+      assertThat(InspectionProfileTest.getInitializedTools(model)).hasSize(1)
 
       assertThat(getInspection(profile).myAdditionalJavadocTags).isEqualTo("foo")
       panel.disposeUI()
@@ -69,17 +68,16 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
     val panel = SingleInspectionProfilePanel(profileManager, model)
     panel.isVisible = true
     panel.reset()
-    TestCase.assertEquals(InspectionProfileTest.getInitializedTools(model).toString(), 1,
-                          InspectionProfileTest.countInitializedTools(model))
+    assertThat(InspectionProfileTest.getInitializedTools(model)).hasSize(1)
 
     val copyTool = getInspection(model)
     copyTool.myAdditionalJavadocTags = "bar"
 
     model.setModified(true)
     panel.apply()
-    assertThat(InspectionProfileTest.countInitializedTools(model)).isEqualTo(1)
+    assertThat(InspectionProfileTest.getInitializedTools(model)).hasSize(1)
 
-    assertEquals("bar", getInspection(profile).myAdditionalJavadocTags)
+    assertThat(getInspection(profile).myAdditionalJavadocTags).isEqualTo("bar")
     panel.disposeUI()
   }
 
@@ -97,7 +95,7 @@ class SingleInspectionProfilePanelTest : LightIdeaTestCase() {
     copyTool.myAdditionalJavadocTags = "foo"
     // this change IS NOT COMMITTED
 
-    assertEquals("", getInspection(profile).myAdditionalJavadocTags)
+    assertThat(getInspection(profile).myAdditionalJavadocTags).isEqualTo("")
   }
 
   private fun getInspection(profile: InspectionProfileImpl): JavaDocLocalInspection {
