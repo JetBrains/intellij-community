@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.gradleTooling.builders
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinGradleVariantData
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinProjectModelImportingContext
 import org.jetbrains.kotlin.idea.gradleTooling.initializeVariantStub
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinVariantReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinVariantReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinVariantData
 
 object KotlinGradleVariantDataBuilder : KotlinProjectModelComponentBuilder<KotlinVariantReflection, KotlinVariantData> {

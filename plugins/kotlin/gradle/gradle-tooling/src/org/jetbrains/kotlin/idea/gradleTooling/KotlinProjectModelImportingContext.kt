@@ -2,9 +2,9 @@
 package org.jetbrains.kotlin.idea.gradleTooling
 
 import org.gradle.api.Project
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinFragmentReflection
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinIdeFragmentDependencyResolverReflection
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinModuleReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinFragmentReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinIdeFragmentDependencyResolverReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinModuleReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinFragment
 import org.jetbrains.kotlin.idea.projectModel.KotlinModule
 import org.jetbrains.kotlin.idea.projectModel.KotlinModuleIdentifier

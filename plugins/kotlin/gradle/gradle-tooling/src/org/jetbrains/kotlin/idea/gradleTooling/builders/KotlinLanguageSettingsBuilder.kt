@@ -2,7 +2,7 @@
 package org.jetbrains.kotlin.idea.gradleTooling.builders
 
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinLanguageSettingsImpl
-import org.jetbrains.kotlin.idea.gradleTooling.reflect.kpm.KotlinLanguageSettingsReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinLanguageSettingsReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinLanguageSettings
 
 object KotlinLanguageSettingsBuilder : KotlinModelComponentBuilderBase<KotlinLanguageSettingsReflection, KotlinLanguageSettings> {
