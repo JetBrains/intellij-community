@@ -21,6 +21,10 @@ internal class AsyncDocumentation(
   val supplier: AsyncSupplier<DocumentationResult?>
 ) : DocumentationResult
 
+internal class ResolvedTarget(
+  val target: DocumentationTarget,
+) : LinkResult
+
 internal fun <X> Supplier<X>.asAsyncSupplier(): AsyncSupplier<X> = {
   withContext(Dispatchers.IO) {
     withJob {
