@@ -3,6 +3,7 @@ package training.dsl
 
 import com.intellij.codeInsight.documentation.DocumentationComponent
 import com.intellij.codeInsight.documentation.DocumentationEditorPane
+import com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
@@ -545,7 +546,7 @@ fun <ComponentType : Component> LessonContext.highlightAllFoundUiWithClass(compo
 }
 
 fun TaskContext.triggerOnQuickDocumentationPopup() {
-  if (Registry.`is`("documentation.v2")) {
+  if (isDocumentationV2Enabled()) {
     triggerByUiComponentAndHighlight(false, false) { _: DocumentationEditorPane -> true }
   }
   else {

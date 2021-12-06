@@ -65,6 +65,7 @@ import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 import java.util.Objects;
 
+import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled;
 import static com.intellij.lang.documentation.ide.impl.DocumentationTargetHoverInfoKt.calcTargetDocumentationInfo;
 
 public class EditorMouseHoverPopupManager implements Disposable {
@@ -518,7 +519,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
 
     private @Nullable DocumentationHoverInfo documentationHoverInfo(@NotNull Editor editor) {
       try {
-        return Registry.is("documentation.v2")
+        return isDocumentationV2Enabled()
                ? EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement()
                  ? calcTargetDocumentationInfo(Objects.requireNonNull(editor.getProject()), editor, targetOffset)
                  : null
