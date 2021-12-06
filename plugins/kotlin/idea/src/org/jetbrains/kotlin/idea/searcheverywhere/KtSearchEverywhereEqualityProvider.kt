@@ -49,24 +49,29 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
         ): Int? {
             fun <T> reduce(
                 transformation: PsiElement.() -> T?,
-                isEquivalent: (new: T, old: T) -> Boolean,
+                shouldBeProcessed: (new: T, old: T) -> Boolean,
                 shouldBeReplaced: (new: T, old: T) -> Boolean,
             ): Int? {
                 val transformedNewItem = newItem.transformation() ?: return null
                 return alreadyFoundItems().mapIndexedNotNull(fun(index: Int, alreadyFoundItem: PsiElement): Int? {
                     val transformedOldItem = alreadyFoundItem.transformation() ?: return null
-                    if (!isEquivalent(transformedNewItem, transformedOldItem)) return null
+                    if (!shouldBeProcessed(transformedNewItem, transformedOldItem)) return null
                     return if (shouldBeReplaced(transformedNewItem, transformedOldItem)) index else -1
                 }).firstOrNull()
             }
 
             return reduce(
                 transformation = { this },
-                isEquivalent = { new, old -> PsiManager.getInstance(new.project).areElementsEquivalent(new, old) },
+                shouldBeProcessed = { new, old ->
+                    // [com.intellij.ide.actions.searcheverywhere.TrivialElementsEqualityProvider] is responsible for "new == old" case
+                    (new::class != old::class || new === old) && PsiManager.getInstance(new.project).areElementsEquivalent(new, old)
+                },
                 shouldBeReplaced = { new, old -> new is KtElement && old !is KtElement },
             ) ?: reduce(
                 transformation = { (this.unwrapped ?: this).withKind() },
-                isEquivalent = { new, old -> getGroupLeader(new.first)?.equals(getGroupLeader(old.first)) == true },
+                shouldBeProcessed = { new, old ->
+                    new.second != old.second && getGroupLeader(new.first)?.equals(getGroupLeader(old.first)) == true
+                },
                 shouldBeReplaced = { new, old -> minOf(new, old, compareBy { it.second }) === new },
             )
         }

@@ -36,6 +36,25 @@ class NativePsiAndKtLightElementEqualityProviderTest : LightJavaCodeInsightFixtu
         }
     }
 
+    fun `test class conflict`() {
+        val file = myFixture.configureByText(
+            "MyKotlinClassWithStrangeName.kt",
+            "package one.two\nclass MyKotlinClassWithStrangeName\nclass MyKotlinClassWithStrangeName<T>",
+        ) as KtFile
+
+        val klass = file.declarations.first() as KtClass
+        val klass2 = file.declarations.last() as KtClass
+        val ulc = LightClassGenerationSupport.getInstance(project).createUltraLightClass(klass)!!
+        val ulc2 = LightClassGenerationSupport.getInstance(project).createUltraLightClass(klass2)!!
+        findByPattern("MyKotlinClassWithStrangeName") { results ->
+            assertTrue(klass in results)
+            assertTrue(klass2 in results)
+            assertFalse(file in results)
+            assertFalse(ulc in results)
+            assertFalse(ulc2 in results)
+        }
+    }
+
     fun `test class and file presented`() {
         val file = myFixture.configureByText(
             "MyKotlinClassWithStrangeName.kt",
