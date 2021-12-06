@@ -15,6 +15,7 @@ import com.intellij.util.containers.MultiMap;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
 import com.jetbrains.python.psi.resolve.*;
@@ -572,6 +573,12 @@ public final class PyCallExpressionHelper {
             return null;
           }
         }
+      }
+    }
+    if (callee instanceof PySubscriptionExpression) {
+      final PyType parametrizedType = Ref.deref(PyTypingTypeProvider.getType(callee, context));
+      if (parametrizedType != null) {
+        return parametrizedType;
       }
     }
     final PyResolveContext resolveContext = PyResolveContext.defaultContext(context);
