@@ -6,7 +6,9 @@ import com.intellij.codeInsight.lookup.*
 import com.intellij.codeInsight.lookup.impl.LookupManagerImpl
 import com.intellij.ide.BrowserUtil
 import com.intellij.ide.util.propComponentProperty
+import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.InlineDocumentation
+import com.intellij.lang.documentation.LinkResult
 import com.intellij.lang.documentation.ide.actions.documentationTargets
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.lang.documentation.impl.DocumentationRequest
@@ -208,10 +210,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
     EDT.assertIsEdt()
     cs.launch(ModalityState.current().asContextElement()) {
       val navigatable = readAction {
-        val ownerTarget = documentation()?.ownerTarget
-                          ?: return@readAction null
-        val linkResult = resolveLink(ownerTarget, url)
-        linkResult?.target?.navigatable
+        resolveInlineLink(documentation, url)?.navigatable
       }
       withContext(Dispatchers.EDT) { // will use context modality state
         if (navigatable != null && navigatable.canNavigate()) {
@@ -233,10 +232,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
       try {
         val request = withContext(Dispatchers.Default) {
           readAction {
-            val ownerTarget = documentation()?.ownerTarget
-                              ?: return@readAction null
-            val linkResult = resolveLink(ownerTarget, url)
-            linkResult?.target?.documentationRequest()
+            resolveInlineLink(documentation, url)?.documentationRequest()
           }
         }
         if (request == null) {
@@ -249,5 +245,13 @@ internal class DocumentationManager(private val project: Project) : Disposable {
         pauseAutoUpdateHandle?.let(Disposer::dispose)
       }
     }
+  }
+
+  private fun resolveInlineLink(documentation: () -> InlineDocumentation?, url: String): DocumentationTarget? {
+    val ownerTarget = documentation()?.ownerTarget
+                      ?: return null
+    val linkResult: LinkResult = resolveLink(ownerTarget, url)
+                                 ?: return null
+    return linkResult.target
   }
 }
