@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -141,5 +142,9 @@ public final class QuickDocUtil {
         }
       }
     });
+  }
+
+  public static boolean isDocumentationV2Enabled() {
+    return Registry.is("documentation.v2");
   }
 }

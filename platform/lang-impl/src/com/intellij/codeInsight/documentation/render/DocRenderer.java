@@ -31,7 +31,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocCommentBase;
@@ -66,6 +65,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled;
 import static com.intellij.lang.documentation.ide.impl.DocumentationManager.instance;
 
 class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRenderer {
@@ -420,7 +420,7 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     if (location == null) return;
 
     String url = event.getDescription();
-    if (Registry.is("documentation.v2")) {
+    if (isDocumentationV2Enabled()) {
       activateLinkV2(url, location);
       return;
     }
