@@ -9,6 +9,7 @@ import com.intellij.ide.util.propComponentProperty
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.InlineDocumentation
 import com.intellij.lang.documentation.LinkResult
+import com.intellij.lang.documentation.ResolvedTarget
 import com.intellij.lang.documentation.ide.actions.documentationTargets
 import com.intellij.lang.documentation.ide.ui.toolWindowUI
 import com.intellij.lang.documentation.impl.DocumentationRequest
@@ -252,6 +253,8 @@ internal class DocumentationManager(private val project: Project) : Disposable {
                       ?: return null
     val linkResult: LinkResult = resolveLink(ownerTarget, url)
                                  ?: return null
-    return linkResult.target
+    return when (linkResult) {
+      is ResolvedTarget -> linkResult.target
+    }
   }
 }

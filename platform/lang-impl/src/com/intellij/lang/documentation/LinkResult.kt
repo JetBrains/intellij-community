@@ -4,13 +4,16 @@ package com.intellij.lang.documentation
 import org.jetbrains.annotations.ApiStatus.Experimental
 
 @Experimental
-class LinkResult private constructor(
-  internal val target: DocumentationTarget,
-) {
+sealed interface LinkResult {
 
   companion object {
 
+    /**
+     * @return a result, which makes the browser load the documentation for the [target]
+     */
     @JvmStatic
-    fun resolvedTarget(target: DocumentationTarget): LinkResult = LinkResult(target)
+    fun resolvedTarget(target: DocumentationTarget): LinkResult {
+      return ResolvedTarget(target)
+    }
   }
 }
