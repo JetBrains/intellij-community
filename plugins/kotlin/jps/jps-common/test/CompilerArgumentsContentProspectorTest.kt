@@ -68,6 +68,7 @@ class CompilerArgumentsContentProspectorTest {
             CommonCompilerArguments::allowKotlinPackage,
             CommonCompilerArguments::progressiveMode,
             CommonCompilerArguments::script,
+            CommonCompilerArguments::selfUpperBoundInference,
             CommonCompilerArguments::noInline,
             CommonCompilerArguments::skipMetadataVersionCheck,
             CommonCompilerArguments::skipPrereleaseCheck,
@@ -79,15 +80,18 @@ class CompilerArgumentsContentProspectorTest {
             CommonCompilerArguments::polymorphicSignature,
             CommonCompilerArguments::legacySmartCastAfterTry,
             CommonCompilerArguments::effectSystem,
+            CommonCompilerArguments::enableBuilderInference,
             CommonCompilerArguments::readDeserializedContracts,
             CommonCompilerArguments::properIeee754Comparisons,
             CommonCompilerArguments::reportPerf,
             CommonCompilerArguments::allowResultReturnType,
+            CommonCompilerArguments::builtInsFromSources,
             CommonCompilerArguments::listPhases,
             CommonCompilerArguments::profilePhases,
             CommonCompilerArguments::checkPhaseConditions,
             CommonCompilerArguments::checkStickyPhaseConditions,
             CommonCompilerArguments::useFir,
+            CommonCompilerArguments::unrestrictedBuilderInference,
             CommonCompilerArguments::useFirExtendedCheckers,
             CommonCompilerArguments::disableUltraLightClasses,
             CommonCompilerArguments::useMixedNamedArguments,
@@ -114,6 +118,7 @@ class CompilerArgumentsContentProspectorTest {
             CommonCompilerArguments::pluginClasspaths,
             CommonCompilerArguments::useExperimental,
             CommonCompilerArguments::optIn,
+            CommonCompilerArguments::optInDeprecated,
             CommonCompilerArguments::commonSources,
             CommonCompilerArguments::disablePhases,
             CommonCompilerArguments::verbosePhases,
@@ -131,6 +136,7 @@ class CompilerArgumentsContentProspectorTest {
             K2JVMCompilerArguments::noJdk,
             K2JVMCompilerArguments::noStdlib,
             K2JVMCompilerArguments::noReflect,
+            K2JVMCompilerArguments::jvmDefaultAllowDisableAgainstAll,
             K2JVMCompilerArguments::javaParameters,
             K2JVMCompilerArguments::useIR,
             K2JVMCompilerArguments::useOldBackend,
@@ -143,8 +149,11 @@ class CompilerArgumentsContentProspectorTest {
             K2JVMCompilerArguments::noOptimize,
             K2JVMCompilerArguments::inheritMultifileParts,
             K2JVMCompilerArguments::useTypeTable,
+            K2JVMCompilerArguments::validateBytecode,
+            K2JVMCompilerArguments::validateIr,
             K2JVMCompilerArguments::skipRuntimeVersionCheck,
             K2JVMCompilerArguments::useOldClassFilesReading,
+            K2JVMCompilerArguments::serializeIr,
             K2JVMCompilerArguments::singleModule,
             K2JVMCompilerArguments::suppressMissingBuiltinsError,
             K2JVMCompilerArguments::useJavac,
@@ -153,6 +162,7 @@ class CompilerArgumentsContentProspectorTest {
             K2JVMCompilerArguments::disableStandardScript,
             K2JVMCompilerArguments::strictMetadataVersionSemantics,
             K2JVMCompilerArguments::suppressDeprecatedJvmTargetWarning,
+            K2JVMCompilerArguments::useFastJarFileSystem,
             K2JVMCompilerArguments::typeEnhancementImprovementsInStrictMode,
             K2JVMCompilerArguments::sanitizeParentheses,
             K2JVMCompilerArguments::allowNoSourceFiles,
@@ -164,6 +174,7 @@ class CompilerArgumentsContentProspectorTest {
             K2JVMCompilerArguments::useOldSpilledVarTypeAnalysis,
             K2JVMCompilerArguments::useOldInlineClassesManglingScheme,
             K2JVMCompilerArguments::enableJvmPreview,
+            K2JVMCompilerArguments::enhanceTypeParameterTypesToDefNotNull,
         )
 
         private val k2JVMCompilerArgumentsStringProperties = commonCompilerArgumentsStringProperties + listOf(
@@ -171,6 +182,7 @@ class CompilerArgumentsContentProspectorTest {
             K2JVMCompilerArguments::classpath,
             K2JVMCompilerArguments::jdkHome,
             K2JVMCompilerArguments::expression,
+            K2JVMCompilerArguments::parallelBackendThreads,
             K2JVMCompilerArguments::moduleName,
             K2JVMCompilerArguments::jvmTarget,
             K2JVMCompilerArguments::abiStability,
@@ -199,6 +211,7 @@ class CompilerArgumentsContentProspectorTest {
             K2JVMCompilerArguments::javacArguments,
             K2JVMCompilerArguments::javaSourceRoots,
             K2JVMCompilerArguments::jsr305,
+            K2JVMCompilerArguments::nullabilityAnnotations,
             K2JVMCompilerArguments::friendPaths
         )
 
@@ -233,7 +246,12 @@ class CompilerArgumentsContentProspectorTest {
             K2JSCompilerArguments::metadataOnly,
             K2JSCompilerArguments::enableJsScripting,
             K2JSCompilerArguments::fakeOverrideValidator,
-            K2JSCompilerArguments::wasm
+            K2JSCompilerArguments::wasm,
+            K2JSCompilerArguments::extensionFunctionsInExternals,
+            K2JSCompilerArguments::irBaseClassInMetadata,
+            K2JSCompilerArguments::irBuildCache,
+            K2JSCompilerArguments::irLegacyPropertyAccess,
+            K2JSCompilerArguments::irSafeExternalBoolean,
         )
         private val k2JSCompilerArgumentsStringProperties = commonCompilerArgumentsStringProperties + listOf(
             K2JSCompilerArguments::outputFile,
@@ -252,6 +270,9 @@ class CompilerArgumentsContentProspectorTest {
             K2JSCompilerArguments::errorTolerancePolicy,
             K2JSCompilerArguments::irDceRuntimeDiagnostic,
             K2JSCompilerArguments::repositries,
+            K2JSCompilerArguments::cacheDirectories,
+            K2JSCompilerArguments::irPerModuleOutputName,
+            K2JSCompilerArguments::irSafeExternalBooleanDiagnostic,
         )
         private val k2JSCompilerArgumentsArrayProperties = commonCompilerArgumentsArrayProperties
 
