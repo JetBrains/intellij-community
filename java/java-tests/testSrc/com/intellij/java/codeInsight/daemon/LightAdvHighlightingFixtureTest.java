@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon;
 
 import com.intellij.JavaTestUtil;
@@ -14,7 +14,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.*;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.CodeInsightTestFixtureImpl;
@@ -42,6 +44,16 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
                        "}");
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting(false, false, false);
+  }
+
+  public void testFilteredCandidates() {
+    PsiFile file = myFixture.configureByText("a.java", "class a {{new StringBuilder().ap<caret>pend();}}");
+    PsiCallExpression callExpression =
+      PsiTreeUtil.getParentOfType(file.findElementAt(myFixture.getEditor().getCaretModel().getOffset()), PsiCallExpression.class);
+    assertNotNull(callExpression);
+    CandidateInfo[] candidates =
+      PsiResolveHelper.SERVICE.getInstance(myFixture.getProject()).getReferencedMethodCandidates(callExpression, false);
+    assertSize(14, candidates);
   }
 
   public void testPackageNamedAsClassInDefaultPackage() {
