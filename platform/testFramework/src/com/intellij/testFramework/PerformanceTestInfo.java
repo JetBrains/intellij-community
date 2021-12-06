@@ -124,7 +124,7 @@ public class PerformanceTestInfo {
       IterationResult iterationResult = data.getIterationResult(expectedOnMyMachine);
 
       boolean testPassed = iterationResult == IterationResult.ACCEPTABLE || iterationResult == IterationResult.BORDERLINE;
-      String logMessage = formatMessage(data, expectedOnMyMachine, iterationResult, initialMaxRetries);
+      String logMessage = formatMessage(data, expectedOnMyMachine, actualInputSize.get(), iterationResult, initialMaxRetries);
 
       if (testPassed) {
         TeamCityLogger.info(logMessage);
@@ -157,6 +157,7 @@ public class PerformanceTestInfo {
 
   private @NotNull String formatMessage(@NotNull CpuUsageData data,
                                         int expectedOnMyMachine,
+                                        int actualInputSize,
                                         @NotNull IterationResult iterationResult,
                                         int initialMaxRetries) {
     long duration = data.durationMs;
@@ -169,6 +170,7 @@ public class PerformanceTestInfo {
       (iterationResult == IterationResult.DISTRACTED && initialMaxRetries != 1 ? " (but JIT compilation took too long, will retry anyway)" : "") +
       "\n  Expected: " + expectedOnMyMachine + "ms (" + StringUtil.formatDuration(expectedOnMyMachine) + ")" +
       "\n  Actual:   " + duration + "ms (" + StringUtil.formatDuration(duration) + ")" +
+      (expectedInputSize != actualInputSize ? "\n  (Expected time was adjusted accordingly to input size: expected " + expectedInputSize + ", actual " + actualInputSize + ".)": "") +
       "\n  Timings:  " + Timings.getStatistics() +
       "\n  Threads:  " + data.getThreadStats() +
       "\n  GC stats: " + data.getGcStats() +
