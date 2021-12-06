@@ -95,6 +95,9 @@ public class MavenIndices implements Disposable {
       closeIndices(getOldIndices(localDiff, remoteDiff));
       updateDependencySearchProviders(project);
     }
+    catch (AlreadyDisposedException e) {
+      myIndexHolder = new MavenIndexHolder(Collections.emptyList(), null);
+    }
     finally {
       updateIndicesLock.unlock();
     }
