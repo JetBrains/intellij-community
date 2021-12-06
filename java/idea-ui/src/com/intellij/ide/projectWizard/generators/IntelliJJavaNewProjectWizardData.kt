@@ -12,5 +12,7 @@ interface IntelliJJavaNewProjectWizardData: IntelliJNewProjectWizardData {
 
     @JvmStatic var NewProjectWizardStep.sdk get() = javaData.sdk; set(it) { javaData.sdk = it }
     @JvmStatic var NewProjectWizardStep.moduleName get() = javaData.moduleName; set(it) { javaData.moduleName = it }
+    @JvmStatic var NewProjectWizardStep.contentRoot get() = javaData.contentRoot; set(it) { javaData.contentRoot = it }
+    @JvmStatic var NewProjectWizardStep.moduleFileLocation get() = javaData.moduleFileLocation; set(it) { javaData.moduleFileLocation = it }
   }
 }

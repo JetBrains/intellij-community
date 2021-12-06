@@ -53,8 +53,8 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
 
   final override var sdk by sdkProperty
   final override var moduleName by moduleNameProperty
-  protected var contentRoot by contentRootProperty
-  protected var moduleFileLocation by moduleFileLocationProperty
+  final override var contentRoot by contentRootProperty
+  final override var moduleFileLocation by moduleFileLocationProperty
 
   private var userDefinedContentRoot: Boolean = false
   private var userDefinedModuleFileLocation: Boolean = false

@@ -6,4 +6,6 @@ import com.intellij.openapi.projectRoots.Sdk
 interface IntelliJNewProjectWizardData {
   var sdk: Sdk?
   var moduleName: String
+  var contentRoot: String
+  var moduleFileLocation: String
 }
