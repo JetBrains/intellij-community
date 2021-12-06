@@ -96,6 +96,8 @@ class GotItTooltip(@NonNls val id: String,
   private var maxCount = 1
   private var onBalloonCreated: (Balloon) -> Unit = {}
 
+  private var useContrastColors = false
+
   // Ease the access (remove private or val to var) if fine-tuning is needed.
   private val savedCount: (String) -> Int = { PropertiesComponent.getInstance().getInt(it, 0) }
   var showCondition: (String) -> Boolean = { savedCount(it) in 0 until maxCount }
@@ -218,6 +220,14 @@ class GotItTooltip(@NonNls val id: String,
    */
   fun withShowCount(count: Int): GotItTooltip {
     if (count > 0) maxCount = count
+    return this
+  }
+
+  /**
+   * Set whether to use contrast tooltip colors.
+   */
+  fun withContrastColors(contrastColors: Boolean): GotItTooltip {
+    useContrastColors = contrastColors
     return this
   }
 
@@ -424,9 +434,9 @@ class GotItTooltip(@NonNls val id: String,
       .setHideOnKeyOutside(false)
       .setHideOnClickOutside(false)
       .setBlockClicksThroughBalloon(true)
-      .setBorderColor(JBUI.CurrentTheme.GotItTooltip.borderColor())
+      .setBorderColor(JBUI.CurrentTheme.GotItTooltip.borderColor(useContrastColors))
       .setCornerToPointerDistance(ARROW_SHIFT)
-      .setFillColor(JBUI.CurrentTheme.GotItTooltip.background())
+      .setFillColor(JBUI.CurrentTheme.GotItTooltip.background(useContrastColors))
       .setPointerSize(JBUI.size(16, 8))
       .createBalloon().also { it.setAnimationEnabled(false) }
 
@@ -471,7 +481,7 @@ class GotItTooltip(@NonNls val id: String,
 
       val finalText = HtmlChunk.raw(header)
         .bold()
-        .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(JBUI.CurrentTheme.GotItTooltip.foreground())))
+        .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(JBUI.CurrentTheme.GotItTooltip.foreground(useContrastColors))))
         .wrapWith(HtmlChunk.html())
         .toString()
       panel.add(JBLabel(finalText), gc.setColumn(column).anchor(GridBagConstraints.LINE_START).insetLeft(left))
@@ -479,12 +489,12 @@ class GotItTooltip(@NonNls val id: String,
 
     val builder = HtmlBuilder()
     builder.append(HtmlChunk.raw(text).wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(
-      JBUI.CurrentTheme.GotItTooltip.foreground()))))
+      JBUI.CurrentTheme.GotItTooltip.foreground(useContrastColors)))))
     shortcut?.let {
       builder.append(HtmlChunk.nbsp())
         .append(HtmlChunk.nbsp())
         .append(HtmlChunk.text(KeymapUtil.getShortcutText(it))
-                  .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(JBUI.CurrentTheme.GotItTooltip.shortcutForeground()))))
+                  .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(JBUI.CurrentTheme.GotItTooltip.shortcutForeground(useContrastColors)))))
     }
 
     if (icon == null || header.isNotEmpty()) gc.nextLine()
@@ -500,6 +510,14 @@ class GotItTooltip(@NonNls val id: String,
         isFocusable = false
         isOpaque = false
         putClientProperty("gotItButton", true)
+        if (useContrastColors) {
+          border = JBUI.Borders.empty(0, 0, 5, 0)
+          background = Color(0, true)
+          putClientProperty("JButton.backgroundColor", JBUI.CurrentTheme.GotItTooltip.buttonBackgroundContrast())
+          putClientProperty("ActionToolbar.smallVariant", true) // remove shadow in darcula
+
+          foreground = JBUI.CurrentTheme.GotItTooltip.buttonForegroundContrast()
+        }
       }
       buttonSupplier(button)
 
@@ -511,7 +529,7 @@ class GotItTooltip(@NonNls val id: String,
 
         @Suppress("HardCodedStringLiteral")
         val closeShortcut = JLabel(KeymapUtil.getShortcutText(CLOSE_ACTION_NAME)).apply {
-          foreground = JBUI.CurrentTheme.GotItTooltip.shortcutForeground()
+          foreground = JBUI.CurrentTheme.GotItTooltip.shortcutForeground(useContrastColors)
         }
         buttonPanel.add(closeShortcut)
 
@@ -522,7 +540,7 @@ class GotItTooltip(@NonNls val id: String,
       }
     }
 
-    panel.background = JBUI.CurrentTheme.GotItTooltip.background()
+    panel.background = JBUI.CurrentTheme.GotItTooltip.background(useContrastColors)
     panel.border = PANEL_MARGINS
 
     return panel

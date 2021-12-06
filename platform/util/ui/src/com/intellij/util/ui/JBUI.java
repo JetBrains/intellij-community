@@ -1197,18 +1197,30 @@ public class JBUI {
 
     public static final class GotItTooltip {
       @NotNull
-      public static Color foreground() {
-        return JBColor.namedColor("GotItTooltip.foreground", UIUtil.getToolTipForeground());
+      public static Color foreground(boolean useContrastColors) {
+        if (useContrastColors) {
+          return JBColor.namedColor("Tooltip.Learning.foreground", 0xF5F5F5);
+        } else {
+          return JBColor.namedColor("GotItTooltip.foreground", UIUtil.getToolTipForeground());
+        }
       }
 
       @NotNull
-      public static Color background() {
-        return JBColor.namedColor("GotItTooltip.background", UIUtil.getToolTipBackground());
+      public static Color background(boolean useContrastColors) {
+        if (useContrastColors) {
+          return JBColor.namedColor("Tooltip.Learning.background");
+        } else {
+          return JBColor.namedColor("GotItTooltip.background", UIUtil.getToolTipBackground());
+        }
       }
 
       @NotNull
-      public static Color shortcutForeground() {
-        return JBColor.namedColor("GotItTooltip.shortcutForeground", Tooltip.shortcutForeground());
+      public static Color shortcutForeground(boolean useContrastColors) {
+        if (useContrastColors) {
+          return JBColor.namedColor("Tooltip.Learning.spanForeground", 0xF5F5F5);
+        } else {
+          return JBColor.namedColor("GotItTooltip.shortcutForeground", Tooltip.shortcutForeground());
+        }
       }
 
       @NotNull
@@ -1217,8 +1229,22 @@ public class JBUI {
       }
 
       @NotNull
-      public static Color borderColor() {
-        return JBColor.namedColor("GotItTooltip.borderColor", JBUI.CurrentTheme.Tooltip.borderColor());
+      public static Color borderColor(boolean useContrastColors) {
+        if (useContrastColors) {
+          return JBColor.namedColor("Tooltip.Learning.background", 0x1071E8, 0x0E62CF);
+        } else {
+          return JBColor.namedColor("GotItTooltip.borderColor", JBUI.CurrentTheme.Tooltip.borderColor());
+        }
+      }
+
+      @NotNull
+      public static Color buttonBackgroundContrast() {
+        return JBColor.namedColor("Tooltip.Learning.spanBackground", 0x0D5CBD, 0x0250B0);
+      }
+
+      @NotNull
+      public static Color buttonForegroundContrast() {
+        return JBColor.namedColor("Tooltip.Learning.spanForeground", 0xF5F5F5);
       }
     }
 
