@@ -10,5 +10,5 @@ sealed class InternalLinkResult {
 
   object CannotResolve : InternalLinkResult()
 
-  class OK(val request: DocumentationRequest) : InternalLinkResult()
+  class Request(val request: DocumentationRequest) : InternalLinkResult()
 }
