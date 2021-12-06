@@ -30,7 +30,6 @@ import java.awt.Color
 import java.awt.Rectangle
 import javax.swing.Icon
 import javax.swing.JScrollPane
-import javax.swing.SwingUtilities
 
 internal class DocumentationUI(
   project: Project,
@@ -158,7 +157,8 @@ internal class DocumentationUI(
     }
     val linkChunk = getLink(presentation.presentableText, data.externalUrl)
     val decorated = decorate(data.html, locationChunk, linkChunk)
-    update(decorated, data.anchor)
+    val scrollingPosition = data.anchor?.let(ScrollingPosition::Anchor) ?: ScrollingPosition.Reset
+    update(decorated, scrollingPosition)
   }
 
   private fun registerIcon(icon: Icon): String {
@@ -177,35 +177,24 @@ internal class DocumentationUI(
       .addText(message)
       .wrapWith("body")
       .wrapWith("html")
-    update(element.toString(), null)
+    update(element.toString(), ScrollingPosition.Reset)
   }
 
-  private sealed class AnchorOrRect {
-    class Anchor(val anchor: String) : AnchorOrRect()
-    class Rect(val rect: Rectangle) : AnchorOrRect()
-  }
-
-  private fun update(text: @Nls String, anchor: String?) {
+  private fun update(text: @Nls String, scrollingPosition: ScrollingPosition) {
     EDT.assertIsEdt()
     editorPane.text = text
-
-    val anchorOrRect = when {
-      DocumentationManagerProtocol.KEEP_SCROLLING_POSITION_REF == anchor -> AnchorOrRect.Rect(
-        scrollPane.viewport.viewRect) // save current scroll position
-      anchor != null -> AnchorOrRect.Anchor(anchor)
-      else -> null
-    }
-
-    SwingUtilities.invokeLater {
-      when (anchorOrRect) {
-        is AnchorOrRect.Anchor -> UIUtil.scrollToReference(editorPane, anchorOrRect.anchor)
-        is AnchorOrRect.Rect -> editorPane.scrollRectToVisible(anchorOrRect.rect)
-        null -> {
-          editorPane.scrollRectToVisible(Rectangle(0, 0))
-          if (ScreenReader.isActive()) {
-            editorPane.caretPosition = 0
-          }
+    when (scrollingPosition) {
+      ScrollingPosition.Keep -> {
+        // do nothing
+      }
+      ScrollingPosition.Reset -> {
+        editorPane.scrollRectToVisible(Rectangle(0, 0))
+        if (ScreenReader.isActive()) {
+          editorPane.caretPosition = 0
         }
+      }
+      is ScrollingPosition.Anchor -> {
+        UIUtil.scrollToReference(editorPane, scrollingPosition.anchor)
       }
     }
   }
