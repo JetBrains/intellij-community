@@ -118,7 +118,7 @@ internal class DocumentationBrowser private constructor(
           // TODO ? can't resolve link to target & nobody can open the link
         }
       }
-      is InternalLinkResult.OK -> {
+      is InternalLinkResult.Request -> {
         backStack.push(historySnapshot())
         forwardStack.clear()
         browseDocumentation(internalResult.request, byLink = true)
