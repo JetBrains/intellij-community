@@ -1195,6 +1195,33 @@ public class JBUI {
       }
     }
 
+    public static final class GotItTooltip {
+      @NotNull
+      public static Color foreground() {
+        return JBColor.namedColor("GotItTooltip.foreground", UIUtil.getToolTipForeground());
+      }
+
+      @NotNull
+      public static Color background() {
+        return JBColor.namedColor("GotItTooltip.background", UIUtil.getToolTipBackground());
+      }
+
+      @NotNull
+      public static Color shortcutForeground() {
+        return JBColor.namedColor("GotItTooltip.shortcutForeground", Tooltip.shortcutForeground());
+      }
+
+      @NotNull
+      public static Color linkForeground() {
+        return JBColor.namedColor("GotItTooltip.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED);
+      }
+
+      @NotNull
+      public static Color borderColor() {
+        return JBColor.namedColor("GotItTooltip.borderColor", JBUI.CurrentTheme.Tooltip.borderColor());
+      }
+    }
+
     public interface ContextHelp {
       @NotNull Color FOREGROUND = JBColor.namedColor("Label.infoForeground", new JBColor(Gray.x78, Gray.x8C));
     }

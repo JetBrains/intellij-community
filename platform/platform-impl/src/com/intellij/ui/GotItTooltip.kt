@@ -189,7 +189,7 @@ class GotItTooltip(@NonNls val id: String,
    */
   fun withLink(@Nls linkLabel: String, action: () -> Unit): GotItTooltip {
     link = object : LinkLabel<Unit>(linkLabel, null) {
-      override fun getNormal(): Color = LINK_FOREGROUND
+      override fun getNormal(): Color = JBUI.CurrentTheme.GotItTooltip.linkForeground()
     }
     linkAction = action
     return this
@@ -207,7 +207,7 @@ class GotItTooltip(@NonNls val id: String,
    */
   fun withBrowserLink(@Nls linkLabel: String, url: URL): GotItTooltip {
     link = object : LinkLabel<Unit>(linkLabel, AllIcons.Ide.External_link_arrow) {
-      override fun getNormal(): Color = LINK_FOREGROUND
+      override fun getNormal(): Color = JBUI.CurrentTheme.GotItTooltip.linkForeground()
     }.apply { horizontalTextPosition = SwingConstants.LEFT }
     linkAction = { BrowserUtil.browse(url) }
     return this
@@ -415,12 +415,20 @@ class GotItTooltip(@NonNls val id: String,
 
   private fun createBalloon(): Balloon {
     var button: JButton? = null
-    val balloon = JBPopupFactory.getInstance().createBalloonBuilder(createContent { button = it }).setDisposable(this).setHideOnAction(
-      false).setHideOnClickOutside(false).setHideOnFrameResize(false).setHideOnKeyOutside(false).setHideOnClickOutside(
-      false).setBlockClicksThroughBalloon(true).setBorderColor(BORDER_COLOR).setCornerToPointerDistance(
-      ARROW_SHIFT).setFillColor(BACKGROUND_COLOR).setPointerSize(JBUI.size(16, 8)).createBalloon().also {
-      it.setAnimationEnabled(false)
-    }
+    val balloon = JBPopupFactory.getInstance()
+      .createBalloonBuilder(createContent { button = it })
+      .setDisposable(this)
+      .setHideOnAction(false)
+      .setHideOnClickOutside(false)
+      .setHideOnFrameResize(false)
+      .setHideOnKeyOutside(false)
+      .setHideOnClickOutside(false)
+      .setBlockClicksThroughBalloon(true)
+      .setBorderColor(JBUI.CurrentTheme.GotItTooltip.borderColor())
+      .setCornerToPointerDistance(ARROW_SHIFT)
+      .setFillColor(JBUI.CurrentTheme.GotItTooltip.background())
+      .setPointerSize(JBUI.size(16, 8))
+      .createBalloon().also { it.setAnimationEnabled(false) }
 
     val collector = GotItUsageCollector.instance
 
@@ -461,16 +469,22 @@ class GotItTooltip(@NonNls val id: String,
     if (header.isNotEmpty()) {
       if (icon == null) gc.nextLine()
 
-      panel.add(JBLabel(HtmlChunk.raw(header).bold().wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(FOREGROUND_COLOR))).wrapWith(
-        HtmlChunk.html()).toString()),
-                gc.setColumn(column).anchor(GridBagConstraints.LINE_START).insetLeft(left))
+      val finalText = HtmlChunk.raw(header)
+        .bold()
+        .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(JBUI.CurrentTheme.GotItTooltip.foreground())))
+        .wrapWith(HtmlChunk.html())
+        .toString()
+      panel.add(JBLabel(finalText), gc.setColumn(column).anchor(GridBagConstraints.LINE_START).insetLeft(left))
     }
 
     val builder = HtmlBuilder()
-    builder.append(HtmlChunk.raw(text).wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(FOREGROUND_COLOR))))
+    builder.append(HtmlChunk.raw(text).wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(
+      JBUI.CurrentTheme.GotItTooltip.foreground()))))
     shortcut?.let {
-      builder.append(HtmlChunk.nbsp()).append(HtmlChunk.nbsp()).append(
-        HtmlChunk.text(KeymapUtil.getShortcutText(it)).wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(SHORTCUT_COLOR))))
+      builder.append(HtmlChunk.nbsp())
+        .append(HtmlChunk.nbsp())
+        .append(HtmlChunk.text(KeymapUtil.getShortcutText(it))
+                  .wrapWith(HtmlChunk.font(ColorUtil.toHtmlColor(JBUI.CurrentTheme.GotItTooltip.shortcutForeground()))))
     }
 
     if (icon == null || header.isNotEmpty()) gc.nextLine()
@@ -496,7 +510,9 @@ class GotItTooltip(@NonNls val id: String,
         buttonPanel.add(Box.createHorizontalStrut(JBUIScale.scale(UIUtil.DEFAULT_HGAP)))
 
         @Suppress("HardCodedStringLiteral")
-        val closeShortcut = JLabel(KeymapUtil.getShortcutText(CLOSE_ACTION_NAME)).apply { foreground = SHORTCUT_COLOR }
+        val closeShortcut = JLabel(KeymapUtil.getShortcutText(CLOSE_ACTION_NAME)).apply {
+          foreground = JBUI.CurrentTheme.GotItTooltip.shortcutForeground()
+        }
         buttonPanel.add(closeShortcut)
 
         panel.add(buttonPanel, gc.nextLine().setColumn(column).insets(11, left, 0, 0).anchor(GridBagConstraints.LINE_START))
@@ -506,7 +522,7 @@ class GotItTooltip(@NonNls val id: String,
       }
     }
 
-    panel.background = BACKGROUND_COLOR
+    panel.background = JBUI.CurrentTheme.GotItTooltip.background()
     panel.border = PANEL_MARGINS
 
     return panel
@@ -558,11 +574,6 @@ class GotItTooltip(@NonNls val id: String,
     private const val DEFAULT_TIMEOUT = 5000 // milliseconds
     private const val CLOSE_ACTION_NAME = "CloseGotItTooltip"
     private val MAX_WIDTH = JBUIScale.scale(280)
-    private val FOREGROUND_COLOR = JBColor.namedColor("GotItTooltip.foreground", UIUtil.getToolTipForeground())
-    private val SHORTCUT_COLOR = JBColor.namedColor("GotItTooltip.shortcutForeground", JBUI.CurrentTheme.Tooltip.shortcutForeground())
-    private val BACKGROUND_COLOR = JBColor.namedColor("GotItTooltip.background", UIUtil.getToolTipBackground())
-    private val BORDER_COLOR = JBColor.namedColor("GotItTooltip.borderColor", JBUI.CurrentTheme.Tooltip.borderColor())
-    private val LINK_FOREGROUND = JBColor.namedColor("GotItTooltip.linkForeground", JBUI.CurrentTheme.Link.Foreground.ENABLED)
 
     private val PANEL_MARGINS = JBUI.Borders.empty(7, 4, 9, 9)
 
