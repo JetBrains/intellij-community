@@ -33,8 +33,11 @@ public final class ClassPath {
   static final boolean recordLoadingInfo = Boolean.getBoolean("idea.record.classpath.info");
   // record class and resource loading time
   static final boolean recordLoadingTime = recordLoadingInfo || Boolean.getBoolean("idea.record.classloading.stats");
-
   static final boolean logLoadingInfo = Boolean.getBoolean("idea.log.classpath.info");
+
+  // DCEVM support
+  private static final boolean isNewClassLoadingEnabled = Boolean.parseBoolean(System.getProperty("idea.classpath.new.classloading.enabled",
+                                                                                                  "false"));
 
   private static final Collection<Map.Entry<String, Path>> loadedClasses;
 
@@ -181,32 +184,58 @@ public final class ClassPath {
         }
 
         if (allUrlsWereProcessed) {
-          return null;
+          if (isNewClassLoadingEnabled) {
+            i = 0;
+          }
+          else {
+            return null;
+          }
         }
-
-        i = lastLoaderProcessed.get();
+        else {
+          i = lastLoaderProcessed.get();
+        }
       }
       else {
         i = 0;
       }
-
-      Loader loader;
-      while ((loader = getLoader(i++)) != null) {
-        if (useCache && !loader.containsName(fileName)) {
-          continue;
-        }
-
-        Class<?> result = findClassInLoader(fileName, className, classDataConsumer, loader);
-        if (result != null) {
-          return result;
-        }
-      }
+      return findClassWithoutCache(className, fileName, i, classDataConsumer);
     }
     finally {
       classLoading.record(start, className);
     }
+  }
 
-    return null;
+  private @Nullable Class<?> findClassWithoutCache(String className,
+                                                   String fileName,
+                                                   int loaderIndex,
+                                                   ClassDataConsumer classDataConsumer) throws IOException {
+    while (true) {
+      boolean useCache = this.useCache;
+      int i = loaderIndex++;
+      Loader loader;
+      if (i < lastLoaderProcessed.get()) {
+        loader = loaders.get(i);
+        // searching in an already processed loader - do not use cache if detecting new classes is enabled
+        useCache = !isNewClassLoadingEnabled;
+      }
+      else {
+        loader = getLoaderSlowPath(i);
+        // useCache doesn't matter - state on disk is checked as part of loader creation
+      }
+
+      if (loader == null) {
+        return null;
+      }
+
+      if (useCache && !loader.containsName(fileName)) {
+        continue;
+      }
+
+      Class<?> result = findClassInLoader(fileName, className, classDataConsumer, loader);
+      if (result != null) {
+        return result;
+      }
+    }
   }
 
   private static @Nullable Class<?> findClassInLoader(@NotNull String fileName,
