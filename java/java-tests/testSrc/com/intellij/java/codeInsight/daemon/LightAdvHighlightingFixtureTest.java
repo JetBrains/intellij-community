@@ -6,6 +6,7 @@ import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.lang.java.JavaDocumentationProvider;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -53,7 +54,23 @@ public class LightAdvHighlightingFixtureTest extends LightJavaCodeInsightFixture
     assertNotNull(callExpression);
     CandidateInfo[] candidates =
       PsiResolveHelper.SERVICE.getInstance(myFixture.getProject()).getReferencedMethodCandidates(callExpression, false);
-    assertSize(14, candidates);
+    assertSize(27, candidates);
+    String generateDoc = new JavaDocumentationProvider().generateDoc(callExpression, callExpression);
+    assertEquals("<html>Candidates for method call <b>new StringBuilder().append()</b> are:<br><br>&nbsp;&nbsp;" +
+                 "<a href=\"psi_element://java.lang.StringBuilder#append(java.lang.Object)\">StringBuilder append(Object)</a><br>&nbsp;&nbsp;" +
+                 "<a href=\"psi_element://java.lang.StringBuilder#append(java.lang.String)\">StringBuilder append(String)</a><br>&nbsp;&nbsp;" +
+                 "<a href=\"psi_element://java.lang.StringBuilder#append(java.lang.StringBuilder)\">StringBuilder append(StringBuilder)</a><br>&nbsp;&nbsp;" +
+                 "<a href=\"psi_element://java.lang.StringBuilder#append(java.lang.StringBuffer)\">StringBuilder append(StringBuffer)</a><br>&nbsp;&nbsp;" +
+                 "<a href=\"psi_element://java.lang.StringBuilder#append(java.lang.CharSequence)\">StringBuilder append(CharSequence)</a><br>&nbsp;&nbsp;" +
+                 "<a href=\"psi_element://java.lang.StringBuilder#append(java.lang.CharSequence, int, int)\">StringBuilder append(CharSequence, int, int)</a><br>&nbsp;&nbsp;" +
+                 "<a href=\"psi_element://java.lang.StringBuilder#append(char[])\">StringBuilder append(char[])</a><br>&nbsp;&nbsp;" +
+                 "<a href=\"psi_element://java.lang.StringBuilder#append(char[], int, int)\">StringBuilder append(char[], int, int)</a><br>&nbsp;&nbsp;" +
+                 "<a href=\"psi_element://java.lang.StringBuilder#append(boolean)\">StringBuilder append(boolean)</a><br>&nbsp;&nbsp;" +
+                 "<a href=\"psi_element://java.lang.StringBuilder#append(char)\">StringBuilder append(char)</a><br>&nbsp;&nbsp;" +
+                 "<a href=\"psi_element://java.lang.StringBuilder#append(int)\">StringBuilder append(int)</a><br>&nbsp;&nbsp;" +
+                 "<a href=\"psi_element://java.lang.StringBuilder#append(long)\">StringBuilder append(long)</a><br>&nbsp;&nbsp;" +
+                 "<a href=\"psi_element://java.lang.StringBuilder#append(float)\">StringBuilder append(float)</a><br>&nbsp;&nbsp;" +
+                 "<a href=\"psi_element://java.lang.StringBuilder#append(double)\">StringBuilder append(double)</a><br></html>", generateDoc);
   }
 
   public void testPackageNamedAsClassInDefaultPackage() {

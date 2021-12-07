@@ -13,7 +13,6 @@ import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.scope.MethodProcessorSetupFailedException;
 import com.intellij.psi.scope.PsiConflictResolver;
 import com.intellij.psi.scope.conflictResolvers.DuplicateConflictResolver;
-import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
@@ -24,7 +23,6 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
@@ -150,7 +148,7 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                                  boolean dummyImplicitConstructor,
                                                                  final boolean checkVarargs) {
     PsiFile containingFile = expr.getContainingFile();
-    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr, containingFile, new PsiConflictResolver[]{DuplicateConflictResolver.INSTANCE, new NoArgsConflictResolver(containingFile)}, new SmartList<>()) {
+    final MethodCandidatesProcessor processor = new MethodCandidatesProcessor(expr, containingFile, new PsiConflictResolver[]{DuplicateConflictResolver.INSTANCE}, new SmartList<>()) {
       @Override
       protected boolean acceptVarargs() {
         return checkVarargs;
@@ -274,21 +272,5 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
       return new PsiGraphInferenceHelper(myManager);
     }
     return new PsiOldInferenceHelper(myManager);
-  }
-
-  private static class NoArgsConflictResolver implements PsiConflictResolver {
-    private final PsiFile myContainingFile;
-
-    private NoArgsConflictResolver(PsiFile containingFile) { 
-      myContainingFile = containingFile; 
-    }
-
-    @Override
-    public @Nullable CandidateInfo resolveConflict(@NotNull List<CandidateInfo> conflicts) {
-      if (conflicts.isEmpty()) return null;
-      if (conflicts.size() == 1) return conflicts.get(0);
-      JavaMethodsConflictResolver.filterSupers(conflicts, myContainingFile, null);
-      return conflicts.size() == 1 ? conflicts.get(0) : null;
-    }
   }
 }
