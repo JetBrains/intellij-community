@@ -133,7 +133,6 @@ internal class DocumentationUI(
         null // normal situation, nothing to do
       }
       applyState(request, data)
-      fireContentChanged()
     }
   }
 
@@ -184,6 +183,7 @@ internal class DocumentationUI(
   fun update(text: @Nls String, scrollingPosition: ScrollingPosition) {
     EDT.assertIsEdt()
     editorPane.text = text
+    fireContentChanged()
     SwingUtilities.invokeLater {
       when (scrollingPosition) {
         ScrollingPosition.Keep -> {
