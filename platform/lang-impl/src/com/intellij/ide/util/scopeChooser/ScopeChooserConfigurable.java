@@ -23,6 +23,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packageDependencies.DependencyValidationManager;
 import com.intellij.psi.search.scope.impl.CustomScopesAggregator;
+import com.intellij.psi.search.scope.packageSet.InvalidPackageSet;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.search.scope.packageSet.NamedScopeManager;
 import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
@@ -353,7 +354,6 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
       registerCustomShortcutSet(CommonActionsPanel.getCommonShortcut(CommonActionsPanel.Buttons.ADD), myTree);
     }
 
-
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
@@ -370,14 +370,14 @@ public class ScopeChooserConfigurable extends MasterDetailsComponent implements 
                                             myLocalScopesManager.getIcon()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            createScope(true, IdeBundle.message("add.scope.dialog.title"), null);
+            createScope(true, IdeBundle.message("add.scope.dialog.title"), new InvalidPackageSet(""));
           }
         };
         myChildren[1] = new DumbAwareAction(IdeBundle.message("add.shared.scope.action.text"), IdeBundle.message("add.shared.scope.action.text"),
                                             mySharedScopesManager.getIcon()) {
           @Override
           public void actionPerformed(@NotNull AnActionEvent e) {
-            createScope(false, IdeBundle.message("add.scope.dialog.title"), null);
+            createScope(false, IdeBundle.message("add.scope.dialog.title"), new InvalidPackageSet(""));
           }
         };
       }
