@@ -113,7 +113,7 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     setEmptyState(EmptyState.NONE_SELECTED);
   }
 
-  final @Nullable IdeaPluginDescriptor getPlugin() {
+  @Nullable IdeaPluginDescriptor getPlugin() {
     return myPlugin;
   }
 
@@ -471,12 +471,12 @@ public final class PluginDetailsPageComponent extends MultiPanel {
     return editorPane;
   }
 
-  public final void showPlugins(@NotNull List<? extends ListPluginComponent> selection) {
+  public void showPlugins(@NotNull List<? extends ListPluginComponent> selection) {
     int size = selection.size();
     showPlugin(size == 1 ? selection.get(0) : null, size > 1);
   }
 
-  public final void showPlugin(@Nullable ListPluginComponent component) {
+  public void showPlugin(@Nullable ListPluginComponent component) {
     showPlugin(component, false);
   }
 
