@@ -672,7 +672,7 @@ public final class CompileDriver {
     }, null);
   }
 
-  private boolean executeCompileTasks(final CompileContext context, final boolean beforeTasks) {
+  private boolean executeCompileTasks(@NotNull final CompileContext context, final boolean beforeTasks) {
     if (myProject.isDisposed()) {
       return false;
     }

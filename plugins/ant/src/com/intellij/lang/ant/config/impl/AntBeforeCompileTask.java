@@ -20,7 +20,7 @@ import static com.intellij.ide.macro.CompilerContextMakeMacro.COMPILER_CONTEXT_M
 
 class AntBeforeCompileTask implements CompileTask {
   @Override
-  public boolean execute(CompileContext context) {
+  public boolean execute(@NotNull CompileContext context) {
     return initializeAndRun(context, antConfiguration -> antConfiguration.executeTargetBeforeCompile(
       createDataContext(context)));
   }
