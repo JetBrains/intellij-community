@@ -18,281 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../completion/tests/testData/handlers/basic")
-public class PerformanceBasicCompletionHandlerTestGenerated extends AbstractPerformanceBasicCompletionHandlerTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
-    }
-
-    @TestMetadata("AddLabelToReturn.kt")
-    public void testAddLabelToReturn() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/AddLabelToReturn.kt");
-    }
-
-    @TestMetadata("ClassKeywordBeforeName.kt")
-    public void testClassKeywordBeforeName() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/ClassKeywordBeforeName.kt");
-    }
-
-    @TestMetadata("ClassNameForMethodWithPackageConflict.kt")
-    public void testClassNameForMethodWithPackageConflict() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/ClassNameForMethodWithPackageConflict.kt");
-    }
-
-    @TestMetadata("ClassNameForMethodWithPackageConflict2.kt")
-    public void testClassNameForMethodWithPackageConflict2() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/ClassNameForMethodWithPackageConflict2.kt");
-    }
-
-    @TestMetadata("ClassNameWithAliasConfict.kt")
-    public void testClassNameWithAliasConfict() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/ClassNameWithAliasConfict.kt");
-    }
-
-    @TestMetadata("ClassNameWithPackageConflict.kt")
-    public void testClassNameWithPackageConflict() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/ClassNameWithPackageConflict.kt");
-    }
-
-    @TestMetadata("ClassWithClassObject.kt")
-    public void testClassWithClassObject() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/ClassWithClassObject.kt");
-    }
-
-    @TestMetadata("DoNotUseParenthesisOnNextLine.kt")
-    public void testDoNotUseParenthesisOnNextLine() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/DoNotUseParenthesisOnNextLine.kt");
-    }
-
-    @TestMetadata("EA70229.kt")
-    public void testEA70229() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/EA70229.kt");
-    }
-
-    @TestMetadata("ExtensionFunctionTypeVariable1.kt")
-    public void testExtensionFunctionTypeVariable1() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/ExtensionFunctionTypeVariable1.kt");
-    }
-
-    @TestMetadata("ExtensionFunctionTypeVariable2.kt")
-    public void testExtensionFunctionTypeVariable2() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/ExtensionFunctionTypeVariable2.kt");
-    }
-
-    @TestMetadata("ExtensionReceiverTypeArg.kt")
-    public void testExtensionReceiverTypeArg() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/ExtensionReceiverTypeArg.kt");
-    }
-
-    @TestMetadata("FirstTypeArgument.kt")
-    public void testFirstTypeArgument() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/FirstTypeArgument.kt");
-    }
-
-    @TestMetadata("GenericFunctionWithTab.kt")
-    public void testGenericFunctionWithTab() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/GenericFunctionWithTab.kt");
-    }
-
-    @TestMetadata("GenericFunctionWithTab2.kt")
-    public void testGenericFunctionWithTab2() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/GenericFunctionWithTab2.kt");
-    }
-
-    @TestMetadata("GetOperator.kt")
-    public void testGetOperator() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/GetOperator.kt");
-    }
-
-    @TestMetadata("InterfaceNameBeforeRunBug.kt")
-    public void testInterfaceNameBeforeRunBug() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/InterfaceNameBeforeRunBug.kt");
-    }
-
-    @TestMetadata("JavaClassName.kt")
-    public void testJavaClassName() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/JavaClassName.kt");
-    }
-
-    @TestMetadata("JavaClassNameWithAliasConfict.kt")
-    public void testJavaClassNameWithAliasConfict() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/JavaClassNameWithAliasConfict.kt");
-    }
-
-    @TestMetadata("JavaClassNameWithConflict.kt")
-    public void testJavaClassNameWithConflict() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/JavaClassNameWithConflict.kt");
-    }
-
-    @TestMetadata("JavaClassNameWithConflict2.kt")
-    public void testJavaClassNameWithConflict2() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/JavaClassNameWithConflict2.kt");
-    }
-
-    @TestMetadata("JavaClassNameWithKotlinNestedClassConflict.kt")
-    public void testJavaClassNameWithKotlinNestedClassConflict() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/JavaClassNameWithKotlinNestedClassConflict.kt");
-    }
-
-    @TestMetadata("JavaSAM.kt")
-    public void testJavaSAM() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/JavaSAM.kt");
-    }
-
-    @TestMetadata("KT11633.kt")
-    public void testKT11633() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/KT11633.kt");
-    }
-
-    @TestMetadata("KT12328.kt")
-    public void testKT12328() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/KT12328.kt");
-    }
-
-    @TestMetadata("KT14130.kt")
-    public void testKT14130() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/KT14130.kt");
-    }
-
-    @TestMetadata("KT19863.kt")
-    public void testKT19863() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/KT19863.kt");
-    }
-
-    @TestMetadata("KT19864.kt")
-    public void testKT19864() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/KT19864.kt");
-    }
-
-    @TestMetadata("KT23627.kt")
-    public void testKT23627() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/KT23627.kt");
-    }
-
-    @TestMetadata("KT36306.kt")
-    public void testKT36306() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/KT36306.kt");
-    }
-
-    @TestMetadata("NestedClassNameWithFileLevelConflict.kt")
-    public void testNestedClassNameWithFileLevelConflict() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/NestedClassNameWithFileLevelConflict.kt");
-    }
-
-    @TestMetadata("NestedTypeArg.kt")
-    public void testNestedTypeArg() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/NestedTypeArg.kt");
-    }
-
-    @TestMetadata("NoTailFromSmart.kt")
-    public void testNoTailFromSmart() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/NoTailFromSmart.kt");
-    }
-
-    @TestMetadata("PreferClassToConstructor.kt")
-    public void testPreferClassToConstructor() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/PreferClassToConstructor.kt");
-    }
-
-    @TestMetadata("PreferMatchingKeyword.kt")
-    public void testPreferMatchingKeyword() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/PreferMatchingKeyword.kt");
-    }
-
-    @TestMetadata("ReceiverParam.kt")
-    public void testReceiverParam() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/ReceiverParam.kt");
-    }
-
-    @TestMetadata("ReceiverParam2.kt")
-    public void testReceiverParam2() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/ReceiverParam2.kt");
-    }
-
-    @TestMetadata("ReplaceFunctionCallByProperty.kt")
-    public void testReplaceFunctionCallByProperty() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/ReplaceFunctionCallByProperty.kt");
-    }
-
-    @TestMetadata("ReplaceFunctionCallByPropertyArgs.kt")
-    public void testReplaceFunctionCallByPropertyArgs() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/ReplaceFunctionCallByPropertyArgs.kt");
-    }
-
-    @TestMetadata("SecondTypeArg.kt")
-    public void testSecondTypeArg() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/SecondTypeArg.kt");
-    }
-
-    @TestMetadata("SpaceAfterParenthesisBug.kt")
-    public void testSpaceAfterParenthesisBug() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/SpaceAfterParenthesisBug.kt");
-    }
-
-    @TestMetadata("StaticFunctionFromJavaWithConflict.kt")
-    public void testStaticFunctionFromJavaWithConflict() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/StaticFunctionFromJavaWithConflict.kt");
-    }
-
-    @TestMetadata("StringFakeConstructor.kt")
-    public void testStringFakeConstructor() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/StringFakeConstructor.kt");
-    }
-
-    @TestMetadata("SuperMethod.kt")
-    public void testSuperMethod() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/SuperMethod.kt");
-    }
-
-    @TestMetadata("SuperMethod2.kt")
-    public void testSuperMethod2() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/SuperMethod2.kt");
-    }
-
-    @TestMetadata("SuperTypeArg.kt")
-    public void testSuperTypeArg() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/SuperTypeArg.kt");
-    }
-
-    @TestMetadata("SyntheticExtension.kt")
-    public void testSyntheticExtension() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/SyntheticExtension.kt");
-    }
-
-    @TestMetadata("TypeAliasConfict.kt")
-    public void testTypeAliasConfict() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/TypeAliasConfict.kt");
-    }
-
-    @TestMetadata("TypeAliasConfict1.kt")
-    public void testTypeAliasConfict1() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/TypeAliasConfict1.kt");
-    }
-
-    @TestMetadata("TypeAliasConfict2.kt")
-    public void testTypeAliasConfict2() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/TypeAliasConfict2.kt");
-    }
-
-    @TestMetadata("TypeAliasConfict3.kt")
-    public void testTypeAliasConfict3() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/TypeAliasConfict3.kt");
-    }
-
-    @TestMetadata("TypeAliasConfict4.kt")
-    public void testTypeAliasConfict4() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/TypeAliasConfict4.kt");
-    }
-
-    @TestMetadata("TypeInferedFromWrapperType.kt")
-    public void testTypeInferedFromWrapperType() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/TypeInferedFromWrapperType.kt");
-    }
-
-    @TestMetadata("TypeParameter.kt")
-    public void testTypeParameter() throws Exception {
-        runTest("../completion/tests/testData/handlers/basic/TypeParameter.kt");
-    }
-
+public abstract class PerformanceBasicCompletionHandlerTestGenerated extends AbstractPerformanceBasicCompletionHandlerTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../completion/tests/testData/handlers/basic/annotation")
     public static class Annotation extends AbstractPerformanceBasicCompletionHandlerTest {
@@ -1134,6 +860,284 @@ public class PerformanceBasicCompletionHandlerTestGenerated extends AbstractPerf
         @TestMetadata("WithParamSimple_DefaultOverriddenArgument.kt")
         public void testWithParamSimple_DefaultOverriddenArgument() throws Exception {
             runTest("../completion/tests/testData/handlers/basic/typeArgsForGenericFun/WithParamSimple_DefaultOverriddenArgument.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../completion/tests/testData/handlers/basic")
+    public static class Uncategorized extends AbstractPerformanceBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doPerfTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("AddLabelToReturn.kt")
+        public void testAddLabelToReturn() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/AddLabelToReturn.kt");
+        }
+
+        @TestMetadata("ClassKeywordBeforeName.kt")
+        public void testClassKeywordBeforeName() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/ClassKeywordBeforeName.kt");
+        }
+
+        @TestMetadata("ClassNameForMethodWithPackageConflict.kt")
+        public void testClassNameForMethodWithPackageConflict() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/ClassNameForMethodWithPackageConflict.kt");
+        }
+
+        @TestMetadata("ClassNameForMethodWithPackageConflict2.kt")
+        public void testClassNameForMethodWithPackageConflict2() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/ClassNameForMethodWithPackageConflict2.kt");
+        }
+
+        @TestMetadata("ClassNameWithAliasConfict.kt")
+        public void testClassNameWithAliasConfict() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/ClassNameWithAliasConfict.kt");
+        }
+
+        @TestMetadata("ClassNameWithPackageConflict.kt")
+        public void testClassNameWithPackageConflict() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/ClassNameWithPackageConflict.kt");
+        }
+
+        @TestMetadata("ClassWithClassObject.kt")
+        public void testClassWithClassObject() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/ClassWithClassObject.kt");
+        }
+
+        @TestMetadata("DoNotUseParenthesisOnNextLine.kt")
+        public void testDoNotUseParenthesisOnNextLine() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/DoNotUseParenthesisOnNextLine.kt");
+        }
+
+        @TestMetadata("EA70229.kt")
+        public void testEA70229() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/EA70229.kt");
+        }
+
+        @TestMetadata("ExtensionFunctionTypeVariable1.kt")
+        public void testExtensionFunctionTypeVariable1() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/ExtensionFunctionTypeVariable1.kt");
+        }
+
+        @TestMetadata("ExtensionFunctionTypeVariable2.kt")
+        public void testExtensionFunctionTypeVariable2() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/ExtensionFunctionTypeVariable2.kt");
+        }
+
+        @TestMetadata("ExtensionReceiverTypeArg.kt")
+        public void testExtensionReceiverTypeArg() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/ExtensionReceiverTypeArg.kt");
+        }
+
+        @TestMetadata("FirstTypeArgument.kt")
+        public void testFirstTypeArgument() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/FirstTypeArgument.kt");
+        }
+
+        @TestMetadata("GenericFunctionWithTab.kt")
+        public void testGenericFunctionWithTab() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/GenericFunctionWithTab.kt");
+        }
+
+        @TestMetadata("GenericFunctionWithTab2.kt")
+        public void testGenericFunctionWithTab2() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/GenericFunctionWithTab2.kt");
+        }
+
+        @TestMetadata("GetOperator.kt")
+        public void testGetOperator() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/GetOperator.kt");
+        }
+
+        @TestMetadata("InterfaceNameBeforeRunBug.kt")
+        public void testInterfaceNameBeforeRunBug() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/InterfaceNameBeforeRunBug.kt");
+        }
+
+        @TestMetadata("JavaClassName.kt")
+        public void testJavaClassName() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/JavaClassName.kt");
+        }
+
+        @TestMetadata("JavaClassNameWithAliasConfict.kt")
+        public void testJavaClassNameWithAliasConfict() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/JavaClassNameWithAliasConfict.kt");
+        }
+
+        @TestMetadata("JavaClassNameWithConflict.kt")
+        public void testJavaClassNameWithConflict() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/JavaClassNameWithConflict.kt");
+        }
+
+        @TestMetadata("JavaClassNameWithConflict2.kt")
+        public void testJavaClassNameWithConflict2() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/JavaClassNameWithConflict2.kt");
+        }
+
+        @TestMetadata("JavaClassNameWithKotlinNestedClassConflict.kt")
+        public void testJavaClassNameWithKotlinNestedClassConflict() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/JavaClassNameWithKotlinNestedClassConflict.kt");
+        }
+
+        @TestMetadata("JavaSAM.kt")
+        public void testJavaSAM() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/JavaSAM.kt");
+        }
+
+        @TestMetadata("KT11633.kt")
+        public void testKT11633() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/KT11633.kt");
+        }
+
+        @TestMetadata("KT12328.kt")
+        public void testKT12328() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/KT12328.kt");
+        }
+
+        @TestMetadata("KT14130.kt")
+        public void testKT14130() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/KT14130.kt");
+        }
+
+        @TestMetadata("KT19863.kt")
+        public void testKT19863() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/KT19863.kt");
+        }
+
+        @TestMetadata("KT19864.kt")
+        public void testKT19864() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/KT19864.kt");
+        }
+
+        @TestMetadata("KT23627.kt")
+        public void testKT23627() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/KT23627.kt");
+        }
+
+        @TestMetadata("KT36306.kt")
+        public void testKT36306() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/KT36306.kt");
+        }
+
+        @TestMetadata("NestedClassNameWithFileLevelConflict.kt")
+        public void testNestedClassNameWithFileLevelConflict() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/NestedClassNameWithFileLevelConflict.kt");
+        }
+
+        @TestMetadata("NestedTypeArg.kt")
+        public void testNestedTypeArg() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/NestedTypeArg.kt");
+        }
+
+        @TestMetadata("NoTailFromSmart.kt")
+        public void testNoTailFromSmart() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/NoTailFromSmart.kt");
+        }
+
+        @TestMetadata("PreferClassToConstructor.kt")
+        public void testPreferClassToConstructor() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/PreferClassToConstructor.kt");
+        }
+
+        @TestMetadata("PreferMatchingKeyword.kt")
+        public void testPreferMatchingKeyword() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/PreferMatchingKeyword.kt");
+        }
+
+        @TestMetadata("ReceiverParam.kt")
+        public void testReceiverParam() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/ReceiverParam.kt");
+        }
+
+        @TestMetadata("ReceiverParam2.kt")
+        public void testReceiverParam2() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/ReceiverParam2.kt");
+        }
+
+        @TestMetadata("ReplaceFunctionCallByProperty.kt")
+        public void testReplaceFunctionCallByProperty() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/ReplaceFunctionCallByProperty.kt");
+        }
+
+        @TestMetadata("ReplaceFunctionCallByPropertyArgs.kt")
+        public void testReplaceFunctionCallByPropertyArgs() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/ReplaceFunctionCallByPropertyArgs.kt");
+        }
+
+        @TestMetadata("SecondTypeArg.kt")
+        public void testSecondTypeArg() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/SecondTypeArg.kt");
+        }
+
+        @TestMetadata("SpaceAfterParenthesisBug.kt")
+        public void testSpaceAfterParenthesisBug() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/SpaceAfterParenthesisBug.kt");
+        }
+
+        @TestMetadata("StaticFunctionFromJavaWithConflict.kt")
+        public void testStaticFunctionFromJavaWithConflict() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/StaticFunctionFromJavaWithConflict.kt");
+        }
+
+        @TestMetadata("StringFakeConstructor.kt")
+        public void testStringFakeConstructor() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/StringFakeConstructor.kt");
+        }
+
+        @TestMetadata("SuperMethod.kt")
+        public void testSuperMethod() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/SuperMethod.kt");
+        }
+
+        @TestMetadata("SuperMethod2.kt")
+        public void testSuperMethod2() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/SuperMethod2.kt");
+        }
+
+        @TestMetadata("SuperTypeArg.kt")
+        public void testSuperTypeArg() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/SuperTypeArg.kt");
+        }
+
+        @TestMetadata("SyntheticExtension.kt")
+        public void testSyntheticExtension() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/SyntheticExtension.kt");
+        }
+
+        @TestMetadata("TypeAliasConfict.kt")
+        public void testTypeAliasConfict() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/TypeAliasConfict.kt");
+        }
+
+        @TestMetadata("TypeAliasConfict1.kt")
+        public void testTypeAliasConfict1() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/TypeAliasConfict1.kt");
+        }
+
+        @TestMetadata("TypeAliasConfict2.kt")
+        public void testTypeAliasConfict2() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/TypeAliasConfict2.kt");
+        }
+
+        @TestMetadata("TypeAliasConfict3.kt")
+        public void testTypeAliasConfict3() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/TypeAliasConfict3.kt");
+        }
+
+        @TestMetadata("TypeAliasConfict4.kt")
+        public void testTypeAliasConfict4() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/TypeAliasConfict4.kt");
+        }
+
+        @TestMetadata("TypeInferedFromWrapperType.kt")
+        public void testTypeInferedFromWrapperType() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/TypeInferedFromWrapperType.kt");
+        }
+
+        @TestMetadata("TypeParameter.kt")
+        public void testTypeParameter() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/TypeParameter.kt");
         }
     }
 }

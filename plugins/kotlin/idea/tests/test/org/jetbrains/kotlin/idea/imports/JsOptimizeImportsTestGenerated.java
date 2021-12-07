@@ -33,231 +33,7 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/editor/optimizeImports/common")
-    public static class Common extends AbstractJsOptimizeImportsTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("ArrayAccessExpression.kt")
-        public void testArrayAccessExpression() throws Exception {
-            runTest("testData/editor/optimizeImports/common/ArrayAccessExpression.kt");
-        }
-
-        @TestMetadata("ClassMemberImported.kt")
-        public void testClassMemberImported() throws Exception {
-            runTest("testData/editor/optimizeImports/common/ClassMemberImported.kt");
-        }
-
-        @TestMetadata("Companion.kt")
-        public void testCompanion() throws Exception {
-            runTest("testData/editor/optimizeImports/common/Companion.kt");
-        }
-
-        @TestMetadata("CompanionFunction.kt")
-        public void testCompanionFunction() throws Exception {
-            runTest("testData/editor/optimizeImports/common/CompanionFunction.kt");
-        }
-
-        @TestMetadata("CompanionFunction2.kt")
-        public void testCompanionFunction2() throws Exception {
-            runTest("testData/editor/optimizeImports/common/CompanionFunction2.kt");
-        }
-
-        @TestMetadata("ComponentFunction.kt")
-        public void testComponentFunction() throws Exception {
-            runTest("testData/editor/optimizeImports/common/ComponentFunction.kt");
-        }
-
-        @TestMetadata("ConflictWithAlias.kt")
-        public void testConflictWithAlias() throws Exception {
-            runTest("testData/editor/optimizeImports/common/ConflictWithAlias.kt");
-        }
-
-        @TestMetadata("ConflictWithAlias2.kt")
-        public void testConflictWithAlias2() throws Exception {
-            runTest("testData/editor/optimizeImports/common/ConflictWithAlias2.kt");
-        }
-
-        @TestMetadata("ConflictWithUnresolvedName.kt")
-        public void testConflictWithUnresolvedName() throws Exception {
-            runTest("testData/editor/optimizeImports/common/ConflictWithUnresolvedName.kt");
-        }
-
-        @TestMetadata("ConflictWithUnresolvedName2.kt")
-        public void testConflictWithUnresolvedName2() throws Exception {
-            runTest("testData/editor/optimizeImports/common/ConflictWithUnresolvedName2.kt");
-        }
-
-        @TestMetadata("CurrentPackage.kt")
-        public void testCurrentPackage() throws Exception {
-            runTest("testData/editor/optimizeImports/common/CurrentPackage.kt");
-        }
-
-        @TestMetadata("DefaultImportAndAlias.kt")
-        public void testDefaultImportAndAlias() throws Exception {
-            runTest("testData/editor/optimizeImports/common/DefaultImportAndAlias.kt");
-        }
-
-        @TestMetadata("DefaultImportAndAlias2.kt")
-        public void testDefaultImportAndAlias2() throws Exception {
-            runTest("testData/editor/optimizeImports/common/DefaultImportAndAlias2.kt");
-        }
-
-        @TestMetadata("DefaultObjectReference.kt")
-        public void testDefaultObjectReference() throws Exception {
-            runTest("testData/editor/optimizeImports/common/DefaultObjectReference.kt");
-        }
-
-        @TestMetadata("Enums.kt")
-        public void testEnums() throws Exception {
-            runTest("testData/editor/optimizeImports/common/Enums.kt");
-        }
-
-        @TestMetadata("ExtensionFunctionalTypeValFromCompanionObject.kt")
-        public void testExtensionFunctionalTypeValFromCompanionObject() throws Exception {
-            runTest("testData/editor/optimizeImports/common/ExtensionFunctionalTypeValFromCompanionObject.kt");
-        }
-
-        @TestMetadata("ExtensionFunctionalTypeValFromCompanionObjectCallOnCompanion.kt")
-        public void testExtensionFunctionalTypeValFromCompanionObjectCallOnCompanion() throws Exception {
-            runTest("testData/editor/optimizeImports/common/ExtensionFunctionalTypeValFromCompanionObjectCallOnCompanion.kt");
-        }
-
-        @TestMetadata("ExtensionFunctionalTypeValFromCompanionObjectNonExtCall.kt")
-        public void testExtensionFunctionalTypeValFromCompanionObjectNonExtCall() throws Exception {
-            runTest("testData/editor/optimizeImports/common/ExtensionFunctionalTypeValFromCompanionObjectNonExtCall.kt");
-        }
-
-        @TestMetadata("InvokeFunction.kt")
-        public void testInvokeFunction() throws Exception {
-            runTest("testData/editor/optimizeImports/common/InvokeFunction.kt");
-        }
-
-        @TestMetadata("IteratorFunction.kt")
-        public void testIteratorFunction() throws Exception {
-            runTest("testData/editor/optimizeImports/common/IteratorFunction.kt");
-        }
-
-        @TestMetadata("IteratorFunction2.kt")
-        public void testIteratorFunction2() throws Exception {
-            runTest("testData/editor/optimizeImports/common/IteratorFunction2.kt");
-        }
-
-        @TestMetadata("KT11640.kt")
-        public void testKT11640() throws Exception {
-            runTest("testData/editor/optimizeImports/common/KT11640.kt");
-        }
-
-        @TestMetadata("KT11640_1.kt")
-        public void testKT11640_1() throws Exception {
-            runTest("testData/editor/optimizeImports/common/KT11640_1.kt");
-        }
-
-        @TestMetadata("KT13689.kt")
-        public void testKT13689() throws Exception {
-            runTest("testData/editor/optimizeImports/common/KT13689.kt");
-        }
-
-        @TestMetadata("KT9875.kt")
-        public void testKT9875() throws Exception {
-            runTest("testData/editor/optimizeImports/common/KT9875.kt");
-        }
-
-        @TestMetadata("KeywordNames.kt")
-        public void testKeywordNames() throws Exception {
-            runTest("testData/editor/optimizeImports/common/KeywordNames.kt");
-        }
-
-        @TestMetadata("Kt2488EnumEntry.kt")
-        public void testKt2488EnumEntry() throws Exception {
-            runTest("testData/editor/optimizeImports/common/Kt2488EnumEntry.kt");
-        }
-
-        @TestMetadata("Kt2709.kt")
-        public void testKt2709() throws Exception {
-            runTest("testData/editor/optimizeImports/common/Kt2709.kt");
-        }
-
-        @TestMetadata("Kt32409.kt")
-        public void testKt32409() throws Exception {
-            runTest("testData/editor/optimizeImports/common/Kt32409.kt");
-        }
-
-        @TestMetadata("MemberImports.kt")
-        public void testMemberImports() throws Exception {
-            runTest("testData/editor/optimizeImports/common/MemberImports.kt");
-        }
-
-        @TestMetadata("MembersInScope.kt")
-        public void testMembersInScope() throws Exception {
-            runTest("testData/editor/optimizeImports/common/MembersInScope.kt");
-        }
-
-        @TestMetadata("NestedClassReferenceOutsideClassBody.kt")
-        public void testNestedClassReferenceOutsideClassBody() throws Exception {
-            runTest("testData/editor/optimizeImports/common/NestedClassReferenceOutsideClassBody.kt");
-        }
-
-        @TestMetadata("Overloads.kt")
-        public void testOverloads() throws Exception {
-            runTest("testData/editor/optimizeImports/common/Overloads.kt");
-        }
-
-        @TestMetadata("ProvideDelegate.kt")
-        public void testProvideDelegate() throws Exception {
-            runTest("testData/editor/optimizeImports/common/ProvideDelegate.kt");
-        }
-
-        @TestMetadata("ProvideDelegate2.kt")
-        public void testProvideDelegate2() throws Exception {
-            runTest("testData/editor/optimizeImports/common/ProvideDelegate2.kt");
-        }
-
-        @TestMetadata("ResolvedImportAndUnresolvedReference.kt")
-        public void testResolvedImportAndUnresolvedReference() throws Exception {
-            runTest("testData/editor/optimizeImports/common/ResolvedImportAndUnresolvedReference.kt");
-        }
-
-        @TestMetadata("SeveralClasses.kt")
-        public void testSeveralClasses() throws Exception {
-            runTest("testData/editor/optimizeImports/common/SeveralClasses.kt");
-        }
-
-        @TestMetadata("SeveralClasses2.kt")
-        public void testSeveralClasses2() throws Exception {
-            runTest("testData/editor/optimizeImports/common/SeveralClasses2.kt");
-        }
-
-        @TestMetadata("SeveralClasses3.kt")
-        public void testSeveralClasses3() throws Exception {
-            runTest("testData/editor/optimizeImports/common/SeveralClasses3.kt");
-        }
-
-        @TestMetadata("TwoConstructors.kt")
-        public void testTwoConstructors() throws Exception {
-            runTest("testData/editor/optimizeImports/common/TwoConstructors.kt");
-        }
-
-        @TestMetadata("UnresolvedImport.kt")
-        public void testUnresolvedImport() throws Exception {
-            runTest("testData/editor/optimizeImports/common/UnresolvedImport.kt");
-        }
-
-        @TestMetadata("UnresolvedImport2.kt")
-        public void testUnresolvedImport2() throws Exception {
-            runTest("testData/editor/optimizeImports/common/UnresolvedImport2.kt");
-        }
-
-        @TestMetadata("WithAlias.kt")
-        public void testWithAlias() throws Exception {
-            runTest("testData/editor/optimizeImports/common/WithAlias.kt");
-        }
-
-        @TestMetadata("WithAlias2.kt")
-        public void testWithAlias2() throws Exception {
-            runTest("testData/editor/optimizeImports/common/WithAlias2.kt");
-        }
-
+    public abstract static class Common extends AbstractJsOptimizeImportsTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/optimizeImports/common/kt21515")
         public static class Kt21515 extends AbstractJsOptimizeImportsTest {
@@ -288,6 +64,234 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
             @TestMetadata("typeReference.kt")
             public void testTypeReference() throws Exception {
                 runTest("testData/editor/optimizeImports/common/kt21515/typeReference.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/editor/optimizeImports/common")
+        public static class Uncategorized extends AbstractJsOptimizeImportsTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("ArrayAccessExpression.kt")
+            public void testArrayAccessExpression() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ArrayAccessExpression.kt");
+            }
+
+            @TestMetadata("ClassMemberImported.kt")
+            public void testClassMemberImported() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ClassMemberImported.kt");
+            }
+
+            @TestMetadata("Companion.kt")
+            public void testCompanion() throws Exception {
+                runTest("testData/editor/optimizeImports/common/Companion.kt");
+            }
+
+            @TestMetadata("CompanionFunction.kt")
+            public void testCompanionFunction() throws Exception {
+                runTest("testData/editor/optimizeImports/common/CompanionFunction.kt");
+            }
+
+            @TestMetadata("CompanionFunction2.kt")
+            public void testCompanionFunction2() throws Exception {
+                runTest("testData/editor/optimizeImports/common/CompanionFunction2.kt");
+            }
+
+            @TestMetadata("ComponentFunction.kt")
+            public void testComponentFunction() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ComponentFunction.kt");
+            }
+
+            @TestMetadata("ConflictWithAlias.kt")
+            public void testConflictWithAlias() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ConflictWithAlias.kt");
+            }
+
+            @TestMetadata("ConflictWithAlias2.kt")
+            public void testConflictWithAlias2() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ConflictWithAlias2.kt");
+            }
+
+            @TestMetadata("ConflictWithUnresolvedName.kt")
+            public void testConflictWithUnresolvedName() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ConflictWithUnresolvedName.kt");
+            }
+
+            @TestMetadata("ConflictWithUnresolvedName2.kt")
+            public void testConflictWithUnresolvedName2() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ConflictWithUnresolvedName2.kt");
+            }
+
+            @TestMetadata("CurrentPackage.kt")
+            public void testCurrentPackage() throws Exception {
+                runTest("testData/editor/optimizeImports/common/CurrentPackage.kt");
+            }
+
+            @TestMetadata("DefaultImportAndAlias.kt")
+            public void testDefaultImportAndAlias() throws Exception {
+                runTest("testData/editor/optimizeImports/common/DefaultImportAndAlias.kt");
+            }
+
+            @TestMetadata("DefaultImportAndAlias2.kt")
+            public void testDefaultImportAndAlias2() throws Exception {
+                runTest("testData/editor/optimizeImports/common/DefaultImportAndAlias2.kt");
+            }
+
+            @TestMetadata("DefaultObjectReference.kt")
+            public void testDefaultObjectReference() throws Exception {
+                runTest("testData/editor/optimizeImports/common/DefaultObjectReference.kt");
+            }
+
+            @TestMetadata("Enums.kt")
+            public void testEnums() throws Exception {
+                runTest("testData/editor/optimizeImports/common/Enums.kt");
+            }
+
+            @TestMetadata("ExtensionFunctionalTypeValFromCompanionObject.kt")
+            public void testExtensionFunctionalTypeValFromCompanionObject() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ExtensionFunctionalTypeValFromCompanionObject.kt");
+            }
+
+            @TestMetadata("ExtensionFunctionalTypeValFromCompanionObjectCallOnCompanion.kt")
+            public void testExtensionFunctionalTypeValFromCompanionObjectCallOnCompanion() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ExtensionFunctionalTypeValFromCompanionObjectCallOnCompanion.kt");
+            }
+
+            @TestMetadata("ExtensionFunctionalTypeValFromCompanionObjectNonExtCall.kt")
+            public void testExtensionFunctionalTypeValFromCompanionObjectNonExtCall() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ExtensionFunctionalTypeValFromCompanionObjectNonExtCall.kt");
+            }
+
+            @TestMetadata("InvokeFunction.kt")
+            public void testInvokeFunction() throws Exception {
+                runTest("testData/editor/optimizeImports/common/InvokeFunction.kt");
+            }
+
+            @TestMetadata("IteratorFunction.kt")
+            public void testIteratorFunction() throws Exception {
+                runTest("testData/editor/optimizeImports/common/IteratorFunction.kt");
+            }
+
+            @TestMetadata("IteratorFunction2.kt")
+            public void testIteratorFunction2() throws Exception {
+                runTest("testData/editor/optimizeImports/common/IteratorFunction2.kt");
+            }
+
+            @TestMetadata("KT11640.kt")
+            public void testKT11640() throws Exception {
+                runTest("testData/editor/optimizeImports/common/KT11640.kt");
+            }
+
+            @TestMetadata("KT11640_1.kt")
+            public void testKT11640_1() throws Exception {
+                runTest("testData/editor/optimizeImports/common/KT11640_1.kt");
+            }
+
+            @TestMetadata("KT13689.kt")
+            public void testKT13689() throws Exception {
+                runTest("testData/editor/optimizeImports/common/KT13689.kt");
+            }
+
+            @TestMetadata("KT9875.kt")
+            public void testKT9875() throws Exception {
+                runTest("testData/editor/optimizeImports/common/KT9875.kt");
+            }
+
+            @TestMetadata("KeywordNames.kt")
+            public void testKeywordNames() throws Exception {
+                runTest("testData/editor/optimizeImports/common/KeywordNames.kt");
+            }
+
+            @TestMetadata("Kt2488EnumEntry.kt")
+            public void testKt2488EnumEntry() throws Exception {
+                runTest("testData/editor/optimizeImports/common/Kt2488EnumEntry.kt");
+            }
+
+            @TestMetadata("Kt2709.kt")
+            public void testKt2709() throws Exception {
+                runTest("testData/editor/optimizeImports/common/Kt2709.kt");
+            }
+
+            @TestMetadata("Kt32409.kt")
+            public void testKt32409() throws Exception {
+                runTest("testData/editor/optimizeImports/common/Kt32409.kt");
+            }
+
+            @TestMetadata("MemberImports.kt")
+            public void testMemberImports() throws Exception {
+                runTest("testData/editor/optimizeImports/common/MemberImports.kt");
+            }
+
+            @TestMetadata("MembersInScope.kt")
+            public void testMembersInScope() throws Exception {
+                runTest("testData/editor/optimizeImports/common/MembersInScope.kt");
+            }
+
+            @TestMetadata("NestedClassReferenceOutsideClassBody.kt")
+            public void testNestedClassReferenceOutsideClassBody() throws Exception {
+                runTest("testData/editor/optimizeImports/common/NestedClassReferenceOutsideClassBody.kt");
+            }
+
+            @TestMetadata("Overloads.kt")
+            public void testOverloads() throws Exception {
+                runTest("testData/editor/optimizeImports/common/Overloads.kt");
+            }
+
+            @TestMetadata("ProvideDelegate.kt")
+            public void testProvideDelegate() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ProvideDelegate.kt");
+            }
+
+            @TestMetadata("ProvideDelegate2.kt")
+            public void testProvideDelegate2() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ProvideDelegate2.kt");
+            }
+
+            @TestMetadata("ResolvedImportAndUnresolvedReference.kt")
+            public void testResolvedImportAndUnresolvedReference() throws Exception {
+                runTest("testData/editor/optimizeImports/common/ResolvedImportAndUnresolvedReference.kt");
+            }
+
+            @TestMetadata("SeveralClasses.kt")
+            public void testSeveralClasses() throws Exception {
+                runTest("testData/editor/optimizeImports/common/SeveralClasses.kt");
+            }
+
+            @TestMetadata("SeveralClasses2.kt")
+            public void testSeveralClasses2() throws Exception {
+                runTest("testData/editor/optimizeImports/common/SeveralClasses2.kt");
+            }
+
+            @TestMetadata("SeveralClasses3.kt")
+            public void testSeveralClasses3() throws Exception {
+                runTest("testData/editor/optimizeImports/common/SeveralClasses3.kt");
+            }
+
+            @TestMetadata("TwoConstructors.kt")
+            public void testTwoConstructors() throws Exception {
+                runTest("testData/editor/optimizeImports/common/TwoConstructors.kt");
+            }
+
+            @TestMetadata("UnresolvedImport.kt")
+            public void testUnresolvedImport() throws Exception {
+                runTest("testData/editor/optimizeImports/common/UnresolvedImport.kt");
+            }
+
+            @TestMetadata("UnresolvedImport2.kt")
+            public void testUnresolvedImport2() throws Exception {
+                runTest("testData/editor/optimizeImports/common/UnresolvedImport2.kt");
+            }
+
+            @TestMetadata("WithAlias.kt")
+            public void testWithAlias() throws Exception {
+                runTest("testData/editor/optimizeImports/common/WithAlias.kt");
+            }
+
+            @TestMetadata("WithAlias2.kt")
+            public void testWithAlias2() throws Exception {
+                runTest("testData/editor/optimizeImports/common/WithAlias2.kt");
             }
         }
     }

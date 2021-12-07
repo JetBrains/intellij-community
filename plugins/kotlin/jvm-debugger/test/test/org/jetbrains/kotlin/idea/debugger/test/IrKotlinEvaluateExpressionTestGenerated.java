@@ -21,558 +21,10 @@ import org.jetbrains.kotlin.test.TargetBackend;
 public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIrKotlinEvaluateExpressionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/evaluation/singleBreakpoint")
-    public static class SingleBreakpoint extends AbstractIrKotlinEvaluateExpressionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
-        }
-
-        @TestMetadata("abstractFunCall.kt")
-        public void testAbstractFunCall() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/abstractFunCall.kt");
-        }
-
-        @TestMetadata("accessToOverridenPropertyWithBackingField.kt")
-        public void testAccessToOverridenPropertyWithBackingField() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/accessToOverridenPropertyWithBackingField.kt");
-        }
-
-        @TestMetadata("annotationValue.kt")
-        public void testAnnotationValue() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/annotationValue.kt");
-        }
-
-        @TestMetadata("anonymousObjects.kt")
-        public void testAnonymousObjects() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/anonymousObjects.kt");
-        }
-
-        @TestMetadata("arrayMethods.kt")
-        public void testArrayMethods() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/arrayMethods.kt");
-        }
-
-        @TestMetadata("arrays.kt")
-        public void testArrays() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/arrays.kt");
-        }
-
-        @TestMetadata("boxParam.kt")
-        public void testBoxParam() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/boxParam.kt");
-        }
-
-        @TestMetadata("boxReturnValue.kt")
-        public void testBoxReturnValue() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/boxReturnValue.kt");
-        }
-
-        @TestMetadata("breakpointInInlineFun.kt")
-        public void testBreakpointInInlineFun() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/breakpointInInlineFun.kt");
-        }
-
-        @TestMetadata("callableBug.kt")
-        public void testCallableBug() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/callableBug.kt");
-        }
-
-        @TestMetadata("classFromAnotherPackage.kt")
-        public void testClassFromAnotherPackage() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/classFromAnotherPackage.kt");
-        }
-
-        @TestMetadata("classObjectVal.kt")
-        public void testClassObjectVal() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/classObjectVal.kt");
-        }
-
-        @TestMetadata("collections.kt")
-        public void testCollections() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/collections.kt");
-        }
-
-        @TestMetadata("color.kt")
-        public void testColor() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/color.kt");
-        }
-
-        @TestMetadata("dataClassCopy.kt")
-        public void testDataClassCopy() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/dataClassCopy.kt");
-        }
-
-        @TestMetadata("defaultParameterValues.kt")
-        public void testDefaultParameterValues() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/defaultParameterValues.kt");
-        }
-
-        @TestMetadata("defaultParameterValues2.kt")
-        public void testDefaultParameterValues2() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/defaultParameterValues2.kt");
-        }
-
-        @TestMetadata("delegatedPropertyInOtherFile.kt")
-        public void testDelegatedPropertyInOtherFile() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/delegatedPropertyInOtherFile.kt");
-        }
-
-        @TestMetadata("delegatedVariables.kt")
-        public void testDelegatedVariables() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/delegatedVariables.kt");
-        }
-
-        @TestMetadata("dependentOnFile.kt")
-        public void testDependentOnFile() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/dependentOnFile.kt");
-        }
-
-        @TestMetadata("doubles.kt")
-        public void testDoubles() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/doubles.kt");
-        }
-
-        @TestMetadata("enums.kt")
-        public void testEnums() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/enums.kt");
-        }
-
-        @TestMetadata("errors.kt")
-        public void testErrors() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/errors.kt");
-        }
-
-        @TestMetadata("escapedNames.kt")
-        public void testEscapedNames() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/escapedNames.kt");
-        }
-
-        @TestMetadata("experimentalApi.kt")
-        public void testExperimentalApi() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/experimentalApi.kt");
-        }
-
-        @TestMetadata("extractLocalVariables.kt")
-        public void testExtractLocalVariables() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/extractLocalVariables.kt");
-        }
-
-        @TestMetadata("extractThis.kt")
-        public void testExtractThis() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/extractThis.kt");
-        }
-
-        @TestMetadata("extractThisInTrait.kt")
-        public void testExtractThisInTrait() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/extractThisInTrait.kt");
-        }
-
-        @TestMetadata("extractVariablesFromCall.kt")
-        public void testExtractVariablesFromCall() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/extractVariablesFromCall.kt");
-        }
-
-        @TestMetadata("fieldGetters.kt")
-        public void testFieldGetters() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/fieldGetters.kt");
-        }
-
-        @TestMetadata("fileWithError.kt")
-        public void testFileWithError() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/fileWithError.kt");
-        }
-
-        @TestMetadata("funFromSuperClass.kt")
-        public void testFunFromSuperClass() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/funFromSuperClass.kt");
-        }
-
-        @TestMetadata("functionDeclaration.kt")
-        public void testFunctionDeclaration() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/functionDeclaration.kt");
-        }
-
-        @TestMetadata("functionWithBodyExpression.kt")
-        public void testFunctionWithBodyExpression() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/functionWithBodyExpression.kt");
-        }
-
-        @TestMetadata("genericCrossinlineArgument.kt")
-        public void testGenericCrossinlineArgument() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/genericCrossinlineArgument.kt");
-        }
-
-        @TestMetadata("imports.kt")
-        public void testImports() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/imports.kt");
-        }
-
-        @TestMetadata("importsLambdaContext.kt")
-        public void testImportsLambdaContext() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/importsLambdaContext.kt");
-        }
-
-        @TestMetadata("inlineFunInMultiFilePackage.kt")
-        public void testInlineFunInMultiFilePackage() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/inlineFunInMultiFilePackage.kt");
-        }
-
-        @TestMetadata("inlineFunInRootPackage.kt")
-        public void testInlineFunInRootPackage() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/inlineFunInRootPackage.kt");
-        }
-
-        @TestMetadata("inlineFunction.kt")
-        public void testInlineFunction() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/inlineFunction.kt");
-        }
-
-        @TestMetadata("inlineFunctionBreakpointAnotherFile.kt")
-        public void testInlineFunctionBreakpointAnotherFile() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/inlineFunctionBreakpointAnotherFile.kt");
-        }
-
-        @TestMetadata("inlineFunctionBreakpointVariants.kt")
-        public void testInlineFunctionBreakpointVariants() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/inlineFunctionBreakpointVariants.kt");
-        }
-
-        @TestMetadata("inlineMethodsInSignature.kt")
-        public void testInlineMethodsInSignature() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/inlineMethodsInSignature.kt");
-        }
-
-        @TestMetadata("innerClass.kt")
-        public void testInnerClass() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/innerClass.kt");
-        }
-
-        @TestMetadata("insertInBlock.kt")
-        public void testInsertInBlock() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/insertInBlock.kt");
-        }
-
-        @TestMetadata("internalFunctionEvaluate.kt")
-        public void testInternalFunctionEvaluate() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/internalFunctionEvaluate.kt");
-        }
-
-        @TestMetadata("internalProperty.kt")
-        public void testInternalProperty() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/internalProperty.kt");
-        }
-
-        @TestMetadata("javaStaticMethods.kt")
-        public void testJavaStaticMethods() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/javaStaticMethods.kt");
-        }
-
-        @TestMetadata("kClass.kt")
-        public void testKClass() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/kClass.kt");
-        }
-
-        @TestMetadata("kt12206BasePropertyWithoutBackingField.kt")
-        public void testKt12206BasePropertyWithoutBackingField() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/kt12206BasePropertyWithoutBackingField.kt");
-        }
-
-        @TestMetadata("kt15259.kt")
-        public void testKt15259() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/kt15259.kt");
-        }
-
-        @TestMetadata("kt17514.kt")
-        public void testKt17514() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/kt17514.kt");
-        }
-
-        @TestMetadata("kt22366.kt")
-        public void testKt22366() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/kt22366.kt");
-        }
-
-        @TestMetadata("kt25220.kt")
-        public void testKt25220() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/kt25220.kt");
-        }
-
-        @TestMetadata("kt25222.kt")
-        public void testKt25222() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/kt25222.kt");
-        }
-
-        @TestMetadata("kt28087.kt")
-        public void testKt28087() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/kt28087.kt");
-        }
-
-        @TestMetadata("kt29179.kt")
-        public void testKt29179() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/kt29179.kt");
-        }
-
-        @TestMetadata("kt31709.kt")
-        public void testKt31709() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/kt31709.kt");
-        }
-
-        @TestMetadata("kt36404.kt")
-        public void testKt36404() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/kt36404.kt");
-        }
-
-        @TestMetadata("kt5554OnlyIntsShouldBeCoerced.kt")
-        public void testKt5554OnlyIntsShouldBeCoerced() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/kt5554OnlyIntsShouldBeCoerced.kt");
-        }
-
-        @TestMetadata("kt7046localVarInInline.kt")
-        public void testKt7046localVarInInline() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/kt7046localVarInInline.kt");
-        }
-
-        @TestMetadata("lambdaToString.kt")
-        public void testLambdaToString() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/lambdaToString.kt");
-        }
-
-        @TestMetadata("lambdaWithDestructuring.kt")
-        public void testLambdaWithDestructuring() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/lambdaWithDestructuring.kt");
-        }
-
-        @TestMetadata("localClass.kt")
-        public void testLocalClass() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/localClass.kt");
-        }
-
-        @TestMetadata("localFunctionCapturedLocalVariable.kt")
-        public void testLocalFunctionCapturedLocalVariable() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/localFunctionCapturedLocalVariable.kt");
-        }
-
-        @TestMetadata("localFunctionsWithReceivers.kt")
-        public void testLocalFunctionsWithReceivers() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/localFunctionsWithReceivers.kt");
-        }
-
-        @TestMetadata("localVariables.kt")
-        public void testLocalVariables() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/localVariables.kt");
-        }
-
-        @TestMetadata("methodWithBreakpoint.kt")
-        public void testMethodWithBreakpoint() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/methodWithBreakpoint.kt");
-        }
-
-        @TestMetadata("multilineExpressionAtBreakpoint.kt")
-        public void testMultilineExpressionAtBreakpoint() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/multilineExpressionAtBreakpoint.kt");
-        }
-
-        @TestMetadata("nestedInlineArguments.kt")
-        public void testNestedInlineArguments() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/nestedInlineArguments.kt");
-        }
-
-        @TestMetadata("nonAssignmentLValue.kt")
-        public void testNonAssignmentLValue() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/nonAssignmentLValue.kt");
-        }
-
-        @TestMetadata("nothing.kt")
-        public void testNothing() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/nothing.kt");
-        }
-
-        @TestMetadata("onClassHeader.kt")
-        public void testOnClassHeader() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/onClassHeader.kt");
-        }
-
-        @TestMetadata("onGetter.kt")
-        public void testOnGetter() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/onGetter.kt");
-        }
-
-        @TestMetadata("onObjectHeader.kt")
-        public void testOnObjectHeader() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/onObjectHeader.kt");
-        }
-
-        @TestMetadata("package.kt")
-        public void testPackage() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/package.kt");
-        }
-
-        @TestMetadata("parametersOfInlineFun.kt")
-        public void testParametersOfInlineFun() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/parametersOfInlineFun.kt");
-        }
-
-        @TestMetadata("parametersOfInlineFunSeveralOnLine.kt")
-        public void testParametersOfInlineFunSeveralOnLine() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/parametersOfInlineFunSeveralOnLine.kt");
-        }
-
-        @TestMetadata("privateClass.kt")
-        public void testPrivateClass() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/privateClass.kt");
-        }
-
-        @TestMetadata("privateFieldInCompanion.kt")
-        public void testPrivateFieldInCompanion() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/privateFieldInCompanion.kt");
-        }
-
-        @TestMetadata("privateMember.kt")
-        public void testPrivateMember() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/privateMember.kt");
-        }
-
-        @TestMetadata("privatePropertyWithExplicitDefaultGetter.kt")
-        public void testPrivatePropertyWithExplicitDefaultGetter() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/privatePropertyWithExplicitDefaultGetter.kt");
-        }
-
-        @TestMetadata("protectedMember.kt")
-        public void testProtectedMember() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/protectedMember.kt");
-        }
-
-        @TestMetadata("rawTypeskt11831.kt")
-        public void testRawTypeskt11831() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/rawTypeskt11831.kt");
-        }
-
-        @TestMetadata("simple.kt")
-        public void testSimple() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/simple.kt");
-        }
-
-        @TestMetadata("statements.kt")
-        public void testStatements() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/statements.kt");
-        }
-
-        @TestMetadata("staticField.kt")
-        public void testStaticField() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/staticField.kt");
-        }
-
-        @TestMetadata("stdlib.kt")
-        public void testStdlib() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/stdlib.kt");
-        }
-
-        @TestMetadata("superCallsCaptured.kt")
-        public void testSuperCallsCaptured() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/superCallsCaptured.kt");
-        }
-
-        @TestMetadata("superCallsSimple.kt")
-        public void testSuperCallsSimple() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/superCallsSimple.kt");
-        }
-
-        @TestMetadata("synchronizedBlock.kt")
-        public void testSynchronizedBlock() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/synchronizedBlock.kt");
-        }
-
-        @TestMetadata("typeParameterRef.kt")
-        public void testTypeParameterRef() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/typeParameterRef.kt");
-        }
-
-        @TestMetadata("typedArray.kt")
-        public void testTypedArray() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/typedArray.kt");
-        }
-
-        @TestMetadata("unboxParam.kt")
-        public void testUnboxParam() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/unboxParam.kt");
-        }
-
-        @TestMetadata("unsafeCall.kt")
-        public void testUnsafeCall() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/unsafeCall.kt");
-        }
-
-        @TestMetadata("valueParameterName.kt")
-        public void testValueParameterName() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/valueParameterName.kt");
-        }
-
-        @TestMetadata("variableAsFunction.kt")
-        public void testVariableAsFunction() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/variableAsFunction.kt");
-        }
-
-        @TestMetadata("vars.kt")
-        public void testVars() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/vars.kt");
-        }
-
-        @TestMetadata("whenEvaluation.kt")
-        public void testWhenEvaluation() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/whenEvaluation.kt");
-        }
-
-        @TestMetadata(".kt.kt")
-        public void test_kt() throws Exception {
-            runTest("testData/evaluation/singleBreakpoint/.kt.kt");
-        }
-
+    public abstract static class SingleBreakpoint extends AbstractIrKotlinEvaluateExpressionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator")
-        public static class CompilingEvaluator extends AbstractIrKotlinEvaluateExpressionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
-            }
-
-            @TestMetadata("ceAnonymousObject.kt")
-            public void testCeAnonymousObject() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceAnonymousObject.kt");
-            }
-
-            @TestMetadata("ceAnonymousObjectCapturedInClosure.kt")
-            public void testCeAnonymousObjectCapturedInClosure() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceAnonymousObjectCapturedInClosure.kt");
-            }
-
-            @TestMetadata("ceAnonymousObjectThisAsReceiver.kt")
-            public void testCeAnonymousObjectThisAsReceiver() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceAnonymousObjectThisAsReceiver.kt");
-            }
-
-            @TestMetadata("ceLambda.kt")
-            public void testCeLambda() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceLambda.kt");
-            }
-
-            @TestMetadata("ceLocalClass.kt")
-            public void testCeLocalClass() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceLocalClass.kt");
-            }
-
-            @TestMetadata("ceLocalClassWithSuperClass.kt")
-            public void testCeLocalClassWithSuperClass() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceLocalClassWithSuperClass.kt");
-            }
-
-            @TestMetadata("ceObject.kt")
-            public void testCeObject() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceObject.kt");
-            }
-
-            @TestMetadata("ceSeveralLambdas.kt")
-            public void testCeSeveralLambdas() throws Exception {
-                runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceSeveralLambdas.kt");
-            }
-
+        public abstract static class CompilingEvaluator extends AbstractIrKotlinEvaluateExpressionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers")
             public static class InaccessibleMembers extends AbstractIrKotlinEvaluateExpressionTest {
@@ -653,6 +105,54 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 @TestMetadata("superMembersNoReflection.kt")
                 public void testSuperMembersNoReflection() throws Exception {
                     runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers/superMembersNoReflection.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator")
+            public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("ceAnonymousObject.kt")
+                public void testCeAnonymousObject() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceAnonymousObject.kt");
+                }
+
+                @TestMetadata("ceAnonymousObjectCapturedInClosure.kt")
+                public void testCeAnonymousObjectCapturedInClosure() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceAnonymousObjectCapturedInClosure.kt");
+                }
+
+                @TestMetadata("ceAnonymousObjectThisAsReceiver.kt")
+                public void testCeAnonymousObjectThisAsReceiver() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceAnonymousObjectThisAsReceiver.kt");
+                }
+
+                @TestMetadata("ceLambda.kt")
+                public void testCeLambda() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceLambda.kt");
+                }
+
+                @TestMetadata("ceLocalClass.kt")
+                public void testCeLocalClass() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceLocalClass.kt");
+                }
+
+                @TestMetadata("ceLocalClassWithSuperClass.kt")
+                public void testCeLocalClassWithSuperClass() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceLocalClassWithSuperClass.kt");
+                }
+
+                @TestMetadata("ceObject.kt")
+                public void testCeObject() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceObject.kt");
+                }
+
+                @TestMetadata("ceSeveralLambdas.kt")
+                public void testCeSeveralLambdas() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/compilingEvaluator/ceSeveralLambdas.kt");
                 }
             }
         }
@@ -1285,170 +785,519 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
                 runTest("testData/evaluation/singleBreakpoint/renderer/toStringRenderer.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/evaluation/singleBreakpoint")
+        public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("abstractFunCall.kt")
+            public void testAbstractFunCall() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/abstractFunCall.kt");
+            }
+
+            @TestMetadata("accessToOverridenPropertyWithBackingField.kt")
+            public void testAccessToOverridenPropertyWithBackingField() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/accessToOverridenPropertyWithBackingField.kt");
+            }
+
+            @TestMetadata("annotationValue.kt")
+            public void testAnnotationValue() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/annotationValue.kt");
+            }
+
+            @TestMetadata("anonymousObjects.kt")
+            public void testAnonymousObjects() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/anonymousObjects.kt");
+            }
+
+            @TestMetadata("arrayMethods.kt")
+            public void testArrayMethods() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/arrayMethods.kt");
+            }
+
+            @TestMetadata("arrays.kt")
+            public void testArrays() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/arrays.kt");
+            }
+
+            @TestMetadata("boxParam.kt")
+            public void testBoxParam() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/boxParam.kt");
+            }
+
+            @TestMetadata("boxReturnValue.kt")
+            public void testBoxReturnValue() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/boxReturnValue.kt");
+            }
+
+            @TestMetadata("breakpointInInlineFun.kt")
+            public void testBreakpointInInlineFun() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/breakpointInInlineFun.kt");
+            }
+
+            @TestMetadata("callableBug.kt")
+            public void testCallableBug() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/callableBug.kt");
+            }
+
+            @TestMetadata("classFromAnotherPackage.kt")
+            public void testClassFromAnotherPackage() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/classFromAnotherPackage.kt");
+            }
+
+            @TestMetadata("classObjectVal.kt")
+            public void testClassObjectVal() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/classObjectVal.kt");
+            }
+
+            @TestMetadata("collections.kt")
+            public void testCollections() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/collections.kt");
+            }
+
+            @TestMetadata("color.kt")
+            public void testColor() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/color.kt");
+            }
+
+            @TestMetadata("dataClassCopy.kt")
+            public void testDataClassCopy() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/dataClassCopy.kt");
+            }
+
+            @TestMetadata("defaultParameterValues.kt")
+            public void testDefaultParameterValues() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/defaultParameterValues.kt");
+            }
+
+            @TestMetadata("defaultParameterValues2.kt")
+            public void testDefaultParameterValues2() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/defaultParameterValues2.kt");
+            }
+
+            @TestMetadata("delegatedPropertyInOtherFile.kt")
+            public void testDelegatedPropertyInOtherFile() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/delegatedPropertyInOtherFile.kt");
+            }
+
+            @TestMetadata("delegatedVariables.kt")
+            public void testDelegatedVariables() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/delegatedVariables.kt");
+            }
+
+            @TestMetadata("dependentOnFile.kt")
+            public void testDependentOnFile() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/dependentOnFile.kt");
+            }
+
+            @TestMetadata("doubles.kt")
+            public void testDoubles() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/doubles.kt");
+            }
+
+            @TestMetadata("enums.kt")
+            public void testEnums() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/enums.kt");
+            }
+
+            @TestMetadata("errors.kt")
+            public void testErrors() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/errors.kt");
+            }
+
+            @TestMetadata("escapedNames.kt")
+            public void testEscapedNames() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/escapedNames.kt");
+            }
+
+            @TestMetadata("experimentalApi.kt")
+            public void testExperimentalApi() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/experimentalApi.kt");
+            }
+
+            @TestMetadata("extractLocalVariables.kt")
+            public void testExtractLocalVariables() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/extractLocalVariables.kt");
+            }
+
+            @TestMetadata("extractThis.kt")
+            public void testExtractThis() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/extractThis.kt");
+            }
+
+            @TestMetadata("extractThisInTrait.kt")
+            public void testExtractThisInTrait() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/extractThisInTrait.kt");
+            }
+
+            @TestMetadata("extractVariablesFromCall.kt")
+            public void testExtractVariablesFromCall() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/extractVariablesFromCall.kt");
+            }
+
+            @TestMetadata("fieldGetters.kt")
+            public void testFieldGetters() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/fieldGetters.kt");
+            }
+
+            @TestMetadata("fileWithError.kt")
+            public void testFileWithError() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/fileWithError.kt");
+            }
+
+            @TestMetadata("funFromSuperClass.kt")
+            public void testFunFromSuperClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/funFromSuperClass.kt");
+            }
+
+            @TestMetadata("functionDeclaration.kt")
+            public void testFunctionDeclaration() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/functionDeclaration.kt");
+            }
+
+            @TestMetadata("functionWithBodyExpression.kt")
+            public void testFunctionWithBodyExpression() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/functionWithBodyExpression.kt");
+            }
+
+            @TestMetadata("genericCrossinlineArgument.kt")
+            public void testGenericCrossinlineArgument() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/genericCrossinlineArgument.kt");
+            }
+
+            @TestMetadata("imports.kt")
+            public void testImports() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/imports.kt");
+            }
+
+            @TestMetadata("importsLambdaContext.kt")
+            public void testImportsLambdaContext() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/importsLambdaContext.kt");
+            }
+
+            @TestMetadata("inlineFunInMultiFilePackage.kt")
+            public void testInlineFunInMultiFilePackage() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineFunInMultiFilePackage.kt");
+            }
+
+            @TestMetadata("inlineFunInRootPackage.kt")
+            public void testInlineFunInRootPackage() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineFunInRootPackage.kt");
+            }
+
+            @TestMetadata("inlineFunction.kt")
+            public void testInlineFunction() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineFunction.kt");
+            }
+
+            @TestMetadata("inlineFunctionBreakpointAnotherFile.kt")
+            public void testInlineFunctionBreakpointAnotherFile() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineFunctionBreakpointAnotherFile.kt");
+            }
+
+            @TestMetadata("inlineFunctionBreakpointVariants.kt")
+            public void testInlineFunctionBreakpointVariants() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineFunctionBreakpointVariants.kt");
+            }
+
+            @TestMetadata("inlineMethodsInSignature.kt")
+            public void testInlineMethodsInSignature() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/inlineMethodsInSignature.kt");
+            }
+
+            @TestMetadata("innerClass.kt")
+            public void testInnerClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/innerClass.kt");
+            }
+
+            @TestMetadata("insertInBlock.kt")
+            public void testInsertInBlock() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/insertInBlock.kt");
+            }
+
+            @TestMetadata("internalFunctionEvaluate.kt")
+            public void testInternalFunctionEvaluate() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/internalFunctionEvaluate.kt");
+            }
+
+            @TestMetadata("internalProperty.kt")
+            public void testInternalProperty() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/internalProperty.kt");
+            }
+
+            @TestMetadata("javaStaticMethods.kt")
+            public void testJavaStaticMethods() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/javaStaticMethods.kt");
+            }
+
+            @TestMetadata("kClass.kt")
+            public void testKClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/kClass.kt");
+            }
+
+            @TestMetadata("kt12206BasePropertyWithoutBackingField.kt")
+            public void testKt12206BasePropertyWithoutBackingField() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/kt12206BasePropertyWithoutBackingField.kt");
+            }
+
+            @TestMetadata("kt15259.kt")
+            public void testKt15259() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/kt15259.kt");
+            }
+
+            @TestMetadata("kt17514.kt")
+            public void testKt17514() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/kt17514.kt");
+            }
+
+            @TestMetadata("kt22366.kt")
+            public void testKt22366() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/kt22366.kt");
+            }
+
+            @TestMetadata("kt25220.kt")
+            public void testKt25220() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/kt25220.kt");
+            }
+
+            @TestMetadata("kt25222.kt")
+            public void testKt25222() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/kt25222.kt");
+            }
+
+            @TestMetadata("kt28087.kt")
+            public void testKt28087() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/kt28087.kt");
+            }
+
+            @TestMetadata("kt29179.kt")
+            public void testKt29179() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/kt29179.kt");
+            }
+
+            @TestMetadata("kt31709.kt")
+            public void testKt31709() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/kt31709.kt");
+            }
+
+            @TestMetadata("kt36404.kt")
+            public void testKt36404() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/kt36404.kt");
+            }
+
+            @TestMetadata("kt5554OnlyIntsShouldBeCoerced.kt")
+            public void testKt5554OnlyIntsShouldBeCoerced() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/kt5554OnlyIntsShouldBeCoerced.kt");
+            }
+
+            @TestMetadata("kt7046localVarInInline.kt")
+            public void testKt7046localVarInInline() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/kt7046localVarInInline.kt");
+            }
+
+            @TestMetadata("lambdaToString.kt")
+            public void testLambdaToString() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdaToString.kt");
+            }
+
+            @TestMetadata("lambdaWithDestructuring.kt")
+            public void testLambdaWithDestructuring() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/lambdaWithDestructuring.kt");
+            }
+
+            @TestMetadata("localClass.kt")
+            public void testLocalClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/localClass.kt");
+            }
+
+            @TestMetadata("localFunctionCapturedLocalVariable.kt")
+            public void testLocalFunctionCapturedLocalVariable() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/localFunctionCapturedLocalVariable.kt");
+            }
+
+            @TestMetadata("localFunctionsWithReceivers.kt")
+            public void testLocalFunctionsWithReceivers() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/localFunctionsWithReceivers.kt");
+            }
+
+            @TestMetadata("localVariables.kt")
+            public void testLocalVariables() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/localVariables.kt");
+            }
+
+            @TestMetadata("methodWithBreakpoint.kt")
+            public void testMethodWithBreakpoint() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/methodWithBreakpoint.kt");
+            }
+
+            @TestMetadata("multilineExpressionAtBreakpoint.kt")
+            public void testMultilineExpressionAtBreakpoint() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/multilineExpressionAtBreakpoint.kt");
+            }
+
+            @TestMetadata("nestedInlineArguments.kt")
+            public void testNestedInlineArguments() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/nestedInlineArguments.kt");
+            }
+
+            @TestMetadata("nonAssignmentLValue.kt")
+            public void testNonAssignmentLValue() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/nonAssignmentLValue.kt");
+            }
+
+            @TestMetadata("nothing.kt")
+            public void testNothing() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/nothing.kt");
+            }
+
+            @TestMetadata("onClassHeader.kt")
+            public void testOnClassHeader() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/onClassHeader.kt");
+            }
+
+            @TestMetadata("onGetter.kt")
+            public void testOnGetter() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/onGetter.kt");
+            }
+
+            @TestMetadata("onObjectHeader.kt")
+            public void testOnObjectHeader() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/onObjectHeader.kt");
+            }
+
+            @TestMetadata("package.kt")
+            public void testPackage() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/package.kt");
+            }
+
+            @TestMetadata("parametersOfInlineFun.kt")
+            public void testParametersOfInlineFun() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/parametersOfInlineFun.kt");
+            }
+
+            @TestMetadata("parametersOfInlineFunSeveralOnLine.kt")
+            public void testParametersOfInlineFunSeveralOnLine() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/parametersOfInlineFunSeveralOnLine.kt");
+            }
+
+            @TestMetadata("privateClass.kt")
+            public void testPrivateClass() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateClass.kt");
+            }
+
+            @TestMetadata("privateFieldInCompanion.kt")
+            public void testPrivateFieldInCompanion() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateFieldInCompanion.kt");
+            }
+
+            @TestMetadata("privateMember.kt")
+            public void testPrivateMember() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privateMember.kt");
+            }
+
+            @TestMetadata("privatePropertyWithExplicitDefaultGetter.kt")
+            public void testPrivatePropertyWithExplicitDefaultGetter() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/privatePropertyWithExplicitDefaultGetter.kt");
+            }
+
+            @TestMetadata("protectedMember.kt")
+            public void testProtectedMember() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/protectedMember.kt");
+            }
+
+            @TestMetadata("rawTypeskt11831.kt")
+            public void testRawTypeskt11831() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/rawTypeskt11831.kt");
+            }
+
+            @TestMetadata("simple.kt")
+            public void testSimple() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/simple.kt");
+            }
+
+            @TestMetadata("statements.kt")
+            public void testStatements() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/statements.kt");
+            }
+
+            @TestMetadata("staticField.kt")
+            public void testStaticField() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/staticField.kt");
+            }
+
+            @TestMetadata("stdlib.kt")
+            public void testStdlib() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/stdlib.kt");
+            }
+
+            @TestMetadata("superCallsCaptured.kt")
+            public void testSuperCallsCaptured() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/superCallsCaptured.kt");
+            }
+
+            @TestMetadata("superCallsSimple.kt")
+            public void testSuperCallsSimple() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/superCallsSimple.kt");
+            }
+
+            @TestMetadata("synchronizedBlock.kt")
+            public void testSynchronizedBlock() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/synchronizedBlock.kt");
+            }
+
+            @TestMetadata("typeParameterRef.kt")
+            public void testTypeParameterRef() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/typeParameterRef.kt");
+            }
+
+            @TestMetadata("typedArray.kt")
+            public void testTypedArray() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/typedArray.kt");
+            }
+
+            @TestMetadata("unboxParam.kt")
+            public void testUnboxParam() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/unboxParam.kt");
+            }
+
+            @TestMetadata("unsafeCall.kt")
+            public void testUnsafeCall() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/unsafeCall.kt");
+            }
+
+            @TestMetadata("valueParameterName.kt")
+            public void testValueParameterName() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/valueParameterName.kt");
+            }
+
+            @TestMetadata("variableAsFunction.kt")
+            public void testVariableAsFunction() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/variableAsFunction.kt");
+            }
+
+            @TestMetadata("vars.kt")
+            public void testVars() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/vars.kt");
+            }
+
+            @TestMetadata("whenEvaluation.kt")
+            public void testWhenEvaluation() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/whenEvaluation.kt");
+            }
+
+            @TestMetadata(".kt.kt")
+            public void test_kt() throws Exception {
+                runTest("testData/evaluation/singleBreakpoint/.kt.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/evaluation/multipleBreakpoints")
-    public static class MultipleBreakpoints extends AbstractIrKotlinEvaluateExpressionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
-        }
-
-        @TestMetadata("clearCache.kt")
-        public void testClearCache() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/clearCache.kt");
-        }
-
-        @TestMetadata("constructors.kt")
-        public void testConstructors() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/constructors.kt");
-        }
-
-        @TestMetadata("exceptions.kt")
-        public void testExceptions() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/exceptions.kt");
-        }
-
-        @TestMetadata("extensionMemberFunction.kt")
-        public void testExtensionMemberFunction() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/extensionMemberFunction.kt");
-        }
-
-        @TestMetadata("extensionMemberFunctionInObject.kt")
-        public void testExtensionMemberFunctionInObject() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/extensionMemberFunctionInObject.kt");
-        }
-
-        @TestMetadata("extensionMemberProperty.kt")
-        public void testExtensionMemberProperty() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/extensionMemberProperty.kt");
-        }
-
-        @TestMetadata("externalReceiverInLambda.kt")
-        public void testExternalReceiverInLambda() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/externalReceiverInLambda.kt");
-        }
-
-        @TestMetadata("fieldVariable.kt")
-        public void testFieldVariable() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/fieldVariable.kt");
-        }
-
-        @TestMetadata("funFromOuterClassInLamdba.kt")
-        public void testFunFromOuterClassInLamdba() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/funFromOuterClassInLamdba.kt");
-        }
-
-        @TestMetadata("initializer.kt")
-        public void testInitializer() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/initializer.kt");
-        }
-
-        @TestMetadata("inlineStackTrace.kt")
-        public void testInlineStackTrace() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/inlineStackTrace.kt");
-        }
-
-        @TestMetadata("inlineStackTraceWithNestedLambdas.kt")
-        public void testInlineStackTraceWithNestedLambdas() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/inlineStackTraceWithNestedLambdas.kt");
-        }
-
-        @TestMetadata("invisibleDeclarations.kt")
-        public void testInvisibleDeclarations() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/invisibleDeclarations.kt");
-        }
-
-        @TestMetadata("isInsideInlineLambda.kt")
-        public void testIsInsideInlineLambda() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/isInsideInlineLambda.kt");
-        }
-
-        @TestMetadata("lambdaParameters.kt")
-        public void testLambdaParameters() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/lambdaParameters.kt");
-        }
-
-        @TestMetadata("localFun.kt")
-        public void testLocalFun() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/localFun.kt");
-        }
-
-        @TestMetadata("multipleBreakpointsAtLine.kt")
-        public void testMultipleBreakpointsAtLine() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/multipleBreakpointsAtLine.kt");
-        }
-
-        @TestMetadata("mutations.kt")
-        public void testMutations() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/mutations.kt");
-        }
-
-        @TestMetadata("nestedCoroutineContexts.kt")
-        public void testNestedCoroutineContexts() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/nestedCoroutineContexts.kt");
-        }
-
-        @TestMetadata("noReceiverOnStack.kt")
-        public void testNoReceiverOnStack() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/noReceiverOnStack.kt");
-        }
-
-        @TestMetadata("nonCapturedVariables.kt")
-        public void testNonCapturedVariables() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/nonCapturedVariables.kt");
-        }
-
-        @TestMetadata("optimisedVariableEvaluation.kt")
-        public void testOptimisedVariableEvaluation() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/optimisedVariableEvaluation.kt");
-        }
-
-        @TestMetadata("privateMembersPriority.kt")
-        public void testPrivateMembersPriority() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/privateMembersPriority.kt");
-        }
-
-        @TestMetadata("remappedParameterInInline.kt")
-        public void testRemappedParameterInInline() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/remappedParameterInInline.kt");
-        }
-
-        @TestMetadata("smartcasts.kt")
-        public void testSmartcasts() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/smartcasts.kt");
-        }
-
-        @TestMetadata("thisLabels.kt")
-        public void testThisLabels() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/thisLabels.kt");
-        }
-
-        @TestMetadata("whenEntry.kt")
-        public void testWhenEntry() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/whenEntry.kt");
-        }
-
-        @TestMetadata("withoutBodyFunctions.kt")
-        public void testWithoutBodyFunctions() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/withoutBodyFunctions.kt");
-        }
-
-        @TestMetadata("withoutBodyProperties.kt")
-        public void testWithoutBodyProperties() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/withoutBodyProperties.kt");
-        }
-
-        @TestMetadata("withoutBodyProperties2.kt")
-        public void testWithoutBodyProperties2() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/withoutBodyProperties2.kt");
-        }
-
-        @TestMetadata("withoutBodyTypeParameters.kt")
-        public void testWithoutBodyTypeParameters() throws Exception {
-            runTest("testData/evaluation/multipleBreakpoints/withoutBodyTypeParameters.kt");
-        }
-
+    public abstract static class MultipleBreakpoints extends AbstractIrKotlinEvaluateExpressionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/evaluation/multipleBreakpoints/library")
         public static class Library extends AbstractIrKotlinEvaluateExpressionTest {
@@ -1464,6 +1313,169 @@ public abstract class IrKotlinEvaluateExpressionTestGenerated extends AbstractIr
             @TestMetadata("localFunInLibrary.kt")
             public void testLocalFunInLibrary() throws Exception {
                 runTest("testData/evaluation/multipleBreakpoints/library/localFunInLibrary.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/evaluation/multipleBreakpoints")
+        public static class Uncategorized extends AbstractIrKotlinEvaluateExpressionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, testDataFilePath);
+            }
+
+            @TestMetadata("clearCache.kt")
+            public void testClearCache() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/clearCache.kt");
+            }
+
+            @TestMetadata("constructors.kt")
+            public void testConstructors() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/constructors.kt");
+            }
+
+            @TestMetadata("exceptions.kt")
+            public void testExceptions() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/exceptions.kt");
+            }
+
+            @TestMetadata("extensionMemberFunction.kt")
+            public void testExtensionMemberFunction() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/extensionMemberFunction.kt");
+            }
+
+            @TestMetadata("extensionMemberFunctionInObject.kt")
+            public void testExtensionMemberFunctionInObject() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/extensionMemberFunctionInObject.kt");
+            }
+
+            @TestMetadata("extensionMemberProperty.kt")
+            public void testExtensionMemberProperty() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/extensionMemberProperty.kt");
+            }
+
+            @TestMetadata("externalReceiverInLambda.kt")
+            public void testExternalReceiverInLambda() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/externalReceiverInLambda.kt");
+            }
+
+            @TestMetadata("fieldVariable.kt")
+            public void testFieldVariable() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/fieldVariable.kt");
+            }
+
+            @TestMetadata("funFromOuterClassInLamdba.kt")
+            public void testFunFromOuterClassInLamdba() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/funFromOuterClassInLamdba.kt");
+            }
+
+            @TestMetadata("initializer.kt")
+            public void testInitializer() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/initializer.kt");
+            }
+
+            @TestMetadata("inlineStackTrace.kt")
+            public void testInlineStackTrace() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/inlineStackTrace.kt");
+            }
+
+            @TestMetadata("inlineStackTraceWithNestedLambdas.kt")
+            public void testInlineStackTraceWithNestedLambdas() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/inlineStackTraceWithNestedLambdas.kt");
+            }
+
+            @TestMetadata("invisibleDeclarations.kt")
+            public void testInvisibleDeclarations() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/invisibleDeclarations.kt");
+            }
+
+            @TestMetadata("isInsideInlineLambda.kt")
+            public void testIsInsideInlineLambda() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/isInsideInlineLambda.kt");
+            }
+
+            @TestMetadata("lambdaParameters.kt")
+            public void testLambdaParameters() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/lambdaParameters.kt");
+            }
+
+            @TestMetadata("localFun.kt")
+            public void testLocalFun() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/localFun.kt");
+            }
+
+            @TestMetadata("multipleBreakpointsAtLine.kt")
+            public void testMultipleBreakpointsAtLine() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/multipleBreakpointsAtLine.kt");
+            }
+
+            @TestMetadata("mutations.kt")
+            public void testMutations() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/mutations.kt");
+            }
+
+            @TestMetadata("nestedCoroutineContexts.kt")
+            public void testNestedCoroutineContexts() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/nestedCoroutineContexts.kt");
+            }
+
+            @TestMetadata("noReceiverOnStack.kt")
+            public void testNoReceiverOnStack() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/noReceiverOnStack.kt");
+            }
+
+            @TestMetadata("nonCapturedVariables.kt")
+            public void testNonCapturedVariables() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/nonCapturedVariables.kt");
+            }
+
+            @TestMetadata("optimisedVariableEvaluation.kt")
+            public void testOptimisedVariableEvaluation() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/optimisedVariableEvaluation.kt");
+            }
+
+            @TestMetadata("privateMembersPriority.kt")
+            public void testPrivateMembersPriority() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/privateMembersPriority.kt");
+            }
+
+            @TestMetadata("remappedParameterInInline.kt")
+            public void testRemappedParameterInInline() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/remappedParameterInInline.kt");
+            }
+
+            @TestMetadata("smartcasts.kt")
+            public void testSmartcasts() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/smartcasts.kt");
+            }
+
+            @TestMetadata("thisLabels.kt")
+            public void testThisLabels() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/thisLabels.kt");
+            }
+
+            @TestMetadata("whenEntry.kt")
+            public void testWhenEntry() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/whenEntry.kt");
+            }
+
+            @TestMetadata("withoutBodyFunctions.kt")
+            public void testWithoutBodyFunctions() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/withoutBodyFunctions.kt");
+            }
+
+            @TestMetadata("withoutBodyProperties.kt")
+            public void testWithoutBodyProperties() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/withoutBodyProperties.kt");
+            }
+
+            @TestMetadata("withoutBodyProperties2.kt")
+            public void testWithoutBodyProperties2() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/withoutBodyProperties2.kt");
+            }
+
+            @TestMetadata("withoutBodyTypeParameters.kt")
+            public void testWithoutBodyTypeParameters() throws Exception {
+                runTest("testData/evaluation/multipleBreakpoints/withoutBodyTypeParameters.kt");
             }
         }
     }

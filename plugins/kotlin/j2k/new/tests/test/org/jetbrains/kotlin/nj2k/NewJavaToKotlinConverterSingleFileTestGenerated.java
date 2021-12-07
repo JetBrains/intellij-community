@@ -3846,16 +3846,7 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/newJ2k/newJavaFeatures")
-    public static class NewJavaFeatures extends AbstractNewJavaToKotlinConverterSingleFileTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("yieldOutsideWhen.java")
-        public void testYieldOutsideWhen() throws Exception {
-            runTest("testData/newJ2k/newJavaFeatures/yieldOutsideWhen.java");
-        }
-
+    public abstract static class NewJavaFeatures extends AbstractNewJavaToKotlinConverterSingleFileTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/newJ2k/newJavaFeatures/enhancedSwitchStatement")
         public static class EnhancedSwitchStatement extends AbstractNewJavaToKotlinConverterSingleFileTest {
@@ -3964,6 +3955,19 @@ public abstract class NewJavaToKotlinConverterSingleFileTestGenerated extends Ab
             @TestMetadata("switchExpressionWithArrow.java")
             public void testSwitchExpressionWithArrow() throws Exception {
                 runTest("testData/newJ2k/newJavaFeatures/switchExpression/switchExpressionWithArrow.java");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/newJ2k/newJavaFeatures")
+        public static class Uncategorized extends AbstractNewJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("yieldOutsideWhen.java")
+            public void testYieldOutsideWhen() throws Exception {
+                runTest("testData/newJ2k/newJavaFeatures/yieldOutsideWhen.java");
             }
         }
     }

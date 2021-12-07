@@ -18,76 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/intentions/loopToCallChain")
-public class IntentionTest2Generated extends AbstractIntentionTest2 {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-    }
-
-    @TestMetadata("array.kt")
-    public void testArray() throws Exception {
-        runTest("testData/intentions/loopToCallChain/array.kt");
-    }
-
-    @TestMetadata("asSequenceOnly.kt")
-    public void testAsSequenceOnly() throws Exception {
-        runTest("testData/intentions/loopToCallChain/asSequenceOnly.kt");
-    }
-
-    @TestMetadata("customTypeWithIterator.kt")
-    public void testCustomTypeWithIterator() throws Exception {
-        runTest("testData/intentions/loopToCallChain/customTypeWithIterator.kt");
-    }
-
-    @TestMetadata("embeddedBreak1.kt")
-    public void testEmbeddedBreak1() throws Exception {
-        runTest("testData/intentions/loopToCallChain/embeddedBreak1.kt");
-    }
-
-    @TestMetadata("embeddedBreak2.kt")
-    public void testEmbeddedBreak2() throws Exception {
-        runTest("testData/intentions/loopToCallChain/embeddedBreak2.kt");
-    }
-
-    @TestMetadata("embeddedContinue.kt")
-    public void testEmbeddedContinue() throws Exception {
-        runTest("testData/intentions/loopToCallChain/embeddedContinue.kt");
-    }
-
-    @TestMetadata("intArray.kt")
-    public void testIntArray() throws Exception {
-        runTest("testData/intentions/loopToCallChain/intArray.kt");
-    }
-
-    @TestMetadata("itAlreadyUsed.kt")
-    public void testItAlreadyUsed() throws Exception {
-        runTest("testData/intentions/loopToCallChain/itAlreadyUsed.kt");
-    }
-
-    @TestMetadata("KT14191.kt")
-    public void testKT14191() throws Exception {
-        runTest("testData/intentions/loopToCallChain/KT14191.kt");
-    }
-
-    @TestMetadata("lastOrNull_ifAssign.kt")
-    public void testLastOrNull_ifAssign() throws Exception {
-        runTest("testData/intentions/loopToCallChain/lastOrNull_ifAssign.kt");
-    }
-
-    @TestMetadata("moveInitializationsCloserToLoop.kt")
-    public void testMoveInitializationsCloserToLoop() throws Exception {
-        runTest("testData/intentions/loopToCallChain/moveInitializationsCloserToLoop.kt");
-    }
-
-    @TestMetadata("range.kt")
-    public void testRange() throws Exception {
-        runTest("testData/intentions/loopToCallChain/range.kt");
-    }
-
-    @TestMetadata("twoInitializationsBeforeLoop.kt")
-    public void testTwoInitializationsBeforeLoop() throws Exception {
-        runTest("testData/intentions/loopToCallChain/twoInitializationsBeforeLoop.kt");
-    }
-
+public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/any")
     public static class Any extends AbstractIntentionTest2 {
@@ -1350,6 +1281,79 @@ public class IntentionTest2Generated extends AbstractIntentionTest2 {
         @TestMetadata("toSetWithMap.kt")
         public void testToSetWithMap() throws Exception {
             runTest("testData/intentions/loopToCallChain/toCollection/toSetWithMap.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/loopToCallChain")
+    public static class Uncategorized extends AbstractIntentionTest2 {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("array.kt")
+        public void testArray() throws Exception {
+            runTest("testData/intentions/loopToCallChain/array.kt");
+        }
+
+        @TestMetadata("asSequenceOnly.kt")
+        public void testAsSequenceOnly() throws Exception {
+            runTest("testData/intentions/loopToCallChain/asSequenceOnly.kt");
+        }
+
+        @TestMetadata("customTypeWithIterator.kt")
+        public void testCustomTypeWithIterator() throws Exception {
+            runTest("testData/intentions/loopToCallChain/customTypeWithIterator.kt");
+        }
+
+        @TestMetadata("embeddedBreak1.kt")
+        public void testEmbeddedBreak1() throws Exception {
+            runTest("testData/intentions/loopToCallChain/embeddedBreak1.kt");
+        }
+
+        @TestMetadata("embeddedBreak2.kt")
+        public void testEmbeddedBreak2() throws Exception {
+            runTest("testData/intentions/loopToCallChain/embeddedBreak2.kt");
+        }
+
+        @TestMetadata("embeddedContinue.kt")
+        public void testEmbeddedContinue() throws Exception {
+            runTest("testData/intentions/loopToCallChain/embeddedContinue.kt");
+        }
+
+        @TestMetadata("intArray.kt")
+        public void testIntArray() throws Exception {
+            runTest("testData/intentions/loopToCallChain/intArray.kt");
+        }
+
+        @TestMetadata("itAlreadyUsed.kt")
+        public void testItAlreadyUsed() throws Exception {
+            runTest("testData/intentions/loopToCallChain/itAlreadyUsed.kt");
+        }
+
+        @TestMetadata("KT14191.kt")
+        public void testKT14191() throws Exception {
+            runTest("testData/intentions/loopToCallChain/KT14191.kt");
+        }
+
+        @TestMetadata("lastOrNull_ifAssign.kt")
+        public void testLastOrNull_ifAssign() throws Exception {
+            runTest("testData/intentions/loopToCallChain/lastOrNull_ifAssign.kt");
+        }
+
+        @TestMetadata("moveInitializationsCloserToLoop.kt")
+        public void testMoveInitializationsCloserToLoop() throws Exception {
+            runTest("testData/intentions/loopToCallChain/moveInitializationsCloserToLoop.kt");
+        }
+
+        @TestMetadata("range.kt")
+        public void testRange() throws Exception {
+            runTest("testData/intentions/loopToCallChain/range.kt");
+        }
+
+        @TestMetadata("twoInitializationsBeforeLoop.kt")
+        public void testTwoInitializationsBeforeLoop() throws Exception {
+            runTest("testData/intentions/loopToCallChain/twoInitializationsBeforeLoop.kt");
         }
     }
 }

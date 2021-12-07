@@ -18,66 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("../../completion/tests/testData/basic/codeFragments")
-public class CodeFragmentCompletionTestGenerated extends AbstractCodeFragmentCompletionTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-    }
-
-    @TestMetadata("blockCodeFragment.kt")
-    public void testBlockCodeFragment() throws Exception {
-        runTest("../../completion/tests/testData/basic/codeFragments/blockCodeFragment.kt");
-    }
-
-    @TestMetadata("classHeader.kt")
-    public void testClassHeader() throws Exception {
-        runTest("../../completion/tests/testData/basic/codeFragments/classHeader.kt");
-    }
-
-    @TestMetadata("elementAt.kt")
-    public void testElementAt() throws Exception {
-        runTest("../../completion/tests/testData/basic/codeFragments/elementAt.kt");
-    }
-
-    @TestMetadata("elementAtFirstInBlock.kt")
-    public void testElementAtFirstInBlock() throws Exception {
-        runTest("../../completion/tests/testData/basic/codeFragments/elementAtFirstInBlock.kt");
-    }
-
-    @TestMetadata("localVal.kt")
-    public void testLocalVal() throws Exception {
-        runTest("../../completion/tests/testData/basic/codeFragments/localVal.kt");
-    }
-
-    @TestMetadata("localVariables.kt")
-    public void testLocalVariables() throws Exception {
-        runTest("../../completion/tests/testData/basic/codeFragments/localVariables.kt");
-    }
-
-    @TestMetadata("localVariablesOnReturn.kt")
-    public void testLocalVariablesOnReturn() throws Exception {
-        runTest("../../completion/tests/testData/basic/codeFragments/localVariablesOnReturn.kt");
-    }
-
-    @TestMetadata("noDuplicatesForSyntheticProperties.kt")
-    public void testNoDuplicatesForSyntheticProperties() throws Exception {
-        runTest("../../completion/tests/testData/basic/codeFragments/noDuplicatesForSyntheticProperties.kt");
-    }
-
-    @TestMetadata("privatesInSecondPressCompletion.kt")
-    public void testPrivatesInSecondPressCompletion() throws Exception {
-        runTest("../../completion/tests/testData/basic/codeFragments/privatesInSecondPressCompletion.kt");
-    }
-
-    @TestMetadata("syntheticFieldProperties.kt")
-    public void testSyntheticFieldProperties() throws Exception {
-        runTest("../../completion/tests/testData/basic/codeFragments/syntheticFieldProperties.kt");
-    }
-
-    @TestMetadata("topLevel.kt")
-    public void testTopLevel() throws Exception {
-        runTest("../../completion/tests/testData/basic/codeFragments/topLevel.kt");
-    }
-
+public abstract class CodeFragmentCompletionTestGenerated extends AbstractCodeFragmentCompletionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../../completion/tests/testData/basic/codeFragments/runtimeType")
     public static class RuntimeType extends AbstractCodeFragmentCompletionTest {
@@ -113,6 +54,69 @@ public class CodeFragmentCompletionTestGenerated extends AbstractCodeFragmentCom
         @TestMetadata("smartCompletion.kt")
         public void testSmartCompletion() throws Exception {
             runTest("../../completion/tests/testData/basic/codeFragments/runtimeType/smartCompletion.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("../../completion/tests/testData/basic/codeFragments")
+    public static class Uncategorized extends AbstractCodeFragmentCompletionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("blockCodeFragment.kt")
+        public void testBlockCodeFragment() throws Exception {
+            runTest("../../completion/tests/testData/basic/codeFragments/blockCodeFragment.kt");
+        }
+
+        @TestMetadata("classHeader.kt")
+        public void testClassHeader() throws Exception {
+            runTest("../../completion/tests/testData/basic/codeFragments/classHeader.kt");
+        }
+
+        @TestMetadata("elementAt.kt")
+        public void testElementAt() throws Exception {
+            runTest("../../completion/tests/testData/basic/codeFragments/elementAt.kt");
+        }
+
+        @TestMetadata("elementAtFirstInBlock.kt")
+        public void testElementAtFirstInBlock() throws Exception {
+            runTest("../../completion/tests/testData/basic/codeFragments/elementAtFirstInBlock.kt");
+        }
+
+        @TestMetadata("localVal.kt")
+        public void testLocalVal() throws Exception {
+            runTest("../../completion/tests/testData/basic/codeFragments/localVal.kt");
+        }
+
+        @TestMetadata("localVariables.kt")
+        public void testLocalVariables() throws Exception {
+            runTest("../../completion/tests/testData/basic/codeFragments/localVariables.kt");
+        }
+
+        @TestMetadata("localVariablesOnReturn.kt")
+        public void testLocalVariablesOnReturn() throws Exception {
+            runTest("../../completion/tests/testData/basic/codeFragments/localVariablesOnReturn.kt");
+        }
+
+        @TestMetadata("noDuplicatesForSyntheticProperties.kt")
+        public void testNoDuplicatesForSyntheticProperties() throws Exception {
+            runTest("../../completion/tests/testData/basic/codeFragments/noDuplicatesForSyntheticProperties.kt");
+        }
+
+        @TestMetadata("privatesInSecondPressCompletion.kt")
+        public void testPrivatesInSecondPressCompletion() throws Exception {
+            runTest("../../completion/tests/testData/basic/codeFragments/privatesInSecondPressCompletion.kt");
+        }
+
+        @TestMetadata("syntheticFieldProperties.kt")
+        public void testSyntheticFieldProperties() throws Exception {
+            runTest("../../completion/tests/testData/basic/codeFragments/syntheticFieldProperties.kt");
+        }
+
+        @TestMetadata("topLevel.kt")
+        public void testTopLevel() throws Exception {
+            runTest("../../completion/tests/testData/basic/codeFragments/topLevel.kt");
         }
     }
 }

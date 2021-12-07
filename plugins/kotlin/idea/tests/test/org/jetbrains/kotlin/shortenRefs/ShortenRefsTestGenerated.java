@@ -18,136 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/shortenRefs")
-public class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-    }
-
-    @TestMetadata("annotation.kt")
-    public void testAnnotation() throws Exception {
-        runTest("testData/shortenRefs/annotation.kt");
-    }
-
-    @TestMetadata("callableRefsOnCompanion.kt")
-    public void testCallableRefsOnCompanion() throws Exception {
-        runTest("testData/shortenRefs/callableRefsOnCompanion.kt");
-    }
-
-    @TestMetadata("classInCompanionObject.kt")
-    public void testClassInCompanionObject() throws Exception {
-        runTest("testData/shortenRefs/classInCompanionObject.kt");
-    }
-
-    @TestMetadata("ClassNameConflict.kt")
-    public void testClassNameConflict() throws Exception {
-        runTest("testData/shortenRefs/ClassNameConflict.kt");
-    }
-
-    @TestMetadata("ClassNameConflictNoPackageImport.kt")
-    public void testClassNameConflictNoPackageImport() throws Exception {
-        runTest("testData/shortenRefs/ClassNameConflictNoPackageImport.kt");
-    }
-
-    @TestMetadata("classObject.kt")
-    public void testClassObject() throws Exception {
-        runTest("testData/shortenRefs/classObject.kt");
-    }
-
-    @TestMetadata("descriptorsChangeAfterImportInsertion.kt")
-    public void testDescriptorsChangeAfterImportInsertion() throws Exception {
-        runTest("testData/shortenRefs/descriptorsChangeAfterImportInsertion.kt");
-    }
-
-    @TestMetadata("extensionForCompanionObject.kt")
-    public void testExtensionForCompanionObject() throws Exception {
-        runTest("testData/shortenRefs/extensionForCompanionObject.kt");
-    }
-
-    @TestMetadata("extensionForObject.kt")
-    public void testExtensionForObject() throws Exception {
-        runTest("testData/shortenRefs/extensionForObject.kt");
-    }
-
-    @TestMetadata("extensionForObject2.kt")
-    public void testExtensionForObject2() throws Exception {
-        runTest("testData/shortenRefs/extensionForObject2.kt");
-    }
-
-    @TestMetadata("extensionFunctionVarInvokedWithQualifier.kt")
-    public void testExtensionFunctionVarInvokedWithQualifier() throws Exception {
-        runTest("testData/shortenRefs/extensionFunctionVarInvokedWithQualifier.kt");
-    }
-
-    @TestMetadata("hiddenByMoreSpecificDeclaration.kt")
-    public void testHiddenByMoreSpecificDeclaration() throws Exception {
-        runTest("testData/shortenRefs/hiddenByMoreSpecificDeclaration.kt");
-    }
-
-    @TestMetadata("InterfaceInExpression.kt")
-    public void testInterfaceInExpression() throws Exception {
-        runTest("testData/shortenRefs/InterfaceInExpression.kt");
-    }
-
-    @TestMetadata("JavaStaticMethod.kt")
-    public void testJavaStaticMethod() throws Exception {
-        runTest("testData/shortenRefs/JavaStaticMethod.kt");
-    }
-
-    @TestMetadata("KotlinRepeat.kt")
-    public void testKotlinRepeat() throws Exception {
-        runTest("testData/shortenRefs/KotlinRepeat.kt");
-    }
-
-    @TestMetadata("kt11633.kt")
-    public void testKt11633() throws Exception {
-        runTest("testData/shortenRefs/kt11633.kt");
-    }
-
-    @TestMetadata("kt14370.kt")
-    public void testKt14370() throws Exception {
-        runTest("testData/shortenRefs/kt14370.kt");
-    }
-
-    @TestMetadata("noShortening.kt")
-    public void testNoShortening() throws Exception {
-        runTest("testData/shortenRefs/noShortening.kt");
-    }
-
-    @TestMetadata("PackagesToUseStarImports.kt")
-    public void testPackagesToUseStarImports() throws Exception {
-        runTest("testData/shortenRefs/PackagesToUseStarImports.kt");
-    }
-
-    @TestMetadata("PropertyFunctionConflict.kt")
-    public void testPropertyFunctionConflict() throws Exception {
-        runTest("testData/shortenRefs/PropertyFunctionConflict.kt");
-    }
-
-    @TestMetadata("removeCompanionRefInCalleeExpression.kt")
-    public void testRemoveCompanionRefInCalleeExpression() throws Exception {
-        runTest("testData/shortenRefs/removeCompanionRefInCalleeExpression.kt");
-    }
-
-    @TestMetadata("removeCompanionRefWithQualifiedReceiverInCalleeExpression.kt")
-    public void testRemoveCompanionRefWithQualifiedReceiverInCalleeExpression() throws Exception {
-        runTest("testData/shortenRefs/removeCompanionRefWithQualifiedReceiverInCalleeExpression.kt");
-    }
-
-    @TestMetadata("shortCompanionRefInsideShortenedCall.kt")
-    public void testShortCompanionRefInsideShortenedCall() throws Exception {
-        runTest("testData/shortenRefs/shortCompanionRefInsideShortenedCall.kt");
-    }
-
-    @TestMetadata("TopLevelFunctionImportWithLotsOfFqName.kt")
-    public void testTopLevelFunctionImportWithLotsOfFqName() throws Exception {
-        runTest("testData/shortenRefs/TopLevelFunctionImportWithLotsOfFqName.kt");
-    }
-
-    @TestMetadata("UnresolvedOverload.kt")
-    public void testUnresolvedOverload() throws Exception {
-        runTest("testData/shortenRefs/UnresolvedOverload.kt");
-    }
-
+public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/shortenRefs/constructor")
     public static class Constructor extends AbstractShortenRefsTest {
@@ -531,6 +402,139 @@ public class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
         @TestMetadata("TypeAliasAsTypeArgument.kt")
         public void testTypeAliasAsTypeArgument() throws Exception {
             runTest("testData/shortenRefs/typealias/TypeAliasAsTypeArgument.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/shortenRefs")
+    public static class Uncategorized extends AbstractShortenRefsTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("annotation.kt")
+        public void testAnnotation() throws Exception {
+            runTest("testData/shortenRefs/annotation.kt");
+        }
+
+        @TestMetadata("callableRefsOnCompanion.kt")
+        public void testCallableRefsOnCompanion() throws Exception {
+            runTest("testData/shortenRefs/callableRefsOnCompanion.kt");
+        }
+
+        @TestMetadata("classInCompanionObject.kt")
+        public void testClassInCompanionObject() throws Exception {
+            runTest("testData/shortenRefs/classInCompanionObject.kt");
+        }
+
+        @TestMetadata("ClassNameConflict.kt")
+        public void testClassNameConflict() throws Exception {
+            runTest("testData/shortenRefs/ClassNameConflict.kt");
+        }
+
+        @TestMetadata("ClassNameConflictNoPackageImport.kt")
+        public void testClassNameConflictNoPackageImport() throws Exception {
+            runTest("testData/shortenRefs/ClassNameConflictNoPackageImport.kt");
+        }
+
+        @TestMetadata("classObject.kt")
+        public void testClassObject() throws Exception {
+            runTest("testData/shortenRefs/classObject.kt");
+        }
+
+        @TestMetadata("descriptorsChangeAfterImportInsertion.kt")
+        public void testDescriptorsChangeAfterImportInsertion() throws Exception {
+            runTest("testData/shortenRefs/descriptorsChangeAfterImportInsertion.kt");
+        }
+
+        @TestMetadata("extensionForCompanionObject.kt")
+        public void testExtensionForCompanionObject() throws Exception {
+            runTest("testData/shortenRefs/extensionForCompanionObject.kt");
+        }
+
+        @TestMetadata("extensionForObject.kt")
+        public void testExtensionForObject() throws Exception {
+            runTest("testData/shortenRefs/extensionForObject.kt");
+        }
+
+        @TestMetadata("extensionForObject2.kt")
+        public void testExtensionForObject2() throws Exception {
+            runTest("testData/shortenRefs/extensionForObject2.kt");
+        }
+
+        @TestMetadata("extensionFunctionVarInvokedWithQualifier.kt")
+        public void testExtensionFunctionVarInvokedWithQualifier() throws Exception {
+            runTest("testData/shortenRefs/extensionFunctionVarInvokedWithQualifier.kt");
+        }
+
+        @TestMetadata("hiddenByMoreSpecificDeclaration.kt")
+        public void testHiddenByMoreSpecificDeclaration() throws Exception {
+            runTest("testData/shortenRefs/hiddenByMoreSpecificDeclaration.kt");
+        }
+
+        @TestMetadata("InterfaceInExpression.kt")
+        public void testInterfaceInExpression() throws Exception {
+            runTest("testData/shortenRefs/InterfaceInExpression.kt");
+        }
+
+        @TestMetadata("JavaStaticMethod.kt")
+        public void testJavaStaticMethod() throws Exception {
+            runTest("testData/shortenRefs/JavaStaticMethod.kt");
+        }
+
+        @TestMetadata("KotlinRepeat.kt")
+        public void testKotlinRepeat() throws Exception {
+            runTest("testData/shortenRefs/KotlinRepeat.kt");
+        }
+
+        @TestMetadata("kt11633.kt")
+        public void testKt11633() throws Exception {
+            runTest("testData/shortenRefs/kt11633.kt");
+        }
+
+        @TestMetadata("kt14370.kt")
+        public void testKt14370() throws Exception {
+            runTest("testData/shortenRefs/kt14370.kt");
+        }
+
+        @TestMetadata("noShortening.kt")
+        public void testNoShortening() throws Exception {
+            runTest("testData/shortenRefs/noShortening.kt");
+        }
+
+        @TestMetadata("PackagesToUseStarImports.kt")
+        public void testPackagesToUseStarImports() throws Exception {
+            runTest("testData/shortenRefs/PackagesToUseStarImports.kt");
+        }
+
+        @TestMetadata("PropertyFunctionConflict.kt")
+        public void testPropertyFunctionConflict() throws Exception {
+            runTest("testData/shortenRefs/PropertyFunctionConflict.kt");
+        }
+
+        @TestMetadata("removeCompanionRefInCalleeExpression.kt")
+        public void testRemoveCompanionRefInCalleeExpression() throws Exception {
+            runTest("testData/shortenRefs/removeCompanionRefInCalleeExpression.kt");
+        }
+
+        @TestMetadata("removeCompanionRefWithQualifiedReceiverInCalleeExpression.kt")
+        public void testRemoveCompanionRefWithQualifiedReceiverInCalleeExpression() throws Exception {
+            runTest("testData/shortenRefs/removeCompanionRefWithQualifiedReceiverInCalleeExpression.kt");
+        }
+
+        @TestMetadata("shortCompanionRefInsideShortenedCall.kt")
+        public void testShortCompanionRefInsideShortenedCall() throws Exception {
+            runTest("testData/shortenRefs/shortCompanionRefInsideShortenedCall.kt");
+        }
+
+        @TestMetadata("TopLevelFunctionImportWithLotsOfFqName.kt")
+        public void testTopLevelFunctionImportWithLotsOfFqName() throws Exception {
+            runTest("testData/shortenRefs/TopLevelFunctionImportWithLotsOfFqName.kt");
+        }
+
+        @TestMetadata("UnresolvedOverload.kt")
+        public void testUnresolvedOverload() throws Exception {
+            runTest("testData/shortenRefs/UnresolvedOverload.kt");
         }
     }
 }

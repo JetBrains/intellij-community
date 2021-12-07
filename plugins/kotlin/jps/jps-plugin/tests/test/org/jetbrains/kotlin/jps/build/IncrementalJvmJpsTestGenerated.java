@@ -889,106 +889,7 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/incremental/withJava/javaUsedInKotlin")
-        public static class JavaUsedInKotlin extends AbstractIncrementalJvmJpsTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
-            }
-
-            @TestMetadata("changeFieldType")
-            public void testChangeFieldType() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/changeFieldType/");
-            }
-
-            @TestMetadata("changeNotUsedSignature")
-            public void testChangeNotUsedSignature() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/changeNotUsedSignature/");
-            }
-
-            @TestMetadata("changePropertyOverrideType")
-            public void testChangePropertyOverrideType() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/changePropertyOverrideType/");
-            }
-
-            @TestMetadata("changeSignature")
-            public void testChangeSignature() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignature/");
-            }
-
-            @TestMetadata("changeSignaturePackagePrivate")
-            public void testChangeSignaturePackagePrivate() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignaturePackagePrivate/");
-            }
-
-            @TestMetadata("changeSignaturePackagePrivateNonRoot")
-            public void testChangeSignaturePackagePrivateNonRoot() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignaturePackagePrivateNonRoot/");
-            }
-
-            @TestMetadata("changeSignatureStatic")
-            public void testChangeSignatureStatic() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignatureStatic/");
-            }
-
-            @TestMetadata("constantChanged")
-            public void testConstantChanged() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/constantChanged/");
-            }
-
-            @TestMetadata("constantUnchanged")
-            public void testConstantUnchanged() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/constantUnchanged/");
-            }
-
-            @TestMetadata("enumEntryAdded")
-            public void testEnumEntryAdded() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/enumEntryAdded/");
-            }
-
-            @TestMetadata("enumEntryRemoved")
-            public void testEnumEntryRemoved() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/enumEntryRemoved/");
-            }
-
-            @TestMetadata("javaAndKotlinChangedSimultaneously")
-            public void testJavaAndKotlinChangedSimultaneously() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/javaAndKotlinChangedSimultaneously/");
-            }
-
-            @TestMetadata("javaFieldNullabilityChanged")
-            public void testJavaFieldNullabilityChanged() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/javaFieldNullabilityChanged/");
-            }
-
-            @TestMetadata("javaMethodParamNullabilityChanged")
-            public void testJavaMethodParamNullabilityChanged() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/javaMethodParamNullabilityChanged/");
-            }
-
-            @TestMetadata("javaMethodReturnTypeNullabilityChanged")
-            public void testJavaMethodReturnTypeNullabilityChanged() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/javaMethodReturnTypeNullabilityChanged/");
-            }
-
-            @TestMetadata("methodAddedInSuper")
-            public void testMethodAddedInSuper() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/methodAddedInSuper/");
-            }
-
-            @TestMetadata("methodRenamed")
-            public void testMethodRenamed() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/methodRenamed/");
-            }
-
-            @TestMetadata("mixedInheritance")
-            public void testMixedInheritance() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/mixedInheritance/");
-            }
-
-            @TestMetadata("notChangeSignature")
-            public void testNotChangeSignature() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/notChangeSignature/");
-            }
-
+        public abstract static class JavaUsedInKotlin extends AbstractIncrementalJvmJpsTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/incremental/withJava/javaUsedInKotlin/samConversions")
             public static class SamConversions extends AbstractIncrementalJvmJpsTest {
@@ -1014,6 +915,109 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
                 @TestMetadata("methodSignatureChangedSamAdapter")
                 public void testMethodSignatureChangedSamAdapter() throws Exception {
                     runTest("testData/incremental/withJava/javaUsedInKotlin/samConversions/methodSignatureChangedSamAdapter/");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/incremental/withJava/javaUsedInKotlin")
+            public static class Uncategorized extends AbstractIncrementalJvmJpsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
+
+                @TestMetadata("changeFieldType")
+                public void testChangeFieldType() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/changeFieldType/");
+                }
+
+                @TestMetadata("changeNotUsedSignature")
+                public void testChangeNotUsedSignature() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/changeNotUsedSignature/");
+                }
+
+                @TestMetadata("changePropertyOverrideType")
+                public void testChangePropertyOverrideType() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/changePropertyOverrideType/");
+                }
+
+                @TestMetadata("changeSignature")
+                public void testChangeSignature() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignature/");
+                }
+
+                @TestMetadata("changeSignaturePackagePrivate")
+                public void testChangeSignaturePackagePrivate() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignaturePackagePrivate/");
+                }
+
+                @TestMetadata("changeSignaturePackagePrivateNonRoot")
+                public void testChangeSignaturePackagePrivateNonRoot() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignaturePackagePrivateNonRoot/");
+                }
+
+                @TestMetadata("changeSignatureStatic")
+                public void testChangeSignatureStatic() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignatureStatic/");
+                }
+
+                @TestMetadata("constantChanged")
+                public void testConstantChanged() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/constantChanged/");
+                }
+
+                @TestMetadata("constantUnchanged")
+                public void testConstantUnchanged() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/constantUnchanged/");
+                }
+
+                @TestMetadata("enumEntryAdded")
+                public void testEnumEntryAdded() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/enumEntryAdded/");
+                }
+
+                @TestMetadata("enumEntryRemoved")
+                public void testEnumEntryRemoved() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/enumEntryRemoved/");
+                }
+
+                @TestMetadata("javaAndKotlinChangedSimultaneously")
+                public void testJavaAndKotlinChangedSimultaneously() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/javaAndKotlinChangedSimultaneously/");
+                }
+
+                @TestMetadata("javaFieldNullabilityChanged")
+                public void testJavaFieldNullabilityChanged() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/javaFieldNullabilityChanged/");
+                }
+
+                @TestMetadata("javaMethodParamNullabilityChanged")
+                public void testJavaMethodParamNullabilityChanged() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/javaMethodParamNullabilityChanged/");
+                }
+
+                @TestMetadata("javaMethodReturnTypeNullabilityChanged")
+                public void testJavaMethodReturnTypeNullabilityChanged() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/javaMethodReturnTypeNullabilityChanged/");
+                }
+
+                @TestMetadata("methodAddedInSuper")
+                public void testMethodAddedInSuper() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/methodAddedInSuper/");
+                }
+
+                @TestMetadata("methodRenamed")
+                public void testMethodRenamed() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/methodRenamed/");
+                }
+
+                @TestMetadata("mixedInheritance")
+                public void testMixedInheritance() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/mixedInheritance/");
+                }
+
+                @TestMetadata("notChangeSignature")
+                public void testNotChangeSignature() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/notChangeSignature/");
                 }
             }
         }
