@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.TypeUtils
 
 /** Similar to [AddModifierFix] but with multi-platform support. */
-open class AddModifierFixMpp(
+open class AddModifierFixFE10(
     element: KtModifierListOwner,
     modifier: KtModifierKeywordToken
 ) : AddModifierFix(element, modifier) {
@@ -68,12 +68,12 @@ open class AddModifierFixMpp(
         return element.canRefactor()
     }
 
-    companion object : Factory<AddModifierFixMpp> {
+    companion object : Factory<AddModifierFixFE10> {
         private fun KtModifierKeywordToken.isMultiplatformPersistent(): Boolean =
             this in MODALITY_MODIFIERS || this == INLINE_KEYWORD
 
-        override fun createModifierFix(element: KtModifierListOwner, modifier: KtModifierKeywordToken): AddModifierFixMpp =
-            AddModifierFixMpp(element, modifier)
+        override fun createModifierFix(element: KtModifierListOwner, modifier: KtModifierKeywordToken): AddModifierFixFE10 =
+            AddModifierFixFE10(element, modifier)
     }
 
     object MakeClassOpenFactory : KotlinSingleIntentionActionFactory() {
@@ -81,7 +81,7 @@ open class AddModifierFixMpp(
             val typeReference = diagnostic.psiElement as KtTypeReference
             val declaration = typeReference.classForRefactor() ?: return null
             if (declaration.isEnum() || declaration.isData()) return null
-            return AddModifierFixMpp(declaration, OPEN_KEYWORD)
+            return AddModifierFixFE10(declaration, OPEN_KEYWORD)
         }
     }
 
@@ -96,7 +96,7 @@ open class AddModifierFixMpp(
             if (TypeUtils.isNullableType(type)) return null
             if (KotlinBuiltIns.isPrimitiveType(type)) return null
 
-            return AddModifierFixMpp(property, LATEINIT_KEYWORD)
+            return AddModifierFixFE10(property, LATEINIT_KEYWORD)
         }
     }
 }

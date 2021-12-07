@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 class AddReifiedToTypeParameterOfFunctionFix(
     typeParameter: KtTypeParameter,
     function: KtNamedFunction
-) : AddModifierFixMpp(typeParameter, KtTokens.REIFIED_KEYWORD) {
+) : AddModifierFixFE10(typeParameter, KtTokens.REIFIED_KEYWORD) {
 
     private val inlineFix = AddInlineToFunctionWithReifiedFix(function)
     private val elementName = RemoveModifierFix.getElementName(function)
