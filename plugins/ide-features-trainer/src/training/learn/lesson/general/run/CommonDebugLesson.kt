@@ -14,13 +14,13 @@ import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
-import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.LogicalPosition
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx
 import com.intellij.openapi.editor.impl.EditorComponentImpl
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.tasks.TaskBundle
+import com.intellij.util.DocumentUtil
 import com.intellij.xdebugger.*
 import com.intellij.xdebugger.impl.XDebugSessionImpl
 import com.intellij.xdebugger.impl.XDebuggerManagerImpl
@@ -64,7 +64,6 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
   protected val afterFixText: String by lazy { sample.text.replaceFirst("[0]", "[1]") }
 
   protected var sessionPaused: Boolean = false
-  protected var mayBeStopped: Boolean = false
   private var debugSession: XDebugSession? by WeakReferenceDelegator()
 
   override val lessonContent: LessonContext.() -> Unit = {
@@ -152,14 +151,12 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
   private fun LessonContext.startDebugTask() {
     highlightButtonById("Debug")
 
-    mayBeStopped = false
     var watchesRemoved = false
     task("Debug") {
       text(LessonsBundle.message("debug.workflow.start.debug", icon(AllIcons.Actions.StartDebugger), action(it)))
       addFutureStep {
         project.messageBus.connect(lessonDisposable).subscribe(XDebuggerManager.TOPIC, object : XDebuggerManagerListener {
           override fun processStarted(debugProcess: XDebugProcess) {
-            mayBeStopped = false
             val debugSession = debugProcess.session
             (this@CommonDebugLesson).debugSession = debugSession
 
@@ -201,6 +198,47 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       test {
         Thread.sleep(500)
         invokeActionViaShortcut("ESCAPE")
+      }
+    }
+  }
+
+  private fun LessonContext.evaluateExpressionTasks() {
+    task {
+      triggerByUiComponentAndHighlight(highlightInside = false,
+                                       usePulsation = true) { ui: XDebuggerEmbeddedComboBox<XExpression> -> ui.isEditable }
+    }
+
+    val position = sample.getPosition(1)
+    val needToEvaluate = position.selection?.let { pair -> sample.text.substring(pair.first, pair.second) }
+                         ?: error("Invalid sample data")
+    caret(position)
+
+    task {
+      text(LessonsBundle.message("debug.workflow.evaluate.expression"))
+      triggerByUiComponentAndHighlight(false, false) { ui: EditorComponentImpl ->
+        ui.editor.document.text == needToEvaluate
+      }
+      proposeSelectionChangeRestore(position)
+      test {
+        invokeActionViaShortcut("CTRL C")
+        ideFrame {
+          val evaluateExpressionField =
+            findComponentWithTimeout(defaultTimeout) { ui: XDebuggerEmbeddedComboBox<XExpression> -> ui.isEditable }
+          JComboBoxFixture(robot(), evaluateExpressionField).click()
+          invokeActionViaShortcut("CTRL V")
+        }
+      }
+    }
+
+    task {
+      text(LessonsBundle.message("debug.workflow.evaluate.it", LessonUtil.rawEnter()))
+      triggerByUiComponentAndHighlight(false, false) l@{ ui: XDebuggerTree ->
+        val resultNode = ui.root.getChildAt(0) as? WatchNodeImpl ?: return@l false
+        resultNode.expression.expression == needToEvaluate
+      }
+      proposeSelectionChangeRestore(position)
+      test {
+        invokeActionViaShortcut("ENTER")
       }
     }
   }
@@ -286,7 +324,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
       test {
         invokeActionViaShortcut("ESCAPE")
         taskInvokeLater {
-          WriteCommandAction.runWriteCommandAction(project) {
+          DocumentUtil.writeInRunUndoTransparentAction {
             val offset = sample.text.indexOf("[0]")
             editor.selectionModel.removeSelection()
             editor.document.replaceString(offset + 1, offset + 2, "1")
@@ -344,47 +382,6 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     }
   }
 
-  private fun LessonContext.evaluateExpressionTasks() {
-    task {
-      triggerByUiComponentAndHighlight(highlightInside = false,
-                                       usePulsation = true) { ui: XDebuggerEmbeddedComboBox<XExpression> -> ui.isEditable }
-    }
-
-    val position = sample.getPosition(1)
-    val needToEvaluate = position.selection?.let { pair -> sample.text.substring(pair.first, pair.second) }
-                         ?: error("Invalid sample data")
-    caret(position)
-
-    task {
-      text(LessonsBundle.message("debug.workflow.evaluate.expression"))
-      triggerByUiComponentAndHighlight(false, false) { ui: EditorComponentImpl ->
-        ui.editor.document.text == needToEvaluate
-      }
-      proposeSelectionChangeRestore(position)
-      test {
-        invokeActionViaShortcut("CTRL C")
-        ideFrame {
-          val evaluateExpressionField =
-            findComponentWithTimeout(defaultTimeout) { ui: XDebuggerEmbeddedComboBox<XExpression> -> ui.isEditable }
-          JComboBoxFixture(robot(), evaluateExpressionField).click()
-          invokeActionViaShortcut("CTRL V")
-        }
-      }
-    }
-
-    task {
-      text(LessonsBundle.message("debug.workflow.evaluate.it", LessonUtil.rawEnter()))
-      triggerByUiComponentAndHighlight(false, false) l@{ ui: XDebuggerTree ->
-        val resultNode = ui.root.getChildAt(0) as? WatchNodeImpl ?: return@l false
-        resultNode.expression.expression == needToEvaluate
-      }
-      proposeSelectionChangeRestore(position)
-      test {
-        invokeActionViaShortcut("ENTER")
-      }
-    }
-  }
-
   private fun LessonContext.evaluateResultTask() {
     quickEvaluateTask(positionId = 4) { position ->
       text(LessonsBundle.message("debug.workflow.check.result", action("QuickEvaluateExpression")))
@@ -398,7 +395,6 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     highlightButtonById("Stop")
 
     actionTask("Stop") {
-      before { mayBeStopped = true }
       LessonsBundle.message("debug.workflow.stop.debug", action(it), icon(AllIcons.Actions.Suspend))
     }
   }
