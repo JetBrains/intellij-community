@@ -29,6 +29,7 @@ import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
 import javax.swing.JScrollPane
+import javax.swing.SwingUtilities
 
 internal class DocumentationUI(
   project: Project,
@@ -176,18 +177,20 @@ internal class DocumentationUI(
   private fun update(text: @Nls String, scrollingPosition: ScrollingPosition) {
     EDT.assertIsEdt()
     editorPane.text = text
-    when (scrollingPosition) {
-      ScrollingPosition.Keep -> {
-        // do nothing
-      }
-      ScrollingPosition.Reset -> {
-        editorPane.scrollRectToVisible(Rectangle(0, 0))
-        if (ScreenReader.isActive()) {
-          editorPane.caretPosition = 0
+    SwingUtilities.invokeLater {
+      when (scrollingPosition) {
+        ScrollingPosition.Keep -> {
+          // do nothing
         }
-      }
-      is ScrollingPosition.Anchor -> {
-        UIUtil.scrollToReference(editorPane, scrollingPosition.anchor)
+        ScrollingPosition.Reset -> {
+          editorPane.scrollRectToVisible(Rectangle(0, 0))
+          if (ScreenReader.isActive()) {
+            editorPane.caretPosition = 0
+          }
+        }
+        is ScrollingPosition.Anchor -> {
+          UIUtil.scrollToReference(editorPane, scrollingPosition.anchor)
+        }
       }
     }
   }
