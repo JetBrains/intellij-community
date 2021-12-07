@@ -722,7 +722,7 @@
     <action id="TinySpacer" class="com.intellij.ide.navigationToolbar.experimental.TinySpacerAction"/>
 
     <group id="NewToolbarActions">
-      <group id="LeftToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.LeftToolbarGroup">
+      <group id="LeftToolbarSideGroup">
         <reference id="Back"/>
         <reference id="Forward"/>
         <reference id="BigSpacer"/>
@@ -730,10 +730,10 @@
         <reference id="SmallSpacer"/>
         <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction"/>
       </group>
-      <group id="CenterToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.CenterToolbarGroup">
+      <group id="CenterToolbarSideGroup">
         <group id="CustomActions"/>
       </group>
-      <group id="RightToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.RightToolbarGroup">
+      <group id="RightToolbarSideGroup">
         <reference id="TinySpacer"/>
         <reference id="BigSpacer"/>
         <reference id="RunToolbarWidgetAction"/>
