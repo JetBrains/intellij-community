@@ -16,10 +16,8 @@ import org.jetbrains.plugins.gradle.util.findChildByType
 import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.Test
 
-class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurationProducerTestCase() {
-
-    private lateinit var projectData: ProjectData
-
+abstract class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurationProducerTestCase() {
+    protected lateinit var projectData: ProjectData
 
     override fun setUp() {
         super.setUp()
@@ -28,119 +26,137 @@ class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurationProduce
 
     //// ALL IN PACKAGE /////
 
-    @Test
-    fun allTestsInJsPackage() {
-        assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
-            """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest --tests "org.jetbrains.*"""",
-            runReadActionAndWait {
-                val jetBrainsDir = projectData["project.jsTest"]["org.jetbrains.JsTests"].element.containingFile.containingDirectory
-                jetBrainsDir
-            }
-        )
+    class AllTestsInJsPackage : GradleMppRunConfigurationProducersTest() {
+        @Test
+        fun allTestsInJsPackage() {
+            assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
+                """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest --tests "org.jetbrains.*"""",
+                runReadActionAndWait {
+                    val jetBrainsDir = projectData["project.jsTest"]["org.jetbrains.JsTests"].element.containingFile.containingDirectory
+                    jetBrainsDir
+                }
+            )
+        }
     }
 
-    @Test
-    fun allTestsInJvmPackage() {
-        assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
-            """:cleanJvmTest :jvmTest --tests "org.jetbrains.*"""",
-            runReadActionAndWait {
-                val jetBrainsDir = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element.containingFile.containingDirectory
-                jetBrainsDir
-            }
-        )
+    class AllTestsInJvmPackage : GradleMppRunConfigurationProducersTest() {
+        @Test
+        fun allTestsInJvmPackage() {
+            assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
+                """:cleanJvmTest :jvmTest --tests "org.jetbrains.*"""",
+                runReadActionAndWait {
+                    val jetBrainsDir = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element.containingFile.containingDirectory
+                    jetBrainsDir
+                }
+            )
+        }
     }
 
-    @Test
-    fun allTestsInNativePackage() {
-        assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
-            """:cleanNativeTest :nativeTest --tests "org.jetbrains.*"""",
-            runReadActionAndWait {
-                val jetBrainsDir =
-                    projectData["project.nativeTest"]["org.jetbrains.NativeTests"].element.containingFile.containingDirectory
-                jetBrainsDir
-            }
-        )
+    class AllTestsInNativePackage : GradleMppRunConfigurationProducersTest() {
+        @Test
+        fun allTestsInNativePackage() {
+            assertConfigurationFromContext<KotlinMultiplatformAllInPackageConfigurationProducer>(
+                """:cleanNativeTest :nativeTest --tests "org.jetbrains.*"""",
+                runReadActionAndWait {
+                    val jetBrainsDir =
+                        projectData["project.nativeTest"]["org.jetbrains.NativeTests"].element.containingFile.containingDirectory
+                    jetBrainsDir
+                }
+            )
+        }
     }
 
     //// ALL IN DIRECTORY /////
 
-    @Test
-    fun allTestsInJsDirectory() {
-        assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
-            """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest""",
-            runReadActionAndWait {
-                val jetBrainsDir = projectData["project.jsTest"]["org.jetbrains.JsTests"].element.containingFile.containingDirectory
-                val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory!!
-                kotlinDir
-            }
-        )
+    class AllTestsInJsDirectory : GradleMppRunConfigurationProducersTest() {
+        @Test
+        fun allTestsInJsDirectory() {
+            assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
+                """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest""",
+                runReadActionAndWait {
+                    val jetBrainsDir = projectData["project.jsTest"]["org.jetbrains.JsTests"].element.containingFile.containingDirectory
+                    val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory!!
+                    kotlinDir
+                }
+            )
+        }
     }
 
-    @Test
-    fun allTestsInJvmDirectory() {
-        assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
-            """:cleanJvmTest :jvmTest""",
-            runReadActionAndWait {
-                val jetBrainsDir = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element.containingFile.containingDirectory
-                val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory!!
-                kotlinDir
-            }
-        )
+    class AllTestsInJvmDirectory : GradleMppRunConfigurationProducersTest() {
+        @Test
+        fun allTestsInJvmDirectory() {
+            assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
+                """:cleanJvmTest :jvmTest""",
+                runReadActionAndWait {
+                    val jetBrainsDir = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element.containingFile.containingDirectory
+                    val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory!!
+                    kotlinDir
+                }
+            )
+        }
     }
 
-    @Test
-    fun allTestsInNativeDirectory() {
-        assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
-            """:cleanNativeTest :nativeTest""",
-            runReadActionAndWait {
-                val jetBrainsDir =
-                    projectData["project.nativeTest"]["org.jetbrains.NativeTests"].element.containingFile.containingDirectory
-                val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory!!
-                kotlinDir
-            }
-        )
+    class AllTestsInNativeDirectory : GradleMppRunConfigurationProducersTest() {
+        @Test
+        fun allTestsInNativeDirectory() {
+            assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
+                """:cleanNativeTest :nativeTest""",
+                runReadActionAndWait {
+                    val jetBrainsDir =
+                        projectData["project.nativeTest"]["org.jetbrains.NativeTests"].element.containingFile.containingDirectory
+                    val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory!!
+                    kotlinDir
+                }
+            )
+        }
     }
 
     //// ALL IN MODULE /////
 
-    @Test
-    fun allTestsInJsModule() {
-        assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
-            """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest""",
-            runReadActionAndWait {
-                val jetBrainsDir = projectData["project.jsTest"]["org.jetbrains.JsTests"].element.containingFile.containingDirectory
-                val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory
-                val moduleDirectory = kotlinDir?.parentDirectory
-                moduleDirectory!!
-            }
-        )
+    class AllTestsInJsModule : GradleMppRunConfigurationProducersTest() {
+        @Test
+        fun allTestsInJsModule() {
+            assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
+                """:cleanJsLegacyBrowserTest :jsLegacyBrowserTest""",
+                runReadActionAndWait {
+                    val jetBrainsDir = projectData["project.jsTest"]["org.jetbrains.JsTests"].element.containingFile.containingDirectory
+                    val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory
+                    val moduleDirectory = kotlinDir?.parentDirectory
+                    moduleDirectory!!
+                }
+            )
+        }
     }
 
-    @Test
-    fun allTestsInJvmModule() {
-        assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
-            """:cleanJvmTest :jvmTest""",
-            runReadActionAndWait {
-                val jetBrainsDir = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element.containingFile.containingDirectory
-                val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory
-                val moduleDirectory = kotlinDir?.parentDirectory
-                moduleDirectory!!
-            }
-        )
+    class AllTestsInJvmModule : GradleMppRunConfigurationProducersTest() {
+        @Test
+        fun allTestsInJvmModule() {
+            assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
+                """:cleanJvmTest :jvmTest""",
+                runReadActionAndWait {
+                    val jetBrainsDir = projectData["project.jvmTest"]["org.jetbrains.JvmTests"].element.containingFile.containingDirectory
+                    val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory
+                    val moduleDirectory = kotlinDir?.parentDirectory
+                    moduleDirectory!!
+                }
+            )
+        }
     }
 
-    @Test
-    fun allTestsInNativeModule() {
-        assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
-            """:cleanNativeTest :nativeTest""",
-            runReadActionAndWait {
-                val jetBrainsDir =
-                    projectData["project.nativeTest"]["org.jetbrains.NativeTests"].element.containingFile.containingDirectory
-                val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory
-                val moduleDirectory = kotlinDir?.parentDirectory
-                moduleDirectory!!
-            }
-        )
+    class AllTestsInNativeModule : GradleMppRunConfigurationProducersTest() {
+        @Test
+        fun allTestsInNativeModule() {
+            assertConfigurationFromContext<KotlinMultiplatformAllInDirectoryConfigurationProducer>(
+                """:cleanNativeTest :nativeTest""",
+                runReadActionAndWait {
+                    val jetBrainsDir =
+                        projectData["project.nativeTest"]["org.jetbrains.NativeTests"].element.containingFile.containingDirectory
+                    val kotlinDir = jetBrainsDir.parentDirectory?.parentDirectory
+                    val moduleDirectory = kotlinDir?.parentDirectory
+                    moduleDirectory!!
+                }
+            )
+        }
     }
 
     override fun extractClassData(file: VirtualFile) = runReadActionAndWait {
@@ -190,7 +206,8 @@ class GradleMppRunConfigurationProducersTest : GradleTestRunConfigurationProduce
         createProjectSubFile("build.gradle", buildscript {
             withPlugin("org.jetbrains.kotlin.multiplatform", TestedKotlinGradlePluginVersions.ALL_PUBLIC.last().toString())
             withPrefix {
-                code("""
+                code(
+                    """
                 repositories {
                     ${listRepositories(false, gradleVersion.version)}                    
                 }
