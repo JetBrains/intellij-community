@@ -218,28 +218,28 @@ class MavenSyncConsole(private val myProject: Project) {
   fun showProblem(problem: MavenProjectProblem) = doIfImportInProcess {
     hasErrors = true
     val group = SyncBundle.message("maven.sync.group.error")
-    val description = problem.description
-    val position = problem.getPosition()
-    val eventImpl = FileMessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, group, description, description, position)
+    val position = problem.getFilePosition()
+    val message = problem.description ?: SyncBundle.message("maven.sync.failure.error.undefined.message")
+    val detailedMessage = problem.description ?: SyncBundle.message("maven.sync.failure.error.undefined.detailed.message", problem.path)
+    val eventImpl = FileMessageEventImpl(mySyncId, MessageEvent.Kind.ERROR, group, message, detailedMessage, position)
     mySyncView.onEvent(mySyncId, eventImpl)
   }
 
-  private fun MavenProjectProblem.getPosition(): FilePosition {
-    val problemFile = File(path)
-    try {
-      if (type == MavenProjectProblem.ProblemType.STRUCTURE) {
-        val pattern = Regex("@(\\d+):(\\d+)")
-        val matchedCoordinates = pattern.findAll(description).lastOrNull()
-        if (matchedCoordinates != null) {
-          val (_, line, offset) = matchedCoordinates.groupValues
-          return FilePosition(problemFile, line.toInt() - 1, offset.toInt())
-        }
-      }
+  private fun MavenProjectProblem.getFilePosition(): FilePosition {
+    val (line, columns) = getPosition() ?: (-1 to -1)
+    return FilePosition(File(path), line, columns)
+  }
+
+  private fun MavenProjectProblem.getPosition(): Pair<Int, Int>? {
+    val description = description ?: return null
+    if (type == MavenProjectProblem.ProblemType.STRUCTURE) {
+      val pattern = Regex("@(\\d+):(\\d+)")
+      val matchResults = pattern.findAll(description)
+      val matchResult = matchResults.lastOrNull() ?: return null
+      val (_, line, offset) = matchResult.groupValues
+      return line.toInt() - 1 to offset.toInt()
     }
-    catch (ex: Exception) {
-      MavenLog.LOG.error(ex)
-    }
-    return FilePosition(problemFile, -1, -1)
+    return null
   }
 
   @Synchronized
