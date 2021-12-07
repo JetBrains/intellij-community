@@ -27,6 +27,12 @@ public class NioFilesTest {
   @Rule public InMemoryFsRule memoryFs = new InMemoryFsRule();
 
   @Test
+  public void fileName() {
+    assertThat(NioFiles.getFileName(memoryFs.getFs().getPath("/f"))).isEqualTo("f");
+    assertThat(NioFiles.getFileName(memoryFs.getFs().getRootDirectories().iterator().next())).isEqualTo("/");
+  }
+
+  @Test
   public void deleteRecursively() throws IOException {
     Path dir = Files.createDirectory(memoryFs.getFs().getPath("/dir"));
     Path file1 = Files.createFile(dir.resolve("file1")), file2 = Files.createFile(dir.resolve("file2"));

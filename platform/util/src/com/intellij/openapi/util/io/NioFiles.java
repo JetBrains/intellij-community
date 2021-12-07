@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.util.io;
 
+import com.intellij.openapi.util.NlsSafe;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -18,6 +19,15 @@ import static java.nio.file.attribute.PosixFilePermission.*;
  */
 public final class NioFiles {
   private NioFiles() { }
+
+  /**
+   * A null-safe replacement for {@link Path#getFileName} + {@link Path#toString} combination
+   * (the former returns {@code null} on root directories).
+   */
+  public static @NotNull @NlsSafe String getFileName(@NotNull Path path) {
+    Path name = path.getFileName();
+    return (name != null ? name : path).toString();
+  }
 
   /**
    * A drop-in replacement for {@link Files#createDirectories} that doesn't stumble upon symlinks - unlike the original.
@@ -78,7 +88,7 @@ public final class NioFiles {
   }
 
   /**
-   * On POSIX file systems, sets "owner-exec" permission (if not yet set); on others, does nothing.
+   * On POSIX file systems, sets "owner-exec" permission (if not yet set); on others, it does nothing.
    */
   public static void setExecutable(@NotNull Path file) throws IOException {
     PosixFileAttributeView view = Files.getFileAttributeView(file, PosixFileAttributeView.class);
