@@ -131,6 +131,7 @@ final class FlushQueue {
   }
 
   void reincludeSkippedItems() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     synchronized (LOCK) {
       int size = mySkippedItems.size();
       for (int i = size - 1; i >= 0; i--) {
@@ -149,6 +150,7 @@ final class FlushQueue {
   }
 
   void purgeExpiredItems() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     synchronized (LOCK) {
       reincludeSkippedItems();
 
