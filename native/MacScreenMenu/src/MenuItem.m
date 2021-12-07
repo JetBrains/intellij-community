@@ -465,29 +465,29 @@ Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetAcceleratorText
  */
 JNIEXPORT void JNICALL
 Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetImage
-(JNIEnv *env, jobject peer, jlong menuItemObj, jintArray buffer, jint width, jint height, jboolean onAppKit)
+(JNIEnv *env, jobject peer, jlong menuItemObj, jintArray buffer, jint pointsWidth, jint pointsHeight, jint pixelsWidth, jint pixelsHeight, jboolean onAppKit)
 {
     JNI_COCOA_ENTER();
     NSImage *nsImage = nil;
-    if (width > 0 && height > 0) {
+    if (pixelsWidth > 0 && pixelsHeight > 0) {
         // 1. prepare NSImage
         NSBitmapImageRep *imageRep = [[[NSBitmapImageRep alloc] initWithBitmapDataPlanes:NULL
-                                                                              pixelsWide:width
-                                                                              pixelsHigh:height
+                                                                              pixelsWide:pixelsWidth
+                                                                              pixelsHigh:pixelsHeight
                                                                            bitsPerSample:8
                                                                          samplesPerPixel:4
                                                                                 hasAlpha:YES
                                                                                 isPlanar:NO
                                                                           colorSpaceName:NSDeviceRGBColorSpace
                                                                             bitmapFormat:NSAlphaFirstBitmapFormat
-                                                                             bytesPerRow:width * 4
+                                                                             bytesPerRow:pixelsWidth * 4
                                                                             bitsPerPixel:32] autorelease];
 
         jint *imgData = (jint *) [imageRep bitmapData];
         jint *src = (*env)->GetPrimitiveArrayCritical(env, buffer, NULL);
 
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
+        for (int y = 0; y < pixelsHeight; y++) {
+            for (int x = 0; x < pixelsWidth; x++) {
                 jint pix = src[x];
                 jint a = (pix >> 24) & 0xff;
                 jint r = (pix >> 16) & 0xff;
@@ -495,13 +495,13 @@ Java_com_intellij_ui_mac_screenmenu_MenuItem_nativeSetImage
                 jint b = (pix) & 0xff;
                 imgData[x] = (b << 24) | (g << 16) | (r << 8) | a;
             }
-            src += width;
-            imgData += width;
+            src += pixelsWidth;
+            imgData += pixelsWidth;
         }
 
         (*env)->ReleasePrimitiveArrayCritical(env, buffer, src, JNI_ABORT);
 
-        nsImage = [[NSImage alloc] initWithSize:NSMakeSize(width, height)];
+        nsImage = [[NSImage alloc] initWithSize:NSMakeSize(pointsWidth, pointsHeight)];
         [nsImage addRepresentation:imageRep];
     }
 
