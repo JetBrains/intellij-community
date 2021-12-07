@@ -30,7 +30,7 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
 
   @Override
   protected void addReferenceData(PsiFile file, int startOffset, PsiElement element, ArrayList<ReferenceData> to) {
-    if (DumbService.getInstance(element.getProject()).isAlternativeResolveEnabled()) {
+    if (DumbService.isDumb(element.getProject())) {
       // IDEA-284298
       return;
     }
