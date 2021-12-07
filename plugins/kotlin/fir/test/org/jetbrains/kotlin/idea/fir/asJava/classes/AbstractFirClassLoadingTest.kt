@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.perf.UltraLightChecker.getJavaFileForTest
 import org.jetbrains.kotlin.idea.perf.UltraLightChecker.renderLightClasses
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.idea.test.KotlinTestUtils
+import org.jetbrains.kotlin.idea.test.withCustomCompilerOptions
 import java.io.File
 
 abstract class AbstractFirClassLoadingTest : AbstractUltraLightClassLoadingTest() {
@@ -25,17 +26,19 @@ abstract class AbstractFirClassLoadingTest : AbstractUltraLightClassLoadingTest(
 
         val testDataFile = File(testDataPath)
         val sourceText = testDataFile.readText()
-        val file = myFixture.addFileToProject(testDataPath, sourceText) as KtFile
+        withCustomCompilerOptions(sourceText, project, module) {
+            val file = myFixture.addFileToProject(testDataPath, sourceText) as KtFile
 
-        val classFabric = KotlinAsJavaSupport.getInstance(project)
+            val classFabric = KotlinAsJavaSupport.getInstance(project)
 
-        val expectedTextFile = getJavaFileForTest(testDataPath)
+            val expectedTextFile = getJavaFileForTest(testDataPath)
 
-        val renderedClasses = executeOnPooledThreadInReadAction {
-            val lightClasses = UltraLightChecker.allClasses(file).mapNotNull { classFabric.getLightClass(it) }
-            renderLightClasses(testDataPath, lightClasses)
+            val renderedClasses = executeOnPooledThreadInReadAction {
+                val lightClasses = UltraLightChecker.allClasses(file).mapNotNull { classFabric.getLightClass(it) }
+                renderLightClasses(testDataPath, lightClasses)
+            }
+
+            KotlinTestUtils.assertEqualsToFile(expectedTextFile, renderedClasses)
         }
-
-        KotlinTestUtils.assertEqualsToFile(expectedTextFile, renderedClasses)
     }
 }
