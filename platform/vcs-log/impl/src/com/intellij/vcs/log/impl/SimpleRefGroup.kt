@@ -16,27 +16,13 @@ class SimpleRefGroup @JvmOverloads constructor(private val name: @Nls String,
   override fun getRefs(): MutableList<VcsRef> = refs
 
   override fun getColors(): List<Color> {
-    return getColors(refs)
+    return refs.groupBy(VcsRef::getType).flatMap { (type, references) ->
+      val color = type.backgroundColor
+      if (references.size > 1) listOf(color, color) else listOf(color)
+    }
   }
 
   companion object {
-    @JvmStatic
-    fun getColors(refs: Collection<VcsRef>): List<Color> {
-      val referencesByType = refs.groupBy(VcsRef::getType)
-      if (referencesByType.size == 1) {
-        val color = referencesByType.keys.single().backgroundColor
-        return if (refs.size > 1) listOf(color, color) else listOf(color)
-      }
-      val colorsList = ArrayList<Color>()
-      for (type in referencesByType.keys) {
-        if (referencesByType[type]!!.size > 1) {
-          colorsList.add(type.backgroundColor)
-        }
-        colorsList.add(type.backgroundColor)
-      }
-      return colorsList
-    }
-
     @JvmStatic
     fun buildGroups(groupedRefs: MultiMap<VcsRefType, VcsRef>,
                     compact: Boolean,
