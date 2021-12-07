@@ -30,7 +30,6 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
 import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
-import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.NewDeclarationNameValidator
@@ -55,8 +54,6 @@ import org.jetbrains.kotlin.resolve.checkers.OptInNames
 import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.descriptorUtil.getImportableDescriptor
-import org.jetbrains.kotlin.resolve.descriptorUtil.module
-import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
@@ -615,7 +612,16 @@ fun ExtractionData.getDefaultVisibility(): KtModifierKeywordToken? {
     return KtTokens.PRIVATE_KEYWORD
 }
 
-private fun ExtractionData.getExperimentalMarkers(): Pair<List<AnnotationDescriptor>, List<FqName>> {
+private data class ExperimentalMarkers(
+    val propagatingMarkerDescriptors: List<AnnotationDescriptor>,
+    val optInMarkers: List<FqName>
+) {
+    companion object {
+        val empty = ExperimentalMarkers(emptyList(), emptyList())
+    }
+}
+
+private fun ExtractionData.getExperimentalMarkers(): ExperimentalMarkers {
     fun AnnotationDescriptor.isExperimentalMarker(): Boolean {
         if (fqName == null) return false
         val annotations = annotationClass?.annotations ?: return false
@@ -623,9 +629,8 @@ private fun ExtractionData.getExperimentalMarkers(): Pair<List<AnnotationDescrip
                 annotations.hasAnnotation(OptInNames.OLD_EXPERIMENTAL_FQ_NAME)
     }
 
-    val emptyPair = Pair(emptyList<AnnotationDescriptor>(), emptyList<FqName>())
-    val bindingContext = bindingContext ?: return emptyPair
-    val container = commonParent.getStrictParentOfType<KtNamedFunction>() ?: return emptyPair
+    val bindingContext = bindingContext ?: return ExperimentalMarkers.empty
+    val container = commonParent.getStrictParentOfType<KtNamedFunction>() ?: return ExperimentalMarkers.empty
 
     val propagatingMarkerDescriptors = mutableListOf<AnnotationDescriptor>()
     val optInMarkerNames = mutableListOf<FqName>()
@@ -642,7 +647,6 @@ private fun ExtractionData.getExperimentalMarkers(): Pair<List<AnnotationDescrip
                 ]?.fqNameSafe ?: continue
                 optInMarkerNames.add(markerFqName)
             }
-
         } else if (annotationDescriptor.isExperimentalMarker()) {
             propagatingMarkerDescriptors.add(annotationDescriptor)
         }
@@ -670,7 +674,7 @@ private fun ExtractionData.getExperimentalMarkers(): Pair<List<AnnotationDescrip
         }
     }
 
-    return Pair(
+    return ExperimentalMarkers(
         propagatingMarkerDescriptors.filter { it.fqName in requiredMarkers },
         optInMarkerNames.filter { it in requiredMarkers }
     )
@@ -750,7 +754,7 @@ fun ExtractionData.performAnalysis(): AnalysisResult {
     val receiverParameter = if (receiverCandidates.size == 1 && !options.canWrapInWith) receiverCandidates.first() else null
     receiverParameter?.let { adjustedParameters.remove(it) }
 
-    val (propagatingMarkerDescriptors, optInMarkerNames) = getExperimentalMarkers()
+    val experimentalMarkers = getExperimentalMarkers()
     var descriptor = ExtractableCodeDescriptor(
         this,
         bindingContext,
@@ -763,8 +767,8 @@ fun ExtractionData.performAnalysis(): AnalysisResult {
         if (messages.isEmpty()) controlFlow else controlFlow.toDefault(),
         returnType,
         emptyList(),
-        annotations = propagatingMarkerDescriptors,
-        optInMarkers = optInMarkerNames
+        annotations = experimentalMarkers.propagatingMarkerDescriptors,
+        optInMarkers = experimentalMarkers.optInMarkers
     )
 
     val generatedDeclaration = ExtractionGeneratorConfiguration(
