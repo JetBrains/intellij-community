@@ -149,8 +149,9 @@ class AnnotationLoaderForClassFileStubBuilder(
 
         return object : KotlinJvmBinaryClass.AnnotationArgumentVisitor {
             private val arguments = mutableMapOf<Name, ConstantValue<*>>()
-            override fun visitClassLiteral(name: Name, value: ClassLiteralValue) {
-                arguments[name] = KClassValue(value)
+            override fun visitClassLiteral(name: Name?, value: ClassLiteralValue) {
+                if (name != null)
+                    arguments[name] = KClassValue(value)
             }
 
             override fun visitEnd() {
@@ -160,9 +161,15 @@ class AnnotationLoaderForClassFileStubBuilder(
             }
 
             override fun visit(name: Name?, value: Any?) = Unit
-            override fun visitEnum(name: Name, enumClassId: ClassId, enumEntryName: Name) = Unit
-            override fun visitArray(name: Name): KotlinJvmBinaryClass.AnnotationArrayArgumentVisitor? = null
-            override fun visitAnnotation(name: Name, classId: ClassId): KotlinJvmBinaryClass.AnnotationArgumentVisitor? = null
+            override fun visitEnum(name: Name?, enumClassId: ClassId, enumEntryName: Name) = Unit
+            override fun visitArray(name: Name?): KotlinJvmBinaryClass.AnnotationArrayArgumentVisitor? = null
+            override fun visitAnnotation(name: Name?, classId: ClassId): KotlinJvmBinaryClass.AnnotationArgumentVisitor? = null
         }
     }
+
+    override fun loadAnnotationMethodDefaultValue(
+        annotationClass: KotlinJvmBinaryClass,
+        methodSignature: MemberSignature,
+        visitResult: (Unit) -> Unit
+    ): KotlinJvmBinaryClass.AnnotationArgumentVisitor? = null
 }
