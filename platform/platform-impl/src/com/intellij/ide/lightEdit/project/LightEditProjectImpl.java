@@ -58,11 +58,6 @@ final class LightEditProjectImpl extends ProjectExImpl implements LightEditCompa
   }
 
   @Override
-  public void init(boolean preloadServices, @Nullable ProgressIndicator indicator) {
-    createComponents(null);
-  }
-
-  @Override
   public void setProjectName(@NotNull String name) {
     throw new IllegalStateException();
   }
