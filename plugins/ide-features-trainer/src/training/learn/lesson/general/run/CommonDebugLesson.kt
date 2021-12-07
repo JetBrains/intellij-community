@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.impl.ActionButton
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.LogicalPosition
@@ -42,7 +43,6 @@ import training.learn.course.KLesson
 import training.learn.lesson.LessonManager
 import training.statistic.LessonStartingWay
 import training.ui.LearningUiHighlightingManager
-import training.ui.LearningUiManager
 import training.ui.LearningUiUtil.findComponentWithTimeout
 import training.util.KeymapUtil
 import training.util.WeakReferenceDelegator
@@ -153,6 +153,7 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     highlightButtonById("Debug")
 
     mayBeStopped = false
+    var watchesRemoved = false
     task("Debug") {
       text(LessonsBundle.message("debug.workflow.start.debug", icon(AllIcons.Actions.StartDebugger), action(it)))
       addFutureStep {
@@ -162,32 +163,21 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
             val debugSession = debugProcess.session
             (this@CommonDebugLesson).debugSession = debugSession
 
-            debugSession.setBreakpointMuted(false)
-            (debugSession as XDebugSessionImpl).setWatchExpressions(emptyList())
-            debugSession.addSessionListener(object : XDebugSessionListener {
-              override fun sessionPaused() {
-                taskInvokeLater { completeStep() }
-              }
-            }, lessonDisposable)
+            invokeLater { debugSession.setBreakpointMuted(false) }  // session is not initialized at this moment
+            if (!watchesRemoved) {
+              (debugSession as XDebugSessionImpl).setWatchExpressions(emptyList())
+              watchesRemoved = true
+            }
             debugSession.addSessionListener(object : XDebugSessionListener {
               override fun sessionPaused() {
                 sessionPaused = true
-              }
-
-              override fun sessionStopped() {
-                val activeToolWindow = LearningUiManager.activeToolWindow
-                if (activeToolWindow != null && !mayBeStopped && LessonManager.instance.currentLesson == this@CommonDebugLesson) {
-                  val notification = TaskContext.RestoreNotification(LessonsBundle.message("debug.workflow.need.restart.lesson")) {
-                    CourseManager.instance.openLesson(activeToolWindow.project, this@CommonDebugLesson, LessonStartingWay.RESTORE_LINK)
-                  }
-                  LessonManager.instance.setRestoreNotification(notification)
-                }
+                taskInvokeLater { completeStep() }
               }
             }, lessonDisposable)
           }
         })
       }
-      proposeModificationRestore(sample.text)
+      proposeModificationRestore(sample.text, checkDebugSession = false)
       test { actions(it) }
     }
 
@@ -432,6 +422,15 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     else null
   }
 
+  private fun TaskRuntimeContext.checkDebugIsRunning(): TaskContext.RestoreNotification? {
+    return if (XDebuggerManager.getInstance(project).currentSession == null) {
+      TaskContext.RestoreNotification(LessonsBundle.message("debug.workflow.need.restart.lesson")) {
+        CourseManager.instance.openLesson(project, this@CommonDebugLesson, LessonStartingWay.RESTORE_LINK)
+      }
+    }
+    else null
+  }
+
   protected abstract fun LessonContext.applyProgramChangeTasks()
 
   protected open fun LessonContext.restoreHotSwapStateInformer() = Unit
@@ -477,17 +476,21 @@ abstract class CommonDebugLesson(id: String) : KLesson(id, LessonsBundle.message
     return true
   }
 
-  protected fun TaskContext.proposeModificationRestore(restoreText: String) = proposeRestore {
+  protected fun TaskContext.proposeModificationRestore(restoreText: String, checkDebugSession: Boolean = true) = proposeRestore {
     val caretOffset = editor.caretModel.offset
     val textLength = editor.document.textLength
     val restoreLength = restoreText.length
     val offset = caretOffset - (if (restoreLength <= textLength) 0 else restoreLength - textLength)
 
-    checkExpectedStateOfEditor(LessonSample(restoreText, offset), false) ?: checkForBreakpoints()
+    checkExpectedStateOfEditor(LessonSample(restoreText, offset), false)
+    ?: checkForBreakpoints()
+    ?: if (checkDebugSession) checkDebugIsRunning() else null
   }
 
   private fun TaskContext.proposeSelectionChangeRestore(position: LessonSamplePosition) = proposeRestore {
-    checkPositionOfEditor(LessonSample(sample.text, position)) ?: checkForBreakpoints()
+    checkPositionOfEditor(LessonSample(sample.text, position))
+    ?: checkForBreakpoints()
+    ?: checkDebugIsRunning()
   }
 
   override val suitableTips = listOf("BreakpointSpeedmenu", "QuickEvaluateExpression", "EvaluateExpressionInEditor")
