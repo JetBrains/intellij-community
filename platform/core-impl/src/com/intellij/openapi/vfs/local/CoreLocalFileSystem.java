@@ -4,7 +4,6 @@ package com.intellij.openapi.vfs.local;
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,11 +12,9 @@ import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-
 public class CoreLocalFileSystem extends DeprecatedVirtualFileSystem {
-  @NotNull
   @Override
-  public String getProtocol() {
+  public @NotNull String getProtocol() {
     return StandardFileSystems.FILE_PROTOCOL;
   }
 
@@ -30,13 +27,12 @@ public class CoreLocalFileSystem extends DeprecatedVirtualFileSystem {
   }
 
   @Override
-  public VirtualFile findFileByPath(@NotNull @NonNls String path) {
+  public VirtualFile findFileByPath(@NotNull String path) {
     return findFileByNioFile(FileSystems.getDefault().getPath(path));
   }
 
   @Override
-  public void refresh(boolean asynchronous) {
-  }
+  public void refresh(boolean asynchronous) { }
 
   @Override
   public VirtualFile refreshAndFindFileByPath(@NotNull String path) {

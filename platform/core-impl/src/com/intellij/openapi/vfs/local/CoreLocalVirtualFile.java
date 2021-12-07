@@ -131,9 +131,8 @@ public class CoreLocalVirtualFile extends VirtualFile {
     return myChildren;
   }
 
-  @NotNull
   @Override
-  public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+  public @NotNull OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
     throw new UnsupportedOperationException();
   }
 
@@ -143,8 +142,7 @@ public class CoreLocalVirtualFile extends VirtualFile {
   }
 
   @Override
-  public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) {
-  }
+  public void refresh(boolean asynchronous, boolean recursive, Runnable postRunnable) { }
 
   @Override
   public @NotNull InputStream getInputStream() throws IOException {
