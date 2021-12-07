@@ -41,7 +41,6 @@
     <orderEntry type="module" module-name="kotlin.j2k.new" />
     <orderEntry type="module" module-name="kotlin.j2k.old" />
     <orderEntry type="module" module-name="kotlin.j2k.services" />
-    <orderEntry type="module" module-name="kotlin.jps-common" />
     <orderEntry type="module" module-name="kotlin.jps-plugin" />
     <orderEntry type="module" module-name="kotlin.i18n" />
     <orderEntry type="module" module-name="kotlin.jvm" />

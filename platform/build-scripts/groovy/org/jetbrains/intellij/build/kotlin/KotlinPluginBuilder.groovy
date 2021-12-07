@@ -212,8 +212,6 @@ final class KotlinPluginBuilder {
         })
       }
 
-      withModule("kotlin.jps-plugin", "jps/kotlin-jps-plugin.jar")
-
       String kotlincKotlinCompiler = "kotlinc.kotlin-compiler"
       withProjectLibrary(kotlincKotlinCompiler, ProjectLibraryData.PackMode.STANDALONE_MERGED)
 
@@ -236,11 +234,11 @@ final class KotlinPluginBuilder {
         }
       })
 
-      withModule("kotlin.jps-common", "kotlin-jps-common.jar")
       withModule("kotlin.common", "kotlin-common.jar")
 
       withProjectLibrary("kotlinc.kotlin-reflect", "kotlinc-lib.jar")
       withProjectLibrary("kotlinc.kotlin-stdlib", "kotlinc-lib.jar")
+      withProjectLibrary("kotlinc.kotlin-jps-common")
       //noinspection SpellCheckingInspection
       withProjectLibrary("javaslang", ProjectLibraryData.PackMode.STANDALONE_MERGED)
       withProjectLibrary("kotlinx-collections-immutable-jvm", ProjectLibraryData.PackMode.STANDALONE_MERGED)
