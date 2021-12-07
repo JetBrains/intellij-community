@@ -284,7 +284,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
     if (element != null) return element;
 
-    return currentElement != null ? isMatchingElement(currentElement, s) : null;
+    return currentElement != null && isMatchingElement(currentElement, s) ? currentElement : null;
   }
 
   private @Nullable Object doFindPreviousElement(@NotNull ListIterator<Object> iterator,
@@ -316,7 +316,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     final Object element = doFindNextElement(iterator, s.trim(), UISettings.getInstance().getCycleScrolling());
     if (element != null) return element;
 
-    return currentElement != null ? isMatchingElement(currentElement, s) : null;
+    return currentElement != null && isMatchingElement(currentElement, s) ? currentElement : null;
   }
 
   private @Nullable Object doFindNextElement(@NotNull ListIterator<Object> iterator,
