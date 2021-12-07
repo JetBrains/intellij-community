@@ -1313,6 +1313,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
                     pattern = DIRECTORY,
                     testMethodName = "doTest${testClass}",
                     testClassName = testClass,
+                    testPerClass = true,
                 )
             }
         }
