@@ -1285,7 +1285,7 @@ private named_argument_tail ::= ':' (mb_nl expression)
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
-argument_label ::= IDENTIFIER | string_literal_tokens | primitive_type | modifier | keyword | '*' { consumeTokenMethod = 'fast' }
+argument_label ::= weak_keyword | IDENTIFIER | string_literal_tokens | primitive_type | modifier | keyword | '*' { consumeTokenMethod = 'fast' }
 // endregion
 
 
