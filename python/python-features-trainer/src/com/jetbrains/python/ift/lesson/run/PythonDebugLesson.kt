@@ -26,7 +26,6 @@ class PythonDebugLesson : CommonDebugLesson("python.debug.workflow") {
 
     actionTask("Rerun") {
       before {
-        mayBeStopped = true
         sessionPaused = false
       }
       proposeModificationRestore(afterFixText)
