@@ -2,6 +2,7 @@
 package org.jetbrains.kotlin.idea
 
 import com.intellij.testFramework.LightPlatformTestCase
+import org.jetbrains.kotlin.idea.jps.KotlinJpsClasspathProvider
 import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
