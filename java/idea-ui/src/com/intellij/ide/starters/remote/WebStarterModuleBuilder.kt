@@ -209,24 +209,6 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
       project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, java.lang.Boolean.TRUE)
     }
 
-    try {
-      extractTemplate() // should be quite fast, only extracts single small ZIP file
-    }
-    catch (e: Exception) {
-      thisLogger().info(e)
-
-      StartupManager.getInstance(project).runAfterOpened {
-        EdtExecutorService.getScheduledExecutorInstance().schedule(
-          {
-            var message = JavaStartersBundle.message("error.text.with.error.content", e.message)
-            message = StringUtil.shortenTextWithEllipsis(message, 1024, 0) // exactly 1024 because why not
-            Messages.showErrorDialog(message, presentableName)
-          },
-          3, TimeUnit.SECONDS)
-      }
-      return
-    }
-
     preprocessModuleCreated(module, this, starterContext.frameworkVersion?.id)
 
     StartupManager.getInstance(project).runAfterOpened {
