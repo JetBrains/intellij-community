@@ -14,7 +14,6 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
-import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -47,12 +46,29 @@ fun interface NewToolbarPaneListener {
   fun stateChanged()
 }
 
+@FunctionalInterface
+fun interface ExperimentalToolbarStateListener {
+  companion object {
+    @JvmField
+    @Topic.ProjectLevel
+    val TOPIC: Topic<ExperimentalToolbarStateListener> = Topic(
+      ExperimentalToolbarStateListener::class.java,
+      Topic.BroadcastDirection.NONE,
+      true,
+    )
+  }
+
+  /**
+   * This event gets emitted when the experimental toolbar wants things dependent on its state to refresh their visibility.
+   */
+  fun refreshVisibility()
+}
+
 @Service
 class NewToolbarRootPaneManager(private val project: Project) : SimpleModificationTracker(),
                                                                 Disposable {
   companion object {
     private val logger = logger<NewToolbarRootPaneManager>()
-
     fun getInstance(project: Project): NewToolbarRootPaneManager = project.service()
   }
 
@@ -180,7 +196,7 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
     val toolbarSettings = ToolbarSettings.Instance
     panel.isEnabled = toolbarSettings.isEnabled
     panel.isVisible = toolbarSettings.isVisible && !settings.presentationMode
-    project.service<StatusBarWidgetsManager>().updateAllWidgets()
+    project.messageBus.syncPublisher(ExperimentalToolbarStateListener.TOPIC).refreshVisibility()
 
     panel.revalidate()
     panel.repaint()
