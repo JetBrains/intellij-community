@@ -8,7 +8,7 @@ import org.gradle.api.file.SourceDirectorySet
 fun KotlinFragmentReflection(fragment: Any): KotlinFragmentReflection =
     KotlinFragmentReflectionImpl(fragment)
 
-interface KotlinFragmentReflection {
+sealed interface KotlinFragmentReflection {
     val fragmentName: String?
     val containingModule: KotlinModuleReflection?
     val kotlinSourceSourceRoots: SourceDirectorySet?

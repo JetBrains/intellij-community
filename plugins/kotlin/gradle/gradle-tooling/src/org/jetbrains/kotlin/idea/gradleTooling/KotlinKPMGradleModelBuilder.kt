@@ -33,7 +33,7 @@ class KotlinKPMGradleModelBuilder : ModelBuilderService.Ex {
             val kotlinNativeHome = KotlinNativeHomeEvaluator.getKotlinNativeHome(project) ?: KotlinMPPGradleModel.NO_KOTLIN_NATIVE_HOME
             val importingContext = KotlinProjectModelImportingContext(project, kpmExtension.javaClass.classLoader)
             val kpmModules = kpmExtensionReflection.modules.orEmpty().mapNotNull { originModule ->
-                KotlinModuleBuilder.buildComponent(originModule, importingContext)
+                KotlinModuleBuilder.buildComponent(originModule, importingContext.withFragmentCache())
             }
 
             return KotlinKPMGradleModelImpl(kpmModules, kpmProjectSettings, kotlinNativeHome)
