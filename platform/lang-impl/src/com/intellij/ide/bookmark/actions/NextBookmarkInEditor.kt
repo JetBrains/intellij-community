@@ -37,7 +37,7 @@ private class NextBookmarkInEditor(val forward: Boolean) : EditorActionHandler()
   private fun getNextBookmark(editor: Editor, context: DataContext): LineBookmark? {
     if (editor.isOneLineMode) return null
     val file = FileDocumentManager.getInstance().getFile(editor.document) ?: return null
-    val manager = BookmarksManager.getInstance(CommonDataKeys.PROJECT.getData(context)) ?: return null
+    val manager = BookmarksManager.getInstance(editor.project ?: CommonDataKeys.PROJECT.getData(context)) ?: return null
     val bookmarks = manager.bookmarks.mapNotNullTo(mutableListOf()) { if (it is LineBookmark && it.file == file) it else null }
     if (bookmarks.isNotEmpty()) {
       val line = editor.caretModel.logicalPosition.line
