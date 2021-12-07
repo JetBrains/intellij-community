@@ -86,6 +86,17 @@ class SuiteElement private constructor(
                         )
                     }
                     methods.clear()
+                } else if (nestedSuites.isNotEmpty()) {
+                    nestedSuites += SuiteElement(
+                        group,
+                        suite,
+                        model.copy(testClassName = "Uncategorized"),
+                        "Uncategorized",
+                        true,
+                        methods + RunTestMethod(model),
+                        emptyList(),
+                    )
+                    methods.clear()
                 } else {
                     methods += RunTestMethod(model)
                 }
