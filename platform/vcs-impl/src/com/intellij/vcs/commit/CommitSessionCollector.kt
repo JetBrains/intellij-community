@@ -28,8 +28,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.TreeActions
-import com.intellij.util.ui.update.Activatable
-import com.intellij.util.ui.update.UiNotifyConnector
+import java.awt.event.HierarchyEvent
 import java.awt.event.MouseEvent
 import javax.swing.JTree
 
@@ -166,20 +165,23 @@ class CommitSessionCollector(val project: Project) {
   }
 
   internal class MyDiffExtension : DiffExtension() {
+    private val HierarchyEvent.isShowingChanged get() = (changeFlags and HierarchyEvent.SHOWING_CHANGED.toLong()) != 0L
+
     override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
       val project = context.project ?: return
       if (!DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, context)) return
       if (request is MessageDiffRequest) return
 
-      UiNotifyConnector(viewer.component, object : Activatable {
-        override fun showNotify() {
-          getInstance(project).logDiffViewer(true)
+      viewer.component.addHierarchyListener { e ->
+        if (e.isShowingChanged) {
+          if (e.component.isShowing) {
+            getInstance(project).logDiffViewer(true)
+          }
+          else {
+            getInstance(project).logDiffViewer(false)
+          }
         }
-
-        override fun hideNotify() {
-          getInstance(project).logDiffViewer(false)
-        }
-      }, false)
+      }
     }
   }
 
