@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.extensions
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Base for any markdown extensions. Implementors of this interface should be
@@ -9,6 +10,7 @@ import com.intellij.openapi.extensions.ExtensionPointName
  *
  * For browser preview extensions please use [MarkdownBrowserPreviewExtension].
  */
+@ApiStatus.Internal
 interface MarkdownExtension {
   companion object {
     internal val EP_NAME: ExtensionPointName<MarkdownExtension> = ExtensionPointName("org.intellij.markdown.markdownExtension")
