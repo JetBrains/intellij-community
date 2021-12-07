@@ -5,8 +5,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.DigestUtil
 import org.intellij.plugins.markdown.MarkdownBundle
+import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
-import org.intellij.plugins.markdown.extensions.MarkdownExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
@@ -121,6 +121,6 @@ internal class MermaidBrowserExtension(panel: MarkdownHtmlPanel, private val dir
     private const val storeFileEventName = "storeMermaidFile"
 
     private val generatingProvider
-      get() = MarkdownExtension.all.find { it is MermaidCodeGeneratingProviderExtension } as? MermaidCodeGeneratingProviderExtension
+      get() = CodeFenceGeneratingProvider.all.asSequence().filterIsInstance<MermaidCodeGeneratingProviderExtension>().firstOrNull()
   }
 }

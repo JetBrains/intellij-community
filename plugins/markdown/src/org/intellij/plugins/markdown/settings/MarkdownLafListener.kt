@@ -4,11 +4,11 @@ package org.intellij.plugins.markdown.settings
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.openapi.project.ProjectManager
-import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
+import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 
 internal class MarkdownLafListener: LafManagerListener {
   override fun lookAndFeelChanged(source: LafManager) {
-    MarkdownCodeFencePluginGeneratingProvider.notifyLAFChanged()
+    CodeFenceGeneratingProvider.notifyLAFChanged()
     val projects = ProjectManager.getInstance().openProjects
     for (project in projects) {
       val settings = MarkdownSettings.getInstance(project)

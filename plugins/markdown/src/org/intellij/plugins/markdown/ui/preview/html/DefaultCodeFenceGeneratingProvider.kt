@@ -10,20 +10,20 @@ import org.intellij.markdown.ast.getTextInNode
 import org.intellij.markdown.html.GeneratingProvider
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.markdown.html.entities.EntityConverter
-import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
+import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 
-internal class MarkdownCodeFenceGeneratingProvider(private val pluginCacheProviders: Array<MarkdownCodeFencePluginGeneratingProvider>,
-                                                   private val project: Project? = null,
-                                                   private val file: VirtualFile? = null)
-  : GeneratingProvider {
-
+internal class DefaultCodeFenceGeneratingProvider(
+  private val cacheProviders: Array<CodeFenceGeneratingProvider>,
+  private val project: Project? = null,
+  private val file: VirtualFile? = null
+): GeneratingProvider {
   private fun pluginGeneratedHtml(language: String?, codeFenceContent: String, codeFenceRawContent: String, node: ASTNode): String {
     if (language == null) {
       return insertCodeOffsets(codeFenceContent, node)
     }
-    val html = pluginCacheProviders
+    val html = cacheProviders
       .filter { it.isApplicable(language) }.stream()
       .findFirst()
       .map {

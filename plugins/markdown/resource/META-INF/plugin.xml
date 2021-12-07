@@ -29,11 +29,11 @@ Includes the following features:</p>
     <extensionPoint qualifiedName="org.intellij.markdown.fenceLanguageProvider"
                     interface="org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider"
                     dynamic="true"/>
+    <extensionPoint qualifiedName="org.intellij.markdown.fenceGeneratingProvider"
+                    interface="org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider"
+                    dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.previewStylesProvider"
                     interface="org.intellij.plugins.markdown.ui.preview.MarkdownPreviewStylesProvider"
-                    dynamic="true"/>
-    <extensionPoint qualifiedName="org.intellij.markdown.markdownExtension"
-                    interface="org.intellij.plugins.markdown.extensions.MarkdownExtension"
                     dynamic="true"/>
     <extensionPoint qualifiedName="org.intellij.markdown.browserPreviewExtensionProvider"
                     interface="org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension$Provider"
@@ -172,7 +172,7 @@ Includes the following features:</p>
 
     <!--suppress DeprecatedClassUsageInspection -->
     <applicationService serviceImplementation="org.intellij.plugins.markdown.settings.MarkdownApplicationSettings"/>
-    <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCache"/>
+    <applicationService serviceImplementation="org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceHtmlCache"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.fileActions.export.MarkdownHtmlExportSettings"/>
     <lang.psiStructureViewFactory language="Markdown"
                                   implementationClass="org.intellij.plugins.markdown.structureView.MarkdownStructureViewFactory"/>
@@ -295,9 +295,11 @@ Includes the following features:</p>
     <html.panel.provider implementation="org.intellij.plugins.markdown.ui.preview.jcef.JCEFHtmlPanelProvider"/>
 
     <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeFenceLanguageProvider"/>
-    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider"/>
+    <!--suppress PluginXmlValidity -->
+    <fenceGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider"/>
 
-    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter"/>
+    <!--suppress PluginXmlValidity -->
+    <fenceGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.common.highlighter.MarkdownCodeFencePreviewHighlighter"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.BaseStylesExtension$Provider"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.InlineStylesExtension$Provider"/>
 
@@ -306,7 +308,9 @@ Includes the following features:</p>
 
     <fenceLanguageProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeFenceLanguageProvider"/>
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidBrowserExtension$Provider"/>
-    <markdownExtension implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeGeneratingProviderExtension"/>
+    <!--suppress PluginXmlValidity -->
+    <fenceGeneratingProvider implementation="org.intellij.plugins.markdown.extensions.jcef.mermaid.MermaidCodeGeneratingProviderExtension"/>
+
     <browserPreviewExtensionProvider implementation="org.intellij.plugins.markdown.extensions.common.highlighter.CodeFenceCopyButtonBrowserExtension$Provider"/>
 
     <!--suppress PluginXmlValidity -->

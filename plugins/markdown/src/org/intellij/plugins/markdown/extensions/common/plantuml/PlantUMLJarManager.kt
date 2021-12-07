@@ -6,7 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
+import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 import java.io.File
 import java.io.OutputStream
 import java.lang.reflect.Method
@@ -58,7 +58,8 @@ internal class PlantUMLJarManager: Disposable {
   }
 
   private fun findPath(): File? {
-    val extension = MarkdownCodeFencePluginGeneratingProvider.all
+    val extension = CodeFenceGeneratingProvider.all
+      .asSequence()
       .filterIsInstance<PlantUMLCodeGeneratingProvider>()
       .firstOrNull()
     return extension?.fullPath

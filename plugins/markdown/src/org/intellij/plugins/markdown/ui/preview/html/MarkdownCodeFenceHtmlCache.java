@@ -16,7 +16,7 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider;
-import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider;
+import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,7 +26,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public final class MarkdownCodeFencePluginCache implements Disposable {
+public final class MarkdownCodeFenceHtmlCache implements Disposable {
   @NotNull public static final String MARKDOWN_FILE_PATH_KEY = "markdown-md5-file-path";
 
   @NotNull private final Alarm myAlarm = new Alarm(this);
@@ -34,11 +34,11 @@ public final class MarkdownCodeFencePluginCache implements Disposable {
     ContainerUtil.newConcurrentSet();
   @NotNull private final Collection<File> myAdditionalCacheToDelete = ContainerUtil.newConcurrentSet();
 
-  public static MarkdownCodeFencePluginCache getInstance() {
-    return ApplicationManager.getApplication().getService(MarkdownCodeFencePluginCache.class);
+  public static MarkdownCodeFenceHtmlCache getInstance() {
+    return ApplicationManager.getApplication().getService(MarkdownCodeFenceHtmlCache.class);
   }
 
-  public MarkdownCodeFencePluginCache() {
+  public MarkdownCodeFenceHtmlCache() {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       scheduleClearCache();
     }
@@ -61,7 +61,7 @@ public final class MarkdownCodeFencePluginCache implements Disposable {
   }
 
   private static List<File> getPluginSystemPaths() {
-    return MarkdownCodeFencePluginGeneratingProvider.Companion.getAll().stream()
+    return CodeFenceGeneratingProvider.Companion.getAll().stream()
       .filter(MarkdownCodeFenceCacheableProvider.class::isInstance)
       .map(MarkdownCodeFenceCacheableProvider.class::cast)
       .map(provider -> provider.getCacheRootPath().toFile())
