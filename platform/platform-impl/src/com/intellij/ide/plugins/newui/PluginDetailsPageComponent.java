@@ -18,7 +18,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
@@ -58,8 +58,7 @@ import java.util.function.Consumer;
 /**
  * @author Alexander Lobas
  */
-public class PluginDetailsPageComponent extends MultiPanel {
-
+public final class PluginDetailsPageComponent extends MultiPanel {
   private static final String MARKETPLACE_LINK = "/plugin/index?xmlId=";
 
   private final MyPluginModel myPluginModel;
@@ -577,7 +576,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     String version = myPlugin.getVersion();
     if (myPlugin.isBundled() && !myPlugin.allowBundledUpdate()) {
-      version = IdeBundle.message("plugin.version.bundled") + (StringUtil.isEmptyOrSpaces(version) ? "" : " " + version);
+      version = IdeBundle.message("plugin.version.bundled") + (Strings.isEmptyOrSpaces(version) ? "" : " " + version);
     }
     if (myUpdateDescriptor != null) {
       version = NewUiUtil.getVersion(myPlugin, myUpdateDescriptor);
@@ -589,7 +588,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       .setPreferredSize(
         new Dimension(myVersionSize.getPreferredSize().width + JBUIScale.scale(4), myVersionSize.getPreferredSize().height));
 
-    myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
+    myVersion.setVisible(!Strings.isEmptyOrSpaces(version));
 
     myTagPanel.setTags(PluginManagerConfigurable.getTags(myPlugin));
 
@@ -617,20 +616,20 @@ public class PluginDetailsPageComponent extends MultiPanel {
       updateEnabledForProject();
     }
 
-    String vendor = myPlugin.isBundled() ? null : StringUtil.trim(myPlugin.getVendor());
-    String organization = myPlugin.isBundled() ? null : StringUtil.trim(myPlugin.getOrganization());
-    if (StringUtil.isEmptyOrSpaces(vendor)) {
+    String vendor = myPlugin.isBundled() ? null : Strings.trim(myPlugin.getVendor());
+    String organization = myPlugin.isBundled() ? null : Strings.trim(myPlugin.getOrganization());
+    if (Strings.isEmptyOrSpaces(vendor)) {
       myAuthor.hide();
     }
     else {
-      if (StringUtil.isEmptyOrSpaces(organization)) {
+      if (Strings.isEmptyOrSpaces(organization)) {
         myAuthor.show(vendor, null);
       }
       else {
         myAuthor.show(organization, () -> mySearchListener.linkSelected(
           null,
           SearchWords.ORGANIZATION.getValue() +
-          (organization.indexOf(' ') == -1 ? organization : StringUtil.wrapWithDoubleQuote(organization))
+          (organization.indexOf(' ') == -1 ? organization : '\"' + organization + "\"")
         ));
       }
     }
@@ -921,7 +920,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   @Nullable
   private @Nls String getDescription() {
     String description = myPlugin.getDescription();
-    return StringUtil.isEmptyOrSpaces(description) ? null : description;
+    return Strings.isEmptyOrSpaces(description) ? null : description;
   }
 
   @Nullable
@@ -929,12 +928,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private String getChangeNotes() {
     if (myUpdateDescriptor != null) {
       String notes = myUpdateDescriptor.getChangeNotes();
-      if (!StringUtil.isEmptyOrSpaces(notes)) {
+      if (!Strings.isEmptyOrSpaces(notes)) {
         return notes;
       }
     }
     String notes = myPlugin.getChangeNotes();
-    return StringUtil.isEmptyOrSpaces(notes) ? null : notes;
+    return Strings.isEmptyOrSpaces(notes) ? null : notes;
   }
 
   private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action) {
