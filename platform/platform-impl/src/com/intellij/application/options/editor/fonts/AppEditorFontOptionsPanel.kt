@@ -13,13 +13,14 @@ import com.intellij.openapi.options.colors.pages.GeneralColorsPage
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.ui.components.ActionLink
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.panel
 import javax.swing.JComponent
 
 class AppEditorFontOptionsPanel(scheme: EditorColorsScheme) : AppFontOptionsPanel(scheme) {
   private lateinit var restoreDefaults: Cell<ActionLink>
 
-  override fun createCustomComponent(): JComponent? {
+  override fun createCustomComponent(): JComponent {
     return panel {
       row {
         comment(ApplicationBundle.message("comment.use.ligatures.with.reader.mode")) {
@@ -45,15 +46,9 @@ class AppEditorFontOptionsPanel(scheme: EditorColorsScheme) : AppFontOptionsPane
     super.updateFontPreferences()
   }
 
-  override fun createBoldFontHint(): JComponent {
-    return panel {
-      row {
-        comment(ApplicationBundle.message("settings.editor.font.bold.weight.hint")) {
-          navigateToColorSchemeTextSettings()
-        }
-      }
-    }
-  }
+  override fun createBoldFontHint(): Pair<String?, HyperlinkEventAction> =
+    Pair(ApplicationBundle.message("settings.editor.font.bold.weight.hint"),
+         HyperlinkEventAction { navigateToColorSchemeTextSettings() })
 
   private fun navigateToColorSchemeTextSettings() {
     var defaultTextOption = OptionsBundle.message("options.general.attribute.descriptor.default.text")
