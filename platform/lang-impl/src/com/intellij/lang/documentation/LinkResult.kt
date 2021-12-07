@@ -4,6 +4,7 @@ package com.intellij.lang.documentation
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import kotlinx.coroutines.flow.Flow
 import org.jetbrains.annotations.ApiStatus.Experimental
+import org.jetbrains.annotations.ApiStatus.Internal
 
 @Experimental
 sealed interface LinkResult {
@@ -22,12 +23,14 @@ sealed interface LinkResult {
      * This result should be used in clients wishing to load some additional data when a link is activated,
      * and then update the browser content with the loaded data.
      */
+    @Internal
     @JvmStatic
     fun updateContent(updater: ContentUpdater): LinkResult {
       return UpdateContent(updater)
     }
   }
 
+  @Internal
   fun interface ContentUpdater {
 
     /**
