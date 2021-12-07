@@ -21,23 +21,20 @@ import org.jetbrains.kotlin.idea.completion.LookupElementFactory
 import org.jetbrains.kotlin.idea.completion.LookupElementSink
 import org.jetbrains.kotlin.idea.completion.context.FirBasicCompletionContext
 import org.jetbrains.kotlin.idea.completion.context.FirRawPositionCompletionContext
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider
+import org.jetbrains.kotlin.idea.completion.contributors.helpers.CallableMetadataProvider.getCallableMetadata
 import org.jetbrains.kotlin.idea.completion.lookups.CallableInsertionOptions
 import org.jetbrains.kotlin.idea.completion.lookups.ImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.detectImportStrategy
 import org.jetbrains.kotlin.idea.completion.lookups.factories.KotlinFirLookupElementFactory
 import org.jetbrains.kotlin.idea.completion.priority
-import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher
-import org.jetbrains.kotlin.idea.completion.weighers.CallableWeigher.callableWeight
 import org.jetbrains.kotlin.idea.completion.weighers.Weighers
 import org.jetbrains.kotlin.idea.completion.weighers.WeighingContext
 import org.jetbrains.kotlin.idea.fir.HLIndexHelper
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.util.shortenReferencesInRange
 import org.jetbrains.kotlin.platform.TargetPlatform
-import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.NotNullableUserDataProperty
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationLevelValue
 
 internal class FirCompletionContributorOptions(
@@ -117,6 +114,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
             createCallableLookupElement(symbol, options, substitutor)
         }
         priority?.let { lookup.priority = it }
+        lookup.callableWeight = getCallableMetadata(context, symbol, substitutor)
         applyWeighers(context, lookup, symbol, substitutor)
         sink.addElement(lookup.adaptToReceiver(context, explicitReceiverTypeHint?.render()))
     }
@@ -126,7 +124,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
         val explicitReceiverText = weigherContext.explicitReceiver?.text
         return when (val kind = callableWeight?.kind) {
             // Make the text bold if it's immediate member of the receiver
-            CallableWeigher.CallableWeightKind.ThisClassMember, CallableWeigher.CallableWeightKind.ThisTypeExtension ->
+            CallableMetadataProvider.CallableKind.ThisClassMember, CallableMetadataProvider.CallableKind.ThisTypeExtension ->
                 object : LookupElementDecorator<LookupElement>(this) {
                     override fun renderElement(presentation: LookupElementPresentation) {
                         super.renderElement(presentation)
@@ -135,7 +133,7 @@ internal abstract class FirCompletionContributorBase<C : FirRawPositionCompletio
                 }
 
             // Make the text gray and insert type cast if the receiver type does not match.
-            is CallableWeigher.CallableWeightKind.ReceiverCastRequired -> object : LookupElementDecorator<LookupElement>(this) {
+            is CallableMetadataProvider.CallableKind.ReceiverCastRequired -> object : LookupElementDecorator<LookupElement>(this) {
                 override fun renderElement(presentation: LookupElementPresentation) {
                     super.renderElement(presentation)
                     presentation.itemTextForeground = LookupElementFactory.CAST_REQUIRED_COLOR
@@ -189,3 +187,7 @@ internal fun <C : FirRawPositionCompletionContext> KtAnalysisSession.complete(
         complete(positionContext)
     }
 }
+
+internal var LookupElement.callableWeight by UserDataProperty(Key<CallableMetadataProvider.CallableMetadata>("KOTLIN_CALLABlE_WEIGHT"))
+    private set
+
