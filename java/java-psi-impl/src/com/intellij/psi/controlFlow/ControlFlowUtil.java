@@ -1182,8 +1182,8 @@ public final class ControlFlowUtil {
     @Nullable
     private static PsiElement getUnreachableExpressionParent(@Nullable PsiElement element) {
       if (element instanceof PsiExpression) {
-        final PsiElement expression = PsiTreeUtil.findFirstParent(element, e -> !(e.getParent() instanceof PsiParenthesizedExpression));
-        if (expression != null) {
+        PsiElement expression = PsiTreeUtil.findFirstParent(element, e -> !(e.getParent() instanceof PsiParenthesizedExpression));
+        while (expression != null) {
           final PsiElement parent = expression.getParent();
           if (parent instanceof PsiExpressionStatement) {
             return getUnreachableStatementParent(parent);
@@ -1193,6 +1193,11 @@ public final class ControlFlowUtil {
               parent instanceof PsiWhileStatement && ((PsiWhileStatement)parent).getCondition() == expression ||
               parent instanceof PsiForeachStatement && ((PsiForeachStatement)parent).getIteratedValue() == expression) {
             return parent;
+          }
+          if (parent instanceof PsiExpression) {
+            expression = parent;
+          } else {
+            break;
           }
         }
       }
