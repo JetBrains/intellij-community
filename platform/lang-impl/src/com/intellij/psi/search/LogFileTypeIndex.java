@@ -508,7 +508,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
       myIndexBatchUpdatingProjects.add(project);
       if (mySnapshot == null) {
         try {
-          LOG.info("Loading file type index snapshot");
+          LOG.trace("Loading file type index snapshot");
           mySnapshot = loadIndexToMemory(myPersistentLog);
         }
         catch (StorageException e) {
@@ -523,7 +523,7 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
       myIndexBatchUpdatingProjects.remove(project);
       if (myIndexBatchUpdatingProjects.isEmpty() && !ApplicationManager.getApplication().isUnitTestMode()) {
         mySnapshot = null;
-        LOG.info("File type index snapshot dropped");
+        LOG.trace("File type index snapshot dropped");
       }
     }
 
