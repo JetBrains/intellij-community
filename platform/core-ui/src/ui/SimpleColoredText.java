@@ -19,53 +19,6 @@ public class SimpleColoredText implements ColoredTextContainer {
     myAttributes = new ArrayList<>(3);
   }
 
-  public static final @NotNull SimpleColoredText EMPTY = new SimpleColoredText() {
-    @Override
-    public void append(@Nls @NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void append(@NotNull ColoredText coloredText) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void append(@NotNull String fragment, @NotNull SimpleTextAttributes attributes, Object tag) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void appendToComponent(@NotNull ColoredTextContainer component) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void insert(int index, @Nls @NotNull String fragment, @NotNull SimpleTextAttributes attributes) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void clear() {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public SimpleColoredText derive(SimpleTextAttributes attributes, boolean override) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public @Nls String toString() {
-      return "";
-    }
-
-    @Override
-    public @NotNull ColoredText toColoredText() {
-      return ColoredText.empty();
-    }
-  };
-
   public SimpleColoredText(@NotNull @NlsContexts.Label String fragment, @NotNull SimpleTextAttributes attributes) {
     this();
     append(fragment, attributes);
