@@ -250,12 +250,14 @@ internal class DocumentationManager(private val project: Project) : Disposable {
                       ?: return null
     val linkResult: LinkResult = resolveLink(ownerTarget, url)
                                  ?: return null
+    @Suppress("REDUNDANT_ELSE_IN_WHEN")
     return when (linkResult) {
       is ResolvedTarget -> linkResult.target
       is UpdateContent -> {
         LOG.warn("Content updates are not supported in inline documentation")
         null
       }
+      else -> error("Unexpected result: $linkResult") // this fixes Kotlin incremental compilation
     }
   }
 }
