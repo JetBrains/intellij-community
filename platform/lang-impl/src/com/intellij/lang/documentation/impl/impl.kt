@@ -49,7 +49,7 @@ private fun doResolveLink(targetPointer: Pointer<out DocumentationTarget>, url: 
   @Suppress("REDUNDANT_ELSE_IN_WHEN")
   return when (result) {
     is ResolvedTarget -> InternalLinkResult.Request(result.target.documentationRequest())
-    is ContentUpdates -> InternalLinkResult.Updates(result.updates)
+    is UpdateContent -> InternalLinkResult.Updater(result.updater)
     else -> error("Unexpected result: $result") // this fixes Kotlin incremental compilation
   }
 }

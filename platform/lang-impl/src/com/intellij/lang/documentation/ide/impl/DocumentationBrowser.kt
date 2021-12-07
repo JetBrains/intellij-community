@@ -3,6 +3,7 @@ package com.intellij.lang.documentation.ide.impl
 
 import com.intellij.lang.documentation.DocumentationData
 import com.intellij.lang.documentation.DocumentationTarget
+import com.intellij.lang.documentation.LinkResult.ContentUpdater
 import com.intellij.lang.documentation.ide.DocumentationBrowserFacade
 import com.intellij.lang.documentation.ide.ui.DocumentationUI
 import com.intellij.lang.documentation.ide.ui.ScrollingPosition
@@ -128,13 +129,14 @@ internal class DocumentationBrowser private constructor(
         forwardStack.clear()
         browseDocumentation(internalResult.request, byLink = true)
       }
-      is InternalLinkResult.Updates -> {
-        handleContentUpdates(internalResult.updates)
+      is InternalLinkResult.Updater -> {
+        handleContentUpdates(internalResult.updater)
       }
     }
   }
 
-  private suspend fun handleContentUpdates(updates: Flow<String>) {
+  private suspend fun handleContentUpdates(updater: ContentUpdater) {
+    val updates: Flow<String> = updater.contentUpdates(ui.editorPane.text)
     updates
       .flowOn(Dispatchers.IO) // run flow in IO
       .collectLatest { // handle results in EDT

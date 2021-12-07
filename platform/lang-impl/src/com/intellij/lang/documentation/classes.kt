@@ -4,7 +4,6 @@ package com.intellij.lang.documentation
 import com.intellij.openapi.progress.withJob
 import com.intellij.util.AsyncSupplier
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.VisibleForTesting
@@ -26,8 +25,8 @@ internal class ResolvedTarget(
   val target: DocumentationTarget,
 ) : LinkResult
 
-internal class ContentUpdates(
-  val updates: Flow<String>,
+internal class UpdateContent(
+  val updater: LinkResult.ContentUpdater,
 ) : LinkResult
 
 internal fun <X> Supplier<X>.asAsyncSupplier(): AsyncSupplier<X> = {

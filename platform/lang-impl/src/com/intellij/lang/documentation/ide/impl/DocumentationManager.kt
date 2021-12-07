@@ -252,7 +252,7 @@ internal class DocumentationManager(private val project: Project) : Disposable {
                                  ?: return null
     return when (linkResult) {
       is ResolvedTarget -> linkResult.target
-      is ContentUpdates -> {
+      is UpdateContent -> {
         LOG.warn("Content updates are not supported in inline documentation")
         null
       }
