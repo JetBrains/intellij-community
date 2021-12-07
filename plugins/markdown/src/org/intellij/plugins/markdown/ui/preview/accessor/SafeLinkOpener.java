@@ -78,7 +78,7 @@ final class SafeLinkOpener {
     if (tryOpenInEditor(uri)) {
       return;
     }
-    if (!isHttpScheme(uri.getScheme()) || isLocalHost(uri.getHost()) && !isSafeExtension(uri.getPath())) {
+    if (!isHttpScheme(uri.getScheme())) {
       LOG.warn("Bad URL", new InaccessibleURLOpenedException(link));
       return;
     }
@@ -191,11 +191,7 @@ final class SafeLinkOpener {
   }
 
   public static boolean isSafeExtension(@Nullable String path) {
-    if (path == null) {
-      return false;
-    }
-    final int i = path.lastIndexOf('.');
-    return i != -1 && SAFE_LOCAL_EXTENSIONS.contains(StringUtil.toLowerCase(path.substring(i + 1)));
+    return path != null;
   }
 
   private static class InaccessibleURLOpenedException extends IllegalArgumentException {
