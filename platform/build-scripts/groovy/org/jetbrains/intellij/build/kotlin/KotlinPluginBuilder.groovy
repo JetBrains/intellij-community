@@ -210,9 +210,6 @@ class KotlinPluginBuilder {
         })
       }
 
-      String jpsPluginJar = "jps/kotlin-jps-plugin.jar"
-      withModule("kotlin.jps-plugin", jpsPluginJar)
-
       String kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
       withProjectLibrary(kotlincKotlinCompilerCommon, ProjectLibraryData.PackMode.STANDALONE_SEPARATE)
 
@@ -239,11 +236,11 @@ class KotlinPluginBuilder {
       withProjectLibrary("kotlinc.kotlin-compiler-fe10")
       withProjectLibrary("kotlinc.kotlin-compiler-ir")
 
-      withModule("kotlin.jps-common", "kotlin-jps-common.jar")
       withModule("kotlin.common", "kotlin-common.jar")
 
       withProjectLibrary("kotlinc.kotlin-reflect", ProjectLibraryData.PackMode.STANDALONE_MERGED)
       withProjectLibrary("kotlinc.kotlin-stdlib", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary("kotlinc.kotlin-jps-common")
       withProjectLibrary("javaslang")
       withProjectLibrary("kotlinx-collections-immutable-jvm")
       withProjectLibrary("javax-inject")

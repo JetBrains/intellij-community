@@ -40,7 +40,6 @@
     <orderEntry type="module" module-name="kotlin.j2k.new" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.old" exported="" />
     <orderEntry type="module" module-name="kotlin.j2k.services" exported="" />
-    <orderEntry type="module" module-name="kotlin.jps-common" exported="" />
     <orderEntry type="module" module-name="kotlin.jps-plugin" exported="" />
     <orderEntry type="module" module-name="kotlin.i18n" exported="" />
     <orderEntry type="module" module-name="kotlin.jvm" exported="" />
@@ -83,6 +82,7 @@
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-compiler-ir" level="project" />
+    <orderEntry type="library" exported="" name="kotlinc.kotlin-jps-common" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-common" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler-impl" level="project" />
     <orderEntry type="library" exported="" name="kotlinc.kotlin-scripting-compiler" level="project" />
