@@ -1791,7 +1791,12 @@ public class JavaDocInfoGenerator {
     PsiDocTag tag = comment.findTagByName(tagName);
     if (tag != null) {
       startHeaderSection(buffer, computePresentableName.get()).append("<p>");
-      generateValue(buffer, tag.getDataElements(), ourEmptyElementsProvider);
+      final PsiElement[] elements = Arrays.stream(tag.getChildren())
+        .skip(1)
+        .filter(e -> e.getNode().getElementType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS)
+        .toArray(PsiElement[]::new);
+
+      generateValue(buffer, elements, ourEmptyElementsProvider);
       buffer.append(DocumentationMarkup.SECTION_END);
     }
   }
@@ -2700,6 +2705,14 @@ public class JavaDocInfoGenerator {
     generateAnnotations(buffer, owner, SignaturePlace.ToolTip, true, true, false);
   }
 
+  /**
+   * @deprecated reason.
+   *
+   * <pre>
+   *     line 1
+   *     line 2
+   * </pre>
+   */
   private enum SignaturePlace {
     Javadoc, ToolTip
   }
