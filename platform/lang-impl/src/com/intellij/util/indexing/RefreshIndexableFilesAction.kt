@@ -3,9 +3,10 @@ package com.intellij.util.indexing
 
 import com.intellij.ide.actions.SynchronizeCurrentFileAction
 import com.intellij.ide.actions.cache.CacheInconsistencyProblem
+import com.intellij.ide.actions.cache.ProjectRecoveryScope
 import com.intellij.ide.actions.cache.RecoveryAction
+import com.intellij.ide.actions.cache.RecoveryScope
 import com.intellij.lang.LangBundle
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.use
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,7 +28,8 @@ class RefreshIndexableFilesAction : RecoveryAction {
   override val actionKey: String
     get() = "refresh"
 
-  override fun performSync(project: Project): List<CacheInconsistencyProblem> {
+  override fun performSync(recoveryScope: RecoveryScope): List<CacheInconsistencyProblem> {
+    val project = recoveryScope.project
     //refresh files to be sure all changes processed before writing event log
     val localRoots = ManagingFS.getInstance().localRoots
     RefreshQueue.getInstance().refresh(false, true, null, *localRoots)
@@ -49,6 +51,8 @@ class RefreshIndexableFilesAction : RecoveryAction {
     }
     return eventLog.loggedEvents.map { it.toCacheInconsistencyProblem() }
   }
+
+  override fun canBeApplied(recoveryScope: RecoveryScope): Boolean = recoveryScope is ProjectRecoveryScope
 
   private class EventLog : BulkFileListener {
     val loggedEvents: MutableList<Event> = mutableListOf()

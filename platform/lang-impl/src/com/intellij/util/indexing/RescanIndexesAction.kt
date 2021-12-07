@@ -1,9 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
-import com.intellij.ide.actions.cache.CacheInconsistencyProblem
-import com.intellij.ide.actions.cache.ExceptionalCompletionProblem
-import com.intellij.ide.actions.cache.RecoveryAction
+import com.intellij.ide.actions.cache.*
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
@@ -30,7 +28,8 @@ class RescanIndexesAction : RecoveryAction {
   override val actionKey: String
     get() = "rescan"
 
-  override fun performSync(project: Project): List<CacheInconsistencyProblem> {
+  override fun performSync(recoveryScope: RecoveryScope): List<CacheInconsistencyProblem> {
+    val project = recoveryScope.project
     val historyFuture = CompletableFuture<ProjectIndexingHistoryImpl>()
     val stubAndIndexingStampInconsistencies = Collections.synchronizedList(arrayListOf<CacheInconsistencyProblem>())
 
@@ -88,6 +87,8 @@ class RescanIndexesAction : RecoveryAction {
       return listOf(ExceptionalCompletionProblem(e))
     }
   }
+
+  override fun canBeApplied(recoveryScope: RecoveryScope): Boolean = recoveryScope is ProjectRecoveryScope
 
   private fun ProjectIndexingHistoryImpl.extractConsistencyProblems(): List<CacheInconsistencyProblem> =
     scanningStatistics.filter { it.numberOfFilesForIndexing != 0 }.map {

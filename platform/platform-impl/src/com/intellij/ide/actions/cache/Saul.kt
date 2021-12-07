@@ -3,6 +3,9 @@ package com.intellij.ide.actions.cache
 
 import com.intellij.ide.IdeBundle
 import com.intellij.notification.*
+import com.intellij.openapi.actionSystem.ActionPlaces
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -13,6 +16,8 @@ import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.ModificationTracker
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.concurrent.CompletableFuture
@@ -40,7 +45,7 @@ internal class Saul {
 
   val modificationRecoveryActionTracker = ModificationTracker { recoveryActionModificationCounter }
 
-  fun sortThingsOut(project: Project) = RecoveryWorker(sortedActions).start(project)
+  fun sortThingsOut(recoveryScope: RecoveryScope) = RecoveryWorker(sortedActions).start(recoveryScope)
 }
 
 private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
@@ -50,22 +55,22 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
 
   private val actionSeq = ConcurrentLinkedQueue(actions)
 
-  fun start(project: Project) {
+  fun start(recoveryScope: RecoveryScope) {
     // we expect that at least one action recovery exist: cache invalidation
-    perform(nextRecoveryAction(project), project, 0)
+    perform(nextRecoveryAction(recoveryScope), recoveryScope, 0)
   }
 
-  fun perform(recoveryAction: RecoveryAction, project: Project, idx: Int) {
-    recoveryAction.performUnderProgress(project, true) { p ->
-      if (hasNextRecoveryAction(p)) {
-        askUserToContinue(p, recoveryAction, idx)
+  fun perform(recoveryAction: RecoveryAction, recoveryScope: RecoveryScope, idx: Int) {
+    recoveryAction.performUnderProgress(recoveryScope, true) { scope ->
+      if (hasNextRecoveryAction(scope)) {
+        askUserToContinue(scope, recoveryAction, idx)
       }
     }
   }
 
-  private fun askUserToContinue(project: Project, previousRecoveryAction: RecoveryAction, idx: Int) {
-    if (!hasNextRecoveryAction(project)) return
-    val recoveryAction = nextRecoveryAction(project)
+  private fun askUserToContinue(recoveryScope: RecoveryScope, previousRecoveryAction: RecoveryAction, idx: Int) {
+    if (!hasNextRecoveryAction(recoveryScope)) return
+    val recoveryAction = nextRecoveryAction(recoveryScope)
     val next = idx + 1
 
     val notification = NotificationGroupManager.getInstance().getNotificationGroup("Cache Recovery")
@@ -74,25 +79,25 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
         IdeBundle.message("notification.cache.diagnostic.helper.text",
           previousRecoveryAction.presentableName,
           next,
-          service<Saul>().sortedActions.filter { it.canBeApplied(project) }.size),
+          service<Saul>().sortedActions.filter { it.canBeApplied(recoveryScope) }.size),
         NotificationType.WARNING
       )
     notification
       .addAction(DumbAwareAction.create(IdeBundle.message("notification.cache.diagnostic.stop.text")) {
         notification.expire()
-        reportStoppedToFus(project)
+        reportStoppedToFus(recoveryScope.project)
       })
       .addAction(DumbAwareAction.create(recoveryAction.presentableName) {
         notification.expire()
-        perform(recoveryAction, project, next)
+        perform(recoveryAction, recoveryScope, next)
       })
       .setImportant(true)
-      .notify(project)
+      .notify(recoveryScope.project)
   }
 
-  private fun hasNextRecoveryAction(project: Project): Boolean {
+  private fun hasNextRecoveryAction(recoveryScope: RecoveryScope): Boolean {
     while (actionSeq.isNotEmpty()) {
-      if (actionSeq.peek().canBeApplied(project)) {
+      if (actionSeq.peek().canBeApplied(recoveryScope)) {
         return true
       }
       actionSeq.poll()
@@ -100,20 +105,21 @@ private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
     return false
   }
 
-  private fun nextRecoveryAction(project: Project): RecoveryAction {
-    assert(hasNextRecoveryAction(project))
+  private fun nextRecoveryAction(recoveryScope: RecoveryScope): RecoveryAction {
+    assert(hasNextRecoveryAction(recoveryScope))
     return actionSeq.poll()
   }
 
   private fun reportStoppedToFus(project: Project) = CacheRecoveryUsageCollector.recordGuideStoppedEvent(project)
 }
 
-internal fun RecoveryAction.performUnderProgress(project: Project, fromGuide: Boolean, onComplete: (Project) -> Unit = {}) {
+internal fun RecoveryAction.performUnderProgress(recoveryScope: RecoveryScope, fromGuide: Boolean, onComplete: (RecoveryScope) -> Unit = {}) {
   val recoveryAction = this
+  val project = recoveryScope.project
   object : Task.Backgroundable(project, IdeBundle.message("recovery.progress.title", recoveryAction.presentableName)) {
     override fun run(indicator: ProgressIndicator) {
       CacheRecoveryUsageCollector.recordRecoveryPerformedEvent(recoveryAction, fromGuide, project)
-      recoveryAction.perform(project).handle { res, err ->
+      recoveryAction.perform(recoveryScope).handle { res, err ->
         if (err != null) {
           RecoveryWorker.LOG.error(err)
           return@handle
@@ -124,7 +130,7 @@ internal fun RecoveryAction.performUnderProgress(project: Project, fromGuide: Bo
                                    res.problems.take(10).joinToString(", ") { it.message })
         }
 
-        onComplete(res.project)
+        onComplete(res.scope)
       }
     }
   }.queue()
@@ -138,22 +144,42 @@ interface RecoveryAction {
 
   val actionKey: String
 
-  fun perform(project: Project): CompletableFuture<AsyncRecoveryResult> {
+  fun perform(recoveryScope: RecoveryScope): CompletableFuture<AsyncRecoveryResult> {
     try {
-      return CompletableFuture.completedFuture(AsyncRecoveryResult(project, performSync(project)))
+      return CompletableFuture.completedFuture(AsyncRecoveryResult(recoveryScope, performSync(recoveryScope)))
     }
     catch (e: Exception) {
       return CompletableFuture.failedFuture(e)
     }
   }
 
-  fun performSync(project: Project): List<CacheInconsistencyProblem> =
+  fun performSync(recoveryScope: RecoveryScope): List<CacheInconsistencyProblem> =
     throw NotImplementedError()
 
-  fun canBeApplied(project: Project): Boolean = true
+  fun canBeApplied(recoveryScope: RecoveryScope): Boolean = true
 }
 
-data class AsyncRecoveryResult(val project: Project, val problems: List<CacheInconsistencyProblem>)
+@ApiStatus.Internal
+sealed interface RecoveryScope {
+  val project: Project
+
+  companion object {
+    fun createInstance(e: AnActionEvent): RecoveryScope {
+      val project = e.project!!
+      if (e.place == ActionPlaces.PROJECT_VIEW_POPUP) {
+        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY) ?: emptyArray()
+        return FilesRecoveryScope(project, files.toSet())
+      }
+      return ProjectRecoveryScope(project)
+    }
+  }
+}
+
+data class ProjectRecoveryScope(override val project: Project) : RecoveryScope
+
+data class FilesRecoveryScope(override val project: Project, val files: Set<VirtualFile>) : RecoveryScope
+
+data class AsyncRecoveryResult(val scope: RecoveryScope, val problems: List<CacheInconsistencyProblem>)
 
 interface CacheInconsistencyProblem {
   val message: String
