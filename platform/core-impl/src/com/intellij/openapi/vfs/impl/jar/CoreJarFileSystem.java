@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.impl.jar;
 
 import com.intellij.openapi.util.Couple;
@@ -48,6 +48,7 @@ public final class CoreJarFileSystem extends DeprecatedVirtualFileSystem {
   }
 
   public void clearHandlersCache() {
+    myHandlers.forEach((path, handler) -> handler.clearCaches());
     myHandlers.clear();
   }
 }
