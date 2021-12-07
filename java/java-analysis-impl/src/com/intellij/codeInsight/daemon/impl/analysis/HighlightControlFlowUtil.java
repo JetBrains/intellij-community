@@ -91,7 +91,14 @@ public final class HighlightControlFlowUtil {
         PsiElement keyword = null;
         if (unreachableStatement instanceof PsiIfStatement ||
             unreachableStatement instanceof PsiSwitchBlock ||
-            unreachableStatement instanceof PsiLoopStatement) {
+            unreachableStatement instanceof PsiLoopStatement ||
+            unreachableStatement instanceof PsiThrowStatement ||
+            unreachableStatement instanceof PsiReturnStatement ||
+            unreachableStatement instanceof PsiYieldStatement ||
+            unreachableStatement instanceof PsiTryStatement ||
+            unreachableStatement instanceof PsiSynchronizedStatement ||
+            unreachableStatement instanceof PsiAssertStatement ||
+            unreachableStatement instanceof PsiLabeledStatement) {
           keyword = unreachableStatement.getFirstChild();
         }
         final PsiElement element = keyword != null ? keyword : unreachableStatement;

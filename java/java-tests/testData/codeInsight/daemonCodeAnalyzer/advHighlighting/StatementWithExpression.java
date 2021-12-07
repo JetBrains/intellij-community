@@ -137,8 +137,42 @@ class WithCondition {
     while (b);
   }
 
+  void testDoWhile3(boolean b) {
+    return;
+    <error descr="Unreachable statement">do</error> {
+      if(b) {
+        System.out.println("x");
+      }
+    } while(true);
+  }
+
+  void testDoWhile4() {
+    return;
+    <error descr="Unreachable statement">do</error> do do do {
+      System.out.println("pchela letela");
+    } while(true); while(true); while(true); while(true);
+  }
+
+  void testIfLabeled(boolean b) {
+    return;
+    <error descr="Unreachable statement">LABEL</error>:
+    if (b == true) {
+      break LABEL;
+    }
+  }
+
+  void testDoIfLabeled(boolean b) {
+    return;
+    <error descr="Unreachable statement">do</error> {
+      LABEL:
+      if (b == true) {
+        break LABEL;
+      }
+    } while(true);
+  }
+
   int testReturn() {
     return 1;
-    <error descr="Unreachable statement">return 2;</error>
+    <error descr="Unreachable statement">return</error> 2;
   }
 }
