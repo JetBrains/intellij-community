@@ -81,7 +81,7 @@ public class JUnit5TestSessionListener implements LauncherSessionListener {
 
   @Override
   public void launcherSessionClosed(LauncherSession session) {
-    if (!includeFirstLast) return;
+    if (!includeFirstLast || suiteStarted == 0) return;
 
     try {
       Assertions.assertAll(() -> {
