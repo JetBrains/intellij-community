@@ -150,10 +150,10 @@ public final class EditorNotificationsImpl extends EditorNotifications {
       return;
     }
 
-    for (Provider<?> provider : DumbService.getDumbAwareExtensions(myProject, EP_PROJECT)) {
+    for (Provider<?> provider : EP_PROJECT.getExtensions(myProject)) {
       ReadAction.nonBlocking(() -> provider.collectNotificationData(file, fileEditor, myProject))
         .expireWith(myProject)
-        .expireWhen(() -> !file.isValid())
+        .expireWhen(() -> !file.isValid() || DumbService.isDumb(myProject) && !DumbService.isDumbAware(provider))
         .coalesceBy(this, provider, file)
         .finishOnUiThread(ModalityState.any(), supplier -> {
           updateNotification(fileEditor, provider, supplier.get());
