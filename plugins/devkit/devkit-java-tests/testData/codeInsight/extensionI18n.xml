@@ -87,6 +87,11 @@
                        key="<error descr="Cannot resolve property key">INVALID_KEY</error>"
                        bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"/>
 
+    <!-- 'id' = property key if 'titleKey' is not present -->
+    <advancedSetting id="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+                     default="dummy"/>
+    <advancedSetting id="mySettingKey" default="this key exists"/>
+
     <advancedSetting id="myAdvancedSetting"
                      default="dummy"
                      bundle="MyBundle"
