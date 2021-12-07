@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinIdeLocalSourceFragm
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinIdeMavenBinaryFragmentDependencyReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinFragmentResolvedDependency
 
-object KotlinFragmentDependencyResolutionBuilder :
+internal object KotlinFragmentDependencyResolutionBuilder :
     KotlinProjectModelComponentBuilder<KotlinFragmentReflection, Collection<KotlinFragmentResolvedDependency>> {
 
     override fun buildComponent(

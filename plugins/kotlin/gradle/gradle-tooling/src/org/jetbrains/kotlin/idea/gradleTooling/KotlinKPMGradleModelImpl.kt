@@ -26,31 +26,7 @@ class KotlinFragmentResolvedSourceDependency(override val dependencyIdentifier: 
 class KotlinFragmentResolvedBinaryDependency(override val dependencyIdentifier: String, val dependencyContent: Set<File>? = null) :
     KotlinFragmentResolvedDependency
 
-data class KotlinGradleFragmentProto(
-    val containingModuleIdentifier: KotlinModuleIdentifier,
-    val isTestFragment: Boolean,
-    val fragmentName: String,
-    val languageSettings: KotlinLanguageSettings?,
-    val directRefinesDependencies: Collection<KotlinGradleFragmentProto>,
-    val sourceDirs: Set<File>,
-    val resourceDirs: Set<File>,
-    val resolvedDependencies: Collection<KotlinFragmentResolvedDependency>
-)
-
-fun KotlinGradleFragmentProto.buildKotlinFragment(
-    refinesKotlinFragments: Collection<KotlinFragment>,
-): KotlinFragment = KotlinGradleFragment(
-    fragmentName = fragmentName,
-    isTestFragment = isTestFragment,
-    moduleIdentifier = containingModuleIdentifier,
-    languageSettings = languageSettings,
-    directRefinesFragments = refinesKotlinFragments,
-    resolvedDependencies = resolvedDependencies,
-    sourceDirs = sourceDirs,
-    resourceDirs = resourceDirs
-)
-
-class KotlinGradleFragment(
+internal class KotlinFragmentImpl(
     override val fragmentName: String,
     override val isTestFragment: Boolean,
     override val moduleIdentifier: KotlinModuleIdentifier,
@@ -61,17 +37,17 @@ class KotlinGradleFragment(
     override val resourceDirs: Set<File>
 ) : KotlinFragment
 
-class KotlinGradleVariantData(
+internal class KotlinVariantImpl(
+    private val fragment: KotlinFragment,
     override val variantAttributes: KotlinKPMVariantAttributesMap,
     override val compilationOutputs: KotlinCompilationOutput?
-) : KotlinVariantData
+) : KotlinVariant, KotlinFragment by fragment
 
-class KotlinGradleModule(
+
+class KotlinModuleImpl(
     override val moduleIdentifier: KotlinModuleIdentifier,
-    override var fragments: Collection<KotlinFragment>,
-    override var variants: Collection<KotlinVariant>
+    override val fragments: Collection<KotlinFragment>,
 ) : KotlinModule
-
 
 class KotlinKPMGradleModelImpl(
     override val kpmModules: Collection<KotlinModule>,

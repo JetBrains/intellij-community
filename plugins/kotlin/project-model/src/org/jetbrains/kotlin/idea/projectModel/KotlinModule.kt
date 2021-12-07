@@ -19,11 +19,13 @@ interface KotlinMavenModuleIdentifier : KotlinModuleIdentifier {
 
 interface KotlinModule : Serializable {
     val moduleIdentifier: KotlinModuleIdentifier
-    var fragments: Collection<KotlinFragment>
-    var variants: Collection<KotlinVariant>
+    val fragments: Collection<KotlinFragment>
 
     companion object {
         const val MAIN_MODULE_NAME = "main"
         const val TEST_MODULE_NAME = "test"
     }
 }
+
+val KotlinModule.variants: Collection<KotlinVariant>
+    get() = fragments.filterIsInstance<KotlinVariant>()
