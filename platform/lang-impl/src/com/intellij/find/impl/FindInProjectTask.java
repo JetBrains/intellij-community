@@ -46,7 +46,6 @@ import com.intellij.psi.search.impl.VirtualFileEnumeration;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.FindUsagesProcessPresentation;
-import com.intellij.usages.UsageLimitUtil;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Processor;
 import com.intellij.util.TimeoutUtil;
@@ -59,7 +58,6 @@ import com.intellij.util.indexing.roots.IndexableFilesIterator;
 import com.intellij.util.indexing.roots.kind.IndexableSetOrigin;
 import com.intellij.util.indexing.roots.kind.ModuleRootOrigin;
 import com.intellij.util.text.StringSearcher;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity;
@@ -123,8 +121,7 @@ final class FindInProjectTask {
     mySearchers = ContainerUtil.mapNotNull(FindInProjectSearchEngine.EP_NAME.getExtensions(), se -> se.createSearcher(findModel, project));
   }
 
-  void findUsages(@NotNull FindUsagesProcessPresentation processPresentation,
-                  @NotNull Processor<? super UsageInfo> usageProcessor) {
+  void findUsages(@NotNull FindUsagesProcessPresentation processPresentation, @NotNull Processor<? super UsageInfo> usageProcessor) {
     CoreProgressManager.assertUnderProgress(myProgress);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Searching for '" + myFindModel.getStringToFind() + "'");
@@ -274,16 +271,9 @@ final class FindInProjectTask {
       if (totalSize > FILES_SIZE_LIMIT) {
         TooManyUsagesStatus tooManyUsagesStatus = TooManyUsagesStatus.getFrom(myProgress);
         if (tooManyUsagesStatus.switchTooManyUsagesStatus()) {
-          UIUtil.invokeLaterIfNeeded(() -> {
-            String message = FindBundle.message("find.excessive.total.size.prompt",
-                                                UsageViewManagerImpl.presentableSize(myTotalFilesSize.longValue()),
-                                                ApplicationNamesInfo.getInstance().getProductName());
-            UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(myProject, message);
-            if (ret == UsageLimitUtil.Result.ABORT) {
-              myProgress.cancel();
-            }
-            tooManyUsagesStatus.userResponded();
-          });
+          UsageViewManagerImpl.showTooManyUsagesWarningLater(myProject, tooManyUsagesStatus, myProgress, null, () -> FindBundle.message("find.excessive.total.size.prompt",
+                                                          UsageViewManagerImpl.presentableSize(myTotalFilesSize.longValue()),
+                                                          ApplicationNamesInfo.getInstance().getProductName()), null);
         }
         tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
         myProgress.checkCanceled();
@@ -296,7 +286,7 @@ final class FindInProjectTask {
   // must return non-binary files
   private void processFilesInScope(@NotNull Set<? extends VirtualFile> alreadySearched,
                                    boolean checkCoveredBySearchers,
-                                   @NotNull Processor<VirtualFile> fileProcessor) {
+                                   @NotNull Processor<? super VirtualFile> fileProcessor) {
     SearchScope customScope = myFindModel.isCustomScope() ? myFindModel.getCustomScope() : null;
     GlobalSearchScope globalCustomScope = customScope == null ? null : GlobalSearchScopeUtil.toGlobalSearchScope(customScope, myProject);
 
