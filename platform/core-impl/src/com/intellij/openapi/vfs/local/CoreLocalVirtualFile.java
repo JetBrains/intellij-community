@@ -1,50 +1,65 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.NioFiles;
+import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.DosFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.util.List;
 
 public class CoreLocalVirtualFile extends VirtualFile {
   private final CoreLocalFileSystem myFileSystem;
-  private final File myIoFile;
+  private final Path myFile;
+  private BasicFileAttributes myAttributes;
   private VirtualFile[] myChildren;
-  private final NotNullLazyValue<Boolean> myIsDirectory;
 
   public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile) {
+    this(fileSystem, ioFile.toPath());
+  }
+
+  /** @deprecated use {@link CoreLocalVirtualFile#CoreLocalVirtualFile(CoreLocalFileSystem, Path, BasicFileAttributes)} instead */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
+  public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile, @SuppressWarnings("unused") boolean isDirectory) {
+    this(fileSystem, ioFile.toPath());
+  }
+
+  public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull Path file) {
     myFileSystem = fileSystem;
-    myIoFile = ioFile;
-    myIsDirectory = NotNullLazyValue.createValue(myIoFile::isDirectory);
+    myFile = file;
   }
 
-  public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile, boolean isDirectory) {
+  public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull Path file, @NotNull BasicFileAttributes attributes) {
     myFileSystem = fileSystem;
-    myIoFile = ioFile;
-    myIsDirectory = NotNullLazyValue.createConstantValue(isDirectory);
+    myFile = file;
+    myAttributes = attributes;
   }
 
-  @NotNull
   @Override
-  public String getName() {
-    return myIoFile.getName();
-  }
-
-  @NotNull
-  @Override
-  public VirtualFileSystem getFileSystem() {
+  public @NotNull VirtualFileSystem getFileSystem() {
     return myFileSystem;
   }
 
-  @NotNull
   @Override
-  public String getPath() {
-    return FileUtil.toSystemIndependentName(myIoFile.getAbsolutePath());
+  public @NotNull String getName() {
+    return NioFiles.getFileName(myFile);
+  }
+
+  @Override
+  public @NotNull String getPath() {
+    return FileUtil.toSystemIndependentName(myFile.toString());
   }
 
   @Override
@@ -54,7 +69,39 @@ public class CoreLocalVirtualFile extends VirtualFile {
 
   @Override
   public boolean isDirectory() {
-    return myIsDirectory.getValue();
+    BasicFileAttributes attrs = getAttributes(false);
+    return attrs != null && attrs.isDirectory();
+  }
+
+  @Override
+  public boolean is(@NotNull VFileProperty property) {
+    BasicFileAttributes attrs = getAttributes(true);
+    if (property == VFileProperty.HIDDEN) return attrs instanceof DosFileAttributes && ((DosFileAttributes)attrs).isHidden();
+    if (property == VFileProperty.SYMLINK) return attrs != null && attrs.isSymbolicLink();
+    if (property == VFileProperty.SPECIAL) return attrs != null && attrs.isOther();
+    return super.is(property);
+  }
+
+  @Override
+  public long getTimeStamp() {
+    BasicFileAttributes attrs = getAttributes(true);
+    return attrs != null ? attrs.lastModifiedTime().toMillis() : -1;
+  }
+
+  @Override
+  public long getLength() {
+    BasicFileAttributes attrs = getAttributes(false);
+    return attrs != null ? attrs.size() : -1;
+  }
+
+  protected @Nullable BasicFileAttributes getAttributes(boolean full) {
+    if (myAttributes == null || full && myAttributes instanceof IncompleteDirectoryAttributes) {
+      try {
+        myAttributes = Files.readAttributes(myFile, BasicFileAttributes.class);
+      }
+      catch (IOException ignored) { }
+    }
+    return myAttributes;
   }
 
   @Override
@@ -64,27 +111,24 @@ public class CoreLocalVirtualFile extends VirtualFile {
 
   @Override
   public VirtualFile getParent() {
-    File parentFile = myIoFile.getParentFile();
-    return parentFile != null ? new CoreLocalVirtualFile(myFileSystem, parentFile, true) : null;
+    Path parentFile = myFile.getParent();
+    return parentFile != null ? new CoreLocalVirtualFile(myFileSystem, parentFile, new IncompleteDirectoryAttributes()) : null;
   }
 
   @Override
   public VirtualFile[] getChildren() {
-    VirtualFile[] answer = myChildren;
-    if (answer == null) {
-      final File[] files = myIoFile.listFiles();
-      if (files == null || files.length == 0) {
-        answer = EMPTY_ARRAY;
+    if (myChildren == null) {
+      List<Path> files = NioFiles.list(myFile);
+      if (files.isEmpty()) {
+        myChildren = EMPTY_ARRAY;
       }
       else {
-        answer = new VirtualFile[files.length];
-        for (int i = 0; i < files.length; i++) {
-          answer[i] = new CoreLocalVirtualFile(myFileSystem, files[i]);
-        }
+        VirtualFile[] result = new VirtualFile[files.size()];
+        for (int i = 0; i < files.size(); i++) result[i] = new CoreLocalVirtualFile(myFileSystem, files.get(i));
+        myChildren = result;
       }
-      myChildren = answer;
     }
-    return answer;
+    return myChildren;
   }
 
   @NotNull
@@ -95,17 +139,7 @@ public class CoreLocalVirtualFile extends VirtualFile {
 
   @Override
   public byte @NotNull [] contentsToByteArray() throws IOException {
-    return FileUtil.loadFileBytes(myIoFile);
-  }
-
-  @Override
-  public long getTimeStamp() {
-    return myIoFile.lastModified();
-  }
-
-  @Override
-  public long getLength() {
-    return myIoFile.length();
+    return Files.readAllBytes(myFile);
   }
 
   @Override
@@ -114,12 +148,17 @@ public class CoreLocalVirtualFile extends VirtualFile {
 
   @Override
   public @NotNull InputStream getInputStream() throws IOException {
-    return VfsUtilCore.inputStreamSkippingBOM(new BufferedInputStream(new FileInputStream(myIoFile)), this);
+    return VfsUtilCore.inputStreamSkippingBOM(new BufferedInputStream(Files.newInputStream(myFile)), this);
   }
 
   @Override
   public long getModificationStamp() {
     return 0;
+  }
+
+  @Override
+  public boolean isInLocalFileSystem() {
+    return true;
   }
 
   @Override
@@ -129,11 +168,58 @@ public class CoreLocalVirtualFile extends VirtualFile {
 
     CoreLocalVirtualFile that = (CoreLocalVirtualFile)o;
 
-    return myIoFile.equals(that.myIoFile);
+    return myFile.equals(that.myFile);
   }
 
   @Override
   public int hashCode() {
-    return myIoFile.hashCode();
+    return myFile.hashCode();
+  }
+
+  private static final class IncompleteDirectoryAttributes implements BasicFileAttributes {
+    @Override
+    public FileTime lastModifiedTime() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public FileTime lastAccessTime() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public FileTime creationTime() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isRegularFile() {
+      return false;
+    }
+
+    @Override
+    public boolean isDirectory() {
+      return true;
+    }
+
+    @Override
+    public boolean isSymbolicLink() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean isOther() {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public long size() {
+      return 0;
+    }
+
+    @Override
+    public Object fileKey() {
+      throw new UnsupportedOperationException();
+    }
   }
 }

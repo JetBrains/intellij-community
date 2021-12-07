@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.vfs.DeprecatedVirtualFileSystem;
@@ -9,6 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.nio.file.FileSystems;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 
 public class CoreLocalFileSystem extends DeprecatedVirtualFileSystem {
@@ -18,14 +21,17 @@ public class CoreLocalFileSystem extends DeprecatedVirtualFileSystem {
     return StandardFileSystems.FILE_PROTOCOL;
   }
 
-  @Nullable
-  public VirtualFile findFileByIoFile(@NotNull File ioFile) {
-    return ioFile.exists() ? new CoreLocalVirtualFile(this, ioFile) : null;
+  public @Nullable VirtualFile findFileByIoFile(@NotNull File file) {
+    return findFileByNioFile(file.toPath());
+  }
+
+  public @Nullable VirtualFile findFileByNioFile(@NotNull Path file) {
+    return Files.exists(file) ? new CoreLocalVirtualFile(this, file) : null;
   }
 
   @Override
   public VirtualFile findFileByPath(@NotNull @NonNls String path) {
-    return findFileByIoFile(new File(path));
+    return findFileByNioFile(FileSystems.getDefault().getPath(path));
   }
 
   @Override
