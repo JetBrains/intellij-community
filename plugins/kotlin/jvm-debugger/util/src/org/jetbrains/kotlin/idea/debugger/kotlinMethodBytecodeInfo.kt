@@ -14,7 +14,8 @@ fun Method.isSimpleGetter() =
 
 fun Method.isLateinitVariableGetter() =
     isOldBackendLateinitVariableGetter() ||
-    isIRBackendLateinitVariableGetter()
+    isIRBackendLateinitVariableGetter() ||
+    isIRBackendLateinitVariableGetterReturningAny()
 
 fun Method.isOldBackendLateinitVariableGetter() =
     verifyMethod(14,
@@ -28,24 +29,36 @@ fun Method.isOldBackendLateinitVariableGetter() =
         )
     )
 
-fun Method.isIRBackendLateinitVariableGetter() =
-    verifyMethod(20,
-        MethodBytecodeVerifierFromArray(
-            intArrayOf(
-              Opcodes.ALOAD,
-              Opcodes.GETFIELD,
-              Opcodes.ASTORE,
-              Opcodes.ALOAD,
-              Opcodes.IFNULL,
-              Opcodes.ALOAD,
-              Opcodes.ARETURN,
-              Opcodes.LDC,
-              Opcodes.INVOKESTATIC,
-              Opcodes.GETSTATIC,
-              Opcodes.ARETURN
-            )
-        )
+fun Method.isIRBackendLateinitVariableGetterReturningAny() =
+    verifyMethod(
+        expectedNumOfBytecodes = 20,
+        MethodBytecodeVerifierFromArray(lateinitVarReturningAnyBytecodes)
     )
+
+fun Method.isIRBackendLateinitVariableGetter() =
+    verifyMethod(
+        expectedNumOfBytecodes = 18,
+        MethodBytecodeVerifierFromArray(lateinitVarPropertyBytecodes)
+    )
+
+private val commonLateinitVarPropertyBytecodes =
+    intArrayOf(
+        Opcodes.ALOAD,
+        Opcodes.GETFIELD,
+        Opcodes.ASTORE,
+        Opcodes.ALOAD,
+        Opcodes.IFNULL,
+        Opcodes.ALOAD,
+        Opcodes.ARETURN,
+        Opcodes.LDC,
+        Opcodes.INVOKESTATIC,
+    )
+
+private val lateinitVarReturningAnyBytecodes =
+    commonLateinitVarPropertyBytecodes + intArrayOf(Opcodes.GETSTATIC, Opcodes.ARETURN)
+
+private val lateinitVarPropertyBytecodes =
+    commonLateinitVarPropertyBytecodes + intArrayOf(Opcodes.ACONST_NULL, Opcodes.ARETURN)
 
 private fun Method.isSimpleStaticVariableGetter() =
     verifyMethod(4, intArrayOf(Opcodes.GETSTATIC))
