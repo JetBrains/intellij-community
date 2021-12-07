@@ -133,6 +133,12 @@ public final class WeakestTypeFinder {
           return Collections.emptyList();
         }
       }
+      else if (referenceParent instanceof PsiNameValuePair) {
+        final PsiType type = ExpectedTypeUtils.findExpectedType((PsiExpression)referenceElement, true);
+        if (!checkType(type, weakestTypeClasses)) {
+          return Collections.emptyList();
+        }
+      }
       else if (referenceParent instanceof PsiVariable) {
         final PsiVariable variable = (PsiVariable)referenceParent;
         final PsiType type = variable.getType();

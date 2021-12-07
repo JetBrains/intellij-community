@@ -250,3 +250,19 @@ class ParensUsage {
     System.out.println((s).firstKey());
   }
 }
+@interface ParamDoc {
+  String value();
+}
+class Primitives {
+  private static final String DEFAULT = "default";
+  @ParamDoc(DEFAULT) final int defaultValue = 1;
+}
+enum Status {
+  INTERNAL,
+  DEPRECATED,
+  STABLE;
+
+  Object x() {
+    return STABLE;
+  }
+}
