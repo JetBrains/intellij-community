@@ -12,7 +12,8 @@ data class TModel(
     val flatten: Boolean,
     val targetBackend: TargetBackend,
     val excludedDirectories: List<String>,
-    val depth: Int
+    val depth: Int,
+    val testPerClass: Boolean,
 )
 
 object Patterns {
@@ -44,11 +45,19 @@ fun MutableTSuite.model(
     flatten: Boolean = false,
     targetBackend: TargetBackend = TargetBackend.ANY,
     excludedDirectories: List<String> = emptyList(),
-    depth: Int = Int.MAX_VALUE
+    depth: Int = Int.MAX_VALUE,
+    testPerClass: Boolean = false,
 ) {
     models += TModel(
-        path, pattern, testClassName, testMethodName,
-        flatten, targetBackend, excludedDirectories, if (!isRecursive) 0 else depth
+        path = path,
+        pattern = pattern,
+        testClassName = testClassName,
+        testMethodName = testMethodName,
+        flatten = flatten,
+        targetBackend = targetBackend,
+        excludedDirectories = excludedDirectories,
+        depth = if (!isRecursive) 0 else depth,
+        testPerClass = testPerClass,
     )
 }
 

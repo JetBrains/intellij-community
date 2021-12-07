@@ -18,7 +18,7 @@ fun File.toRelativeStringSystemIndependent(base: File): String {
     } else path
 }
 
-interface TestMethod: RenderElement {
+interface TestMethod : RenderElement {
     val methodName: String
 }
 
@@ -26,7 +26,7 @@ class SuiteElement private constructor(
     private val group: TGroup, private val suite: TSuite, private val model: TModel,
     private val className: String, private val isNested: Boolean,
     methods: List<TestMethod>, nestedSuites: List<SuiteElement>
-): RenderElement {
+) : RenderElement {
     private val methods = methods.sortedBy { it.methodName }
     private val nestedSuites = nestedSuites.sortedBy { it.className }
 
@@ -44,7 +44,11 @@ class SuiteElement private constructor(
             for (file in rootFile.listFiles().orEmpty()) {
                 if (depth > 0 && file.isDirectory && file.name !in model.excludedDirectories) {
                     val nestedClassName = file.toJavaIdentifier().capitalize()
-                    val nestedModel = model.copy(path = file.toRelativeStringSystemIndependent(group.testDataRoot), testClassName = nestedClassName)
+                    val nestedModel = model.copy(
+                        path = file.toRelativeStringSystemIndependent(group.testDataRoot),
+                        testClassName = nestedClassName,
+                    )
+
                     val nestedElement = collect(group, suite, nestedModel, depth - 1, nestedClassName, isNested = true)
                     if (nestedElement.methods.isNotEmpty() || nestedElement.nestedSuites.isNotEmpty()) {
                         if (model.flatten) {
@@ -60,11 +64,31 @@ class SuiteElement private constructor(
                 assert(match.groupValues.size >= 2) { "Invalid pattern, test method name group should be defined" }
                 val methodNameBase = getTestMethodNameBase(match.groupValues[1])
                 val path = file.toRelativeStringSystemIndependent(group.moduleRoot)
-                methods += TestCaseMethod(methodNameBase, if (file.isDirectory) "$path/" else path, file.toRelativeStringSystemIndependent(rootFile))
+                methods += TestCaseMethod(
+                    methodNameBase,
+                    if (file.isDirectory) "$path/" else path,
+                    file.toRelativeStringSystemIndependent(rootFile)
+                )
             }
 
             if (methods.isNotEmpty()) {
-                methods += RunTestMethod(model)
+                if (model.testPerClass) {
+                    nestedSuites += methods.map {
+                        val nestedClassName = it.methodName.capitalize()
+                        SuiteElement(
+                            group,
+                            suite,
+                            model.copy(testClassName = nestedClassName),
+                            nestedClassName,
+                            true,
+                            listOf(it, RunTestMethod(model)),
+                            emptyList(),
+                        )
+                    }
+                    methods.clear()
+                } else {
+                    methods += RunTestMethod(model)
+                }
             }
 
             return SuiteElement(group, suite, model, className, isNested, methods, nestedSuites)
