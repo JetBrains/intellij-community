@@ -86,7 +86,6 @@ internal object Weighers {
         with(PreferGetSetMethodsToPropertyWeigher) { addWeight(lookupElement, symbol) }
         with(NotImportedWeigher) { addWeight(context, lookupElement, symbol) }
         with(KindWeigher) { addWeight(lookupElement, symbol) }
-        with(CallableWeigher) { addWeight(context, lookupElement, symbol, substitutor) }
         with(VariableOrFunctionWeigher) { addWeight(lookupElement, symbol) }
     }
 
