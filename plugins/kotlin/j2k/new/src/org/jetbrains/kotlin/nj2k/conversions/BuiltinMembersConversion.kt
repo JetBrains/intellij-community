@@ -89,32 +89,39 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
     private inner class MethodBuilder(
         private val fqName: String,
+        private val parameterTypesFqNames: List<String>?,
         private val argumentsProvider: (JKArgumentList) -> JKArgumentList
     ) : ResultBuilder {
-        override fun build(from: JKExpression): JKExpression =
-            when (from) {
-                is JKCallExpression ->
+        override fun build(from: JKExpression): JKExpression {
+            val methodSymbol = if (parameterTypesFqNames == null) {
+                symbolProvider.provideMethodSymbol(fqName)
+            } else {
+                symbolProvider.provideMethodSymbolWithExactSignature(fqName, parameterTypesFqNames)
+            }
+            return when (from) {
+                is JKCallExpression -> {
                     JKCallExpressionImpl(
-                        symbolProvider.provideMethodSymbol(fqName),
+                        methodSymbol,
                         argumentsProvider(from::arguments.detached()),
                         from::typeArgumentList.detached()
                     )
+                }
                 is JKFieldAccessExpression ->
                     JKCallExpressionImpl(
-                        symbolProvider.provideMethodSymbol(fqName),
+                        methodSymbol,
                         JKArgumentList(),
                         JKTypeArgumentList()
                     )
-                is JKMethodAccessExpression ->
-                    JKMethodAccessExpression(symbolProvider.provideMethodSymbol(fqName))
+                is JKMethodAccessExpression -> JKMethodAccessExpression(methodSymbol)
                 is JKNewExpression ->
                     JKCallExpressionImpl(
-                        symbolProvider.provideMethodSymbol(fqName),
+                        methodSymbol,
                         argumentsProvider(from::arguments.detached()),
                         JKTypeArgumentList()
                     )
                 else -> error("Bad conversion")
             }.withFormattingFrom(from)
+        }
     }
 
     private inner class FieldBuilder(
@@ -162,7 +169,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
 
     private fun Conversion.createBuilder(): ResultBuilder =
         when (to) {
-            is Method -> MethodBuilder(to.fqName, argumentsProvider ?: { it })
+            is Method -> MethodBuilder(to.fqName, to.parameterTypesFqNames, argumentsProvider ?: { it })
             is Field -> FieldBuilder(to.fqName)
             is ExtensionMethod -> ExtensionMethodBuilder(to.fqName)
             is CustomExpression -> CustomExpressionBuilder(to.expressionBuilder)
@@ -180,7 +187,7 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
         val fqName: String
     }
 
-    private data class Method(override val fqName: String) : SymbolInfo
+    private data class Method(override val fqName: String, val parameterTypesFqNames: List<String>? = null) : SymbolInfo
     private data class NewExpression(override val fqName: String) : SymbolInfo
     private data class Field(override val fqName: String) : SymbolInfo
     private data class ExtensionMethod(override val fqName: String) : SymbolInfo
@@ -467,52 +474,72 @@ class BuiltinMembersConversion(context: NewJ2kConverterContext) : RecursiveAppli
                         )
                     } withReplaceType ReplaceType.REPLACE_WITH_QUALIFIER,
 
+            // We request the `split` function with the exact signature `split(regex: Regex, limit: Int = 0)`
+            // (see `JKSymbolProvider.provideMethodSymbolWithExactSignature`).
+            // Otherwise, `JKSymbolProvider` might choose a `split` overload with different parameters
+            // and `ImplicitCastsConversion` downstream will try to insert a nonsensical cast
+            // of the `limit` argument to Boolean.
             Method("java.lang.String.split")
-                    convertTo Method("kotlin.text.split")
-                    withByArgumentsFilter { it.size == 2 }
+                    convertTo Method("kotlin.text.split", listOf("kotlin.text.Regex", "kotlin.Int"))
                     andAfter { expression ->
                 val arguments =
                     expression.cast<JKQualifiedExpression>()
                         .selector.cast<JKCallExpression>()
                         .arguments
-                val limitArgument = arguments.arguments[1].value
-                val limit = limitArgument.asLiteralTextWithPrefix()?.toIntOrNull()
-                when {
-                    limit != null -> {
-                        if (limit > 0) expression
-                        else expression
-                            .also {
-                                arguments.arguments = arguments.arguments.dropLast(1)
-                            }.callOn(
-                                symbolProvider.provideMethodSymbol("kotlin.collections.dropLastWhile"),
-                                listOf(
-                                    JKLambdaExpression(
-                                        JKFieldAccessExpression(
-                                            JKUnresolvedField(//TODO replace with `it` parameter
-                                                "it",
-                                                typeFactory
-                                            )
-                                        ).callOn(symbolProvider.provideMethodSymbol("kotlin.text.isEmpty")).asStatement(),
-                                        emptyList()
-                                    )
+
+                val patternArgument =
+                    arguments.arguments.first()::value.detached().callOn(
+                        symbolProvider.provideMethodSymbol("kotlin.text.toRegex")
+                    )
+
+                val limit: Int? = if (arguments.arguments.size == 2) {
+                    arguments.arguments.last().value.asLiteralTextWithPrefix()?.toIntOrNull()
+                } else {
+                    0
+                }
+
+                arguments.arguments = when {
+                    limit == null -> {
+                        // limit is not a constant, need to make it non-negative
+                        val limitArgument = arguments.arguments.last()::value.detached().callOn(
+                            symbolProvider.provideMethodSymbol("kotlin.ranges.coerceAtLeast"),
+                            listOf(JKLiteralExpression("0", JKLiteralExpression.LiteralType.INT))
+                        )
+                        listOf(JKArgumentImpl(patternArgument), JKArgumentImpl(limitArgument))
+                    }
+                    limit <= 0 -> {
+                        // negative: same behavior as split(regex) in Kotlin
+                        // zero or absent limit: cases are equivalent in Kotlin
+                        listOf(JKArgumentImpl(patternArgument))
+                    }
+                    else -> {
+                        // positive: same behavior as split(regex, limit) in Kotlin
+                        val limitArgument = arguments.arguments.last()::value.detached()
+                        listOf(
+                            JKArgumentImpl(patternArgument),
+                            JKNamedArgument(limitArgument, JKNameIdentifier("limit"))
+                        )
+                    }
+                }
+
+                return@andAfter if (limit == 0) {
+                    // zero or absent limit: discard trailing empty strings to match Java behavior
+                    expression
+                        .callOn(
+                            symbolProvider.provideMethodSymbol("kotlin.collections.dropLastWhile"),
+                            listOf(
+                                JKLambdaExpression(
+                                    JKKtItExpression(typeFactory.types.string).callOn(
+                                        symbolProvider.provideMethodSymbol("kotlin.text.isEmpty")
+                                    ).asStatement(),
+                                    emptyList()
                                 )
                             )
-                    }
-                    else -> expression.also {
-                        val lastArgument = arguments.arguments.last().value.copyTreeAndDetach()
-                            .callOn(
-                                symbolProvider.provideMethodSymbol("kotlin.ranges.coerceAtLeast"),
-                                listOf(JKLiteralExpression("0", JKLiteralExpression.LiteralType.INT))
-                            )
-                        arguments.arguments = arguments.arguments.dropLast(1) + JKArgumentImpl(lastArgument)
-                    }
+                        )
+                } else {
+                    expression
                 }.castToTypedArray()
             },
-
-
-            Method("java.lang.String.split")
-                    convertTo Method("kotlin.text.split")
-                    andAfter { it.castToTypedArray() },
 
             Method("java.lang.String.trim")
                     convertTo Method("kotlin.text.trim")

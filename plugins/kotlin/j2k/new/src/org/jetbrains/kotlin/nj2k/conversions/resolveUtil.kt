@@ -10,6 +10,8 @@ import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
 import com.intellij.psi.search.GlobalSearchScope
+import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
+import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.stubindex.KotlinFullClassNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelFunctionFqnNameIndex
 import org.jetbrains.kotlin.idea.stubindex.KotlinTopLevelPropertyFqnNameIndex
@@ -42,6 +44,12 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
         resolveFqNameOfKtFunctionByIndex(fqName)
             ?: resolveFqName(fqName)
 
+    fun resolveMethodWithExactSignature(methodFqName: FqName, parameterTypesFqNames: List<FqName>): PsiElement? =
+        resolveFqNameOfKtFunctionByIndex(methodFqName) {
+            it.valueParameters.size == parameterTypesFqNames.size &&
+                    it.valueParameters.map { param -> param.resolveToParameterDescriptorIfAny()?.type?.fqName } == parameterTypesFqNames
+        }
+
     fun resolveField(fqName: FqName): PsiElement? =
         resolveFqNameOfKtPropertyByIndex(fqName)
             ?: resolveFqName(fqName)
@@ -62,9 +70,8 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
             }
     }
 
-
-    private fun resolveFqNameOfKtFunctionByIndex(fqName: FqName): KtNamedFunction? =
-        KotlinTopLevelFunctionFqnNameIndex.getInstance()[fqName.asString(), project, scope].firstOrNull()
+    private fun resolveFqNameOfKtFunctionByIndex(fqName: FqName, filter: (KtNamedFunction) -> Boolean = { true }): KtNamedFunction? =
+        KotlinTopLevelFunctionFqnNameIndex.getInstance()[fqName.asString(), project, scope].firstOrNull { filter(it) }
 
     private fun resolveFqNameOfKtPropertyByIndex(fqName: FqName): KtProperty? =
         KotlinTopLevelPropertyFqnNameIndex.getInstance()[fqName.asString(), project, scope].firstOrNull()
