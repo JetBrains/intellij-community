@@ -127,8 +127,8 @@ private val errorsFixingDiagnosticBasedPostProcessingGroup =
             Errors.REDUNDANT_PROJECTION
         ),
         diagnosticBasedProcessing(
-            AddModifierFixMpp.createFactory(KtTokens.OVERRIDE_KEYWORD),
-            Errors.VIRTUAL_MEMBER_HIDDEN
+          AddModifierFixFE10.createFactory(KtTokens.OVERRIDE_KEYWORD),
+          Errors.VIRTUAL_MEMBER_HIDDEN
         ),
         diagnosticBasedProcessing(
             RemoveModifierFixBase.createRemoveModifierFromListOwnerPsiBasedFactory(KtTokens.OPEN_KEYWORD),

@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 class AddInlineModifierFix(
     parameter: KtParameter,
     modifier: KtModifierKeywordToken
-) : AddModifierFixMpp(parameter, modifier) {
+) : AddModifierFixFE10(parameter, modifier) {
 
     override fun getText(): String {
         val element = this.element
