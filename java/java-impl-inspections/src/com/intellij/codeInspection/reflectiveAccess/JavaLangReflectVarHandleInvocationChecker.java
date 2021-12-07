@@ -155,7 +155,7 @@ final class JavaLangReflectVarHandleInvocationChecker {
 
     LOG.assertTrue(accessArguments.length == requiredArgumentCount);
     for (int i = coordinateArguments; i < requiredArgumentCount; i++) {
-      checkArgumentType(accessArguments[i], valueType, accessArgumentList, false, holder);
+      checkArgumentType(accessArguments[i], valueType, accessArgumentList, false, false, holder);
     }
   }
 
