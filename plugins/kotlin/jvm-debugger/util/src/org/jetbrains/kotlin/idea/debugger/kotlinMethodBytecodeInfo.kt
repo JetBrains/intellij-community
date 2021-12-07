@@ -29,7 +29,7 @@ fun Method.isOldBackendLateinitVariableGetter() =
     )
 
 fun Method.isIRBackendLateinitVariableGetter() =
-    verifyMethod(18,
+    verifyMethod(20,
         MethodBytecodeVerifierFromArray(
             intArrayOf(
               Opcodes.ALOAD,
@@ -41,8 +41,8 @@ fun Method.isIRBackendLateinitVariableGetter() =
               Opcodes.ARETURN,
               Opcodes.LDC,
               Opcodes.INVOKESTATIC,
-              Opcodes.ACONST_NULL,
-              Opcodes.ATHROW
+              Opcodes.GETSTATIC,
+              Opcodes.ARETURN
             )
         )
     )
