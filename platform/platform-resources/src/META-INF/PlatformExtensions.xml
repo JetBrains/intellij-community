@@ -572,7 +572,7 @@
     <fileType name="PLAIN_TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextFileType" fieldName="INSTANCE" language="TEXT"
               extensions="txt"/>
     <fileType name="Native" implementationClass="com.intellij.openapi.fileTypes.NativeFileType" fieldName="INSTANCE"
-              extensions="chm;doc;docx;hlp;mdb;odt;pdf;ppt;pptx;vsd;xls;xlsx"/>
+              extensions="doc;docx;hlp;mdb;odt;pdf;ppt;pptx;vsd;xls;xlsx"/>
     <fileType name="UNKNOWN" implementationClass="com.intellij.openapi.fileTypes.UnknownFileType" fieldName="INSTANCE"/>
     <fileType name="AUTO_DETECTED" implementationClass="com.intellij.openapi.fileTypes.ex.DetectedByContentFileType" fieldName="INSTANCE"/>
 
