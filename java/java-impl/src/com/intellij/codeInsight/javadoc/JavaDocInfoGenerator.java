@@ -1555,9 +1555,28 @@ public class JavaDocInfoGenerator {
         }
       }
       else {
-        appendPlainText(buffer, element.getText());
+        final String text;
+        if (element instanceof PsiWhiteSpace) {
+          text = getWhitespacesBeforeLFWhenLeadingAsterisk(element);
+        }
+        else {
+          text = element.getText();
+        }
+        appendPlainText(buffer, text);
       }
     }
+  }
+
+  @Contract(pure = true)
+  private static String getWhitespacesBeforeLFWhenLeadingAsterisk(PsiElement element) {
+    final PsiElement sibling = element.getNextSibling();
+    if (sibling == null || sibling.getNode().getElementType() != JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) {
+      return element.getText();
+    }
+
+    final int lf = element.getText().lastIndexOf('\n');
+
+    return lf == -1 ? element.getText() : element.getText().substring(0, lf + 1);
   }
 
   @Contract(mutates = "param1")

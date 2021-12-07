@@ -50,9 +50,9 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
       "<div class=\"definition\"><pre><b>foo.bar</b><br/>" +
       pluginXml +
       "<div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span> <span style=\"color:#000080;font-weight:bold;\">class</span> <span style=\"color:#000000;\">MyExtensionPoint</span></pre></div><div class='content'>\n" +
-      "   MyExtensionPoint JavaDoc.\n" +
+      "  MyExtensionPoint JavaDoc.\n" +
       " </div><table class='sections'><p></table><table class=\"sections\"><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#implementationClass\"><code>implementationClass</code></a></p></td><td valign=\"top\">String (required)</td></tr><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#stringCanBeEmpty\"><code>stringCanBeEmpty</code></a></p></td><td valign=\"top\">String (required, empty allowed)</td></tr><tr><td class=\"section\" valign=\"top\"><p><a href=\"psi_element://bar.MyExtensionPoint#intValue\"><code>&lt;intValue&gt;</code></a></p></td><td valign=\"top\">Integer</td></tr><br/></table></pre></div><div class=\"content\"><a href=\"https://jb.gg/ipe?extensions=foo.bar\">Show Usages in IntelliJ Platform Explorer</a></div><div class=\"content\"><h2>Extension Point Implementation</h2><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span> <span style=\"color:#000080;font-weight:bold;\">interface</span> <span style=\"color:#000000;\">MyExtension</span></pre></div><div class='content'>\n" +
-      "   My Extension Javadoc.\n" +
+      "  My Extension Javadoc.\n" +
       " </div><table class='sections'><p></table></div>",
       provider.generateDoc(docElement, getOriginalElement()));
   }
@@ -74,7 +74,7 @@ public class ExtensionPointDocumentationProviderTest extends LightJavaCodeInsigh
 
     assertEquals(
       "<div class=\"definition\"><pre><b>foo.bar</b><br/>interfaceExtensionPointDocumentation.xml</pre></div><div class=\"content\"><a href=\"https://jb.gg/ipe?extensions=foo.bar\">Show Usages in IntelliJ Platform Explorer</a></div><div class=\"content\"><h2>Extension Point Implementation</h2><div class='definition'><pre><span style=\"color:#000080;font-weight:bold;\">public</span> <span style=\"color:#000080;font-weight:bold;\">interface</span> <span style=\"color:#000000;\">MyExtension</span></pre></div><div class='content'>\n" +
-      "   My Extension Javadoc.\n" +
+      "  My Extension Javadoc.\n" +
       " </div><table class='sections'><p></table></div>",
       provider.generateDoc(docElement, getOriginalElement()));
   }

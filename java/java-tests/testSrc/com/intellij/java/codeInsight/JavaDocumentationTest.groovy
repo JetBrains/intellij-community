@@ -157,7 +157,7 @@ class JavaDocumentationTest extends LightJavaCodeInsightFixtureTestCase {
     def doc = new JavaDocumentationProvider().generateDoc(method, null)
 
     def expected =
-      "<div class=\'definition\'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class=\'content\'>\n     For example, <a href=\"psi_element://java.lang.String#String(byte[], int, int, java.lang.String)\"><code><span style=\"color:#0000ff;\">String</span><span style=\"\">.</span><span style=\"color:#0000ff;\">String</span><span style=\"\">(</span><span style=\"color:#000080;font-weight:bold;\">byte</span><span style=\"\">[],&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;String)</span></code></a>.\n   </div><table class=\'sections\'></table>"
+      "<div class=\'definition\'><pre><span style=\"color:#000080;font-weight:bold;\">public</span>&nbsp;<span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">m</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><div class=\'content\'>\n  For example, <a href=\"psi_element://java.lang.String#String(byte[], int, int, java.lang.String)\"><code><span style=\"color:#0000ff;\">String</span><span style=\"\">.</span><span style=\"color:#0000ff;\">String</span><span style=\"\">(</span><span style=\"color:#000080;font-weight:bold;\">byte</span><span style=\"\">[],&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;</span><span style=\"color:#000080;font-weight:bold;\">int</span><span style=\"\">,&#32;String)</span></code></a>.\n   </div><table class=\'sections\'></table>";
 
     assert doc == expected
   }
@@ -217,7 +217,7 @@ class Bar {
     def method = PsiTreeUtil.getParentOfType(myFixture.file.findElementAt(myFixture.editor.caretModel.offset), PsiMethod.class)
     def doc = new JavaDocumentationProvider().generateDoc(method, null)
 
-    String expected = "<div class=\'definition\'><pre><span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">foo</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><table class=\'sections\'><p><tr><td valign=\'top\' class=\'section\'><p>From class:</td><td valign=\'top\'><p><a href=\"psi_element://Foo\"><code><span style=\"color:#000000;\">Foo</span></code></a><br>\n    Some doc\n  </td></table>"
+    String expected = "<div class=\'definition\'><pre><span style=\"color:#000080;font-weight:bold;\">void</span>&nbsp;<span style=\"color:#000000;\">foo</span><span style=\"\">(</span><span style=\"\">)</span></pre></div><table class=\'sections\'><p><tr><td valign=\'top\' class=\'section\'><p>From class:</td><td valign=\'top\'><p><a href=\"psi_element://Foo\"><code><span style=\"color:#000000;\">Foo</span></code></a><br>\n  Some doc\n  </td></table>";
 
     assert doc == expected
   }
