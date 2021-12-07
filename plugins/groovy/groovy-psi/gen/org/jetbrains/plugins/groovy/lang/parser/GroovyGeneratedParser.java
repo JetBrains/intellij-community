@@ -5747,7 +5747,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   /* ********************************************************** */
   // primitive_type_element array_type_elements
   //                                  | qualified_class_type_element array_type_elements
-  //                                  | unqualified_class_type_element &(IDENTIFIER | ellipsis)
+  //                                  | unqualified_class_type_element &(weak_keyword | IDENTIFIER | ellipsis)
   //                                  | unqualified_class_type_element array_type_element array_type_elements
   static boolean parameter_type_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "parameter_type_element")) return false;
@@ -5783,7 +5783,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // unqualified_class_type_element &(IDENTIFIER | ellipsis)
+  // unqualified_class_type_element &(weak_keyword | IDENTIFIER | ellipsis)
   private static boolean parameter_type_element_2(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "parameter_type_element_2")) return false;
     boolean r;
@@ -5794,7 +5794,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // &(IDENTIFIER | ellipsis)
+  // &(weak_keyword | IDENTIFIER | ellipsis)
   private static boolean parameter_type_element_2_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "parameter_type_element_2_1")) return false;
     boolean r;
@@ -5804,11 +5804,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // IDENTIFIER | ellipsis
+  // weak_keyword | IDENTIFIER | ellipsis
   private static boolean parameter_type_element_2_1_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "parameter_type_element_2_1_0")) return false;
     boolean r;
-    r = consumeToken(b, IDENTIFIER);
+    r = weak_keyword(b, l + 1);
+    if (!r) r = consumeToken(b, IDENTIFIER);
     if (!r) r = ellipsis(b, l + 1);
     return r;
   }
