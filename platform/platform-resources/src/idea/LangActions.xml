@@ -1445,6 +1445,8 @@
 
     <action id="SeverityEditorDialog" class="com.intellij.codeInspection.ex.SeverityEditorDialogAction"/>
 
+    <action class="com.intellij.codeInsight.codeVision.ShowCodeVisionPopupAction" id="CodeVision.ShowMore" />
+
     <group id="InspectionToolWindow.TreePopup" compact="true">
       <reference ref="EditSource"/>
       <reference ref="FindUsages"/>

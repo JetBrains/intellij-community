@@ -1,0 +1,56 @@
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.codeInsight.codeVision.settings
+
+import com.intellij.codeInsight.codeVision.CodeVisionBundle
+import com.intellij.codeInsight.codeVision.CodeVisionHost
+import com.intellij.codeInsight.codeVision.CodeVisionProvider
+import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.project.Project
+
+interface CodeVisionGroupSettingProvider {
+  /**
+   * Group id settings refer to. @see [CodeVisionProvider.groupId]
+   */
+  val groupId: String
+
+  /**
+   * Name that shown in settings
+   */
+  open val groupName: String
+    get() = CodeVisionBundle.message("codeLens.${groupId}.name")
+
+  open val description: String
+    get() = CodeVisionBundle.message("codeLens.${groupId}.description")
+
+  fun createModel(project: Project): CodeVisionGroupSettingModel {
+    val providers = CodeVisionHost.getInstance(project).providers.filter { it.groupId == groupId }
+    val settings = CodeVisionSettings.instance()
+    val isEnabled = settings.codeVisionEnabled && settings.isProviderEnabled(groupId)
+    return createSettingsModel(isEnabled, providers)
+  }
+
+  open fun createSettingsModel(isEnabled: Boolean, providers: List<CodeVisionProvider<*>>): CodeVisionGroupSettingModel {
+    return CodeVisionGroupDefaultSettingModel(groupName, groupId, description, isEnabled, providers)
+  }
+
+  object EP {
+    val EXTENSION_POINT_NAME =
+      ExtensionPointName.create<CodeVisionGroupSettingProvider>("com.intellij.config.codeVisionGroupSettingProvider")
+
+    fun findGroupModels(): List<CodeVisionGroupSettingProvider> {
+      val extensions = EXTENSION_POINT_NAME.extensions
+      val distinctExtensions = extensions.distinctBy { it.groupId }
+      if (extensions.size != distinctExtensions.size)
+        logger<CodeVisionGroupSettingProvider>().error("Multiple CodeLensGroupSettingProvider with same groupId are registered")
+
+      return distinctExtensions
+    }
+
+    fun findSingleModels(project: Project): List<CodeVisionGroupSettingProvider> {
+      val registeredGroupIds = EXTENSION_POINT_NAME.extensions.distinctBy { it.groupId }.map { it.groupId }
+      val providersWithoutGroup = CodeVisionHost.getInstance(project).providers.filter { registeredGroupIds.contains(it.groupId).not() }
+      return providersWithoutGroup.map { CodeVisionUngroppedSettingProvider(it.groupId) }
+    }
+  }
+}

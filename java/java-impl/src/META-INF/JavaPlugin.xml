@@ -2228,8 +2228,11 @@
     <jreProvider implementation="com.intellij.execution.ui.BundledJreProvider"/>
     <registryKey key="ide.java.show.bundled.runtime" defaultValue="true" description="Enables using bundled JetBrains Runtime for execution"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.hints.JavaCodeAuthorInlayHintsProvider"/>
+    <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaReferencesCodeVisionProvider"/>
+    <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.impl.JavaInheritorsCodeVisionProvider"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.impl.JavaCodeVisionProvider"/>
     <codeInsight.inlayProvider language="JAVA" implementationClass="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemHintProvider"/>
+    <codeInsight.daemonBoundCodeVisionProvider implementation="com.intellij.codeInsight.daemon.problems.pass.ProjectProblemCodeVisionProvider"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.daemon.impl.JavaCodeVisionUsageCollector"/>
     <notificationGroup id="Clean artifact" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Compiler" displayType="NONE" bundle="messages.JavaCompilerBundle" key="notification.group.compiler"/>

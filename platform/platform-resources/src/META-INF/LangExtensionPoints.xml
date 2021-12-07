@@ -370,6 +370,22 @@
                     interface="com.intellij.codeInsight.hints.InlayHintsProviderFactory"
                     dynamic="true"/>
 
+    <extensionPoint qualifiedName="com.intellij.codeInsight.codeVisionProvider"
+                    interface="com.intellij.codeInsight.codeVision.CodeVisionProvider"
+                    dynamic="true" />
+
+    <extensionPoint qualifiedName="com.intellij.codeInsight.codeVisionProviderFactory"
+                    interface="com.intellij.codeInsight.codeVision.CodeVisionProviderFactory"
+                    dynamic="true" />
+
+    <extensionPoint qualifiedName="com.intellij.codeInsight.daemonBoundCodeVisionProvider"
+                    interface="com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProvider"
+                    dynamic="true" />
+
+    <extensionPoint name="codeVisionPainterProvider" beanClass="com.intellij.openapi.util.ClassExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.codeVision.ui.renderers.painters.ICodeVisionEntryBasePainter"/>
+    </extensionPoint>
+
     <extensionPoint name="codeInsight.typeInfo" beanClass="com.intellij.lang.LanguageExtensionPoint" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.lang.ExpressionTypeProvider"/>
     </extensionPoint>

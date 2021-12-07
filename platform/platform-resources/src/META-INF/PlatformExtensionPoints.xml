@@ -414,7 +414,8 @@
     <extensionPoint name="dynamicActionConfigurationCustomizer" interface="com.intellij.openapi.actionSystem.impl.DynamicActionConfigurationCustomizer" dynamic="true"/>
 
     <extensionPoint name="config.inlaySettingsProvider" interface="com.intellij.codeInsight.hints.settings.InlaySettingsProvider" dynamic="true"/>
-
+    <extensionPoint name="config.inlayGroupSettingProvider" interface="com.intellij.codeInsight.hints.settings.InlayGroupSettingProvider" dynamic="true"/>
+    <extensionPoint name="config.codeVisionGroupSettingProvider" interface="com.intellij.codeInsight.codeVision.settings.CodeVisionGroupSettingProvider" dynamic="true"/>
     <extensionPoint name="breadcrumbsPresentationProvider" interface="com.intellij.xml.breadcrumbs.BreadcrumbsPresentationProvider" dynamic="true"/>
     <extensionPoint name="unknownSdkResolver" interface="com.intellij.openapi.roots.ui.configuration.UnknownSdkResolver" dynamic="true"/>
     <extensionPoint name="unknownSdkContributor" interface="com.intellij.openapi.projectRoots.impl.UnknownSdkContributor" dynamic="true"/>

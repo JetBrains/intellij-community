@@ -399,6 +399,13 @@
     <projectService serviceInterface="com.intellij.codeInsight.highlighting.HighlightManager"
                     serviceImplementation="com.intellij.codeInsight.highlighting.HighlightManagerImpl"/>
 
+    <applicationService serviceImplementation="com.intellij.codeInsight.codeVision.settings.CodeVisionSettings" />
+    <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionHost" preload="true" />
+    <projectService serviceImplementation="com.intellij.codeInsight.codeVision.CodeVisionContextProvider" />
+
+    <projectService serviceImplementation="com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionCacheService" />
+    <highlightingPassFactory implementation="com.intellij.codeInsight.hints.codeVision.CodeVisionPassFactory"/>
+
     <projectService serviceInterface="com.intellij.ide.GeneratedSourceFileChangeTracker"
                     serviceImplementation="com.intellij.ide.GeneratedSourceFileChangeTrackerImpl" preload="notHeadless"/>
     <editorFactoryDocumentListener implementation="com.intellij.ide.GeneratedSourceFileChangeTrackerImpl$MyDocumentListener"/>
@@ -456,7 +463,12 @@
 
     <applicationService serviceImplementation="com.intellij.codeInsight.hints.InlayHintsSettings"/>
     <codeInsight.inlayProviderFactory implementation="com.intellij.codeInsight.hints.SingleLanguageInlayProviderFactory"/>
-
+    <codeInsight.codeVisionProviderFactory implementation="com.intellij.codeInsight.codeVision.DefaultCodeVisionProviderFactory"/>
+    <codeInsight.codeVisionProviderFactory implementation="com.intellij.codeInsight.hints.codeVision.DaemonBoundCodeVisionProviderFactory"/>
+    <config.inlayGroupSettingProvider implementation="com.intellij.codeInsight.codeVision.settings.CodeVisionGlobalSettingsProvider"/>
+    <config.codeVisionGroupSettingProvider implementation="com.intellij.codeInsight.codeVision.settings.impl.CodeVisionInheritorsSettingsProvider"/>
+    <config.codeVisionGroupSettingProvider implementation="com.intellij.codeInsight.codeVision.settings.impl.CodeVisionProblemsSettingsProvider"/>
+    <config.codeVisionGroupSettingProvider implementation="com.intellij.codeInsight.codeVision.settings.impl.CodeVisionUsagesSettingsProvider"/>
     <projectService serviceImplementation="com.intellij.codeInsight.daemon.impl.ErrorStripeUpdateManager"/>
 
     <applicationService serviceInterface="com.intellij.framework.detection.FileContentPattern$ParseXml"
@@ -772,6 +784,11 @@
     <editorOptionsProvider instance="com.intellij.application.options.editor.GutterIconsConfigurable" id="editor.preferences.gutterIcons"/>
     <search.optionContributor implementation="com.intellij.application.options.editor.GutterIconsSearchableOptionContributor"/>
 
+    <!-- Code Lens -->
+    <codeVisionPainterProvider forClass="com.intellij.codeInsight.codeVision.ui.model.CounterCodeVisionEntry" implementationClass="com.intellij.codeInsight.codeVision.ui.renderers.providers.CounterCodeVisionEntryPainter"/>
+    <codeVisionPainterProvider forClass="com.intellij.codeInsight.codeVision.ui.model.TextCodeVisionEntry" implementationClass="com.intellij.codeInsight.codeVision.ui.renderers.providers.TextCodeVisionEntryPainter"/>
+    <codeVisionPainterProvider forClass="com.intellij.codeInsight.codeVision.ui.model.AdditionalCodeVisionEntry" implementationClass="com.intellij.codeInsight.codeVision.ui.renderers.providers.AdditionalCodeVisionEntryPainter"/>
+
     <!-- Colors & Fonts-->
     <applicationConfigurable groupId="editor" groupWeight="180" dynamic="true" instance="com.intellij.application.options.colors.ColorAndFontOptions"
                            id="reference.settingsdialog.IDE.editor.colors" key="title.colors.and.fonts" bundle="messages.ApplicationBundle"/>
@@ -913,6 +930,9 @@
     <projectService serviceImplementation="com.intellij.ide.projectView.impl.ProjectViewState"/>
     <projectService serviceInterface="com.intellij.execution.ui.RunnerLayoutUi$Factory"
                     serviceImplementation="com.intellij.execution.ui.layout.impl.RunnerLayoutUiFactoryImpl"/>
+
+    <projectService serviceImplementation="com.intellij.codeInsight.codeVision.ui.CodeVisionView" />
+    <projectService serviceImplementation="com.intellij.codeInsight.codeVision.ui.model.ProjectCodeVisionModel" />
 
     <http.fileEditorActionProvider implementation="com.intellij.openapi.fileEditor.impl.http.LangRemoteFileEditorActionProvider"/>
 
