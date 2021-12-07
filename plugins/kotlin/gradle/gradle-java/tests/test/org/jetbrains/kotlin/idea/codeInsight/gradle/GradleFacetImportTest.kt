@@ -171,6 +171,7 @@ abstract class GradleFacetImportTest : KotlinGradleImportingTestCase() {
     }
 
     class JsImport : GradleFacetImportTest() {
+        @Test
         fun testJsImport() {
             configureByFiles()
             importProject()
@@ -410,6 +411,8 @@ abstract class GradleFacetImportTest : KotlinGradleImportingTestCase() {
     }
 
     class CommonImportByPlatformPlugin : GradleFacetImportTest() {
+        @Ignore
+        @Test
         @TargetVersions("4.9")
         fun testCommonImportByPlatformPlugin() {
             configureByFiles()
