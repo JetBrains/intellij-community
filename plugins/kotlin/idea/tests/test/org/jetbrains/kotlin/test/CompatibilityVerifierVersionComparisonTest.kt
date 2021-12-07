@@ -49,7 +49,7 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
 
         assertEquals("1.4.20", version.kotlinVersion)
         assertEquals("dev", version.status)
-        assertEquals("4575", version.kotlinBuildNumber)
+        assertEquals(4575, version.kotlinVersionVerbose.buildNumber)
         assertEquals("45", version.buildNumber)
         assertEquals(PlatformVersion.Platform.IDEA, version.platformVersion.platform)
         assertEquals("203.1234", version.platformVersion.version)
