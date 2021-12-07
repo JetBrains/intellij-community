@@ -97,17 +97,20 @@
                      bundle="MyBundle"
                      groupKey="my.key"
                      titleKey="my.key"
+                     trailingLabelKey="my.key"
                      descriptionKey="my.key"/>
     <advancedSetting id="myAdvancedSettingDefaultBundle"
                      default="dummy"
                      groupKey="my.key"
                      titleKey="my.key"
+                     trailingLabelKey="my.key"
                      descriptionKey="my.key"/>
     <advancedSetting id="myAdvancedSettingInvalid"
                      default="dummy"
                      bundle="<error descr="Cannot resolve property bundle">INVALID_BUNDLE</error>"
                      groupKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
                      titleKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
+                     trailingLabelKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"
                      descriptionKey="<error descr="Cannot resolve property key">INVALID_KEY</error>"/>
 
     <schemeImporter nameKey="my.key" nameBundle="MyBundle"/>

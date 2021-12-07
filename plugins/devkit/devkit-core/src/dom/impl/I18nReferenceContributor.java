@@ -154,6 +154,13 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                             return ApplicationBundle.BUNDLE;
                                           }
                                         });
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"trailingLabelKey"}, Holder.ADVANCED_SETTINGS_EP),
+                                        new PropertyKeyReferenceProvider(false, "trailingLabelKey", null) {
+                                          @Override
+                                          protected String getFallbackBundleName() {
+                                            return ApplicationBundle.BUNDLE;
+                                          }
+                                        });
 
     final XmlAttributeValuePattern separatorSynonymPattern =
       xmlAttributeValue("key")
