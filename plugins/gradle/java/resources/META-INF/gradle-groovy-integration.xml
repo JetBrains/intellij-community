@@ -100,7 +100,7 @@
                     implementationClass="org.jetbrains.plugins.gradle.service.resolve.GradleTaskDeclarationTypeCalculator"/>
     <unresolvedHighlightFilter implementation="org.jetbrains.plugins.gradle.service.resolve.GradleUnresolvedReferenceFilter"/>
     <inlayHintFilter implementation="org.jetbrains.plugins.gradle.dsl.GradleInlayHintFilter"/>
-    <inspectionDisabler implementation="org.jetbrains.plugins.gradle.codeInspection.GradleFileTypeInspectionDisabler"/>
+    <inspectionDisabler filetype="Gradle" implementationClass="org.jetbrains.plugins.gradle.codeInspection.GradleFileTypeInspectionDisabler"/>
   </extensions>
 
   <actions>

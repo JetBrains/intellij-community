@@ -54,7 +54,11 @@
     <extensionPoint name="expectedTypesContributor" dynamic="true"
                     interface="org.jetbrains.plugins.groovy.lang.psi.expectedTypes.GroovyExpectedTypesContributor"/>
 
-    <extensionPoint name="inspectionDisabler" dynamic="true" interface="org.jetbrains.plugins.groovy.codeInspection.FileTypeInspectionDisabler"/>
+    <extensionPoint name="inspectionDisabler" beanClass="com.intellij.openapi.fileTypes.FileTypeExtensionPoint" dynamic="true">
+      <with attribute="implementationClass" implements="org.jetbrains.plugins.groovy.codeInspection.FileTypeInspectionDisabler"/>
+    </extensionPoint>
+
+
 
     <extensionPoint name="positionManagerDelegate" dynamic="true"
                     interface="org.jetbrains.plugins.groovy.extensions.debugger.ScriptPositionManagerHelper"/>

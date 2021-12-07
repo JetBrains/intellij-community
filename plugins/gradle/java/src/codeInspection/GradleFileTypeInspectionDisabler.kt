@@ -3,26 +3,19 @@ package org.jetbrains.plugins.gradle.codeInspection
 
 import com.intellij.codeInspection.LocalInspectionTool
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.fileTypes.FileType
-import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.util.Disposer
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.plugins.gradle.config.GradleFileType
 import org.jetbrains.plugins.groovy.codeInspection.FileTypeInspectionDisabler
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 
-private val DISABLEABLE_INSPECTIONS : Map<out String, Set<Class<out LocalInspectionTool>>> = mapOf(
-  GradleFileType.name to setOf(
+private val DISABLEABLE_INSPECTIONS : Set<Class<out LocalInspectionTool>> = setOf(
     GrUnresolvedAccessInspection::class.java,
     GroovyAssignabilityCheckInspection::class.java,
-  )
 )
 
 class GradleFileTypeInspectionDisabler : FileTypeInspectionDisabler {
-  override fun getDisableableInspections(): Map<out FileType, Set<Class<out LocalInspectionTool>>> =
-    if (shouldDisable) DISABLEABLE_INSPECTIONS.mapKeys { FileTypeRegistry.getInstance().findFileTypeByName(it.key) }
-    else emptyMap()
+  override fun getDisableableInspections(): Set<Class<out LocalInspectionTool>> = if (shouldDisable) DISABLEABLE_INSPECTIONS else emptySet()
 }
 
 private var shouldDisable: Boolean = true
