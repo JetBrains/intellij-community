@@ -66,7 +66,7 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
     val presentation = (element as? PSIPresentationBgRendererWrapper.PsiItemWithPresentation)?.presentation
 
     cache as Cache?
-    val file = if (item is PsiFileSystemItem) item.virtualFile else item.containingFile?.virtualFile
+    val file = getContainingFile(item)
     val project = item.project
 
     val data = HashMap<String, Any>()
@@ -75,6 +75,15 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
     }
     data.putAll(getElementFeatures(item, presentation, currentTime, searchQuery, elementPriority, cache))
     return data
+  }
+
+  private fun getContainingFile(item: PsiElement) = if (item is PsiFileSystemItem) {
+    item.virtualFile
+  }
+  else {
+    ReadAction.compute<VirtualFile?, Nothing> {
+      item.containingFile?.virtualFile
+    }
   }
 
   private fun getFileFeatures(data: HashMap<String, Any>,
