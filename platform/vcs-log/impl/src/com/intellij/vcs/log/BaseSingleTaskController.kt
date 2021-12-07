@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log
 
-import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
@@ -9,7 +8,6 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.util.CheckedDisposable
-import com.intellij.openapi.util.Disposer
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.vcs.log.data.SingleTaskController
@@ -48,7 +46,7 @@ abstract class BaseSingleTaskController<Request, Result>(name: String, resultCon
   abstract fun process(requests: List<Request>, previousResult: Result?): Result
 }
 
-fun runInEdt(disposable: Disposable, action: () -> Unit) {
+fun runInEdt(disposable: CheckedDisposable, action: () -> Unit) {
   if (ApplicationManager.getApplication().isDispatchThread) {
     action()
   }
@@ -57,11 +55,8 @@ fun runInEdt(disposable: Disposable, action: () -> Unit) {
   }
 }
 
-fun runInEdtAsync(disposable: Disposable, action: () -> Unit) {
-  ApplicationManager.getApplication().invokeLater(action) {
-    if (disposable is CheckedDisposable) disposable.isDisposed
-    else Disposer.isDisposed(disposable)
-  }
+fun runInEdtAsync(disposable: CheckedDisposable, action: () -> Unit) {
+  ApplicationManager.getApplication().invokeLater(action) { disposable.isDisposed }
 }
 
 fun ExecutorService.submitSafe(log: Logger, task: () -> Unit): Future<*> = this.submit {
