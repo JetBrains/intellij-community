@@ -249,7 +249,7 @@ class PythonOnboardingTour :
 
     val usedInterpreter = project.pythonSdk?.versionString ?: "none"
 
-    primaryLanguage.onboardingFeedbackData = object : OnboardingFeedbackData("PyCharm Onbdoarding Tour Feedback", lessonEndInfo) {
+    primaryLanguage.onboardingFeedbackData = object : OnboardingFeedbackData("PyCharm Onboarding Tour Feedback", lessonEndInfo) {
       override val feedbackReportId = "pycharm_onboarding_tour"
 
       val interpreters: List<String>? by lazy {
