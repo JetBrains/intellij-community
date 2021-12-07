@@ -30,7 +30,7 @@ class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBas
                     PsiTreeUtil.getParentOfType(
                         target, KtReturnExpression::class.java, KtThrowExpression::class.java, KtFunction::class.java
                     )?.takeUnless { it is KtFunction }
-                else -> parent
+                else -> null
             } as? KtExpression ?: return null
             return OnExitUsagesHandler(editor, file, returnOrThrow)
         }
