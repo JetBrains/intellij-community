@@ -53,7 +53,7 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
   @NonNls private static final String TEXT = ".text";
   @NonNls private static final String DESCRIPTION = ".description";
   @NonNls private static final String TRAILING_LABEL = ".trailingLabel";
-  @NonNls private static final String ADVANCED_SETTING = "advanced.setting.";
+  @NonNls public static final String ADVANCED_SETTING = "advanced.setting.";
   @NonNls public static final String BUNDLE_PROPERTIES = "Bundle.properties";
 
   @NonNls private static final String TOOLWINDOW_STRIPE_PREFIX = "toolwindow.stripe.";

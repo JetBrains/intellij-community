@@ -34,6 +34,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.devkit.DevKitBundle;
 import org.jetbrains.idea.devkit.dom.*;
+import org.jetbrains.idea.devkit.references.MessageBundleReferenceContributor;
 import org.jetbrains.idea.devkit.util.PsiUtil;
 
 import javax.swing.*;
@@ -41,8 +42,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static com.intellij.patterns.StandardPatterns.or;
-import static com.intellij.patterns.XmlPatterns.xmlAttributeValue;
-import static com.intellij.patterns.XmlPatterns.xmlTag;
+import static com.intellij.patterns.XmlPatterns.*;
 
 public class I18nReferenceContributor extends PsiReferenceContributor {
 
@@ -117,8 +117,17 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                                                   Holder.SPRING_TOOL_WINDOW_CONTENT),
                                         new PropertyKeyReferenceProvider(false, "displayName", "bundle"));
 
-    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"groupKey"}, Holder.ADVANCED_SETTINGS_EP),
-                                        new PropertyKeyReferenceProvider(false, "groupKey", null) {
+
+    XmlAttributeValuePattern idAttributeWithoutTitleKeyPattern =
+      extensionAttributePattern(new String[]{"id"}, Holder.ADVANCED_SETTINGS_EP)
+        .andNot(xmlAttributeValue().withSuperParent(2, xmlTag().withChild(xmlAttribute("titleKey"))));
+    registrar.registerReferenceProvider(idAttributeWithoutTitleKeyPattern,
+                                        new PropertyKeyReferenceProvider(false, "id", null) {
+                                          @Override
+                                          protected @NotNull String getFinalKeyValue(String keyValue) {
+                                            return MessageBundleReferenceContributor.ADVANCED_SETTING + keyValue;
+                                          }
+
                                           @Override
                                           protected String getFallbackBundleName() {
                                             return ApplicationBundle.BUNDLE;
@@ -126,6 +135,13 @@ public class I18nReferenceContributor extends PsiReferenceContributor {
                                         });
     registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"titleKey"}, Holder.ADVANCED_SETTINGS_EP),
                                         new PropertyKeyReferenceProvider(false, "titleKey", null) {
+                                          @Override
+                                          protected String getFallbackBundleName() {
+                                            return ApplicationBundle.BUNDLE;
+                                          }
+                                        });
+    registrar.registerReferenceProvider(extensionAttributePattern(new String[]{"groupKey"}, Holder.ADVANCED_SETTINGS_EP),
+                                        new PropertyKeyReferenceProvider(false, "groupKey", null) {
                                           @Override
                                           protected String getFallbackBundleName() {
                                             return ApplicationBundle.BUNDLE;
