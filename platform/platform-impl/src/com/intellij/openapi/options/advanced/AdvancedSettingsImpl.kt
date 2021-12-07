@@ -53,7 +53,7 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
 
   /**
    * The default value of the setting. Also determines the type of control used to display the setting. If [enumClass] is specified,
-   * the setting is shown as a combobox. If the default value is [true] or [false], the setting is shown as a checkbox. Otherwise, the
+   * the setting is shown as a combobox. If the default value is `true` or `false`, the setting is shown as a checkbox. Otherwise, the
    * setting is shown as a text field, and if the default value is an integer, only integers will be accepted as property values.
    */
   @Attribute("default")
