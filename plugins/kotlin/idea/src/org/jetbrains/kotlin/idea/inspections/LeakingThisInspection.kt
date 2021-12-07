@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.cfg.LeakingThisDescriptor.*
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyzeWithContent
-import org.jetbrains.kotlin.idea.quickfix.AddModifierFixMpp
+import org.jetbrains.kotlin.idea.quickfix.AddModifierFixFE10
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
@@ -97,7 +97,7 @@ class LeakingThisInspection : AbstractKotlinInspection() {
             val useScope = declaration.useScope
             if (DefinitionsScopedSearch.search(declaration, useScope).findFirst() != null) return null
             if ((declaration.containingClassOrObject as? KtClass)?.isInterface() == true) return null
-            return IntentionWrapper(AddModifierFixMpp(declaration, KtTokens.FINAL_KEYWORD))
+            return IntentionWrapper(AddModifierFixFE10(declaration, KtTokens.FINAL_KEYWORD))
         }
     }
 }
