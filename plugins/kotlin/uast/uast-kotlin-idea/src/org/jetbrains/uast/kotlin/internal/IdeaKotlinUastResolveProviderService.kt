@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.returnIfNoDescriptorForDeclarati
 import org.jetbrains.kotlin.idea.core.resolveCandidates
 import org.jetbrains.kotlin.idea.project.TargetPlatformDetector
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
-import org.jetbrains.kotlin.idea.roots.isUnderKotlinSourceRootTypes
+import org.jetbrains.kotlin.idea.roots.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.platform.jvm.isJvm
@@ -61,14 +61,7 @@ class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
 
     override fun getReferenceVariants(ktElement: KtElement, nameHint: String): Sequence<DeclarationDescriptor> {
         val resolutionFacade = ktElement.getResolutionFacade()
-        val bindingContext =
-            try {
-                ktElement.analyze(resolutionFacade)
-            } catch (e: Exception) {
-                e.returnIfNoDescriptorForDeclarationException(condition = {
-                    it && (!ktElement.isPhysical || !isUnderKotlinSourceRootTypes(ktElement.containingFile))
-                }) { BindingContext.EMPTY }
-            }
+        val bindingContext = ktElement.safeAnalyzeNonSourceRootCode(resolutionFacade)
         val call = ktElement.getCall(bindingContext) ?: return emptySequence()
         return call.resolveCandidates(bindingContext, resolutionFacade).map { it.candidateDescriptor }.asSequence()
     }
