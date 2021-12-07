@@ -96,7 +96,7 @@ public class FontOptions extends AbstractFontOptionsPanel {
   }
 
   @Nullable
-  private Component createOverwriteCheckBox() {
+  protected Component createOverwriteCheckBox() {
     if (getInheritedFontTitle() != null) {
       JPanel overwritePanel = new JPanel(new FlowLayout(FlowLayout.LEADING, 0,0 ));
       overwritePanel.setBorder(BorderFactory.createEmptyBorder());

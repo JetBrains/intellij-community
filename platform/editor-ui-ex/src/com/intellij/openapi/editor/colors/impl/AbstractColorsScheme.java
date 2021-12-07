@@ -783,6 +783,9 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @NotNull
   @Override
   public FontPreferences getConsoleFontPreferences() {
+    if (!AppConsoleFontOptions.getInstance().isUseEditorFont()) {
+      return AppConsoleFontOptions.getInstance().getFontPreferences();
+    }
     return myConsoleFontPreferences;
   }
 
@@ -807,7 +810,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @NotNull
   @NlsSafe
   public String getConsoleFontName() {
-    return myConsoleFontPreferences.getFontFamily();
+    return getConsoleFontPreferences().getFontFamily();
   }
 
   private ModifiableFontPreferences ensureEditableConsoleFontPreferences() {
@@ -831,8 +834,8 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   public int getConsoleFontSize() {
     String font = getConsoleFontName();
     UISettings uiSettings = UISettings.getInstanceOrNull();
-    if ((uiSettings == null || !uiSettings.getPresentationMode()) && myConsoleFontPreferences.hasSize(font)) {
-      return myConsoleFontPreferences.getSize(font);
+    if ((uiSettings == null || !uiSettings.getPresentationMode()) && getConsoleFontPreferences().hasSize(font)) {
+      return getConsoleFontPreferences().getSize(font);
     }
     return getEditorFontSize();
   }
@@ -847,7 +850,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
 
   @Override
   public float getConsoleLineSpacing() {
-    return myConsoleFontPreferences.getLineSpacing();
+    return getConsoleFontPreferences().getLineSpacing();
   }
 
   @Override
