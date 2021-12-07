@@ -2,8 +2,11 @@
 package org.jetbrains.plugins.gradle.codeInspection
 
 import com.intellij.codeInspection.LocalInspectionTool
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.util.Disposer
+import org.jetbrains.annotations.TestOnly
 import org.jetbrains.plugins.gradle.config.GradleFileType
 import org.jetbrains.plugins.groovy.codeInspection.FileTypeInspectionDisabler
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
@@ -17,7 +20,19 @@ private val DISABLEABLE_INSPECTIONS : Map<out String, Set<Class<out LocalInspect
 )
 
 class GradleFileTypeInspectionDisabler : FileTypeInspectionDisabler {
-  override fun getDisableableInspections(): Map<out FileType, Set<Class<out LocalInspectionTool>>> = DISABLEABLE_INSPECTIONS.mapKeys {
-    FileTypeRegistry.getInstance().findFileTypeByName(it.key)
+  override fun getDisableableInspections(): Map<out FileType, Set<Class<out LocalInspectionTool>>> =
+    if (shouldDisable) DISABLEABLE_INSPECTIONS.mapKeys { FileTypeRegistry.getInstance().findFileTypeByName(it.key) }
+    else emptyMap()
+}
+
+private var shouldDisable: Boolean = true
+
+object GradleDisablerTestUtils {
+  @TestOnly
+  @JvmStatic
+  fun enableAllDisableableInspections(disposable: Disposable) {
+    val previousValue = shouldDisable
+    Disposer.register(disposable) { shouldDisable = previousValue }
+    shouldDisable = false
   }
 }

@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing.highlighting
 
-import com.intellij.codeInspection.InspectionProfileEntry
+
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.vfs.VfsUtil
@@ -20,11 +20,7 @@ import groovy.transform.CompileStatic
 import org.gradle.util.GradleVersion
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
-import org.jetbrains.plugins.gradle.config.GradleFileType
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
-import org.jetbrains.plugins.groovy.codeInspection.bugs.GroovyAccessibilityInspection
-import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrMethodCall
 import org.jetbrains.plugins.groovy.util.ResolveTest
 
@@ -145,15 +141,5 @@ abstract class GradleHighlightingBaseTest extends GradleImportingTestCase implem
     def original = assertInstanceOf(method.navigationElement, PsiMethod)
     methodTest(original, originalName, containingClass)
   }
-
-  protected static InspectionProfileEntry[] getTypecheckingInspections() {
-    def unresolvedAccess = new GrUnresolvedAccessInspection()
-    unresolvedAccess.explicitlyEnabledFileTypes.add(GradleFileType.INSTANCE.name)
-    def assignability = new GroovyAssignabilityCheckInspection()
-    assignability.explicitlyEnabledFileTypes.add(GradleFileType.INSTANCE.name)
-    def accessibility = new GroovyAccessibilityInspection()
-    return [unresolvedAccess, assignability, accessibility].toArray(new InspectionProfileEntry[0])
-  }
-
 }
 
