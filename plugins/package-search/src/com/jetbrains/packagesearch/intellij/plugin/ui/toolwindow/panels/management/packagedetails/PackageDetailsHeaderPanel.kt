@@ -331,7 +331,7 @@ private class HeaderLayout : AbstractLayoutManager2() {
             )
 
             val nameLabel = componentByRole[Role.NAME] ?: error("Name label missing")
-            val nameLabelHeight = nameLabel.preferredSize.height
+            val nameLabelHeight = nameLabel.preferredSize.height.coerceAtLeast(nameLabel.font.size)
             val nameLabelButtonGap = if (primaryActionButton.isVisible || overflowButton.isVisible) gapBetweenNameAndButtons else 0
             val nameLabelWidth = primaryActionButton.left - bounds.left - nameLabelButtonGap
 
@@ -347,13 +347,14 @@ private class HeaderLayout : AbstractLayoutManager2() {
             }
 
             val identifierLabel = componentByRole[Role.IDENTIFIER] ?: error("Identifier label missing")
+            val identifierLabelHeight = identifierLabel.preferredSize.height.coerceAtLeast(identifierLabel.font.size)
             val labelsY = maxOf(nameLabel.bottom + vGapBetweenNameAndIdentifier, primaryActionButton.bottom + vGapBetweenNameAndIdentifier)
             if (identifierLabel.isVisible) {
                 identifierLabel.setBounds(
                     bounds.left,
                     labelsY,
                     bounds.width,
-                    if (identifierLabel.isVisible) identifierLabel.preferredSize.height else 0
+                    if (identifierLabel.isVisible) identifierLabelHeight else 0
                 )
             } else {
                 identifierLabel.setBounds(0, nameLabel.bottom, bounds.width, 0)
