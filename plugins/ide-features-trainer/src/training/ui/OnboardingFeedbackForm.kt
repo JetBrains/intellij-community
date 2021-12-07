@@ -76,7 +76,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
                                      openedViaNotification: Boolean): Boolean {
   val saver = mutableListOf<JsonObjectBuilder.() -> Unit>()
 
-  fun feedbackTextArea(fieldName: String, optionalText: @Nls String, width: Int, height: Int): JComponent {
+  fun feedbackTextArea(fieldName: String, optionalText: @Nls String, width: Int, height: Int): JBScrollPane {
     val jTextPane = JBTextArea()
     jTextPane.lineWrap = true
     jTextPane.wrapStyleWord = true
@@ -132,11 +132,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
 
   val (votePanel, likenessResult) = createLikenessPanel()
   saver.add {
-    "like_vote" to when(likenessResult()) {
-      FeedbackLikenessAnswer.LIKE -> "like"
-      FeedbackLikenessAnswer.DISLIKE -> "dislike"
-      FeedbackLikenessAnswer.NO_ANSWER -> ""
-    }
+    "like_vote" to likenessToString(likenessResult())
   }
 
   val systemInfoData = CommonFeedbackSystemInfoData.getCurrentData()
@@ -207,7 +203,8 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
       put("recent_projects", recentProjectsNumber)
     }
 
-    submitGeneralFeedback(project, onboardingFeedbackData.reportTitle, "",
+    val description = getShortDescription(likenessResult(), technicalIssuesOption, freeForm)
+    submitGeneralFeedback(project, onboardingFeedbackData.reportTitle, description,
                           onboardingFeedbackData.reportTitle, jsonConverter.encodeToString(collectedData))
   }
   StatisticBase.logOnboardingFeedbackDialogResult(
@@ -218,6 +215,25 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     experiencedUser = experiencedUserOption.isChosen
   )
   return maySendFeedback
+}
+
+private fun getShortDescription(likenessResult: FeedbackLikenessAnswer,
+                                technicalIssuesOption: FeedbackOption,
+                                freeForm: JBScrollPane): String {
+  val likenessSummaryAnswer = likenessToString(likenessResult)
+
+  return """
+Likeness answer: $likenessSummaryAnswer
+Has technical problems: ${technicalIssuesOption.isChosen}
+Overall experience:
+${(freeForm.viewport.view as? JBTextArea)?.text}
+    """.trimIndent()
+}
+
+private fun likenessToString(likenessResult: FeedbackLikenessAnswer) = when (likenessResult) {
+  FeedbackLikenessAnswer.LIKE -> "like"
+  FeedbackLikenessAnswer.DISLIKE -> "dislike"
+  FeedbackLikenessAnswer.NO_ANSWER -> "no answer"
 }
 
 private fun showSystemData(project: Project?,
