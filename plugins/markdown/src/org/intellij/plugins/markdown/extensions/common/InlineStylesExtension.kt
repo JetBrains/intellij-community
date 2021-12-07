@@ -17,7 +17,9 @@ internal class InlineStylesExtension : MarkdownBrowserPreviewExtension, Resource
   override fun canProvide(resourceName: String): Boolean = resourceName in styles
 
   override fun loadResource(resourceName: String): ResourceProvider.Resource {
-    return when (val text = MarkdownExtension.currentProjectSettings.customStylesheetText) {
+    val settings = MarkdownExtension.currentProjectSettings
+    val text = settings.customStylesheetText.takeIf { settings.useCustomStylesheetText }
+    return when (text) {
       null -> ResourceProvider.Resource(emptyStylesheet)
       else -> ResourceProvider.Resource(text.toByteArray())
     }

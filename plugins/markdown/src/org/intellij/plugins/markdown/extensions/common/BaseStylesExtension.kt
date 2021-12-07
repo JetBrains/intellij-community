@@ -19,7 +19,9 @@ internal class BaseStylesExtension : MarkdownBrowserPreviewExtension, ResourcePr
     if (resourceName == COLORS_CSS_FILENAME) {
       return ResourceProvider.Resource(PreviewLAFThemeStyles.createStylesheet().toByteArray())
     }
-    return when (val path = MarkdownExtension.currentProjectSettings.customStylesheetPath) {
+    val settings = MarkdownExtension.currentProjectSettings
+    val path = settings.customStylesheetPath.takeIf { settings.useCustomStylesheetPath }
+    return when (path) {
       null -> ResourceProvider.loadInternalResource(BaseStylesExtension::class, resourceName)
       else -> ResourceProvider.loadExternalResource(File(path))
     }
