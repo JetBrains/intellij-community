@@ -256,6 +256,10 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(createComment(comment, maxLineLength, action))
   }
 
+  override fun commentHtml(text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
+    return comment(text, MAX_LINE_LENGTH_WORD_WRAP, action)
+  }
+
   override fun link(text: String, action: (ActionEvent) -> Unit): CellImpl<ActionLink> {
     return cell(ActionLink(text, action))
   }
