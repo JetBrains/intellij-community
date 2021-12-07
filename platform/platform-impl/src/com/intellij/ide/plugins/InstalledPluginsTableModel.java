@@ -99,6 +99,7 @@ public class InstalledPluginsTableModel {
                                                         getDependentsToDisable(impls, tempEnabled);
 
     Set<String> pluginNamesToUpdate = descriptorsToUpdate.stream()
+      .filter(descriptor -> !isHiddenImplementationDetail(descriptor))
       .map(IdeaPluginDescriptorImpl::getName)
       .collect(Collectors.toCollection(TreeSet::new));
     if (HIDE_IMPLEMENTATION_DETAILS &&
@@ -143,12 +144,9 @@ public class InstalledPluginsTableModel {
       PluginManagerCore.processAllNonOptionalDependencies(descriptor, dependency -> {
         PluginId dependencyId = dependency.getPluginId();
         PluginEnabledState state = enabledMap.get(dependencyId);
-        if (state == null) {
-          return FileVisitResult.TERMINATE;
-        }
 
         if (!dependencyId.equals(descriptor.getPluginId()) &&
-            state.isDisabled()) {
+            !(state != null && state.isEnabled())) {
           result.add(dependency);
         }
         return FileVisitResult.CONTINUE;

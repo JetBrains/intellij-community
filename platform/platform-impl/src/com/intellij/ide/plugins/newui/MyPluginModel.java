@@ -1145,7 +1145,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
           continue;
         }
 
-        IdeaPluginDescriptorImpl descriptor = pluginIdMap.get(pluginId);
+        IdeaPluginDescriptorImpl descriptor = pluginIdMap.get(dependencyPluginId);
         if (descriptor != null && !isHidden(descriptor)) {
           descriptors.add(descriptor);
         }
