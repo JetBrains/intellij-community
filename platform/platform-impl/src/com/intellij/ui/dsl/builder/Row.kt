@@ -202,6 +202,11 @@ interface Row {
   fun comment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP,
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
+  @Deprecated("Use comment(...) instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun commentHtml(@NlsContexts.DetailedDescription text: String,
+                  action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
+
   /**
    * Creates focusable link with text inside. Should not be used with html in [text]
    */
