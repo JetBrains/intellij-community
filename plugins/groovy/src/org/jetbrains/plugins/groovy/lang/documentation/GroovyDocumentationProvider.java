@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrImplicitVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMapProperty;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -180,6 +181,23 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     }
     else if (element instanceof GrTypeDefinition) {
       return generateClassInfo((GrTypeDefinition)element);
+    }
+    else if (element instanceof GroovyMapProperty) {
+      @Nls StringBuilder buffer = new StringBuilder();
+      GroovyMapProperty mapProperty = (GroovyMapProperty)element;
+      appendStyledSpan(buffer, "Map property\n");
+      PsiType inferredType = mapProperty.getPropertyType();
+      String typeLabel = inferredType != null
+                         ? GroovyBundle.message("documentation.inferred.type.label")
+                         : GroovyBundle.message("documentation.cannot.infer.type.label");
+      appendStyledSpan(buffer, "[" + typeLabel + "]", "color: #909090");
+      if (inferredType != null) {
+        buffer.append(" ");
+        appendTypeString(buffer, inferredType, originalElement, false);
+      }
+      buffer.append(" ");
+      appendStyledSpan(buffer, GroovyDocHighlightingManager.getInstance().getClassNameAttributes(), mapProperty.getName());
+      return buffer.toString();
     }
 
     return null;
