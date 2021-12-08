@@ -2,6 +2,7 @@
 package training.ui
 
 import com.intellij.feedback.FEEDBACK_REPORT_ID_KEY
+import com.intellij.feedback.FeedbackRequestType
 import com.intellij.feedback.dialog.CommonFeedbackSystemInfoData
 import com.intellij.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.submitGeneralFeedback
@@ -205,7 +206,9 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
 
     val description = getShortDescription(likenessResult(), technicalIssuesOption, freeForm)
     submitGeneralFeedback(project, onboardingFeedbackData.reportTitle, description,
-                          onboardingFeedbackData.reportTitle, jsonConverter.encodeToString(collectedData))
+                          onboardingFeedbackData.reportTitle, jsonConverter.encodeToString(collectedData),
+                          feedbackRequestType = FeedbackRequestType.PRODUCTION_REQUEST
+    )
   }
   StatisticBase.logOnboardingFeedbackDialogResult(
     place = getFeedbackEntryPlace(project),
