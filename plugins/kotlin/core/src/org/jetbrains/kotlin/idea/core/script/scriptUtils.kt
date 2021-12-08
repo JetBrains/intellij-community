@@ -33,8 +33,8 @@ fun scriptingInfoLog(message: String) {
     logger.info("[KOTLIN_SCRIPTING] $message")
 }
 
-fun scriptingWarnLog(message: String, throwable: Throwable? = null) {
-    logger.warn("[KOTLIN_SCRIPTING] $message", throwable)
+fun scriptingWarnLog(message: String) {
+    logger.warn("[KOTLIN_SCRIPTING] $message")
 }
 
 fun scriptingWarnLog(message: String, throwable: Throwable?) {
