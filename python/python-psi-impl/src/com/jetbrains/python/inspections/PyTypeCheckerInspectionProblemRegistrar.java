@@ -18,6 +18,7 @@ package com.jetbrains.python.inspections;
 import com.google.common.collect.Sets;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.util.InspectionMessage;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,13 +27,12 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import com.jetbrains.python.PyPsiBundle;
+import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.typing.PyProtocolsKt;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.types.PyClassLikeType;
-import com.jetbrains.python.psi.types.PyStructuralType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -50,7 +50,7 @@ class PyTypeCheckerInspectionProblemRegistrar {
                               @NotNull List<PyTypeCheckerInspection.AnalyzeCalleeResults> calleesResults,
                               @NotNull TypeEvalContext context) {
     if (calleesResults.size() == 1) {
-      registerSingleCalleeProblem(visitor, calleesResults.get(0), context);
+      registerSingleCalleeProblem(visitor, callSite, calleesResults.get(0), context);
     }
     else if (!calleesResults.isEmpty()) {
       registerMultiCalleeProblem(visitor, callSite, argumentTypes, calleesResults, context);
@@ -58,12 +58,35 @@ class PyTypeCheckerInspectionProblemRegistrar {
   }
 
   private static void registerSingleCalleeProblem(@NotNull PyInspectionVisitor visitor,
+                                                  @NotNull PyCallSiteExpression callSite,
                                                   @NotNull PyTypeCheckerInspection.AnalyzeCalleeResults calleeResults,
                                                   @NotNull TypeEvalContext context) {
     for (PyTypeCheckerInspection.AnalyzeArgumentResult argumentResult : calleeResults.getResults()) {
       if (argumentResult.isMatched()) continue;
 
       visitor.registerProblem(argumentResult.getArgument(), getSingleCalleeProblemMessage(argumentResult, context));
+    }
+
+    for (PyTypeCheckerInspection.UnmatchedArgument unmatchedArgument : calleeResults.getUnmatchedArguments()) {
+      var argument = unmatchedArgument.getArgument();
+      var paramSpecTypeName = unmatchedArgument.getParamSpecType().getVariableName();
+      visitor.registerProblem(argument, PyPsiBundle.message("INSP.type.checker.unmapped.argument.with.paramspec", paramSpecTypeName));
+    }
+
+    if (callSite instanceof PyCallExpression) {
+      var argumentList = ((PyCallExpression)callSite).getArgumentList();
+      if (argumentList != null) {
+        var rpar = PyPsiUtils.getFirstChildOfType(argumentList, PyTokenTypes.RPAR);
+        if (rpar != null) {
+          for (PyTypeCheckerInspection.UnmatchedParameter unmatchedParameter : calleeResults.getUnmatchedParameters()) {
+            var parameterName = unmatchedParameter.getParameter().getName();
+            var paramSpecTypeName = unmatchedParameter.getParamSpecType().getVariableName();
+            if (parameterName != null) {
+              visitor.registerProblem(rpar, PyPsiBundle.message("INSP.type.checker.parameter.unfilled", parameterName, paramSpecTypeName));
+            }
+          }
+        }
+      }
     }
   }
 
@@ -144,7 +167,7 @@ class PyTypeCheckerInspectionProblemRegistrar {
       : ContainerUtil.filter(calleesResults, calleeResults -> !isRightOperatorResults.test(calleeResults));
 
     if (preferredOperatorsResults.size() == 1) {
-      registerSingleCalleeProblem(visitor, preferredOperatorsResults.get(0), context);
+      registerSingleCalleeProblem(visitor, binaryExpression, preferredOperatorsResults.get(0), context);
     }
     else {
       visitor.registerProblem(

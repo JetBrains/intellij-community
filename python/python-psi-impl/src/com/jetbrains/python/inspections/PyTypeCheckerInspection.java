@@ -299,6 +299,8 @@ public class PyTypeCheckerInspection extends PyInspection {
       if (callableType == null) return null;
 
       final List<AnalyzeArgumentResult> result = new ArrayList<>();
+      final List<UnmatchedArgument> unmatchedArguments = new ArrayList<>();
+      final List<UnmatchedParameter> unmatchedParameters = new ArrayList<>();
 
       final var receiver = callSite.getReceiver(callableType.getCallable());
       final var substitutions = PyTypeChecker.unifyReceiverWithParamSpecs(receiver, myTypeEvalContext);
@@ -314,7 +316,7 @@ public class PyTypeCheckerInspection extends PyInspection {
 
         if (expected instanceof PyParamSpecType) {
           final var allArguments = callSite.getArguments(callableType.getCallable());
-          analyzeParamSpec((PyParamSpecType)expected, allArguments, substitutions, result);
+          analyzeParamSpec((PyParamSpecType)expected, allArguments, substitutions, result, unmatchedArguments, unmatchedParameters);
           break;
         }
         else if (expected instanceof PyConcatenateType) {
@@ -330,7 +332,7 @@ public class PyTypeCheckerInspection extends PyInspection {
           if (argumentRightBound < allArguments.size()) {
             final var paramSpec = concatenateType.getParamSpec();
             final var restArguments = allArguments.subList(argumentRightBound, allArguments.size());
-            analyzeParamSpec(paramSpec, restArguments, substitutions, result);
+            analyzeParamSpec(paramSpec, restArguments, substitutions, result, unmatchedArguments, unmatchedParameters);
           }
 
           break;
@@ -340,27 +342,56 @@ public class PyTypeCheckerInspection extends PyInspection {
           result.add(new AnalyzeArgumentResult(argument, expected, substituteGenerics(expected, substitutions), actual, matched));
         }
       }
-      final PyCallableParameter positionalContainer = getMappedPositionalContainer(mappedParameters);
-      if (positionalContainer != null) {
-        result.addAll(
-          analyzeContainerMapping(positionalContainer, getArgumentsMappedToPositionalContainer(mappedParameters), substitutions));
+
+      PyCallableParameter positionalContainer = getMappedPositionalContainer(mappedParameters);
+      List<PyExpression> positionalArguments = getArgumentsMappedToPositionalContainer(mappedParameters);
+      PyCallableParameter keywordContainer = getMappedKeywordContainer(mappedParameters);
+      List<PyExpression> keywordArguments = getArgumentsMappedToKeywordContainer(mappedParameters);
+      List<PyExpression> allArguments = ContainerUtil.concat(positionalArguments, keywordArguments);
+
+      PyParamSpecType paramSpecType = getParamSpecTypeFromContainerParameters(keywordContainer, positionalContainer);
+      if (paramSpecType != null) {
+        analyzeParamSpec(paramSpecType, allArguments, substitutions, result, unmatchedArguments, unmatchedParameters);
       }
-      final PyCallableParameter keywordContainer = getMappedKeywordContainer(mappedParameters);
-      if (keywordContainer != null) {
-        result.addAll(analyzeContainerMapping(keywordContainer, getArgumentsMappedToKeywordContainer(mappedParameters), substitutions));
+      else {
+        if (positionalContainer != null) {
+          result.addAll(analyzeContainerMapping(positionalContainer, positionalArguments, substitutions));
+        }
+        if (keywordContainer != null) {
+          result.addAll(analyzeContainerMapping(keywordContainer, keywordArguments, substitutions));
+        }
       }
-      return new AnalyzeCalleeResults(callableType, callableType.getCallable(), result);
+
+      return new AnalyzeCalleeResults(callableType, callableType.getCallable(), result, unmatchedArguments, unmatchedParameters);
     }
 
     private void analyzeParamSpec(@NotNull PyParamSpecType paramSpec, @NotNull List<PyExpression> arguments,
                                   @NotNull PyTypeChecker.GenericSubstitutions substitutions,
-                                  @NotNull List<AnalyzeArgumentResult> result) {
-      final var substParamSpec = substitutions.getParamSpecs().get(paramSpec);
-      paramSpec = substParamSpec == null ? paramSpec : substParamSpec;
-      final var parameters = paramSpec.getParameters();
+                                  @NotNull List<AnalyzeArgumentResult> result,
+                                  @NotNull List<UnmatchedArgument> unmatchedArguments,
+                                  @NotNull List<UnmatchedParameter> unmatchedParameters) {
+      paramSpec = Objects.requireNonNullElse(substitutions.getParamSpecs().get(paramSpec), paramSpec);
+      List<PyCallableParameter> parameters = paramSpec.getParameters();
       if (parameters == null) return;
-      final var parametersTypes = ContainerUtil.map(parameters, it -> it.getType(myTypeEvalContext));
-      matchArgumentsAndTypes(arguments, parametersTypes, substitutions, result);
+
+      var mapping = analyzeArguments(arguments, parameters, myTypeEvalContext);
+      for (var item: mapping.getMappedParameters().entrySet()) {
+        PyExpression argument = item.getKey();
+        PyCallableParameter parameter = item.getValue();
+        PyType argType = myTypeEvalContext.getType(argument);
+        PyType paramType = parameter.getType(myTypeEvalContext);
+        boolean matched = matchParameterAndArgument(paramType, argType, argument, substitutions);
+        result.add(new AnalyzeArgumentResult(argument, paramType, substituteGenerics(paramType, substitutions), argType, matched));
+      }
+      if (!mapping.getUnmappedArguments().isEmpty()) {
+        for (var argument: mapping.getUnmappedArguments()) {
+          unmatchedArguments.add(new UnmatchedArgument(argument, paramSpec));
+        }
+      }
+      var unmappedParameters = mapping.getUnmappedParameters();
+      if (!unmappedParameters.isEmpty()) {
+        unmatchedParameters.add(new UnmatchedParameter(unmappedParameters.get(0), paramSpec));
+      }
     }
 
     private void matchArgumentsAndTypes(@NotNull List<PyExpression> arguments, @NotNull List<PyType> types,
@@ -386,8 +417,8 @@ public class PyTypeCheckerInspection extends PyInspection {
       if (PyTypeChecker.hasGenerics(expected, myTypeEvalContext)) {
         final PyType actual = PyUnionType.union(ContainerUtil.map(arguments, myTypeEvalContext::getType));
         final boolean matched = matchParameterAndArgument(expected, actual, null, substitutions);
-        return ContainerUtil.map(arguments,
-                                 argument -> new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched));
+        return ContainerUtil.map(arguments, argument ->
+          new AnalyzeArgumentResult(argument, expected, expectedWithSubstitutions, actual, matched));
       }
       else {
         return ContainerUtil.map(
@@ -399,6 +430,23 @@ public class PyTypeCheckerInspection extends PyInspection {
           }
         );
       }
+    }
+
+    @Nullable
+    private static PyParamSpecType getParamSpecTypeFromContainerParameters(@Nullable PyCallableParameter positionalContainer,
+                                                                           @Nullable PyCallableParameter keywordContainer) {
+      if (positionalContainer == null && keywordContainer == null) return null;
+      PyCallableParameter container = Objects.requireNonNullElse(positionalContainer, keywordContainer);
+
+      PyParameter parameter = container.getParameter();
+      if (!(parameter instanceof PyNamedParameter)) return null;
+      String annotationValue = ((PyNamedParameter)parameter).getAnnotationValue();
+      if (annotationValue == null ||
+          !(annotationValue.endsWith(".args") || annotationValue.endsWith(".kwargs")) ||
+          annotationValue.split("\\.").length != 2) return null;
+      String containerName = StringUtil.substringBeforeLast(annotationValue, ".");
+
+      return new PyParamSpecType(containerName);
     }
 
     private boolean matchParameterAndArgument(@Nullable PyType parameterType,
@@ -423,7 +471,9 @@ public class PyTypeCheckerInspection extends PyInspection {
     private static boolean matchedCalleeResultsExist(@NotNull List<AnalyzeCalleeResults> calleesResults) {
       return calleesResults
         .stream()
-        .anyMatch(calleeResults -> calleeResults.getResults().stream().allMatch(AnalyzeArgumentResult::isMatched));
+        .anyMatch(calleeResults -> calleeResults.getResults().stream().allMatch(AnalyzeArgumentResult::isMatched) &&
+                                   calleeResults.getUnmatchedArguments().isEmpty() &&
+                                   calleeResults.getUnmatchedParameters().isEmpty());
     }
 
     @NotNull
@@ -462,12 +512,22 @@ public class PyTypeCheckerInspection extends PyInspection {
     @NotNull
     private final List<AnalyzeArgumentResult> myResults;
 
+    @NotNull
+    private final List<UnmatchedArgument> myUnmatchedArguments;
+
+    @NotNull
+    private final List<UnmatchedParameter> myUnmatchedParameters;
+
     AnalyzeCalleeResults(@NotNull PyCallableType callableType,
                          @Nullable PyCallable callable,
-                         @NotNull List<AnalyzeArgumentResult> results) {
+                         @NotNull List<AnalyzeArgumentResult> results,
+                         @NotNull List<UnmatchedArgument> unmatchedArguments,
+                         @NotNull List<UnmatchedParameter> unmatchedParameters) {
       myCallableType = callableType;
       myCallable = callable;
       myResults = results;
+      myUnmatchedArguments = unmatchedArguments;
+      myUnmatchedParameters = unmatchedParameters;
     }
 
     @NotNull
@@ -483,6 +543,16 @@ public class PyTypeCheckerInspection extends PyInspection {
     @NotNull
     public List<AnalyzeArgumentResult> getResults() {
       return myResults;
+    }
+
+    @NotNull
+    List<UnmatchedArgument> getUnmatchedArguments() {
+      return myUnmatchedArguments;
+    }
+
+    @NotNull
+    List<UnmatchedParameter> getUnmatchedParameters() {
+      return myUnmatchedParameters;
     }
   }
 
@@ -536,6 +606,46 @@ public class PyTypeCheckerInspection extends PyInspection {
 
     public boolean isMatched() {
       return myIsMatched;
+    }
+  }
+
+  static class UnmatchedParameter {
+    final private PyCallableParameter myParameter;
+    final private PyParamSpecType myParamSpecType;
+
+    UnmatchedParameter(@NotNull PyCallableParameter parameter, @NotNull PyParamSpecType paramSpecType) {
+      myParameter = parameter;
+      myParamSpecType = paramSpecType;
+    }
+
+    @NotNull
+    public PyCallableParameter getParameter() {
+      return myParameter;
+    }
+
+    @NotNull
+    PyParamSpecType getParamSpecType() {
+      return myParamSpecType;
+    }
+  }
+
+  static class UnmatchedArgument {
+    final private PyExpression myArgument;
+    final private PyParamSpecType myParamSpecType;
+
+    UnmatchedArgument(@NotNull PyExpression argument, @NotNull PyParamSpecType paramSpecType) {
+      myArgument = argument;
+      myParamSpecType = paramSpecType;
+    }
+
+    @NotNull
+    PyExpression getArgument() {
+      return myArgument;
+    }
+
+    @NotNull
+    PyParamSpecType getParamSpecType() {
+      return myParamSpecType;
     }
   }
 }

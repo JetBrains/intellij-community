@@ -959,7 +959,7 @@ public final class PyCallExpressionHelper {
   }
 
   @NotNull
-  private static ArgumentMappingResults analyzeArguments(@NotNull List<PyExpression> arguments,
+  public static ArgumentMappingResults analyzeArguments(@NotNull List<PyExpression> arguments,
                                                          @NotNull List<PyCallableParameter> parameters,
                                                          @NotNull TypeEvalContext context) {
     boolean positionalOnlyMode = ContainerUtil.exists(parameters, p -> p.getParameter() instanceof PySlashParameter);
@@ -1219,7 +1219,7 @@ public final class PyCallExpressionHelper {
     return PyTypeChecker.unifyGenericCallWithParamSpecs(receiver, allMappedParameters, context) == null;
   }
 
-  private static class ArgumentMappingResults {
+  public static class ArgumentMappingResults {
     @NotNull private final Map<PyExpression, PyCallableParameter> myMappedParameters;
     @NotNull private final List<PyCallableParameter> myUnmappedParameters;
     @NotNull private final List<PyExpression> myUnmappedArguments;
