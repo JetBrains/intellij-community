@@ -21,7 +21,7 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
   }
 
   /**
-   * @deprecated use {@link #getTabName(JBTerminalWidget)} instead
+   * @deprecated use {@link JBTerminalWidget#getSessionName()} instead
    */
   @Deprecated
   @Override
@@ -32,15 +32,6 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
     else {
       return sessionName;
     }
-  }
-
-  public @NlsSafe String getTabName(@NotNull JBTerminalWidget terminalWidget) {
-    TtyConnector connector = terminalWidget.getTtyConnector();
-    if (connector instanceof PtyProcessTtyConnector) {
-      // use name from settings for local terminal
-      return TerminalOptionsProvider.getInstance().getTabName();
-    }
-    return terminalWidget.getSessionName();
   }
 
   @Override

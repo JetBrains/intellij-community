@@ -20,6 +20,7 @@ import com.intellij.ui.content.Content
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.SwingHelper
+import org.jetbrains.annotations.Nls
 import java.awt.Font
 import java.awt.Point
 import java.awt.event.FocusAdapter
@@ -50,7 +51,8 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
   }
 
   private fun showContentRenamePopup(baseLabel: BaseLabel, content: Content, project: Project) {
-    val textField = JTextField(content.displayName)
+    val defaultPopupValue = getContentDisplayNameToEdit(content, project)
+    val textField = JTextField(defaultPopupValue)
     textField.selectAll()
 
     val label = JBLabel(labelText)
@@ -83,8 +85,7 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
               textField.repaint()
               return
             }
-            content.displayName = textField.text
-            contentNameUpdated(content, project)
+            applyContentDisplayName(content, project, textField.text)
           }
           balloon.hide()
         }
@@ -104,5 +105,9 @@ open class ToolWindowTabRenameActionBase(val toolWindowId: String, @NlsContexts.
     balloon.show(RelativePoint(baseLabel, Point(baseLabel.width / 2, 0)), Balloon.Position.above)
   }
 
-  open fun contentNameUpdated(content: Content, project: Project) {}
+  open fun getContentDisplayNameToEdit(content: Content, project: Project): @NlsContexts.TabTitle String = content.displayName
+
+  open fun applyContentDisplayName(content: Content, project: Project, @Nls newContentName: String) {
+    content.displayName = newContentName
+  }
 }
