@@ -3,6 +3,7 @@ package com.intellij.jarRepository;
 
 import com.intellij.CommonBundle;
 import com.intellij.core.JavaPsiBundle;
+import com.intellij.execution.process.ProcessIOExecutorService;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.jarRepository.services.MavenRepositoryServicesManager;
 import com.intellij.notification.Notification;
@@ -82,7 +83,8 @@ public final class JarRepositoryManager {
   }
 
   private static final class JobExecutor {
-    static final ExecutorService INSTANCE = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("RemoteLibraryDownloader");
+    static final ExecutorService INSTANCE = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("RemoteLibraryDownloader",
+                                                                                                           ProcessIOExecutorService.INSTANCE);
   }
 
   public static boolean hasRunningTasks() {
