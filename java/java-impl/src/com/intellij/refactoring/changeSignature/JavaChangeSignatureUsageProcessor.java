@@ -1031,48 +1031,51 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
 
   private static void fixJavadocsForChangedMethod(final PsiMethod method, final JavaChangeInfo changeInfo, int newParamsLength) throws IncorrectOperationException {
     final PsiParameter[] parameters = method.getParameterList().getParameters();
-    final JavaParameterInfo[] newParms = changeInfo.getNewParameters();
-    LOG.assertTrue(parameters.length <= newParamsLength);
-    final Set<PsiParameter> newParameters = new HashSet<>();
-    final String[] oldParameterNames = changeInfo.getOldParameterNames();
-    for (int i = 0; i < newParamsLength; i++) {
-      JavaParameterInfo newParm = newParms[i];
-      if (newParm.getOldIndex() < 0 ||
-          newParm.getOldIndex() == i && !(newParm.getName().equals(oldParameterNames[newParm.getOldIndex()]) && newParm.getTypeText().equals(changeInfo.getOldParameterTypes()[newParm.getOldIndex()]))) {
-        newParameters.add(parameters[i]);
+    PsiClass aClass = method.getContainingClass();
+    if (aClass == null) return;
+    PsiDocComment methodDocComment =  method.getDocComment();
+    PsiDocComment classDocComment = aClass.getDocComment();
+    if (changeInfo.isParameterSetOrOrderChanged() || changeInfo.isParameterNamesChanged()) {
+      final JavaParameterInfo[] newParms = changeInfo.getNewParameters();
+      LOG.assertTrue(parameters.length <= newParamsLength);
+      final Set<PsiParameter> newParameters = new HashSet<>();
+      final String[] oldParameterNames = changeInfo.getOldParameterNames();
+      for (int i = 0; i < newParamsLength; i++) {
+        JavaParameterInfo newParm = newParms[i];
+        if (newParm.getOldIndex() < 0 ||
+            newParm.getOldIndex() == i && !(newParm.getName().equals(oldParameterNames[newParm.getOldIndex()]) && newParm.getTypeText().equals(changeInfo.getOldParameterTypes()[newParm.getOldIndex()]))) {
+          newParameters.add(parameters[i]);
+        }
+      }
+      Condition<Pair<PsiParameter, String>> eqCondition = pair -> {
+        final PsiParameter parameter = pair.first;
+        final String oldParamName = pair.second;
+        final int oldIdx = ArrayUtil.find(oldParameterNames, oldParamName);
+        int newIndex = method.getParameterList().getParameterIndex(parameter);
+        return oldIdx >= 0 && newIndex >= 0 && changeInfo.getNewParameters()[newIndex].getOldIndex() == oldIdx;
+      };
+      Condition<String> matchedToOldParam = paramName -> ArrayUtil.find(oldParameterNames, paramName) >= 0;
+      if (!(method instanceof SyntheticElement) && methodDocComment != null && methodDocComment.findTagByName("param") != null) {
+        RefactoringUtil.fixJavadocsForParams(method, methodDocComment, newParameters, eqCondition, matchedToOldParam);
+      }
+
+      if (JavaPsiRecordUtil.isCanonicalConstructor(method) && classDocComment != null && classDocComment.findTagByName("param") != null) {
+        RefactoringUtil.fixJavadocsForParams(method, classDocComment, newParameters, eqCondition, matchedToOldParam);
       }
     }
-    Condition<Pair<PsiParameter, String>> eqCondition = pair -> {
-      final PsiParameter parameter = pair.first;
-      final String oldParamName = pair.second;
-      final int oldIdx = ArrayUtil.find(oldParameterNames, oldParamName);
-      int newIndex = method.getParameterList().getParameterIndex(parameter);
-      return oldIdx >= 0 && newIndex >= 0 && changeInfo.getNewParameters()[newIndex].getOldIndex() == oldIdx;
-    };
-    Condition<String> matchedToOldParam = paramName -> ArrayUtil.find(oldParameterNames, paramName) >= 0;
-    if (!(method instanceof SyntheticElement)) {
-      RefactoringUtil.fixJavadocsForParams(method, newParameters, eqCondition, matchedToOldParam);
-    }
-    PsiClass aClass = method.getContainingClass();
-    if (aClass != null && JavaPsiRecordUtil.isCanonicalConstructor(method)) {
-      RefactoringUtil.fixJavadocsForParams(method, aClass.getDocComment(), newParameters, eqCondition, matchedToOldParam);
-    }
 
-    if (changeInfo.isReturnTypeChanged()) {
-      PsiDocComment docComment = method.getDocComment();
-      if (docComment != null) {
-        CanonicalTypes.Type type = changeInfo.getNewReturnType();
-        PsiDocTag aReturn = docComment.findTagByName("return");
-        if (PsiType.VOID.equalsToText(type.getTypeText())) {
-          if (aReturn != null) {
-            aReturn.delete();
-          }
+    if (changeInfo.isReturnTypeChanged() && methodDocComment != null) {
+      CanonicalTypes.Type type = changeInfo.getNewReturnType();
+      PsiDocTag aReturn = methodDocComment.findTagByName("return");
+      if (PsiType.VOID.equalsToText(type.getTypeText())) {
+        if (aReturn != null) {
+          aReturn.delete();
         }
-        else {
-          String oldReturnType = changeInfo.getOldReturnType();
-          if (aReturn == null && oldReturnType != null && PsiType.VOID.equalsToText(oldReturnType)) {
-            docComment.add(JavaPsiFacade.getElementFactory(method.getProject()).createDocTagFromText("@return"));
-          }
+      }
+      else {
+        String oldReturnType = changeInfo.getOldReturnType();
+        if (aReturn == null && oldReturnType != null && PsiType.VOID.equalsToText(oldReturnType)) {
+          methodDocComment.add(JavaPsiFacade.getElementFactory(method.getProject()).createDocTagFromText("@return"));
         }
       }
     }
