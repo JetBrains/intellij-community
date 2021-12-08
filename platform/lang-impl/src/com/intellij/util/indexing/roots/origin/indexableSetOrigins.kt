@@ -12,8 +12,7 @@ import com.intellij.util.indexing.roots.kind.*
 data class ModuleRootOriginImpl(override val module: Module,
                            override val roots: List<VirtualFile>) : ModuleRootOrigin
 
-data class LibraryOriginImpl(override val libraryName: String?,
-                             override val classRootUrls: List<VirtualFilePointer>,
+data class LibraryOriginImpl(override val classRootUrls: List<VirtualFilePointer>,
                              override val sourceRootUrls: List<VirtualFilePointer>) : LibraryOrigin
 
 data class SyntheticLibraryOriginImpl(override val syntheticLibrary: SyntheticLibrary) : SyntheticLibraryOrigin

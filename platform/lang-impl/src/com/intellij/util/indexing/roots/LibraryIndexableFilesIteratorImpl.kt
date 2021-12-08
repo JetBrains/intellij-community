@@ -31,14 +31,14 @@ class LibraryIndexableFilesIteratorImpl(val libraryName: @NlsSafe String?,
                                                                           presentableLibraryName)
 
   override fun getRootsScanningProgressText(): String {
-    if (!this.libraryName.isNullOrEmpty()) {
-      return IndexingBundle.message("indexable.files.provider.scanning.library.name", this.libraryName)
+    if (!libraryName.isNullOrEmpty()) {
+      return IndexingBundle.message("indexable.files.provider.scanning.library.name", libraryName)
     }
     return IndexingBundle.message("indexable.files.provider.scanning.additional.dependencies")
   }
 
   override fun getOrigin(): LibraryOrigin {
-    return LibraryOriginImpl(libraryName, classRootUrls, sourceRootUrls)
+    return LibraryOriginImpl(classRootUrls, sourceRootUrls)
   }
 
   override fun iterateFiles(
@@ -57,7 +57,7 @@ class LibraryIndexableFilesIteratorImpl(val libraryName: @NlsSafe String?,
   }
 
   companion object {
-    private fun collectPointers(library: Library, rootType: OrderRootType) = library.rootProvider.getUrls(rootType).map {
+    private fun collectPointers(library: Library, rootType: OrderRootType) = library.rootProvider.getFiles(rootType).map {
       LightFilePointer(it)
     }
   }

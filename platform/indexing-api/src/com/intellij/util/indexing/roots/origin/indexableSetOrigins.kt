@@ -19,7 +19,6 @@ interface ModuleRootOrigin : IndexableSetOrigin {
 }
 
 interface LibraryOrigin : IndexableSetOrigin {
-  val libraryName: String?
   val classRootUrls: List<VirtualFilePointer>
   val sourceRootUrls: List<VirtualFilePointer>
 }
