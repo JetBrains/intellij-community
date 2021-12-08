@@ -67,7 +67,9 @@ class SystemRuntimeCollector : ApplicationUsagesCollector() {
     }
 
     result += GC.metric(getGcName())
-    result += RENDERING.metric(getRenderingPipelineName())
+
+    // Proper detection implemented only for macOS
+    if (SystemInfo.isMac) result += RENDERING.metric(getRenderingPipelineName())
 
     result += JVM.metric(
       Version(1, JavaVersion.current().feature, 0),
