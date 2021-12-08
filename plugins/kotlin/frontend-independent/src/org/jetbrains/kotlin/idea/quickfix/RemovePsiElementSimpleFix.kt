@@ -69,14 +69,17 @@ open class RemovePsiElementSimpleFix private constructor(element: PsiElement, @N
             if (psiElement is KtDestructuringDeclarationEntry) return emptyList()
             val ktProperty = psiElement.getNonStrictParentOfType<KtProperty>() ?: return emptyList()
             if (ktProperty.isExplicitTypeReferenceNeededForTypeInference()) return emptyList()
-            return listOf(RemoveVariableFix(expression))
-        }
-    }
 
-    class RemoveVariableFix(expression: KtProperty) :
-        RemovePsiElementSimpleFix(expression, KotlinBundle.message("remove.variable.0", ktProperty.name.toString())) {
-        override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-            val ktProperty = element as? KtProperty ?: return
+            val removePropertyFix = object : RemovePsiElementSimpleFix(ktProperty, KotlinBundle.message("remove.variable.0", ktProperty.name.toString())) {
+                override fun invoke(project: Project, editor: Editor?, file: KtFile) {
+                    removeProperty(element as? KtProperty ?: return)
+                }
+            }
+
+            return listOf(removePropertyFix)
+        }
+
+        fun removeProperty(ktProperty: KtProperty) {
             val initializer = ktProperty.initializer
             if (initializer != null && initializer !is KtConstantExpression) {
                 val commentSaver = CommentSaver(ktProperty)
