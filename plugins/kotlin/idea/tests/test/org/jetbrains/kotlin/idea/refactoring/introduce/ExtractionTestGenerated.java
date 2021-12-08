@@ -293,449 +293,485 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceVariable")
-        public static class Uncategorized extends AbstractExtractionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("AnonymousType.kt")
-            public void testAnonymousType() throws Exception {
-                runTest("testData/refactoring/introduceVariable/AnonymousType.kt");
-            }
-
-            @TestMetadata("ArrayAccessExpr.kt")
-            public void testArrayAccessExpr() throws Exception {
-                runTest("testData/refactoring/introduceVariable/ArrayAccessExpr.kt");
-            }
-
-            @TestMetadata("arrayAssignment.kt")
-            public void testArrayAssignment() throws Exception {
-                runTest("testData/refactoring/introduceVariable/arrayAssignment.kt");
-            }
-
-            @TestMetadata("callUnderSmartCast.kt")
-            public void testCallUnderSmartCast() throws Exception {
-                runTest("testData/refactoring/introduceVariable/callUnderSmartCast.kt");
-            }
-
-            @TestMetadata("capturedType.kt")
-            public void testCapturedType() throws Exception {
-                runTest("testData/refactoring/introduceVariable/capturedType.kt");
-            }
-
-            @TestMetadata("commentSkipping.kt")
-            public void testCommentSkipping() throws Exception {
-                runTest("testData/refactoring/introduceVariable/commentSkipping.kt");
-            }
-
-            @TestMetadata("ComplexCallee.kt")
-            public void testComplexCallee() throws Exception {
-                runTest("testData/refactoring/introduceVariable/ComplexCallee.kt");
-            }
-
-            @TestMetadata("ConstructorDelegationCall.kt")
-            public void testConstructorDelegationCall() throws Exception {
-                runTest("testData/refactoring/introduceVariable/ConstructorDelegationCall.kt");
-            }
-
-            @TestMetadata("DelegatorByExpressionInDelegate.kt")
-            public void testDelegatorByExpressionInDelegate() throws Exception {
-                runTest("testData/refactoring/introduceVariable/DelegatorByExpressionInDelegate.kt");
-            }
-
-            @TestMetadata("DelegatorByExpressionInType.kt")
-            public void testDelegatorByExpressionInType() throws Exception {
-                runTest("testData/refactoring/introduceVariable/DelegatorByExpressionInType.kt");
-            }
-
-            @TestMetadata("DelegatorToSuperCallInArgument.kt")
-            public void testDelegatorToSuperCallInArgument() throws Exception {
-                runTest("testData/refactoring/introduceVariable/DelegatorToSuperCallInArgument.kt");
-            }
-
-            @TestMetadata("DelegatorToSuperCallInType.kt")
-            public void testDelegatorToSuperCallInType() throws Exception {
-                runTest("testData/refactoring/introduceVariable/DelegatorToSuperCallInType.kt");
-            }
-
-            @TestMetadata("DelegatorToSuperClass.kt")
-            public void testDelegatorToSuperClass() throws Exception {
-                runTest("testData/refactoring/introduceVariable/DelegatorToSuperClass.kt");
-            }
-
-            @TestMetadata("DoWhileAddBlock.kt")
-            public void testDoWhileAddBlock() throws Exception {
-                runTest("testData/refactoring/introduceVariable/DoWhileAddBlock.kt");
-            }
-
-            @TestMetadata("DoWhileAddBlockInner.kt")
-            public void testDoWhileAddBlockInner() throws Exception {
-                runTest("testData/refactoring/introduceVariable/DoWhileAddBlockInner.kt");
-            }
-
-            @TestMetadata("dynamicType.kt")
-            public void testDynamicType() throws Exception {
-                runTest("testData/refactoring/introduceVariable/dynamicType.kt");
-            }
-
-            @TestMetadata("FewOccurrences.kt")
-            public void testFewOccurrences() throws Exception {
-                runTest("testData/refactoring/introduceVariable/FewOccurrences.kt");
-            }
-
-            @TestMetadata("FromLambda.kt")
-            public void testFromLambda() throws Exception {
-                runTest("testData/refactoring/introduceVariable/FromLambda.kt");
-            }
-
-            @TestMetadata("FunctionAddBlock.kt")
-            public void testFunctionAddBlock() throws Exception {
-                runTest("testData/refactoring/introduceVariable/FunctionAddBlock.kt");
-            }
-
-            @TestMetadata("FunctionAddBlockInner.kt")
-            public void testFunctionAddBlockInner() throws Exception {
-                runTest("testData/refactoring/introduceVariable/FunctionAddBlockInner.kt");
-            }
-
-            @TestMetadata("FunctionLiteral.kt")
-            public void testFunctionLiteral() throws Exception {
-                runTest("testData/refactoring/introduceVariable/FunctionLiteral.kt");
-            }
-
-            @TestMetadata("FunctionLiteralFromExpected.kt")
-            public void testFunctionLiteralFromExpected() throws Exception {
-                runTest("testData/refactoring/introduceVariable/FunctionLiteralFromExpected.kt");
-            }
-
-            @TestMetadata("FunctionLiteralWithExtraArgs.kt")
-            public void testFunctionLiteralWithExtraArgs() throws Exception {
-                runTest("testData/refactoring/introduceVariable/FunctionLiteralWithExtraArgs.kt");
-            }
-
-            @TestMetadata("IfCondition.kt")
-            public void testIfCondition() throws Exception {
-                runTest("testData/refactoring/introduceVariable/IfCondition.kt");
-            }
-
-            @TestMetadata("IfElseAddBlock.kt")
-            public void testIfElseAddBlock() throws Exception {
-                runTest("testData/refactoring/introduceVariable/IfElseAddBlock.kt");
-            }
-
-            @TestMetadata("IfElseAddBlockInner.kt")
-            public void testIfElseAddBlockInner() throws Exception {
-                runTest("testData/refactoring/introduceVariable/IfElseAddBlockInner.kt");
-            }
-
-            @TestMetadata("IfThenAddBlock.kt")
-            public void testIfThenAddBlock() throws Exception {
-                runTest("testData/refactoring/introduceVariable/IfThenAddBlock.kt");
-            }
-
-            @TestMetadata("IfThenAddBlockInner.kt")
-            public void testIfThenAddBlockInner() throws Exception {
-                runTest("testData/refactoring/introduceVariable/IfThenAddBlockInner.kt");
-            }
-
-            @TestMetadata("IfThenValuedAddBlock.kt")
-            public void testIfThenValuedAddBlock() throws Exception {
-                runTest("testData/refactoring/introduceVariable/IfThenValuedAddBlock.kt");
-            }
-
-            @TestMetadata("InsideOfInitializerAnnotation.kt")
-            public void testInsideOfInitializerAnnotation() throws Exception {
-                runTest("testData/refactoring/introduceVariable/InsideOfInitializerAnnotation.kt");
-            }
-
-            @TestMetadata("IntroduceAndCreateBlock.kt")
-            public void testIntroduceAndCreateBlock() throws Exception {
-                runTest("testData/refactoring/introduceVariable/IntroduceAndCreateBlock.kt");
-            }
-
-            @TestMetadata("IntroduceLambdaAndCreateBlock.kt")
-            public void testIntroduceLambdaAndCreateBlock() throws Exception {
-                runTest("testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock.kt");
-            }
-
-            @TestMetadata("introduceToClass.kt")
-            public void testIntroduceToClass() throws Exception {
-                runTest("testData/refactoring/introduceVariable/introduceToClass.kt");
-            }
-
-            @TestMetadata("introduceToFile.kt")
-            public void testIntroduceToFile() throws Exception {
-                runTest("testData/refactoring/introduceVariable/introduceToFile.kt");
-            }
-
-            @TestMetadata("It.kt")
-            public void testIt() throws Exception {
-                runTest("testData/refactoring/introduceVariable/It.kt");
-            }
-
-            @TestMetadata("kt10808.kt")
-            public void testKt10808() throws Exception {
-                runTest("testData/refactoring/introduceVariable/kt10808.kt");
-            }
-
-            @TestMetadata("kt21530_withConstructorParam.kt")
-            public void testKt21530_withConstructorParam() throws Exception {
-                runTest("testData/refactoring/introduceVariable/kt21530_withConstructorParam.kt");
-            }
-
-            @TestMetadata("kt21530_withGlobal.kt")
-            public void testKt21530_withGlobal() throws Exception {
-                runTest("testData/refactoring/introduceVariable/kt21530_withGlobal.kt");
-            }
-
-            @TestMetadata("kt21530_withParam.kt")
-            public void testKt21530_withParam() throws Exception {
-                runTest("testData/refactoring/introduceVariable/kt21530_withParam.kt");
-            }
-
-            @TestMetadata("kt38449_int.kt")
-            public void testKt38449_int() throws Exception {
-                runTest("testData/refactoring/introduceVariable/kt38449_int.kt");
-            }
-
-            @TestMetadata("kt38449_unit.kt")
-            public void testKt38449_unit() throws Exception {
-                runTest("testData/refactoring/introduceVariable/kt38449_unit.kt");
-            }
-
-            @TestMetadata("ktij817.kt")
-            public void testKtij817() throws Exception {
-                runTest("testData/refactoring/introduceVariable/ktij817.kt");
-            }
-
-            @TestMetadata("LoopRange.kt")
-            public void testLoopRange() throws Exception {
-                runTest("testData/refactoring/introduceVariable/LoopRange.kt");
-            }
-
-            @TestMetadata("ManyInnerOccurences.kt")
-            public void testManyInnerOccurences() throws Exception {
-                runTest("testData/refactoring/introduceVariable/ManyInnerOccurences.kt");
-            }
-
-            @TestMetadata("ManyOccurrences.kt")
-            public void testManyOccurrences() throws Exception {
-                runTest("testData/refactoring/introduceVariable/ManyOccurrences.kt");
-            }
-
-            @TestMetadata("multilineBinaryExpression.kt")
-            public void testMultilineBinaryExpression() throws Exception {
-                runTest("testData/refactoring/introduceVariable/multilineBinaryExpression.kt");
-            }
-
-            @TestMetadata("multilineBinaryExpressionWithComments.kt")
-            public void testMultilineBinaryExpressionWithComments() throws Exception {
-                runTest("testData/refactoring/introduceVariable/multilineBinaryExpressionWithComments.kt");
-            }
-
-            @TestMetadata("multilineNestedBinaryExpression1.kt")
-            public void testMultilineNestedBinaryExpression1() throws Exception {
-                runTest("testData/refactoring/introduceVariable/multilineNestedBinaryExpression1.kt");
-            }
-
-            @TestMetadata("multilineNestedBinaryExpression2.kt")
-            public void testMultilineNestedBinaryExpression2() throws Exception {
-                runTest("testData/refactoring/introduceVariable/multilineNestedBinaryExpression2.kt");
-            }
-
-            @TestMetadata("NameSuggestionBug1.kt")
-            public void testNameSuggestionBug1() throws Exception {
-                runTest("testData/refactoring/introduceVariable/NameSuggestionBug1.kt");
-            }
-
-            @TestMetadata("NameSuggestionBug2.kt")
-            public void testNameSuggestionBug2() throws Exception {
-                runTest("testData/refactoring/introduceVariable/NameSuggestionBug2.kt");
-            }
-
-            @TestMetadata("NameSuggestionCheckVisibility.kt")
-            public void testNameSuggestionCheckVisibility() throws Exception {
-                runTest("testData/refactoring/introduceVariable/NameSuggestionCheckVisibility.kt");
-            }
-
-            @TestMetadata("noConflictWithInnerVariable.kt")
-            public void testNoConflictWithInnerVariable() throws Exception {
-                runTest("testData/refactoring/introduceVariable/noConflictWithInnerVariable.kt");
-            }
-
-            @TestMetadata("NoExplicitReceivers.kt")
-            public void testNoExplicitReceivers() throws Exception {
-                runTest("testData/refactoring/introduceVariable/NoExplicitReceivers.kt");
-            }
-
-            @TestMetadata("NoExplicitReceiversUnresolved.kt")
-            public void testNoExplicitReceiversUnresolved() throws Exception {
-                runTest("testData/refactoring/introduceVariable/NoExplicitReceiversUnresolved.kt");
-            }
-
-            @TestMetadata("NoNewLinesInBetween.kt")
-            public void testNoNewLinesInBetween() throws Exception {
-                runTest("testData/refactoring/introduceVariable/NoNewLinesInBetween.kt");
-            }
-
-            @TestMetadata("NoNewLinesInBetweenNoBraces.kt")
-            public void testNoNewLinesInBetweenNoBraces() throws Exception {
-                runTest("testData/refactoring/introduceVariable/NoNewLinesInBetweenNoBraces.kt");
-            }
-
-            @TestMetadata("nonEquivalentReceivers.kt")
-            public void testNonEquivalentReceivers() throws Exception {
-                runTest("testData/refactoring/introduceVariable/nonEquivalentReceivers.kt");
-            }
-
-            @TestMetadata("notNullAssertion.kt")
-            public void testNotNullAssertion() throws Exception {
-                runTest("testData/refactoring/introduceVariable/notNullAssertion.kt");
-            }
-
-            @TestMetadata("OccurrencesInStringTemplate.kt")
-            public void testOccurrencesInStringTemplate() throws Exception {
-                runTest("testData/refactoring/introduceVariable/OccurrencesInStringTemplate.kt");
-            }
-
-            @TestMetadata("onAssignmentLHS.kt")
-            public void testOnAssignmentLHS() throws Exception {
-                runTest("testData/refactoring/introduceVariable/onAssignmentLHS.kt");
-            }
-
-            @TestMetadata("OneExplicitReceiver.kt")
-            public void testOneExplicitReceiver() throws Exception {
-                runTest("testData/refactoring/introduceVariable/OneExplicitReceiver.kt");
-            }
-
-            @TestMetadata("PropertyAccessorAddBlock.kt")
-            public void testPropertyAccessorAddBlock() throws Exception {
-                runTest("testData/refactoring/introduceVariable/PropertyAccessorAddBlock.kt");
-            }
-
-            @TestMetadata("PropertyAccessorAddBlockInner.kt")
-            public void testPropertyAccessorAddBlockInner() throws Exception {
-                runTest("testData/refactoring/introduceVariable/PropertyAccessorAddBlockInner.kt");
-            }
-
-            @TestMetadata("qualifier.kt")
-            public void testQualifier() throws Exception {
-                runTest("testData/refactoring/introduceVariable/qualifier.kt");
-            }
-
-            @TestMetadata("ReplaceOccurence.kt")
-            public void testReplaceOccurence() throws Exception {
-                runTest("testData/refactoring/introduceVariable/ReplaceOccurence.kt");
-            }
-
-            @TestMetadata("selectorAssignment.kt")
-            public void testSelectorAssignment() throws Exception {
-                runTest("testData/refactoring/introduceVariable/selectorAssignment.kt");
-            }
-
-            @TestMetadata("Simple.kt")
-            public void testSimple() throws Exception {
-                runTest("testData/refactoring/introduceVariable/Simple.kt");
-            }
-
-            @TestMetadata("SimpleCreateValue.kt")
-            public void testSimpleCreateValue() throws Exception {
-                runTest("testData/refactoring/introduceVariable/SimpleCreateValue.kt");
-            }
-
-            @TestMetadata("skipClassReference.kt")
-            public void testSkipClassReference() throws Exception {
-                runTest("testData/refactoring/introduceVariable/skipClassReference.kt");
-            }
-
-            @TestMetadata("skipUsageInAssignmentLHS.kt")
-            public void testSkipUsageInAssignmentLHS() throws Exception {
-                runTest("testData/refactoring/introduceVariable/skipUsageInAssignmentLHS.kt");
-            }
-
-            @TestMetadata("StringInjection.kt")
-            public void testStringInjection() throws Exception {
-                runTest("testData/refactoring/introduceVariable/StringInjection.kt");
-            }
-
-            @TestMetadata("SuperReference.kt")
-            public void testSuperReference() throws Exception {
-                runTest("testData/refactoring/introduceVariable/SuperReference.kt");
-            }
-
-            @TestMetadata("thisAsCallee.kt")
-            public void testThisAsCallee() throws Exception {
-                runTest("testData/refactoring/introduceVariable/thisAsCallee.kt");
-            }
-
-            @TestMetadata("ThisReference.kt")
-            public void testThisReference() throws Exception {
-                runTest("testData/refactoring/introduceVariable/ThisReference.kt");
-            }
-
-            @TestMetadata("TwoExplicitReceivers.kt")
-            public void testTwoExplicitReceivers() throws Exception {
-                runTest("testData/refactoring/introduceVariable/TwoExplicitReceivers.kt");
-            }
-
-            @TestMetadata("TypeElement.kt")
-            public void testTypeElement() throws Exception {
-                runTest("testData/refactoring/introduceVariable/TypeElement.kt");
-            }
-
-            @TestMetadata("UnresolvedOccurrences.kt")
-            public void testUnresolvedOccurrences() throws Exception {
-                runTest("testData/refactoring/introduceVariable/UnresolvedOccurrences.kt");
-            }
-
-            @TestMetadata("UsedAndUnusedExpressions1.kt")
-            public void testUsedAndUnusedExpressions1() throws Exception {
-                runTest("testData/refactoring/introduceVariable/UsedAndUnusedExpressions1.kt");
-            }
-
-            @TestMetadata("UsedAndUnusedExpressions2.kt")
-            public void testUsedAndUnusedExpressions2() throws Exception {
-                runTest("testData/refactoring/introduceVariable/UsedAndUnusedExpressions2.kt");
-            }
-
-            @TestMetadata("WhenAddBlock.kt")
-            public void testWhenAddBlock() throws Exception {
-                runTest("testData/refactoring/introduceVariable/WhenAddBlock.kt");
-            }
-
-            @TestMetadata("WhenAddBlockInner.kt")
-            public void testWhenAddBlockInner() throws Exception {
-                runTest("testData/refactoring/introduceVariable/WhenAddBlockInner.kt");
-            }
-
-            @TestMetadata("WhenEntryCondition.kt")
-            public void testWhenEntryCondition() throws Exception {
-                runTest("testData/refactoring/introduceVariable/WhenEntryCondition.kt");
-            }
-
-            @TestMetadata("WhenParts.kt")
-            public void testWhenParts() throws Exception {
-                runTest("testData/refactoring/introduceVariable/WhenParts.kt");
-            }
-
-            @TestMetadata("WhenValuedAddBlock.kt")
-            public void testWhenValuedAddBlock() throws Exception {
-                runTest("testData/refactoring/introduceVariable/WhenValuedAddBlock.kt");
-            }
-
-            @TestMetadata("WhileAddBlock.kt")
-            public void testWhileAddBlock() throws Exception {
-                runTest("testData/refactoring/introduceVariable/WhileAddBlock.kt");
-            }
-
-            @TestMetadata("WhileAddBlockInner.kt")
-            public void testWhileAddBlockInner() throws Exception {
-                runTest("testData/refactoring/introduceVariable/WhileAddBlockInner.kt");
-            }
-
-            @TestMetadata("WhileCondition.kt")
-            public void testWhileCondition() throws Exception {
-                runTest("testData/refactoring/introduceVariable/WhileCondition.kt");
+        public abstract static class Uncategorized extends AbstractExtractionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/introduceVariable")
+            public static class TestBucket1 extends AbstractExtractionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("AnonymousType.kt")
+                public void testAnonymousType() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/AnonymousType.kt");
+                }
+
+                @TestMetadata("ArrayAccessExpr.kt")
+                public void testArrayAccessExpr() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/ArrayAccessExpr.kt");
+                }
+
+                @TestMetadata("arrayAssignment.kt")
+                public void testArrayAssignment() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/arrayAssignment.kt");
+                }
+
+                @TestMetadata("callUnderSmartCast.kt")
+                public void testCallUnderSmartCast() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/callUnderSmartCast.kt");
+                }
+
+                @TestMetadata("capturedType.kt")
+                public void testCapturedType() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/capturedType.kt");
+                }
+
+                @TestMetadata("commentSkipping.kt")
+                public void testCommentSkipping() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/commentSkipping.kt");
+                }
+
+                @TestMetadata("ComplexCallee.kt")
+                public void testComplexCallee() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/ComplexCallee.kt");
+                }
+
+                @TestMetadata("ConstructorDelegationCall.kt")
+                public void testConstructorDelegationCall() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/ConstructorDelegationCall.kt");
+                }
+
+                @TestMetadata("DelegatorByExpressionInDelegate.kt")
+                public void testDelegatorByExpressionInDelegate() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/DelegatorByExpressionInDelegate.kt");
+                }
+
+                @TestMetadata("DelegatorByExpressionInType.kt")
+                public void testDelegatorByExpressionInType() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/DelegatorByExpressionInType.kt");
+                }
+
+                @TestMetadata("DelegatorToSuperCallInArgument.kt")
+                public void testDelegatorToSuperCallInArgument() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/DelegatorToSuperCallInArgument.kt");
+                }
+
+                @TestMetadata("DelegatorToSuperCallInType.kt")
+                public void testDelegatorToSuperCallInType() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/DelegatorToSuperCallInType.kt");
+                }
+
+                @TestMetadata("DelegatorToSuperClass.kt")
+                public void testDelegatorToSuperClass() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/DelegatorToSuperClass.kt");
+                }
+
+                @TestMetadata("DoWhileAddBlock.kt")
+                public void testDoWhileAddBlock() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/DoWhileAddBlock.kt");
+                }
+
+                @TestMetadata("DoWhileAddBlockInner.kt")
+                public void testDoWhileAddBlockInner() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/DoWhileAddBlockInner.kt");
+                }
+
+                @TestMetadata("dynamicType.kt")
+                public void testDynamicType() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/dynamicType.kt");
+                }
+
+                @TestMetadata("FewOccurrences.kt")
+                public void testFewOccurrences() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/FewOccurrences.kt");
+                }
+
+                @TestMetadata("FromLambda.kt")
+                public void testFromLambda() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/FromLambda.kt");
+                }
+
+                @TestMetadata("FunctionAddBlock.kt")
+                public void testFunctionAddBlock() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/FunctionAddBlock.kt");
+                }
+
+                @TestMetadata("FunctionAddBlockInner.kt")
+                public void testFunctionAddBlockInner() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/FunctionAddBlockInner.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/introduceVariable")
+            public static class TestBucket2 extends AbstractExtractionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("FunctionLiteral.kt")
+                public void testFunctionLiteral() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/FunctionLiteral.kt");
+                }
+
+                @TestMetadata("FunctionLiteralFromExpected.kt")
+                public void testFunctionLiteralFromExpected() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/FunctionLiteralFromExpected.kt");
+                }
+
+                @TestMetadata("FunctionLiteralWithExtraArgs.kt")
+                public void testFunctionLiteralWithExtraArgs() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/FunctionLiteralWithExtraArgs.kt");
+                }
+
+                @TestMetadata("IfCondition.kt")
+                public void testIfCondition() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/IfCondition.kt");
+                }
+
+                @TestMetadata("IfElseAddBlock.kt")
+                public void testIfElseAddBlock() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/IfElseAddBlock.kt");
+                }
+
+                @TestMetadata("IfElseAddBlockInner.kt")
+                public void testIfElseAddBlockInner() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/IfElseAddBlockInner.kt");
+                }
+
+                @TestMetadata("IfThenAddBlock.kt")
+                public void testIfThenAddBlock() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/IfThenAddBlock.kt");
+                }
+
+                @TestMetadata("IfThenAddBlockInner.kt")
+                public void testIfThenAddBlockInner() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/IfThenAddBlockInner.kt");
+                }
+
+                @TestMetadata("IfThenValuedAddBlock.kt")
+                public void testIfThenValuedAddBlock() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/IfThenValuedAddBlock.kt");
+                }
+
+                @TestMetadata("InsideOfInitializerAnnotation.kt")
+                public void testInsideOfInitializerAnnotation() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/InsideOfInitializerAnnotation.kt");
+                }
+
+                @TestMetadata("IntroduceAndCreateBlock.kt")
+                public void testIntroduceAndCreateBlock() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/IntroduceAndCreateBlock.kt");
+                }
+
+                @TestMetadata("IntroduceLambdaAndCreateBlock.kt")
+                public void testIntroduceLambdaAndCreateBlock() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/IntroduceLambdaAndCreateBlock.kt");
+                }
+
+                @TestMetadata("introduceToClass.kt")
+                public void testIntroduceToClass() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/introduceToClass.kt");
+                }
+
+                @TestMetadata("introduceToFile.kt")
+                public void testIntroduceToFile() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/introduceToFile.kt");
+                }
+
+                @TestMetadata("It.kt")
+                public void testIt() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/It.kt");
+                }
+
+                @TestMetadata("kt10808.kt")
+                public void testKt10808() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/kt10808.kt");
+                }
+
+                @TestMetadata("kt21530_withConstructorParam.kt")
+                public void testKt21530_withConstructorParam() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/kt21530_withConstructorParam.kt");
+                }
+
+                @TestMetadata("kt21530_withGlobal.kt")
+                public void testKt21530_withGlobal() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/kt21530_withGlobal.kt");
+                }
+
+                @TestMetadata("kt21530_withParam.kt")
+                public void testKt21530_withParam() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/kt21530_withParam.kt");
+                }
+
+                @TestMetadata("kt38449_int.kt")
+                public void testKt38449_int() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/kt38449_int.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/introduceVariable")
+            public static class TestBucket3 extends AbstractExtractionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kt38449_unit.kt")
+                public void testKt38449_unit() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/kt38449_unit.kt");
+                }
+
+                @TestMetadata("ktij817.kt")
+                public void testKtij817() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/ktij817.kt");
+                }
+
+                @TestMetadata("LoopRange.kt")
+                public void testLoopRange() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/LoopRange.kt");
+                }
+
+                @TestMetadata("ManyInnerOccurences.kt")
+                public void testManyInnerOccurences() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/ManyInnerOccurences.kt");
+                }
+
+                @TestMetadata("ManyOccurrences.kt")
+                public void testManyOccurrences() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/ManyOccurrences.kt");
+                }
+
+                @TestMetadata("multilineBinaryExpression.kt")
+                public void testMultilineBinaryExpression() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/multilineBinaryExpression.kt");
+                }
+
+                @TestMetadata("multilineBinaryExpressionWithComments.kt")
+                public void testMultilineBinaryExpressionWithComments() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/multilineBinaryExpressionWithComments.kt");
+                }
+
+                @TestMetadata("multilineNestedBinaryExpression1.kt")
+                public void testMultilineNestedBinaryExpression1() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/multilineNestedBinaryExpression1.kt");
+                }
+
+                @TestMetadata("multilineNestedBinaryExpression2.kt")
+                public void testMultilineNestedBinaryExpression2() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/multilineNestedBinaryExpression2.kt");
+                }
+
+                @TestMetadata("NameSuggestionBug1.kt")
+                public void testNameSuggestionBug1() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/NameSuggestionBug1.kt");
+                }
+
+                @TestMetadata("NameSuggestionBug2.kt")
+                public void testNameSuggestionBug2() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/NameSuggestionBug2.kt");
+                }
+
+                @TestMetadata("NameSuggestionCheckVisibility.kt")
+                public void testNameSuggestionCheckVisibility() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/NameSuggestionCheckVisibility.kt");
+                }
+
+                @TestMetadata("noConflictWithInnerVariable.kt")
+                public void testNoConflictWithInnerVariable() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/noConflictWithInnerVariable.kt");
+                }
+
+                @TestMetadata("NoExplicitReceivers.kt")
+                public void testNoExplicitReceivers() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/NoExplicitReceivers.kt");
+                }
+
+                @TestMetadata("NoExplicitReceiversUnresolved.kt")
+                public void testNoExplicitReceiversUnresolved() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/NoExplicitReceiversUnresolved.kt");
+                }
+
+                @TestMetadata("NoNewLinesInBetween.kt")
+                public void testNoNewLinesInBetween() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/NoNewLinesInBetween.kt");
+                }
+
+                @TestMetadata("NoNewLinesInBetweenNoBraces.kt")
+                public void testNoNewLinesInBetweenNoBraces() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/NoNewLinesInBetweenNoBraces.kt");
+                }
+
+                @TestMetadata("nonEquivalentReceivers.kt")
+                public void testNonEquivalentReceivers() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/nonEquivalentReceivers.kt");
+                }
+
+                @TestMetadata("notNullAssertion.kt")
+                public void testNotNullAssertion() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/notNullAssertion.kt");
+                }
+
+                @TestMetadata("OccurrencesInStringTemplate.kt")
+                public void testOccurrencesInStringTemplate() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/OccurrencesInStringTemplate.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/introduceVariable")
+            public static class TestBucket4 extends AbstractExtractionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("onAssignmentLHS.kt")
+                public void testOnAssignmentLHS() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/onAssignmentLHS.kt");
+                }
+
+                @TestMetadata("OneExplicitReceiver.kt")
+                public void testOneExplicitReceiver() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/OneExplicitReceiver.kt");
+                }
+
+                @TestMetadata("PropertyAccessorAddBlock.kt")
+                public void testPropertyAccessorAddBlock() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/PropertyAccessorAddBlock.kt");
+                }
+
+                @TestMetadata("PropertyAccessorAddBlockInner.kt")
+                public void testPropertyAccessorAddBlockInner() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/PropertyAccessorAddBlockInner.kt");
+                }
+
+                @TestMetadata("qualifier.kt")
+                public void testQualifier() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/qualifier.kt");
+                }
+
+                @TestMetadata("ReplaceOccurence.kt")
+                public void testReplaceOccurence() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/ReplaceOccurence.kt");
+                }
+
+                @TestMetadata("selectorAssignment.kt")
+                public void testSelectorAssignment() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/selectorAssignment.kt");
+                }
+
+                @TestMetadata("Simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/Simple.kt");
+                }
+
+                @TestMetadata("SimpleCreateValue.kt")
+                public void testSimpleCreateValue() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/SimpleCreateValue.kt");
+                }
+
+                @TestMetadata("skipClassReference.kt")
+                public void testSkipClassReference() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/skipClassReference.kt");
+                }
+
+                @TestMetadata("skipUsageInAssignmentLHS.kt")
+                public void testSkipUsageInAssignmentLHS() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/skipUsageInAssignmentLHS.kt");
+                }
+
+                @TestMetadata("StringInjection.kt")
+                public void testStringInjection() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/StringInjection.kt");
+                }
+
+                @TestMetadata("SuperReference.kt")
+                public void testSuperReference() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/SuperReference.kt");
+                }
+
+                @TestMetadata("thisAsCallee.kt")
+                public void testThisAsCallee() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/thisAsCallee.kt");
+                }
+
+                @TestMetadata("ThisReference.kt")
+                public void testThisReference() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/ThisReference.kt");
+                }
+
+                @TestMetadata("TwoExplicitReceivers.kt")
+                public void testTwoExplicitReceivers() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/TwoExplicitReceivers.kt");
+                }
+
+                @TestMetadata("TypeElement.kt")
+                public void testTypeElement() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/TypeElement.kt");
+                }
+
+                @TestMetadata("UnresolvedOccurrences.kt")
+                public void testUnresolvedOccurrences() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/UnresolvedOccurrences.kt");
+                }
+
+                @TestMetadata("UsedAndUnusedExpressions1.kt")
+                public void testUsedAndUnusedExpressions1() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/UsedAndUnusedExpressions1.kt");
+                }
+
+                @TestMetadata("UsedAndUnusedExpressions2.kt")
+                public void testUsedAndUnusedExpressions2() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/UsedAndUnusedExpressions2.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/introduceVariable")
+            public static class TestBucket5 extends AbstractExtractionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("WhenAddBlock.kt")
+                public void testWhenAddBlock() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/WhenAddBlock.kt");
+                }
+
+                @TestMetadata("WhenAddBlockInner.kt")
+                public void testWhenAddBlockInner() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/WhenAddBlockInner.kt");
+                }
+
+                @TestMetadata("WhenEntryCondition.kt")
+                public void testWhenEntryCondition() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/WhenEntryCondition.kt");
+                }
+
+                @TestMetadata("WhenParts.kt")
+                public void testWhenParts() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/WhenParts.kt");
+                }
+
+                @TestMetadata("WhenValuedAddBlock.kt")
+                public void testWhenValuedAddBlock() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/WhenValuedAddBlock.kt");
+                }
+
+                @TestMetadata("WhileAddBlock.kt")
+                public void testWhileAddBlock() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/WhileAddBlock.kt");
+                }
+
+                @TestMetadata("WhileAddBlockInner.kt")
+                public void testWhileAddBlockInner() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/WhileAddBlockInner.kt");
+                }
+
+                @TestMetadata("WhileCondition.kt")
+                public void testWhileCondition() throws Exception {
+                    runTest("testData/refactoring/introduceVariable/WhileCondition.kt");
+                }
             }
         }
     }
@@ -745,284 +781,304 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
     public abstract static class ExtractFunction extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/extractFunction/basic")
-        public static class Basic extends AbstractExtractionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+        public abstract static class Basic extends AbstractExtractionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/extractFunction/basic")
+            public static class TestBucket1 extends AbstractExtractionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("callWithPlatformTypeReceiver.kt")
+                public void testCallWithPlatformTypeReceiver() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/callWithPlatformTypeReceiver.kt");
+                }
+
+                @TestMetadata("callableReferenceSelector.kt")
+                public void testCallableReferenceSelector() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/callableReferenceSelector.kt");
+                }
+
+                @TestMetadata("calleeExpression.kt")
+                public void testCalleeExpression() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/calleeExpression.kt");
+                }
+
+                @TestMetadata("classQualifier.kt")
+                public void testClassQualifier() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/classQualifier.kt");
+                }
+
+                @TestMetadata("companionObjectMemberRef.kt")
+                public void testCompanionObjectMemberRef() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/companionObjectMemberRef.kt");
+                }
+
+                @TestMetadata("convertBinaryExpression.kt")
+                public void testConvertBinaryExpression() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/convertBinaryExpression.kt");
+                }
+
+                @TestMetadata("convertInfixExpression.kt")
+                public void testConvertInfixExpression() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/convertInfixExpression.kt");
+                }
+
+                @TestMetadata("delegatingFunction.kt")
+                public void testDelegatingFunction() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/delegatingFunction.kt");
+                }
+
+                @TestMetadata("enumQualifier.kt")
+                public void testEnumQualifier() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/enumQualifier.kt");
+                }
+
+                @TestMetadata("extensionFunForArray.kt")
+                public void testExtensionFunForArray() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/extensionFunForArray.kt");
+                }
+
+                @TestMetadata("extractBlockContent.kt")
+                public void testExtractBlockContent() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/extractBlockContent.kt");
+                }
+
+                @TestMetadata("extractFromPrivateInlineFun.kt")
+                public void testExtractFromPrivateInlineFun() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/extractFromPrivateInlineFun.kt");
+                }
+
+                @TestMetadata("extractFromPublicInlineFun.kt")
+                public void testExtractFromPublicInlineFun() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/extractFromPublicInlineFun.kt");
+                }
+
+                @TestMetadata("extractSuspend.kt")
+                public void testExtractSuspend() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/extractSuspend.kt");
+                }
+
+                @TestMetadata("extractToEnumClassBody.kt")
+                public void testExtractToEnumClassBody() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/extractToEnumClassBody.kt");
+                }
+
+                @TestMetadata("fakeOverride.kt")
+                public void testFakeOverride() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/fakeOverride.kt");
+                }
+
+                @TestMetadata("fragmentWithComment.kt")
+                public void testFragmentWithComment() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/fragmentWithComment.kt");
+                }
+
+                @TestMetadata("fragmentWithMultilineComment.kt")
+                public void testFragmentWithMultilineComment() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/fragmentWithMultilineComment.kt");
+                }
+
+                @TestMetadata("identityEquals.kt")
+                public void testIdentityEquals() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/identityEquals.kt");
+                }
+
+                @TestMetadata("inlineReified.kt")
+                public void testInlineReified() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/inlineReified.kt");
+                }
             }
 
-            @TestMetadata("callWithPlatformTypeReceiver.kt")
-            public void testCallWithPlatformTypeReceiver() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/callWithPlatformTypeReceiver.kt");
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/extractFunction/basic")
+            public static class TestBucket2 extends AbstractExtractionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("inlineReified2.kt")
+                public void testInlineReified2() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/inlineReified2.kt");
+                }
+
+                @TestMetadata("invisibleType.kt")
+                public void testInvisibleType() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/invisibleType.kt");
+                }
+
+                @TestMetadata("lineWithSemicolon.kt")
+                public void testLineWithSemicolon() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/lineWithSemicolon.kt");
+                }
+
+                @TestMetadata("localClassExtraction.kt")
+                public void testLocalClassExtraction() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/localClassExtraction.kt");
+                }
+
+                @TestMetadata("localClassFunctionRef.kt")
+                public void testLocalClassFunctionRef() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/localClassFunctionRef.kt");
+                }
+
+                @TestMetadata("localClassPropertyRef.kt")
+                public void testLocalClassPropertyRef() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/localClassPropertyRef.kt");
+                }
+
+                @TestMetadata("localExtraction.kt")
+                public void testLocalExtraction() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/localExtraction.kt");
+                }
+
+                @TestMetadata("localFunExtraction.kt")
+                public void testLocalFunExtraction() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/localFunExtraction.kt");
+                }
+
+                @TestMetadata("localFunctionInTheMiddleSimpleControlFlow.kt")
+                public void testLocalFunctionInTheMiddleSimpleControlFlow() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/localFunctionInTheMiddleSimpleControlFlow.kt");
+                }
+
+                @TestMetadata("localFunctionInTheMiddleUnusedVar.kt")
+                public void testLocalFunctionInTheMiddleUnusedVar() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/localFunctionInTheMiddleUnusedVar.kt");
+                }
+
+                @TestMetadata("localFunctionInTheMiddleUsedVar.kt")
+                public void testLocalFunctionInTheMiddleUsedVar() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/localFunctionInTheMiddleUsedVar.kt");
+                }
+
+                @TestMetadata("localFunctionRef.kt")
+                public void testLocalFunctionRef() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/localFunctionRef.kt");
+                }
+
+                @TestMetadata("localObjectRef.kt")
+                public void testLocalObjectRef() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/localObjectRef.kt");
+                }
+
+                @TestMetadata("malformedExpression.kt")
+                public void testMalformedExpression() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/malformedExpression.kt");
+                }
+
+                @TestMetadata("malformedStatements.kt")
+                public void testMalformedStatements() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/malformedStatements.kt");
+                }
+
+                @TestMetadata("memberValUnderSmartCast.kt")
+                public void testMemberValUnderSmartCast() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/memberValUnderSmartCast.kt");
+                }
+
+                @TestMetadata("memberValUnderSmartCastAndImplicitReceiver.kt")
+                public void testMemberValUnderSmartCastAndImplicitReceiver() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/memberValUnderSmartCastAndImplicitReceiver.kt");
+                }
+
+                @TestMetadata("misdirectedRef.kt")
+                public void testMisdirectedRef() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/misdirectedRef.kt");
+                }
+
+                @TestMetadata("noConflictWithInnerFunction.kt")
+                public void testNoConflictWithInnerFunction() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/noConflictWithInnerFunction.kt");
+                }
+
+                @TestMetadata("objectQualifier.kt")
+                public void testObjectQualifier() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/objectQualifier.kt");
+                }
             }
 
-            @TestMetadata("callableReferenceSelector.kt")
-            public void testCallableReferenceSelector() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/callableReferenceSelector.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/extractFunction/basic")
+            public static class TestBucket3 extends AbstractExtractionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("calleeExpression.kt")
-            public void testCalleeExpression() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/calleeExpression.kt");
-            }
+                @TestMetadata("packageQualifier.kt")
+                public void testPackageQualifier() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/packageQualifier.kt");
+                }
 
-            @TestMetadata("classQualifier.kt")
-            public void testClassQualifier() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/classQualifier.kt");
-            }
+                @TestMetadata("privateMemberInClassObject.kt")
+                public void testPrivateMemberInClassObject() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/privateMemberInClassObject.kt");
+                }
 
-            @TestMetadata("companionObjectMemberRef.kt")
-            public void testCompanionObjectMemberRef() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/companionObjectMemberRef.kt");
-            }
+                @TestMetadata("privateMemberRef.kt")
+                public void testPrivateMemberRef() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/privateMemberRef.kt");
+                }
 
-            @TestMetadata("convertBinaryExpression.kt")
-            public void testConvertBinaryExpression() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/convertBinaryExpression.kt");
-            }
+                @TestMetadata("privateNestedClass.kt")
+                public void testPrivateNestedClass() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/privateNestedClass.kt");
+                }
 
-            @TestMetadata("convertInfixExpression.kt")
-            public void testConvertInfixExpression() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/convertInfixExpression.kt");
-            }
+                @TestMetadata("privateSetter.kt")
+                public void testPrivateSetter() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/privateSetter.kt");
+                }
 
-            @TestMetadata("delegatingFunction.kt")
-            public void testDelegatingFunction() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/delegatingFunction.kt");
-            }
+                @TestMetadata("refInReturn.kt")
+                public void testRefInReturn() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/refInReturn.kt");
+                }
 
-            @TestMetadata("enumQualifier.kt")
-            public void testEnumQualifier() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/enumQualifier.kt");
-            }
+                @TestMetadata("sameParameterNames.kt")
+                public void testSameParameterNames() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/sameParameterNames.kt");
+                }
 
-            @TestMetadata("extensionFunForArray.kt")
-            public void testExtensionFunForArray() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/extensionFunForArray.kt");
-            }
+                @TestMetadata("selectedConstructor.kt")
+                public void testSelectedConstructor() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/selectedConstructor.kt");
+                }
 
-            @TestMetadata("extractBlockContent.kt")
-            public void testExtractBlockContent() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/extractBlockContent.kt");
-            }
+                @TestMetadata("selectedParameter.kt")
+                public void testSelectedParameter() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/selectedParameter.kt");
+                }
 
-            @TestMetadata("extractFromPrivateInlineFun.kt")
-            public void testExtractFromPrivateInlineFun() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/extractFromPrivateInlineFun.kt");
-            }
+                @TestMetadata("suspendCall.kt")
+                public void testSuspendCall() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/suspendCall.kt");
+                }
 
-            @TestMetadata("extractFromPublicInlineFun.kt")
-            public void testExtractFromPublicInlineFun() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/extractFromPublicInlineFun.kt");
-            }
+                @TestMetadata("suspendCallWithExtractedParameter.kt")
+                public void testSuspendCallWithExtractedParameter() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/suspendCallWithExtractedParameter.kt");
+                }
 
-            @TestMetadata("extractSuspend.kt")
-            public void testExtractSuspend() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/extractSuspend.kt");
-            }
+                @TestMetadata("topLevelValUnderSmartCast.kt")
+                public void testTopLevelValUnderSmartCast() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/topLevelValUnderSmartCast.kt");
+                }
 
-            @TestMetadata("extractToEnumClassBody.kt")
-            public void testExtractToEnumClassBody() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/extractToEnumClassBody.kt");
-            }
+                @TestMetadata("traitFunction.kt")
+                public void testTraitFunction() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/traitFunction.kt");
+                }
 
-            @TestMetadata("fakeOverride.kt")
-            public void testFakeOverride() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/fakeOverride.kt");
-            }
+                @TestMetadata("unnecessaryNullabilityAnnotation.kt")
+                public void testUnnecessaryNullabilityAnnotation() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/unnecessaryNullabilityAnnotation.kt");
+                }
 
-            @TestMetadata("fragmentWithComment.kt")
-            public void testFragmentWithComment() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/fragmentWithComment.kt");
-            }
-
-            @TestMetadata("fragmentWithMultilineComment.kt")
-            public void testFragmentWithMultilineComment() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/fragmentWithMultilineComment.kt");
-            }
-
-            @TestMetadata("identityEquals.kt")
-            public void testIdentityEquals() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/identityEquals.kt");
-            }
-
-            @TestMetadata("inlineReified.kt")
-            public void testInlineReified() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/inlineReified.kt");
-            }
-
-            @TestMetadata("inlineReified2.kt")
-            public void testInlineReified2() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/inlineReified2.kt");
-            }
-
-            @TestMetadata("invisibleType.kt")
-            public void testInvisibleType() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/invisibleType.kt");
-            }
-
-            @TestMetadata("lineWithSemicolon.kt")
-            public void testLineWithSemicolon() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/lineWithSemicolon.kt");
-            }
-
-            @TestMetadata("localClassExtraction.kt")
-            public void testLocalClassExtraction() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/localClassExtraction.kt");
-            }
-
-            @TestMetadata("localClassFunctionRef.kt")
-            public void testLocalClassFunctionRef() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/localClassFunctionRef.kt");
-            }
-
-            @TestMetadata("localClassPropertyRef.kt")
-            public void testLocalClassPropertyRef() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/localClassPropertyRef.kt");
-            }
-
-            @TestMetadata("localExtraction.kt")
-            public void testLocalExtraction() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/localExtraction.kt");
-            }
-
-            @TestMetadata("localFunExtraction.kt")
-            public void testLocalFunExtraction() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/localFunExtraction.kt");
-            }
-
-            @TestMetadata("localFunctionInTheMiddleSimpleControlFlow.kt")
-            public void testLocalFunctionInTheMiddleSimpleControlFlow() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/localFunctionInTheMiddleSimpleControlFlow.kt");
-            }
-
-            @TestMetadata("localFunctionInTheMiddleUnusedVar.kt")
-            public void testLocalFunctionInTheMiddleUnusedVar() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/localFunctionInTheMiddleUnusedVar.kt");
-            }
-
-            @TestMetadata("localFunctionInTheMiddleUsedVar.kt")
-            public void testLocalFunctionInTheMiddleUsedVar() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/localFunctionInTheMiddleUsedVar.kt");
-            }
-
-            @TestMetadata("localFunctionRef.kt")
-            public void testLocalFunctionRef() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/localFunctionRef.kt");
-            }
-
-            @TestMetadata("localObjectRef.kt")
-            public void testLocalObjectRef() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/localObjectRef.kt");
-            }
-
-            @TestMetadata("malformedExpression.kt")
-            public void testMalformedExpression() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/malformedExpression.kt");
-            }
-
-            @TestMetadata("malformedStatements.kt")
-            public void testMalformedStatements() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/malformedStatements.kt");
-            }
-
-            @TestMetadata("memberValUnderSmartCast.kt")
-            public void testMemberValUnderSmartCast() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/memberValUnderSmartCast.kt");
-            }
-
-            @TestMetadata("memberValUnderSmartCastAndImplicitReceiver.kt")
-            public void testMemberValUnderSmartCastAndImplicitReceiver() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/memberValUnderSmartCastAndImplicitReceiver.kt");
-            }
-
-            @TestMetadata("misdirectedRef.kt")
-            public void testMisdirectedRef() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/misdirectedRef.kt");
-            }
-
-            @TestMetadata("noConflictWithInnerFunction.kt")
-            public void testNoConflictWithInnerFunction() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/noConflictWithInnerFunction.kt");
-            }
-
-            @TestMetadata("objectQualifier.kt")
-            public void testObjectQualifier() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/objectQualifier.kt");
-            }
-
-            @TestMetadata("packageQualifier.kt")
-            public void testPackageQualifier() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/packageQualifier.kt");
-            }
-
-            @TestMetadata("privateMemberInClassObject.kt")
-            public void testPrivateMemberInClassObject() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/privateMemberInClassObject.kt");
-            }
-
-            @TestMetadata("privateMemberRef.kt")
-            public void testPrivateMemberRef() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/privateMemberRef.kt");
-            }
-
-            @TestMetadata("privateNestedClass.kt")
-            public void testPrivateNestedClass() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/privateNestedClass.kt");
-            }
-
-            @TestMetadata("privateSetter.kt")
-            public void testPrivateSetter() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/privateSetter.kt");
-            }
-
-            @TestMetadata("refInReturn.kt")
-            public void testRefInReturn() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/refInReturn.kt");
-            }
-
-            @TestMetadata("sameParameterNames.kt")
-            public void testSameParameterNames() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/sameParameterNames.kt");
-            }
-
-            @TestMetadata("selectedConstructor.kt")
-            public void testSelectedConstructor() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/selectedConstructor.kt");
-            }
-
-            @TestMetadata("selectedParameter.kt")
-            public void testSelectedParameter() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/selectedParameter.kt");
-            }
-
-            @TestMetadata("suspendCall.kt")
-            public void testSuspendCall() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/suspendCall.kt");
-            }
-
-            @TestMetadata("suspendCallWithExtractedParameter.kt")
-            public void testSuspendCallWithExtractedParameter() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/suspendCallWithExtractedParameter.kt");
-            }
-
-            @TestMetadata("topLevelValUnderSmartCast.kt")
-            public void testTopLevelValUnderSmartCast() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/topLevelValUnderSmartCast.kt");
-            }
-
-            @TestMetadata("traitFunction.kt")
-            public void testTraitFunction() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/traitFunction.kt");
-            }
-
-            @TestMetadata("unnecessaryNullabilityAnnotation.kt")
-            public void testUnnecessaryNullabilityAnnotation() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/unnecessaryNullabilityAnnotation.kt");
-            }
-
-            @TestMetadata("unresolvedWrongReceiver.kt")
-            public void testUnresolvedWrongReceiver() throws Exception {
-                runTest("testData/refactoring/extractFunction/basic/unresolvedWrongReceiver.kt");
+                @TestMetadata("unresolvedWrongReceiver.kt")
+                public void testUnresolvedWrongReceiver() throws Exception {
+                    runTest("testData/refactoring/extractFunction/basic/unresolvedWrongReceiver.kt");
+                }
             }
         }
 
@@ -1349,134 +1405,146 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/controlFlow/outputValues")
-            public static class OutputValues extends AbstractExtractionTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+            public abstract static class OutputValues extends AbstractExtractionTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/refactoring/extractFunction/controlFlow/outputValues")
+                public static class TestBucket1 extends AbstractExtractionTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("genericPair.kt")
+                    public void testGenericPair() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/genericPair.kt");
+                    }
+
+                    @TestMetadata("initializersAndUpdate.kt")
+                    public void testInitializersAndUpdate() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/initializersAndUpdate.kt");
+                    }
+
+                    @TestMetadata("nestedNonInlinableCall.kt")
+                    public void testNestedNonInlinableCall() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/nestedNonInlinableCall.kt");
+                    }
+
+                    @TestMetadata("outputValueWithExpression.kt")
+                    public void testOutputValueWithExpression() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/outputValueWithExpression.kt");
+                    }
+
+                    @TestMetadata("outputValueWithReturn.kt")
+                    public void testOutputValueWithReturn() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/outputValueWithReturn.kt");
+                    }
+
+                    @TestMetadata("outputValueWithSingleLineExpression.kt")
+                    public void testOutputValueWithSingleLineExpression() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/outputValueWithSingleLineExpression.kt");
+                    }
+
+                    @TestMetadata("outputValuesWithExpression.kt")
+                    public void testOutputValuesWithExpression() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/outputValuesWithExpression.kt");
+                    }
+
+                    @TestMetadata("pair.kt")
+                    public void testPair() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pair.kt");
+                    }
+
+                    @TestMetadata("pairOfInitalizersWithNonLocalUsages.kt")
+                    public void testPairOfInitalizersWithNonLocalUsages() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairOfInitalizersWithNonLocalUsages.kt");
+                    }
+
+                    @TestMetadata("pairOfVarInitalizersWithNonLocalUsages.kt")
+                    public void testPairOfVarInitalizersWithNonLocalUsages() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairOfVarInitalizersWithNonLocalUsages.kt");
+                    }
+
+                    @TestMetadata("pairWithIf.kt")
+                    public void testPairWithIf() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairWithIf.kt");
+                    }
+
+                    @TestMetadata("pairWithNameClash.kt")
+                    public void testPairWithNameClash() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairWithNameClash.kt");
+                    }
+
+                    @TestMetadata("pairWithWhen.kt")
+                    public void testPairWithWhen() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairWithWhen.kt");
+                    }
+
+                    @TestMetadata("singleOutputValue.kt")
+                    public void testSingleOutputValue() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValue.kt");
+                    }
+
+                    @TestMetadata("singleOutputValueWithIf.kt")
+                    public void testSingleOutputValueWithIf() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValueWithIf.kt");
+                    }
+
+                    @TestMetadata("singleOutputValueWithIfElse.kt")
+                    public void testSingleOutputValueWithIfElse() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValueWithIfElse.kt");
+                    }
+
+                    @TestMetadata("singleOutputValueWithWhen.kt")
+                    public void testSingleOutputValueWithWhen() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValueWithWhen.kt");
+                    }
+
+                    @TestMetadata("singleOutputValueWithWhenElse.kt")
+                    public void testSingleOutputValueWithWhenElse() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValueWithWhenElse.kt");
+                    }
+
+                    @TestMetadata("tooManyOutputValues.kt")
+                    public void testTooManyOutputValues() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/tooManyOutputValues.kt");
+                    }
+
+                    @TestMetadata("tooManyOutputValuesAsList.kt")
+                    public void testTooManyOutputValuesAsList() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/tooManyOutputValuesAsList.kt");
+                    }
                 }
 
-                @TestMetadata("genericPair.kt")
-                public void testGenericPair() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/genericPair.kt");
-                }
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/refactoring/extractFunction/controlFlow/outputValues")
+                public static class TestBucket2 extends AbstractExtractionTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+                    }
 
-                @TestMetadata("initializersAndUpdate.kt")
-                public void testInitializersAndUpdate() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/initializersAndUpdate.kt");
-                }
+                    @TestMetadata("triple.kt")
+                    public void testTriple() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/triple.kt");
+                    }
 
-                @TestMetadata("nestedNonInlinableCall.kt")
-                public void testNestedNonInlinableCall() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/nestedNonInlinableCall.kt");
-                }
+                    @TestMetadata("usedAndUnusedOutputValues.kt")
+                    public void testUsedAndUnusedOutputValues() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/usedAndUnusedOutputValues.kt");
+                    }
 
-                @TestMetadata("outputValueWithExpression.kt")
-                public void testOutputValueWithExpression() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/outputValueWithExpression.kt");
-                }
+                    @TestMetadata("valAndVarInitalizersWithNonLocalUsages.kt")
+                    public void testValAndVarInitalizersWithNonLocalUsages() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/valAndVarInitalizersWithNonLocalUsages.kt");
+                    }
 
-                @TestMetadata("outputValueWithReturn.kt")
-                public void testOutputValueWithReturn() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/outputValueWithReturn.kt");
-                }
+                    @TestMetadata("valuesUsedInLambdaOnly.kt")
+                    public void testValuesUsedInLambdaOnly() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/valuesUsedInLambdaOnly.kt");
+                    }
 
-                @TestMetadata("outputValueWithSingleLineExpression.kt")
-                public void testOutputValueWithSingleLineExpression() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/outputValueWithSingleLineExpression.kt");
-                }
-
-                @TestMetadata("outputValuesWithExpression.kt")
-                public void testOutputValuesWithExpression() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/outputValuesWithExpression.kt");
-                }
-
-                @TestMetadata("pair.kt")
-                public void testPair() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pair.kt");
-                }
-
-                @TestMetadata("pairOfInitalizersWithNonLocalUsages.kt")
-                public void testPairOfInitalizersWithNonLocalUsages() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairOfInitalizersWithNonLocalUsages.kt");
-                }
-
-                @TestMetadata("pairOfVarInitalizersWithNonLocalUsages.kt")
-                public void testPairOfVarInitalizersWithNonLocalUsages() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairOfVarInitalizersWithNonLocalUsages.kt");
-                }
-
-                @TestMetadata("pairWithIf.kt")
-                public void testPairWithIf() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairWithIf.kt");
-                }
-
-                @TestMetadata("pairWithNameClash.kt")
-                public void testPairWithNameClash() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairWithNameClash.kt");
-                }
-
-                @TestMetadata("pairWithWhen.kt")
-                public void testPairWithWhen() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/pairWithWhen.kt");
-                }
-
-                @TestMetadata("singleOutputValue.kt")
-                public void testSingleOutputValue() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValue.kt");
-                }
-
-                @TestMetadata("singleOutputValueWithIf.kt")
-                public void testSingleOutputValueWithIf() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValueWithIf.kt");
-                }
-
-                @TestMetadata("singleOutputValueWithIfElse.kt")
-                public void testSingleOutputValueWithIfElse() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValueWithIfElse.kt");
-                }
-
-                @TestMetadata("singleOutputValueWithWhen.kt")
-                public void testSingleOutputValueWithWhen() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValueWithWhen.kt");
-                }
-
-                @TestMetadata("singleOutputValueWithWhenElse.kt")
-                public void testSingleOutputValueWithWhenElse() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/singleOutputValueWithWhenElse.kt");
-                }
-
-                @TestMetadata("tooManyOutputValues.kt")
-                public void testTooManyOutputValues() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/tooManyOutputValues.kt");
-                }
-
-                @TestMetadata("tooManyOutputValuesAsList.kt")
-                public void testTooManyOutputValuesAsList() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/tooManyOutputValuesAsList.kt");
-                }
-
-                @TestMetadata("triple.kt")
-                public void testTriple() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/triple.kt");
-                }
-
-                @TestMetadata("usedAndUnusedOutputValues.kt")
-                public void testUsedAndUnusedOutputValues() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/usedAndUnusedOutputValues.kt");
-                }
-
-                @TestMetadata("valAndVarInitalizersWithNonLocalUsages.kt")
-                public void testValAndVarInitalizersWithNonLocalUsages() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/valAndVarInitalizersWithNonLocalUsages.kt");
-                }
-
-                @TestMetadata("valuesUsedInLambdaOnly.kt")
-                public void testValuesUsedInLambdaOnly() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/valuesUsedInLambdaOnly.kt");
-                }
-
-                @TestMetadata("valuesUsedInNestedBlock.kt")
-                public void testValuesUsedInNestedBlock() throws Exception {
-                    runTest("testData/refactoring/extractFunction/controlFlow/outputValues/valuesUsedInNestedBlock.kt");
+                    @TestMetadata("valuesUsedInNestedBlock.kt")
+                    public void testValuesUsedInNestedBlock() throws Exception {
+                        runTest("testData/refactoring/extractFunction/controlFlow/outputValues/valuesUsedInNestedBlock.kt");
+                    }
                 }
             }
 
@@ -2213,139 +2281,151 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/parameters/misc")
-            public static class Misc extends AbstractExtractionTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+            public abstract static class Misc extends AbstractExtractionTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/refactoring/extractFunction/parameters/misc")
+                public static class TestBucket1 extends AbstractExtractionTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("addPrefixToBackticks.kt")
+                    public void testAddPrefixToBackticks() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/addPrefixToBackticks.kt");
+                    }
+
+                    @TestMetadata("classObject.kt")
+                    public void testClassObject() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/classObject.kt");
+                    }
+
+                    @TestMetadata("extensionLambda.kt")
+                    public void testExtensionLambda() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/extensionLambda.kt");
+                    }
+
+                    @TestMetadata("extensionLambdaAsParameter.kt")
+                    public void testExtensionLambdaAsParameter() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/extensionLambdaAsParameter.kt");
+                    }
+
+                    @TestMetadata("idWithBackticks.kt")
+                    public void testIdWithBackticks() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/idWithBackticks.kt");
+                    }
+
+                    @TestMetadata("idWithRequiredBackticks.kt")
+                    public void testIdWithRequiredBackticks() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/idWithRequiredBackticks.kt");
+                    }
+
+                    @TestMetadata("innerClassObject.kt")
+                    public void testInnerClassObject() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/innerClassObject.kt");
+                    }
+
+                    @TestMetadata("kt5001.kt")
+                    public void testKt5001() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/kt5001.kt");
+                    }
+
+                    @TestMetadata("multiDeclaration.kt")
+                    public void testMultiDeclaration() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/multiDeclaration.kt");
+                    }
+
+                    @TestMetadata("multipleOccurrences.kt")
+                    public void testMultipleOccurrences() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/multipleOccurrences.kt");
+                    }
+
+                    @TestMetadata("namedArguments.kt")
+                    public void testNamedArguments() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/namedArguments.kt");
+                    }
+
+                    @TestMetadata("qualifiedAnnotation.kt")
+                    public void testQualifiedAnnotation() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedAnnotation.kt");
+                    }
+
+                    @TestMetadata("qualifiedClassObject.kt")
+                    public void testQualifiedClassObject() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedClassObject.kt");
+                    }
+
+                    @TestMetadata("qualifiedEnum.kt")
+                    public void testQualifiedEnum() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedEnum.kt");
+                    }
+
+                    @TestMetadata("qualifiedObject.kt")
+                    public void testQualifiedObject() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedObject.kt");
+                    }
+
+                    @TestMetadata("qualifiedPackage.kt")
+                    public void testQualifiedPackage() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedPackage.kt");
+                    }
+
+                    @TestMetadata("qualifiedTypeArg.kt")
+                    public void testQualifiedTypeArg() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedTypeArg.kt");
+                    }
+
+                    @TestMetadata("qualifiedTypeInValueArg.kt")
+                    public void testQualifiedTypeInValueArg() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedTypeInValueArg.kt");
+                    }
+
+                    @TestMetadata("qualifiedTypeRef.kt")
+                    public void testQualifiedTypeRef() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedTypeRef.kt");
+                    }
+
+                    @TestMetadata("reducedParameterList.kt")
+                    public void testReducedParameterList() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/reducedParameterList.kt");
+                    }
                 }
 
-                @TestMetadata("addPrefixToBackticks.kt")
-                public void testAddPrefixToBackticks() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/addPrefixToBackticks.kt");
-                }
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/refactoring/extractFunction/parameters/misc")
+                public static class TestBucket2 extends AbstractExtractionTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
+                    }
 
-                @TestMetadata("classObject.kt")
-                public void testClassObject() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/classObject.kt");
-                }
+                    @TestMetadata("replaceWithBackticks.kt")
+                    public void testReplaceWithBackticks() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/replaceWithBackticks.kt");
+                    }
 
-                @TestMetadata("extensionLambda.kt")
-                public void testExtensionLambda() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/extensionLambda.kt");
-                }
+                    @TestMetadata("replaceWithBackticks2.kt")
+                    public void testReplaceWithBackticks2() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/replaceWithBackticks2.kt");
+                    }
 
-                @TestMetadata("extensionLambdaAsParameter.kt")
-                public void testExtensionLambdaAsParameter() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/extensionLambdaAsParameter.kt");
-                }
+                    @TestMetadata("thisInObject.kt")
+                    public void testThisInObject() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/thisInObject.kt");
+                    }
 
-                @TestMetadata("idWithBackticks.kt")
-                public void testIdWithBackticks() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/idWithBackticks.kt");
-                }
+                    @TestMetadata("typeRef.kt")
+                    public void testTypeRef() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/typeRef.kt");
+                    }
 
-                @TestMetadata("idWithRequiredBackticks.kt")
-                public void testIdWithRequiredBackticks() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/idWithRequiredBackticks.kt");
-                }
+                    @TestMetadata("usagesInCallArgs.kt")
+                    public void testUsagesInCallArgs() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/usagesInCallArgs.kt");
+                    }
 
-                @TestMetadata("innerClassObject.kt")
-                public void testInnerClassObject() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/innerClassObject.kt");
-                }
-
-                @TestMetadata("kt5001.kt")
-                public void testKt5001() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/kt5001.kt");
-                }
-
-                @TestMetadata("multiDeclaration.kt")
-                public void testMultiDeclaration() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/multiDeclaration.kt");
-                }
-
-                @TestMetadata("multipleOccurrences.kt")
-                public void testMultipleOccurrences() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/multipleOccurrences.kt");
-                }
-
-                @TestMetadata("namedArguments.kt")
-                public void testNamedArguments() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/namedArguments.kt");
-                }
-
-                @TestMetadata("qualifiedAnnotation.kt")
-                public void testQualifiedAnnotation() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedAnnotation.kt");
-                }
-
-                @TestMetadata("qualifiedClassObject.kt")
-                public void testQualifiedClassObject() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedClassObject.kt");
-                }
-
-                @TestMetadata("qualifiedEnum.kt")
-                public void testQualifiedEnum() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedEnum.kt");
-                }
-
-                @TestMetadata("qualifiedObject.kt")
-                public void testQualifiedObject() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedObject.kt");
-                }
-
-                @TestMetadata("qualifiedPackage.kt")
-                public void testQualifiedPackage() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedPackage.kt");
-                }
-
-                @TestMetadata("qualifiedTypeArg.kt")
-                public void testQualifiedTypeArg() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedTypeArg.kt");
-                }
-
-                @TestMetadata("qualifiedTypeInValueArg.kt")
-                public void testQualifiedTypeInValueArg() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedTypeInValueArg.kt");
-                }
-
-                @TestMetadata("qualifiedTypeRef.kt")
-                public void testQualifiedTypeRef() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/qualifiedTypeRef.kt");
-                }
-
-                @TestMetadata("reducedParameterList.kt")
-                public void testReducedParameterList() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/reducedParameterList.kt");
-                }
-
-                @TestMetadata("replaceWithBackticks.kt")
-                public void testReplaceWithBackticks() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/replaceWithBackticks.kt");
-                }
-
-                @TestMetadata("replaceWithBackticks2.kt")
-                public void testReplaceWithBackticks2() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/replaceWithBackticks2.kt");
-                }
-
-                @TestMetadata("thisInObject.kt")
-                public void testThisInObject() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/thisInObject.kt");
-                }
-
-                @TestMetadata("typeRef.kt")
-                public void testTypeRef() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/typeRef.kt");
-                }
-
-                @TestMetadata("usagesInCallArgs.kt")
-                public void testUsagesInCallArgs() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/usagesInCallArgs.kt");
-                }
-
-                @TestMetadata("variableAsFunction.kt")
-                public void testVariableAsFunction() throws Exception {
-                    runTest("testData/refactoring/extractFunction/parameters/misc/variableAsFunction.kt");
+                    @TestMetadata("variableAsFunction.kt")
+                    public void testVariableAsFunction() throws Exception {
+                        runTest("testData/refactoring/extractFunction/parameters/misc/variableAsFunction.kt");
+                    }
                 }
             }
 
@@ -2709,184 +2789,196 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceProperty")
-        public static class Uncategorized extends AbstractExtractionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doIntroducePropertyTest, this, testDataFilePath);
+        public abstract static class Uncategorized extends AbstractExtractionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/introduceProperty")
+            public static class TestBucket1 extends AbstractExtractionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doIntroducePropertyTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("conflictWithParentClass.kt")
+                public void testConflictWithParentClass() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/conflictWithParentClass.kt");
+                }
+
+                @TestMetadata("extractExtensionWithInitializer.kt")
+                public void testExtractExtensionWithInitializer() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractExtensionWithInitializer.kt");
+                }
+
+                @TestMetadata("extractFromDefaultValueInConstructor.kt")
+                public void testExtractFromDefaultValueInConstructor() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractFromDefaultValueInConstructor.kt");
+                }
+
+                @TestMetadata("extractFromDefaultValueInFun.kt")
+                public void testExtractFromDefaultValueInFun() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractFromDefaultValueInFun.kt");
+                }
+
+                @TestMetadata("extractLazyExtension.kt")
+                public void testExtractLazyExtension() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractLazyExtension.kt");
+                }
+
+                @TestMetadata("extractLazyMultipleExpressions.kt")
+                public void testExtractLazyMultipleExpressions() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractLazyMultipleExpressions.kt");
+                }
+
+                @TestMetadata("extractLazyToClass.kt")
+                public void testExtractLazyToClass() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractLazyToClass.kt");
+                }
+
+                @TestMetadata("extractLazyToFile.kt")
+                public void testExtractLazyToFile() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractLazyToFile.kt");
+                }
+
+                @TestMetadata("extractLazyToTrait.kt")
+                public void testExtractLazyToTrait() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractLazyToTrait.kt");
+                }
+
+                @TestMetadata("extractLazyWithBlock.kt")
+                public void testExtractLazyWithBlock() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractLazyWithBlock.kt");
+                }
+
+                @TestMetadata("extractLazyWithCallSiteReturn.kt")
+                public void testExtractLazyWithCallSiteReturn() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractLazyWithCallSiteReturn.kt");
+                }
+
+                @TestMetadata("extractToClassWithNameClash.kt")
+                public void testExtractToClassWithNameClash() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractToClassWithNameClash.kt");
+                }
+
+                @TestMetadata("extractToClassWithNameClashAndAnonymousInitializer.kt")
+                public void testExtractToClassWithNameClashAndAnonymousInitializer() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractToClassWithNameClashAndAnonymousInitializer.kt");
+                }
+
+                @TestMetadata("extractToFileWithNameClash.kt")
+                public void testExtractToFileWithNameClash() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractToFileWithNameClash.kt");
+                }
+
+                @TestMetadata("extractToFunction.kt")
+                public void testExtractToFunction() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractToFunction.kt");
+                }
+
+                @TestMetadata("extractUnit.kt")
+                public void testExtractUnit() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractUnit.kt");
+                }
+
+                @TestMetadata("extractWithGetterMultipleExpressions.kt")
+                public void testExtractWithGetterMultipleExpressions() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractWithGetterMultipleExpressions.kt");
+                }
+
+                @TestMetadata("extractWithGetterToClass.kt")
+                public void testExtractWithGetterToClass() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractWithGetterToClass.kt");
+                }
+
+                @TestMetadata("extractWithGetterToFile.kt")
+                public void testExtractWithGetterToFile() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractWithGetterToFile.kt");
+                }
+
+                @TestMetadata("extractWithGetterToTrait.kt")
+                public void testExtractWithGetterToTrait() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractWithGetterToTrait.kt");
+                }
             }
 
-            @TestMetadata("conflictWithParentClass.kt")
-            public void testConflictWithParentClass() throws Exception {
-                runTest("testData/refactoring/introduceProperty/conflictWithParentClass.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/introduceProperty")
+            public static class TestBucket2 extends AbstractExtractionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doIntroducePropertyTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("extractExtensionWithInitializer.kt")
-            public void testExtractExtensionWithInitializer() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractExtensionWithInitializer.kt");
-            }
+                @TestMetadata("extractWithInitializerAndBlock.kt")
+                public void testExtractWithInitializerAndBlock() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractWithInitializerAndBlock.kt");
+                }
 
-            @TestMetadata("extractFromDefaultValueInConstructor.kt")
-            public void testExtractFromDefaultValueInConstructor() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractFromDefaultValueInConstructor.kt");
-            }
+                @TestMetadata("extractWithInitializerAndCallSiteReturn.kt")
+                public void testExtractWithInitializerAndCallSiteReturn() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractWithInitializerAndCallSiteReturn.kt");
+                }
 
-            @TestMetadata("extractFromDefaultValueInFun.kt")
-            public void testExtractFromDefaultValueInFun() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractFromDefaultValueInFun.kt");
-            }
+                @TestMetadata("extractWithInitializerAndSingleElementBlock.kt")
+                public void testExtractWithInitializerAndSingleElementBlock() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractWithInitializerAndSingleElementBlock.kt");
+                }
 
-            @TestMetadata("extractLazyExtension.kt")
-            public void testExtractLazyExtension() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractLazyExtension.kt");
-            }
+                @TestMetadata("extractWithInitializerMultipleExpressions.kt")
+                public void testExtractWithInitializerMultipleExpressions() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractWithInitializerMultipleExpressions.kt");
+                }
 
-            @TestMetadata("extractLazyMultipleExpressions.kt")
-            public void testExtractLazyMultipleExpressions() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractLazyMultipleExpressions.kt");
-            }
+                @TestMetadata("extractWithInitializerToClass.kt")
+                public void testExtractWithInitializerToClass() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractWithInitializerToClass.kt");
+                }
 
-            @TestMetadata("extractLazyToClass.kt")
-            public void testExtractLazyToClass() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractLazyToClass.kt");
-            }
+                @TestMetadata("extractWithInitializerToFile.kt")
+                public void testExtractWithInitializerToFile() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractWithInitializerToFile.kt");
+                }
 
-            @TestMetadata("extractLazyToFile.kt")
-            public void testExtractLazyToFile() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractLazyToFile.kt");
-            }
+                @TestMetadata("extractWithInitializerToTrait.kt")
+                public void testExtractWithInitializerToTrait() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractWithInitializerToTrait.kt");
+                }
 
-            @TestMetadata("extractLazyToTrait.kt")
-            public void testExtractLazyToTrait() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractLazyToTrait.kt");
-            }
+                @TestMetadata("extractWithParams.kt")
+                public void testExtractWithParams() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/extractWithParams.kt");
+                }
 
-            @TestMetadata("extractLazyWithBlock.kt")
-            public void testExtractLazyWithBlock() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractLazyWithBlock.kt");
-            }
+                @TestMetadata("kt21530.kt")
+                public void testKt21530() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/kt21530.kt");
+                }
 
-            @TestMetadata("extractLazyWithCallSiteReturn.kt")
-            public void testExtractLazyWithCallSiteReturn() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractLazyWithCallSiteReturn.kt");
-            }
+                @TestMetadata("kt24615.kt")
+                public void testKt24615() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/kt24615.kt");
+                }
 
-            @TestMetadata("extractToClassWithNameClash.kt")
-            public void testExtractToClassWithNameClash() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractToClassWithNameClash.kt");
-            }
+                @TestMetadata("primaryConstructorParameterReference.kt")
+                public void testPrimaryConstructorParameterReference() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/primaryConstructorParameterReference.kt");
+                }
 
-            @TestMetadata("extractToClassWithNameClashAndAnonymousInitializer.kt")
-            public void testExtractToClassWithNameClashAndAnonymousInitializer() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractToClassWithNameClashAndAnonymousInitializer.kt");
-            }
+                @TestMetadata("replaceDuplicates.kt")
+                public void testReplaceDuplicates() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/replaceDuplicates.kt");
+                }
 
-            @TestMetadata("extractToFileWithNameClash.kt")
-            public void testExtractToFileWithNameClash() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractToFileWithNameClash.kt");
-            }
+                @TestMetadata("syntaxErrors.kt")
+                public void testSyntaxErrors() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/syntaxErrors.kt");
+                }
 
-            @TestMetadata("extractToFunction.kt")
-            public void testExtractToFunction() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractToFunction.kt");
-            }
+                @TestMetadata("typeParameterNotResolvableInTargetScope.kt")
+                public void testTypeParameterNotResolvableInTargetScope() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/typeParameterNotResolvableInTargetScope.kt");
+                }
 
-            @TestMetadata("extractUnit.kt")
-            public void testExtractUnit() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractUnit.kt");
-            }
-
-            @TestMetadata("extractWithGetterMultipleExpressions.kt")
-            public void testExtractWithGetterMultipleExpressions() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractWithGetterMultipleExpressions.kt");
-            }
-
-            @TestMetadata("extractWithGetterToClass.kt")
-            public void testExtractWithGetterToClass() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractWithGetterToClass.kt");
-            }
-
-            @TestMetadata("extractWithGetterToFile.kt")
-            public void testExtractWithGetterToFile() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractWithGetterToFile.kt");
-            }
-
-            @TestMetadata("extractWithGetterToTrait.kt")
-            public void testExtractWithGetterToTrait() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractWithGetterToTrait.kt");
-            }
-
-            @TestMetadata("extractWithInitializerAndBlock.kt")
-            public void testExtractWithInitializerAndBlock() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractWithInitializerAndBlock.kt");
-            }
-
-            @TestMetadata("extractWithInitializerAndCallSiteReturn.kt")
-            public void testExtractWithInitializerAndCallSiteReturn() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractWithInitializerAndCallSiteReturn.kt");
-            }
-
-            @TestMetadata("extractWithInitializerAndSingleElementBlock.kt")
-            public void testExtractWithInitializerAndSingleElementBlock() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractWithInitializerAndSingleElementBlock.kt");
-            }
-
-            @TestMetadata("extractWithInitializerMultipleExpressions.kt")
-            public void testExtractWithInitializerMultipleExpressions() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractWithInitializerMultipleExpressions.kt");
-            }
-
-            @TestMetadata("extractWithInitializerToClass.kt")
-            public void testExtractWithInitializerToClass() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractWithInitializerToClass.kt");
-            }
-
-            @TestMetadata("extractWithInitializerToFile.kt")
-            public void testExtractWithInitializerToFile() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractWithInitializerToFile.kt");
-            }
-
-            @TestMetadata("extractWithInitializerToTrait.kt")
-            public void testExtractWithInitializerToTrait() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractWithInitializerToTrait.kt");
-            }
-
-            @TestMetadata("extractWithParams.kt")
-            public void testExtractWithParams() throws Exception {
-                runTest("testData/refactoring/introduceProperty/extractWithParams.kt");
-            }
-
-            @TestMetadata("kt21530.kt")
-            public void testKt21530() throws Exception {
-                runTest("testData/refactoring/introduceProperty/kt21530.kt");
-            }
-
-            @TestMetadata("kt24615.kt")
-            public void testKt24615() throws Exception {
-                runTest("testData/refactoring/introduceProperty/kt24615.kt");
-            }
-
-            @TestMetadata("primaryConstructorParameterReference.kt")
-            public void testPrimaryConstructorParameterReference() throws Exception {
-                runTest("testData/refactoring/introduceProperty/primaryConstructorParameterReference.kt");
-            }
-
-            @TestMetadata("replaceDuplicates.kt")
-            public void testReplaceDuplicates() throws Exception {
-                runTest("testData/refactoring/introduceProperty/replaceDuplicates.kt");
-            }
-
-            @TestMetadata("syntaxErrors.kt")
-            public void testSyntaxErrors() throws Exception {
-                runTest("testData/refactoring/introduceProperty/syntaxErrors.kt");
-            }
-
-            @TestMetadata("typeParameterNotResolvableInTargetScope.kt")
-            public void testTypeParameterNotResolvableInTargetScope() throws Exception {
-                runTest("testData/refactoring/introduceProperty/typeParameterNotResolvableInTargetScope.kt");
-            }
-
-            @TestMetadata("typeParameterResolvableInTargetScope.kt")
-            public void testTypeParameterResolvableInTargetScope() throws Exception {
-                runTest("testData/refactoring/introduceProperty/typeParameterResolvableInTargetScope.kt");
+                @TestMetadata("typeParameterResolvableInTargetScope.kt")
+                public void testTypeParameterResolvableInTargetScope() throws Exception {
+                    runTest("testData/refactoring/introduceProperty/typeParameterResolvableInTargetScope.kt");
+                }
             }
         }
     }
@@ -3035,274 +3127,294 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceParameter")
-        public static class Uncategorized extends AbstractExtractionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doIntroduceSimpleParameterTest, this, testDataFilePath);
+        public abstract static class Uncategorized extends AbstractExtractionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/introduceParameter")
+            public static class TestBucket1 extends AbstractExtractionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doIntroduceSimpleParameterTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("annotationArgument.kt")
+                public void testAnnotationArgument() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/annotationArgument.kt");
+                }
+
+                @TestMetadata("assignment.kt")
+                public void testAssignment() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/assignment.kt");
+                }
+
+                @TestMetadata("avoidClassDuplicatingParameters.kt")
+                public void testAvoidClassDuplicatingParameters() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/avoidClassDuplicatingParameters.kt");
+                }
+
+                @TestMetadata("avoidFunDuplicatingParameters.kt")
+                public void testAvoidFunDuplicatingParameters() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/avoidFunDuplicatingParameters.kt");
+                }
+
+                @TestMetadata("classInAnonymousInitializer.kt")
+                public void testClassInAnonymousInitializer() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/classInAnonymousInitializer.kt");
+                }
+
+                @TestMetadata("classInPropertyInitializer.kt")
+                public void testClassInPropertyInitializer() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/classInPropertyInitializer.kt");
+                }
+
+                @TestMetadata("classMultipleUsages1.kt")
+                public void testClassMultipleUsages1() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/classMultipleUsages1.kt");
+                }
+
+                @TestMetadata("classMultipleUsages2.kt")
+                public void testClassMultipleUsages2() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/classMultipleUsages2.kt");
+                }
+
+                @TestMetadata("classMultipleUsagesOutsideScope.kt")
+                public void testClassMultipleUsagesOutsideScope() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/classMultipleUsagesOutsideScope.kt");
+                }
+
+                @TestMetadata("classMultipleUsagesSingleReplace1.kt")
+                public void testClassMultipleUsagesSingleReplace1() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/classMultipleUsagesSingleReplace1.kt");
+                }
+
+                @TestMetadata("classMultipleUsagesSingleReplace2.kt")
+                public void testClassMultipleUsagesSingleReplace2() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/classMultipleUsagesSingleReplace2.kt");
+                }
+
+                @TestMetadata("classNoParams.kt")
+                public void testClassNoParams() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/classNoParams.kt");
+                }
+
+                @TestMetadata("classParameterInFunctionBody.kt")
+                public void testClassParameterInFunctionBody() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/classParameterInFunctionBody.kt");
+                }
+
+                @TestMetadata("classParameterUsedOutside.kt")
+                public void testClassParameterUsedOutside() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/classParameterUsedOutside.kt");
+                }
+
+                @TestMetadata("classUnusedParameter.kt")
+                public void testClassUnusedParameter() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/classUnusedParameter.kt");
+                }
+
+                @TestMetadata("classUsedParameter.kt")
+                public void testClassUsedParameter() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/classUsedParameter.kt");
+                }
+
+                @TestMetadata("defaultValueInParens.kt")
+                public void testDefaultValueInParens() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/defaultValueInParens.kt");
+                }
+
+                @TestMetadata("defaultValueNoTempVar.kt")
+                public void testDefaultValueNoTempVar() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/defaultValueNoTempVar.kt");
+                }
+
+                @TestMetadata("forbiddenUsages.kt")
+                public void testForbiddenUsages() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/forbiddenUsages.kt");
+                }
+
+                @TestMetadata("foreignParameterRef.kt")
+                public void testForeignParameterRef() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/foreignParameterRef.kt");
+                }
             }
 
-            @TestMetadata("annotationArgument.kt")
-            public void testAnnotationArgument() throws Exception {
-                runTest("testData/refactoring/introduceParameter/annotationArgument.kt");
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/introduceParameter")
+            public static class TestBucket2 extends AbstractExtractionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doIntroduceSimpleParameterTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("fun.kt")
+                public void testFun() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/fun.kt");
+                }
+
+                @TestMetadata("functionMultipleUnusedParameters.kt")
+                public void testFunctionMultipleUnusedParameters() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/functionMultipleUnusedParameters.kt");
+                }
+
+                @TestMetadata("functionMultipleUsages.kt")
+                public void testFunctionMultipleUsages() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/functionMultipleUsages.kt");
+                }
+
+                @TestMetadata("functionMultipleUsagesSingleReplace.kt")
+                public void testFunctionMultipleUsagesSingleReplace() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/functionMultipleUsagesSingleReplace.kt");
+                }
+
+                @TestMetadata("functionUnusedParameter.kt")
+                public void testFunctionUnusedParameter() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/functionUnusedParameter.kt");
+                }
+
+                @TestMetadata("functionUsedParameter.kt")
+                public void testFunctionUsedParameter() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/functionUsedParameter.kt");
+                }
+
+                @TestMetadata("functionWithApproximatedType.kt")
+                public void testFunctionWithApproximatedType() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/functionWithApproximatedType.kt");
+                }
+
+                @TestMetadata("functionWithDefaultValue.kt")
+                public void testFunctionWithDefaultValue() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/functionWithDefaultValue.kt");
+                }
+
+                @TestMetadata("inDefaultValue.kt")
+                public void testInDefaultValue() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/inDefaultValue.kt");
+                }
+
+                @TestMetadata("lambdaArgument.kt")
+                public void testLambdaArgument() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/lambdaArgument.kt");
+                }
+
+                @TestMetadata("partialSubstitution.kt")
+                public void testPartialSubstitution() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/partialSubstitution.kt");
+                }
+
+                @TestMetadata("propertyAccessor.kt")
+                public void testPropertyAccessor() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/propertyAccessor.kt");
+                }
+
+                @TestMetadata("return.kt")
+                public void testReturn() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/return.kt");
+                }
+
+                @TestMetadata("secondaryConstructorWithDefaultValue.kt")
+                public void testSecondaryConstructorWithDefaultValue() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/secondaryConstructorWithDefaultValue.kt");
+                }
+
+                @TestMetadata("simpleNameWithDefaultValueSubstitution.kt")
+                public void testSimpleNameWithDefaultValueSubstitution() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/simpleNameWithDefaultValueSubstitution.kt");
+                }
+
+                @TestMetadata("substituteBinaryExpressions.kt")
+                public void testSubstituteBinaryExpressions() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/substituteBinaryExpressions.kt");
+                }
+
+                @TestMetadata("substituteCallExpressions.kt")
+                public void testSubstituteCallExpressions() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/substituteCallExpressions.kt");
+                }
+
+                @TestMetadata("substituteDelegationCallsNoTempVar.kt")
+                public void testSubstituteDelegationCallsNoTempVar() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/substituteDelegationCallsNoTempVar.kt");
+                }
+
+                @TestMetadata("substituteDoubleReceiver.kt")
+                public void testSubstituteDoubleReceiver() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/substituteDoubleReceiver.kt");
+                }
+
+                @TestMetadata("substituteExplicitThisInMember.kt")
+                public void testSubstituteExplicitThisInMember() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/substituteExplicitThisInMember.kt");
+                }
             }
 
-            @TestMetadata("assignment.kt")
-            public void testAssignment() throws Exception {
-                runTest("testData/refactoring/introduceParameter/assignment.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/introduceParameter")
+            public static class TestBucket3 extends AbstractExtractionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doIntroduceSimpleParameterTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("avoidClassDuplicatingParameters.kt")
-            public void testAvoidClassDuplicatingParameters() throws Exception {
-                runTest("testData/refactoring/introduceParameter/avoidClassDuplicatingParameters.kt");
-            }
+                @TestMetadata("substituteImplicitThisInMember.kt")
+                public void testSubstituteImplicitThisInMember() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/substituteImplicitThisInMember.kt");
+                }
 
-            @TestMetadata("avoidFunDuplicatingParameters.kt")
-            public void testAvoidFunDuplicatingParameters() throws Exception {
-                runTest("testData/refactoring/introduceParameter/avoidFunDuplicatingParameters.kt");
-            }
+                @TestMetadata("substituteInPrimaryConstructorCall.kt")
+                public void testSubstituteInPrimaryConstructorCall() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/substituteInPrimaryConstructorCall.kt");
+                }
 
-            @TestMetadata("classInAnonymousInitializer.kt")
-            public void testClassInAnonymousInitializer() throws Exception {
-                runTest("testData/refactoring/introduceParameter/classInAnonymousInitializer.kt");
-            }
+                @TestMetadata("substituteInSecondaryConstructorCall.kt")
+                public void testSubstituteInSecondaryConstructorCall() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/substituteInSecondaryConstructorCall.kt");
+                }
 
-            @TestMetadata("classInPropertyInitializer.kt")
-            public void testClassInPropertyInitializer() throws Exception {
-                runTest("testData/refactoring/introduceParameter/classInPropertyInitializer.kt");
-            }
+                @TestMetadata("substituteIncrement.kt")
+                public void testSubstituteIncrement() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/substituteIncrement.kt");
+                }
 
-            @TestMetadata("classMultipleUsages1.kt")
-            public void testClassMultipleUsages1() throws Exception {
-                runTest("testData/refactoring/introduceParameter/classMultipleUsages1.kt");
-            }
+                @TestMetadata("substituteInfixCall.kt")
+                public void testSubstituteInfixCall() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/substituteInfixCall.kt");
+                }
 
-            @TestMetadata("classMultipleUsages2.kt")
-            public void testClassMultipleUsages2() throws Exception {
-                runTest("testData/refactoring/introduceParameter/classMultipleUsages2.kt");
-            }
+                @TestMetadata("superCallArgument.kt")
+                public void testSuperCallArgument() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/superCallArgument.kt");
+                }
 
-            @TestMetadata("classMultipleUsagesOutsideScope.kt")
-            public void testClassMultipleUsagesOutsideScope() throws Exception {
-                runTest("testData/refactoring/introduceParameter/classMultipleUsagesOutsideScope.kt");
-            }
+                @TestMetadata("throw.kt")
+                public void testThrow() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/throw.kt");
+                }
 
-            @TestMetadata("classMultipleUsagesSingleReplace1.kt")
-            public void testClassMultipleUsagesSingleReplace1() throws Exception {
-                runTest("testData/refactoring/introduceParameter/classMultipleUsagesSingleReplace1.kt");
-            }
+                @TestMetadata("unusedDispatchReceiver.kt")
+                public void testUnusedDispatchReceiver() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/unusedDispatchReceiver.kt");
+                }
 
-            @TestMetadata("classMultipleUsagesSingleReplace2.kt")
-            public void testClassMultipleUsagesSingleReplace2() throws Exception {
-                runTest("testData/refactoring/introduceParameter/classMultipleUsagesSingleReplace2.kt");
-            }
+                @TestMetadata("unusedExtensionReceiver.kt")
+                public void testUnusedExtensionReceiver() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/unusedExtensionReceiver.kt");
+                }
 
-            @TestMetadata("classNoParams.kt")
-            public void testClassNoParams() throws Exception {
-                runTest("testData/refactoring/introduceParameter/classNoParams.kt");
-            }
+                @TestMetadata("valueAtCallSite.kt")
+                public void testValueAtCallSite() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/valueAtCallSite.kt");
+                }
 
-            @TestMetadata("classParameterInFunctionBody.kt")
-            public void testClassParameterInFunctionBody() throws Exception {
-                runTest("testData/refactoring/introduceParameter/classParameterInFunctionBody.kt");
-            }
+                @TestMetadata("valueAtCallSiteMultipleUsages.kt")
+                public void testValueAtCallSiteMultipleUsages() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/valueAtCallSiteMultipleUsages.kt");
+                }
 
-            @TestMetadata("classParameterUsedOutside.kt")
-            public void testClassParameterUsedOutside() throws Exception {
-                runTest("testData/refactoring/introduceParameter/classParameterUsedOutside.kt");
-            }
+                @TestMetadata("varargs.kt")
+                public void testVarargs() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/varargs.kt");
+                }
 
-            @TestMetadata("classUnusedParameter.kt")
-            public void testClassUnusedParameter() throws Exception {
-                runTest("testData/refactoring/introduceParameter/classUnusedParameter.kt");
-            }
-
-            @TestMetadata("classUsedParameter.kt")
-            public void testClassUsedParameter() throws Exception {
-                runTest("testData/refactoring/introduceParameter/classUsedParameter.kt");
-            }
-
-            @TestMetadata("defaultValueInParens.kt")
-            public void testDefaultValueInParens() throws Exception {
-                runTest("testData/refactoring/introduceParameter/defaultValueInParens.kt");
-            }
-
-            @TestMetadata("defaultValueNoTempVar.kt")
-            public void testDefaultValueNoTempVar() throws Exception {
-                runTest("testData/refactoring/introduceParameter/defaultValueNoTempVar.kt");
-            }
-
-            @TestMetadata("forbiddenUsages.kt")
-            public void testForbiddenUsages() throws Exception {
-                runTest("testData/refactoring/introduceParameter/forbiddenUsages.kt");
-            }
-
-            @TestMetadata("foreignParameterRef.kt")
-            public void testForeignParameterRef() throws Exception {
-                runTest("testData/refactoring/introduceParameter/foreignParameterRef.kt");
-            }
-
-            @TestMetadata("fun.kt")
-            public void testFun() throws Exception {
-                runTest("testData/refactoring/introduceParameter/fun.kt");
-            }
-
-            @TestMetadata("functionMultipleUnusedParameters.kt")
-            public void testFunctionMultipleUnusedParameters() throws Exception {
-                runTest("testData/refactoring/introduceParameter/functionMultipleUnusedParameters.kt");
-            }
-
-            @TestMetadata("functionMultipleUsages.kt")
-            public void testFunctionMultipleUsages() throws Exception {
-                runTest("testData/refactoring/introduceParameter/functionMultipleUsages.kt");
-            }
-
-            @TestMetadata("functionMultipleUsagesSingleReplace.kt")
-            public void testFunctionMultipleUsagesSingleReplace() throws Exception {
-                runTest("testData/refactoring/introduceParameter/functionMultipleUsagesSingleReplace.kt");
-            }
-
-            @TestMetadata("functionUnusedParameter.kt")
-            public void testFunctionUnusedParameter() throws Exception {
-                runTest("testData/refactoring/introduceParameter/functionUnusedParameter.kt");
-            }
-
-            @TestMetadata("functionUsedParameter.kt")
-            public void testFunctionUsedParameter() throws Exception {
-                runTest("testData/refactoring/introduceParameter/functionUsedParameter.kt");
-            }
-
-            @TestMetadata("functionWithApproximatedType.kt")
-            public void testFunctionWithApproximatedType() throws Exception {
-                runTest("testData/refactoring/introduceParameter/functionWithApproximatedType.kt");
-            }
-
-            @TestMetadata("functionWithDefaultValue.kt")
-            public void testFunctionWithDefaultValue() throws Exception {
-                runTest("testData/refactoring/introduceParameter/functionWithDefaultValue.kt");
-            }
-
-            @TestMetadata("inDefaultValue.kt")
-            public void testInDefaultValue() throws Exception {
-                runTest("testData/refactoring/introduceParameter/inDefaultValue.kt");
-            }
-
-            @TestMetadata("lambdaArgument.kt")
-            public void testLambdaArgument() throws Exception {
-                runTest("testData/refactoring/introduceParameter/lambdaArgument.kt");
-            }
-
-            @TestMetadata("partialSubstitution.kt")
-            public void testPartialSubstitution() throws Exception {
-                runTest("testData/refactoring/introduceParameter/partialSubstitution.kt");
-            }
-
-            @TestMetadata("propertyAccessor.kt")
-            public void testPropertyAccessor() throws Exception {
-                runTest("testData/refactoring/introduceParameter/propertyAccessor.kt");
-            }
-
-            @TestMetadata("return.kt")
-            public void testReturn() throws Exception {
-                runTest("testData/refactoring/introduceParameter/return.kt");
-            }
-
-            @TestMetadata("secondaryConstructorWithDefaultValue.kt")
-            public void testSecondaryConstructorWithDefaultValue() throws Exception {
-                runTest("testData/refactoring/introduceParameter/secondaryConstructorWithDefaultValue.kt");
-            }
-
-            @TestMetadata("simpleNameWithDefaultValueSubstitution.kt")
-            public void testSimpleNameWithDefaultValueSubstitution() throws Exception {
-                runTest("testData/refactoring/introduceParameter/simpleNameWithDefaultValueSubstitution.kt");
-            }
-
-            @TestMetadata("substituteBinaryExpressions.kt")
-            public void testSubstituteBinaryExpressions() throws Exception {
-                runTest("testData/refactoring/introduceParameter/substituteBinaryExpressions.kt");
-            }
-
-            @TestMetadata("substituteCallExpressions.kt")
-            public void testSubstituteCallExpressions() throws Exception {
-                runTest("testData/refactoring/introduceParameter/substituteCallExpressions.kt");
-            }
-
-            @TestMetadata("substituteDelegationCallsNoTempVar.kt")
-            public void testSubstituteDelegationCallsNoTempVar() throws Exception {
-                runTest("testData/refactoring/introduceParameter/substituteDelegationCallsNoTempVar.kt");
-            }
-
-            @TestMetadata("substituteDoubleReceiver.kt")
-            public void testSubstituteDoubleReceiver() throws Exception {
-                runTest("testData/refactoring/introduceParameter/substituteDoubleReceiver.kt");
-            }
-
-            @TestMetadata("substituteExplicitThisInMember.kt")
-            public void testSubstituteExplicitThisInMember() throws Exception {
-                runTest("testData/refactoring/introduceParameter/substituteExplicitThisInMember.kt");
-            }
-
-            @TestMetadata("substituteImplicitThisInMember.kt")
-            public void testSubstituteImplicitThisInMember() throws Exception {
-                runTest("testData/refactoring/introduceParameter/substituteImplicitThisInMember.kt");
-            }
-
-            @TestMetadata("substituteInPrimaryConstructorCall.kt")
-            public void testSubstituteInPrimaryConstructorCall() throws Exception {
-                runTest("testData/refactoring/introduceParameter/substituteInPrimaryConstructorCall.kt");
-            }
-
-            @TestMetadata("substituteInSecondaryConstructorCall.kt")
-            public void testSubstituteInSecondaryConstructorCall() throws Exception {
-                runTest("testData/refactoring/introduceParameter/substituteInSecondaryConstructorCall.kt");
-            }
-
-            @TestMetadata("substituteIncrement.kt")
-            public void testSubstituteIncrement() throws Exception {
-                runTest("testData/refactoring/introduceParameter/substituteIncrement.kt");
-            }
-
-            @TestMetadata("substituteInfixCall.kt")
-            public void testSubstituteInfixCall() throws Exception {
-                runTest("testData/refactoring/introduceParameter/substituteInfixCall.kt");
-            }
-
-            @TestMetadata("superCallArgument.kt")
-            public void testSuperCallArgument() throws Exception {
-                runTest("testData/refactoring/introduceParameter/superCallArgument.kt");
-            }
-
-            @TestMetadata("throw.kt")
-            public void testThrow() throws Exception {
-                runTest("testData/refactoring/introduceParameter/throw.kt");
-            }
-
-            @TestMetadata("unusedDispatchReceiver.kt")
-            public void testUnusedDispatchReceiver() throws Exception {
-                runTest("testData/refactoring/introduceParameter/unusedDispatchReceiver.kt");
-            }
-
-            @TestMetadata("unusedExtensionReceiver.kt")
-            public void testUnusedExtensionReceiver() throws Exception {
-                runTest("testData/refactoring/introduceParameter/unusedExtensionReceiver.kt");
-            }
-
-            @TestMetadata("valueAtCallSite.kt")
-            public void testValueAtCallSite() throws Exception {
-                runTest("testData/refactoring/introduceParameter/valueAtCallSite.kt");
-            }
-
-            @TestMetadata("valueAtCallSiteMultipleUsages.kt")
-            public void testValueAtCallSiteMultipleUsages() throws Exception {
-                runTest("testData/refactoring/introduceParameter/valueAtCallSiteMultipleUsages.kt");
-            }
-
-            @TestMetadata("varargs.kt")
-            public void testVarargs() throws Exception {
-                runTest("testData/refactoring/introduceParameter/varargs.kt");
-            }
-
-            @TestMetadata("while.kt")
-            public void testWhile() throws Exception {
-                runTest("testData/refactoring/introduceParameter/while.kt");
+                @TestMetadata("while.kt")
+                public void testWhile() throws Exception {
+                    runTest("testData/refactoring/introduceParameter/while.kt");
+                }
             }
         }
 
@@ -3561,154 +3673,166 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/introduceTypeAlias")
-    public static class IntroduceTypeAlias extends AbstractExtractionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doIntroduceTypeAliasTest, this, testDataFilePath);
+    public abstract static class IntroduceTypeAlias extends AbstractExtractionTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/refactoring/introduceTypeAlias")
+        public static class TestBucket1 extends AbstractExtractionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doIntroduceTypeAliasTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("callableReference.kt")
+            public void testCallableReference() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/callableReference.kt");
+            }
+
+            @TestMetadata("callableReferenceSelector.kt")
+            public void testCallableReferenceSelector() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/callableReferenceSelector.kt");
+            }
+
+            @TestMetadata("classLiteral.kt")
+            public void testClassLiteral() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/classLiteral.kt");
+            }
+
+            @TestMetadata("constructorCalls.kt")
+            public void testConstructorCalls() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/constructorCalls.kt");
+            }
+
+            @TestMetadata("deeplyNestedClass.kt")
+            public void testDeeplyNestedClass() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/deeplyNestedClass.kt");
+            }
+
+            @TestMetadata("emptyName.kt")
+            public void testEmptyName() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/emptyName.kt");
+            }
+
+            @TestMetadata("entireTypeExtracted.kt")
+            public void testEntireTypeExtracted() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/entireTypeExtracted.kt");
+            }
+
+            @TestMetadata("equivalentNestedTypeElements.kt")
+            public void testEquivalentNestedTypeElements() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/equivalentNestedTypeElements.kt");
+            }
+
+            @TestMetadata("existingTypeClash.kt")
+            public void testExistingTypeClash() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/existingTypeClash.kt");
+            }
+
+            @TestMetadata("functionTypeDuplicatesNoTypeParameters.kt")
+            public void testFunctionTypeDuplicatesNoTypeParameters() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/functionTypeDuplicatesNoTypeParameters.kt");
+            }
+
+            @TestMetadata("functionTypeDuplicatesWithTypeParameters.kt")
+            public void testFunctionTypeDuplicatesWithTypeParameters() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/functionTypeDuplicatesWithTypeParameters.kt");
+            }
+
+            @TestMetadata("functionalType.kt")
+            public void testFunctionalType() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/functionalType.kt");
+            }
+
+            @TestMetadata("localTypeExtracted.kt")
+            public void testLocalTypeExtracted() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/localTypeExtracted.kt");
+            }
+
+            @TestMetadata("localWithVisibility.kt")
+            public void testLocalWithVisibility() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/localWithVisibility.kt");
+            }
+
+            @TestMetadata("nestedClass.kt")
+            public void testNestedClass() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/nestedClass.kt");
+            }
+
+            @TestMetadata("nestedTypesExtracted.kt")
+            public void testNestedTypesExtracted() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/nestedTypesExtracted.kt");
+            }
+
+            @TestMetadata("noTypeElement.kt")
+            public void testNoTypeElement() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/noTypeElement.kt");
+            }
+
+            @TestMetadata("nonIdentifierName.kt")
+            public void testNonIdentifierName() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/nonIdentifierName.kt");
+            }
+
+            @TestMetadata("nullableType.kt")
+            public void testNullableType() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/nullableType.kt");
+            }
+
+            @TestMetadata("privateTypeAlias.kt")
+            public void testPrivateTypeAlias() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/privateTypeAlias.kt");
+            }
         }
 
-        @TestMetadata("callableReference.kt")
-        public void testCallableReference() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/callableReference.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/refactoring/introduceTypeAlias")
+        public static class TestBucket2 extends AbstractExtractionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doIntroduceTypeAliasTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("callableReferenceSelector.kt")
-        public void testCallableReferenceSelector() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/callableReferenceSelector.kt");
-        }
+            @TestMetadata("protectedInFile.kt")
+            public void testProtectedInFile() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/protectedInFile.kt");
+            }
 
-        @TestMetadata("classLiteral.kt")
-        public void testClassLiteral() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/classLiteral.kt");
-        }
+            @TestMetadata("skipQualifiers.kt")
+            public void testSkipQualifiers() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/skipQualifiers.kt");
+            }
 
-        @TestMetadata("constructorCalls.kt")
-        public void testConstructorCalls() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/constructorCalls.kt");
-        }
+            @TestMetadata("suggestedName.kt")
+            public void testSuggestedName() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/suggestedName.kt");
+            }
 
-        @TestMetadata("deeplyNestedClass.kt")
-        public void testDeeplyNestedClass() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/deeplyNestedClass.kt");
-        }
+            @TestMetadata("topLevelTypeAlias.kt")
+            public void testTopLevelTypeAlias() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/topLevelTypeAlias.kt");
+            }
 
-        @TestMetadata("emptyName.kt")
-        public void testEmptyName() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/emptyName.kt");
-        }
+            @TestMetadata("typeConstructor.kt")
+            public void testTypeConstructor() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/typeConstructor.kt");
+            }
 
-        @TestMetadata("entireTypeExtracted.kt")
-        public void testEntireTypeExtracted() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/entireTypeExtracted.kt");
-        }
+            @TestMetadata("typesExtractedWithFunctionalType.kt")
+            public void testTypesExtractedWithFunctionalType() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/typesExtractedWithFunctionalType.kt");
+            }
 
-        @TestMetadata("equivalentNestedTypeElements.kt")
-        public void testEquivalentNestedTypeElements() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/equivalentNestedTypeElements.kt");
-        }
+            @TestMetadata("unmatchedNullability.kt")
+            public void testUnmatchedNullability() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/unmatchedNullability.kt");
+            }
 
-        @TestMetadata("existingTypeClash.kt")
-        public void testExistingTypeClash() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/existingTypeClash.kt");
-        }
+            @TestMetadata("userTypeDuplicatesNoTypeParameters.kt")
+            public void testUserTypeDuplicatesNoTypeParameters() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/userTypeDuplicatesNoTypeParameters.kt");
+            }
 
-        @TestMetadata("functionTypeDuplicatesNoTypeParameters.kt")
-        public void testFunctionTypeDuplicatesNoTypeParameters() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/functionTypeDuplicatesNoTypeParameters.kt");
-        }
-
-        @TestMetadata("functionTypeDuplicatesWithTypeParameters.kt")
-        public void testFunctionTypeDuplicatesWithTypeParameters() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/functionTypeDuplicatesWithTypeParameters.kt");
-        }
-
-        @TestMetadata("functionalType.kt")
-        public void testFunctionalType() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/functionalType.kt");
-        }
-
-        @TestMetadata("localTypeExtracted.kt")
-        public void testLocalTypeExtracted() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/localTypeExtracted.kt");
-        }
-
-        @TestMetadata("localWithVisibility.kt")
-        public void testLocalWithVisibility() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/localWithVisibility.kt");
-        }
-
-        @TestMetadata("nestedClass.kt")
-        public void testNestedClass() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/nestedClass.kt");
-        }
-
-        @TestMetadata("nestedTypesExtracted.kt")
-        public void testNestedTypesExtracted() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/nestedTypesExtracted.kt");
-        }
-
-        @TestMetadata("noTypeElement.kt")
-        public void testNoTypeElement() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/noTypeElement.kt");
-        }
-
-        @TestMetadata("nonIdentifierName.kt")
-        public void testNonIdentifierName() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/nonIdentifierName.kt");
-        }
-
-        @TestMetadata("nullableType.kt")
-        public void testNullableType() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/nullableType.kt");
-        }
-
-        @TestMetadata("privateTypeAlias.kt")
-        public void testPrivateTypeAlias() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/privateTypeAlias.kt");
-        }
-
-        @TestMetadata("protectedInFile.kt")
-        public void testProtectedInFile() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/protectedInFile.kt");
-        }
-
-        @TestMetadata("skipQualifiers.kt")
-        public void testSkipQualifiers() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/skipQualifiers.kt");
-        }
-
-        @TestMetadata("suggestedName.kt")
-        public void testSuggestedName() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/suggestedName.kt");
-        }
-
-        @TestMetadata("topLevelTypeAlias.kt")
-        public void testTopLevelTypeAlias() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/topLevelTypeAlias.kt");
-        }
-
-        @TestMetadata("typeConstructor.kt")
-        public void testTypeConstructor() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/typeConstructor.kt");
-        }
-
-        @TestMetadata("typesExtractedWithFunctionalType.kt")
-        public void testTypesExtractedWithFunctionalType() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/typesExtractedWithFunctionalType.kt");
-        }
-
-        @TestMetadata("unmatchedNullability.kt")
-        public void testUnmatchedNullability() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/unmatchedNullability.kt");
-        }
-
-        @TestMetadata("userTypeDuplicatesNoTypeParameters.kt")
-        public void testUserTypeDuplicatesNoTypeParameters() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/userTypeDuplicatesNoTypeParameters.kt");
-        }
-
-        @TestMetadata("userTypeDuplicatesWithTypeParameters.kt")
-        public void testUserTypeDuplicatesWithTypeParameters() throws Exception {
-            runTest("testData/refactoring/introduceTypeAlias/userTypeDuplicatesWithTypeParameters.kt");
+            @TestMetadata("userTypeDuplicatesWithTypeParameters.kt")
+            public void testUserTypeDuplicatesWithTypeParameters() throws Exception {
+                runTest("testData/refactoring/introduceTypeAlias/userTypeDuplicatesWithTypeParameters.kt");
+            }
         }
     }
 
@@ -3717,124 +3841,136 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
     public abstract static class IntroduceConstant extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceConstant/binaryExpression")
-        public static class BinaryExpression extends AbstractExtractionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doIntroduceConstantTest, this, testDataFilePath);
+        public abstract static class BinaryExpression extends AbstractExtractionTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/introduceConstant/binaryExpression")
+            public static class TestBucket1 extends AbstractExtractionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doIntroduceConstantTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("integerCompareTo.kt")
+                public void testIntegerCompareTo() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/integerCompareTo.kt");
+                }
+
+                @TestMetadata("integerDec.kt")
+                public void testIntegerDec() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/integerDec.kt");
+                }
+
+                @TestMetadata("integerDiv.kt")
+                public void testIntegerDiv() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/integerDiv.kt");
+                }
+
+                @TestMetadata("integerEquals.kt")
+                public void testIntegerEquals() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/integerEquals.kt");
+                }
+
+                @TestMetadata("integerInc.kt")
+                public void testIntegerInc() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/integerInc.kt");
+                }
+
+                @TestMetadata("integerMinus.kt")
+                public void testIntegerMinus() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/integerMinus.kt");
+                }
+
+                @TestMetadata("integerPlus.kt")
+                public void testIntegerPlus() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlus.kt");
+                }
+
+                @TestMetadata("integerPlusConstVal.kt")
+                public void testIntegerPlusConstVal() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlusConstVal.kt");
+                }
+
+                @TestMetadata("integerPlusConstValTwice.kt")
+                public void testIntegerPlusConstValTwice() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlusConstValTwice.kt");
+                }
+
+                @TestMetadata("integerPlusFun.kt")
+                public void testIntegerPlusFun() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlusFun.kt");
+                }
+
+                @TestMetadata("integerPlusVal.kt")
+                public void testIntegerPlusVal() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlusVal.kt");
+                }
+
+                @TestMetadata("integerPlusVar.kt")
+                public void testIntegerPlusVar() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlusVar.kt");
+                }
+
+                @TestMetadata("integerRem.kt")
+                public void testIntegerRem() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/integerRem.kt");
+                }
+
+                @TestMetadata("integerTimes.kt")
+                public void testIntegerTimes() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/integerTimes.kt");
+                }
+
+                @TestMetadata("integerUnaryMinus.kt")
+                public void testIntegerUnaryMinus() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/integerUnaryMinus.kt");
+                }
+
+                @TestMetadata("integerUnaryPlus.kt")
+                public void testIntegerUnaryPlus() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/integerUnaryPlus.kt");
+                }
+
+                @TestMetadata("paranthesis.kt")
+                public void testParanthesis() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/paranthesis.kt");
+                }
+
+                @TestMetadata("paranthesisBroken.kt")
+                public void testParanthesisBroken() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/paranthesisBroken.kt");
+                }
+
+                @TestMetadata("stringCompareTo.kt")
+                public void testStringCompareTo() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/stringCompareTo.kt");
+                }
+
+                @TestMetadata("stringCustomOperator.kt")
+                public void testStringCustomOperator() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/stringCustomOperator.kt");
+                }
             }
 
-            @TestMetadata("integerCompareTo.kt")
-            public void testIntegerCompareTo() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerCompareTo.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/refactoring/introduceConstant/binaryExpression")
+            public static class TestBucket2 extends AbstractExtractionTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doIntroduceConstantTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("integerDec.kt")
-            public void testIntegerDec() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerDec.kt");
-            }
+                @TestMetadata("stringEquals.kt")
+                public void testStringEquals() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/stringEquals.kt");
+                }
 
-            @TestMetadata("integerDiv.kt")
-            public void testIntegerDiv() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerDiv.kt");
-            }
+                @TestMetadata("stringPlus.kt")
+                public void testStringPlus() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/stringPlus.kt");
+                }
 
-            @TestMetadata("integerEquals.kt")
-            public void testIntegerEquals() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerEquals.kt");
-            }
-
-            @TestMetadata("integerInc.kt")
-            public void testIntegerInc() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerInc.kt");
-            }
-
-            @TestMetadata("integerMinus.kt")
-            public void testIntegerMinus() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerMinus.kt");
-            }
-
-            @TestMetadata("integerPlus.kt")
-            public void testIntegerPlus() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlus.kt");
-            }
-
-            @TestMetadata("integerPlusConstVal.kt")
-            public void testIntegerPlusConstVal() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlusConstVal.kt");
-            }
-
-            @TestMetadata("integerPlusConstValTwice.kt")
-            public void testIntegerPlusConstValTwice() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlusConstValTwice.kt");
-            }
-
-            @TestMetadata("integerPlusFun.kt")
-            public void testIntegerPlusFun() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlusFun.kt");
-            }
-
-            @TestMetadata("integerPlusVal.kt")
-            public void testIntegerPlusVal() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlusVal.kt");
-            }
-
-            @TestMetadata("integerPlusVar.kt")
-            public void testIntegerPlusVar() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerPlusVar.kt");
-            }
-
-            @TestMetadata("integerRem.kt")
-            public void testIntegerRem() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerRem.kt");
-            }
-
-            @TestMetadata("integerTimes.kt")
-            public void testIntegerTimes() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerTimes.kt");
-            }
-
-            @TestMetadata("integerUnaryMinus.kt")
-            public void testIntegerUnaryMinus() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerUnaryMinus.kt");
-            }
-
-            @TestMetadata("integerUnaryPlus.kt")
-            public void testIntegerUnaryPlus() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/integerUnaryPlus.kt");
-            }
-
-            @TestMetadata("paranthesis.kt")
-            public void testParanthesis() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/paranthesis.kt");
-            }
-
-            @TestMetadata("paranthesisBroken.kt")
-            public void testParanthesisBroken() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/paranthesisBroken.kt");
-            }
-
-            @TestMetadata("stringCompareTo.kt")
-            public void testStringCompareTo() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/stringCompareTo.kt");
-            }
-
-            @TestMetadata("stringCustomOperator.kt")
-            public void testStringCustomOperator() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/stringCustomOperator.kt");
-            }
-
-            @TestMetadata("stringEquals.kt")
-            public void testStringEquals() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/stringEquals.kt");
-            }
-
-            @TestMetadata("stringPlus.kt")
-            public void testStringPlus() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/stringPlus.kt");
-            }
-
-            @TestMetadata("stringPlusPartNotConst.kt")
-            public void testStringPlusPartNotConst() throws Exception {
-                runTest("testData/refactoring/introduceConstant/binaryExpression/stringPlusPartNotConst.kt");
+                @TestMetadata("stringPlusPartNotConst.kt")
+                public void testStringPlusPartNotConst() throws Exception {
+                    runTest("testData/refactoring/introduceConstant/binaryExpression/stringPlusPartNotConst.kt");
+                }
             }
         }
 

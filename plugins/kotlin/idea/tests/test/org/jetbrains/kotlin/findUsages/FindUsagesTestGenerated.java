@@ -157,601 +157,645 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/kotlin/conventions")
-            public static class Uncategorized extends AbstractFindUsagesTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            public abstract static class Uncategorized extends AbstractFindUsagesTest {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/findUsages/kotlin/conventions")
+                public static class TestBucket1 extends AbstractFindUsagesTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("compareTo.0.kt")
+                    public void testCompareTo() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/compareTo.0.kt");
+                    }
+
+                    @TestMetadata("contains.0.kt")
+                    public void testContains() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/contains.0.kt");
+                    }
+
+                    @TestMetadata("equals.0.kt")
+                    public void testEquals() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/equals.0.kt");
+                    }
+
+                    @TestMetadata("equalsNotAny.0.kt")
+                    public void testEqualsNotAny() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/equalsNotAny.0.kt");
+                    }
+
+                    @TestMetadata("forIteration.0.kt")
+                    public void testForIteration() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/forIteration.0.kt");
+                    }
+
+                    @TestMetadata("get.0.kt")
+                    public void testGet() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/get.0.kt");
+                    }
+
+                    @TestMetadata("getAsPropertyDelegate.0.kt")
+                    public void testGetAsPropertyDelegate() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/getAsPropertyDelegate.0.kt");
+                    }
+
+                    @TestMetadata("getInObject.0.kt")
+                    public void testGetInObject() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/getInObject.0.kt");
+                    }
+
+                    @TestMetadata("inc.0.kt")
+                    public void testInc() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/inc.0.kt");
+                    }
+
+                    @TestMetadata("invoke.0.kt")
+                    public void testInvoke() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/invoke.0.kt");
+                    }
+
+                    @TestMetadata("invokeExtension.0.kt")
+                    public void testInvokeExtension() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/invokeExtension.0.kt");
+                    }
+
+                    @TestMetadata("invokeInObject.0.kt")
+                    public void testInvokeInObject() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/invokeInObject.0.kt");
+                    }
+
+                    @TestMetadata("invokeInheritance.0.kt")
+                    public void testInvokeInheritance() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/invokeInheritance.0.kt");
+                    }
+
+                    @TestMetadata("invokeWithVarArg.0.kt")
+                    public void testInvokeWithVarArg() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/invokeWithVarArg.0.kt");
+                    }
+
+                    @TestMetadata("plus.0.kt")
+                    public void testPlus() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/plus.0.kt");
+                    }
+
+                    @TestMetadata("plusAssign.0.kt")
+                    public void testPlusAssign() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/plusAssign.0.kt");
+                    }
+
+                    @TestMetadata("set.0.kt")
+                    public void testSet() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/set.0.kt");
+                    }
+
+                    @TestMetadata("set1.0.kt")
+                    public void testSet1() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/set1.0.kt");
+                    }
+
+                    @TestMetadata("setAsPropertyDelegate.0.kt")
+                    public void testSetAsPropertyDelegate() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/setAsPropertyDelegate.0.kt");
+                    }
+
+                    @TestMetadata("severalOperators.0.kt")
+                    public void testSeveralOperators() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/severalOperators.0.kt");
+                    }
                 }
 
-                @TestMetadata("compareTo.0.kt")
-                public void testCompareTo() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/compareTo.0.kt");
-                }
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/findUsages/kotlin/conventions")
+                public static class TestBucket2 extends AbstractFindUsagesTest {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                    }
 
-                @TestMetadata("contains.0.kt")
-                public void testContains() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/contains.0.kt");
-                }
-
-                @TestMetadata("equals.0.kt")
-                public void testEquals() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/equals.0.kt");
-                }
-
-                @TestMetadata("equalsNotAny.0.kt")
-                public void testEqualsNotAny() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/equalsNotAny.0.kt");
-                }
-
-                @TestMetadata("forIteration.0.kt")
-                public void testForIteration() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/forIteration.0.kt");
-                }
-
-                @TestMetadata("get.0.kt")
-                public void testGet() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/get.0.kt");
-                }
-
-                @TestMetadata("getAsPropertyDelegate.0.kt")
-                public void testGetAsPropertyDelegate() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/getAsPropertyDelegate.0.kt");
-                }
-
-                @TestMetadata("getInObject.0.kt")
-                public void testGetInObject() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/getInObject.0.kt");
-                }
-
-                @TestMetadata("inc.0.kt")
-                public void testInc() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/inc.0.kt");
-                }
-
-                @TestMetadata("invoke.0.kt")
-                public void testInvoke() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/invoke.0.kt");
-                }
-
-                @TestMetadata("invokeExtension.0.kt")
-                public void testInvokeExtension() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/invokeExtension.0.kt");
-                }
-
-                @TestMetadata("invokeInObject.0.kt")
-                public void testInvokeInObject() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/invokeInObject.0.kt");
-                }
-
-                @TestMetadata("invokeInheritance.0.kt")
-                public void testInvokeInheritance() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/invokeInheritance.0.kt");
-                }
-
-                @TestMetadata("invokeWithVarArg.0.kt")
-                public void testInvokeWithVarArg() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/invokeWithVarArg.0.kt");
-                }
-
-                @TestMetadata("plus.0.kt")
-                public void testPlus() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/plus.0.kt");
-                }
-
-                @TestMetadata("plusAssign.0.kt")
-                public void testPlusAssign() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/plusAssign.0.kt");
-                }
-
-                @TestMetadata("set.0.kt")
-                public void testSet() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/set.0.kt");
-                }
-
-                @TestMetadata("set1.0.kt")
-                public void testSet1() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/set1.0.kt");
-                }
-
-                @TestMetadata("setAsPropertyDelegate.0.kt")
-                public void testSetAsPropertyDelegate() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/setAsPropertyDelegate.0.kt");
-                }
-
-                @TestMetadata("severalOperators.0.kt")
-                public void testSeveralOperators() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/severalOperators.0.kt");
-                }
-
-                @TestMetadata("unaryMinus.0.kt")
-                public void testUnaryMinus() throws Exception {
-                    runTest("testData/findUsages/kotlin/conventions/unaryMinus.0.kt");
+                    @TestMetadata("unaryMinus.0.kt")
+                    public void testUnaryMinus() throws Exception {
+                        runTest("testData/findUsages/kotlin/conventions/unaryMinus.0.kt");
+                    }
                 }
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findClassUsages")
-        public static class FindClassUsages extends AbstractFindUsagesTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        public abstract static class FindClassUsages extends AbstractFindUsagesTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/findUsages/kotlin/findClassUsages")
+            public static class TestBucket1 extends AbstractFindUsagesTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("classUsedInPlainText.0.kt")
+                public void testClassUsedInPlainText() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/classUsedInPlainText.0.kt");
+                }
+
+                @TestMetadata("classUsedInTextAsRef.0.kt")
+                public void testClassUsedInTextAsRef() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/classUsedInTextAsRef.0.kt");
+                }
+
+                @TestMetadata("javaClassAllUsages.0.kt")
+                public void testJavaClassAllUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/javaClassAllUsages.0.kt");
+                }
+
+                @TestMetadata("javaClassConstructorUsages.0.kt")
+                public void testJavaClassConstructorUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/javaClassConstructorUsages.0.kt");
+                }
+
+                @TestMetadata("javaClassFunctionUsages1.0.kt")
+                public void testJavaClassFunctionUsages1() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/javaClassFunctionUsages1.0.kt");
+                }
+
+                @TestMetadata("javaClassFunctionUsages2.0.kt")
+                public void testJavaClassFunctionUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/javaClassFunctionUsages2.0.kt");
+                }
+
+                @TestMetadata("javaClassNonConstructorUsages.0.kt")
+                public void testJavaClassNonConstructorUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/javaClassNonConstructorUsages.0.kt");
+                }
+
+                @TestMetadata("javaClassPropertyUsages1.0.kt")
+                public void testJavaClassPropertyUsages1() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/javaClassPropertyUsages1.0.kt");
+                }
+
+                @TestMetadata("javaClassPropertyUsages2.0.kt")
+                public void testJavaClassPropertyUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/javaClassPropertyUsages2.0.kt");
+                }
+
+                @TestMetadata("javaClassSecondaryCtrUsages.0.kt")
+                public void testJavaClassSecondaryCtrUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/javaClassSecondaryCtrUsages.0.kt");
+                }
+
+                @TestMetadata("javaDerivedClassUsages1.0.kt")
+                public void testJavaDerivedClassUsages1() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/javaDerivedClassUsages1.0.kt");
+                }
+
+                @TestMetadata("javaDerivedClassUsages2.0.kt")
+                public void testJavaDerivedClassUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/javaDerivedClassUsages2.0.kt");
+                }
+
+                @TestMetadata("javaDerivedInterfaceUsages1.0.kt")
+                public void testJavaDerivedInterfaceUsages1() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/javaDerivedInterfaceUsages1.0.kt");
+                }
+
+                @TestMetadata("javaDerivedInterfaceUsages2.0.kt")
+                public void testJavaDerivedInterfaceUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/javaDerivedInterfaceUsages2.0.kt");
+                }
+
+                @TestMetadata("kotlinAliasedClassAllUsages.0.kt")
+                public void testKotlinAliasedClassAllUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinAliasedClassAllUsages.0.kt");
+                }
+
+                @TestMetadata("kotlinClassAllUsages.0.kt")
+                public void testKotlinClassAllUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassAllUsages.0.kt");
+                }
+
+                @TestMetadata("kotlinClassAllUsages2.0.kt")
+                public void testKotlinClassAllUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassAllUsages2.0.kt");
+                }
+
+                @TestMetadata("kotlinClassAllUsages3.0.kt")
+                public void testKotlinClassAllUsages3() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassAllUsages3.0.kt");
+                }
+
+                @TestMetadata("kotlinClassAllUsagesNoImport.0.kt")
+                public void testKotlinClassAllUsagesNoImport() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassAllUsagesNoImport.0.kt");
+                }
+
+                @TestMetadata("kotlinClassConstructorUsages.0.kt")
+                public void testKotlinClassConstructorUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassConstructorUsages.0.kt");
+                }
             }
 
-            @TestMetadata("classUsedInPlainText.0.kt")
-            public void testClassUsedInPlainText() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/classUsedInPlainText.0.kt");
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/findUsages/kotlin/findClassUsages")
+            public static class TestBucket2 extends AbstractFindUsagesTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("kotlinClassDerivedAnonymousObjects.0.kt")
+                public void testKotlinClassDerivedAnonymousObjects() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedAnonymousObjects.0.kt");
+                }
+
+                @TestMetadata("kotlinClassDerivedClasses.0.kt")
+                public void testKotlinClassDerivedClasses() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedClasses.0.kt");
+                }
+
+                @TestMetadata("kotlinClassDerivedInnerClasses.0.kt")
+                public void testKotlinClassDerivedInnerClasses() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedInnerClasses.0.kt");
+                }
+
+                @TestMetadata("kotlinClassDerivedInnerObjects.0.kt")
+                public void testKotlinClassDerivedInnerObjects() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedInnerObjects.0.kt");
+                }
+
+                @TestMetadata("kotlinClassDerivedLocalClasses.0.kt")
+                public void testKotlinClassDerivedLocalClasses() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedLocalClasses.0.kt");
+                }
+
+                @TestMetadata("kotlinClassDerivedLocalObjects.0.kt")
+                public void testKotlinClassDerivedLocalObjects() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedLocalObjects.0.kt");
+                }
+
+                @TestMetadata("kotlinClassDerivedObjects.0.kt")
+                public void testKotlinClassDerivedObjects() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedObjects.0.kt");
+                }
+
+                @TestMetadata("kotlinClassFunctionUsages1.0.kt")
+                public void testKotlinClassFunctionUsages1() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassFunctionUsages1.0.kt");
+                }
+
+                @TestMetadata("kotlinClassFunctionUsages2.0.kt")
+                public void testKotlinClassFunctionUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassFunctionUsages2.0.kt");
+                }
+
+                @TestMetadata("kotlinClassImportAliasAllUsages.0.kt")
+                public void testKotlinClassImportAliasAllUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassImportAliasAllUsages.0.kt");
+                }
+
+                @TestMetadata("kotlinClassNonConstructorUsages.0.kt")
+                public void testKotlinClassNonConstructorUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassNonConstructorUsages.0.kt");
+                }
+
+                @TestMetadata("kotlinClassPropertyUsages1.0.kt")
+                public void testKotlinClassPropertyUsages1() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassPropertyUsages1.0.kt");
+                }
+
+                @TestMetadata("kotlinClassPropertyUsages2.0.kt")
+                public void testKotlinClassPropertyUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassPropertyUsages2.0.kt");
+                }
+
+                @TestMetadata("kotlinClassSecondaryCtorUsages.0.kt")
+                public void testKotlinClassSecondaryCtorUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassSecondaryCtorUsages.0.kt");
+                }
+
+                @TestMetadata("kotlinDeeplyNestedClassAllUsages.0.kt")
+                public void testKotlinDeeplyNestedClassAllUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinDeeplyNestedClassAllUsages.0.kt");
+                }
+
+                @TestMetadata("kotlinInnerClassAllUsages.0.kt")
+                public void testKotlinInnerClassAllUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinInnerClassAllUsages.0.kt");
+                }
+
+                @TestMetadata("kotlinInterfaceDerivedAnonymousObjects.0.kt")
+                public void testKotlinInterfaceDerivedAnonymousObjects() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedAnonymousObjects.0.kt");
+                }
+
+                @TestMetadata("kotlinInterfaceDerivedClasses.0.kt")
+                public void testKotlinInterfaceDerivedClasses() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedClasses.0.kt");
+                }
+
+                @TestMetadata("kotlinInterfaceDerivedInnerClasses.0.kt")
+                public void testKotlinInterfaceDerivedInnerClasses() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedInnerClasses.0.kt");
+                }
+
+                @TestMetadata("kotlinInterfaceDerivedInnerObjects.0.kt")
+                public void testKotlinInterfaceDerivedInnerObjects() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedInnerObjects.0.kt");
+                }
             }
 
-            @TestMetadata("classUsedInTextAsRef.0.kt")
-            public void testClassUsedInTextAsRef() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/classUsedInTextAsRef.0.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/findUsages/kotlin/findClassUsages")
+            public static class TestBucket3 extends AbstractFindUsagesTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("javaClassAllUsages.0.kt")
-            public void testJavaClassAllUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/javaClassAllUsages.0.kt");
-            }
+                @TestMetadata("kotlinInterfaceDerivedInterfaces.0.kt")
+                public void testKotlinInterfaceDerivedInterfaces() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedInterfaces.0.kt");
+                }
 
-            @TestMetadata("javaClassConstructorUsages.0.kt")
-            public void testJavaClassConstructorUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/javaClassConstructorUsages.0.kt");
-            }
+                @TestMetadata("kotlinInterfaceDerivedLocalClasses.0.kt")
+                public void testKotlinInterfaceDerivedLocalClasses() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedLocalClasses.0.kt");
+                }
 
-            @TestMetadata("javaClassFunctionUsages1.0.kt")
-            public void testJavaClassFunctionUsages1() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/javaClassFunctionUsages1.0.kt");
-            }
+                @TestMetadata("kotlinInterfaceDerivedLocalObjects.0.kt")
+                public void testKotlinInterfaceDerivedLocalObjects() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedLocalObjects.0.kt");
+                }
 
-            @TestMetadata("javaClassFunctionUsages2.0.kt")
-            public void testJavaClassFunctionUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/javaClassFunctionUsages2.0.kt");
-            }
+                @TestMetadata("kotlinInterfaceDerivedObjects.0.kt")
+                public void testKotlinInterfaceDerivedObjects() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedObjects.0.kt");
+                }
 
-            @TestMetadata("javaClassNonConstructorUsages.0.kt")
-            public void testJavaClassNonConstructorUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/javaClassNonConstructorUsages.0.kt");
-            }
+                @TestMetadata("kotlinLocalClassDerivedAnonymousObjects.0.kt")
+                public void testKotlinLocalClassDerivedAnonymousObjects() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinLocalClassDerivedAnonymousObjects.0.kt");
+                }
 
-            @TestMetadata("javaClassPropertyUsages1.0.kt")
-            public void testJavaClassPropertyUsages1() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/javaClassPropertyUsages1.0.kt");
-            }
+                @TestMetadata("kotlinLocalClassDerivedLocalClasses.0.kt")
+                public void testKotlinLocalClassDerivedLocalClasses() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinLocalClassDerivedLocalClasses.0.kt");
+                }
 
-            @TestMetadata("javaClassPropertyUsages2.0.kt")
-            public void testJavaClassPropertyUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/javaClassPropertyUsages2.0.kt");
-            }
+                @TestMetadata("kotlinLocalClassDerivedLocalObjects.0.kt")
+                public void testKotlinLocalClassDerivedLocalObjects() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinLocalClassDerivedLocalObjects.0.kt");
+                }
 
-            @TestMetadata("javaClassSecondaryCtrUsages.0.kt")
-            public void testJavaClassSecondaryCtrUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/javaClassSecondaryCtrUsages.0.kt");
-            }
+                @TestMetadata("kotlinLocalClassUsages1.0.kt")
+                public void testKotlinLocalClassUsages1() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinLocalClassUsages1.0.kt");
+                }
 
-            @TestMetadata("javaDerivedClassUsages1.0.kt")
-            public void testJavaDerivedClassUsages1() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/javaDerivedClassUsages1.0.kt");
-            }
+                @TestMetadata("kotlinLocalClassUsages2.0.kt")
+                public void testKotlinLocalClassUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinLocalClassUsages2.0.kt");
+                }
 
-            @TestMetadata("javaDerivedClassUsages2.0.kt")
-            public void testJavaDerivedClassUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/javaDerivedClassUsages2.0.kt");
-            }
+                @TestMetadata("kotlinNestedClassAllUsages.0.kt")
+                public void testKotlinNestedClassAllUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinNestedClassAllUsages.0.kt");
+                }
 
-            @TestMetadata("javaDerivedInterfaceUsages1.0.kt")
-            public void testJavaDerivedInterfaceUsages1() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/javaDerivedInterfaceUsages1.0.kt");
-            }
+                @TestMetadata("kotlinPrivateClassUsages.0.kt")
+                public void testKotlinPrivateClassUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/kotlinPrivateClassUsages.0.kt");
+                }
 
-            @TestMetadata("javaDerivedInterfaceUsages2.0.kt")
-            public void testJavaDerivedInterfaceUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/javaDerivedInterfaceUsages2.0.kt");
-            }
+                @TestMetadata("localAndNonLocalClass.0.kt")
+                public void testLocalAndNonLocalClass() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/localAndNonLocalClass.0.kt");
+                }
 
-            @TestMetadata("kotlinAliasedClassAllUsages.0.kt")
-            public void testKotlinAliasedClassAllUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinAliasedClassAllUsages.0.kt");
-            }
+                @TestMetadata("primaryConstructorWithDefaultParams.0.kt")
+                public void testPrimaryConstructorWithDefaultParams() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/primaryConstructorWithDefaultParams.0.kt");
+                }
 
-            @TestMetadata("kotlinClassAllUsages.0.kt")
-            public void testKotlinClassAllUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassAllUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinClassAllUsages2.0.kt")
-            public void testKotlinClassAllUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassAllUsages2.0.kt");
-            }
-
-            @TestMetadata("kotlinClassAllUsages3.0.kt")
-            public void testKotlinClassAllUsages3() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassAllUsages3.0.kt");
-            }
-
-            @TestMetadata("kotlinClassAllUsagesNoImport.0.kt")
-            public void testKotlinClassAllUsagesNoImport() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassAllUsagesNoImport.0.kt");
-            }
-
-            @TestMetadata("kotlinClassConstructorUsages.0.kt")
-            public void testKotlinClassConstructorUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassConstructorUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinClassDerivedAnonymousObjects.0.kt")
-            public void testKotlinClassDerivedAnonymousObjects() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedAnonymousObjects.0.kt");
-            }
-
-            @TestMetadata("kotlinClassDerivedClasses.0.kt")
-            public void testKotlinClassDerivedClasses() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedClasses.0.kt");
-            }
-
-            @TestMetadata("kotlinClassDerivedInnerClasses.0.kt")
-            public void testKotlinClassDerivedInnerClasses() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedInnerClasses.0.kt");
-            }
-
-            @TestMetadata("kotlinClassDerivedInnerObjects.0.kt")
-            public void testKotlinClassDerivedInnerObjects() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedInnerObjects.0.kt");
-            }
-
-            @TestMetadata("kotlinClassDerivedLocalClasses.0.kt")
-            public void testKotlinClassDerivedLocalClasses() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedLocalClasses.0.kt");
-            }
-
-            @TestMetadata("kotlinClassDerivedLocalObjects.0.kt")
-            public void testKotlinClassDerivedLocalObjects() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedLocalObjects.0.kt");
-            }
-
-            @TestMetadata("kotlinClassDerivedObjects.0.kt")
-            public void testKotlinClassDerivedObjects() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassDerivedObjects.0.kt");
-            }
-
-            @TestMetadata("kotlinClassFunctionUsages1.0.kt")
-            public void testKotlinClassFunctionUsages1() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassFunctionUsages1.0.kt");
-            }
-
-            @TestMetadata("kotlinClassFunctionUsages2.0.kt")
-            public void testKotlinClassFunctionUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassFunctionUsages2.0.kt");
-            }
-
-            @TestMetadata("kotlinClassImportAliasAllUsages.0.kt")
-            public void testKotlinClassImportAliasAllUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassImportAliasAllUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinClassNonConstructorUsages.0.kt")
-            public void testKotlinClassNonConstructorUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassNonConstructorUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinClassPropertyUsages1.0.kt")
-            public void testKotlinClassPropertyUsages1() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassPropertyUsages1.0.kt");
-            }
-
-            @TestMetadata("kotlinClassPropertyUsages2.0.kt")
-            public void testKotlinClassPropertyUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassPropertyUsages2.0.kt");
-            }
-
-            @TestMetadata("kotlinClassSecondaryCtorUsages.0.kt")
-            public void testKotlinClassSecondaryCtorUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinClassSecondaryCtorUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinDeeplyNestedClassAllUsages.0.kt")
-            public void testKotlinDeeplyNestedClassAllUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinDeeplyNestedClassAllUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinInnerClassAllUsages.0.kt")
-            public void testKotlinInnerClassAllUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinInnerClassAllUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinInterfaceDerivedAnonymousObjects.0.kt")
-            public void testKotlinInterfaceDerivedAnonymousObjects() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedAnonymousObjects.0.kt");
-            }
-
-            @TestMetadata("kotlinInterfaceDerivedClasses.0.kt")
-            public void testKotlinInterfaceDerivedClasses() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedClasses.0.kt");
-            }
-
-            @TestMetadata("kotlinInterfaceDerivedInnerClasses.0.kt")
-            public void testKotlinInterfaceDerivedInnerClasses() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedInnerClasses.0.kt");
-            }
-
-            @TestMetadata("kotlinInterfaceDerivedInnerObjects.0.kt")
-            public void testKotlinInterfaceDerivedInnerObjects() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedInnerObjects.0.kt");
-            }
-
-            @TestMetadata("kotlinInterfaceDerivedInterfaces.0.kt")
-            public void testKotlinInterfaceDerivedInterfaces() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedInterfaces.0.kt");
-            }
-
-            @TestMetadata("kotlinInterfaceDerivedLocalClasses.0.kt")
-            public void testKotlinInterfaceDerivedLocalClasses() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedLocalClasses.0.kt");
-            }
-
-            @TestMetadata("kotlinInterfaceDerivedLocalObjects.0.kt")
-            public void testKotlinInterfaceDerivedLocalObjects() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedLocalObjects.0.kt");
-            }
-
-            @TestMetadata("kotlinInterfaceDerivedObjects.0.kt")
-            public void testKotlinInterfaceDerivedObjects() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinInterfaceDerivedObjects.0.kt");
-            }
-
-            @TestMetadata("kotlinLocalClassDerivedAnonymousObjects.0.kt")
-            public void testKotlinLocalClassDerivedAnonymousObjects() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinLocalClassDerivedAnonymousObjects.0.kt");
-            }
-
-            @TestMetadata("kotlinLocalClassDerivedLocalClasses.0.kt")
-            public void testKotlinLocalClassDerivedLocalClasses() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinLocalClassDerivedLocalClasses.0.kt");
-            }
-
-            @TestMetadata("kotlinLocalClassDerivedLocalObjects.0.kt")
-            public void testKotlinLocalClassDerivedLocalObjects() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinLocalClassDerivedLocalObjects.0.kt");
-            }
-
-            @TestMetadata("kotlinLocalClassUsages1.0.kt")
-            public void testKotlinLocalClassUsages1() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinLocalClassUsages1.0.kt");
-            }
-
-            @TestMetadata("kotlinLocalClassUsages2.0.kt")
-            public void testKotlinLocalClassUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinLocalClassUsages2.0.kt");
-            }
-
-            @TestMetadata("kotlinNestedClassAllUsages.0.kt")
-            public void testKotlinNestedClassAllUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinNestedClassAllUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinPrivateClassUsages.0.kt")
-            public void testKotlinPrivateClassUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/kotlinPrivateClassUsages.0.kt");
-            }
-
-            @TestMetadata("localAndNonLocalClass.0.kt")
-            public void testLocalAndNonLocalClass() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/localAndNonLocalClass.0.kt");
-            }
-
-            @TestMetadata("primaryConstructorWithDefaultParams.0.kt")
-            public void testPrimaryConstructorWithDefaultParams() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/primaryConstructorWithDefaultParams.0.kt");
-            }
-
-            @TestMetadata("usageInTypeAlias.0.kt")
-            public void testUsageInTypeAlias() throws Exception {
-                runTest("testData/findUsages/kotlin/findClassUsages/usageInTypeAlias.0.kt");
+                @TestMetadata("usageInTypeAlias.0.kt")
+                public void testUsageInTypeAlias() throws Exception {
+                    runTest("testData/findUsages/kotlin/findClassUsages/usageInTypeAlias.0.kt");
+                }
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findFunctionUsages")
-        public static class FindFunctionUsages extends AbstractFindUsagesTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        public abstract static class FindFunctionUsages extends AbstractFindUsagesTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/findUsages/kotlin/findFunctionUsages")
+            public static class TestBucket1 extends AbstractFindUsagesTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("enumFunctionUsages.0.kt")
+                public void testEnumFunctionUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/enumFunctionUsages.0.kt");
+                }
+
+                @TestMetadata("functionUsedInPlainText.0.kt")
+                public void testFunctionUsedInPlainText() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/functionUsedInPlainText.0.kt");
+                }
+
+                @TestMetadata("highlightingOfSuperUsages.0.kt")
+                public void testHighlightingOfSuperUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/highlightingOfSuperUsages.0.kt");
+                }
+
+                @TestMetadata("interfaceOverrides.0.kt")
+                public void testInterfaceOverrides() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/interfaceOverrides.0.kt");
+                }
+
+                @TestMetadata("javaAndKotlinOverrides.0.kt")
+                public void testJavaAndKotlinOverrides() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/javaAndKotlinOverrides.0.kt");
+                }
+
+                @TestMetadata("javaMethodUsages.0.kt")
+                public void testJavaMethodUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/javaMethodUsages.0.kt");
+                }
+
+                @TestMetadata("jvmOverloaded.0.kt")
+                public void testJvmOverloaded() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/jvmOverloaded.0.kt");
+                }
+
+                @TestMetadata("jvmStaticFun.0.kt")
+                public void testJvmStaticFun() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/jvmStaticFun.0.kt");
+                }
+
+                @TestMetadata("jvmStaticJvmOverloadsFun.0.kt")
+                public void testJvmStaticJvmOverloadsFun() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/jvmStaticJvmOverloadsFun.0.kt");
+                }
+
+                @TestMetadata("kotlinAliasedMethodUsages.0.kt")
+                public void testKotlinAliasedMethodUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinAliasedMethodUsages.0.kt");
+                }
+
+                @TestMetadata("kotlinInterfaceImplThroughDelegate.0.kt")
+                public void testKotlinInterfaceImplThroughDelegate() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinInterfaceImplThroughDelegate.0.kt");
+                }
+
+                @TestMetadata("kotlinInterfaceNoImplThroughDelegate.0.kt")
+                public void testKotlinInterfaceNoImplThroughDelegate() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinInterfaceNoImplThroughDelegate.0.kt");
+                }
+
+                @TestMetadata("kotlinInternalMethodUsages.0.kt")
+                public void testKotlinInternalMethodUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinInternalMethodUsages.0.kt");
+                }
+
+                @TestMetadata("kotlinLocalMethodUsages1.0.kt")
+                public void testKotlinLocalMethodUsages1() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinLocalMethodUsages1.0.kt");
+                }
+
+                @TestMetadata("kotlinLocalMethodUsages2.0.kt")
+                public void testKotlinLocalMethodUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinLocalMethodUsages2.0.kt");
+                }
+
+                @TestMetadata("kotlinMethodAliasedUsages.0.kt")
+                public void testKotlinMethodAliasedUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinMethodAliasedUsages.0.kt");
+                }
+
+                @TestMetadata("kotlinMethodUsages.0.kt")
+                public void testKotlinMethodUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinMethodUsages.0.kt");
+                }
+
+                @TestMetadata("kotlinMethodsAliasedUsages.0.kt")
+                public void testKotlinMethodsAliasedUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinMethodsAliasedUsages.0.kt");
+                }
+
+                @TestMetadata("kotlinMultiRefInImport.0.kt")
+                public void testKotlinMultiRefInImport() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinMultiRefInImport.0.kt");
+                }
+
+                @TestMetadata("kotlinNestedClassMethodUsages.0.kt")
+                public void testKotlinNestedClassMethodUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinNestedClassMethodUsages.0.kt");
+                }
             }
 
-            @TestMetadata("enumFunctionUsages.0.kt")
-            public void testEnumFunctionUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/enumFunctionUsages.0.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/findUsages/kotlin/findFunctionUsages")
+            public static class TestBucket2 extends AbstractFindUsagesTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("functionUsedInPlainText.0.kt")
-            public void testFunctionUsedInPlainText() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/functionUsedInPlainText.0.kt");
-            }
+                @TestMetadata("kotlinOverloadAndExtensionUsages.0.kt")
+                public void testKotlinOverloadAndExtensionUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsages.0.kt");
+                }
 
-            @TestMetadata("highlightingOfSuperUsages.0.kt")
-            public void testHighlightingOfSuperUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/highlightingOfSuperUsages.0.kt");
-            }
+                @TestMetadata("kotlinOverloadAndExtensionUsages2.0.kt")
+                public void testKotlinOverloadAndExtensionUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsages2.0.kt");
+                }
 
-            @TestMetadata("interfaceOverrides.0.kt")
-            public void testInterfaceOverrides() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/interfaceOverrides.0.kt");
-            }
+                @TestMetadata("kotlinPrivateMethodUsages.0.kt")
+                public void testKotlinPrivateMethodUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinPrivateMethodUsages.0.kt");
+                }
 
-            @TestMetadata("javaAndKotlinOverrides.0.kt")
-            public void testJavaAndKotlinOverrides() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/javaAndKotlinOverrides.0.kt");
-            }
+                @TestMetadata("kotlinTopLevelMethodUsages.0.kt")
+                public void testKotlinTopLevelMethodUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinTopLevelMethodUsages.0.kt");
+                }
 
-            @TestMetadata("javaMethodUsages.0.kt")
-            public void testJavaMethodUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/javaMethodUsages.0.kt");
-            }
+                @TestMetadata("kotlinTopLevelMethodUsagesMultifile.0.kt")
+                public void testKotlinTopLevelMethodUsagesMultifile() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinTopLevelMethodUsagesMultifile.0.kt");
+                }
 
-            @TestMetadata("jvmOverloaded.0.kt")
-            public void testJvmOverloaded() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/jvmOverloaded.0.kt");
-            }
+                @TestMetadata("kotlinTopLevelMethodUsagesNoImport.0.kt")
+                public void testKotlinTopLevelMethodUsagesNoImport() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinTopLevelMethodUsagesNoImport.0.kt");
+                }
 
-            @TestMetadata("jvmStaticFun.0.kt")
-            public void testJvmStaticFun() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/jvmStaticFun.0.kt");
-            }
+                @TestMetadata("kotlinTopLevelMethodUsagesWithRenamedFile.0.kt")
+                public void testKotlinTopLevelMethodUsagesWithRenamedFile() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinTopLevelMethodUsagesWithRenamedFile.0.kt");
+                }
 
-            @TestMetadata("jvmStaticJvmOverloadsFun.0.kt")
-            public void testJvmStaticJvmOverloadsFun() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/jvmStaticJvmOverloadsFun.0.kt");
-            }
+                @TestMetadata("labeledReturns.0.kt")
+                public void testLabeledReturns() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/labeledReturns.0.kt");
+                }
 
-            @TestMetadata("kotlinAliasedMethodUsages.0.kt")
-            public void testKotlinAliasedMethodUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinAliasedMethodUsages.0.kt");
-            }
+                @TestMetadata("localClassMember.0.kt")
+                public void testLocalClassMember() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/localClassMember.0.kt");
+                }
 
-            @TestMetadata("kotlinInterfaceImplThroughDelegate.0.kt")
-            public void testKotlinInterfaceImplThroughDelegate() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinInterfaceImplThroughDelegate.0.kt");
-            }
+                @TestMetadata("nonBaseDeclarationFunctionAsPropName.0.kt")
+                public void testNonBaseDeclarationFunctionAsPropName() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/nonBaseDeclarationFunctionAsPropName.0.kt");
+                }
 
-            @TestMetadata("kotlinInterfaceNoImplThroughDelegate.0.kt")
-            public void testKotlinInterfaceNoImplThroughDelegate() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinInterfaceNoImplThroughDelegate.0.kt");
-            }
+                @TestMetadata("objectExpressionDeepMember.0.kt")
+                public void testObjectExpressionDeepMember() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/objectExpressionDeepMember.0.kt");
+                }
 
-            @TestMetadata("kotlinInternalMethodUsages.0.kt")
-            public void testKotlinInternalMethodUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinInternalMethodUsages.0.kt");
-            }
+                @TestMetadata("objectExpressionMember.0.kt")
+                public void testObjectExpressionMember() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/objectExpressionMember.0.kt");
+                }
 
-            @TestMetadata("kotlinLocalMethodUsages1.0.kt")
-            public void testKotlinLocalMethodUsages1() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinLocalMethodUsages1.0.kt");
-            }
+                @TestMetadata("objectExpressionMember2.0.kt")
+                public void testObjectExpressionMember2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/objectExpressionMember2.0.kt");
+                }
 
-            @TestMetadata("kotlinLocalMethodUsages2.0.kt")
-            public void testKotlinLocalMethodUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinLocalMethodUsages2.0.kt");
-            }
+                @TestMetadata("objectExpressionMemberInClass.0.kt")
+                public void testObjectExpressionMemberInClass() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/objectExpressionMemberInClass.0.kt");
+                }
 
-            @TestMetadata("kotlinMethodAliasedUsages.0.kt")
-            public void testKotlinMethodAliasedUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinMethodAliasedUsages.0.kt");
-            }
+                @TestMetadata("objectExpressionMemberInCompanion.0.kt")
+                public void testObjectExpressionMemberInCompanion() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/objectExpressionMemberInCompanion.0.kt");
+                }
 
-            @TestMetadata("kotlinMethodUsages.0.kt")
-            public void testKotlinMethodUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinMethodUsages.0.kt");
-            }
+                @TestMetadata("objectExpressionMemberInTopLevel.0.kt")
+                public void testObjectExpressionMemberInTopLevel() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/objectExpressionMemberInTopLevel.0.kt");
+                }
 
-            @TestMetadata("kotlinMethodsAliasedUsages.0.kt")
-            public void testKotlinMethodsAliasedUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinMethodsAliasedUsages.0.kt");
-            }
+                @TestMetadata("overrides.0.kt")
+                public void testOverrides() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/overrides.0.kt");
+                }
 
-            @TestMetadata("kotlinMultiRefInImport.0.kt")
-            public void testKotlinMultiRefInImport() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinMultiRefInImport.0.kt");
-            }
+                @TestMetadata("privateKotlinClass.0.kt")
+                public void testPrivateKotlinClass() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/privateKotlinClass.0.kt");
+                }
 
-            @TestMetadata("kotlinNestedClassMethodUsages.0.kt")
-            public void testKotlinNestedClassMethodUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinNestedClassMethodUsages.0.kt");
-            }
+                @TestMetadata("privateKotlinObject.0.kt")
+                public void testPrivateKotlinObject() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/privateKotlinObject.0.kt");
+                }
 
-            @TestMetadata("kotlinOverloadAndExtensionUsages.0.kt")
-            public void testKotlinOverloadAndExtensionUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinOverloadAndExtensionUsages2.0.kt")
-            public void testKotlinOverloadAndExtensionUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinOverloadAndExtensionUsages2.0.kt");
-            }
-
-            @TestMetadata("kotlinPrivateMethodUsages.0.kt")
-            public void testKotlinPrivateMethodUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinPrivateMethodUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinTopLevelMethodUsages.0.kt")
-            public void testKotlinTopLevelMethodUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinTopLevelMethodUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinTopLevelMethodUsagesMultifile.0.kt")
-            public void testKotlinTopLevelMethodUsagesMultifile() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinTopLevelMethodUsagesMultifile.0.kt");
-            }
-
-            @TestMetadata("kotlinTopLevelMethodUsagesNoImport.0.kt")
-            public void testKotlinTopLevelMethodUsagesNoImport() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinTopLevelMethodUsagesNoImport.0.kt");
-            }
-
-            @TestMetadata("kotlinTopLevelMethodUsagesWithRenamedFile.0.kt")
-            public void testKotlinTopLevelMethodUsagesWithRenamedFile() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/kotlinTopLevelMethodUsagesWithRenamedFile.0.kt");
-            }
-
-            @TestMetadata("labeledReturns.0.kt")
-            public void testLabeledReturns() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/labeledReturns.0.kt");
-            }
-
-            @TestMetadata("localClassMember.0.kt")
-            public void testLocalClassMember() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/localClassMember.0.kt");
-            }
-
-            @TestMetadata("nonBaseDeclarationFunctionAsPropName.0.kt")
-            public void testNonBaseDeclarationFunctionAsPropName() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/nonBaseDeclarationFunctionAsPropName.0.kt");
-            }
-
-            @TestMetadata("objectExpressionDeepMember.0.kt")
-            public void testObjectExpressionDeepMember() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/objectExpressionDeepMember.0.kt");
-            }
-
-            @TestMetadata("objectExpressionMember.0.kt")
-            public void testObjectExpressionMember() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/objectExpressionMember.0.kt");
-            }
-
-            @TestMetadata("objectExpressionMember2.0.kt")
-            public void testObjectExpressionMember2() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/objectExpressionMember2.0.kt");
-            }
-
-            @TestMetadata("objectExpressionMemberInClass.0.kt")
-            public void testObjectExpressionMemberInClass() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/objectExpressionMemberInClass.0.kt");
-            }
-
-            @TestMetadata("objectExpressionMemberInCompanion.0.kt")
-            public void testObjectExpressionMemberInCompanion() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/objectExpressionMemberInCompanion.0.kt");
-            }
-
-            @TestMetadata("objectExpressionMemberInTopLevel.0.kt")
-            public void testObjectExpressionMemberInTopLevel() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/objectExpressionMemberInTopLevel.0.kt");
-            }
-
-            @TestMetadata("overrides.0.kt")
-            public void testOverrides() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/overrides.0.kt");
-            }
-
-            @TestMetadata("privateKotlinClass.0.kt")
-            public void testPrivateKotlinClass() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/privateKotlinClass.0.kt");
-            }
-
-            @TestMetadata("privateKotlinObject.0.kt")
-            public void testPrivateKotlinObject() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/privateKotlinObject.0.kt");
-            }
-
-            @TestMetadata("usagesOfBaseForFunction.0.kt")
-            public void testUsagesOfBaseForFunction() throws Exception {
-                runTest("testData/findUsages/kotlin/findFunctionUsages/usagesOfBaseForFunction.0.kt");
+                @TestMetadata("usagesOfBaseForFunction.0.kt")
+                public void testUsagesOfBaseForFunction() throws Exception {
+                    runTest("testData/findUsages/kotlin/findFunctionUsages/usagesOfBaseForFunction.0.kt");
+                }
             }
         }
 
@@ -922,174 +966,186 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/kotlin/findPropertyUsages")
-        public static class FindPropertyUsages extends AbstractFindUsagesTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        public abstract static class FindPropertyUsages extends AbstractFindUsagesTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/findUsages/kotlin/findPropertyUsages")
+            public static class TestBucket1 extends AbstractFindUsagesTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("extensionPropertyUsages.0.kt")
+                public void testExtensionPropertyUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/extensionPropertyUsages.0.kt");
+                }
+
+                @TestMetadata("javaAndKotlinOverrides.0.kt")
+                public void testJavaAndKotlinOverrides() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/javaAndKotlinOverrides.0.kt");
+                }
+
+                @TestMetadata("javaAndKotlinOverrides2.0.kt")
+                public void testJavaAndKotlinOverrides2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/javaAndKotlinOverrides2.0.kt");
+                }
+
+                @TestMetadata("javaClassObjectPropertyUsages.0.kt")
+                public void testJavaClassObjectPropertyUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/javaClassObjectPropertyUsages.0.kt");
+                }
+
+                @TestMetadata("javaClassObjectPropertyUsages2.0.kt")
+                public void testJavaClassObjectPropertyUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/javaClassObjectPropertyUsages2.0.kt");
+                }
+
+                @TestMetadata("javaPropertyReadUsages.0.kt")
+                public void testJavaPropertyReadUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/javaPropertyReadUsages.0.kt");
+                }
+
+                @TestMetadata("javaPropertyReadUsages2.0.kt")
+                public void testJavaPropertyReadUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/javaPropertyReadUsages2.0.kt");
+                }
+
+                @TestMetadata("javaPropertyUsages.0.kt")
+                public void testJavaPropertyUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/javaPropertyUsages.0.kt");
+                }
+
+                @TestMetadata("javaPropertyUsages2.0.kt")
+                public void testJavaPropertyUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/javaPropertyUsages2.0.kt");
+                }
+
+                @TestMetadata("javaPropertyUsages3.0.kt")
+                public void testJavaPropertyUsages3() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/javaPropertyUsages3.0.kt");
+                }
+
+                @TestMetadata("javaPropertyWriteUsages.0.kt")
+                public void testJavaPropertyWriteUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/javaPropertyWriteUsages.0.kt");
+                }
+
+                @TestMetadata("javaPropertyWriteUsages2.0.kt")
+                public void testJavaPropertyWriteUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/javaPropertyWriteUsages2.0.kt");
+                }
+
+                @TestMetadata("jvmFieldProperty.0.kt")
+                public void testJvmFieldProperty() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/jvmFieldProperty.0.kt");
+                }
+
+                @TestMetadata("jvmStaticProperty.0.kt")
+                public void testJvmStaticProperty() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/jvmStaticProperty.0.kt");
+                }
+
+                @TestMetadata("kotlinClassObjectPropertyUsage.0.kt")
+                public void testKotlinClassObjectPropertyUsage() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinClassObjectPropertyUsage.0.kt");
+                }
+
+                @TestMetadata("kotlinLocalPropertyUsages1.0.kt")
+                public void testKotlinLocalPropertyUsages1() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinLocalPropertyUsages1.0.kt");
+                }
+
+                @TestMetadata("kotlinLocalPropertyUsages2.0.kt")
+                public void testKotlinLocalPropertyUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinLocalPropertyUsages2.0.kt");
+                }
+
+                @TestMetadata("kotlinMultiRefInImport.0.kt")
+                public void testKotlinMultiRefInImport() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinMultiRefInImport.0.kt");
+                }
+
+                @TestMetadata("kotlinNestedClassPropertyUsages.0.kt")
+                public void testKotlinNestedClassPropertyUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinNestedClassPropertyUsages.0.kt");
+                }
+
+                @TestMetadata("kotlinPrivatePropertyInClassObjectUsages.0.kt")
+                public void testKotlinPrivatePropertyInClassObjectUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPrivatePropertyInClassObjectUsages.0.kt");
+                }
             }
 
-            @TestMetadata("extensionPropertyUsages.0.kt")
-            public void testExtensionPropertyUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/extensionPropertyUsages.0.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/findUsages/kotlin/findPropertyUsages")
+            public static class TestBucket2 extends AbstractFindUsagesTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("javaAndKotlinOverrides.0.kt")
-            public void testJavaAndKotlinOverrides() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/javaAndKotlinOverrides.0.kt");
-            }
+                @TestMetadata("kotlinPrivatePropertyUsages.0.kt")
+                public void testKotlinPrivatePropertyUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPrivatePropertyUsages.0.kt");
+                }
 
-            @TestMetadata("javaAndKotlinOverrides2.0.kt")
-            public void testJavaAndKotlinOverrides2() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/javaAndKotlinOverrides2.0.kt");
-            }
+                @TestMetadata("kotlinPrivatePropertyUsages2.0.kt")
+                public void testKotlinPrivatePropertyUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPrivatePropertyUsages2.0.kt");
+                }
 
-            @TestMetadata("javaClassObjectPropertyUsages.0.kt")
-            public void testJavaClassObjectPropertyUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/javaClassObjectPropertyUsages.0.kt");
-            }
+                @TestMetadata("kotlinPrivatePropertyUsages3.0.kt")
+                public void testKotlinPrivatePropertyUsages3() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPrivatePropertyUsages3.0.kt");
+                }
 
-            @TestMetadata("javaClassObjectPropertyUsages2.0.kt")
-            public void testJavaClassObjectPropertyUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/javaClassObjectPropertyUsages2.0.kt");
-            }
+                @TestMetadata("kotlinPrivatePropertyUsages4.0.kt")
+                public void testKotlinPrivatePropertyUsages4() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPrivatePropertyUsages4.0.kt");
+                }
 
-            @TestMetadata("javaPropertyReadUsages.0.kt")
-            public void testJavaPropertyReadUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/javaPropertyReadUsages.0.kt");
-            }
+                @TestMetadata("kotlinPropertyReadUsages.0.kt")
+                public void testKotlinPropertyReadUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPropertyReadUsages.0.kt");
+                }
 
-            @TestMetadata("javaPropertyReadUsages2.0.kt")
-            public void testJavaPropertyReadUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/javaPropertyReadUsages2.0.kt");
-            }
+                @TestMetadata("kotlinPropertyReadUsages2.0.kt")
+                public void testKotlinPropertyReadUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPropertyReadUsages2.0.kt");
+                }
 
-            @TestMetadata("javaPropertyUsages.0.kt")
-            public void testJavaPropertyUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/javaPropertyUsages.0.kt");
-            }
+                @TestMetadata("kotlinPropertySameNameAsMethodUsages.0.kt")
+                public void testKotlinPropertySameNameAsMethodUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPropertySameNameAsMethodUsages.0.kt");
+                }
 
-            @TestMetadata("javaPropertyUsages2.0.kt")
-            public void testJavaPropertyUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/javaPropertyUsages2.0.kt");
-            }
+                @TestMetadata("kotlinPropertyUsages.0.kt")
+                public void testKotlinPropertyUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPropertyUsages.0.kt");
+                }
 
-            @TestMetadata("javaPropertyUsages3.0.kt")
-            public void testJavaPropertyUsages3() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/javaPropertyUsages3.0.kt");
-            }
+                @TestMetadata("kotlinPropertyUsages2.0.kt")
+                public void testKotlinPropertyUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPropertyUsages2.0.kt");
+                }
 
-            @TestMetadata("javaPropertyWriteUsages.0.kt")
-            public void testJavaPropertyWriteUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/javaPropertyWriteUsages.0.kt");
-            }
+                @TestMetadata("kotlinPropertyWriteUsages.0.kt")
+                public void testKotlinPropertyWriteUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPropertyWriteUsages.0.kt");
+                }
 
-            @TestMetadata("javaPropertyWriteUsages2.0.kt")
-            public void testJavaPropertyWriteUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/javaPropertyWriteUsages2.0.kt");
-            }
+                @TestMetadata("kotlinPropertyWriteUsages2.0.kt")
+                public void testKotlinPropertyWriteUsages2() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPropertyWriteUsages2.0.kt");
+                }
 
-            @TestMetadata("jvmFieldProperty.0.kt")
-            public void testJvmFieldProperty() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/jvmFieldProperty.0.kt");
-            }
+                @TestMetadata("kotlinTopLevelPropertyUsages.0.kt")
+                public void testKotlinTopLevelPropertyUsages() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinTopLevelPropertyUsages.0.kt");
+                }
 
-            @TestMetadata("jvmStaticProperty.0.kt")
-            public void testJvmStaticProperty() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/jvmStaticProperty.0.kt");
-            }
-
-            @TestMetadata("kotlinClassObjectPropertyUsage.0.kt")
-            public void testKotlinClassObjectPropertyUsage() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinClassObjectPropertyUsage.0.kt");
-            }
-
-            @TestMetadata("kotlinLocalPropertyUsages1.0.kt")
-            public void testKotlinLocalPropertyUsages1() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinLocalPropertyUsages1.0.kt");
-            }
-
-            @TestMetadata("kotlinLocalPropertyUsages2.0.kt")
-            public void testKotlinLocalPropertyUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinLocalPropertyUsages2.0.kt");
-            }
-
-            @TestMetadata("kotlinMultiRefInImport.0.kt")
-            public void testKotlinMultiRefInImport() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinMultiRefInImport.0.kt");
-            }
-
-            @TestMetadata("kotlinNestedClassPropertyUsages.0.kt")
-            public void testKotlinNestedClassPropertyUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinNestedClassPropertyUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinPrivatePropertyInClassObjectUsages.0.kt")
-            public void testKotlinPrivatePropertyInClassObjectUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPrivatePropertyInClassObjectUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinPrivatePropertyUsages.0.kt")
-            public void testKotlinPrivatePropertyUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPrivatePropertyUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinPrivatePropertyUsages2.0.kt")
-            public void testKotlinPrivatePropertyUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPrivatePropertyUsages2.0.kt");
-            }
-
-            @TestMetadata("kotlinPrivatePropertyUsages3.0.kt")
-            public void testKotlinPrivatePropertyUsages3() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPrivatePropertyUsages3.0.kt");
-            }
-
-            @TestMetadata("kotlinPrivatePropertyUsages4.0.kt")
-            public void testKotlinPrivatePropertyUsages4() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPrivatePropertyUsages4.0.kt");
-            }
-
-            @TestMetadata("kotlinPropertyReadUsages.0.kt")
-            public void testKotlinPropertyReadUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPropertyReadUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinPropertyReadUsages2.0.kt")
-            public void testKotlinPropertyReadUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPropertyReadUsages2.0.kt");
-            }
-
-            @TestMetadata("kotlinPropertySameNameAsMethodUsages.0.kt")
-            public void testKotlinPropertySameNameAsMethodUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPropertySameNameAsMethodUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinPropertyUsages.0.kt")
-            public void testKotlinPropertyUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPropertyUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinPropertyUsages2.0.kt")
-            public void testKotlinPropertyUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPropertyUsages2.0.kt");
-            }
-
-            @TestMetadata("kotlinPropertyWriteUsages.0.kt")
-            public void testKotlinPropertyWriteUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPropertyWriteUsages.0.kt");
-            }
-
-            @TestMetadata("kotlinPropertyWriteUsages2.0.kt")
-            public void testKotlinPropertyWriteUsages2() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinPropertyWriteUsages2.0.kt");
-            }
-
-            @TestMetadata("kotlinTopLevelPropertyUsages.0.kt")
-            public void testKotlinTopLevelPropertyUsages() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kotlinTopLevelPropertyUsages.0.kt");
-            }
-
-            @TestMetadata("kt7656.0.kt")
-            public void testKt7656() throws Exception {
-                runTest("testData/findUsages/kotlin/findPropertyUsages/kt7656.0.kt");
+                @TestMetadata("kt7656.0.kt")
+                public void testKt7656() throws Exception {
+                    runTest("testData/findUsages/kotlin/findPropertyUsages/kt7656.0.kt");
+                }
             }
         }
 
@@ -1412,119 +1468,131 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/findUsages/java/findJavaClassUsages")
-        public static class FindJavaClassUsages extends AbstractFindUsagesTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        public abstract static class FindJavaClassUsages extends AbstractFindUsagesTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/findUsages/java/findJavaClassUsages")
+            public static class TestBucket1 extends AbstractFindUsagesTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("JKAliasedClassAllUsages.0.java")
+                public void testJKAliasedClassAllUsages() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKAliasedClassAllUsages.0.java");
+                }
+
+                @TestMetadata("JKClassAllUsages.0.java")
+                public void testJKClassAllUsages() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKClassAllUsages.0.java");
+                }
+
+                @TestMetadata("JKClassDerivedAnonymousObjects.0.java")
+                public void testJKClassDerivedAnonymousObjects() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedAnonymousObjects.0.java");
+                }
+
+                @TestMetadata("JKClassDerivedClasses.0.java")
+                public void testJKClassDerivedClasses() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedClasses.0.java");
+                }
+
+                @TestMetadata("JKClassDerivedInnerClasses.0.java")
+                public void testJKClassDerivedInnerClasses() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedInnerClasses.0.java");
+                }
+
+                @TestMetadata("JKClassDerivedInnerObjects.0.java")
+                public void testJKClassDerivedInnerObjects() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedInnerObjects.0.java");
+                }
+
+                @TestMetadata("JKClassDerivedLocalClasses.0.java")
+                public void testJKClassDerivedLocalClasses() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedLocalClasses.0.java");
+                }
+
+                @TestMetadata("JKClassDerivedLocalObjects.0.java")
+                public void testJKClassDerivedLocalObjects() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedLocalObjects.0.java");
+                }
+
+                @TestMetadata("JKClassDerivedObjects.0.java")
+                public void testJKClassDerivedObjects() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedObjects.0.java");
+                }
+
+                @TestMetadata("JKClassFieldsUsages.0.java")
+                public void testJKClassFieldsUsages() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKClassFieldsUsages.0.java");
+                }
+
+                @TestMetadata("JKClassMethodsUsages.0.java")
+                public void testJKClassMethodsUsages() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKClassMethodsUsages.0.java");
+                }
+
+                @TestMetadata("JKClassWithImplicitConstructorAllUsages.0.java")
+                public void testJKClassWithImplicitConstructorAllUsages() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKClassWithImplicitConstructorAllUsages.0.java");
+                }
+
+                @TestMetadata("JKDerivedInterfaces.0.java")
+                public void testJKDerivedInterfaces() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKDerivedInterfaces.0.java");
+                }
+
+                @TestMetadata("JKInnerClassAllUsages.0.java")
+                public void testJKInnerClassAllUsages() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKInnerClassAllUsages.0.java");
+                }
+
+                @TestMetadata("JKInterfaceDerivedAnonymousObjects.0.java")
+                public void testJKInterfaceDerivedAnonymousObjects() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKInterfaceDerivedAnonymousObjects.0.java");
+                }
+
+                @TestMetadata("JKInterfaceDerivedClasses.0.java")
+                public void testJKInterfaceDerivedClasses() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKInterfaceDerivedClasses.0.java");
+                }
+
+                @TestMetadata("JKInterfaceDerivedInnerClasses.0.java")
+                public void testJKInterfaceDerivedInnerClasses() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKInterfaceDerivedInnerClasses.0.java");
+                }
+
+                @TestMetadata("JKInterfaceDerivedInnerObjects.0.java")
+                public void testJKInterfaceDerivedInnerObjects() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKInterfaceDerivedInnerObjects.0.java");
+                }
+
+                @TestMetadata("JKInterfaceDerivedLocalClasses.0.java")
+                public void testJKInterfaceDerivedLocalClasses() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKInterfaceDerivedLocalClasses.0.java");
+                }
+
+                @TestMetadata("JKInterfaceDerivedLocalObjects.0.java")
+                public void testJKInterfaceDerivedLocalObjects() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKInterfaceDerivedLocalObjects.0.java");
+                }
             }
 
-            @TestMetadata("JKAliasedClassAllUsages.0.java")
-            public void testJKAliasedClassAllUsages() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKAliasedClassAllUsages.0.java");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/findUsages/java/findJavaClassUsages")
+            public static class TestBucket2 extends AbstractFindUsagesTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("JKClassAllUsages.0.java")
-            public void testJKClassAllUsages() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKClassAllUsages.0.java");
-            }
+                @TestMetadata("JKInterfaceDerivedObjects.0.java")
+                public void testJKInterfaceDerivedObjects() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKInterfaceDerivedObjects.0.java");
+                }
 
-            @TestMetadata("JKClassDerivedAnonymousObjects.0.java")
-            public void testJKClassDerivedAnonymousObjects() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedAnonymousObjects.0.java");
-            }
-
-            @TestMetadata("JKClassDerivedClasses.0.java")
-            public void testJKClassDerivedClasses() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedClasses.0.java");
-            }
-
-            @TestMetadata("JKClassDerivedInnerClasses.0.java")
-            public void testJKClassDerivedInnerClasses() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedInnerClasses.0.java");
-            }
-
-            @TestMetadata("JKClassDerivedInnerObjects.0.java")
-            public void testJKClassDerivedInnerObjects() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedInnerObjects.0.java");
-            }
-
-            @TestMetadata("JKClassDerivedLocalClasses.0.java")
-            public void testJKClassDerivedLocalClasses() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedLocalClasses.0.java");
-            }
-
-            @TestMetadata("JKClassDerivedLocalObjects.0.java")
-            public void testJKClassDerivedLocalObjects() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedLocalObjects.0.java");
-            }
-
-            @TestMetadata("JKClassDerivedObjects.0.java")
-            public void testJKClassDerivedObjects() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKClassDerivedObjects.0.java");
-            }
-
-            @TestMetadata("JKClassFieldsUsages.0.java")
-            public void testJKClassFieldsUsages() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKClassFieldsUsages.0.java");
-            }
-
-            @TestMetadata("JKClassMethodsUsages.0.java")
-            public void testJKClassMethodsUsages() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKClassMethodsUsages.0.java");
-            }
-
-            @TestMetadata("JKClassWithImplicitConstructorAllUsages.0.java")
-            public void testJKClassWithImplicitConstructorAllUsages() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKClassWithImplicitConstructorAllUsages.0.java");
-            }
-
-            @TestMetadata("JKDerivedInterfaces.0.java")
-            public void testJKDerivedInterfaces() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKDerivedInterfaces.0.java");
-            }
-
-            @TestMetadata("JKInnerClassAllUsages.0.java")
-            public void testJKInnerClassAllUsages() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKInnerClassAllUsages.0.java");
-            }
-
-            @TestMetadata("JKInterfaceDerivedAnonymousObjects.0.java")
-            public void testJKInterfaceDerivedAnonymousObjects() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKInterfaceDerivedAnonymousObjects.0.java");
-            }
-
-            @TestMetadata("JKInterfaceDerivedClasses.0.java")
-            public void testJKInterfaceDerivedClasses() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKInterfaceDerivedClasses.0.java");
-            }
-
-            @TestMetadata("JKInterfaceDerivedInnerClasses.0.java")
-            public void testJKInterfaceDerivedInnerClasses() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKInterfaceDerivedInnerClasses.0.java");
-            }
-
-            @TestMetadata("JKInterfaceDerivedInnerObjects.0.java")
-            public void testJKInterfaceDerivedInnerObjects() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKInterfaceDerivedInnerObjects.0.java");
-            }
-
-            @TestMetadata("JKInterfaceDerivedLocalClasses.0.java")
-            public void testJKInterfaceDerivedLocalClasses() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKInterfaceDerivedLocalClasses.0.java");
-            }
-
-            @TestMetadata("JKInterfaceDerivedLocalObjects.0.java")
-            public void testJKInterfaceDerivedLocalObjects() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKInterfaceDerivedLocalObjects.0.java");
-            }
-
-            @TestMetadata("JKInterfaceDerivedObjects.0.java")
-            public void testJKInterfaceDerivedObjects() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKInterfaceDerivedObjects.0.java");
-            }
-
-            @TestMetadata("JKNestedClassAllUsages.0.java")
-            public void testJKNestedClassAllUsages() throws Exception {
-                runTest("testData/findUsages/java/findJavaClassUsages/JKNestedClassAllUsages.0.java");
+                @TestMetadata("JKNestedClassAllUsages.0.java")
+                public void testJKNestedClassAllUsages() throws Exception {
+                    runTest("testData/findUsages/java/findJavaClassUsages/JKNestedClassAllUsages.0.java");
+                }
             }
         }
 

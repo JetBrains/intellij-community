@@ -18,188 +18,200 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/multiModuleHighlighting/multiplatform")
-public class MultiPlatformHighlightingTestGenerated extends AbstractMultiPlatformHighlightingTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+public abstract class MultiPlatformHighlightingTestGenerated extends AbstractMultiPlatformHighlightingTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/multiModuleHighlighting/multiplatform")
+    public static class TestBucket1 extends AbstractMultiPlatformHighlightingTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("actualizedSupertype")
+        public void testActualizedSupertype() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/actualizedSupertype/");
+        }
+
+        @TestMetadata("additionalMembersInPlatformInterface")
+        public void testAdditionalMembersInPlatformInterface() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/additionalMembersInPlatformInterface/");
+        }
+
+        @TestMetadata("basic")
+        public void testBasic() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/basic/");
+        }
+
+        @TestMetadata("catchHeaderExceptionInPlatformModule")
+        public void testCatchHeaderExceptionInPlatformModule() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/catchHeaderExceptionInPlatformModule/");
+        }
+
+        @TestMetadata("completionHandlexCoroutines")
+        public void testCompletionHandlexCoroutines() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/completionHandlexCoroutines/");
+        }
+
+        @TestMetadata("contracts")
+        public void testContracts() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/contracts/");
+        }
+
+        @TestMetadata("depends")
+        public void testDepends() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/depends/");
+        }
+
+        @TestMetadata("differentJvmImpls")
+        public void testDifferentJvmImpls() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/differentJvmImpls/");
+        }
+
+        @TestMetadata("headerClass")
+        public void testHeaderClass() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/headerClass/");
+        }
+
+        @TestMetadata("headerClassImplTypealias")
+        public void testHeaderClassImplTypealias() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/headerClassImplTypealias/");
+        }
+
+        @TestMetadata("headerFunUsesStdlibInSignature")
+        public void testHeaderFunUsesStdlibInSignature() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/headerFunUsesStdlibInSignature/");
+        }
+
+        @TestMetadata("headerFunctionProperty")
+        public void testHeaderFunctionProperty() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/headerFunctionProperty/");
+        }
+
+        @TestMetadata("headerPartiallyImplemented")
+        public void testHeaderPartiallyImplemented() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/headerPartiallyImplemented/");
+        }
+
+        @TestMetadata("headerWithoutImplForBoth")
+        public void testHeaderWithoutImplForBoth() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/headerWithoutImplForBoth/");
+        }
+
+        @TestMetadata("internal")
+        public void testInternal() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/internal/");
+        }
+
+        @TestMetadata("internalDependencyFromTests")
+        public void testInternalDependencyFromTests() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/internalDependencyFromTests/");
+        }
+
+        @TestMetadata("internalInheritanceToCommon")
+        public void testInternalInheritanceToCommon() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/internalInheritanceToCommon/");
+        }
+
+        @TestMetadata("javaUsesPlatformFacade")
+        public void testJavaUsesPlatformFacade() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/javaUsesPlatformFacade/");
+        }
+
+        @TestMetadata("jvmKotlinReferencesCommonKotlinThroughJava")
+        public void testJvmKotlinReferencesCommonKotlinThroughJava() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/jvmKotlinReferencesCommonKotlinThroughJava/");
+        }
+
+        @TestMetadata("jvmKotlinReferencesCommonKotlinThroughJavaDifferentJvmImpls")
+        public void testJvmKotlinReferencesCommonKotlinThroughJavaDifferentJvmImpls() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/jvmKotlinReferencesCommonKotlinThroughJavaDifferentJvmImpls/");
+        }
     }
 
-    @TestMetadata("actualizedSupertype")
-    public void testActualizedSupertype() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/actualizedSupertype/");
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/multiModuleHighlighting/multiplatform")
+    public static class TestBucket2 extends AbstractMultiPlatformHighlightingTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("additionalMembersInPlatformInterface")
-    public void testAdditionalMembersInPlatformInterface() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/additionalMembersInPlatformInterface/");
-    }
+        @TestMetadata("jvmNameInCommon")
+        public void testJvmNameInCommon() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/jvmNameInCommon/");
+        }
 
-    @TestMetadata("basic")
-    public void testBasic() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/basic/");
-    }
+        @TestMetadata("multifileFacade")
+        public void testMultifileFacade() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/multifileFacade/");
+        }
 
-    @TestMetadata("catchHeaderExceptionInPlatformModule")
-    public void testCatchHeaderExceptionInPlatformModule() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/catchHeaderExceptionInPlatformModule/");
-    }
+        @TestMetadata("nestedClassWithoutImpl")
+        public void testNestedClassWithoutImpl() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/nestedClassWithoutImpl/");
+        }
 
-    @TestMetadata("completionHandlexCoroutines")
-    public void testCompletionHandlexCoroutines() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/completionHandlexCoroutines/");
-    }
+        @TestMetadata("platformTypeAliasInterchangebleWithAliasedClass")
+        public void testPlatformTypeAliasInterchangebleWithAliasedClass() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/platformTypeAliasInterchangebleWithAliasedClass/");
+        }
 
-    @TestMetadata("contracts")
-    public void testContracts() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/contracts/");
-    }
+        @TestMetadata("sealedTypeAlias")
+        public void testSealedTypeAlias() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/sealedTypeAlias/");
+        }
 
-    @TestMetadata("depends")
-    public void testDepends() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/depends/");
-    }
+        @TestMetadata("suppressHeaderWithoutImpl")
+        public void testSuppressHeaderWithoutImpl() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/suppressHeaderWithoutImpl/");
+        }
 
-    @TestMetadata("differentJvmImpls")
-    public void testDifferentJvmImpls() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/differentJvmImpls/");
-    }
+        @TestMetadata("suspend")
+        public void testSuspend() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/suspend/");
+        }
 
-    @TestMetadata("headerClass")
-    public void testHeaderClass() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/headerClass/");
-    }
+        @TestMetadata("transitive")
+        public void testTransitive() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/transitive/");
+        }
 
-    @TestMetadata("headerClassImplTypealias")
-    public void testHeaderClassImplTypealias() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/headerClassImplTypealias/");
-    }
+        @TestMetadata("triangle")
+        public void testTriangle() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/triangle/");
+        }
 
-    @TestMetadata("headerFunUsesStdlibInSignature")
-    public void testHeaderFunUsesStdlibInSignature() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/headerFunUsesStdlibInSignature/");
-    }
+        @TestMetadata("triangleWithDependency")
+        public void testTriangleWithDependency() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/triangleWithDependency/");
+        }
 
-    @TestMetadata("headerFunctionProperty")
-    public void testHeaderFunctionProperty() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/headerFunctionProperty/");
-    }
+        @TestMetadata("typeAliasedParameter")
+        public void testTypeAliasedParameter() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/typeAliasedParameter/");
+        }
 
-    @TestMetadata("headerPartiallyImplemented")
-    public void testHeaderPartiallyImplemented() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/headerPartiallyImplemented/");
-    }
+        @TestMetadata("typeAliasedSam")
+        public void testTypeAliasedSam() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/typeAliasedSam/");
+        }
 
-    @TestMetadata("headerWithoutImplForBoth")
-    public void testHeaderWithoutImplForBoth() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/headerWithoutImplForBoth/");
-    }
+        @TestMetadata("useAppendable")
+        public void testUseAppendable() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/useAppendable/");
+        }
 
-    @TestMetadata("internal")
-    public void testInternal() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/internal/");
-    }
+        @TestMetadata("useCorrectBuiltInsForCommonModule")
+        public void testUseCorrectBuiltInsForCommonModule() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/useCorrectBuiltInsForCommonModule/");
+        }
 
-    @TestMetadata("internalDependencyFromTests")
-    public void testInternalDependencyFromTests() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/internalDependencyFromTests/");
-    }
+        @TestMetadata("usePlatformSpecificMember")
+        public void testUsePlatformSpecificMember() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/usePlatformSpecificMember/");
+        }
 
-    @TestMetadata("internalInheritanceToCommon")
-    public void testInternalInheritanceToCommon() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/internalInheritanceToCommon/");
-    }
-
-    @TestMetadata("javaUsesPlatformFacade")
-    public void testJavaUsesPlatformFacade() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/javaUsesPlatformFacade/");
-    }
-
-    @TestMetadata("jvmKotlinReferencesCommonKotlinThroughJava")
-    public void testJvmKotlinReferencesCommonKotlinThroughJava() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/jvmKotlinReferencesCommonKotlinThroughJava/");
-    }
-
-    @TestMetadata("jvmKotlinReferencesCommonKotlinThroughJavaDifferentJvmImpls")
-    public void testJvmKotlinReferencesCommonKotlinThroughJavaDifferentJvmImpls() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/jvmKotlinReferencesCommonKotlinThroughJavaDifferentJvmImpls/");
-    }
-
-    @TestMetadata("jvmNameInCommon")
-    public void testJvmNameInCommon() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/jvmNameInCommon/");
-    }
-
-    @TestMetadata("multifileFacade")
-    public void testMultifileFacade() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/multifileFacade/");
-    }
-
-    @TestMetadata("nestedClassWithoutImpl")
-    public void testNestedClassWithoutImpl() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/nestedClassWithoutImpl/");
-    }
-
-    @TestMetadata("platformTypeAliasInterchangebleWithAliasedClass")
-    public void testPlatformTypeAliasInterchangebleWithAliasedClass() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/platformTypeAliasInterchangebleWithAliasedClass/");
-    }
-
-    @TestMetadata("sealedTypeAlias")
-    public void testSealedTypeAlias() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/sealedTypeAlias/");
-    }
-
-    @TestMetadata("suppressHeaderWithoutImpl")
-    public void testSuppressHeaderWithoutImpl() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/suppressHeaderWithoutImpl/");
-    }
-
-    @TestMetadata("suspend")
-    public void testSuspend() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/suspend/");
-    }
-
-    @TestMetadata("transitive")
-    public void testTransitive() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/transitive/");
-    }
-
-    @TestMetadata("triangle")
-    public void testTriangle() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/triangle/");
-    }
-
-    @TestMetadata("triangleWithDependency")
-    public void testTriangleWithDependency() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/triangleWithDependency/");
-    }
-
-    @TestMetadata("typeAliasedParameter")
-    public void testTypeAliasedParameter() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/typeAliasedParameter/");
-    }
-
-    @TestMetadata("typeAliasedSam")
-    public void testTypeAliasedSam() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/typeAliasedSam/");
-    }
-
-    @TestMetadata("useAppendable")
-    public void testUseAppendable() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/useAppendable/");
-    }
-
-    @TestMetadata("useCorrectBuiltInsForCommonModule")
-    public void testUseCorrectBuiltInsForCommonModule() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/useCorrectBuiltInsForCommonModule/");
-    }
-
-    @TestMetadata("usePlatformSpecificMember")
-    public void testUsePlatformSpecificMember() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/usePlatformSpecificMember/");
-    }
-
-    @TestMetadata("withOverrides")
-    public void testWithOverrides() throws Exception {
-        runTest("testData/multiModuleHighlighting/multiplatform/withOverrides/");
+        @TestMetadata("withOverrides")
+        public void testWithOverrides() throws Exception {
+            runTest("testData/multiModuleHighlighting/multiplatform/withOverrides/");
+        }
     }
 }

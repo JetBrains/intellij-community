@@ -89,259 +89,279 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/indentationOnNewline/controlFlowConstructions")
-        public static class ControlFlowConstructions extends AbstractTypingIndentationTestBase {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+        public abstract static class ControlFlowConstructions extends AbstractTypingIndentationTestBase {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/indentationOnNewline/controlFlowConstructions")
+            public static class TestBucket1 extends AbstractTypingIndentationTestBase {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("BetweenOpenBraceAndParenthesis.after.kt")
+                public void testBetweenOpenBraceAndParenthesis() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/BetweenOpenBraceAndParenthesis.after.kt");
+                }
+
+                @TestMetadata("Catch.after.kt")
+                public void testCatch() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/Catch.after.kt");
+                }
+
+                @TestMetadata("Catch2.after.kt")
+                public void testCatch2() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/Catch2.after.kt");
+                }
+
+                @TestMetadata("Catch3.after.kt")
+                public void testCatch3() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/Catch3.after.kt");
+                }
+
+                @TestMetadata("Catch4.after.kt")
+                public void testCatch4() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/Catch4.after.kt");
+                }
+
+                @TestMetadata("Do2.after.kt")
+                public void testDo2() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/Do2.after.kt");
+                }
+
+                @TestMetadata("DoInFun.after.kt")
+                public void testDoInFun() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/DoInFun.after.kt");
+                }
+
+                @TestMetadata("DoWhile.after.kt")
+                public void testDoWhile() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/DoWhile.after.kt");
+                }
+
+                @TestMetadata("DoWhile2.after.kt")
+                public void testDoWhile2() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/DoWhile2.after.kt");
+                }
+
+                @TestMetadata("DoWhile3.after.kt")
+                public void testDoWhile3() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/DoWhile3.after.kt");
+                }
+
+                @TestMetadata("DoWhile4.after.kt")
+                public void testDoWhile4() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/DoWhile4.after.kt");
+                }
+
+                @TestMetadata("DoWhile5.after.kt")
+                public void testDoWhile5() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/DoWhile5.after.kt");
+                }
+
+                @TestMetadata("DoWhile6.after.kt")
+                public void testDoWhile6() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/DoWhile6.after.kt");
+                }
+
+                @TestMetadata("DoWhile7.after.kt")
+                public void testDoWhile7() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/DoWhile7.after.kt");
+                }
+
+                @TestMetadata("DoWithBraces.after.kt")
+                public void testDoWithBraces() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/DoWithBraces.after.kt");
+                }
+
+                @TestMetadata("DoWithBraces2.after.kt")
+                public void testDoWithBraces2() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/DoWithBraces2.after.kt");
+                }
+
+                @TestMetadata("ElseIf.after.kt")
+                public void testElseIf() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/ElseIf.after.kt");
+                }
+
+                @TestMetadata("ElseInWhenWithOption.after.kt")
+                public void testElseInWhenWithOption() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/ElseInWhenWithOption.after.kt");
+                }
+
+                @TestMetadata("ElseInWhenWithoutOption.after.kt")
+                public void testElseInWhenWithoutOption() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/ElseInWhenWithoutOption.after.kt");
+                }
+
+                @TestMetadata("ElseWithBrace.after.kt")
+                public void testElseWithBrace() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/ElseWithBrace.after.kt");
+                }
             }
 
-            @TestMetadata("BetweenOpenBraceAndParenthesis.after.kt")
-            public void testBetweenOpenBraceAndParenthesis() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/BetweenOpenBraceAndParenthesis.after.kt");
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/indentationOnNewline/controlFlowConstructions")
+            public static class TestBucket2 extends AbstractTypingIndentationTestBase {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("ElseWithBraceAndComment.after.kt")
+                public void testElseWithBraceAndComment() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/ElseWithBraceAndComment.after.kt");
+                }
+
+                @TestMetadata("ElseWithBraceAndComment2.after.kt")
+                public void testElseWithBraceAndComment2() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/ElseWithBraceAndComment2.after.kt");
+                }
+
+                @TestMetadata("ElseWithoutBrace.after.kt")
+                public void testElseWithoutBrace() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/ElseWithoutBrace.after.kt");
+                }
+
+                @TestMetadata("ElseWithoutBrace2.after.kt")
+                public void testElseWithoutBrace2() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/ElseWithoutBrace2.after.kt");
+                }
+
+                @TestMetadata("Finally.after.kt")
+                public void testFinally() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/Finally.after.kt");
+                }
+
+                @TestMetadata("Finally2.after.kt")
+                public void testFinally2() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/Finally2.after.kt");
+                }
+
+                @TestMetadata("Finally3.after.kt")
+                public void testFinally3() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/Finally3.after.kt");
+                }
+
+                @TestMetadata("Finally4.after.kt")
+                public void testFinally4() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/Finally4.after.kt");
+                }
+
+                @TestMetadata("For.after.kt")
+                public void testFor() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/For.after.kt");
+                }
+
+                @TestMetadata("ForWithBlock.after.kt")
+                public void testForWithBlock() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/ForWithBlock.after.kt");
+                }
+
+                @TestMetadata("ForWithCondition.after.kt")
+                public void testForWithCondition() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/ForWithCondition.after.kt");
+                }
+
+                @TestMetadata("ForWithoutCondition.after.kt")
+                public void testForWithoutCondition() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/ForWithoutCondition.after.kt");
+                }
+
+                @TestMetadata("If.after.kt")
+                public void testIf() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/If.after.kt");
+                }
+
+                @TestMetadata("IfBeforeCondition.after.kt")
+                public void testIfBeforeCondition() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/IfBeforeCondition.after.kt");
+                }
+
+                @TestMetadata("IfBeforeCondition2.after.kt")
+                public void testIfBeforeCondition2() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/IfBeforeCondition2.after.kt");
+                }
+
+                @TestMetadata("IfBeforeCondition3.after.kt")
+                public void testIfBeforeCondition3() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/IfBeforeCondition3.after.kt");
+                }
+
+                @TestMetadata("IfBeforeCondition4.after.kt")
+                public void testIfBeforeCondition4() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/IfBeforeCondition4.after.kt");
+                }
+
+                @TestMetadata("IfWithBraces.after.kt")
+                public void testIfWithBraces() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/IfWithBraces.after.kt");
+                }
+
+                @TestMetadata("IfWithBraces2.after.kt")
+                public void testIfWithBraces2() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/IfWithBraces2.after.kt");
+                }
+
+                @TestMetadata("Try.after.kt")
+                public void testTry() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/Try.after.kt");
+                }
             }
 
-            @TestMetadata("Catch.after.kt")
-            public void testCatch() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/Catch.after.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/indentationOnNewline/controlFlowConstructions")
+            public static class TestBucket3 extends AbstractTypingIndentationTestBase {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("Catch2.after.kt")
-            public void testCatch2() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/Catch2.after.kt");
-            }
+                @TestMetadata("Try2.after.kt")
+                public void testTry2() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/Try2.after.kt");
+                }
 
-            @TestMetadata("Catch3.after.kt")
-            public void testCatch3() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/Catch3.after.kt");
-            }
+                @TestMetadata("WhenWithCondition.after.kt")
+                public void testWhenWithCondition() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/WhenWithCondition.after.kt");
+                }
 
-            @TestMetadata("Catch4.after.kt")
-            public void testCatch4() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/Catch4.after.kt");
-            }
+                @TestMetadata("WhenWithCondition2.after.kt")
+                public void testWhenWithCondition2() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/WhenWithCondition2.after.kt");
+                }
 
-            @TestMetadata("Do2.after.kt")
-            public void testDo2() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/Do2.after.kt");
-            }
+                @TestMetadata("WhenWithoutCondition.after.kt")
+                public void testWhenWithoutCondition() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/WhenWithoutCondition.after.kt");
+                }
 
-            @TestMetadata("DoInFun.after.kt")
-            public void testDoInFun() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/DoInFun.after.kt");
-            }
+                @TestMetadata("While.after.kt")
+                public void testWhile() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/While.after.kt");
+                }
 
-            @TestMetadata("DoWhile.after.kt")
-            public void testDoWhile() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/DoWhile.after.kt");
-            }
+                @TestMetadata("While2.after.kt")
+                public void testWhile2() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/While2.after.kt");
+                }
 
-            @TestMetadata("DoWhile2.after.kt")
-            public void testDoWhile2() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/DoWhile2.after.kt");
-            }
+                @TestMetadata("While3.after.kt")
+                public void testWhile3() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/While3.after.kt");
+                }
 
-            @TestMetadata("DoWhile3.after.kt")
-            public void testDoWhile3() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/DoWhile3.after.kt");
-            }
+                @TestMetadata("WhileWithBlock.after.kt")
+                public void testWhileWithBlock() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/WhileWithBlock.after.kt");
+                }
 
-            @TestMetadata("DoWhile4.after.kt")
-            public void testDoWhile4() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/DoWhile4.after.kt");
-            }
+                @TestMetadata("WhileWithCondition.after.kt")
+                public void testWhileWithCondition() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/WhileWithCondition.after.kt");
+                }
 
-            @TestMetadata("DoWhile5.after.kt")
-            public void testDoWhile5() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/DoWhile5.after.kt");
-            }
-
-            @TestMetadata("DoWhile6.after.kt")
-            public void testDoWhile6() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/DoWhile6.after.kt");
-            }
-
-            @TestMetadata("DoWhile7.after.kt")
-            public void testDoWhile7() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/DoWhile7.after.kt");
-            }
-
-            @TestMetadata("DoWithBraces.after.kt")
-            public void testDoWithBraces() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/DoWithBraces.after.kt");
-            }
-
-            @TestMetadata("DoWithBraces2.after.kt")
-            public void testDoWithBraces2() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/DoWithBraces2.after.kt");
-            }
-
-            @TestMetadata("ElseIf.after.kt")
-            public void testElseIf() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/ElseIf.after.kt");
-            }
-
-            @TestMetadata("ElseInWhenWithOption.after.kt")
-            public void testElseInWhenWithOption() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/ElseInWhenWithOption.after.kt");
-            }
-
-            @TestMetadata("ElseInWhenWithoutOption.after.kt")
-            public void testElseInWhenWithoutOption() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/ElseInWhenWithoutOption.after.kt");
-            }
-
-            @TestMetadata("ElseWithBrace.after.kt")
-            public void testElseWithBrace() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/ElseWithBrace.after.kt");
-            }
-
-            @TestMetadata("ElseWithBraceAndComment.after.kt")
-            public void testElseWithBraceAndComment() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/ElseWithBraceAndComment.after.kt");
-            }
-
-            @TestMetadata("ElseWithBraceAndComment2.after.kt")
-            public void testElseWithBraceAndComment2() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/ElseWithBraceAndComment2.after.kt");
-            }
-
-            @TestMetadata("ElseWithoutBrace.after.kt")
-            public void testElseWithoutBrace() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/ElseWithoutBrace.after.kt");
-            }
-
-            @TestMetadata("ElseWithoutBrace2.after.kt")
-            public void testElseWithoutBrace2() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/ElseWithoutBrace2.after.kt");
-            }
-
-            @TestMetadata("Finally.after.kt")
-            public void testFinally() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/Finally.after.kt");
-            }
-
-            @TestMetadata("Finally2.after.kt")
-            public void testFinally2() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/Finally2.after.kt");
-            }
-
-            @TestMetadata("Finally3.after.kt")
-            public void testFinally3() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/Finally3.after.kt");
-            }
-
-            @TestMetadata("Finally4.after.kt")
-            public void testFinally4() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/Finally4.after.kt");
-            }
-
-            @TestMetadata("For.after.kt")
-            public void testFor() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/For.after.kt");
-            }
-
-            @TestMetadata("ForWithBlock.after.kt")
-            public void testForWithBlock() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/ForWithBlock.after.kt");
-            }
-
-            @TestMetadata("ForWithCondition.after.kt")
-            public void testForWithCondition() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/ForWithCondition.after.kt");
-            }
-
-            @TestMetadata("ForWithoutCondition.after.kt")
-            public void testForWithoutCondition() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/ForWithoutCondition.after.kt");
-            }
-
-            @TestMetadata("If.after.kt")
-            public void testIf() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/If.after.kt");
-            }
-
-            @TestMetadata("IfBeforeCondition.after.kt")
-            public void testIfBeforeCondition() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/IfBeforeCondition.after.kt");
-            }
-
-            @TestMetadata("IfBeforeCondition2.after.kt")
-            public void testIfBeforeCondition2() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/IfBeforeCondition2.after.kt");
-            }
-
-            @TestMetadata("IfBeforeCondition3.after.kt")
-            public void testIfBeforeCondition3() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/IfBeforeCondition3.after.kt");
-            }
-
-            @TestMetadata("IfBeforeCondition4.after.kt")
-            public void testIfBeforeCondition4() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/IfBeforeCondition4.after.kt");
-            }
-
-            @TestMetadata("IfWithBraces.after.kt")
-            public void testIfWithBraces() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/IfWithBraces.after.kt");
-            }
-
-            @TestMetadata("IfWithBraces2.after.kt")
-            public void testIfWithBraces2() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/IfWithBraces2.after.kt");
-            }
-
-            @TestMetadata("Try.after.kt")
-            public void testTry() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/Try.after.kt");
-            }
-
-            @TestMetadata("Try2.after.kt")
-            public void testTry2() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/Try2.after.kt");
-            }
-
-            @TestMetadata("WhenWithCondition.after.kt")
-            public void testWhenWithCondition() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/WhenWithCondition.after.kt");
-            }
-
-            @TestMetadata("WhenWithCondition2.after.kt")
-            public void testWhenWithCondition2() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/WhenWithCondition2.after.kt");
-            }
-
-            @TestMetadata("WhenWithoutCondition.after.kt")
-            public void testWhenWithoutCondition() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/WhenWithoutCondition.after.kt");
-            }
-
-            @TestMetadata("While.after.kt")
-            public void testWhile() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/While.after.kt");
-            }
-
-            @TestMetadata("While2.after.kt")
-            public void testWhile2() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/While2.after.kt");
-            }
-
-            @TestMetadata("While3.after.kt")
-            public void testWhile3() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/While3.after.kt");
-            }
-
-            @TestMetadata("WhileWithBlock.after.kt")
-            public void testWhileWithBlock() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/WhileWithBlock.after.kt");
-            }
-
-            @TestMetadata("WhileWithCondition.after.kt")
-            public void testWhileWithCondition() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/WhileWithCondition.after.kt");
-            }
-
-            @TestMetadata("WhileWithoutCondition.after.kt")
-            public void testWhileWithoutCondition() throws Exception {
-                runTest("testData/indentationOnNewline/controlFlowConstructions/WhileWithoutCondition.after.kt");
+                @TestMetadata("WhileWithoutCondition.after.kt")
+                public void testWhileWithoutCondition() throws Exception {
+                    runTest("testData/indentationOnNewline/controlFlowConstructions/WhileWithoutCondition.after.kt");
+                }
             }
         }
 
@@ -433,294 +453,314 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/indentationOnNewline/emptyParameters")
-        public static class EmptyParameters extends AbstractTypingIndentationTestBase {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+        public abstract static class EmptyParameters extends AbstractTypingIndentationTestBase {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/indentationOnNewline/emptyParameters")
+            public static class TestBucket1 extends AbstractTypingIndentationTestBase {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("EmptyArgumentInCallByArrayAccess.after.kt")
+                public void testEmptyArgumentInCallByArrayAccess() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByArrayAccess.after.kt");
+                }
+
+                @TestMetadata("EmptyArgumentInCallByArrayAccess2.after.kt")
+                public void testEmptyArgumentInCallByArrayAccess2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByArrayAccess2.after.kt");
+                }
+
+                @TestMetadata("EmptyArgumentInCallByDeclaration.after.kt")
+                public void testEmptyArgumentInCallByDeclaration() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByDeclaration.after.kt");
+                }
+
+                @TestMetadata("EmptyArgumentInCallByDeclaration2.after.kt")
+                public void testEmptyArgumentInCallByDeclaration2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByDeclaration2.after.kt");
+                }
+
+                @TestMetadata("EmptyArgumentInCallByReference.after.kt")
+                public void testEmptyArgumentInCallByReference() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReference.after.kt");
+                }
+
+                @TestMetadata("EmptyArgumentInCallByReference2.after.kt")
+                public void testEmptyArgumentInCallByReference2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReference2.after.kt");
+                }
+
+                @TestMetadata("EmptyArgumentInCallByReferenceInSuperType.after.kt")
+                public void testEmptyArgumentInCallByReferenceInSuperType() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceInSuperType.after.kt");
+                }
+
+                @TestMetadata("EmptyArgumentInCallByReferenceInSuperType2.after.kt")
+                public void testEmptyArgumentInCallByReferenceInSuperType2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceInSuperType2.after.kt");
+                }
+
+                @TestMetadata("EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments.after.kt")
+                public void testEmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments.after.kt");
+                }
+
+                @TestMetadata("EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments2.after.kt")
+                public void testEmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments2.after.kt");
+                }
+
+                @TestMetadata("EmptyArgumentInCallByReferenceWithTypeArguments.after.kt")
+                public void testEmptyArgumentInCallByReferenceWithTypeArguments() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceWithTypeArguments.after.kt");
+                }
+
+                @TestMetadata("EmptyArgumentInCallByReferenceWithTypeArguments2.after.kt")
+                public void testEmptyArgumentInCallByReferenceWithTypeArguments2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceWithTypeArguments2.after.kt");
+                }
+
+                @TestMetadata("EmptyArgumentInThisAsClassicFunction.after.kt")
+                public void testEmptyArgumentInThisAsClassicFunction() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInThisAsClassicFunction.after.kt");
+                }
+
+                @TestMetadata("EmptyArgumentInThisAsConstructor.after.kt")
+                public void testEmptyArgumentInThisAsConstructor() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInThisAsConstructor.after.kt");
+                }
+
+                @TestMetadata("EmptyArgumentInThisAsConstructor2.after.kt")
+                public void testEmptyArgumentInThisAsConstructor2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInThisAsConstructor2.after.kt");
+                }
+
+                @TestMetadata("EmptyConditionInCatch.after.kt")
+                public void testEmptyConditionInCatch() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyConditionInCatch.after.kt");
+                }
+
+                @TestMetadata("EmptyConditionInCatch2.after.kt")
+                public void testEmptyConditionInCatch2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyConditionInCatch2.after.kt");
+                }
+
+                @TestMetadata("EmptyConditionInDoWhile.after.kt")
+                public void testEmptyConditionInDoWhile() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyConditionInDoWhile.after.kt");
+                }
+
+                @TestMetadata("EmptyConditionInFor.after.kt")
+                public void testEmptyConditionInFor() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyConditionInFor.after.kt");
+                }
+
+                @TestMetadata("EmptyConditionInIf.after.kt")
+                public void testEmptyConditionInIf() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyConditionInIf.after.kt");
+                }
             }
 
-            @TestMetadata("EmptyArgumentInCallByArrayAccess.after.kt")
-            public void testEmptyArgumentInCallByArrayAccess() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByArrayAccess.after.kt");
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/indentationOnNewline/emptyParameters")
+            public static class TestBucket2 extends AbstractTypingIndentationTestBase {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("EmptyConditionInWhen.after.kt")
+                public void testEmptyConditionInWhen() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyConditionInWhen.after.kt");
+                }
+
+                @TestMetadata("EmptyConditionInWhile.after.kt")
+                public void testEmptyConditionInWhile() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyConditionInWhile.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInAnnonymousFunction.after.kt")
+                public void testEmptyParameterInAnnonymousFunction() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunction.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInAnnonymousFunction2.after.kt")
+                public void testEmptyParameterInAnnonymousFunction2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunction2.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInAnnonymousFunctionWithNullableReceiver.after.kt")
+                public void testEmptyParameterInAnnonymousFunctionWithNullableReceiver() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunctionWithNullableReceiver.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInAnnonymousFunctionWithNullableReceiver2.after.kt")
+                public void testEmptyParameterInAnnonymousFunctionWithNullableReceiver2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunctionWithNullableReceiver2.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInAnnonymousFunctionWithReceiver.after.kt")
+                public void testEmptyParameterInAnnonymousFunctionWithReceiver() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunctionWithReceiver.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInAnnonymousFunctionWithReceiver2.after.kt")
+                public void testEmptyParameterInAnnonymousFunctionWithReceiver2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunctionWithReceiver2.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInDestructuringDeclaration.after.kt")
+                public void testEmptyParameterInDestructuringDeclaration() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInDestructuringDeclaration.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInDestructuringDeclaration2.after.kt")
+                public void testEmptyParameterInDestructuringDeclaration2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInDestructuringDeclaration2.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInDestructuringDeclaration3.after.kt")
+                public void testEmptyParameterInDestructuringDeclaration3() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInDestructuringDeclaration3.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInExplicitPrimaryConstructor.after.kt")
+                public void testEmptyParameterInExplicitPrimaryConstructor() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInExplicitPrimaryConstructor.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInExplicitPrimaryConstructor2.after.kt")
+                public void testEmptyParameterInExplicitPrimaryConstructor2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInExplicitPrimaryConstructor2.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInFunction.after.kt")
+                public void testEmptyParameterInFunction() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunction.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInFunction2.after.kt")
+                public void testEmptyParameterInFunction2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunction2.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInFunctionWithReceiver.after.kt")
+                public void testEmptyParameterInFunctionWithReceiver() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithReceiver.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInFunctionWithReceiver2.after.kt")
+                public void testEmptyParameterInFunctionWithReceiver2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithReceiver2.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInFunctionWithTypeParameters.after.kt")
+                public void testEmptyParameterInFunctionWithTypeParameters() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParameters.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInFunctionWithTypeParameters2.after.kt")
+                public void testEmptyParameterInFunctionWithTypeParameters2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParameters2.after.kt");
+                }
+
+                @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver.after.kt")
+                public void testEmptyParameterInFunctionWithTypeParametersAndReceiver() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver.after.kt");
+                }
             }
 
-            @TestMetadata("EmptyArgumentInCallByArrayAccess2.after.kt")
-            public void testEmptyArgumentInCallByArrayAccess2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByArrayAccess2.after.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/indentationOnNewline/emptyParameters")
+            public static class TestBucket3 extends AbstractTypingIndentationTestBase {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("EmptyArgumentInCallByDeclaration.after.kt")
-            public void testEmptyArgumentInCallByDeclaration() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByDeclaration.after.kt");
-            }
+                @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver2.after.kt")
+                public void testEmptyParameterInFunctionWithTypeParametersAndReceiver2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver2.after.kt");
+                }
 
-            @TestMetadata("EmptyArgumentInCallByDeclaration2.after.kt")
-            public void testEmptyArgumentInCallByDeclaration2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByDeclaration2.after.kt");
-            }
+                @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver3.after.kt")
+                public void testEmptyParameterInFunctionWithTypeParametersAndReceiver3() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver3.after.kt");
+                }
 
-            @TestMetadata("EmptyArgumentInCallByReference.after.kt")
-            public void testEmptyArgumentInCallByReference() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReference.after.kt");
-            }
+                @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver4.after.kt")
+                public void testEmptyParameterInFunctionWithTypeParametersAndReceiver4() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver4.after.kt");
+                }
 
-            @TestMetadata("EmptyArgumentInCallByReference2.after.kt")
-            public void testEmptyArgumentInCallByReference2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReference2.after.kt");
-            }
+                @TestMetadata("EmptyParameterInGetter.after.kt")
+                public void testEmptyParameterInGetter() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInGetter.after.kt");
+                }
 
-            @TestMetadata("EmptyArgumentInCallByReferenceInSuperType.after.kt")
-            public void testEmptyArgumentInCallByReferenceInSuperType() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceInSuperType.after.kt");
-            }
+                @TestMetadata("EmptyParameterInGetter2.after.kt")
+                public void testEmptyParameterInGetter2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInGetter2.after.kt");
+                }
 
-            @TestMetadata("EmptyArgumentInCallByReferenceInSuperType2.after.kt")
-            public void testEmptyArgumentInCallByReferenceInSuperType2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceInSuperType2.after.kt");
-            }
+                @TestMetadata("EmptyParameterInImplicitPrimaryConstructor.after.kt")
+                public void testEmptyParameterInImplicitPrimaryConstructor() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInImplicitPrimaryConstructor.after.kt");
+                }
 
-            @TestMetadata("EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments.after.kt")
-            public void testEmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments.after.kt");
-            }
+                @TestMetadata("EmptyParameterInImplicitPrimaryConstructor2.after.kt")
+                public void testEmptyParameterInImplicitPrimaryConstructor2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInImplicitPrimaryConstructor2.after.kt");
+                }
 
-            @TestMetadata("EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments2.after.kt")
-            public void testEmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceInSuperTypeWithTypeArguments2.after.kt");
-            }
+                @TestMetadata("EmptyParameterInImplicitPrimaryConstructorWithTypeParameters.after.kt")
+                public void testEmptyParameterInImplicitPrimaryConstructorWithTypeParameters() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInImplicitPrimaryConstructorWithTypeParameters.after.kt");
+                }
 
-            @TestMetadata("EmptyArgumentInCallByReferenceWithTypeArguments.after.kt")
-            public void testEmptyArgumentInCallByReferenceWithTypeArguments() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceWithTypeArguments.after.kt");
-            }
+                @TestMetadata("EmptyParameterInImplicitPrimaryConstructorWithTypeParameters2.after.kt")
+                public void testEmptyParameterInImplicitPrimaryConstructorWithTypeParameters2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInImplicitPrimaryConstructorWithTypeParameters2.after.kt");
+                }
 
-            @TestMetadata("EmptyArgumentInCallByReferenceWithTypeArguments2.after.kt")
-            public void testEmptyArgumentInCallByReferenceWithTypeArguments2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInCallByReferenceWithTypeArguments2.after.kt");
-            }
+                @TestMetadata("EmptyParameterInInnerAnnonymousFunction.after.kt")
+                public void testEmptyParameterInInnerAnnonymousFunction() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInInnerAnnonymousFunction.after.kt");
+                }
 
-            @TestMetadata("EmptyArgumentInThisAsClassicFunction.after.kt")
-            public void testEmptyArgumentInThisAsClassicFunction() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInThisAsClassicFunction.after.kt");
-            }
+                @TestMetadata("EmptyParameterInInnerAnnonymousFunction2.after.kt")
+                public void testEmptyParameterInInnerAnnonymousFunction2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInInnerAnnonymousFunction2.after.kt");
+                }
 
-            @TestMetadata("EmptyArgumentInThisAsConstructor.after.kt")
-            public void testEmptyArgumentInThisAsConstructor() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInThisAsConstructor.after.kt");
-            }
+                @TestMetadata("EmptyParameterInSecondaryConstructor.after.kt")
+                public void testEmptyParameterInSecondaryConstructor() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInSecondaryConstructor.after.kt");
+                }
 
-            @TestMetadata("EmptyArgumentInThisAsConstructor2.after.kt")
-            public void testEmptyArgumentInThisAsConstructor2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyArgumentInThisAsConstructor2.after.kt");
-            }
+                @TestMetadata("EmptyParameterInSecondaryConstructor2.after.kt")
+                public void testEmptyParameterInSecondaryConstructor2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInSecondaryConstructor2.after.kt");
+                }
 
-            @TestMetadata("EmptyConditionInCatch.after.kt")
-            public void testEmptyConditionInCatch() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyConditionInCatch.after.kt");
-            }
+                @TestMetadata("EmptyParameterInSetter.after.kt")
+                public void testEmptyParameterInSetter() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInSetter.after.kt");
+                }
 
-            @TestMetadata("EmptyConditionInCatch2.after.kt")
-            public void testEmptyConditionInCatch2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyConditionInCatch2.after.kt");
-            }
+                @TestMetadata("EmptyParameterInSetter2.after.kt")
+                public void testEmptyParameterInSetter2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInSetter2.after.kt");
+                }
 
-            @TestMetadata("EmptyConditionInDoWhile.after.kt")
-            public void testEmptyConditionInDoWhile() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyConditionInDoWhile.after.kt");
-            }
+                @TestMetadata("EmptyParameters.after.kt")
+                public void testEmptyParameters() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameters.after.kt");
+                }
 
-            @TestMetadata("EmptyConditionInFor.after.kt")
-            public void testEmptyConditionInFor() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyConditionInFor.after.kt");
-            }
-
-            @TestMetadata("EmptyConditionInIf.after.kt")
-            public void testEmptyConditionInIf() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyConditionInIf.after.kt");
-            }
-
-            @TestMetadata("EmptyConditionInWhen.after.kt")
-            public void testEmptyConditionInWhen() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyConditionInWhen.after.kt");
-            }
-
-            @TestMetadata("EmptyConditionInWhile.after.kt")
-            public void testEmptyConditionInWhile() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyConditionInWhile.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInAnnonymousFunction.after.kt")
-            public void testEmptyParameterInAnnonymousFunction() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunction.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInAnnonymousFunction2.after.kt")
-            public void testEmptyParameterInAnnonymousFunction2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunction2.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInAnnonymousFunctionWithNullableReceiver.after.kt")
-            public void testEmptyParameterInAnnonymousFunctionWithNullableReceiver() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunctionWithNullableReceiver.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInAnnonymousFunctionWithNullableReceiver2.after.kt")
-            public void testEmptyParameterInAnnonymousFunctionWithNullableReceiver2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunctionWithNullableReceiver2.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInAnnonymousFunctionWithReceiver.after.kt")
-            public void testEmptyParameterInAnnonymousFunctionWithReceiver() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunctionWithReceiver.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInAnnonymousFunctionWithReceiver2.after.kt")
-            public void testEmptyParameterInAnnonymousFunctionWithReceiver2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInAnnonymousFunctionWithReceiver2.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInDestructuringDeclaration.after.kt")
-            public void testEmptyParameterInDestructuringDeclaration() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInDestructuringDeclaration.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInDestructuringDeclaration2.after.kt")
-            public void testEmptyParameterInDestructuringDeclaration2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInDestructuringDeclaration2.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInDestructuringDeclaration3.after.kt")
-            public void testEmptyParameterInDestructuringDeclaration3() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInDestructuringDeclaration3.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInExplicitPrimaryConstructor.after.kt")
-            public void testEmptyParameterInExplicitPrimaryConstructor() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInExplicitPrimaryConstructor.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInExplicitPrimaryConstructor2.after.kt")
-            public void testEmptyParameterInExplicitPrimaryConstructor2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInExplicitPrimaryConstructor2.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInFunction.after.kt")
-            public void testEmptyParameterInFunction() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunction.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInFunction2.after.kt")
-            public void testEmptyParameterInFunction2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunction2.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInFunctionWithReceiver.after.kt")
-            public void testEmptyParameterInFunctionWithReceiver() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithReceiver.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInFunctionWithReceiver2.after.kt")
-            public void testEmptyParameterInFunctionWithReceiver2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithReceiver2.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInFunctionWithTypeParameters.after.kt")
-            public void testEmptyParameterInFunctionWithTypeParameters() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParameters.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInFunctionWithTypeParameters2.after.kt")
-            public void testEmptyParameterInFunctionWithTypeParameters2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParameters2.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver.after.kt")
-            public void testEmptyParameterInFunctionWithTypeParametersAndReceiver() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver2.after.kt")
-            public void testEmptyParameterInFunctionWithTypeParametersAndReceiver2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver2.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver3.after.kt")
-            public void testEmptyParameterInFunctionWithTypeParametersAndReceiver3() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver3.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInFunctionWithTypeParametersAndReceiver4.after.kt")
-            public void testEmptyParameterInFunctionWithTypeParametersAndReceiver4() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInFunctionWithTypeParametersAndReceiver4.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInGetter.after.kt")
-            public void testEmptyParameterInGetter() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInGetter.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInGetter2.after.kt")
-            public void testEmptyParameterInGetter2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInGetter2.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInImplicitPrimaryConstructor.after.kt")
-            public void testEmptyParameterInImplicitPrimaryConstructor() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInImplicitPrimaryConstructor.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInImplicitPrimaryConstructor2.after.kt")
-            public void testEmptyParameterInImplicitPrimaryConstructor2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInImplicitPrimaryConstructor2.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInImplicitPrimaryConstructorWithTypeParameters.after.kt")
-            public void testEmptyParameterInImplicitPrimaryConstructorWithTypeParameters() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInImplicitPrimaryConstructorWithTypeParameters.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInImplicitPrimaryConstructorWithTypeParameters2.after.kt")
-            public void testEmptyParameterInImplicitPrimaryConstructorWithTypeParameters2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInImplicitPrimaryConstructorWithTypeParameters2.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInInnerAnnonymousFunction.after.kt")
-            public void testEmptyParameterInInnerAnnonymousFunction() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInInnerAnnonymousFunction.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInInnerAnnonymousFunction2.after.kt")
-            public void testEmptyParameterInInnerAnnonymousFunction2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInInnerAnnonymousFunction2.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInSecondaryConstructor.after.kt")
-            public void testEmptyParameterInSecondaryConstructor() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInSecondaryConstructor.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInSecondaryConstructor2.after.kt")
-            public void testEmptyParameterInSecondaryConstructor2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInSecondaryConstructor2.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInSetter.after.kt")
-            public void testEmptyParameterInSetter() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInSetter.after.kt");
-            }
-
-            @TestMetadata("EmptyParameterInSetter2.after.kt")
-            public void testEmptyParameterInSetter2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameterInSetter2.after.kt");
-            }
-
-            @TestMetadata("EmptyParameters.after.kt")
-            public void testEmptyParameters() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameters.after.kt");
-            }
-
-            @TestMetadata("EmptyParameters2.after.kt")
-            public void testEmptyParameters2() throws Exception {
-                runTest("testData/indentationOnNewline/emptyParameters/EmptyParameters2.after.kt");
+                @TestMetadata("EmptyParameters2.after.kt")
+                public void testEmptyParameters2() throws Exception {
+                    runTest("testData/indentationOnNewline/emptyParameters/EmptyParameters2.after.kt");
+                }
             }
         }
 
@@ -940,382 +980,414 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/indentationOnNewline/templates")
-        public static class Templates extends AbstractTypingIndentationTestBase {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+        public abstract static class Templates extends AbstractTypingIndentationTestBase {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/indentationOnNewline/templates")
+            public static class TestBucket1 extends AbstractTypingIndentationTestBase {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("LargeFileWithStringTemplate.after.kt")
+                public void testLargeFileWithStringTemplate() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/LargeFileWithStringTemplate.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryClose.after.kt")
+                public void testTemplateEntryClose() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryClose.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryClose2.after.kt")
+                public void testTemplateEntryClose2() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryClose2.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryClose3.after.kt")
+                public void testTemplateEntryClose3() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryClose3.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryClose4.after.kt")
+                public void testTemplateEntryClose4() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryClose4.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryClose5.after.kt")
+                public void testTemplateEntryClose5() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryClose5.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryClose6.after.kt")
+                public void testTemplateEntryClose6() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryClose6.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryClose7.after.kt")
+                public void testTemplateEntryClose7() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryClose7.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryCloseInMultilineString.after.kt")
+                public void testTemplateEntryCloseInMultilineString() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryCloseInMultilineString.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryCloseInMultilineString2.after.kt")
+                public void testTemplateEntryCloseInMultilineString2() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryCloseInMultilineString2.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryCloseInMultilineString3.after.kt")
+                public void testTemplateEntryCloseInMultilineString3() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryCloseInMultilineString3.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryOpen.after.kt")
+                public void testTemplateEntryOpen() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryOpen.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryOpen2.after.kt")
+                public void testTemplateEntryOpen2() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryOpen2.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryOpenInMultilineString.after.kt")
+                public void testTemplateEntryOpenInMultilineString() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryOpenInMultilineString.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryOpenInMultilineString2.after.kt")
+                public void testTemplateEntryOpenInMultilineString2() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryOpenInMultilineString2.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryOpenInMultilineString3.after.kt")
+                public void testTemplateEntryOpenInMultilineString3() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryOpenInMultilineString3.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryOpenWithComment.after.kt")
+                public void testTemplateEntryOpenWithComment() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryOpenWithComment.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryOpenWithComment2.after.kt")
+                public void testTemplateEntryOpenWithComment2() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryOpenWithComment2.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryOpenWithoutContent.after.kt")
+                public void testTemplateEntryOpenWithoutContent() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent.after.kt");
+                }
+
+                @TestMetadata("TemplateEntryOpenWithoutContent2.after.kt")
+                public void testTemplateEntryOpenWithoutContent2() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent2.after.kt");
+                }
             }
 
-            @TestMetadata("LargeFileWithStringTemplate.after.kt")
-            public void testLargeFileWithStringTemplate() throws Exception {
-                runTest("testData/indentationOnNewline/templates/LargeFileWithStringTemplate.after.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/indentationOnNewline/templates")
+            public static class TestBucket2 extends AbstractTypingIndentationTestBase {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("TemplateEntryClose.after.kt")
-            public void testTemplateEntryClose() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryClose.after.kt");
-            }
+                @TestMetadata("TemplateEntryOpenWithoutContent3.after.kt")
+                public void testTemplateEntryOpenWithoutContent3() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent3.after.kt");
+                }
 
-            @TestMetadata("TemplateEntryClose2.after.kt")
-            public void testTemplateEntryClose2() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryClose2.after.kt");
-            }
+                @TestMetadata("TemplateEntryOpenWithoutContent4.after.kt")
+                public void testTemplateEntryOpenWithoutContent4() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent4.after.kt");
+                }
 
-            @TestMetadata("TemplateEntryClose3.after.kt")
-            public void testTemplateEntryClose3() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryClose3.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryClose4.after.kt")
-            public void testTemplateEntryClose4() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryClose4.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryClose5.after.kt")
-            public void testTemplateEntryClose5() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryClose5.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryClose6.after.kt")
-            public void testTemplateEntryClose6() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryClose6.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryClose7.after.kt")
-            public void testTemplateEntryClose7() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryClose7.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryCloseInMultilineString.after.kt")
-            public void testTemplateEntryCloseInMultilineString() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryCloseInMultilineString.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryCloseInMultilineString2.after.kt")
-            public void testTemplateEntryCloseInMultilineString2() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryCloseInMultilineString2.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryCloseInMultilineString3.after.kt")
-            public void testTemplateEntryCloseInMultilineString3() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryCloseInMultilineString3.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryOpen.after.kt")
-            public void testTemplateEntryOpen() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryOpen.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryOpen2.after.kt")
-            public void testTemplateEntryOpen2() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryOpen2.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryOpenInMultilineString.after.kt")
-            public void testTemplateEntryOpenInMultilineString() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryOpenInMultilineString.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryOpenInMultilineString2.after.kt")
-            public void testTemplateEntryOpenInMultilineString2() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryOpenInMultilineString2.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryOpenInMultilineString3.after.kt")
-            public void testTemplateEntryOpenInMultilineString3() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryOpenInMultilineString3.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryOpenWithComment.after.kt")
-            public void testTemplateEntryOpenWithComment() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryOpenWithComment.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryOpenWithComment2.after.kt")
-            public void testTemplateEntryOpenWithComment2() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryOpenWithComment2.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryOpenWithoutContent.after.kt")
-            public void testTemplateEntryOpenWithoutContent() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryOpenWithoutContent2.after.kt")
-            public void testTemplateEntryOpenWithoutContent2() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent2.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryOpenWithoutContent3.after.kt")
-            public void testTemplateEntryOpenWithoutContent3() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent3.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryOpenWithoutContent4.after.kt")
-            public void testTemplateEntryOpenWithoutContent4() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent4.after.kt");
-            }
-
-            @TestMetadata("TemplateEntryOpenWithoutContent5.after.kt")
-            public void testTemplateEntryOpenWithoutContent5() throws Exception {
-                runTest("testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent5.after.kt");
+                @TestMetadata("TemplateEntryOpenWithoutContent5.after.kt")
+                public void testTemplateEntryOpenWithoutContent5() throws Exception {
+                    runTest("testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent5.after.kt");
+                }
             }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/indentationOnNewline")
-        public static class Uncategorized extends AbstractTypingIndentationTestBase {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+        public abstract static class Uncategorized extends AbstractTypingIndentationTestBase {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/indentationOnNewline")
+            public static class TestBucket1 extends AbstractTypingIndentationTestBase {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("AfterCatch.after.kt")
+                public void testAfterCatch() throws Exception {
+                    runTest("testData/indentationOnNewline/AfterCatch.after.kt");
+                }
+
+                @TestMetadata("AfterClassNameBeforeFun.after.kt")
+                public void testAfterClassNameBeforeFun() throws Exception {
+                    runTest("testData/indentationOnNewline/AfterClassNameBeforeFun.after.kt");
+                }
+
+                @TestMetadata("AfterExtensionPropertyGetter.after.kt")
+                public void testAfterExtensionPropertyGetter() throws Exception {
+                    runTest("testData/indentationOnNewline/AfterExtensionPropertyGetter.after.kt");
+                }
+
+                @TestMetadata("AfterExtensionPropertySetter.after.kt")
+                public void testAfterExtensionPropertySetter() throws Exception {
+                    runTest("testData/indentationOnNewline/AfterExtensionPropertySetter.after.kt");
+                }
+
+                @TestMetadata("AfterFinally.after.kt")
+                public void testAfterFinally() throws Exception {
+                    runTest("testData/indentationOnNewline/AfterFinally.after.kt");
+                }
+
+                @TestMetadata("AfterImport.after.kt")
+                public void testAfterImport() throws Exception {
+                    runTest("testData/indentationOnNewline/AfterImport.after.kt");
+                }
+
+                @TestMetadata("AfterPropertyGetter.after.kt")
+                public void testAfterPropertyGetter() throws Exception {
+                    runTest("testData/indentationOnNewline/AfterPropertyGetter.after.kt");
+                }
+
+                @TestMetadata("AfterPropertySetter.after.kt")
+                public void testAfterPropertySetter() throws Exception {
+                    runTest("testData/indentationOnNewline/AfterPropertySetter.after.kt");
+                }
+
+                @TestMetadata("AfterTry.after.kt")
+                public void testAfterTry() throws Exception {
+                    runTest("testData/indentationOnNewline/AfterTry.after.kt");
+                }
+
+                @TestMetadata("Annotation.after.kt")
+                public void testAnnotation() throws Exception {
+                    runTest("testData/indentationOnNewline/Annotation.after.kt");
+                }
+
+                @TestMetadata("AnnotationInDeclaration.after.kt")
+                public void testAnnotationInDeclaration() throws Exception {
+                    runTest("testData/indentationOnNewline/AnnotationInDeclaration.after.kt");
+                }
+
+                @TestMetadata("ArgumentListNormalIndent.after.kt")
+                public void testArgumentListNormalIndent() throws Exception {
+                    runTest("testData/indentationOnNewline/ArgumentListNormalIndent.after.kt");
+                }
+
+                @TestMetadata("BlockCommentAfterCatch.after.kt")
+                public void testBlockCommentAfterCatch() throws Exception {
+                    runTest("testData/indentationOnNewline/BlockCommentAfterCatch.after.kt");
+                }
+
+                @TestMetadata("ConsecutiveCallsAfterDot.after.kt")
+                public void testConsecutiveCallsAfterDot() throws Exception {
+                    runTest("testData/indentationOnNewline/ConsecutiveCallsAfterDot.after.kt");
+                }
+
+                @TestMetadata("ConsecutiveCallsInSaeCallsMiddle.after.kt")
+                public void testConsecutiveCallsInSaeCallsMiddle() throws Exception {
+                    runTest("testData/indentationOnNewline/ConsecutiveCallsInSaeCallsMiddle.after.kt");
+                }
+
+                @TestMetadata("ConsecutiveCallsInSafeCallsEnd.after.kt")
+                public void testConsecutiveCallsInSafeCallsEnd() throws Exception {
+                    runTest("testData/indentationOnNewline/ConsecutiveCallsInSafeCallsEnd.after.kt");
+                }
+
+                @TestMetadata("EoLCommentAfterCatch.after.kt")
+                public void testEoLCommentAfterCatch() throws Exception {
+                    runTest("testData/indentationOnNewline/EoLCommentAfterCatch.after.kt");
+                }
+
+                @TestMetadata("EoLCommentAfterFor.after.kt")
+                public void testEoLCommentAfterFor() throws Exception {
+                    runTest("testData/indentationOnNewline/EoLCommentAfterFor.after.kt");
+                }
+
+                @TestMetadata("EoLCommentAfterIf.after.kt")
+                public void testEoLCommentAfterIf() throws Exception {
+                    runTest("testData/indentationOnNewline/EoLCommentAfterIf.after.kt");
+                }
+
+                @TestMetadata("FunctionBlock.after.kt")
+                public void testFunctionBlock() throws Exception {
+                    runTest("testData/indentationOnNewline/FunctionBlock.after.kt");
+                }
             }
 
-            @TestMetadata("AfterCatch.after.kt")
-            public void testAfterCatch() throws Exception {
-                runTest("testData/indentationOnNewline/AfterCatch.after.kt");
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/indentationOnNewline")
+            public static class TestBucket2 extends AbstractTypingIndentationTestBase {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("HigherOrderFunction.after.kt")
+                public void testHigherOrderFunction() throws Exception {
+                    runTest("testData/indentationOnNewline/HigherOrderFunction.after.kt");
+                }
+
+                @TestMetadata("HigherOrderFunction2.after.kt")
+                public void testHigherOrderFunction2() throws Exception {
+                    runTest("testData/indentationOnNewline/HigherOrderFunction2.after.kt");
+                }
+
+                @TestMetadata("HigherOrderFunction3.after.kt")
+                public void testHigherOrderFunction3() throws Exception {
+                    runTest("testData/indentationOnNewline/HigherOrderFunction3.after.kt");
+                }
+
+                @TestMetadata("InDelegationListAfterColon.after.kt")
+                public void testInDelegationListAfterColon() throws Exception {
+                    runTest("testData/indentationOnNewline/InDelegationListAfterColon.after.kt");
+                }
+
+                @TestMetadata("InDelegationListAfterComma.after.kt")
+                public void testInDelegationListAfterComma() throws Exception {
+                    runTest("testData/indentationOnNewline/InDelegationListAfterComma.after.kt");
+                }
+
+                @TestMetadata("InDelegationListNotEmpty.after.kt")
+                public void testInDelegationListNotEmpty() throws Exception {
+                    runTest("testData/indentationOnNewline/InDelegationListNotEmpty.after.kt");
+                }
+
+                @TestMetadata("InEnumAfterSemicolon.after.kt")
+                public void testInEnumAfterSemicolon() throws Exception {
+                    runTest("testData/indentationOnNewline/InEnumAfterSemicolon.after.kt");
+                }
+
+                @TestMetadata("InEnumInitializerListAfterComma.after.kt")
+                public void testInEnumInitializerListAfterComma() throws Exception {
+                    runTest("testData/indentationOnNewline/InEnumInitializerListAfterComma.after.kt");
+                }
+
+                @TestMetadata("InEnumInitializerListNotEmpty.after.kt")
+                public void testInEnumInitializerListNotEmpty() throws Exception {
+                    runTest("testData/indentationOnNewline/InEnumInitializerListNotEmpty.after.kt");
+                }
+
+                @TestMetadata("InLabmdaAfterArrow.after.kt")
+                public void testInLabmdaAfterArrow() throws Exception {
+                    runTest("testData/indentationOnNewline/InLabmdaAfterArrow.after.kt");
+                }
+
+                @TestMetadata("InLambdaAfterArrowWithSpaces.after.kt")
+                public void testInLambdaAfterArrowWithSpaces() throws Exception {
+                    runTest("testData/indentationOnNewline/InLambdaAfterArrowWithSpaces.after.kt");
+                }
+
+                @TestMetadata("InLambdaBeforeParams.after.kt")
+                public void testInLambdaBeforeParams() throws Exception {
+                    runTest("testData/indentationOnNewline/InLambdaBeforeParams.after.kt");
+                }
+
+                @TestMetadata("InLambdaInsideChainCallSameLine.after.kt")
+                public void testInLambdaInsideChainCallSameLine() throws Exception {
+                    runTest("testData/indentationOnNewline/InLambdaInsideChainCallSameLine.after.kt");
+                }
+
+                @TestMetadata("InLambdaInsideChainCallSameLineWithSpaces.after.kt")
+                public void testInLambdaInsideChainCallSameLineWithSpaces() throws Exception {
+                    runTest("testData/indentationOnNewline/InLambdaInsideChainCallSameLineWithSpaces.after.kt");
+                }
+
+                @TestMetadata("InLambdaInsideChainCallWithNewLine.after.kt")
+                public void testInLambdaInsideChainCallWithNewLine() throws Exception {
+                    runTest("testData/indentationOnNewline/InLambdaInsideChainCallWithNewLine.after.kt");
+                }
+
+                @TestMetadata("InLambdaInsideChainCallWithNewLineWithSpaces.after.kt")
+                public void testInLambdaInsideChainCallWithNewLineWithSpaces() throws Exception {
+                    runTest("testData/indentationOnNewline/InLambdaInsideChainCallWithNewLineWithSpaces.after.kt");
+                }
+
+                @TestMetadata("InMultilineLambdaAfterArrow.after.kt")
+                public void testInMultilineLambdaAfterArrow() throws Exception {
+                    runTest("testData/indentationOnNewline/InMultilineLambdaAfterArrow.after.kt");
+                }
+
+                @TestMetadata("KT20783.after.kt")
+                public void testKT20783() throws Exception {
+                    runTest("testData/indentationOnNewline/KT20783.after.kt");
+                }
+
+                @TestMetadata("LambdaInArguments.after.kt")
+                public void testLambdaInArguments() throws Exception {
+                    runTest("testData/indentationOnNewline/LambdaInArguments.after.kt");
+                }
+
+                @TestMetadata("LambdaInArguments2.after.kt")
+                public void testLambdaInArguments2() throws Exception {
+                    runTest("testData/indentationOnNewline/LambdaInArguments2.after.kt");
+                }
             }
 
-            @TestMetadata("AfterClassNameBeforeFun.after.kt")
-            public void testAfterClassNameBeforeFun() throws Exception {
-                runTest("testData/indentationOnNewline/AfterClassNameBeforeFun.after.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/indentationOnNewline")
+            public static class TestBucket3 extends AbstractTypingIndentationTestBase {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
 
-            @TestMetadata("AfterExtensionPropertyGetter.after.kt")
-            public void testAfterExtensionPropertyGetter() throws Exception {
-                runTest("testData/indentationOnNewline/AfterExtensionPropertyGetter.after.kt");
-            }
+                @TestMetadata("LargeFile.after.kt")
+                public void testLargeFile() throws Exception {
+                    runTest("testData/indentationOnNewline/LargeFile.after.kt");
+                }
 
-            @TestMetadata("AfterExtensionPropertySetter.after.kt")
-            public void testAfterExtensionPropertySetter() throws Exception {
-                runTest("testData/indentationOnNewline/AfterExtensionPropertySetter.after.kt");
-            }
+                @TestMetadata("LiteralExpression.after.kt")
+                public void testLiteralExpression() throws Exception {
+                    runTest("testData/indentationOnNewline/LiteralExpression.after.kt");
+                }
 
-            @TestMetadata("AfterFinally.after.kt")
-            public void testAfterFinally() throws Exception {
-                runTest("testData/indentationOnNewline/AfterFinally.after.kt");
-            }
+                @TestMetadata("LiteralExpression2.after.kt")
+                public void testLiteralExpression2() throws Exception {
+                    runTest("testData/indentationOnNewline/LiteralExpression2.after.kt");
+                }
 
-            @TestMetadata("AfterImport.after.kt")
-            public void testAfterImport() throws Exception {
-                runTest("testData/indentationOnNewline/AfterImport.after.kt");
-            }
+                @TestMetadata("LiteralExpression3.after.kt")
+                public void testLiteralExpression3() throws Exception {
+                    runTest("testData/indentationOnNewline/LiteralExpression3.after.kt");
+                }
 
-            @TestMetadata("AfterPropertyGetter.after.kt")
-            public void testAfterPropertyGetter() throws Exception {
-                runTest("testData/indentationOnNewline/AfterPropertyGetter.after.kt");
-            }
+                @TestMetadata("ModifierListInUnfinishedDeclaration.after.kt")
+                public void testModifierListInUnfinishedDeclaration() throws Exception {
+                    runTest("testData/indentationOnNewline/ModifierListInUnfinishedDeclaration.after.kt");
+                }
 
-            @TestMetadata("AfterPropertySetter.after.kt")
-            public void testAfterPropertySetter() throws Exception {
-                runTest("testData/indentationOnNewline/AfterPropertySetter.after.kt");
-            }
+                @TestMetadata("NotFirstParameter.after.kt")
+                public void testNotFirstParameter() throws Exception {
+                    runTest("testData/indentationOnNewline/NotFirstParameter.after.kt");
+                }
 
-            @TestMetadata("AfterTry.after.kt")
-            public void testAfterTry() throws Exception {
-                runTest("testData/indentationOnNewline/AfterTry.after.kt");
-            }
+                @TestMetadata("ReturnContinue.after.kt")
+                public void testReturnContinue() throws Exception {
+                    runTest("testData/indentationOnNewline/ReturnContinue.after.kt");
+                }
 
-            @TestMetadata("Annotation.after.kt")
-            public void testAnnotation() throws Exception {
-                runTest("testData/indentationOnNewline/Annotation.after.kt");
-            }
+                @TestMetadata("Semicolon.after.kt")
+                public void testSemicolon() throws Exception {
+                    runTest("testData/indentationOnNewline/Semicolon.after.kt");
+                }
 
-            @TestMetadata("AnnotationInDeclaration.after.kt")
-            public void testAnnotationInDeclaration() throws Exception {
-                runTest("testData/indentationOnNewline/AnnotationInDeclaration.after.kt");
-            }
+                @TestMetadata("Semicolon2.after.kt")
+                public void testSemicolon2() throws Exception {
+                    runTest("testData/indentationOnNewline/Semicolon2.after.kt");
+                }
 
-            @TestMetadata("ArgumentListNormalIndent.after.kt")
-            public void testArgumentListNormalIndent() throws Exception {
-                runTest("testData/indentationOnNewline/ArgumentListNormalIndent.after.kt");
-            }
-
-            @TestMetadata("BlockCommentAfterCatch.after.kt")
-            public void testBlockCommentAfterCatch() throws Exception {
-                runTest("testData/indentationOnNewline/BlockCommentAfterCatch.after.kt");
-            }
-
-            @TestMetadata("ConsecutiveCallsAfterDot.after.kt")
-            public void testConsecutiveCallsAfterDot() throws Exception {
-                runTest("testData/indentationOnNewline/ConsecutiveCallsAfterDot.after.kt");
-            }
-
-            @TestMetadata("ConsecutiveCallsInSaeCallsMiddle.after.kt")
-            public void testConsecutiveCallsInSaeCallsMiddle() throws Exception {
-                runTest("testData/indentationOnNewline/ConsecutiveCallsInSaeCallsMiddle.after.kt");
-            }
-
-            @TestMetadata("ConsecutiveCallsInSafeCallsEnd.after.kt")
-            public void testConsecutiveCallsInSafeCallsEnd() throws Exception {
-                runTest("testData/indentationOnNewline/ConsecutiveCallsInSafeCallsEnd.after.kt");
-            }
-
-            @TestMetadata("EoLCommentAfterCatch.after.kt")
-            public void testEoLCommentAfterCatch() throws Exception {
-                runTest("testData/indentationOnNewline/EoLCommentAfterCatch.after.kt");
-            }
-
-            @TestMetadata("EoLCommentAfterFor.after.kt")
-            public void testEoLCommentAfterFor() throws Exception {
-                runTest("testData/indentationOnNewline/EoLCommentAfterFor.after.kt");
-            }
-
-            @TestMetadata("EoLCommentAfterIf.after.kt")
-            public void testEoLCommentAfterIf() throws Exception {
-                runTest("testData/indentationOnNewline/EoLCommentAfterIf.after.kt");
-            }
-
-            @TestMetadata("FunctionBlock.after.kt")
-            public void testFunctionBlock() throws Exception {
-                runTest("testData/indentationOnNewline/FunctionBlock.after.kt");
-            }
-
-            @TestMetadata("HigherOrderFunction.after.kt")
-            public void testHigherOrderFunction() throws Exception {
-                runTest("testData/indentationOnNewline/HigherOrderFunction.after.kt");
-            }
-
-            @TestMetadata("HigherOrderFunction2.after.kt")
-            public void testHigherOrderFunction2() throws Exception {
-                runTest("testData/indentationOnNewline/HigherOrderFunction2.after.kt");
-            }
-
-            @TestMetadata("HigherOrderFunction3.after.kt")
-            public void testHigherOrderFunction3() throws Exception {
-                runTest("testData/indentationOnNewline/HigherOrderFunction3.after.kt");
-            }
-
-            @TestMetadata("InDelegationListAfterColon.after.kt")
-            public void testInDelegationListAfterColon() throws Exception {
-                runTest("testData/indentationOnNewline/InDelegationListAfterColon.after.kt");
-            }
-
-            @TestMetadata("InDelegationListAfterComma.after.kt")
-            public void testInDelegationListAfterComma() throws Exception {
-                runTest("testData/indentationOnNewline/InDelegationListAfterComma.after.kt");
-            }
-
-            @TestMetadata("InDelegationListNotEmpty.after.kt")
-            public void testInDelegationListNotEmpty() throws Exception {
-                runTest("testData/indentationOnNewline/InDelegationListNotEmpty.after.kt");
-            }
-
-            @TestMetadata("InEnumAfterSemicolon.after.kt")
-            public void testInEnumAfterSemicolon() throws Exception {
-                runTest("testData/indentationOnNewline/InEnumAfterSemicolon.after.kt");
-            }
-
-            @TestMetadata("InEnumInitializerListAfterComma.after.kt")
-            public void testInEnumInitializerListAfterComma() throws Exception {
-                runTest("testData/indentationOnNewline/InEnumInitializerListAfterComma.after.kt");
-            }
-
-            @TestMetadata("InEnumInitializerListNotEmpty.after.kt")
-            public void testInEnumInitializerListNotEmpty() throws Exception {
-                runTest("testData/indentationOnNewline/InEnumInitializerListNotEmpty.after.kt");
-            }
-
-            @TestMetadata("InLabmdaAfterArrow.after.kt")
-            public void testInLabmdaAfterArrow() throws Exception {
-                runTest("testData/indentationOnNewline/InLabmdaAfterArrow.after.kt");
-            }
-
-            @TestMetadata("InLambdaAfterArrowWithSpaces.after.kt")
-            public void testInLambdaAfterArrowWithSpaces() throws Exception {
-                runTest("testData/indentationOnNewline/InLambdaAfterArrowWithSpaces.after.kt");
-            }
-
-            @TestMetadata("InLambdaBeforeParams.after.kt")
-            public void testInLambdaBeforeParams() throws Exception {
-                runTest("testData/indentationOnNewline/InLambdaBeforeParams.after.kt");
-            }
-
-            @TestMetadata("InLambdaInsideChainCallSameLine.after.kt")
-            public void testInLambdaInsideChainCallSameLine() throws Exception {
-                runTest("testData/indentationOnNewline/InLambdaInsideChainCallSameLine.after.kt");
-            }
-
-            @TestMetadata("InLambdaInsideChainCallSameLineWithSpaces.after.kt")
-            public void testInLambdaInsideChainCallSameLineWithSpaces() throws Exception {
-                runTest("testData/indentationOnNewline/InLambdaInsideChainCallSameLineWithSpaces.after.kt");
-            }
-
-            @TestMetadata("InLambdaInsideChainCallWithNewLine.after.kt")
-            public void testInLambdaInsideChainCallWithNewLine() throws Exception {
-                runTest("testData/indentationOnNewline/InLambdaInsideChainCallWithNewLine.after.kt");
-            }
-
-            @TestMetadata("InLambdaInsideChainCallWithNewLineWithSpaces.after.kt")
-            public void testInLambdaInsideChainCallWithNewLineWithSpaces() throws Exception {
-                runTest("testData/indentationOnNewline/InLambdaInsideChainCallWithNewLineWithSpaces.after.kt");
-            }
-
-            @TestMetadata("InMultilineLambdaAfterArrow.after.kt")
-            public void testInMultilineLambdaAfterArrow() throws Exception {
-                runTest("testData/indentationOnNewline/InMultilineLambdaAfterArrow.after.kt");
-            }
-
-            @TestMetadata("KT20783.after.kt")
-            public void testKT20783() throws Exception {
-                runTest("testData/indentationOnNewline/KT20783.after.kt");
-            }
-
-            @TestMetadata("LambdaInArguments.after.kt")
-            public void testLambdaInArguments() throws Exception {
-                runTest("testData/indentationOnNewline/LambdaInArguments.after.kt");
-            }
-
-            @TestMetadata("LambdaInArguments2.after.kt")
-            public void testLambdaInArguments2() throws Exception {
-                runTest("testData/indentationOnNewline/LambdaInArguments2.after.kt");
-            }
-
-            @TestMetadata("LargeFile.after.kt")
-            public void testLargeFile() throws Exception {
-                runTest("testData/indentationOnNewline/LargeFile.after.kt");
-            }
-
-            @TestMetadata("LiteralExpression.after.kt")
-            public void testLiteralExpression() throws Exception {
-                runTest("testData/indentationOnNewline/LiteralExpression.after.kt");
-            }
-
-            @TestMetadata("LiteralExpression2.after.kt")
-            public void testLiteralExpression2() throws Exception {
-                runTest("testData/indentationOnNewline/LiteralExpression2.after.kt");
-            }
-
-            @TestMetadata("LiteralExpression3.after.kt")
-            public void testLiteralExpression3() throws Exception {
-                runTest("testData/indentationOnNewline/LiteralExpression3.after.kt");
-            }
-
-            @TestMetadata("ModifierListInUnfinishedDeclaration.after.kt")
-            public void testModifierListInUnfinishedDeclaration() throws Exception {
-                runTest("testData/indentationOnNewline/ModifierListInUnfinishedDeclaration.after.kt");
-            }
-
-            @TestMetadata("NotFirstParameter.after.kt")
-            public void testNotFirstParameter() throws Exception {
-                runTest("testData/indentationOnNewline/NotFirstParameter.after.kt");
-            }
-
-            @TestMetadata("ReturnContinue.after.kt")
-            public void testReturnContinue() throws Exception {
-                runTest("testData/indentationOnNewline/ReturnContinue.after.kt");
-            }
-
-            @TestMetadata("Semicolon.after.kt")
-            public void testSemicolon() throws Exception {
-                runTest("testData/indentationOnNewline/Semicolon.after.kt");
-            }
-
-            @TestMetadata("Semicolon2.after.kt")
-            public void testSemicolon2() throws Exception {
-                runTest("testData/indentationOnNewline/Semicolon2.after.kt");
-            }
-
-            @TestMetadata("SettingAlignMultilineParametersInCalls.after.kt")
-            public void testSettingAlignMultilineParametersInCalls() throws Exception {
-                runTest("testData/indentationOnNewline/SettingAlignMultilineParametersInCalls.after.kt");
+                @TestMetadata("SettingAlignMultilineParametersInCalls.after.kt")
+                public void testSettingAlignMultilineParametersInCalls() throws Exception {
+                    runTest("testData/indentationOnNewline/SettingAlignMultilineParametersInCalls.after.kt");
+                }
             }
         }
     }

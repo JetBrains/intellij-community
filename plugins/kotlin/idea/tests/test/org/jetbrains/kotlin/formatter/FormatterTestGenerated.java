@@ -494,879 +494,947 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter")
-        public static class Uncategorized extends AbstractFormatterTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("AfterSemiColonInEnumClass.after.kt")
-            public void testAfterSemiColonInEnumClass() throws Exception {
-                runTest("testData/formatter/AfterSemiColonInEnumClass.after.kt");
-            }
-
-            @TestMetadata("AnnotationBeforeExpression.after.kt")
-            public void testAnnotationBeforeExpression() throws Exception {
-                runTest("testData/formatter/AnnotationBeforeExpression.after.kt");
-            }
-
-            @TestMetadata("AnnotationBeforeTypeAliasOrConstructor.after.kt")
-            public void testAnnotationBeforeTypeAliasOrConstructor() throws Exception {
-                runTest("testData/formatter/AnnotationBeforeTypeAliasOrConstructor.after.kt");
-            }
-
-            @TestMetadata("AnonymousInitializers.after.kt")
-            public void testAnonymousInitializers() throws Exception {
-                runTest("testData/formatter/AnonymousInitializers.after.kt");
-            }
-
-            @TestMetadata("AnonymousInitializersLineBreak.after.kt")
-            public void testAnonymousInitializersLineBreak() throws Exception {
-                runTest("testData/formatter/AnonymousInitializersLineBreak.after.kt");
-            }
-
-            @TestMetadata("ArrayAccess.after.kt")
-            public void testArrayAccess() throws Exception {
-                runTest("testData/formatter/ArrayAccess.after.kt");
-            }
-
-            @TestMetadata("ArrayLiteral.after.kt")
-            public void testArrayLiteral() throws Exception {
-                runTest("testData/formatter/ArrayLiteral.after.kt");
-            }
-
-            @TestMetadata("AssignmentWrap.after.kt")
-            public void testAssignmentWrap() throws Exception {
-                runTest("testData/formatter/AssignmentWrap.after.kt");
-            }
-
-            @TestMetadata("BinaryExpressionAlignmentSpread.after.kt")
-            public void testBinaryExpressionAlignmentSpread() throws Exception {
-                runTest("testData/formatter/BinaryExpressionAlignmentSpread.after.kt");
-            }
-
-            @TestMetadata("BinaryExpressions.after.kt")
-            public void testBinaryExpressions() throws Exception {
-                runTest("testData/formatter/BinaryExpressions.after.kt");
-            }
-
-            @TestMetadata("BinaryExpressionsBoolean.after.kt")
-            public void testBinaryExpressionsBoolean() throws Exception {
-                runTest("testData/formatter/BinaryExpressionsBoolean.after.kt");
-            }
-
-            @TestMetadata("BinaryExpressionsWithoutAlignment.after.kt")
-            public void testBinaryExpressionsWithoutAlignment() throws Exception {
-                runTest("testData/formatter/BinaryExpressionsWithoutAlignment.after.kt");
-            }
-
-            @TestMetadata("BlankLinesAfterClassHeader.after.kt")
-            public void testBlankLinesAfterClassHeader() throws Exception {
-                runTest("testData/formatter/BlankLinesAfterClassHeader.after.kt");
-            }
-
-            @TestMetadata("BlankLinesAfterClassHeader2.after.kt")
-            public void testBlankLinesAfterClassHeader2() throws Exception {
-                runTest("testData/formatter/BlankLinesAfterClassHeader2.after.kt");
-            }
-
-            @TestMetadata("BlankLinesBeforeRBrace.after.kt")
-            public void testBlankLinesBeforeRBrace() throws Exception {
-                runTest("testData/formatter/BlankLinesBeforeRBrace.after.kt");
-            }
-
-            @TestMetadata("BlankLinesBeforeRBrace2.after.kt")
-            public void testBlankLinesBeforeRBrace2() throws Exception {
-                runTest("testData/formatter/BlankLinesBeforeRBrace2.after.kt");
-            }
-
-            @TestMetadata("BlockFor.after.kt")
-            public void testBlockFor() throws Exception {
-                runTest("testData/formatter/BlockFor.after.kt");
-            }
-
-            @TestMetadata("By.after.kt")
-            public void testBy() throws Exception {
-                runTest("testData/formatter/By.after.kt");
-            }
-
-            @TestMetadata("CallLParenthOnNextLine.after.kt")
-            public void testCallLParenthOnNextLine() throws Exception {
-                runTest("testData/formatter/CallLParenthOnNextLine.after.kt");
-            }
-
-            @TestMetadata("CallRParenthOnNextLine.after.kt")
-            public void testCallRParenthOnNextLine() throws Exception {
-                runTest("testData/formatter/CallRParenthOnNextLine.after.kt");
-            }
-
-            @TestMetadata("Cast.after.kt")
-            public void testCast() throws Exception {
-                runTest("testData/formatter/Cast.after.kt");
-            }
-
-            @TestMetadata("CatchFinallyOnNewLine.after.kt")
-            public void testCatchFinallyOnNewLine() throws Exception {
-                runTest("testData/formatter/CatchFinallyOnNewLine.after.kt");
-            }
-
-            @TestMetadata("Class.after.kt")
-            public void testClass() throws Exception {
-                runTest("testData/formatter/Class.after.kt");
-            }
-
-            @TestMetadata("ClassAnnotationWrapping.after.kt")
-            public void testClassAnnotationWrapping() throws Exception {
-                runTest("testData/formatter/ClassAnnotationWrapping.after.kt");
-            }
-
-            @TestMetadata("ClassInBody.after.kt")
-            public void testClassInBody() throws Exception {
-                runTest("testData/formatter/ClassInBody.after.kt");
-            }
-
-            @TestMetadata("ClassLineBreak.after.kt")
-            public void testClassLineBreak() throws Exception {
-                runTest("testData/formatter/ClassLineBreak.after.kt");
-            }
-
-            @TestMetadata("ClassTypeParam.after.kt")
-            public void testClassTypeParam() throws Exception {
-                runTest("testData/formatter/ClassTypeParam.after.kt");
-            }
-
-            @TestMetadata("ColonSpaces.after.kt")
-            public void testColonSpaces() throws Exception {
-                runTest("testData/formatter/ColonSpaces.after.kt");
-            }
-
-            @TestMetadata("CommentAfterPackage.after.kt")
-            public void testCommentAfterPackage() throws Exception {
-                runTest("testData/formatter/CommentAfterPackage.after.kt");
-            }
-
-            @TestMetadata("CommentInExpressionBodies.after.kt")
-            public void testCommentInExpressionBodies() throws Exception {
-                runTest("testData/formatter/CommentInExpressionBodies.after.kt");
-            }
-
-            @TestMetadata("CommentInFunctionLiteral.after.kt")
-            public void testCommentInFunctionLiteral() throws Exception {
-                runTest("testData/formatter/CommentInFunctionLiteral.after.kt");
-            }
-
-            @TestMetadata("ContinuationIndentInAssigments.after.kt")
-            public void testContinuationIndentInAssigments() throws Exception {
-                runTest("testData/formatter/ContinuationIndentInAssigments.after.kt");
-            }
-
-            @TestMetadata("ContinuationIndentInParameterLists.after.kt")
-            public void testContinuationIndentInParameterLists() throws Exception {
-                runTest("testData/formatter/ContinuationIndentInParameterLists.after.kt");
-            }
-
-            @TestMetadata("ContinuationIndentInSupertypeLists.after.kt")
-            public void testContinuationIndentInSupertypeLists() throws Exception {
-                runTest("testData/formatter/ContinuationIndentInSupertypeLists.after.kt");
-            }
-
-            @TestMetadata("CurlyBraceStringInterpolation.after.kt")
-            public void testCurlyBraceStringInterpolation() throws Exception {
-                runTest("testData/formatter/CurlyBraceStringInterpolation.after.kt");
-            }
-
-            @TestMetadata("DanglingComments.after.kt")
-            public void testDanglingComments() throws Exception {
-                runTest("testData/formatter/DanglingComments.after.kt");
-            }
-
-            @TestMetadata("DelegationList.after.kt")
-            public void testDelegationList() throws Exception {
-                runTest("testData/formatter/DelegationList.after.kt");
-            }
-
-            @TestMetadata("DoWhileLineBreak.after.kt")
-            public void testDoWhileLineBreak() throws Exception {
-                runTest("testData/formatter/DoWhileLineBreak.after.kt");
-            }
-
-            @TestMetadata("DoWhileSpacing.after.kt")
-            public void testDoWhileSpacing() throws Exception {
-                runTest("testData/formatter/DoWhileSpacing.after.kt");
-            }
-
-            @TestMetadata("DocComments.after.kt")
-            public void testDocComments() throws Exception {
-                runTest("testData/formatter/DocComments.after.kt");
-            }
-
-            @TestMetadata("ElseOnNewLine.after.kt")
-            public void testElseOnNewLine() throws Exception {
-                runTest("testData/formatter/ElseOnNewLine.after.kt");
-            }
-
-            @TestMetadata("Elvis.after.kt")
-            public void testElvis() throws Exception {
-                runTest("testData/formatter/Elvis.after.kt");
-            }
-
-            @TestMetadata("ElvisContinuationIndentOptions.after.kt")
-            public void testElvisContinuationIndentOptions() throws Exception {
-                runTest("testData/formatter/ElvisContinuationIndentOptions.after.kt");
-            }
-
-            @TestMetadata("ElvisInStringTemplate.after.kt")
-            public void testElvisInStringTemplate() throws Exception {
-                runTest("testData/formatter/ElvisInStringTemplate.after.kt");
-            }
-
-            @TestMetadata("ElvisIndent.after.kt")
-            public void testElvisIndent() throws Exception {
-                runTest("testData/formatter/ElvisIndent.after.kt");
-            }
-
-            @TestMetadata("ElvisWithOperationReference.after.kt")
-            public void testElvisWithOperationReference() throws Exception {
-                runTest("testData/formatter/ElvisWithOperationReference.after.kt");
-            }
-
-            @TestMetadata("ElvisWrap.after.kt")
-            public void testElvisWrap() throws Exception {
-                runTest("testData/formatter/ElvisWrap.after.kt");
-            }
-
-            @TestMetadata("EmptyLineAfterObjectDeclaration.after.kt")
-            public void testEmptyLineAfterObjectDeclaration() throws Exception {
-                runTest("testData/formatter/EmptyLineAfterObjectDeclaration.after.kt");
-            }
-
-            @TestMetadata("EmptyLineAfterPackage.after.kt")
-            public void testEmptyLineAfterPackage() throws Exception {
-                runTest("testData/formatter/EmptyLineAfterPackage.after.kt");
-            }
-
-            @TestMetadata("EmptyLineBetweeAbstractFunctions.after.kt")
-            public void testEmptyLineBetweeAbstractFunctions() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweeAbstractFunctions.after.kt");
-            }
-
-            @TestMetadata("EmptyLineBetweeMultilineDeclarationTwo.after.kt")
-            public void testEmptyLineBetweeMultilineDeclarationTwo() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweeMultilineDeclarationTwo.after.kt");
-            }
-
-            @TestMetadata("EmptyLineBetweeMultilineDeclarationZero.after.kt")
-            public void testEmptyLineBetweeMultilineDeclarationZero() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweeMultilineDeclarationZero.after.kt");
-            }
-
-            @TestMetadata("EmptyLineBetweeSecondaryConstructors.after.kt")
-            public void testEmptyLineBetweeSecondaryConstructors() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweeSecondaryConstructors.after.kt");
-            }
-
-            @TestMetadata("EmptyLineBetweenClassAndFunction.after.kt")
-            public void testEmptyLineBetweenClassAndFunction() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweenClassAndFunction.after.kt");
-            }
-
-            @TestMetadata("EmptyLineBetweenClasses.after.kt")
-            public void testEmptyLineBetweenClasses() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweenClasses.after.kt");
-            }
-
-            @TestMetadata("EmptyLineBetweenEnumEntries.after.kt")
-            public void testEmptyLineBetweenEnumEntries() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweenEnumEntries.after.kt");
-            }
-
-            @TestMetadata("EmptyLineBetweenFunAndProperty.after.kt")
-            public void testEmptyLineBetweenFunAndProperty() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweenFunAndProperty.after.kt");
-            }
-
-            @TestMetadata("EmptyLineBetweenFunctions.after.kt")
-            public void testEmptyLineBetweenFunctions() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweenFunctions.after.kt");
-            }
-
-            @TestMetadata("EmptyLineBetweenProperties.after.kt")
-            public void testEmptyLineBetweenProperties() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweenProperties.after.kt");
-            }
-
-            @TestMetadata("EnumArguments.after.kt")
-            public void testEnumArguments() throws Exception {
-                runTest("testData/formatter/EnumArguments.after.kt");
-            }
-
-            @TestMetadata("EnumEntiesWithComments.after.kt")
-            public void testEnumEntiesWithComments() throws Exception {
-                runTest("testData/formatter/EnumEntiesWithComments.after.kt");
-            }
-
-            @TestMetadata("EnumInitializerList.after.kt")
-            public void testEnumInitializerList() throws Exception {
-                runTest("testData/formatter/EnumInitializerList.after.kt");
-            }
-
-            @TestMetadata("EnumWrapping.after.kt")
-            public void testEnumWrapping() throws Exception {
-                runTest("testData/formatter/EnumWrapping.after.kt");
-            }
-
-            @TestMetadata("ExpressionBodyWrap.after.kt")
-            public void testExpressionBodyWrap() throws Exception {
-                runTest("testData/formatter/ExpressionBodyWrap.after.kt");
-            }
-
-            @TestMetadata("ExtendsListAlignEnum.after.kt")
-            public void testExtendsListAlignEnum() throws Exception {
-                runTest("testData/formatter/ExtendsListAlignEnum.after.kt");
-            }
-
-            @TestMetadata("ExtendsListWrap.after.kt")
-            public void testExtendsListWrap() throws Exception {
-                runTest("testData/formatter/ExtendsListWrap.after.kt");
-            }
-
-            @TestMetadata("ForLineBreak.after.kt")
-            public void testForLineBreak() throws Exception {
-                runTest("testData/formatter/ForLineBreak.after.kt");
-            }
-
-            @TestMetadata("ForNoBraces.after.kt")
-            public void testForNoBraces() throws Exception {
-                runTest("testData/formatter/ForNoBraces.after.kt");
-            }
-
-            @TestMetadata("ForSpacing.after.kt")
-            public void testForSpacing() throws Exception {
-                runTest("testData/formatter/ForSpacing.after.kt");
-            }
-
-            @TestMetadata("FormatFirstColumnComments.after.kt")
-            public void testFormatFirstColumnComments() throws Exception {
-                runTest("testData/formatter/FormatFirstColumnComments.after.kt");
-            }
-
-            @TestMetadata("FormatFirstColumnCommentsBeforeDeclaration.after.kt")
-            public void testFormatFirstColumnCommentsBeforeDeclaration() throws Exception {
-                runTest("testData/formatter/FormatFirstColumnCommentsBeforeDeclaration.after.kt");
-            }
-
-            @TestMetadata("FunctionCallParametersAlign.after.kt")
-            public void testFunctionCallParametersAlign() throws Exception {
-                runTest("testData/formatter/FunctionCallParametersAlign.after.kt");
-            }
-
-            @TestMetadata("FunctionDefParametersAlign.after.kt")
-            public void testFunctionDefParametersAlign() throws Exception {
-                runTest("testData/formatter/FunctionDefParametersAlign.after.kt");
-            }
-
-            @TestMetadata("FunctionExpression.after.kt")
-            public void testFunctionExpression() throws Exception {
-                runTest("testData/formatter/FunctionExpression.after.kt");
-            }
-
-            @TestMetadata("FunctionLineBreak.after.kt")
-            public void testFunctionLineBreak() throws Exception {
-                runTest("testData/formatter/FunctionLineBreak.after.kt");
-            }
-
-            @TestMetadata("FunctionReferenceOperator.after.kt")
-            public void testFunctionReferenceOperator() throws Exception {
-                runTest("testData/formatter/FunctionReferenceOperator.after.kt");
-            }
-
-            @TestMetadata("FunctionWithInference.after.kt")
-            public void testFunctionWithInference() throws Exception {
-                runTest("testData/formatter/FunctionWithInference.after.kt");
-            }
-
-            @TestMetadata("FunctionalType.after.kt")
-            public void testFunctionalType() throws Exception {
-                runTest("testData/formatter/FunctionalType.after.kt");
-            }
-
-            @TestMetadata("GetterAndSetter.after.kt")
-            public void testGetterAndSetter() throws Exception {
-                runTest("testData/formatter/GetterAndSetter.after.kt");
-            }
-
-            @TestMetadata("If.after.kt")
-            public void testIf() throws Exception {
-                runTest("testData/formatter/If.after.kt");
-            }
-
-            @TestMetadata("IfClosingParen.after.kt")
-            public void testIfClosingParen() throws Exception {
-                runTest("testData/formatter/IfClosingParen.after.kt");
-            }
-
-            @TestMetadata("IfConditionIndent.after.kt")
-            public void testIfConditionIndent() throws Exception {
-                runTest("testData/formatter/IfConditionIndent.after.kt");
-            }
-
-            @TestMetadata("IfElseRemoveLineBreak.after.kt")
-            public void testIfElseRemoveLineBreak() throws Exception {
-                runTest("testData/formatter/IfElseRemoveLineBreak.after.kt");
-            }
-
-            @TestMetadata("IfElseWithLineBreak.after.kt")
-            public void testIfElseWithLineBreak() throws Exception {
-                runTest("testData/formatter/IfElseWithLineBreak.after.kt");
-            }
-
-            @TestMetadata("IfElseWithTrickyComments.after.kt")
-            public void testIfElseWithTrickyComments() throws Exception {
-                runTest("testData/formatter/IfElseWithTrickyComments.after.kt");
-            }
-
-            @TestMetadata("IfRParen.after.kt")
-            public void testIfRParen() throws Exception {
-                runTest("testData/formatter/IfRParen.after.kt");
-            }
-
-            @TestMetadata("IfSpacing.after.kt")
-            public void testIfSpacing() throws Exception {
-                runTest("testData/formatter/IfSpacing.after.kt");
-            }
-
-            @TestMetadata("In.after.kt")
-            public void testIn() throws Exception {
-                runTest("testData/formatter/In.after.kt");
-            }
-
-            @TestMetadata("InfixCall.after.kt")
-            public void testInfixCall() throws Exception {
-                runTest("testData/formatter/InfixCall.after.kt");
-            }
-
-            @TestMetadata("Is.after.kt")
-            public void testIs() throws Exception {
-                runTest("testData/formatter/Is.after.kt");
-            }
-
-            @TestMetadata("KDoc.after.kt")
-            public void testKDoc() throws Exception {
-                runTest("testData/formatter/KDoc.after.kt");
-            }
-
-            @TestMetadata("KT22230.after.kt")
-            public void testKT22230() throws Exception {
-                runTest("testData/formatter/KT22230.after.kt");
-            }
-
-            @TestMetadata("KeepLineBreak.after.kt")
-            public void testKeepLineBreak() throws Exception {
-                runTest("testData/formatter/KeepLineBreak.after.kt");
-            }
-
-            @TestMetadata("LabeledExpression.after.kt")
-            public void testLabeledExpression() throws Exception {
-                runTest("testData/formatter/LabeledExpression.after.kt");
-            }
-
-            @TestMetadata("LambdaArrow.after.kt")
-            public void testLambdaArrow() throws Exception {
-                runTest("testData/formatter/LambdaArrow.after.kt");
-            }
-
-            @TestMetadata("LineBreakBeforeExtendsColon.after.kt")
-            public void testLineBreakBeforeExtendsColon() throws Exception {
-                runTest("testData/formatter/LineBreakBeforeExtendsColon.after.kt");
-            }
-
-            @TestMetadata("LineBreakBeforeExtendsColonWrap.after.kt")
-            public void testLineBreakBeforeExtendsColonWrap() throws Exception {
-                runTest("testData/formatter/LineBreakBeforeExtendsColonWrap.after.kt");
-            }
-
-            @TestMetadata("LocalVariableAnnotationWrap.after.kt")
-            public void testLocalVariableAnnotationWrap() throws Exception {
-                runTest("testData/formatter/LocalVariableAnnotationWrap.after.kt");
-            }
-
-            @TestMetadata("LoopParameterWithExplicitType.after.kt")
-            public void testLoopParameterWithExplicitType() throws Exception {
-                runTest("testData/formatter/LoopParameterWithExplicitType.after.kt");
-            }
-
-            @TestMetadata("MethodAnnotationWrapping.after.kt")
-            public void testMethodAnnotationWrapping() throws Exception {
-                runTest("testData/formatter/MethodAnnotationWrapping.after.kt");
-            }
-
-            @TestMetadata("MethodCall.after.kt")
-            public void testMethodCall() throws Exception {
-                runTest("testData/formatter/MethodCall.after.kt");
-            }
-
-            @TestMetadata("MethodLParenthOnNextLine.after.kt")
-            public void testMethodLParenthOnNextLine() throws Exception {
-                runTest("testData/formatter/MethodLParenthOnNextLine.after.kt");
-            }
-
-            @TestMetadata("MethodRParenthOnNextLine.after.kt")
-            public void testMethodRParenthOnNextLine() throws Exception {
-                runTest("testData/formatter/MethodRParenthOnNextLine.after.kt");
-            }
-
-            @TestMetadata("Multideclaration.after.kt")
-            public void testMultideclaration() throws Exception {
-                runTest("testData/formatter/Multideclaration.after.kt");
-            }
-
-            @TestMetadata("MultilineFunctionLiteral.after.kt")
-            public void testMultilineFunctionLiteral() throws Exception {
-                runTest("testData/formatter/MultilineFunctionLiteral.after.kt");
-            }
-
-            @TestMetadata("MultilineFunctionLiteralWithParams.after.kt")
-            public void testMultilineFunctionLiteralWithParams() throws Exception {
-                runTest("testData/formatter/MultilineFunctionLiteralWithParams.after.kt");
-            }
-
-            @TestMetadata("MultilineStringEntry.after.kt")
-            public void testMultilineStringEntry() throws Exception {
-                runTest("testData/formatter/MultilineStringEntry.after.kt");
-            }
-
-            @TestMetadata("MultilineStringEntry2.after.kt")
-            public void testMultilineStringEntry2() throws Exception {
-                runTest("testData/formatter/MultilineStringEntry2.after.kt");
-            }
-
-            @TestMetadata("MultilineStringEntry3.after.kt")
-            public void testMultilineStringEntry3() throws Exception {
-                runTest("testData/formatter/MultilineStringEntry3.after.kt");
-            }
-
-            @TestMetadata("MultilineStringEntry4.after.kt")
-            public void testMultilineStringEntry4() throws Exception {
-                runTest("testData/formatter/MultilineStringEntry4.after.kt");
-            }
-
-            @TestMetadata("MultilineStringEntry5.after.kt")
-            public void testMultilineStringEntry5() throws Exception {
-                runTest("testData/formatter/MultilineStringEntry5.after.kt");
-            }
-
-            @TestMetadata("MultilineStringEntry6.after.kt")
-            public void testMultilineStringEntry6() throws Exception {
-                runTest("testData/formatter/MultilineStringEntry6.after.kt");
-            }
-
-            @TestMetadata("NewLineForRBrace.after.kt")
-            public void testNewLineForRBrace() throws Exception {
-                runTest("testData/formatter/NewLineForRBrace.after.kt");
-            }
-
-            @TestMetadata("NotIn.after.kt")
-            public void testNotIn() throws Exception {
-                runTest("testData/formatter/NotIn.after.kt");
-            }
-
-            @TestMetadata("NotIs.after.kt")
-            public void testNotIs() throws Exception {
-                runTest("testData/formatter/NotIs.after.kt");
-            }
-
-            @TestMetadata("NullableType.after.kt")
-            public void testNullableType() throws Exception {
-                runTest("testData/formatter/NullableType.after.kt");
-            }
-
-            @TestMetadata("ObjectInBody.after.kt")
-            public void testObjectInBody() throws Exception {
-                runTest("testData/formatter/ObjectInBody.after.kt");
-            }
-
-            @TestMetadata("ParameterAnnotationWrap.after.kt")
-            public void testParameterAnnotationWrap() throws Exception {
-                runTest("testData/formatter/ParameterAnnotationWrap.after.kt");
-            }
-
-            @TestMetadata("ParameterDocComments.after.kt")
-            public void testParameterDocComments() throws Exception {
-                runTest("testData/formatter/ParameterDocComments.after.kt");
-            }
-
-            @TestMetadata("Parameters.after.kt")
-            public void testParameters() throws Exception {
-                runTest("testData/formatter/Parameters.after.kt");
-            }
-
-            @TestMetadata("PrimaryConstructor.after.kt")
-            public void testPrimaryConstructor() throws Exception {
-                runTest("testData/formatter/PrimaryConstructor.after.kt");
-            }
-
-            @TestMetadata("PropertyAccessorLineBreak.after.kt")
-            public void testPropertyAccessorLineBreak() throws Exception {
-                runTest("testData/formatter/PropertyAccessorLineBreak.after.kt");
-            }
-
-            @TestMetadata("PropertyAccessors.after.kt")
-            public void testPropertyAccessors() throws Exception {
-                runTest("testData/formatter/PropertyAccessors.after.kt");
-            }
-
-            @TestMetadata("PropertyAnnotationWrap.after.kt")
-            public void testPropertyAnnotationWrap() throws Exception {
-                runTest("testData/formatter/PropertyAnnotationWrap.after.kt");
-            }
-
-            @TestMetadata("PropertyInitializerLineBreak.after.kt")
-            public void testPropertyInitializerLineBreak() throws Exception {
-                runTest("testData/formatter/PropertyInitializerLineBreak.after.kt");
-            }
-
-            @TestMetadata("PropertyTypeParameterList.after.kt")
-            public void testPropertyTypeParameterList() throws Exception {
-                runTest("testData/formatter/PropertyTypeParameterList.after.kt");
-            }
-
-            @TestMetadata("PropertyWithInference.after.kt")
-            public void testPropertyWithInference() throws Exception {
-                runTest("testData/formatter/PropertyWithInference.after.kt");
-            }
-
-            @TestMetadata("ReferenceExpressionFunctionLiteral.after.kt")
-            public void testReferenceExpressionFunctionLiteral() throws Exception {
-                runTest("testData/formatter/ReferenceExpressionFunctionLiteral.after.kt");
-            }
-
-            @TestMetadata("RemoveSpacesAroundOperations.after.kt")
-            public void testRemoveSpacesAroundOperations() throws Exception {
-                runTest("testData/formatter/RemoveSpacesAroundOperations.after.kt");
-            }
-
-            @TestMetadata("ReturnExpression.after.kt")
-            public void testReturnExpression() throws Exception {
-                runTest("testData/formatter/ReturnExpression.after.kt");
-            }
-
-            @TestMetadata("RightBracketOnNewLine.after.kt")
-            public void testRightBracketOnNewLine() throws Exception {
-                runTest("testData/formatter/RightBracketOnNewLine.after.kt");
-            }
-
-            @TestMetadata("SafeCast.after.kt")
-            public void testSafeCast() throws Exception {
-                runTest("testData/formatter/SafeCast.after.kt");
-            }
-
-            @TestMetadata("SaveSpacesInDocComments.after.kt")
-            public void testSaveSpacesInDocComments() throws Exception {
-                runTest("testData/formatter/SaveSpacesInDocComments.after.kt");
-            }
-
-            @TestMetadata("Script.after.kts")
-            public void testScript() throws Exception {
-                runTest("testData/formatter/Script.after.kts");
-            }
-
-            @TestMetadata("SecondaryConstructors.after.kt")
-            public void testSecondaryConstructors() throws Exception {
-                runTest("testData/formatter/SecondaryConstructors.after.kt");
-            }
-
-            @TestMetadata("secondaryCtorLineBreak.after.kt")
-            public void testSecondaryCtorLineBreak() throws Exception {
-                runTest("testData/formatter/secondaryCtorLineBreak.after.kt");
-            }
-
-            @TestMetadata("Semicolon.after.kt")
-            public void testSemicolon() throws Exception {
-                runTest("testData/formatter/Semicolon.after.kt");
-            }
-
-            @TestMetadata("SingleLineFunctionLiteral.after.kt")
-            public void testSingleLineFunctionLiteral() throws Exception {
-                runTest("testData/formatter/SingleLineFunctionLiteral.after.kt");
-            }
-
-            @TestMetadata("SpaceAroundDotInUserReference.after.kt")
-            public void testSpaceAroundDotInUserReference() throws Exception {
-                runTest("testData/formatter/SpaceAroundDotInUserReference.after.kt");
-            }
-
-            @TestMetadata("SpaceAroundExtendColon.after.kt")
-            public void testSpaceAroundExtendColon() throws Exception {
-                runTest("testData/formatter/SpaceAroundExtendColon.after.kt");
-            }
-
-            @TestMetadata("SpaceAroundExtendColonInObjects.after.kt")
-            public void testSpaceAroundExtendColonInObjects() throws Exception {
-                runTest("testData/formatter/SpaceAroundExtendColonInObjects.after.kt");
-            }
-
-            @TestMetadata("SpaceAroundExtendColonInSecondaryCtr.after.kt")
-            public void testSpaceAroundExtendColonInSecondaryCtr() throws Exception {
-                runTest("testData/formatter/SpaceAroundExtendColonInSecondaryCtr.after.kt");
-            }
-
-            @TestMetadata("SpaceBeforeCatchParentheses.after.kt")
-            public void testSpaceBeforeCatchParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeCatchParentheses.after.kt");
-            }
-
-            @TestMetadata("SpaceBeforeForParentheses.after.kt")
-            public void testSpaceBeforeForParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeForParentheses.after.kt");
-            }
-
-            @TestMetadata("SpaceBeforeFunctionLiteral.after.kt")
-            public void testSpaceBeforeFunctionLiteral() throws Exception {
-                runTest("testData/formatter/SpaceBeforeFunctionLiteral.after.kt");
-            }
-
-            @TestMetadata("SpaceBeforeIfParentheses.after.kt")
-            public void testSpaceBeforeIfParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeIfParentheses.after.kt");
-            }
-
-            @TestMetadata("SpaceBeforeIndices.after.kt")
-            public void testSpaceBeforeIndices() throws Exception {
-                runTest("testData/formatter/SpaceBeforeIndices.after.kt");
-            }
-
-            @TestMetadata("SpaceBeforeTypeArgumentList.after.kt")
-            public void testSpaceBeforeTypeArgumentList() throws Exception {
-                runTest("testData/formatter/SpaceBeforeTypeArgumentList.after.kt");
-            }
-
-            @TestMetadata("SpaceBeforeWhenParentheses.after.kt")
-            public void testSpaceBeforeWhenParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeWhenParentheses.after.kt");
-            }
-
-            @TestMetadata("SpaceBeforeWhileParentheses.after.kt")
-            public void testSpaceBeforeWhileParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeWhileParentheses.after.kt");
-            }
-
-            @TestMetadata("SpacedInsideParans.after.kt")
-            public void testSpacedInsideParans() throws Exception {
-                runTest("testData/formatter/SpacedInsideParans.after.kt");
-            }
-
-            @TestMetadata("SpacesAroundOperations.after.kt")
-            public void testSpacesAroundOperations() throws Exception {
-                runTest("testData/formatter/SpacesAroundOperations.after.kt");
-            }
-
-            @TestMetadata("SpacesAroundUnaryOperations.after.kt")
-            public void testSpacesAroundUnaryOperations() throws Exception {
-                runTest("testData/formatter/SpacesAroundUnaryOperations.after.kt");
-            }
-
-            @TestMetadata("SpacesInDeclarations.after.kt")
-            public void testSpacesInDeclarations() throws Exception {
-                runTest("testData/formatter/SpacesInDeclarations.after.kt");
-            }
-
-            @TestMetadata("SpacesInQualifiedExpressions.after.kt")
-            public void testSpacesInQualifiedExpressions() throws Exception {
-                runTest("testData/formatter/SpacesInQualifiedExpressions.after.kt");
-            }
-
-            @TestMetadata("SuperListIndent.after.kt")
-            public void testSuperListIndent() throws Exception {
-                runTest("testData/formatter/SuperListIndent.after.kt");
-            }
-
-            @TestMetadata("TryCatchLineBreak.after.kt")
-            public void testTryCatchLineBreak() throws Exception {
-                runTest("testData/formatter/TryCatchLineBreak.after.kt");
-            }
-
-            @TestMetadata("TypeAliasSpacing.after.kt")
-            public void testTypeAliasSpacing() throws Exception {
-                runTest("testData/formatter/TypeAliasSpacing.after.kt");
-            }
-
-            @TestMetadata("UnnecessarySpacesInParametersLists.after.kt")
-            public void testUnnecessarySpacesInParametersLists() throws Exception {
-                runTest("testData/formatter/UnnecessarySpacesInParametersLists.after.kt");
-            }
-
-            @TestMetadata("ValVarSpaces.after.kt")
-            public void testValVarSpaces() throws Exception {
-                runTest("testData/formatter/ValVarSpaces.after.kt");
-            }
-
-            @TestMetadata("When.after.kt")
-            public void testWhen() throws Exception {
-                runTest("testData/formatter/When.after.kt");
-            }
-
-            @TestMetadata("WhenArrow.after.kt")
-            public void testWhenArrow() throws Exception {
-                runTest("testData/formatter/WhenArrow.after.kt");
-            }
-
-            @TestMetadata("WhenBlockBlankLines.after.kt")
-            public void testWhenBlockBlankLines() throws Exception {
-                runTest("testData/formatter/WhenBlockBlankLines.after.kt");
-            }
-
-            @TestMetadata("WhenBraceAndEntry.after.kt")
-            public void testWhenBraceAndEntry() throws Exception {
-                runTest("testData/formatter/WhenBraceAndEntry.after.kt");
-            }
-
-            @TestMetadata("WhenComment.after.kt")
-            public void testWhenComment() throws Exception {
-                runTest("testData/formatter/WhenComment.after.kt");
-            }
-
-            @TestMetadata("WhenEntry.after.kt")
-            public void testWhenEntry() throws Exception {
-                runTest("testData/formatter/WhenEntry.after.kt");
-            }
-
-            @TestMetadata("WhenEntryExpr.after.kt")
-            public void testWhenEntryExpr() throws Exception {
-                runTest("testData/formatter/WhenEntryExpr.after.kt");
-            }
-
-            @TestMetadata("WhenLineBreak.after.kt")
-            public void testWhenLineBreak() throws Exception {
-                runTest("testData/formatter/WhenLineBreak.after.kt");
-            }
-
-            @TestMetadata("WhenLinesBeforeLbrace.after.kt")
-            public void testWhenLinesBeforeLbrace() throws Exception {
-                runTest("testData/formatter/WhenLinesBeforeLbrace.after.kt");
-            }
-
-            @TestMetadata("WhenWithVariable.after.kt")
-            public void testWhenWithVariable() throws Exception {
-                runTest("testData/formatter/WhenWithVariable.after.kt");
-            }
-
-            @TestMetadata("WhereClause.after.kt")
-            public void testWhereClause() throws Exception {
-                runTest("testData/formatter/WhereClause.after.kt");
-            }
-
-            @TestMetadata("WhileLineBreak.after.kt")
-            public void testWhileLineBreak() throws Exception {
-                runTest("testData/formatter/WhileLineBreak.after.kt");
-            }
-
-            @TestMetadata("WhileOnNewLine.after.kt")
-            public void testWhileOnNewLine() throws Exception {
-                runTest("testData/formatter/WhileOnNewLine.after.kt");
-            }
-
-            @TestMetadata("WhileSpacing.after.kt")
-            public void testWhileSpacing() throws Exception {
-                runTest("testData/formatter/WhileSpacing.after.kt");
+        public abstract static class Uncategorized extends AbstractFormatterTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/formatter")
+            public static class TestBucket1 extends AbstractFormatterTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("AfterSemiColonInEnumClass.after.kt")
+                public void testAfterSemiColonInEnumClass() throws Exception {
+                    runTest("testData/formatter/AfterSemiColonInEnumClass.after.kt");
+                }
+
+                @TestMetadata("AnnotationBeforeExpression.after.kt")
+                public void testAnnotationBeforeExpression() throws Exception {
+                    runTest("testData/formatter/AnnotationBeforeExpression.after.kt");
+                }
+
+                @TestMetadata("AnnotationBeforeTypeAliasOrConstructor.after.kt")
+                public void testAnnotationBeforeTypeAliasOrConstructor() throws Exception {
+                    runTest("testData/formatter/AnnotationBeforeTypeAliasOrConstructor.after.kt");
+                }
+
+                @TestMetadata("AnonymousInitializers.after.kt")
+                public void testAnonymousInitializers() throws Exception {
+                    runTest("testData/formatter/AnonymousInitializers.after.kt");
+                }
+
+                @TestMetadata("AnonymousInitializersLineBreak.after.kt")
+                public void testAnonymousInitializersLineBreak() throws Exception {
+                    runTest("testData/formatter/AnonymousInitializersLineBreak.after.kt");
+                }
+
+                @TestMetadata("ArrayAccess.after.kt")
+                public void testArrayAccess() throws Exception {
+                    runTest("testData/formatter/ArrayAccess.after.kt");
+                }
+
+                @TestMetadata("ArrayLiteral.after.kt")
+                public void testArrayLiteral() throws Exception {
+                    runTest("testData/formatter/ArrayLiteral.after.kt");
+                }
+
+                @TestMetadata("AssignmentWrap.after.kt")
+                public void testAssignmentWrap() throws Exception {
+                    runTest("testData/formatter/AssignmentWrap.after.kt");
+                }
+
+                @TestMetadata("BinaryExpressionAlignmentSpread.after.kt")
+                public void testBinaryExpressionAlignmentSpread() throws Exception {
+                    runTest("testData/formatter/BinaryExpressionAlignmentSpread.after.kt");
+                }
+
+                @TestMetadata("BinaryExpressions.after.kt")
+                public void testBinaryExpressions() throws Exception {
+                    runTest("testData/formatter/BinaryExpressions.after.kt");
+                }
+
+                @TestMetadata("BinaryExpressionsBoolean.after.kt")
+                public void testBinaryExpressionsBoolean() throws Exception {
+                    runTest("testData/formatter/BinaryExpressionsBoolean.after.kt");
+                }
+
+                @TestMetadata("BinaryExpressionsWithoutAlignment.after.kt")
+                public void testBinaryExpressionsWithoutAlignment() throws Exception {
+                    runTest("testData/formatter/BinaryExpressionsWithoutAlignment.after.kt");
+                }
+
+                @TestMetadata("BlankLinesAfterClassHeader.after.kt")
+                public void testBlankLinesAfterClassHeader() throws Exception {
+                    runTest("testData/formatter/BlankLinesAfterClassHeader.after.kt");
+                }
+
+                @TestMetadata("BlankLinesAfterClassHeader2.after.kt")
+                public void testBlankLinesAfterClassHeader2() throws Exception {
+                    runTest("testData/formatter/BlankLinesAfterClassHeader2.after.kt");
+                }
+
+                @TestMetadata("BlankLinesBeforeRBrace.after.kt")
+                public void testBlankLinesBeforeRBrace() throws Exception {
+                    runTest("testData/formatter/BlankLinesBeforeRBrace.after.kt");
+                }
+
+                @TestMetadata("BlankLinesBeforeRBrace2.after.kt")
+                public void testBlankLinesBeforeRBrace2() throws Exception {
+                    runTest("testData/formatter/BlankLinesBeforeRBrace2.after.kt");
+                }
+
+                @TestMetadata("BlockFor.after.kt")
+                public void testBlockFor() throws Exception {
+                    runTest("testData/formatter/BlockFor.after.kt");
+                }
+
+                @TestMetadata("By.after.kt")
+                public void testBy() throws Exception {
+                    runTest("testData/formatter/By.after.kt");
+                }
+
+                @TestMetadata("CallLParenthOnNextLine.after.kt")
+                public void testCallLParenthOnNextLine() throws Exception {
+                    runTest("testData/formatter/CallLParenthOnNextLine.after.kt");
+                }
+
+                @TestMetadata("CallRParenthOnNextLine.after.kt")
+                public void testCallRParenthOnNextLine() throws Exception {
+                    runTest("testData/formatter/CallRParenthOnNextLine.after.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/formatter")
+            public static class TestBucket2 extends AbstractFormatterTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("Cast.after.kt")
+                public void testCast() throws Exception {
+                    runTest("testData/formatter/Cast.after.kt");
+                }
+
+                @TestMetadata("CatchFinallyOnNewLine.after.kt")
+                public void testCatchFinallyOnNewLine() throws Exception {
+                    runTest("testData/formatter/CatchFinallyOnNewLine.after.kt");
+                }
+
+                @TestMetadata("Class.after.kt")
+                public void testClass() throws Exception {
+                    runTest("testData/formatter/Class.after.kt");
+                }
+
+                @TestMetadata("ClassAnnotationWrapping.after.kt")
+                public void testClassAnnotationWrapping() throws Exception {
+                    runTest("testData/formatter/ClassAnnotationWrapping.after.kt");
+                }
+
+                @TestMetadata("ClassInBody.after.kt")
+                public void testClassInBody() throws Exception {
+                    runTest("testData/formatter/ClassInBody.after.kt");
+                }
+
+                @TestMetadata("ClassLineBreak.after.kt")
+                public void testClassLineBreak() throws Exception {
+                    runTest("testData/formatter/ClassLineBreak.after.kt");
+                }
+
+                @TestMetadata("ClassTypeParam.after.kt")
+                public void testClassTypeParam() throws Exception {
+                    runTest("testData/formatter/ClassTypeParam.after.kt");
+                }
+
+                @TestMetadata("ColonSpaces.after.kt")
+                public void testColonSpaces() throws Exception {
+                    runTest("testData/formatter/ColonSpaces.after.kt");
+                }
+
+                @TestMetadata("CommentAfterPackage.after.kt")
+                public void testCommentAfterPackage() throws Exception {
+                    runTest("testData/formatter/CommentAfterPackage.after.kt");
+                }
+
+                @TestMetadata("CommentInExpressionBodies.after.kt")
+                public void testCommentInExpressionBodies() throws Exception {
+                    runTest("testData/formatter/CommentInExpressionBodies.after.kt");
+                }
+
+                @TestMetadata("CommentInFunctionLiteral.after.kt")
+                public void testCommentInFunctionLiteral() throws Exception {
+                    runTest("testData/formatter/CommentInFunctionLiteral.after.kt");
+                }
+
+                @TestMetadata("ContinuationIndentInAssigments.after.kt")
+                public void testContinuationIndentInAssigments() throws Exception {
+                    runTest("testData/formatter/ContinuationIndentInAssigments.after.kt");
+                }
+
+                @TestMetadata("ContinuationIndentInParameterLists.after.kt")
+                public void testContinuationIndentInParameterLists() throws Exception {
+                    runTest("testData/formatter/ContinuationIndentInParameterLists.after.kt");
+                }
+
+                @TestMetadata("ContinuationIndentInSupertypeLists.after.kt")
+                public void testContinuationIndentInSupertypeLists() throws Exception {
+                    runTest("testData/formatter/ContinuationIndentInSupertypeLists.after.kt");
+                }
+
+                @TestMetadata("CurlyBraceStringInterpolation.after.kt")
+                public void testCurlyBraceStringInterpolation() throws Exception {
+                    runTest("testData/formatter/CurlyBraceStringInterpolation.after.kt");
+                }
+
+                @TestMetadata("DanglingComments.after.kt")
+                public void testDanglingComments() throws Exception {
+                    runTest("testData/formatter/DanglingComments.after.kt");
+                }
+
+                @TestMetadata("DelegationList.after.kt")
+                public void testDelegationList() throws Exception {
+                    runTest("testData/formatter/DelegationList.after.kt");
+                }
+
+                @TestMetadata("DoWhileLineBreak.after.kt")
+                public void testDoWhileLineBreak() throws Exception {
+                    runTest("testData/formatter/DoWhileLineBreak.after.kt");
+                }
+
+                @TestMetadata("DoWhileSpacing.after.kt")
+                public void testDoWhileSpacing() throws Exception {
+                    runTest("testData/formatter/DoWhileSpacing.after.kt");
+                }
+
+                @TestMetadata("DocComments.after.kt")
+                public void testDocComments() throws Exception {
+                    runTest("testData/formatter/DocComments.after.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/formatter")
+            public static class TestBucket3 extends AbstractFormatterTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("ElseOnNewLine.after.kt")
+                public void testElseOnNewLine() throws Exception {
+                    runTest("testData/formatter/ElseOnNewLine.after.kt");
+                }
+
+                @TestMetadata("Elvis.after.kt")
+                public void testElvis() throws Exception {
+                    runTest("testData/formatter/Elvis.after.kt");
+                }
+
+                @TestMetadata("ElvisContinuationIndentOptions.after.kt")
+                public void testElvisContinuationIndentOptions() throws Exception {
+                    runTest("testData/formatter/ElvisContinuationIndentOptions.after.kt");
+                }
+
+                @TestMetadata("ElvisInStringTemplate.after.kt")
+                public void testElvisInStringTemplate() throws Exception {
+                    runTest("testData/formatter/ElvisInStringTemplate.after.kt");
+                }
+
+                @TestMetadata("ElvisIndent.after.kt")
+                public void testElvisIndent() throws Exception {
+                    runTest("testData/formatter/ElvisIndent.after.kt");
+                }
+
+                @TestMetadata("ElvisWithOperationReference.after.kt")
+                public void testElvisWithOperationReference() throws Exception {
+                    runTest("testData/formatter/ElvisWithOperationReference.after.kt");
+                }
+
+                @TestMetadata("ElvisWrap.after.kt")
+                public void testElvisWrap() throws Exception {
+                    runTest("testData/formatter/ElvisWrap.after.kt");
+                }
+
+                @TestMetadata("EmptyLineAfterObjectDeclaration.after.kt")
+                public void testEmptyLineAfterObjectDeclaration() throws Exception {
+                    runTest("testData/formatter/EmptyLineAfterObjectDeclaration.after.kt");
+                }
+
+                @TestMetadata("EmptyLineAfterPackage.after.kt")
+                public void testEmptyLineAfterPackage() throws Exception {
+                    runTest("testData/formatter/EmptyLineAfterPackage.after.kt");
+                }
+
+                @TestMetadata("EmptyLineBetweeAbstractFunctions.after.kt")
+                public void testEmptyLineBetweeAbstractFunctions() throws Exception {
+                    runTest("testData/formatter/EmptyLineBetweeAbstractFunctions.after.kt");
+                }
+
+                @TestMetadata("EmptyLineBetweeMultilineDeclarationTwo.after.kt")
+                public void testEmptyLineBetweeMultilineDeclarationTwo() throws Exception {
+                    runTest("testData/formatter/EmptyLineBetweeMultilineDeclarationTwo.after.kt");
+                }
+
+                @TestMetadata("EmptyLineBetweeMultilineDeclarationZero.after.kt")
+                public void testEmptyLineBetweeMultilineDeclarationZero() throws Exception {
+                    runTest("testData/formatter/EmptyLineBetweeMultilineDeclarationZero.after.kt");
+                }
+
+                @TestMetadata("EmptyLineBetweeSecondaryConstructors.after.kt")
+                public void testEmptyLineBetweeSecondaryConstructors() throws Exception {
+                    runTest("testData/formatter/EmptyLineBetweeSecondaryConstructors.after.kt");
+                }
+
+                @TestMetadata("EmptyLineBetweenClassAndFunction.after.kt")
+                public void testEmptyLineBetweenClassAndFunction() throws Exception {
+                    runTest("testData/formatter/EmptyLineBetweenClassAndFunction.after.kt");
+                }
+
+                @TestMetadata("EmptyLineBetweenClasses.after.kt")
+                public void testEmptyLineBetweenClasses() throws Exception {
+                    runTest("testData/formatter/EmptyLineBetweenClasses.after.kt");
+                }
+
+                @TestMetadata("EmptyLineBetweenEnumEntries.after.kt")
+                public void testEmptyLineBetweenEnumEntries() throws Exception {
+                    runTest("testData/formatter/EmptyLineBetweenEnumEntries.after.kt");
+                }
+
+                @TestMetadata("EmptyLineBetweenFunAndProperty.after.kt")
+                public void testEmptyLineBetweenFunAndProperty() throws Exception {
+                    runTest("testData/formatter/EmptyLineBetweenFunAndProperty.after.kt");
+                }
+
+                @TestMetadata("EmptyLineBetweenFunctions.after.kt")
+                public void testEmptyLineBetweenFunctions() throws Exception {
+                    runTest("testData/formatter/EmptyLineBetweenFunctions.after.kt");
+                }
+
+                @TestMetadata("EmptyLineBetweenProperties.after.kt")
+                public void testEmptyLineBetweenProperties() throws Exception {
+                    runTest("testData/formatter/EmptyLineBetweenProperties.after.kt");
+                }
+
+                @TestMetadata("EnumArguments.after.kt")
+                public void testEnumArguments() throws Exception {
+                    runTest("testData/formatter/EnumArguments.after.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/formatter")
+            public static class TestBucket4 extends AbstractFormatterTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("EnumEntiesWithComments.after.kt")
+                public void testEnumEntiesWithComments() throws Exception {
+                    runTest("testData/formatter/EnumEntiesWithComments.after.kt");
+                }
+
+                @TestMetadata("EnumInitializerList.after.kt")
+                public void testEnumInitializerList() throws Exception {
+                    runTest("testData/formatter/EnumInitializerList.after.kt");
+                }
+
+                @TestMetadata("EnumWrapping.after.kt")
+                public void testEnumWrapping() throws Exception {
+                    runTest("testData/formatter/EnumWrapping.after.kt");
+                }
+
+                @TestMetadata("ExpressionBodyWrap.after.kt")
+                public void testExpressionBodyWrap() throws Exception {
+                    runTest("testData/formatter/ExpressionBodyWrap.after.kt");
+                }
+
+                @TestMetadata("ExtendsListAlignEnum.after.kt")
+                public void testExtendsListAlignEnum() throws Exception {
+                    runTest("testData/formatter/ExtendsListAlignEnum.after.kt");
+                }
+
+                @TestMetadata("ExtendsListWrap.after.kt")
+                public void testExtendsListWrap() throws Exception {
+                    runTest("testData/formatter/ExtendsListWrap.after.kt");
+                }
+
+                @TestMetadata("ForLineBreak.after.kt")
+                public void testForLineBreak() throws Exception {
+                    runTest("testData/formatter/ForLineBreak.after.kt");
+                }
+
+                @TestMetadata("ForNoBraces.after.kt")
+                public void testForNoBraces() throws Exception {
+                    runTest("testData/formatter/ForNoBraces.after.kt");
+                }
+
+                @TestMetadata("ForSpacing.after.kt")
+                public void testForSpacing() throws Exception {
+                    runTest("testData/formatter/ForSpacing.after.kt");
+                }
+
+                @TestMetadata("FormatFirstColumnComments.after.kt")
+                public void testFormatFirstColumnComments() throws Exception {
+                    runTest("testData/formatter/FormatFirstColumnComments.after.kt");
+                }
+
+                @TestMetadata("FormatFirstColumnCommentsBeforeDeclaration.after.kt")
+                public void testFormatFirstColumnCommentsBeforeDeclaration() throws Exception {
+                    runTest("testData/formatter/FormatFirstColumnCommentsBeforeDeclaration.after.kt");
+                }
+
+                @TestMetadata("FunctionCallParametersAlign.after.kt")
+                public void testFunctionCallParametersAlign() throws Exception {
+                    runTest("testData/formatter/FunctionCallParametersAlign.after.kt");
+                }
+
+                @TestMetadata("FunctionDefParametersAlign.after.kt")
+                public void testFunctionDefParametersAlign() throws Exception {
+                    runTest("testData/formatter/FunctionDefParametersAlign.after.kt");
+                }
+
+                @TestMetadata("FunctionExpression.after.kt")
+                public void testFunctionExpression() throws Exception {
+                    runTest("testData/formatter/FunctionExpression.after.kt");
+                }
+
+                @TestMetadata("FunctionLineBreak.after.kt")
+                public void testFunctionLineBreak() throws Exception {
+                    runTest("testData/formatter/FunctionLineBreak.after.kt");
+                }
+
+                @TestMetadata("FunctionReferenceOperator.after.kt")
+                public void testFunctionReferenceOperator() throws Exception {
+                    runTest("testData/formatter/FunctionReferenceOperator.after.kt");
+                }
+
+                @TestMetadata("FunctionWithInference.after.kt")
+                public void testFunctionWithInference() throws Exception {
+                    runTest("testData/formatter/FunctionWithInference.after.kt");
+                }
+
+                @TestMetadata("FunctionalType.after.kt")
+                public void testFunctionalType() throws Exception {
+                    runTest("testData/formatter/FunctionalType.after.kt");
+                }
+
+                @TestMetadata("GetterAndSetter.after.kt")
+                public void testGetterAndSetter() throws Exception {
+                    runTest("testData/formatter/GetterAndSetter.after.kt");
+                }
+
+                @TestMetadata("If.after.kt")
+                public void testIf() throws Exception {
+                    runTest("testData/formatter/If.after.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/formatter")
+            public static class TestBucket5 extends AbstractFormatterTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("IfClosingParen.after.kt")
+                public void testIfClosingParen() throws Exception {
+                    runTest("testData/formatter/IfClosingParen.after.kt");
+                }
+
+                @TestMetadata("IfConditionIndent.after.kt")
+                public void testIfConditionIndent() throws Exception {
+                    runTest("testData/formatter/IfConditionIndent.after.kt");
+                }
+
+                @TestMetadata("IfElseRemoveLineBreak.after.kt")
+                public void testIfElseRemoveLineBreak() throws Exception {
+                    runTest("testData/formatter/IfElseRemoveLineBreak.after.kt");
+                }
+
+                @TestMetadata("IfElseWithLineBreak.after.kt")
+                public void testIfElseWithLineBreak() throws Exception {
+                    runTest("testData/formatter/IfElseWithLineBreak.after.kt");
+                }
+
+                @TestMetadata("IfElseWithTrickyComments.after.kt")
+                public void testIfElseWithTrickyComments() throws Exception {
+                    runTest("testData/formatter/IfElseWithTrickyComments.after.kt");
+                }
+
+                @TestMetadata("IfRParen.after.kt")
+                public void testIfRParen() throws Exception {
+                    runTest("testData/formatter/IfRParen.after.kt");
+                }
+
+                @TestMetadata("IfSpacing.after.kt")
+                public void testIfSpacing() throws Exception {
+                    runTest("testData/formatter/IfSpacing.after.kt");
+                }
+
+                @TestMetadata("In.after.kt")
+                public void testIn() throws Exception {
+                    runTest("testData/formatter/In.after.kt");
+                }
+
+                @TestMetadata("InfixCall.after.kt")
+                public void testInfixCall() throws Exception {
+                    runTest("testData/formatter/InfixCall.after.kt");
+                }
+
+                @TestMetadata("Is.after.kt")
+                public void testIs() throws Exception {
+                    runTest("testData/formatter/Is.after.kt");
+                }
+
+                @TestMetadata("KDoc.after.kt")
+                public void testKDoc() throws Exception {
+                    runTest("testData/formatter/KDoc.after.kt");
+                }
+
+                @TestMetadata("KT22230.after.kt")
+                public void testKT22230() throws Exception {
+                    runTest("testData/formatter/KT22230.after.kt");
+                }
+
+                @TestMetadata("KeepLineBreak.after.kt")
+                public void testKeepLineBreak() throws Exception {
+                    runTest("testData/formatter/KeepLineBreak.after.kt");
+                }
+
+                @TestMetadata("LabeledExpression.after.kt")
+                public void testLabeledExpression() throws Exception {
+                    runTest("testData/formatter/LabeledExpression.after.kt");
+                }
+
+                @TestMetadata("LambdaArrow.after.kt")
+                public void testLambdaArrow() throws Exception {
+                    runTest("testData/formatter/LambdaArrow.after.kt");
+                }
+
+                @TestMetadata("LineBreakBeforeExtendsColon.after.kt")
+                public void testLineBreakBeforeExtendsColon() throws Exception {
+                    runTest("testData/formatter/LineBreakBeforeExtendsColon.after.kt");
+                }
+
+                @TestMetadata("LineBreakBeforeExtendsColonWrap.after.kt")
+                public void testLineBreakBeforeExtendsColonWrap() throws Exception {
+                    runTest("testData/formatter/LineBreakBeforeExtendsColonWrap.after.kt");
+                }
+
+                @TestMetadata("LocalVariableAnnotationWrap.after.kt")
+                public void testLocalVariableAnnotationWrap() throws Exception {
+                    runTest("testData/formatter/LocalVariableAnnotationWrap.after.kt");
+                }
+
+                @TestMetadata("LoopParameterWithExplicitType.after.kt")
+                public void testLoopParameterWithExplicitType() throws Exception {
+                    runTest("testData/formatter/LoopParameterWithExplicitType.after.kt");
+                }
+
+                @TestMetadata("MethodAnnotationWrapping.after.kt")
+                public void testMethodAnnotationWrapping() throws Exception {
+                    runTest("testData/formatter/MethodAnnotationWrapping.after.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/formatter")
+            public static class TestBucket6 extends AbstractFormatterTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("MethodCall.after.kt")
+                public void testMethodCall() throws Exception {
+                    runTest("testData/formatter/MethodCall.after.kt");
+                }
+
+                @TestMetadata("MethodLParenthOnNextLine.after.kt")
+                public void testMethodLParenthOnNextLine() throws Exception {
+                    runTest("testData/formatter/MethodLParenthOnNextLine.after.kt");
+                }
+
+                @TestMetadata("MethodRParenthOnNextLine.after.kt")
+                public void testMethodRParenthOnNextLine() throws Exception {
+                    runTest("testData/formatter/MethodRParenthOnNextLine.after.kt");
+                }
+
+                @TestMetadata("Multideclaration.after.kt")
+                public void testMultideclaration() throws Exception {
+                    runTest("testData/formatter/Multideclaration.after.kt");
+                }
+
+                @TestMetadata("MultilineFunctionLiteral.after.kt")
+                public void testMultilineFunctionLiteral() throws Exception {
+                    runTest("testData/formatter/MultilineFunctionLiteral.after.kt");
+                }
+
+                @TestMetadata("MultilineFunctionLiteralWithParams.after.kt")
+                public void testMultilineFunctionLiteralWithParams() throws Exception {
+                    runTest("testData/formatter/MultilineFunctionLiteralWithParams.after.kt");
+                }
+
+                @TestMetadata("MultilineStringEntry.after.kt")
+                public void testMultilineStringEntry() throws Exception {
+                    runTest("testData/formatter/MultilineStringEntry.after.kt");
+                }
+
+                @TestMetadata("MultilineStringEntry2.after.kt")
+                public void testMultilineStringEntry2() throws Exception {
+                    runTest("testData/formatter/MultilineStringEntry2.after.kt");
+                }
+
+                @TestMetadata("MultilineStringEntry3.after.kt")
+                public void testMultilineStringEntry3() throws Exception {
+                    runTest("testData/formatter/MultilineStringEntry3.after.kt");
+                }
+
+                @TestMetadata("MultilineStringEntry4.after.kt")
+                public void testMultilineStringEntry4() throws Exception {
+                    runTest("testData/formatter/MultilineStringEntry4.after.kt");
+                }
+
+                @TestMetadata("MultilineStringEntry5.after.kt")
+                public void testMultilineStringEntry5() throws Exception {
+                    runTest("testData/formatter/MultilineStringEntry5.after.kt");
+                }
+
+                @TestMetadata("MultilineStringEntry6.after.kt")
+                public void testMultilineStringEntry6() throws Exception {
+                    runTest("testData/formatter/MultilineStringEntry6.after.kt");
+                }
+
+                @TestMetadata("NewLineForRBrace.after.kt")
+                public void testNewLineForRBrace() throws Exception {
+                    runTest("testData/formatter/NewLineForRBrace.after.kt");
+                }
+
+                @TestMetadata("NotIn.after.kt")
+                public void testNotIn() throws Exception {
+                    runTest("testData/formatter/NotIn.after.kt");
+                }
+
+                @TestMetadata("NotIs.after.kt")
+                public void testNotIs() throws Exception {
+                    runTest("testData/formatter/NotIs.after.kt");
+                }
+
+                @TestMetadata("NullableType.after.kt")
+                public void testNullableType() throws Exception {
+                    runTest("testData/formatter/NullableType.after.kt");
+                }
+
+                @TestMetadata("ObjectInBody.after.kt")
+                public void testObjectInBody() throws Exception {
+                    runTest("testData/formatter/ObjectInBody.after.kt");
+                }
+
+                @TestMetadata("ParameterAnnotationWrap.after.kt")
+                public void testParameterAnnotationWrap() throws Exception {
+                    runTest("testData/formatter/ParameterAnnotationWrap.after.kt");
+                }
+
+                @TestMetadata("ParameterDocComments.after.kt")
+                public void testParameterDocComments() throws Exception {
+                    runTest("testData/formatter/ParameterDocComments.after.kt");
+                }
+
+                @TestMetadata("Parameters.after.kt")
+                public void testParameters() throws Exception {
+                    runTest("testData/formatter/Parameters.after.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/formatter")
+            public static class TestBucket7 extends AbstractFormatterTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("PrimaryConstructor.after.kt")
+                public void testPrimaryConstructor() throws Exception {
+                    runTest("testData/formatter/PrimaryConstructor.after.kt");
+                }
+
+                @TestMetadata("PropertyAccessorLineBreak.after.kt")
+                public void testPropertyAccessorLineBreak() throws Exception {
+                    runTest("testData/formatter/PropertyAccessorLineBreak.after.kt");
+                }
+
+                @TestMetadata("PropertyAccessors.after.kt")
+                public void testPropertyAccessors() throws Exception {
+                    runTest("testData/formatter/PropertyAccessors.after.kt");
+                }
+
+                @TestMetadata("PropertyAnnotationWrap.after.kt")
+                public void testPropertyAnnotationWrap() throws Exception {
+                    runTest("testData/formatter/PropertyAnnotationWrap.after.kt");
+                }
+
+                @TestMetadata("PropertyInitializerLineBreak.after.kt")
+                public void testPropertyInitializerLineBreak() throws Exception {
+                    runTest("testData/formatter/PropertyInitializerLineBreak.after.kt");
+                }
+
+                @TestMetadata("PropertyTypeParameterList.after.kt")
+                public void testPropertyTypeParameterList() throws Exception {
+                    runTest("testData/formatter/PropertyTypeParameterList.after.kt");
+                }
+
+                @TestMetadata("PropertyWithInference.after.kt")
+                public void testPropertyWithInference() throws Exception {
+                    runTest("testData/formatter/PropertyWithInference.after.kt");
+                }
+
+                @TestMetadata("ReferenceExpressionFunctionLiteral.after.kt")
+                public void testReferenceExpressionFunctionLiteral() throws Exception {
+                    runTest("testData/formatter/ReferenceExpressionFunctionLiteral.after.kt");
+                }
+
+                @TestMetadata("RemoveSpacesAroundOperations.after.kt")
+                public void testRemoveSpacesAroundOperations() throws Exception {
+                    runTest("testData/formatter/RemoveSpacesAroundOperations.after.kt");
+                }
+
+                @TestMetadata("ReturnExpression.after.kt")
+                public void testReturnExpression() throws Exception {
+                    runTest("testData/formatter/ReturnExpression.after.kt");
+                }
+
+                @TestMetadata("RightBracketOnNewLine.after.kt")
+                public void testRightBracketOnNewLine() throws Exception {
+                    runTest("testData/formatter/RightBracketOnNewLine.after.kt");
+                }
+
+                @TestMetadata("SafeCast.after.kt")
+                public void testSafeCast() throws Exception {
+                    runTest("testData/formatter/SafeCast.after.kt");
+                }
+
+                @TestMetadata("SaveSpacesInDocComments.after.kt")
+                public void testSaveSpacesInDocComments() throws Exception {
+                    runTest("testData/formatter/SaveSpacesInDocComments.after.kt");
+                }
+
+                @TestMetadata("Script.after.kts")
+                public void testScript() throws Exception {
+                    runTest("testData/formatter/Script.after.kts");
+                }
+
+                @TestMetadata("SecondaryConstructors.after.kt")
+                public void testSecondaryConstructors() throws Exception {
+                    runTest("testData/formatter/SecondaryConstructors.after.kt");
+                }
+
+                @TestMetadata("secondaryCtorLineBreak.after.kt")
+                public void testSecondaryCtorLineBreak() throws Exception {
+                    runTest("testData/formatter/secondaryCtorLineBreak.after.kt");
+                }
+
+                @TestMetadata("Semicolon.after.kt")
+                public void testSemicolon() throws Exception {
+                    runTest("testData/formatter/Semicolon.after.kt");
+                }
+
+                @TestMetadata("SingleLineFunctionLiteral.after.kt")
+                public void testSingleLineFunctionLiteral() throws Exception {
+                    runTest("testData/formatter/SingleLineFunctionLiteral.after.kt");
+                }
+
+                @TestMetadata("SpaceAroundDotInUserReference.after.kt")
+                public void testSpaceAroundDotInUserReference() throws Exception {
+                    runTest("testData/formatter/SpaceAroundDotInUserReference.after.kt");
+                }
+
+                @TestMetadata("SpaceAroundExtendColon.after.kt")
+                public void testSpaceAroundExtendColon() throws Exception {
+                    runTest("testData/formatter/SpaceAroundExtendColon.after.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/formatter")
+            public static class TestBucket8 extends AbstractFormatterTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("SpaceAroundExtendColonInObjects.after.kt")
+                public void testSpaceAroundExtendColonInObjects() throws Exception {
+                    runTest("testData/formatter/SpaceAroundExtendColonInObjects.after.kt");
+                }
+
+                @TestMetadata("SpaceAroundExtendColonInSecondaryCtr.after.kt")
+                public void testSpaceAroundExtendColonInSecondaryCtr() throws Exception {
+                    runTest("testData/formatter/SpaceAroundExtendColonInSecondaryCtr.after.kt");
+                }
+
+                @TestMetadata("SpaceBeforeCatchParentheses.after.kt")
+                public void testSpaceBeforeCatchParentheses() throws Exception {
+                    runTest("testData/formatter/SpaceBeforeCatchParentheses.after.kt");
+                }
+
+                @TestMetadata("SpaceBeforeForParentheses.after.kt")
+                public void testSpaceBeforeForParentheses() throws Exception {
+                    runTest("testData/formatter/SpaceBeforeForParentheses.after.kt");
+                }
+
+                @TestMetadata("SpaceBeforeFunctionLiteral.after.kt")
+                public void testSpaceBeforeFunctionLiteral() throws Exception {
+                    runTest("testData/formatter/SpaceBeforeFunctionLiteral.after.kt");
+                }
+
+                @TestMetadata("SpaceBeforeIfParentheses.after.kt")
+                public void testSpaceBeforeIfParentheses() throws Exception {
+                    runTest("testData/formatter/SpaceBeforeIfParentheses.after.kt");
+                }
+
+                @TestMetadata("SpaceBeforeIndices.after.kt")
+                public void testSpaceBeforeIndices() throws Exception {
+                    runTest("testData/formatter/SpaceBeforeIndices.after.kt");
+                }
+
+                @TestMetadata("SpaceBeforeTypeArgumentList.after.kt")
+                public void testSpaceBeforeTypeArgumentList() throws Exception {
+                    runTest("testData/formatter/SpaceBeforeTypeArgumentList.after.kt");
+                }
+
+                @TestMetadata("SpaceBeforeWhenParentheses.after.kt")
+                public void testSpaceBeforeWhenParentheses() throws Exception {
+                    runTest("testData/formatter/SpaceBeforeWhenParentheses.after.kt");
+                }
+
+                @TestMetadata("SpaceBeforeWhileParentheses.after.kt")
+                public void testSpaceBeforeWhileParentheses() throws Exception {
+                    runTest("testData/formatter/SpaceBeforeWhileParentheses.after.kt");
+                }
+
+                @TestMetadata("SpacedInsideParans.after.kt")
+                public void testSpacedInsideParans() throws Exception {
+                    runTest("testData/formatter/SpacedInsideParans.after.kt");
+                }
+
+                @TestMetadata("SpacesAroundOperations.after.kt")
+                public void testSpacesAroundOperations() throws Exception {
+                    runTest("testData/formatter/SpacesAroundOperations.after.kt");
+                }
+
+                @TestMetadata("SpacesAroundUnaryOperations.after.kt")
+                public void testSpacesAroundUnaryOperations() throws Exception {
+                    runTest("testData/formatter/SpacesAroundUnaryOperations.after.kt");
+                }
+
+                @TestMetadata("SpacesInDeclarations.after.kt")
+                public void testSpacesInDeclarations() throws Exception {
+                    runTest("testData/formatter/SpacesInDeclarations.after.kt");
+                }
+
+                @TestMetadata("SpacesInQualifiedExpressions.after.kt")
+                public void testSpacesInQualifiedExpressions() throws Exception {
+                    runTest("testData/formatter/SpacesInQualifiedExpressions.after.kt");
+                }
+
+                @TestMetadata("SuperListIndent.after.kt")
+                public void testSuperListIndent() throws Exception {
+                    runTest("testData/formatter/SuperListIndent.after.kt");
+                }
+
+                @TestMetadata("TryCatchLineBreak.after.kt")
+                public void testTryCatchLineBreak() throws Exception {
+                    runTest("testData/formatter/TryCatchLineBreak.after.kt");
+                }
+
+                @TestMetadata("TypeAliasSpacing.after.kt")
+                public void testTypeAliasSpacing() throws Exception {
+                    runTest("testData/formatter/TypeAliasSpacing.after.kt");
+                }
+
+                @TestMetadata("UnnecessarySpacesInParametersLists.after.kt")
+                public void testUnnecessarySpacesInParametersLists() throws Exception {
+                    runTest("testData/formatter/UnnecessarySpacesInParametersLists.after.kt");
+                }
+
+                @TestMetadata("ValVarSpaces.after.kt")
+                public void testValVarSpaces() throws Exception {
+                    runTest("testData/formatter/ValVarSpaces.after.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/formatter")
+            public static class TestBucket9 extends AbstractFormatterTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("When.after.kt")
+                public void testWhen() throws Exception {
+                    runTest("testData/formatter/When.after.kt");
+                }
+
+                @TestMetadata("WhenArrow.after.kt")
+                public void testWhenArrow() throws Exception {
+                    runTest("testData/formatter/WhenArrow.after.kt");
+                }
+
+                @TestMetadata("WhenBlockBlankLines.after.kt")
+                public void testWhenBlockBlankLines() throws Exception {
+                    runTest("testData/formatter/WhenBlockBlankLines.after.kt");
+                }
+
+                @TestMetadata("WhenBraceAndEntry.after.kt")
+                public void testWhenBraceAndEntry() throws Exception {
+                    runTest("testData/formatter/WhenBraceAndEntry.after.kt");
+                }
+
+                @TestMetadata("WhenComment.after.kt")
+                public void testWhenComment() throws Exception {
+                    runTest("testData/formatter/WhenComment.after.kt");
+                }
+
+                @TestMetadata("WhenEntry.after.kt")
+                public void testWhenEntry() throws Exception {
+                    runTest("testData/formatter/WhenEntry.after.kt");
+                }
+
+                @TestMetadata("WhenEntryExpr.after.kt")
+                public void testWhenEntryExpr() throws Exception {
+                    runTest("testData/formatter/WhenEntryExpr.after.kt");
+                }
+
+                @TestMetadata("WhenLineBreak.after.kt")
+                public void testWhenLineBreak() throws Exception {
+                    runTest("testData/formatter/WhenLineBreak.after.kt");
+                }
+
+                @TestMetadata("WhenLinesBeforeLbrace.after.kt")
+                public void testWhenLinesBeforeLbrace() throws Exception {
+                    runTest("testData/formatter/WhenLinesBeforeLbrace.after.kt");
+                }
+
+                @TestMetadata("WhenWithVariable.after.kt")
+                public void testWhenWithVariable() throws Exception {
+                    runTest("testData/formatter/WhenWithVariable.after.kt");
+                }
+
+                @TestMetadata("WhereClause.after.kt")
+                public void testWhereClause() throws Exception {
+                    runTest("testData/formatter/WhereClause.after.kt");
+                }
+
+                @TestMetadata("WhileLineBreak.after.kt")
+                public void testWhileLineBreak() throws Exception {
+                    runTest("testData/formatter/WhileLineBreak.after.kt");
+                }
+
+                @TestMetadata("WhileOnNewLine.after.kt")
+                public void testWhileOnNewLine() throws Exception {
+                    runTest("testData/formatter/WhileOnNewLine.after.kt");
+                }
+
+                @TestMetadata("WhileSpacing.after.kt")
+                public void testWhileSpacing() throws Exception {
+                    runTest("testData/formatter/WhileSpacing.after.kt");
+                }
             }
         }
     }
@@ -1706,274 +1774,294 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/formatter")
-        public static class Uncategorized extends AbstractFormatterTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
+        public abstract static class Uncategorized extends AbstractFormatterTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/formatter")
+            public static class TestBucket1 extends AbstractFormatterTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
+                }
+
+                @TestMetadata("AnonymousInitializersLineBreak.after.inv.kt")
+                public void testAnonymousInitializersLineBreak() throws Exception {
+                    runTest("testData/formatter/AnonymousInitializersLineBreak.after.inv.kt");
+                }
+
+                @TestMetadata("BinaryExpressions.after.inv.kt")
+                public void testBinaryExpressions() throws Exception {
+                    runTest("testData/formatter/BinaryExpressions.after.inv.kt");
+                }
+
+                @TestMetadata("BinaryExpressionsBoolean.after.inv.kt")
+                public void testBinaryExpressionsBoolean() throws Exception {
+                    runTest("testData/formatter/BinaryExpressionsBoolean.after.inv.kt");
+                }
+
+                @TestMetadata("BinaryExpressionsWithoutAlignment.after.inv.kt")
+                public void testBinaryExpressionsWithoutAlignment() throws Exception {
+                    runTest("testData/formatter/BinaryExpressionsWithoutAlignment.after.inv.kt");
+                }
+
+                @TestMetadata("CallLParenthOnNextLine.after.inv.kt")
+                public void testCallLParenthOnNextLine() throws Exception {
+                    runTest("testData/formatter/CallLParenthOnNextLine.after.inv.kt");
+                }
+
+                @TestMetadata("CallRParenthOnNextLine.after.inv.kt")
+                public void testCallRParenthOnNextLine() throws Exception {
+                    runTest("testData/formatter/CallRParenthOnNextLine.after.inv.kt");
+                }
+
+                @TestMetadata("CatchFinallyOnNewLine.after.inv.kt")
+                public void testCatchFinallyOnNewLine() throws Exception {
+                    runTest("testData/formatter/CatchFinallyOnNewLine.after.inv.kt");
+                }
+
+                @TestMetadata("ClassLineBreak.after.inv.kt")
+                public void testClassLineBreak() throws Exception {
+                    runTest("testData/formatter/ClassLineBreak.after.inv.kt");
+                }
+
+                @TestMetadata("ColonSpaces.after.inv.kt")
+                public void testColonSpaces() throws Exception {
+                    runTest("testData/formatter/ColonSpaces.after.inv.kt");
+                }
+
+                @TestMetadata("ContinuationIndentForExpressionBodies.after.inv.kt")
+                public void testContinuationIndentForExpressionBodies() throws Exception {
+                    runTest("testData/formatter/ContinuationIndentForExpressionBodies.after.inv.kt");
+                }
+
+                @TestMetadata("ContinuationIndentInAssigments.after.inv.kt")
+                public void testContinuationIndentInAssigments() throws Exception {
+                    runTest("testData/formatter/ContinuationIndentInAssigments.after.inv.kt");
+                }
+
+                @TestMetadata("DelegationList.after.inv.kt")
+                public void testDelegationList() throws Exception {
+                    runTest("testData/formatter/DelegationList.after.inv.kt");
+                }
+
+                @TestMetadata("DoWhileLineBreak.after.inv.kt")
+                public void testDoWhileLineBreak() throws Exception {
+                    runTest("testData/formatter/DoWhileLineBreak.after.inv.kt");
+                }
+
+                @TestMetadata("ElseOnNewLine.after.inv.kt")
+                public void testElseOnNewLine() throws Exception {
+                    runTest("testData/formatter/ElseOnNewLine.after.inv.kt");
+                }
+
+                @TestMetadata("Elvis.after.inv.kt")
+                public void testElvis() throws Exception {
+                    runTest("testData/formatter/Elvis.after.inv.kt");
+                }
+
+                @TestMetadata("ElvisContinuationIndentOptions.after.inv.kt")
+                public void testElvisContinuationIndentOptions() throws Exception {
+                    runTest("testData/formatter/ElvisContinuationIndentOptions.after.inv.kt");
+                }
+
+                @TestMetadata("ElvisIndent.after.inv.kt")
+                public void testElvisIndent() throws Exception {
+                    runTest("testData/formatter/ElvisIndent.after.inv.kt");
+                }
+
+                @TestMetadata("EmptyBlocks.after.inv.kt")
+                public void testEmptyBlocks() throws Exception {
+                    runTest("testData/formatter/EmptyBlocks.after.inv.kt");
+                }
+
+                @TestMetadata("EmptyLineBetweenEnumEntries.after.inv.kt")
+                public void testEmptyLineBetweenEnumEntries() throws Exception {
+                    runTest("testData/formatter/EmptyLineBetweenEnumEntries.after.inv.kt");
+                }
+
+                @TestMetadata("ExtendsListAlignEnum.after.inv.kt")
+                public void testExtendsListAlignEnum() throws Exception {
+                    runTest("testData/formatter/ExtendsListAlignEnum.after.inv.kt");
+                }
             }
 
-            @TestMetadata("AnonymousInitializersLineBreak.after.inv.kt")
-            public void testAnonymousInitializersLineBreak() throws Exception {
-                runTest("testData/formatter/AnonymousInitializersLineBreak.after.inv.kt");
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/formatter")
+            public static class TestBucket2 extends AbstractFormatterTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
+                }
+
+                @TestMetadata("ForLineBreak.after.inv.kt")
+                public void testForLineBreak() throws Exception {
+                    runTest("testData/formatter/ForLineBreak.after.inv.kt");
+                }
+
+                @TestMetadata("FormatFirstColumnComments.after.inv.kt")
+                public void testFormatFirstColumnComments() throws Exception {
+                    runTest("testData/formatter/FormatFirstColumnComments.after.inv.kt");
+                }
+
+                @TestMetadata("FormatFirstColumnCommentsBeforeDeclaration.after.inv.kt")
+                public void testFormatFirstColumnCommentsBeforeDeclaration() throws Exception {
+                    runTest("testData/formatter/FormatFirstColumnCommentsBeforeDeclaration.after.inv.kt");
+                }
+
+                @TestMetadata("FunctionLineBreak.after.inv.kt")
+                public void testFunctionLineBreak() throws Exception {
+                    runTest("testData/formatter/FunctionLineBreak.after.inv.kt");
+                }
+
+                @TestMetadata("FunctionalType.after.inv.kt")
+                public void testFunctionalType() throws Exception {
+                    runTest("testData/formatter/FunctionalType.after.inv.kt");
+                }
+
+                @TestMetadata("IfConditionIndent.after.inv.kt")
+                public void testIfConditionIndent() throws Exception {
+                    runTest("testData/formatter/IfConditionIndent.after.inv.kt");
+                }
+
+                @TestMetadata("IfElseWithTrickyComments.after.inv.kt")
+                public void testIfElseWithTrickyComments() throws Exception {
+                    runTest("testData/formatter/IfElseWithTrickyComments.after.inv.kt");
+                }
+
+                @TestMetadata("KeepLineBreak.after.inv.kt")
+                public void testKeepLineBreak() throws Exception {
+                    runTest("testData/formatter/KeepLineBreak.after.inv.kt");
+                }
+
+                @TestMetadata("LambdaArrow.after.inv.kt")
+                public void testLambdaArrow() throws Exception {
+                    runTest("testData/formatter/LambdaArrow.after.inv.kt");
+                }
+
+                @TestMetadata("MethodLParenthOnNextLine.after.inv.kt")
+                public void testMethodLParenthOnNextLine() throws Exception {
+                    runTest("testData/formatter/MethodLParenthOnNextLine.after.inv.kt");
+                }
+
+                @TestMetadata("MethodRParenthOnNextLine.after.inv.kt")
+                public void testMethodRParenthOnNextLine() throws Exception {
+                    runTest("testData/formatter/MethodRParenthOnNextLine.after.inv.kt");
+                }
+
+                @TestMetadata("MultilineFunctionLiteralWithParams.after.inv.kt")
+                public void testMultilineFunctionLiteralWithParams() throws Exception {
+                    runTest("testData/formatter/MultilineFunctionLiteralWithParams.after.inv.kt");
+                }
+
+                @TestMetadata("Parameters.after.inv.kt")
+                public void testParameters() throws Exception {
+                    runTest("testData/formatter/Parameters.after.inv.kt");
+                }
+
+                @TestMetadata("RightBracketOnNewLine.after.inv.kt")
+                public void testRightBracketOnNewLine() throws Exception {
+                    runTest("testData/formatter/RightBracketOnNewLine.after.inv.kt");
+                }
+
+                @TestMetadata("secondaryCtorLineBreak.after.inv.kt")
+                public void testSecondaryCtorLineBreak() throws Exception {
+                    runTest("testData/formatter/secondaryCtorLineBreak.after.inv.kt");
+                }
+
+                @TestMetadata("SingleLineFunctionLiteral.after.inv.kt")
+                public void testSingleLineFunctionLiteral() throws Exception {
+                    runTest("testData/formatter/SingleLineFunctionLiteral.after.inv.kt");
+                }
+
+                @TestMetadata("SpaceAroundExtendColon.after.inv.kt")
+                public void testSpaceAroundExtendColon() throws Exception {
+                    runTest("testData/formatter/SpaceAroundExtendColon.after.inv.kt");
+                }
+
+                @TestMetadata("SpaceAroundExtendColonInObjects.after.inv.kt")
+                public void testSpaceAroundExtendColonInObjects() throws Exception {
+                    runTest("testData/formatter/SpaceAroundExtendColonInObjects.after.inv.kt");
+                }
+
+                @TestMetadata("SpaceAroundExtendColonInSecondaryCtr.after.inv.kt")
+                public void testSpaceAroundExtendColonInSecondaryCtr() throws Exception {
+                    runTest("testData/formatter/SpaceAroundExtendColonInSecondaryCtr.after.inv.kt");
+                }
+
+                @TestMetadata("SpaceBeforeCatchParentheses.after.inv.kt")
+                public void testSpaceBeforeCatchParentheses() throws Exception {
+                    runTest("testData/formatter/SpaceBeforeCatchParentheses.after.inv.kt");
+                }
             }
 
-            @TestMetadata("BinaryExpressions.after.inv.kt")
-            public void testBinaryExpressions() throws Exception {
-                runTest("testData/formatter/BinaryExpressions.after.inv.kt");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/formatter")
+            public static class TestBucket3 extends AbstractFormatterTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
+                }
 
-            @TestMetadata("BinaryExpressionsBoolean.after.inv.kt")
-            public void testBinaryExpressionsBoolean() throws Exception {
-                runTest("testData/formatter/BinaryExpressionsBoolean.after.inv.kt");
-            }
+                @TestMetadata("SpaceBeforeForParentheses.after.inv.kt")
+                public void testSpaceBeforeForParentheses() throws Exception {
+                    runTest("testData/formatter/SpaceBeforeForParentheses.after.inv.kt");
+                }
 
-            @TestMetadata("BinaryExpressionsWithoutAlignment.after.inv.kt")
-            public void testBinaryExpressionsWithoutAlignment() throws Exception {
-                runTest("testData/formatter/BinaryExpressionsWithoutAlignment.after.inv.kt");
-            }
+                @TestMetadata("SpaceBeforeIfParentheses.after.inv.kt")
+                public void testSpaceBeforeIfParentheses() throws Exception {
+                    runTest("testData/formatter/SpaceBeforeIfParentheses.after.inv.kt");
+                }
 
-            @TestMetadata("CallLParenthOnNextLine.after.inv.kt")
-            public void testCallLParenthOnNextLine() throws Exception {
-                runTest("testData/formatter/CallLParenthOnNextLine.after.inv.kt");
-            }
+                @TestMetadata("SpaceBeforeWhenParentheses.after.inv.kt")
+                public void testSpaceBeforeWhenParentheses() throws Exception {
+                    runTest("testData/formatter/SpaceBeforeWhenParentheses.after.inv.kt");
+                }
 
-            @TestMetadata("CallRParenthOnNextLine.after.inv.kt")
-            public void testCallRParenthOnNextLine() throws Exception {
-                runTest("testData/formatter/CallRParenthOnNextLine.after.inv.kt");
-            }
+                @TestMetadata("SpaceBeforeWhileParentheses.after.inv.kt")
+                public void testSpaceBeforeWhileParentheses() throws Exception {
+                    runTest("testData/formatter/SpaceBeforeWhileParentheses.after.inv.kt");
+                }
 
-            @TestMetadata("CatchFinallyOnNewLine.after.inv.kt")
-            public void testCatchFinallyOnNewLine() throws Exception {
-                runTest("testData/formatter/CatchFinallyOnNewLine.after.inv.kt");
-            }
+                @TestMetadata("SpacesAroundOperations.after.inv.kt")
+                public void testSpacesAroundOperations() throws Exception {
+                    runTest("testData/formatter/SpacesAroundOperations.after.inv.kt");
+                }
 
-            @TestMetadata("ClassLineBreak.after.inv.kt")
-            public void testClassLineBreak() throws Exception {
-                runTest("testData/formatter/ClassLineBreak.after.inv.kt");
-            }
+                @TestMetadata("SpacesAroundUnaryOperations.after.inv.kt")
+                public void testSpacesAroundUnaryOperations() throws Exception {
+                    runTest("testData/formatter/SpacesAroundUnaryOperations.after.inv.kt");
+                }
 
-            @TestMetadata("ColonSpaces.after.inv.kt")
-            public void testColonSpaces() throws Exception {
-                runTest("testData/formatter/ColonSpaces.after.inv.kt");
-            }
+                @TestMetadata("TryCatchLineBreak.after.inv.kt")
+                public void testTryCatchLineBreak() throws Exception {
+                    runTest("testData/formatter/TryCatchLineBreak.after.inv.kt");
+                }
 
-            @TestMetadata("ContinuationIndentForExpressionBodies.after.inv.kt")
-            public void testContinuationIndentForExpressionBodies() throws Exception {
-                runTest("testData/formatter/ContinuationIndentForExpressionBodies.after.inv.kt");
-            }
+                @TestMetadata("When.after.inv.kt")
+                public void testWhen() throws Exception {
+                    runTest("testData/formatter/When.after.inv.kt");
+                }
 
-            @TestMetadata("ContinuationIndentInAssigments.after.inv.kt")
-            public void testContinuationIndentInAssigments() throws Exception {
-                runTest("testData/formatter/ContinuationIndentInAssigments.after.inv.kt");
-            }
+                @TestMetadata("WhenArrow.after.inv.kt")
+                public void testWhenArrow() throws Exception {
+                    runTest("testData/formatter/WhenArrow.after.inv.kt");
+                }
 
-            @TestMetadata("DelegationList.after.inv.kt")
-            public void testDelegationList() throws Exception {
-                runTest("testData/formatter/DelegationList.after.inv.kt");
-            }
+                @TestMetadata("WhenEntry.after.inv.kt")
+                public void testWhenEntry() throws Exception {
+                    runTest("testData/formatter/WhenEntry.after.inv.kt");
+                }
 
-            @TestMetadata("DoWhileLineBreak.after.inv.kt")
-            public void testDoWhileLineBreak() throws Exception {
-                runTest("testData/formatter/DoWhileLineBreak.after.inv.kt");
-            }
+                @TestMetadata("WhenLineBreak.after.inv.kt")
+                public void testWhenLineBreak() throws Exception {
+                    runTest("testData/formatter/WhenLineBreak.after.inv.kt");
+                }
 
-            @TestMetadata("ElseOnNewLine.after.inv.kt")
-            public void testElseOnNewLine() throws Exception {
-                runTest("testData/formatter/ElseOnNewLine.after.inv.kt");
-            }
+                @TestMetadata("WhileLineBreak.after.inv.kt")
+                public void testWhileLineBreak() throws Exception {
+                    runTest("testData/formatter/WhileLineBreak.after.inv.kt");
+                }
 
-            @TestMetadata("Elvis.after.inv.kt")
-            public void testElvis() throws Exception {
-                runTest("testData/formatter/Elvis.after.inv.kt");
-            }
-
-            @TestMetadata("ElvisContinuationIndentOptions.after.inv.kt")
-            public void testElvisContinuationIndentOptions() throws Exception {
-                runTest("testData/formatter/ElvisContinuationIndentOptions.after.inv.kt");
-            }
-
-            @TestMetadata("ElvisIndent.after.inv.kt")
-            public void testElvisIndent() throws Exception {
-                runTest("testData/formatter/ElvisIndent.after.inv.kt");
-            }
-
-            @TestMetadata("EmptyBlocks.after.inv.kt")
-            public void testEmptyBlocks() throws Exception {
-                runTest("testData/formatter/EmptyBlocks.after.inv.kt");
-            }
-
-            @TestMetadata("EmptyLineBetweenEnumEntries.after.inv.kt")
-            public void testEmptyLineBetweenEnumEntries() throws Exception {
-                runTest("testData/formatter/EmptyLineBetweenEnumEntries.after.inv.kt");
-            }
-
-            @TestMetadata("ExtendsListAlignEnum.after.inv.kt")
-            public void testExtendsListAlignEnum() throws Exception {
-                runTest("testData/formatter/ExtendsListAlignEnum.after.inv.kt");
-            }
-
-            @TestMetadata("ForLineBreak.after.inv.kt")
-            public void testForLineBreak() throws Exception {
-                runTest("testData/formatter/ForLineBreak.after.inv.kt");
-            }
-
-            @TestMetadata("FormatFirstColumnComments.after.inv.kt")
-            public void testFormatFirstColumnComments() throws Exception {
-                runTest("testData/formatter/FormatFirstColumnComments.after.inv.kt");
-            }
-
-            @TestMetadata("FormatFirstColumnCommentsBeforeDeclaration.after.inv.kt")
-            public void testFormatFirstColumnCommentsBeforeDeclaration() throws Exception {
-                runTest("testData/formatter/FormatFirstColumnCommentsBeforeDeclaration.after.inv.kt");
-            }
-
-            @TestMetadata("FunctionLineBreak.after.inv.kt")
-            public void testFunctionLineBreak() throws Exception {
-                runTest("testData/formatter/FunctionLineBreak.after.inv.kt");
-            }
-
-            @TestMetadata("FunctionalType.after.inv.kt")
-            public void testFunctionalType() throws Exception {
-                runTest("testData/formatter/FunctionalType.after.inv.kt");
-            }
-
-            @TestMetadata("IfConditionIndent.after.inv.kt")
-            public void testIfConditionIndent() throws Exception {
-                runTest("testData/formatter/IfConditionIndent.after.inv.kt");
-            }
-
-            @TestMetadata("IfElseWithTrickyComments.after.inv.kt")
-            public void testIfElseWithTrickyComments() throws Exception {
-                runTest("testData/formatter/IfElseWithTrickyComments.after.inv.kt");
-            }
-
-            @TestMetadata("KeepLineBreak.after.inv.kt")
-            public void testKeepLineBreak() throws Exception {
-                runTest("testData/formatter/KeepLineBreak.after.inv.kt");
-            }
-
-            @TestMetadata("LambdaArrow.after.inv.kt")
-            public void testLambdaArrow() throws Exception {
-                runTest("testData/formatter/LambdaArrow.after.inv.kt");
-            }
-
-            @TestMetadata("MethodLParenthOnNextLine.after.inv.kt")
-            public void testMethodLParenthOnNextLine() throws Exception {
-                runTest("testData/formatter/MethodLParenthOnNextLine.after.inv.kt");
-            }
-
-            @TestMetadata("MethodRParenthOnNextLine.after.inv.kt")
-            public void testMethodRParenthOnNextLine() throws Exception {
-                runTest("testData/formatter/MethodRParenthOnNextLine.after.inv.kt");
-            }
-
-            @TestMetadata("MultilineFunctionLiteralWithParams.after.inv.kt")
-            public void testMultilineFunctionLiteralWithParams() throws Exception {
-                runTest("testData/formatter/MultilineFunctionLiteralWithParams.after.inv.kt");
-            }
-
-            @TestMetadata("Parameters.after.inv.kt")
-            public void testParameters() throws Exception {
-                runTest("testData/formatter/Parameters.after.inv.kt");
-            }
-
-            @TestMetadata("RightBracketOnNewLine.after.inv.kt")
-            public void testRightBracketOnNewLine() throws Exception {
-                runTest("testData/formatter/RightBracketOnNewLine.after.inv.kt");
-            }
-
-            @TestMetadata("secondaryCtorLineBreak.after.inv.kt")
-            public void testSecondaryCtorLineBreak() throws Exception {
-                runTest("testData/formatter/secondaryCtorLineBreak.after.inv.kt");
-            }
-
-            @TestMetadata("SingleLineFunctionLiteral.after.inv.kt")
-            public void testSingleLineFunctionLiteral() throws Exception {
-                runTest("testData/formatter/SingleLineFunctionLiteral.after.inv.kt");
-            }
-
-            @TestMetadata("SpaceAroundExtendColon.after.inv.kt")
-            public void testSpaceAroundExtendColon() throws Exception {
-                runTest("testData/formatter/SpaceAroundExtendColon.after.inv.kt");
-            }
-
-            @TestMetadata("SpaceAroundExtendColonInObjects.after.inv.kt")
-            public void testSpaceAroundExtendColonInObjects() throws Exception {
-                runTest("testData/formatter/SpaceAroundExtendColonInObjects.after.inv.kt");
-            }
-
-            @TestMetadata("SpaceAroundExtendColonInSecondaryCtr.after.inv.kt")
-            public void testSpaceAroundExtendColonInSecondaryCtr() throws Exception {
-                runTest("testData/formatter/SpaceAroundExtendColonInSecondaryCtr.after.inv.kt");
-            }
-
-            @TestMetadata("SpaceBeforeCatchParentheses.after.inv.kt")
-            public void testSpaceBeforeCatchParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeCatchParentheses.after.inv.kt");
-            }
-
-            @TestMetadata("SpaceBeforeForParentheses.after.inv.kt")
-            public void testSpaceBeforeForParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeForParentheses.after.inv.kt");
-            }
-
-            @TestMetadata("SpaceBeforeIfParentheses.after.inv.kt")
-            public void testSpaceBeforeIfParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeIfParentheses.after.inv.kt");
-            }
-
-            @TestMetadata("SpaceBeforeWhenParentheses.after.inv.kt")
-            public void testSpaceBeforeWhenParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeWhenParentheses.after.inv.kt");
-            }
-
-            @TestMetadata("SpaceBeforeWhileParentheses.after.inv.kt")
-            public void testSpaceBeforeWhileParentheses() throws Exception {
-                runTest("testData/formatter/SpaceBeforeWhileParentheses.after.inv.kt");
-            }
-
-            @TestMetadata("SpacesAroundOperations.after.inv.kt")
-            public void testSpacesAroundOperations() throws Exception {
-                runTest("testData/formatter/SpacesAroundOperations.after.inv.kt");
-            }
-
-            @TestMetadata("SpacesAroundUnaryOperations.after.inv.kt")
-            public void testSpacesAroundUnaryOperations() throws Exception {
-                runTest("testData/formatter/SpacesAroundUnaryOperations.after.inv.kt");
-            }
-
-            @TestMetadata("TryCatchLineBreak.after.inv.kt")
-            public void testTryCatchLineBreak() throws Exception {
-                runTest("testData/formatter/TryCatchLineBreak.after.inv.kt");
-            }
-
-            @TestMetadata("When.after.inv.kt")
-            public void testWhen() throws Exception {
-                runTest("testData/formatter/When.after.inv.kt");
-            }
-
-            @TestMetadata("WhenArrow.after.inv.kt")
-            public void testWhenArrow() throws Exception {
-                runTest("testData/formatter/WhenArrow.after.inv.kt");
-            }
-
-            @TestMetadata("WhenEntry.after.inv.kt")
-            public void testWhenEntry() throws Exception {
-                runTest("testData/formatter/WhenEntry.after.inv.kt");
-            }
-
-            @TestMetadata("WhenLineBreak.after.inv.kt")
-            public void testWhenLineBreak() throws Exception {
-                runTest("testData/formatter/WhenLineBreak.after.inv.kt");
-            }
-
-            @TestMetadata("WhileLineBreak.after.inv.kt")
-            public void testWhileLineBreak() throws Exception {
-                runTest("testData/formatter/WhileLineBreak.after.inv.kt");
-            }
-
-            @TestMetadata("WhileOnNewLine.after.inv.kt")
-            public void testWhileOnNewLine() throws Exception {
-                runTest("testData/formatter/WhileOnNewLine.after.inv.kt");
+                @TestMetadata("WhileOnNewLine.after.inv.kt")
+                public void testWhileOnNewLine() throws Exception {
+                    runTest("testData/formatter/WhileOnNewLine.after.inv.kt");
+                }
             }
         }
     }
