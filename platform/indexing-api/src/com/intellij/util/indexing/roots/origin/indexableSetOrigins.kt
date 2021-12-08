@@ -1,11 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing.roots.kind
 
-import com.intellij.openapi.roots.SyntheticLibrary
-import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.SyntheticLibrary
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.openapi.vfs.pointers.VirtualFilePointer
 import com.intellij.util.indexing.IndexableSetContributor
 
 /**
@@ -19,7 +19,9 @@ interface ModuleRootOrigin : IndexableSetOrigin {
 }
 
 interface LibraryOrigin : IndexableSetOrigin {
-  val library: Library
+  val libraryName: String?
+  val classRootUrls: List<VirtualFilePointer>
+  val sourceRootUrls: List<VirtualFilePointer>
 }
 
 interface SyntheticLibraryOrigin : IndexableSetOrigin {

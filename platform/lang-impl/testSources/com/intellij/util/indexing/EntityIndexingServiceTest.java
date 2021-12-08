@@ -98,7 +98,7 @@ public class EntityIndexingServiceTest extends HeavyPlatformTestCase {
 
   public void testIndexingGlobalLibrary() throws Exception {
     doTest(this::createGlobalLibrary, this::removeGlobalLibrary,
-           pair -> IndexableEntityProviderMethods.INSTANCE.createIterators(pair.getFirst(), pair.getSecond()));
+           pair -> IndexableEntityProviderMethods.INSTANCE.createIterators(pair.getFirst()));
   }
 
   @NotNull

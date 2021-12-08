@@ -6,7 +6,7 @@ import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.util.indexing.roots.IndexableEntityProvider
 import com.intellij.util.indexing.roots.IndexableEntityProviderMethods.createIterators
 import com.intellij.util.indexing.roots.IndexableFilesIterator
-import com.intellij.util.indexing.roots.LibraryBridgeIndexableFilesIteratorImpl
+import com.intellij.util.indexing.roots.LibraryIndexableFilesIteratorImpl
 import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
@@ -21,6 +21,7 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
   override fun instantiate(builders: Collection<IndexableEntityProvider.IndexableIteratorBuilder>,
                            project: Project,
                            entityStorage: WorkspaceEntityStorage): List<IndexableFilesIterator> {
+    @Suppress("UNCHECKED_CAST")
     builders as Collection<LibraryIdIteratorBuilder>
     val idsToIndex = mutableSetOf<LibraryId>()
     builders.forEach { builder -> if (builder.dependencyChecked) idsToIndex.add(builder.libraryId) }
@@ -44,13 +45,13 @@ class LibraryIndexableIteratorHandler : IndexableIteratorBuilderHandler {
                                     entityStorage: WorkspaceEntityStorage,
                                     project: Project): Collection<IndexableFilesIterator> =
     if (libraryId.tableId is LibraryTableId.GlobalLibraryTableId) {
-      LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(libraryId.tableId.level, project)?.let {
-        it.getLibraryByName(libraryId.name)?.let { createIterators(it, libraryId) }
+      LibraryTablesRegistrar.getInstance().getLibraryTableByLevel(libraryId.tableId.level, project)?.let { libraryTable ->
+        libraryTable.getLibraryByName(libraryId.name)?.let { createIterators(it) }
       } ?: emptyList()
     }
     else {
       entityStorage.resolve(libraryId)?.let { entityStorage.libraryMap.getDataByEntity(it) }?.let {
-        listOf(LibraryBridgeIndexableFilesIteratorImpl(it))
+        listOf(LibraryIndexableFilesIteratorImpl(it))
       } ?: emptyList()
     }
 

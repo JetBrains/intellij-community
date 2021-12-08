@@ -9,12 +9,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.ExternalEntityMapping
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 object IndexableEntityProviderMethods {
@@ -69,10 +67,8 @@ object IndexableEntityProviderMethods {
     }
   }
 
-  fun createIterators(library: LibraryBridge): Collection<IndexableFilesIterator> = createIterators(library, library.libraryId)
-
-  fun createIterators(library: Library, libraryId: LibraryId): Collection<IndexableFilesIterator> {
-    return listOf(LibraryBridgeIndexableFilesIteratorImpl(library, libraryId))
+  fun createIterators(library: Library): Collection<IndexableFilesIterator> {
+    return listOf(LibraryIndexableFilesIteratorImpl(library))
   }
 
   fun createIterators(sdk: Sdk): Collection<IndexableFilesIterator> {
