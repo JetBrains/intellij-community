@@ -146,7 +146,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
   private val TreePath.asVirtualFile
     get() = TreeUtil.getLastUserObject(ProjectViewNode::class.java, this)?.virtualFile
 
-  private val MouseEvent.isUnexpected
+  private val MouseEvent.isUnexpected // see MouseEvent.isUnexpected in ToggleBookmarkAction
     get() = !SwingUtilities.isLeftMouseButton(this) || isPopupTrigger || if (SystemInfo.isMac) !isMetaDown else !isControlDown
 
   private val EditorMouseEvent.isUnexpected
