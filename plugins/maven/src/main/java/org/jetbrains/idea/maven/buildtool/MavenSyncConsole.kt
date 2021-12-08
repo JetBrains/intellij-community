@@ -162,7 +162,6 @@ class MavenSyncConsole(private val myProject: Project) {
     doFinish()
   }
 
-  @Synchronized
   fun terminated(exitCode: Int) = doIfImportInProcess {
     if (EXIT_CODE_OK == exitCode || EXIT_CODE_SIGTERM == exitCode) doFinish() else doTerminate(exitCode)
   }
@@ -279,7 +278,9 @@ class MavenSyncConsole(private val myProject: Project) {
     if (MavenWorkspaceSettingsComponent.getInstance(myProject).settings.getGeneralSettings().isPrintErrorStackTraces) {
       return ExceptionUtil.getThrowableText(e)
     }
-    return e.localizedMessage.ifEmpty { if (StringUtil.isEmpty(e.message)) SyncBundle.message("build.event.title.error") else e.message!! }
+
+    if(!e.localizedMessage.isNullOrEmpty()) return e.localizedMessage
+    return if (StringUtil.isEmpty(e.message)) SyncBundle.message("build.event.title.error") else e.message!!
   }
 
   fun getListener(type: MavenServerProgressIndicator.ResolveType): ArtifactSyncListener {
@@ -300,18 +301,26 @@ class MavenSyncConsole(private val myProject: Project) {
     tasks.forEach { completeTask(it.first, it.second, DerivedResultImpl()) }
     mySyncView.onEvent(mySyncId, FinishBuildEventImpl(mySyncId, null, System.currentTimeMillis(), "",
                                                       if (hasErrors) FailureResultImpl() else DerivedResultImpl()))
-    val generalSettings = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings
-    if (hasUnresolved && generalSettings.isWorkOffline) {
-      mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
-        override val title: String = "Dependency Resolution Failed"
-        override val description: String = "<a href=\"${OffMavenOfflineModeQuickFix.ID}\">Switch Off Offline Mode</a>\n"
-        override val quickFixes: List<BuildIssueQuickFix> = listOf(OffMavenOfflineModeQuickFix())
 
-        override fun getNavigatable(project: Project): Navigatable? = null
-      }, MessageEvent.Kind.ERROR))
-    }
+    attachOfflineQuickFix()
     finished = true
     started = false
+  }
+
+  private fun attachOfflineQuickFix() {
+    try {
+      val generalSettings = MavenWorkspaceSettingsComponent.getInstance(myProject).settings.generalSettings
+      if (hasUnresolved && generalSettings.isWorkOffline) {
+        mySyncView.onEvent(mySyncId, BuildIssueEventImpl(mySyncId, object : BuildIssue {
+          override val title: String = "Dependency Resolution Failed"
+          override val description: String = "<a href=\"${OffMavenOfflineModeQuickFix.ID}\">Switch Off Offline Mode</a>\n"
+          override val quickFixes: List<BuildIssueQuickFix> = listOf(OffMavenOfflineModeQuickFix())
+
+          override fun getNavigatable(project: Project): Navigatable? = null
+        }, MessageEvent.Kind.ERROR))
+      }
+    } catch (ignore: Exception){}
+
   }
 
   @Synchronized
@@ -429,7 +438,6 @@ class MavenSyncConsole(private val myProject: Project) {
     }, kind))
   }
 
-  @Synchronized
   fun <Result> runTask(@NlsSafe taskName: String, task: () -> Result): Result {
     startTask(mySyncId, taskName)
     try {

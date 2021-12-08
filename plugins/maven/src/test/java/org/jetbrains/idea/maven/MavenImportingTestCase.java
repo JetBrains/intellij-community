@@ -454,6 +454,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   }
 
 
+
   protected final void importViaNewFlow(final List<VirtualFile> files, boolean failOnReadingError,
                                   List<String> disabledProfiles, String... profiles) {
 

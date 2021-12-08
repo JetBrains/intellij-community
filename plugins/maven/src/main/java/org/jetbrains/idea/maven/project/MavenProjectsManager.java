@@ -839,11 +839,11 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   @ApiStatus.Internal
   public AsyncPromise<Void> forceUpdateProjects() {
-    return doScheduleUpdateProjects(null, true, true);
+    return (AsyncPromise<Void>)doScheduleUpdateProjects(null, true, true);
   }
 
   public AsyncPromise<Void> forceUpdateProjects(@NotNull Collection<MavenProject> projects) {
-    return doScheduleUpdateProjects(projects, true, true);
+    return (AsyncPromise<Void>)doScheduleUpdateProjects(projects, true, true);
   }
 
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
@@ -858,9 +858,13 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     doScheduleUpdateProjects(null, true, true);
   }
 
-  private AsyncPromise<Void> doScheduleUpdateProjects(final Collection<MavenProject> projects,
+  private Promise<Void> doScheduleUpdateProjects(final Collection<MavenProject> projects,
                                                       final boolean forceUpdate,
                                                       final boolean forceImportAndResolve) {
+    if (Registry.is("maven.new.import")){
+      return MavenImportingManager.getInstance(myProject)
+        .openProjectAndImport(new FilesList(ContainerUtil.map(projects, MavenProject::getFile)), getImportingSettings(), getGeneralSettings()).then(it -> null);
+    }
     MavenDistributionsCache.getInstance(myProject).cleanCaches();
     MavenWslCache.getInstance().clearCache();
     final AsyncPromise<Void> promise = new AsyncPromise<>();
