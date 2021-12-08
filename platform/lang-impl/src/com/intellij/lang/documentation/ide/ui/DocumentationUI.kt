@@ -176,6 +176,9 @@ internal class DocumentationUI(
 
   private fun update(text: @Nls String, scrollingPosition: ScrollingPosition) {
     EDT.assertIsEdt()
+    if (editorPane.text == text) {
+      return
+    }
     editorPane.text = text
     SwingUtilities.invokeLater {
       when (scrollingPosition) {
