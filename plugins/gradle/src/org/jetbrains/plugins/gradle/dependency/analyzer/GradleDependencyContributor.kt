@@ -19,13 +19,16 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.tooling.tasks.DependenciesReport
 import org.jetbrains.plugins.gradle.tooling.tasks.DependencyNodeDeserializer
 import org.jetbrains.plugins.gradle.util.GradleBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleModuleData
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.collections.ArrayList
 
 class GradleDependencyContributor(private val project: Project) : DependencyContributor {
   private val projects = ConcurrentHashMap<String, GradleModuleData>()
@@ -189,6 +192,6 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
       return dependencyScopeNodes
     }
 
-    private fun DependencyScopeNode.toScope() = DependencyContributor.Scope(scope, scope, scope)
+    private fun DependencyScopeNode.toScope() = DependencyContributor.Scope(scope, scope, StringUtil.toTitleCase(scope))
   }
 }
