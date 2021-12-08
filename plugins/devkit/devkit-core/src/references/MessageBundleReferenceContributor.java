@@ -132,7 +132,8 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
           String s = StringUtil.notNullize(StringUtil.substringAfter(text, ADVANCED_SETTING));
           String id = s.endsWith(DESCRIPTION) ? StringUtil.trimEnd(s, DESCRIPTION) :
                       (s.endsWith(TRAILING_LABEL) ? StringUtil.trimEnd(s, TRAILING_LABEL) : s);
-          return new AdvancedSettingReference(element, id);
+          TextRange range = TextRange.allOf(id).shiftRight(ADVANCED_SETTING.length());
+          return new AdvancedSettingsIdContributor.AdvancedSettingReference(element, range);
         }
       });
   }
@@ -301,40 +302,6 @@ public final class MessageBundleReferenceContributor extends PsiReferenceContrib
 
         variants.add(LookupElementBuilder.create(extension.getXmlElement(), value.replace(' ', '_'))
                        .withTypeText(getAttributeValue(extension, "factoryClass")));
-        return true;
-      });
-      return variants.toArray(LookupElement.EMPTY_ARRAY);
-    }
-  }
-
-
-  private static class AdvancedSettingReference extends ExtensionPointReferenceBase {
-
-    private AdvancedSettingReference(PsiElement element, String id) {
-      super(element, TextRange.allOf(id).shiftRight(ADVANCED_SETTING.length()));
-    }
-
-    @Override
-    protected String getExtensionPointFqn() {
-      return "com.intellij.advancedSetting";
-    }
-
-    @Override
-    public @NotNull String getUnresolvedMessagePattern() {
-      return DevKitBundle.message("message.bundle.convert.advanced.setting.id.cannot.resolve", getValue());
-    }
-
-    @Override
-    public Object @NotNull [] getVariants() {
-      final List<LookupElement> variants = Collections.synchronizedList(new SmartList<>());
-      processCandidates(extension -> {
-        final GenericAttributeValue<String> id = extension.getId();
-        if (id == null || extension.getXmlElement() == null) return true;
-
-        final String value = id.getStringValue();
-        if (value == null) return true;
-
-        variants.add(LookupElementBuilder.create(extension.getXmlElement(), value));
         return true;
       });
       return variants.toArray(LookupElement.EMPTY_ARRAY);
