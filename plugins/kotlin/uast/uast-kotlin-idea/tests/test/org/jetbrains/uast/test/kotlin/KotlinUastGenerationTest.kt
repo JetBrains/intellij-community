@@ -25,8 +25,8 @@ import org.jetbrains.uast.generate.UastCodeGenerationPlugin
 import org.jetbrains.uast.generate.refreshed
 import org.jetbrains.uast.generate.replace
 import org.jetbrains.uast.kotlin.generate.KotlinUastElementFactory
-import org.jetbrains.uast.test.common.findElementByTextFromPsi
-import org.jetbrains.uast.test.common.findUElementByTextFromPsi
+import org.jetbrains.uast.test.env.findElementByTextFromPsi
+import org.jetbrains.uast.test.env.findUElementByTextFromPsi
 import org.jetbrains.uast.visitor.UastVisitor
 import kotlin.test.fail as kfail
 
