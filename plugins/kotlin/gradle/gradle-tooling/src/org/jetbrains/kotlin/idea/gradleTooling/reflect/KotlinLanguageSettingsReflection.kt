@@ -4,6 +4,7 @@
 package org.jetbrains.kotlin.idea.gradleTooling.reflect
 
 import java.io.File
+import kotlin.reflect.full.memberProperties
 
 fun KotlinLanguageSettingsReflection(languageSettings: Any): KotlinLanguageSettingsReflection =
     KotlinLanguageSettingsReflectionImpl(languageSettings)
@@ -37,13 +38,14 @@ private class KotlinLanguageSettingsReflectionImpl(private val instance: Any) : 
     }
 
     override val optInAnnotationsInUse: Set<String>? by lazy {
-        instance.callReflective("getOptInAnnotationsInUse", parameters(), returnType<Iterable<String>>(), logger)?.toSet()
+        val getterName = if (instance::class.memberProperties.any { it.name == "optInAnnotationsInUse" }) "getOptInAnnotationsInUse"
+        else "getExperimentalAnnotationsInUse"
+        instance.callReflective(getterName, parameters(), returnType<Iterable<String>>(), logger)?.toSet()
     }
 
     override val compilerPluginArguments: List<String>? by lazy {
         instance.callReflective("getCompilerPluginArguments", parameters(), returnType<Iterable<String>>(), logger)?.toList()
     }
-
 
     override val compilerPluginClasspath: Set<File>? by lazy {
         instance.callReflective("getCompilerPluginClasspath", parameters(), returnType<Iterable<File>>(), logger)?.toSet()
