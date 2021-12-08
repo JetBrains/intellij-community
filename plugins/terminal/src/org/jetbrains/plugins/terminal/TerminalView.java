@@ -22,7 +22,9 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -36,6 +38,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.terminal.JBTerminalWidget;
 import com.intellij.terminal.JBTerminalWidgetListener;
+import com.intellij.terminal.TerminalTitle;
+import com.intellij.terminal.TerminalTitleListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.content.Content;
@@ -48,6 +52,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.UniqueNameGenerator;
+import com.jediterm.terminal.RequestOrigin;
+import com.jediterm.terminal.ui.TerminalPanelListener;
 import kotlin.Unit;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -63,6 +69,8 @@ import org.jetbrains.plugins.terminal.vfs.TerminalSessionVirtualFileImpl;
 import javax.swing.*;
 import java.awt.event.*;
 import java.util.*;
+import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.function.Consumer;
 
 public final class TerminalView implements Disposable {
   private final static Key<JBTerminalWidget> TERMINAL_WIDGET_KEY = new Key<>("TerminalWidget");
@@ -98,6 +106,15 @@ public final class TerminalView implements Disposable {
 
   public Set<JBTerminalWidget> getWidgets() {
     return myContainerByWidgetMap.keySet();
+  }
+
+  private final List<Consumer<JBTerminalWidget>> myTerminalSetupHandlers = new CopyOnWriteArrayList<>();
+
+  public void addNewTerminalSetupHandler(@NotNull Consumer<JBTerminalWidget> listener, @NotNull Disposable parentDisposable) {
+    myTerminalSetupHandlers.add(listener);
+    if (!Disposer.tryRegister(parentDisposable, () -> { myTerminalSetupHandlers.remove(listener); })) {
+      myTerminalSetupHandlers.remove(listener);
+    }
   }
 
   public static TerminalView getInstance(@NotNull Project project) {
@@ -266,6 +283,8 @@ public final class TerminalView implements Disposable {
     panel.setContent(container.getComponent());
     panel.addFocusListener(createFocusListener(toolWindow));
 
+    JBTerminalWidget finalTerminalWidget = terminalWidget;
+    myTerminalSetupHandlers.forEach(consumer -> consumer.accept(finalTerminalWidget));
     panel.updateDFState();
 
     updatePreferredFocusableComponent(content, terminalWidget);
@@ -280,6 +299,29 @@ public final class TerminalView implements Disposable {
                                    boolean updateContentDisplayName) {
     MoveTerminalToolWindowTabLeftAction moveTabLeftAction = new MoveTerminalToolWindowTabLeftAction();
     MoveTerminalToolWindowTabRightAction moveTabRightAction = new MoveTerminalToolWindowTabRightAction();
+
+    terminalWidget.getTerminalTitle().addTitleListener(new TerminalTitleListener() {
+      @Override
+      public void onTitleChanged(@NotNull TerminalTitle terminalTitle) {
+        ApplicationManager.getApplication().invokeLater(() -> {
+          updateTabTitle(terminalTitle, toolWindow, content);
+        }, myProject.getDisposed());
+      }
+    }, content);
+    terminalWidget.setTerminalPanelListener(new TerminalPanelListener() {
+      @Override
+      public void onPanelResize(@NotNull RequestOrigin origin) { }
+
+      @Override
+      public void onTitleChanged(@NlsSafe String title) {
+        TerminalTitle terminalTitle = terminalWidget.getTerminalTitle();
+        terminalTitle.change(terminalTitleState -> {
+          terminalTitleState.setApplicationTitle(title);
+          return null;
+        });
+      }
+    });
+
     terminalWidget.setListener(new JBTerminalWidgetListener() {
       @Override
       public void onNewSession() {
@@ -289,16 +331,8 @@ public final class TerminalView implements Disposable {
       @Override
       public void onTerminalStarted() {
         if (updateContentDisplayName && (tabState == null || StringUtil.isEmpty(tabState.myTabName))) {
-          onTerminalRenamed();
+          updateTabTitle(terminalWidget.getTerminalTitle(), toolWindow, content);
         }
-      }
-
-      @Override
-      public void onTerminalRenamed() {
-        String name = ((JBTerminalSystemSettingsProvider)terminalWidget.getSettingsProvider()).getTabName(terminalWidget);
-        List<Content> contents = ContainerUtil.newArrayList(toolWindow.getContentManager().getContents());
-        contents.remove(content);
-        content.setDisplayName(generateUniqueName(name, ContainerUtil.map(contents, c -> c.getDisplayName())));
       }
 
       @Override
@@ -376,6 +410,15 @@ public final class TerminalView implements Disposable {
         updatePreferredFocusableComponent(content, terminalWidget);
       }
     });
+  }
+
+  private static void updateTabTitle(@NotNull TerminalTitle terminalTitle,
+                                     @NotNull ToolWindow toolWindow,
+                                     @NotNull Content content) {
+    String title = terminalTitle.buildTitle();
+    List<Content> contents = ContainerUtil.newArrayList(toolWindow.getContentManager().getContents());
+    contents.remove(content);
+    content.setDisplayName(generateUniqueName(title, ContainerUtil.map(contents, c -> c.getDisplayName())));
   }
 
   private static void updatePreferredFocusableComponent(@NotNull Content content, @NotNull JBTerminalWidget terminalWidget) {
