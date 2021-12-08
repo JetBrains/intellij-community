@@ -23,9 +23,16 @@ const val FEEDBACK_REPORT_ID_KEY: String = "feedback_id"
 
 const val DEFAULT_NO_EMAIL_ZENDESK_REQUESTER: String = "no_mail@jetbrains.com"
 
-private const val PATH_TO_FEEDBACK_FORM_XML = "forms/ProjectCreationFeedbackForm.xml"
+private const val PATH_TO_TEST_FEEDBACK_REQUEST_FORM_XML = "forms/SimpleTestFeedbackForm.xml"
+private const val PATH_TO_PRODUCTION_FEEDBACK_REQUEST_FORM_XML = "forms/SimpleProductionFeedbackForm.xml"
 private const val PRIVACY_POLICY_URL: String = "https://www.jetbrains.com/legal/docs/privacy/privacy.html"
 private const val PRIVACY_POLICY_THIRD_PARTIES_URL = "https://www.jetbrains.com/legal/docs/privacy/third-parties.html"
+
+enum class FeedbackRequestType {
+  NO_REQUEST, // can be used during feedback UI/statistics development and debug
+  TEST_REQUEST,
+  PRODUCTION_REQUEST
+}
 
 fun submitGeneralFeedback(project: Project?,
                           title: String,
@@ -33,11 +40,19 @@ fun submitGeneralFeedback(project: Project?,
                           feedbackType: String,
                           collectedData: String,
                           email: String = DEFAULT_NO_EMAIL_ZENDESK_REQUESTER,
-                          onDone: () -> Unit = {}, onError: () -> Unit = {}) {
+                          onDone: () -> Unit = {},
+                          onError: () -> Unit = {},
+                          feedbackRequestType: FeedbackRequestType = FeedbackRequestType.TEST_REQUEST
+) {
   ApplicationManager.getApplication().executeOnPooledThread {
     // Any class from this module will fit
-    val stream = ThanksForFeedbackNotification::class.java.classLoader.getResourceAsStream(PATH_TO_FEEDBACK_FORM_XML)
-                 ?: throw RuntimeException("Resource not found: $PATH_TO_FEEDBACK_FORM_XML")
+    val pathToFeedbackFormXml = when(feedbackRequestType) {
+      FeedbackRequestType.NO_REQUEST -> return@executeOnPooledThread
+      FeedbackRequestType.TEST_REQUEST -> PATH_TO_TEST_FEEDBACK_REQUEST_FORM_XML
+      FeedbackRequestType.PRODUCTION_REQUEST -> PATH_TO_PRODUCTION_FEEDBACK_REQUEST_FORM_XML
+    }
+    val stream = FeedbackRequestType::class.java.classLoader.getResourceAsStream(pathToFeedbackFormXml)
+                 ?: throw RuntimeException("Resource not found: $pathToFeedbackFormXml")
     val xmlElement = readXmlAsModel(stream)
     val form = ZenDeskForm.parse(xmlElement)
     ZenDeskRequests().submit(
