@@ -545,6 +545,9 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     }
   }
 
+  /*
+   * The method is expected to return an Icon in Swing format (with MultiResolutionImage)
+   */
   @Override
   public final Icon getDisabledIcon(JComponent component, Icon icon) {
     if (icon == null) {
@@ -552,14 +555,13 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     }
 
     ScaleContext ctx = ScaleContext.create(component);
-    icon = MultiResolutionImageProvider.convertFromJBIcon(icon, ctx);
-    Icon disabledIcon = super.getDisabledIcon(component, icon);
-    disabledIcon = MultiResolutionImageProvider.convertFromMRIcon(disabledIcon, ctx);
-
-    if (disabledIcon != null) {
-      return disabledIcon;
+    Icon multiResIcon = MultiResolutionImageProvider.convertFromJBIcon(icon, ctx);
+    Icon multiResDisabledIcon = super.getDisabledIcon(component, multiResIcon);
+    if (multiResDisabledIcon != null) {
+      return multiResDisabledIcon;
     }
-    return IconLoader.getDisabledIcon(icon, component);
+    Icon jbDisabledIcon = IconLoader.getDisabledIcon(icon, component);
+    return MultiResolutionImageProvider.convertFromJBIcon(jbDisabledIcon, ctx);
   }
 
   @Override
