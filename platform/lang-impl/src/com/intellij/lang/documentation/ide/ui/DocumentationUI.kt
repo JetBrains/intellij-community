@@ -182,6 +182,9 @@ internal class DocumentationUI(
 
   fun update(text: @Nls String, scrollingPosition: ScrollingPosition) {
     EDT.assertIsEdt()
+    if (editorPane.text == text) {
+      return
+    }
     editorPane.text = text
     fireContentChanged()
     SwingUtilities.invokeLater {
