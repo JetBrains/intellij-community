@@ -14,6 +14,7 @@ data class TModel(
     val excludedDirectories: List<String>,
     val depth: Int,
     val testPerClass: Boolean,
+    val bucketSize: Int?,
 )
 
 object Patterns {
@@ -47,6 +48,8 @@ fun MutableTSuite.model(
     excludedDirectories: List<String> = emptyList(),
     depth: Int = Int.MAX_VALUE,
     testPerClass: Boolean = false,
+    splitToBuckets: Boolean = true,
+    bucketSize: Int = 20,
 ) {
     models += TModel(
         path = path,
@@ -58,6 +61,7 @@ fun MutableTSuite.model(
         excludedDirectories = excludedDirectories,
         depth = if (!isRecursive) 0 else depth,
         testPerClass = testPerClass,
+        bucketSize = if (!splitToBuckets) null else bucketSize,
     )
 }
 

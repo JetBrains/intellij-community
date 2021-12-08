@@ -75,34 +75,82 @@ class SuiteElement private constructor(
                 if (model.testPerClass) {
                     nestedSuites += methods.map {
                         val nestedClassName = it.methodName.capitalize()
-                        SuiteElement(
+                        listOf(it).wrapToNestedClass(
                             group,
                             suite,
-                            model.copy(testClassName = nestedClassName),
+                            model,
                             nestedClassName,
-                            true,
-                            listOf(it, RunTestMethod(model)),
-                            emptyList(),
                         )
                     }
                     methods.clear()
-                } else if (nestedSuites.isNotEmpty()) {
-                    nestedSuites += SuiteElement(
-                        group,
-                        suite,
-                        model.copy(testClassName = "Uncategorized"),
-                        "Uncategorized",
-                        true,
-                        methods + RunTestMethod(model),
-                        emptyList(),
-                    )
-                    methods.clear()
                 } else {
-                    methods += RunTestMethod(model)
+                    if (nestedSuites.isNotEmpty()) {
+                        nestedSuites += methods.wrapToNestedClass(
+                            group,
+                            suite,
+                            model,
+                        )
+
+                        methods.clear()
+                    } else {
+                        methods += RunTestMethod(model)
+                    }
                 }
             }
 
-            return SuiteElement(group, suite, model, className, isNested, methods, nestedSuites)
+            val suiteElement = SuiteElement(group, suite, model, className, isNested, methods, nestedSuites)
+            return if (model.bucketSize != null) {
+                suiteElement.chunked(model.bucketSize)
+            } else {
+                suiteElement
+            }
+        }
+
+        private fun List<TestMethod>.wrapToNestedClass(
+            group: TGroup,
+            suite: TSuite,
+            model: TModel,
+            name: String = "Uncategorized",
+        ): SuiteElement = SuiteElement(
+            group = group,
+            suite = suite,
+            model = model.copy(testClassName = name),
+            className = name,
+            isNested = true,
+            methods = this.takeIf { methods -> methods.none { it.methodName == "runTest" } }?.plus(RunTestMethod(model)) ?: this,
+            nestedSuites = emptyList(),
+        )
+
+        private fun SuiteElement.chunked(bucketSize: Int): SuiteElement {
+            val size = methods.size - 1
+            val newNestedClasses = if (size > bucketSize) {
+                methods.asSequence()
+                    .filter { it.methodName != "runTest" }
+                    .chunked(bucketSize)
+                    .mapIndexed { index: Int, testMethods: List<TestMethod> ->
+                        testMethods.wrapToNestedClass(
+                            group,
+                            suite,
+                            model,
+                            "TestBucket${index + 1}",
+                        )
+                    }
+                    .toList()
+            } else {
+                emptyList()
+            }
+
+            if (nestedSuites.isEmpty() && newNestedClasses.isEmpty()) return this
+
+            return SuiteElement(
+                group,
+                suite,
+                model,
+                className,
+                isNested,
+                if (newNestedClasses.isEmpty()) methods else emptyList(),
+                nestedSuites.map { it.chunked(bucketSize) } + newNestedClasses,
+            )
         }
 
         private fun flatten(element: SuiteElement): List<TestMethod> {
