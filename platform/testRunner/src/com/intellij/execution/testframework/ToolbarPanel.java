@@ -56,11 +56,13 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     boolean isNewLayout = Registry.is("debugger.new.tool.window.layout");
 
     var sortGroup = !isNewLayout ? actionGroup : DefaultActionGroup.createPopupGroup(() -> ExecutionBundle.message("junit.runing.info.sort.group.name"));
+    DumbAwareToggleBooleanProperty suitesAlwaysOnTop =
+      new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.folders.on.top.action.name"),
+                                         ExecutionBundle.message("junit.runing.info.folders.on.top.action.description"),
+                                         null,
+                                         properties, TestConsoleProperties.SUITES_ALWAYS_ON_TOP);
     if (isNewLayout) {
-      sortGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.folders.on.top.action.name"),
-                                                             ExecutionBundle.message("junit.runing.info.folders.on.top.action.description"),
-                                                             null,
-                                                             properties, TestConsoleProperties.SUITES_ALWAYS_ON_TOP));
+      sortGroup.addAction(suitesAlwaysOnTop);
     }
     sortGroup.addAction(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.name"),
                                                              ExecutionBundle.message("junit.runing.info.sort.alphabetically.action.description"),
@@ -126,6 +128,9 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
     secondaryGroup.add(new DumbAwareToggleBooleanProperty(TestRunnerBundle.message("action.show.inline.statistics.text"), TestRunnerBundle
       .message("action.toggle.visibility.test.duration.in.tree.description"),
                                                           null, properties, TestConsoleProperties.SHOW_INLINE_STATISTICS));
+    if (!isNewLayout) {
+      secondaryGroup.add(suitesAlwaysOnTop);
+    }
 
     secondaryGroup.addSeparator();
     secondaryGroup.add(new DumbAwareToggleBooleanProperty(ExecutionBundle.message("junit.runing.info.scroll.to.stacktrace.action.name"),
