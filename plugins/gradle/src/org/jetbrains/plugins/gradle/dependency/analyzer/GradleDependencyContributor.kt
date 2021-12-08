@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
-import org.jetbrains.concurrency.runAsync
 import org.jetbrains.plugins.gradle.service.task.GradleTaskManager
 import org.jetbrains.plugins.gradle.tooling.tasks.DependenciesReport
 import org.jetbrains.plugins.gradle.tooling.tasks.DependencyNodeDeserializer
@@ -29,13 +28,11 @@ import org.jetbrains.plugins.gradle.util.GradleModuleData
 import java.util.concurrent.ConcurrentHashMap
 
 class GradleDependencyContributor(private val project: Project) : DependencyContributor {
-  private val projects = mutableMapOf<String, GradleModuleData>()
+  private val projects = ConcurrentHashMap<String, GradleModuleData>()
   private val configurationNodesMap = ConcurrentHashMap<String, List<DependencyScopeNode>>()
   private val dependencyMap = ConcurrentHashMap<Long, Dependency>()
-  private lateinit var updateViewTrigger: () -> Unit
 
   override fun whenDataChanged(listener: () -> Unit, parentDisposable: Disposable) {
-    updateViewTrigger = listener
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
     progressManager.addNotificationListener(object : ExternalSystemTaskNotificationListenerAdapter() {
       override fun onEnd(id: ExternalSystemTaskId) {
@@ -44,7 +41,7 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
         projects.clear()
         configurationNodesMap.clear()
         dependencyMap.clear()
-        updateViewTrigger()
+        listener()
       }
     }, parentDisposable)
   }
@@ -73,15 +70,8 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
   }
 
   private fun getOrRefreshData(gradleModuleData: GradleModuleData): List<DependencyScopeNode> {
-    return configurationNodesMap.computeIfAbsent(gradleModuleData.gradleProjectDir) { path ->
-      runAsync { // TODO should be replaced with async loading data by DependencyAnalyzerViewImpl
-        val dependencyScopeNodes = gradleModuleData.getDependencies(project)
-        if (dependencyScopeNodes.isNotEmpty()) {
-          configurationNodesMap[path] = dependencyScopeNodes
-          updateViewTrigger()
-        }
-      }
-      emptyList()
+    return configurationNodesMap.computeIfAbsent(gradleModuleData.gradleProjectDir) {
+      gradleModuleData.getDependencies(project)
     }
   }
 

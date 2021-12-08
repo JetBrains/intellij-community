@@ -4,14 +4,33 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.Nls
 
+/**
+ * Contributor dependencies data for dependency analyzer.
+ *
+ * All functions, which give access for external system dependencies data,
+ * are called from non-modal background thread to free UI thread when data is being loaded.
+ * @see DependencyAnalyzerExtension.createContributor
+ */
 interface DependencyContributor {
 
+  /**
+   * @param listener should be called when dependencies data changed.
+   */
   fun whenDataChanged(listener: () -> Unit, parentDisposable: Disposable)
 
+  /**
+   * Gets external system projects for external system.
+   */
   fun getExternalProjects(): List<ExternalProject>
 
+  /**
+   * Gets scopes/configurations (e.g. compile, runtime, test, etc.) for specified external project.
+   */
   fun getDependencyScopes(externalProjectPath: String): List<Scope>
 
+  /**
+   * Gets dependencies for specified external project.
+   */
   fun getDependencies(externalProjectPath: String): List<Dependency>
 
   class ExternalProject(val path: String, val title: @Nls String) {

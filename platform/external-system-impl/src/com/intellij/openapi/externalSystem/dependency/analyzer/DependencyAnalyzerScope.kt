@@ -158,6 +158,7 @@ private class SearchScopeDropDownLink(
   }
 
   init {
+    autoHideOnDisable = false
     foreground = JBUI.CurrentTheme.Label.foreground()
     whenItemSelected { text = itemToString(selectedItem) }
     bind(property)
