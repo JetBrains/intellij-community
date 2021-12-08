@@ -1068,8 +1068,11 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
             aReturn.delete();
           }
         }
-        else if (aReturn == null) {
-          docComment.add(JavaPsiFacade.getElementFactory(method.getProject()).createDocTagFromText("@return"));
+        else {
+          String oldReturnType = changeInfo.getOldReturnType();
+          if (aReturn == null && oldReturnType != null && PsiType.VOID.equalsToText(oldReturnType)) {
+            docComment.add(JavaPsiFacade.getElementFactory(method.getProject()).createDocTagFromText("@return"));
+          }
         }
       }
     }
