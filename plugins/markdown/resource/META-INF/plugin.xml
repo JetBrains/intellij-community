@@ -217,9 +217,9 @@ Includes the following features:</p>
     <actionPromoter implementation="org.intellij.plugins.markdown.ui.actions.MarkdownActionPromoter"/>
 
     <!--Formatting-->
-    <langCodeStyleSettingsProvider
-      implementation="org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCodeStyleSettingsProvider"/>
+    <langCodeStyleSettingsProvider implementation="org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCodeStyleSettingsProvider"/>
     <lang.formatter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.formatter.MarkdownFormattingModelBuilder"/>
+    <postFormatProcessor implementation="org.intellij.plugins.markdown.lang.formatter.BlockquotePostFormatProcessor"/>
     <lang.lineWrapStrategy language="Markdown" implementationClass="org.intellij.plugins.markdown.editor.MarkdownLineWrapPositionStrategy"/>
 
     <lang.commenter language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.MarkdownCommenter"/>

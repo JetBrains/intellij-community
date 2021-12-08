@@ -10,7 +10,6 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.blocks.special.MarkdownRangedFormattingBlock
 import org.intellij.plugins.markdown.lang.formatter.blocks.special.MarkdownWrappingFormattingBlock
-import org.intellij.plugins.markdown.util.parents
 
 internal object MarkdownBlocks {
   /**
@@ -34,13 +33,7 @@ internal object MarkdownBlocks {
         MarkdownRangedFormattingBlock.trimmed(node, settings, spacing, align(node), null)
       }
       MarkdownElementTypes.PARAGRAPH, MarkdownElementTypes.EMPH, MarkdownElementTypes.STRONG, MarkdownElementTypes.STRIKETHROUGH -> {
-        //Blockquotes should not be wrapped
-        if (node.parents().any { it.elementType == MarkdownTokenTypeSets.BLOCK_QUOTE }) {
-          MarkdownFormattingBlock(node, settings, spacing, align(node))
-        }
-        else {
-          MarkdownWrappingFormattingBlock(settings, spacing, node, align(node))
-        }
+        MarkdownWrappingFormattingBlock(settings, spacing, node, align(node))
       }
       else -> MarkdownFormattingBlock(node, settings, spacing, align(node))
     }
