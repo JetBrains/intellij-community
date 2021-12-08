@@ -339,7 +339,7 @@ private fun createAgreementComponent(showSystemInfo: () -> Unit): JComponent {
         showSystemInfo()
       }
     })
-    editorKit = HTMLEditorKitBuilder.simple()
+    editorKit = JBHtmlEditorKit()  // 213 specific change
     text = htmlText
 
     val styleSheet = (document as HTMLDocument).styleSheet
