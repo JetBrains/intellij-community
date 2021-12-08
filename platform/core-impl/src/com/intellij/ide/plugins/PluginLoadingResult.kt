@@ -10,6 +10,7 @@ import com.intellij.util.lang.Java11Shim
 import com.intellij.util.text.VersionComparatorUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.annotations.VisibleForTesting
 import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -22,15 +23,21 @@ import java.util.function.Supplier
 class PluginLoadingResult(private val brokenPluginVersions: Map<PluginId, Set<String?>>,
                           @JvmField val productBuildNumber: Supplier<BuildNumber>,
                           private val checkModuleDependencies: Boolean = !PlatformUtils.isIntelliJ()) {
-  @JvmField val incompletePlugins = ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl>()
+  @JvmField
+  val incompletePlugins = ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl>()
   private val plugins = HashMap<PluginId, IdeaPluginDescriptorImpl>()
 
   // only read is concurrent, write from the only thread
-  @JvmField val idMap = ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl>()
-  @JvmField var duplicateModuleMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? = null
+  @JvmField
+  val idMap = ConcurrentHashMap<PluginId, IdeaPluginDescriptorImpl>()
+  @JvmField
+  var duplicateModuleMap: MutableMap<PluginId, MutableList<IdeaPluginDescriptorImpl>>? = null
   private val pluginErrors = ConcurrentHashMap<PluginId, PluginLoadingError>()
   private val globalErrors = Collections.synchronizedList(ArrayList<Supplier<String>>())
-  @JvmField val shadowedBundledIds = HashSet<PluginId>()
+
+  @VisibleForTesting
+  @JvmField
+  val shadowedBundledIds = HashSet<PluginId>()
 
   // result, after calling finishLoading
   private var enabledPlugins: List<IdeaPluginDescriptorImpl>? = null
