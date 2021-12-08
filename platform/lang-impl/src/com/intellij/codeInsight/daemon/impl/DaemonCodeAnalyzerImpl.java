@@ -155,7 +155,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     myUpdateRunnableFuture.cancel(true);
   }
 
-  void clearProgressIndicator() {
+  synchronized void clearProgressIndicator() {
     HighlightingSessionImpl.clearProgressIndicator(myUpdateProgress);
   }
 
@@ -966,7 +966,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   @TestOnly
   @NotNull
-  public synchronized DaemonProgressIndicator getUpdateProgress() {
+  protected synchronized DaemonProgressIndicator getUpdateProgress() {
     return myUpdateProgress;
   }
 
