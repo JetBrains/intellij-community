@@ -10,7 +10,7 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlin-reflect" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-build-common-tests" level="project" />
     <orderEntry type="library" scope="TEST" name="Guava" level="project" />
