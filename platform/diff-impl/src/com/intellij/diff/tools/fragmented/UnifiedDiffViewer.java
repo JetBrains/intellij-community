@@ -776,10 +776,13 @@ public class UnifiedDiffViewer extends ListenerDiffViewerBase {
 
     LineFragment lineFragment = change.getLineFragment();
 
-    DiffUtil.applyModification(outputSide.select(document1, document2),
-                               outputSide.getStartLine(lineFragment), outputSide.getEndLine(lineFragment),
-                               sourceSide.select(document1, document2),
-                               sourceSide.getStartLine(lineFragment), sourceSide.getEndLine(lineFragment));
+    boolean isLastWithLocal = DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, myContext);
+    boolean isLocalChangeRevert = sourceSide == Side.LEFT && isLastWithLocal;
+    TextDiffViewerUtil.applyModification(outputSide.select(document1, document2),
+                                         outputSide.getStartLine(lineFragment), outputSide.getEndLine(lineFragment),
+                                         sourceSide.select(document1, document2),
+                                         sourceSide.getStartLine(lineFragment), sourceSide.getEndLine(lineFragment),
+                                         isLocalChangeRevert);
 
     // no need to mark myStateIsOutOfDate - it will be made by DocumentListener
     // TODO: we can apply change manually, without marking state out-of-date. But we'll have to schedule rediff anyway.

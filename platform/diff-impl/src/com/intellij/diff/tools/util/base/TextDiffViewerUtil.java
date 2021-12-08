@@ -11,6 +11,7 @@ import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.diff.util.DiffUserDataKeysEx;
+import com.intellij.diff.util.DiffUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -24,6 +25,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorPopupHandler;
 import com.intellij.openapi.editor.impl.ContextMenuPopupHandler;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.ToggleActionButton;
@@ -177,6 +179,20 @@ public final class TextDiffViewerUtil {
         recursiveRegisterShortcutSet((ActionGroup)action, component, parentDisposable);
       }
       action.registerCustomShortcutSet(component, parentDisposable);
+    }
+  }
+
+  public static void applyModification(@NotNull Document document1,
+                                       int line1,
+                                       int line2,
+                                       @NotNull Document document2,
+                                       int oLine1,
+                                       int oLine2,
+                                       boolean isLocalChangeRevert) {
+    DiffUtil.applyModification(document1, line1, line2, document2, oLine1, oLine2);
+
+    if (isLocalChangeRevert) {
+      DiffUtil.clearLineModificationFlags(document1, line1, line1 + (oLine2 - oLine1));
     }
   }
 

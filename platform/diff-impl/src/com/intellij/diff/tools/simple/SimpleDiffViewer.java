@@ -385,7 +385,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
   //
 
   boolean isDiffForLocalChanges() {
-    boolean isLastWithLocal = DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL.get(myContext, false);
+    boolean isLastWithLocal = DiffUtil.isUserDataFlagSet(DiffUserDataKeysEx.LAST_REVISION_WITH_LOCAL, myContext);
     return isLastWithLocal && !isEditable(Side.LEFT) && isEditable(Side.RIGHT);
   }
 
@@ -615,8 +615,12 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     if (!change.isValid()) return;
     Side outputSide = sourceSide.other();
 
-    DiffUtil.applyModification(getEditor(outputSide).getDocument(), change.getStartLine(outputSide), change.getEndLine(outputSide),
-                               getEditor(sourceSide).getDocument(), change.getStartLine(sourceSide), change.getEndLine(sourceSide));
+    boolean isLocalChangeRevert = sourceSide == Side.LEFT && isDiffForLocalChanges();
+    TextDiffViewerUtil.applyModification(getEditor(outputSide).getDocument(),
+                                         change.getStartLine(outputSide), change.getEndLine(outputSide),
+                                         getEditor(sourceSide).getDocument(),
+                                         change.getStartLine(sourceSide), change.getEndLine(sourceSide),
+                                         isLocalChangeRevert);
 
     myModel.destroyChange(change);
   }
