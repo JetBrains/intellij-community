@@ -31,5 +31,14 @@ fun ClassLoader.loadClassOrNull(name: String): Class<*>? {
 fun compilationFullName(simpleName: String, classifier: String?) =
     if (classifier != null) classifier + simpleName.capitalize() else simpleName
 
-@Suppress("DEPRECATION")
-fun String.capitalize(): String = this.capitalize(Locale.getDefault())
+fun String.capitalize(): String {
+    /* Default implementation as suggested by 'capitalize' deprecation */
+    if (KotlinVersion.CURRENT.isAtLeast(1, 5)) {
+        return this.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
+    }
+
+    /* Fallback implementation for older Kotlin versions */
+    if (this.isEmpty()) return this
+    @Suppress("DEPRECATION")
+    return this[0].toUpperCase() + this.drop(1)
+}

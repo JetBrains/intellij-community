@@ -5,25 +5,38 @@ package org.jetbrains.kotlin.idea.gradleTooling.reflect
 
 import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
+import kotlin.reflect.KClass
 import kotlin.reflect.KType
 import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.typeOf
 
 internal inline fun <reified T> returnType(): TypeToken<T> = TypeToken.create()
 
-internal inline fun <reified T> parameter(value: T?) = Parameter(TypeToken.create(), value)
+internal inline fun <reified T> parameter(value: T?): Parameter<T> = Parameter(TypeToken.create(), value)
 
 internal fun parameters(vararg parameter: Parameter<*>): ParameterList =
     if (parameter.isEmpty()) ParameterList.empty else ParameterList(parameter.toList())
 
-internal class TypeToken<T> private constructor(val type: KType) {
+internal class TypeToken<T> private constructor(
+    val kotlinType: KType?,
+    val kotlinClass: KClass<*>,
+    val isMarkedNullable: Boolean
+) {
     override fun toString(): String {
-        return type.toString()
+        return kotlinType?.toString() ?: (kotlinClass.java.name + if (isMarkedNullable) "?" else "")
     }
 
     companion object {
         inline fun <reified T> create(): TypeToken<T> {
-            return TypeToken(typeOf<T>())
+            /* KType is not supported with older versions of Kotlin bundled in old Gradle versions (4.x) */
+            val type = runCatching { typeOf<T>() }.getOrNull()
+
+            val isMarkedNullable = when {
+                type != null -> type.isMarkedNullable
+                else -> null is T
+            }
+
+            return TypeToken(type, T::class, isMarkedNullable)
         }
     }
 }
@@ -43,15 +56,13 @@ private class GradleReflectionLogger(private val logger: Logger) : ReflectionLog
     }
 }
 
-internal class Parameter<T>(val typeToken: TypeToken<T>, val value: T?)
-
-internal val Parameter<*>.jvmErasure: Class<*>
-    get() {
-        if (typeToken.type.isMarkedNullable) {
-            return typeToken.type.jvmErasure.javaObjectType
-        }
-        return typeToken.type.jvmErasure.java
-    }
+internal class Parameter<T>(
+    /**
+     * Optional, because this is not supported in old Gradle/Kotlin Versions
+     */
+    val typeToken: TypeToken<T>,
+    val value: T?
+)
 
 internal class ParameterList(private val parameters: List<Parameter<*>>) : List<Parameter<*>> by parameters {
     companion object {
@@ -60,34 +71,44 @@ internal class ParameterList(private val parameters: List<Parameter<*>>) : List<
 }
 
 internal inline fun <reified T> Any.callReflective(
-    methodName: String, params: ParameterList, returnTypeProjection: TypeToken<T>, logger: ReflectionLogger
+    methodName: String, parameters: ParameterList, returnTypeToken: TypeToken<T>, logger: ReflectionLogger
 ): T? {
+    val parameterClasses = parameters.map { parameter ->
+        /* Ensure using the object representation for primitive types, when marked nullable */
+        if (parameter.typeToken.isMarkedNullable) parameter.typeToken.kotlinClass.javaObjectType
+        else parameter.typeToken.kotlinClass.javaPrimitiveType?: parameter.typeToken.kotlinClass.java
+    }
+
     val method = try {
-        this::class.java.getMethod(methodName, *params.map { it.jvmErasure }.toTypedArray())
+        this::class.java.getMethod(methodName, *parameterClasses.toTypedArray())
     } catch (e: Exception) {
         logger.logIssue("Failed to invoke $methodName on ${this.javaClass.name}", e)
         return null
     }
-    method.trySetAccessible()
+
+    runCatching {
+        @Suppress("Since15")
+        method.trySetAccessible()
+    }
 
     val returnValue = try {
-        method.invoke(this, *params.map { it.value }.toTypedArray())
+        method.invoke(this, *parameters.map { it.value }.toTypedArray())
     } catch (t: Throwable) {
         logger.logIssue("Failed to invoke $methodName on ${this.javaClass.name}", t)
         return null
     }
 
     if (returnValue == null) {
-        if (!returnTypeProjection.type.isMarkedNullable) {
-            logger.logIssue("Method $methodName on ${this.javaClass.name} unexpectedly returned null (expected $returnTypeProjection)")
+        if (!returnTypeToken.isMarkedNullable) {
+            logger.logIssue("Method $methodName on ${this.javaClass.name} unexpectedly returned null (expected $returnTypeToken)")
         }
         return null
     }
 
-    if (!returnTypeProjection.type.jvmErasure.isInstance(returnValue)) {
+    if (!returnTypeToken.kotlinClass.javaObjectType.isInstance(returnValue)) {
         logger.logIssue(
             "Method $methodName on ${this.javaClass.name} unexpectedly returned ${returnValue.javaClass.name}, which is " +
-                    "not an instance of ${returnTypeProjection}"
+                    "not an instance of ${returnTypeToken}"
         )
         return null
     }
