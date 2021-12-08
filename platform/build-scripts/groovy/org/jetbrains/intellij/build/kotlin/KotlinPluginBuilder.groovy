@@ -212,20 +212,20 @@ class KotlinPluginBuilder {
       String jpsPluginJar = "jps/kotlin-jps-plugin.jar"
       withModule("kotlin.jps-plugin", jpsPluginJar)
 
-      String kotlincKotlinCompiler = "kotlinc.kotlin-compiler"
-      withProjectLibrary(kotlincKotlinCompiler, ProjectLibraryData.PackMode.STANDALONE_SEPARATE)
+      String kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
+      withProjectLibrary(kotlincKotlinCompilerCommon, ProjectLibraryData.PackMode.STANDALONE_SEPARATE)
 
       withModuleOutputPatches(MAIN_KOTLIN_PLUGIN_MODULE, new ResourcesGenerator() {
         @Override
         File generateResources(BuildContext context) {
-          JpsLibrary library = context.project.libraryCollection.findLibrary(kotlincKotlinCompiler)
+          JpsLibrary library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)
           List<File> jars = library.getFiles(JpsOrderRootType.COMPILED)
           if (jars.size() != 1) {
-            throw new IllegalStateException("$kotlincKotlinCompiler is expected to have only one jar")
+            throw new IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
           }
-          def extractedDir = context.paths.tempDir.resolve("$kotlincKotlinCompiler-extracted")
+          def extractedDir = context.paths.tempDir.resolve("$kotlincKotlinCompilerCommon-extracted")
           new Decompressor.Zip(jars[0]).extract(extractedDir)
-          def compilerExtensions = context.paths.tempDir.resolve("$kotlincKotlinCompiler-compiler-extensions")
+          def compilerExtensions = context.paths.tempDir.resolve("$kotlincKotlinCompilerCommon-compiler-extensions")
           def prefix = "META-INF/extensions"
           compilerExtensions.resolve(prefix).toFile().mkdirs()
           for (File file : extractedDir.resolve(prefix).toFile().listFiles()) {
@@ -234,6 +234,9 @@ class KotlinPluginBuilder {
           return compilerExtensions.toFile()
         }
       })
+
+      withProjectLibrary("kotlinc.kotlin-compiler-fe10")
+      withProjectLibrary("kotlinc.kotlin-compiler-ir")
 
       withModule("kotlin.jps-common", "kotlin-jps-common.jar")
       withModule("kotlin.common", "kotlin-common.jar")
