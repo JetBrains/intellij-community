@@ -149,9 +149,6 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
       is ArtifactDependencyNode -> {
         Artifact(group, module, version)
       }
-      is UnknownDependencyNode -> {
-        Artifact("", displayName, "")
-      }
       else -> null
     }
   }
