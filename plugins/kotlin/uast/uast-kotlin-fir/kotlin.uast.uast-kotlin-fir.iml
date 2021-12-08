@@ -21,11 +21,13 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
-    <orderEntry type="library" name="kotlinc.kotlin-compiler" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="library" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="library" name="ASM" level="project" />
     <orderEntry type="module" module-name="kotlin.resources-fir" />
     <orderEntry type="module" module-name="kotlin.uast.uast-kotlin-base" />
+    <orderEntry type="library" name="kotlinc.analysis-project-structure" level="project" />
     <orderEntry type="library" name="kotlinc.high-level-api" level="project" />
     <orderEntry type="library" name="kotlinc.high-level-api-fir" level="project" />
     <orderEntry type="library" name="kotlinc.high-level-api-impl-base" level="project" />
