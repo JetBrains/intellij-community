@@ -34,6 +34,7 @@ import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
+import java.util.concurrent.ConcurrentHashMap
 
 internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
                                       private val provider: Provider)
@@ -161,19 +162,18 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
 
 
   class Provider: MarkdownBrowserPreviewExtension.Provider, MarkdownConfigurableExtension, ResourceProvider {
-    val extensions = mutableMapOf<VirtualFile, CommandRunnerExtension>()
+    val extensions = ConcurrentHashMap<VirtualFile, CommandRunnerExtension>()
 
     init {
       PreviewStaticServer.instance.registerResourceProvider(this)
     }
 
     override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
-      if ( panel.project == null || panel.virtualFile == null
-          || !MarkdownSettings.getInstance(panel.project!!).isRunnerEnabled
-      ) return null
-
-      extensions.computeIfAbsent(panel.virtualFile!!) { CommandRunnerExtension(panel, this) }
-      return extensions[panel.virtualFile]
+      val virtualFile = panel.virtualFile ?: return null
+      if (panel.project?.let(MarkdownSettings::getInstance)?.isRunnerEnabled == false) {
+        return null
+      }
+      return extensions.computeIfAbsent(virtualFile) { CommandRunnerExtension(panel, this) }
     }
 
     override val displayName: String
@@ -213,7 +213,8 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
     private const val RUN_BLOCK_ICON = "runrun.png"
 
     fun getRunnerByFile(file: VirtualFile?) : CommandRunnerExtension? {
-      return MarkdownExtensionsUtil.findBrowserExtensionProvider<Provider>()?.extensions?.get(file)
+      val provider = MarkdownExtensionsUtil.findBrowserExtensionProvider<Provider>()
+      return provider?.extensions?.get(file)
     }
 
     fun matches(project: Project, workingDirectory: String?, localSession: Boolean,
