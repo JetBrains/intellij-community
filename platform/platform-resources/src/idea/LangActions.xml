@@ -1655,6 +1655,11 @@
         <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage"/>
       </group>
     </group>
+    
+    <group id="RunToolbarWidgetCustomizableActionGroup">
+      <action class="com.intellij.execution.ui.RunWithDropDownAction" id="RunWithDropDown"/>
+      <action class="com.intellij.execution.ui.StopWithDropDownAction" id="StopWithDropDown"/>
+    </group>
 
     <action id="FileChooser.LightEditGotoOpenedFile"
             class="com.intellij.ide.lightEdit.actions.LightEditGotoOpenedFileAction"

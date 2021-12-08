@@ -149,6 +149,16 @@ public final class ExperimentalUI {
     paths.put("general/chevron-right.svg", "expui/general/chevronRight.svg");
     paths.put("general/chevron-up.svg", "expui/general/chevronUp.svg");
     paths.put("vcs/branch.svg", "expui/toolwindow/vcs.svg");
+    if (isNewToolbar()) {
+      paths.put("actions/execute.svg", "expui/run/widget/run.svg");
+      paths.put("actions/execute_dark.svg", "expui/run/widget/run_dark.svg");
+      paths.put("actions/startDebugger.svg", "expui/run/widget/debug.svg");
+      paths.put("actions/startDebugger_dark.svg", "expui/run/widget/debug_dark.svg");
+      paths.put("actions/restart.svg", "expui/run/widget/restart.svg");
+      paths.put("actions/restart_dark.svg", "expui/run/widget/restart_dark.svg");
+      paths.put("actions/suspend.svg", "expui/run/widget/stop.svg");
+      paths.put("actions/suspend_dark.svg", "expui/run/widget/stop_dark.svg");
+    }
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
