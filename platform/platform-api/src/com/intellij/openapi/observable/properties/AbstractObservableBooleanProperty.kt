@@ -4,7 +4,7 @@ package com.intellij.openapi.observable.properties
 import com.intellij.openapi.Disposable
 import com.intellij.util.containers.DisposableWrapperList
 
-abstract class AbstractObservableBooleanProperty : AbstractObservableProperty<Boolean>(), BooleanProperty {
+abstract class AbstractObservableBooleanProperty : AbstractObservableClearableProperty<Boolean>(), BooleanProperty {
 
   private val setListeners = DisposableWrapperList<() -> Unit>()
 
