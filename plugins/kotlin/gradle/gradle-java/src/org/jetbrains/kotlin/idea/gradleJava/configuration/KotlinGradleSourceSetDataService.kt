@@ -346,16 +346,6 @@ fun configureFacetByCachedCompilerArguments(
     }
 }
 
-fun configureFacetByCompilerArguments(kotlinFacet: KotlinFacet, argsInfo: ArgsInfo, modelsProvider: IdeModifiableModelsProvider?) {
-    val currentCompilerArguments = argsInfo.currentArguments
-    val defaultCompilerArguments = argsInfo.defaultArguments
-    val dependencyClasspath = argsInfo.dependencyClasspath.map { PathUtil.toSystemIndependentName(it) }
-    if (currentCompilerArguments.isNotEmpty()) {
-        parseCompilerArgumentsToFacet(currentCompilerArguments, defaultCompilerArguments, kotlinFacet, modelsProvider)
-    }
-    adjustClasspath(kotlinFacet, dependencyClasspath)
-}
-
 private fun getAdditionalVisibleModuleNames(moduleNode: DataNode<ModuleData>, sourceSetName: String): Set<String> {
     val kotlinGradleProjectDataNode = moduleNode.kotlinGradleProjectDataNodeOrNull ?: return emptySet()
     return ExternalSystemApiUtil.findAll(kotlinGradleProjectDataNode, KotlinGradleSourceSetData.KEY)
