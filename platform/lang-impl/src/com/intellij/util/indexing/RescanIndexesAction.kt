@@ -14,6 +14,8 @@ import com.intellij.psi.stubs.StubTreeBuilder
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.BooleanFunction
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
+import com.intellij.util.indexing.roots.IndexableFilesIterator
+import com.intellij.util.indexing.roots.ProjectIndexableFilesIteratorImpl
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
@@ -33,7 +35,11 @@ class RescanIndexesAction : RecoveryAction {
     val historyFuture = CompletableFuture<ProjectIndexingHistoryImpl>()
     val stubAndIndexingStampInconsistencies = Collections.synchronizedList(arrayListOf<CacheInconsistencyProblem>())
 
-    object : UnindexedFilesUpdater(project, "Rescanning indexes recovery action") {
+    var predefinedIndexableFilesIterators: List<IndexableFilesIterator>? = null
+    if (recoveryScope is FilesRecoveryScope) {
+      predefinedIndexableFilesIterators = recoveryScope.files.map { ProjectIndexableFilesIteratorImpl(it) }
+    }
+    object : UnindexedFilesUpdater(project, predefinedIndexableFilesIterators, "Rescanning indexes recovery action") {
       private val stubIndex =
         runCatching { (FileBasedIndex.getInstance() as FileBasedIndexImpl).getIndex(StubUpdatingIndex.INDEX_ID) }
         .onFailure { logger<RescanIndexesAction>().error(it) }.getOrNull()
@@ -87,8 +93,6 @@ class RescanIndexesAction : RecoveryAction {
       return listOf(ExceptionalCompletionProblem(e))
     }
   }
-
-  override fun canBeApplied(recoveryScope: RecoveryScope): Boolean = recoveryScope is ProjectRecoveryScope
 
   private fun ProjectIndexingHistoryImpl.extractConsistencyProblems(): List<CacheInconsistencyProblem> =
     scanningStatistics.filter { it.numberOfFilesForIndexing != 0 }.map {
