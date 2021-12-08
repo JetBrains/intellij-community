@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinLanguageSettingsRef
 import org.jetbrains.kotlin.idea.projectModel.KotlinLanguageSettings
 
 object KotlinLanguageSettingsBuilder : KotlinModelComponentBuilderBase<KotlinLanguageSettingsReflection, KotlinLanguageSettings> {
-    override fun buildComponent(origin: KotlinLanguageSettingsReflection): KotlinLanguageSettings? {
+    override fun buildComponent(origin: KotlinLanguageSettingsReflection): KotlinLanguageSettings {
         @Suppress("UNCHECKED_CAST")
         return KotlinLanguageSettingsImpl(
             languageVersion = origin.languageVersion,
