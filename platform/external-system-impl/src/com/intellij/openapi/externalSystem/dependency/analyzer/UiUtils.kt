@@ -30,6 +30,7 @@ import javax.swing.border.Border
 internal const val BORDER = 6
 internal const val INDENT = 16
 internal const val ICON_TEXT_GAP = 4
+internal const val ACTION_BORDER = 2
 
 internal fun emptyListBorder(): Border {
   return JBUI.Borders.empty()
@@ -108,16 +109,6 @@ internal fun <C : JBLoadingPanel> C.bindLoadingText(property: ObservableProperty
   property.afterChange { setLoadingText(it) }
 }
 
-internal fun JComponent.actionToolbarPanel(vararg actions: AnAction): JComponent {
-  val actionManager = ActionManager.getInstance()
-  val actionGroup = DefaultActionGroup(*actions)
-  val toolbar = actionManager.createActionToolbar(ActionPlaces.TOOLBAR, actionGroup, true)
-  toolbar.targetComponent = this
-  toolbar.component.isOpaque = false
-  toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-  return toolbar.component
-}
-
 internal fun toggleAction(property: ObservableClearableProperty<Boolean>): ToggleAction =
   object : ToggleAction(), DumbAware {
     override fun isSelected(e: AnActionEvent) = property.get()
@@ -135,11 +126,11 @@ internal fun popupActionGroup(vararg actions: AnAction) =
 
 internal fun AnAction.asActionButton() =
   ActionButton(this, templatePresentation.clone(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
-    .apply { border = JBUI.Borders.empty(1, 2) }
+    .apply { border = JBUI.Borders.empty(ACTION_BORDER) }
 
 internal fun separator() =
   JLabel(AllIcons.General.Divider)
-    .apply { border = JBUI.Borders.empty() }
+    .apply { border = JBUI.Borders.empty(ACTION_BORDER) }
     .apply { font = JBUI.Fonts.toolbarSmallComboBoxFont() }
 
 internal fun expandTreeAction(tree: JTree) =
