@@ -43,7 +43,6 @@ internal class KotlinVariantImpl(
     override val compilationOutputs: KotlinCompilationOutput?
 ) : KotlinVariant, KotlinFragment by fragment
 
-
 class KotlinModuleImpl(
     override val moduleIdentifier: KotlinModuleIdentifier,
     override val fragments: Collection<KotlinFragment>,
