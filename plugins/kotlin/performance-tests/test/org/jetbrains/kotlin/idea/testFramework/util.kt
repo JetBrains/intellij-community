@@ -31,7 +31,7 @@ fun <SV, TV> perfTest(
     setUp: (TestData<SV, TV>) -> Unit = { },
     test: (TestData<SV, TV>) -> Unit,
     tearDown: (TestData<SV, TV>) -> Unit = { },
-    checkStability: Boolean = true
+    stabilityWatermark: Int? = 20
 ) {
     val setUpWrapper = stats.profilerConfig.wrapSetUp(setUp)
     val testWrapper = stats.profilerConfig.wrapTest(test)
@@ -43,7 +43,8 @@ fun <SV, TV> perfTest(
         fastIterations = fastIterations,
         setUp = setUpWrapper,
         test = testWrapper,
-        tearDown = tearDownWrapper
+        tearDown = tearDownWrapper,
+        stabilityWatermark = stabilityWatermark
     )
     val mainPhaseData = PhaseData(
         stats = stats,
@@ -52,7 +53,8 @@ fun <SV, TV> perfTest(
         fastIterations = fastIterations,
         setUp = setUpWrapper,
         test = testWrapper,
-        tearDown = tearDownWrapper
+        tearDown = tearDownWrapper,
+        stabilityWatermark = stabilityWatermark
     )
     val block = {
         val metricChildren = mutableListOf<Metric>()
@@ -69,13 +71,12 @@ fun <SV, TV> perfTest(
                     logMessage { "$testName stability is $stabilityPercentage %" }
                     val stabilityName = "${stats.name}: $testName stability"
 
-                    val acceptanceStabilityLevel = stats.acceptanceStabilityLevel
-                    val stable = stabilityPercentage <= acceptanceStabilityLevel
+                    val stable = stabilityWatermark?.let { stabilityPercentage <= it } ?: true
 
-                    val error = if (stable or !checkStability) {
+                    val error = if (stable) {
                         null
                     } else {
-                        "$testName stability is $stabilityPercentage %, above accepted level of $acceptanceStabilityLevel %"
+                        "$testName stability is $stabilityPercentage %, above accepted level of $stabilityWatermark %"
                     }
 
                     TeamCity.test(stabilityName, errorDetails = error, includeStats = false) {
@@ -113,6 +114,7 @@ data class PhaseData<SV, TV>(
     val setUp: (TestData<SV, TV>) -> Unit,
     val test: (TestData<SV, TV>) -> Unit,
     val tearDown: (TestData<SV, TV>) -> Unit,
+    val stabilityWatermark: Int?,
     val fastIterations: Boolean = false
 )
 
@@ -221,7 +223,7 @@ private fun <SV, TV> phase(phaseData: PhaseData<SV, TV>, phaseName: String, warm
             if (phaseData.fastIterations && attempt > 0) {
                 val subArray = statInfosArray.take(attempt + 1).toTypedArray()
                 val stabilityPercentage = stats.stabilityPercentage(subArray)
-                val stable = stabilityPercentage <= stats.acceptanceStabilityLevel
+                val stable = phaseData.stabilityWatermark?.let { stabilityPercentage <= it } == true
                 if (stable) {
                     return subArray
                 }

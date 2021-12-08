@@ -26,6 +26,7 @@ open class MeasurementScope<T>(
             warmUpIterations(config.warmup)
             iterations(config.iterations)
             fastIterations(config.fastIterations)
+            stabilityWatermark(config.stabilityWatermark)
             setUp { setUp() }
             test { test() }
             tearDown { tearDown() }

@@ -76,6 +76,11 @@ class StatsScopeConfig(
     var name: String? = null,
     var warmup: Int = 2,
     var iterations: Int = 5,
+    /**
+     * results into an error if deviation is more than [stabilityWatermark] percentage,
+     * check is disabled if it is <code>null</code>
+     */
+    var stabilityWatermark: Int? = 20,
     var fastIterations: Boolean = false,
     var outputConfig: OutputConfig = OutputConfig(),
     var profilerConfig: ProfilerConfig = ProfilerConfig()

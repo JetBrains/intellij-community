@@ -14,8 +14,7 @@ import kotlin.system.measureTimeMillis
 class Stats(
     val name: String = "",
     val outputConfig: OutputConfig = OutputConfig(),
-    val profilerConfig: ProfilerConfig = ProfilerConfig(),
-    val acceptanceStabilityLevel: Int = 25
+    val profilerConfig: ProfilerConfig = ProfilerConfig()
 ) : AutoCloseable {
 
     private val perfTestRawDataMs = mutableListOf<Long>()
