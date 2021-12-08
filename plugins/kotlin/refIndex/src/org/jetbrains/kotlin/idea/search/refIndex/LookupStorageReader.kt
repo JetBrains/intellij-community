@@ -3,6 +3,8 @@ package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.openapi.project.Project
 import com.intellij.util.io.*
+import org.jetbrains.kotlin.cli.common.CompilerSystemProperties
+import org.jetbrains.kotlin.cli.common.toBooleanLenient
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorage.Companion.buildDataPaths
 import org.jetbrains.kotlin.idea.search.refIndex.KotlinCompilerReferenceIndexStorage.Companion.kotlinDataContainer
 import org.jetbrains.kotlin.incremental.storage.*
@@ -36,9 +38,10 @@ class LookupStorageReader private constructor(
         fun create(kotlinDataContainerPath: Path, projectPath: String): LookupStorageReader? {
             val lookupStoragePath = kotlinDataContainerPath.resolve(LOOKUP_STORAGE_NAME).takeIf { it.exists() } ?: return null
             val idToFileStoragePath = kotlinDataContainerPath.resolve(ID_TO_FILE_STORAGE_NAME).takeIf { it.exists() } ?: return null
+            val storeFullFqNames = CompilerSystemProperties.COMPILE_INCREMENTAL_WITH_CLASSPATH_SNAPSHOTS.value.toBooleanLenient() ?: false
             val lookupStorage = openReadOnlyPersistentHashMap(
                 lookupStoragePath,
-                LookupSymbolKeyDescriptor,
+                LookupSymbolKeyDescriptor(storeFullFqNames),
                 IntCollectionExternalizer,
             )
 
