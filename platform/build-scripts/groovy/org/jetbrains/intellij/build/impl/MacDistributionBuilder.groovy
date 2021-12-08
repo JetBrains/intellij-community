@@ -252,7 +252,9 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                             BuildContext context) {
     MacDistributionCustomizer macCustomizer = customizer
     BuildHelper buildHelper = BuildHelper.getInstance(context)
-    buildHelper.copyDir(context.paths.communityHomeDir.resolve("bin/mac"), macDistDir.resolve("bin"))
+    buildHelper.copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"),
+                                      macDistDir.resolve("bin"),
+                                      customizer.binFilesFilter)
     buildHelper.copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
 
     String executable = context.productProperties.baseFileName
