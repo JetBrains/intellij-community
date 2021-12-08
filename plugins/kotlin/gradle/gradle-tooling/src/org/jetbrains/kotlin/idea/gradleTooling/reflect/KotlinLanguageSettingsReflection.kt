@@ -44,11 +44,11 @@ private class KotlinLanguageSettingsReflectionImpl(private val instance: Any) : 
     }
 
     override val compilerPluginArguments: List<String>? by lazy {
-        instance.callReflective("getCompilerPluginArguments", parameters(), returnType<Iterable<String>>(), logger)?.toList()
+        instance.callReflective("getCompilerPluginArguments", parameters(), returnType<Iterable<String>?>(), logger)?.toList()
     }
 
     override val compilerPluginClasspath: Set<File>? by lazy {
-        instance.callReflective("getCompilerPluginClasspath", parameters(), returnType<Iterable<File>>(), logger)?.toSet()
+        instance.callReflective("getCompilerPluginClasspath", parameters(), returnType<Iterable<File>?>(), logger)?.toSet()
     }
 
     override val freeCompilerArgs: List<String>? by lazy {
