@@ -136,9 +136,12 @@
     <notificationGroup id="Gradle Import" displayType="BALLOON"/>
   </extensions>
   <applicationListeners>
+    <listener class="com.intellij.openapi.externalSystem.autoimport.ProjectRefreshFloatingProvider$Listener"
+              topic="com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware$Listener"
+              activeInHeadlessMode="true" activeInTestMode="true"/>
     <listener class="com.intellij.openapi.externalSystem.service.project.ExternalSystemTrustedListener"
               topic="com.intellij.ide.impl.TrustStateListener"
-              activeInHeadlessMode="false" activeInTestMode="false" />
+              activeInHeadlessMode="false" activeInTestMode="false"/>
   </applicationListeners>
 </idea-plugin>
 
