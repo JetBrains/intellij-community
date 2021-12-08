@@ -221,8 +221,8 @@ open class PluginAdvertiserService {
       }
 
       val globalIgnoredState = GlobalIgnoredPluginSuggestionState.getInstance()
-      for (pluginIdToIgnore in plugins) {
-        globalIgnoredState.ignoreFeature(pluginIdToIgnore.id)
+      for (pluginIdToIgnore in ids) {
+        globalIgnoredState.ignoreFeature(pluginIdToIgnore)
       }
     }
   }
