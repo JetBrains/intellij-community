@@ -29,7 +29,8 @@
     <orderEntry type="module" module-name="kotlin.repl" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.line-indent-provider" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.native" scope="TEST" />
-    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-common" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-fe10" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-cli" level="project" />
     <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-tests" level="project" />
     <orderEntry type="module" module-name="kotlin.core" scope="TEST" />

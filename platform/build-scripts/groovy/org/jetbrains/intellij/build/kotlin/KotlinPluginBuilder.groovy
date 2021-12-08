@@ -169,16 +169,16 @@ final class KotlinPluginBuilder {
         withModule("kotlin-ultimate.ultimate-native")
       }
 
-      String kotlincKotlinCompiler = "kotlinc.kotlin-compiler"
-      withProjectLibrary(kotlincKotlinCompiler, ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      String kotlincKotlinCompilerCommon = "kotlinc.kotlin-compiler-common"
+      withProjectLibrary(kotlincKotlinCompilerCommon, ProjectLibraryData.PackMode.STANDALONE_MERGED)
 
       withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
         @Override
         void accept(ModuleOutputPatcher patcher, BuildContext context) {
-          JpsLibrary library = context.project.libraryCollection.findLibrary(kotlincKotlinCompiler)
+          JpsLibrary library = context.project.libraryCollection.findLibrary(kotlincKotlinCompilerCommon)
           List<File> jars = library.getFiles(JpsOrderRootType.COMPILED)
           if (jars.size() != 1) {
-            throw new IllegalStateException("$kotlincKotlinCompiler is expected to have only one jar")
+            throw new IllegalStateException("$kotlincKotlinCompilerCommon is expected to have only one jar")
           }
 
           BuildHelper.getInstance(context).consumeDataByPrefix
@@ -190,6 +190,9 @@ final class KotlinPluginBuilder {
             })
         }
       })
+
+      withProjectLibrary("kotlinc.kotlin-compiler-fe10")
+      withProjectLibrary("kotlinc.kotlin-compiler-ir")
 
       withModule("kotlin.common", "kotlin-common.jar")
 

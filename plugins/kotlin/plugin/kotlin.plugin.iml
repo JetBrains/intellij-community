@@ -7,7 +7,7 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler" level="project" />
+    <orderEntry type="library" scope="PROVIDED" name="kotlinc.kotlin-compiler-common" level="project" />
     <orderEntry type="module" module-name="kotlin.common" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.common" scope="PROVIDED" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.allopen.gradle" scope="PROVIDED" />
