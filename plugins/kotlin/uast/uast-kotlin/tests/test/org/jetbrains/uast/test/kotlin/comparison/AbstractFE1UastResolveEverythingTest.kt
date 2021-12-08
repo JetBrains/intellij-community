@@ -6,7 +6,7 @@ package org.jetbrains.uast.test.kotlin.comparison
 
 import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastResolveEverythingTestBase
-import org.jetbrains.uast.test.kotlin.org.jetbrains.uast.test.env.kotlin.AbstractFE1UastTest
+import org.jetbrains.uast.test.kotlin.env.AbstractFE1UastTest
 
 abstract class AbstractFE1UastResolveEverythingTest : AbstractFE1UastTest(), UastResolveEverythingTestBase {
     override val isFirUastPlugin: Boolean = false
