@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.formatter.AbstractFormatterTest
 import org.jetbrains.kotlin.formatter.AbstractTypingIndentationTestBase
 import org.jetbrains.kotlin.idea.AbstractExpressionSelectionTest
 import org.jetbrains.kotlin.idea.AbstractSmartSelectionTest
+import org.jetbrains.kotlin.idea.AbstractWorkSelectionTest
 import org.jetbrains.kotlin.idea.actions.AbstractGotoTestOrCodeActionTest
 import org.jetbrains.kotlin.idea.caches.resolve.*
 import org.jetbrains.kotlin.idea.codeInsight.*
@@ -751,6 +752,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractSmartSelectionTest> {
             model("smartSelection", testMethodName = "doTestSmartSelection", pattern = KT_WITHOUT_DOTS)
+        }
+
+        testClass<AbstractWorkSelectionTest> {
+            model("wordSelection", pattern = DIRECTORY)
         }
 
         testClass<AbstractKotlinFileStructureTest> {
