@@ -28,6 +28,7 @@ function log() {
 function retry() {
   local operation=$1
   local limit=$2
+  local stop_code=23
   shift
   shift
   local attempt=1
@@ -35,6 +36,10 @@ function retry() {
     # shellcheck disable=SC2015
     "$@" && { log "$operation done"; return 0; } || {
       ec=$?
+      if [[ "$ec" == "$stop_code" ]]; then
+        log "$operation failed with exit code $ec, no more attempts."
+        return $ec
+      fi
       if [[ $attempt -ge limit ]]; then
         log "$operation failed with exit code $ec. Attempt $attempt/$limit."
         return $ec
