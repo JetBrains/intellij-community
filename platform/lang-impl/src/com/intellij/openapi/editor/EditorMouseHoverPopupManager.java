@@ -311,6 +311,7 @@ public class EditorMouseHoverPopupManager implements Disposable {
       .setResizable(true)
       .setFocusable(requestFocus)
       .setRequestFocus(requestFocus)
+      .setModalContext(false)
       .createPopup();
     popupBridge.setPopup(popup);
     return popup;
