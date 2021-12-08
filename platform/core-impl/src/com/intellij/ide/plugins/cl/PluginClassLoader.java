@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ShutDownTracker;
-import com.intellij.util.SmartList;
 import com.intellij.util.lang.ClassPath;
 import com.intellij.util.lang.ClasspathCache;
 import com.intellij.util.lang.Resource;
@@ -137,31 +136,6 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
 
   public interface ResolveScopeManager {
     String isDefinitelyAlienClass(String name, String packagePrefix, boolean force);
-  }
-
-  public PluginClassLoader(@NotNull UrlClassLoader.Builder builder,
-                           @NotNull IdeaPluginDescriptorImpl @NotNull [] dependencies,
-                           @NotNull PluginDescriptor pluginDescriptor,
-                           @Nullable Path pluginRoot,
-                           @NotNull ClassLoader coreLoader) {
-    super(builder, null, isParallelCapable);
-
-    instanceId = instanceIdProducer.incrementAndGet();
-
-    this.resolveScopeManager = (p1, p2, p3) -> null;
-    this.pluginDescriptor = pluginDescriptor;
-    pluginId = pluginDescriptor.getPluginId();
-    this.packagePrefix = null;
-    this.coreLoader = coreLoader;
-    this.parents = dependencies;
-
-    libDirectories = new SmartList<>();
-    if (pluginRoot != null) {
-      Path libDir = pluginRoot.resolve("lib");
-      if (Files.exists(libDir)) {
-        libDirectories.add(libDir.toAbsolutePath().toString());
-      }
-    }
   }
 
   public PluginClassLoader(@NotNull List<Path> files,
@@ -386,6 +360,12 @@ public final class PluginClassLoader extends UrlClassLoader implements PluginAwa
                                                (className.startsWith("kotlin.reflect.") &&
                                                 className.indexOf('.', 15 /* "kotlin.reflect".length */) < 0) ||
                                                KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
+  }
+
+  @Override
+  public boolean hasLoadedClass(String name) {
+    String consistencyError = resolveScopeManager.isDefinitelyAlienClass(name, packagePrefix, false);
+    return consistencyError == null && super.hasLoadedClass(name);
   }
 
   @Override
