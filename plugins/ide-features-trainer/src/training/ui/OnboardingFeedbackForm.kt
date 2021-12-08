@@ -207,7 +207,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     val description = getShortDescription(likenessResult(), technicalIssuesOption, freeForm)
     submitGeneralFeedback(project, onboardingFeedbackData.reportTitle, description,
                           onboardingFeedbackData.reportTitle, jsonConverter.encodeToString(collectedData),
-                          feedbackRequestType = FeedbackRequestType.PRODUCTION_REQUEST
+                          feedbackRequestType = FeedbackRequestType.NO_REQUEST
     )
   }
   StatisticBase.logOnboardingFeedbackDialogResult(
