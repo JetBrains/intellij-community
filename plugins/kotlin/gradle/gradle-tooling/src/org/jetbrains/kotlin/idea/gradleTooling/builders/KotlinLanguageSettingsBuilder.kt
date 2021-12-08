@@ -9,7 +9,7 @@ object KotlinLanguageSettingsBuilder : KotlinModelComponentBuilderBase<KotlinLan
     override fun buildComponent(origin: KotlinLanguageSettingsReflection): KotlinLanguageSettings? {
         @Suppress("UNCHECKED_CAST")
         return KotlinLanguageSettingsImpl(
-            languageVersion = origin.languageVersion ?: return null,
+            languageVersion = origin.languageVersion,
             apiVersion = origin.apiVersion,
             isProgressiveMode = origin.progressiveMode ?: false,
             enabledLanguageFeatures = origin.enabledLanguageFeatures.orEmpty(),
