@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.JDOMUtil;
@@ -61,7 +61,7 @@ public final class XmlSerializer {
 
   public static @NotNull <T> T deserialize(@NotNull URL url, Class<T> aClass) throws SerializationException {
     try {
-      return deserialize(JDOMXIncluder.resolveRoot(JDOMUtil.load(url), url), aClass);
+      return deserialize(JDOMUtil.load(url), aClass);
     }
     catch (IOException | JDOMException e) {
       throw new XmlSerializationException(e);
