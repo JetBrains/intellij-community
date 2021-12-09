@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class NullabilityInferenceTestGenerated extends AbstractNullabilityInferenceTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inference/nullability")
-    public static class TestBucket1 extends AbstractNullabilityInferenceTest {
+    public static class TestBucket001 extends AbstractNullabilityInferenceTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class NullabilityInferenceTestGenerated extends AbstractNullabil
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inference/nullability")
-    public static class TestBucket2 extends AbstractNullabilityInferenceTest {
+    public static class TestBucket002 extends AbstractNullabilityInferenceTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

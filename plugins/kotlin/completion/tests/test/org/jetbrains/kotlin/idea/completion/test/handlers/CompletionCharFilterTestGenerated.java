@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class CompletionCharFilterTestGenerated extends AbstractCompletionCharFilterTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/handlers/charFilter")
-    public static class TestBucket1 extends AbstractCompletionCharFilterTest {
+    public static class TestBucket001 extends AbstractCompletionCharFilterTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class CompletionCharFilterTestGenerated extends AbstractCompleti
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/handlers/charFilter")
-    public static class TestBucket2 extends AbstractCompletionCharFilterTest {
+    public static class TestBucket002 extends AbstractCompletionCharFilterTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

@@ -24,7 +24,7 @@ public abstract class MultiLineStringIndentTestGenerated extends AbstractMultiLi
     public abstract static class Spaces extends AbstractMultiLineStringIndentTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/multilineString/spaces")
-        public static class TestBucket1 extends AbstractMultiLineStringIndentTest {
+        public static class TestBucket001 extends AbstractMultiLineStringIndentTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -132,7 +132,7 @@ public abstract class MultiLineStringIndentTestGenerated extends AbstractMultiLi
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/multilineString/spaces")
-        public static class TestBucket2 extends AbstractMultiLineStringIndentTest {
+        public static class TestBucket002 extends AbstractMultiLineStringIndentTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

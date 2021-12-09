@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class StubBuilderTestGenerated extends AbstractStubBuilderTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stubs")
-    public static class TestBucket1 extends AbstractStubBuilderTest {
+    public static class TestBucket001 extends AbstractStubBuilderTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class StubBuilderTestGenerated extends AbstractStubBuilderTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/stubs")
-    public static class TestBucket2 extends AbstractStubBuilderTest {
+    public static class TestBucket002 extends AbstractStubBuilderTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

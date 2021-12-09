@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class MultiModuleLineMarkerTestGenerated extends AbstractMultiModuleLineMarkerTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleLineMarker")
-    public static class TestBucket1 extends AbstractMultiModuleLineMarkerTest {
+    public static class TestBucket001 extends AbstractMultiModuleLineMarkerTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class MultiModuleLineMarkerTestGenerated extends AbstractMultiMo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleLineMarker")
-    public static class TestBucket2 extends AbstractMultiModuleLineMarkerTest {
+    public static class TestBucket002 extends AbstractMultiModuleLineMarkerTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

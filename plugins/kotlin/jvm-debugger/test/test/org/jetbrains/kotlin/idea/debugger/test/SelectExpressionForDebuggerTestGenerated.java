@@ -23,7 +23,7 @@ public abstract class SelectExpressionForDebuggerTestGenerated extends AbstractS
     public abstract static class SelectExpression extends AbstractSelectExpressionForDebuggerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/selectExpression")
-        public static class TestBucket1 extends AbstractSelectExpressionForDebuggerTest {
+        public static class TestBucket001 extends AbstractSelectExpressionForDebuggerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -131,7 +131,7 @@ public abstract class SelectExpressionForDebuggerTestGenerated extends AbstractS
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/selectExpression")
-        public static class TestBucket2 extends AbstractSelectExpressionForDebuggerTest {
+        public static class TestBucket002 extends AbstractSelectExpressionForDebuggerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

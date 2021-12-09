@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class KDocCompletionTestGenerated extends AbstractJvmBasicCompletionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/kdoc")
-    public static class TestBucket1 extends AbstractJvmBasicCompletionTest {
+    public static class TestBucket001 extends AbstractJvmBasicCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class KDocCompletionTestGenerated extends AbstractJvmBasicComple
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/kdoc")
-    public static class TestBucket2 extends AbstractJvmBasicCompletionTest {
+    public static class TestBucket002 extends AbstractJvmBasicCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

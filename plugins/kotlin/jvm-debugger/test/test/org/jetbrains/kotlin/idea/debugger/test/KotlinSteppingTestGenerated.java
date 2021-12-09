@@ -199,7 +199,7 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
     public abstract static class StepIntoOnly extends AbstractKotlinSteppingTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/stepping/stepInto")
-        public static class TestBucket1 extends AbstractKotlinSteppingTest {
+        public static class TestBucket001 extends AbstractKotlinSteppingTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doStepIntoTest, this, testDataFilePath);
             }
@@ -307,7 +307,7 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/stepping/stepInto")
-        public static class TestBucket2 extends AbstractKotlinSteppingTest {
+        public static class TestBucket002 extends AbstractKotlinSteppingTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doStepIntoTest, this, testDataFilePath);
             }
@@ -423,7 +423,7 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
         public abstract static class Uncategorized extends AbstractKotlinSteppingTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/stepping/stepOver")
-            public static class TestBucket1 extends AbstractKotlinSteppingTest {
+            public static class TestBucket001 extends AbstractKotlinSteppingTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
                 }
@@ -531,7 +531,7 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/stepping/stepOver")
-            public static class TestBucket2 extends AbstractKotlinSteppingTest {
+            public static class TestBucket002 extends AbstractKotlinSteppingTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
                 }
@@ -639,7 +639,7 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/stepping/stepOver")
-            public static class TestBucket3 extends AbstractKotlinSteppingTest {
+            public static class TestBucket003 extends AbstractKotlinSteppingTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
                 }
@@ -747,7 +747,7 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/stepping/stepOver")
-            public static class TestBucket4 extends AbstractKotlinSteppingTest {
+            public static class TestBucket004 extends AbstractKotlinSteppingTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
                 }
@@ -855,7 +855,7 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/stepping/stepOver")
-            public static class TestBucket5 extends AbstractKotlinSteppingTest {
+            public static class TestBucket005 extends AbstractKotlinSteppingTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
                 }
@@ -963,7 +963,7 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/stepping/stepOver")
-            public static class TestBucket6 extends AbstractKotlinSteppingTest {
+            public static class TestBucket006 extends AbstractKotlinSteppingTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doStepOverTest, this, testDataFilePath);
                 }
@@ -1114,7 +1114,7 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
     public abstract static class Custom extends AbstractKotlinSteppingTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/stepping/custom")
-        public static class TestBucket1 extends AbstractKotlinSteppingTest {
+        public static class TestBucket001 extends AbstractKotlinSteppingTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doCustomTest, this, testDataFilePath);
             }
@@ -1222,7 +1222,7 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/stepping/custom")
-        public static class TestBucket2 extends AbstractKotlinSteppingTest {
+        public static class TestBucket002 extends AbstractKotlinSteppingTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doCustomTest, this, testDataFilePath);
             }
@@ -1330,7 +1330,7 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/stepping/custom")
-        public static class TestBucket3 extends AbstractKotlinSteppingTest {
+        public static class TestBucket003 extends AbstractKotlinSteppingTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doCustomTest, this, testDataFilePath);
             }
@@ -1438,7 +1438,7 @@ public abstract class KotlinSteppingTestGenerated extends AbstractKotlinStepping
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/stepping/custom")
-        public static class TestBucket4 extends AbstractKotlinSteppingTest {
+        public static class TestBucket004 extends AbstractKotlinSteppingTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doCustomTest, this, testDataFilePath);
             }

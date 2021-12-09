@@ -296,7 +296,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         public abstract static class Uncategorized extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/introduceVariable")
-            public static class TestBucket1 extends AbstractExtractionTest {
+            public static class TestBucket001 extends AbstractExtractionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
                 }
@@ -404,7 +404,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/introduceVariable")
-            public static class TestBucket2 extends AbstractExtractionTest {
+            public static class TestBucket002 extends AbstractExtractionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
                 }
@@ -512,7 +512,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/introduceVariable")
-            public static class TestBucket3 extends AbstractExtractionTest {
+            public static class TestBucket003 extends AbstractExtractionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
                 }
@@ -620,7 +620,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/introduceVariable")
-            public static class TestBucket4 extends AbstractExtractionTest {
+            public static class TestBucket004 extends AbstractExtractionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
                 }
@@ -728,7 +728,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/introduceVariable")
-            public static class TestBucket5 extends AbstractExtractionTest {
+            public static class TestBucket005 extends AbstractExtractionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doIntroduceVariableTest, this, testDataFilePath);
                 }
@@ -784,7 +784,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         public abstract static class Basic extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/basic")
-            public static class TestBucket1 extends AbstractExtractionTest {
+            public static class TestBucket001 extends AbstractExtractionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -892,7 +892,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/basic")
-            public static class TestBucket2 extends AbstractExtractionTest {
+            public static class TestBucket002 extends AbstractExtractionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -1000,7 +1000,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/extractFunction/basic")
-            public static class TestBucket3 extends AbstractExtractionTest {
+            public static class TestBucket003 extends AbstractExtractionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                 }
@@ -1408,7 +1408,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             public abstract static class OutputValues extends AbstractExtractionTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/refactoring/extractFunction/controlFlow/outputValues")
-                public static class TestBucket1 extends AbstractExtractionTest {
+                public static class TestBucket001 extends AbstractExtractionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                     }
@@ -1516,7 +1516,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/refactoring/extractFunction/controlFlow/outputValues")
-                public static class TestBucket2 extends AbstractExtractionTest {
+                public static class TestBucket002 extends AbstractExtractionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                     }
@@ -2284,7 +2284,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
             public abstract static class Misc extends AbstractExtractionTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/refactoring/extractFunction/parameters/misc")
-                public static class TestBucket1 extends AbstractExtractionTest {
+                public static class TestBucket001 extends AbstractExtractionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                     }
@@ -2392,7 +2392,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/refactoring/extractFunction/parameters/misc")
-                public static class TestBucket2 extends AbstractExtractionTest {
+                public static class TestBucket002 extends AbstractExtractionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doExtractFunctionTest, this, testDataFilePath);
                     }
@@ -2792,7 +2792,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         public abstract static class Uncategorized extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/introduceProperty")
-            public static class TestBucket1 extends AbstractExtractionTest {
+            public static class TestBucket001 extends AbstractExtractionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doIntroducePropertyTest, this, testDataFilePath);
                 }
@@ -2900,7 +2900,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/introduceProperty")
-            public static class TestBucket2 extends AbstractExtractionTest {
+            public static class TestBucket002 extends AbstractExtractionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doIntroducePropertyTest, this, testDataFilePath);
                 }
@@ -3130,7 +3130,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         public abstract static class Uncategorized extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/introduceParameter")
-            public static class TestBucket1 extends AbstractExtractionTest {
+            public static class TestBucket001 extends AbstractExtractionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doIntroduceSimpleParameterTest, this, testDataFilePath);
                 }
@@ -3238,7 +3238,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/introduceParameter")
-            public static class TestBucket2 extends AbstractExtractionTest {
+            public static class TestBucket002 extends AbstractExtractionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doIntroduceSimpleParameterTest, this, testDataFilePath);
                 }
@@ -3346,7 +3346,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/introduceParameter")
-            public static class TestBucket3 extends AbstractExtractionTest {
+            public static class TestBucket003 extends AbstractExtractionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doIntroduceSimpleParameterTest, this, testDataFilePath);
                 }
@@ -3676,7 +3676,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
     public abstract static class IntroduceTypeAlias extends AbstractExtractionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceTypeAlias")
-        public static class TestBucket1 extends AbstractExtractionTest {
+        public static class TestBucket001 extends AbstractExtractionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceTypeAliasTest, this, testDataFilePath);
             }
@@ -3784,7 +3784,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/introduceTypeAlias")
-        public static class TestBucket2 extends AbstractExtractionTest {
+        public static class TestBucket002 extends AbstractExtractionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doIntroduceTypeAliasTest, this, testDataFilePath);
             }
@@ -3844,7 +3844,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
         public abstract static class BinaryExpression extends AbstractExtractionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/introduceConstant/binaryExpression")
-            public static class TestBucket1 extends AbstractExtractionTest {
+            public static class TestBucket001 extends AbstractExtractionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doIntroduceConstantTest, this, testDataFilePath);
                 }
@@ -3952,7 +3952,7 @@ public abstract class ExtractionTestGenerated extends AbstractExtractionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/introduceConstant/binaryExpression")
-            public static class TestBucket2 extends AbstractExtractionTest {
+            public static class TestBucket002 extends AbstractExtractionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doIntroduceConstantTest, this, testDataFilePath);
                 }

@@ -80,7 +80,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class CallableReference extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/callableReference")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -113,7 +113,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/callableReference")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -146,7 +146,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/callableReference")
-        public static class TestBucket3 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket003 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -179,7 +179,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/callableReference")
-        public static class TestBucket4 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket004 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -212,7 +212,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/callableReference")
-        public static class TestBucket5 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket005 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -239,7 +239,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class Constructor extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/constructor")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -272,7 +272,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/constructor")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -305,7 +305,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/constructor")
-        public static class TestBucket3 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket003 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -338,7 +338,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/constructor")
-        public static class TestBucket4 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket004 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -365,7 +365,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class ForLoopRange extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/forLoopRange")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -398,7 +398,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/forLoopRange")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -420,7 +420,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class FunctionLiterals extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/functionLiterals")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -453,7 +453,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/functionLiterals")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -486,7 +486,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/functionLiterals")
-        public static class TestBucket3 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket003 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -519,7 +519,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/functionLiterals")
-        public static class TestBucket4 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket004 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -546,7 +546,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class Generics extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/generics")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -579,7 +579,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/generics")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -596,7 +596,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class HeuristicSignatures extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/heuristicSignatures")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -629,7 +629,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/heuristicSignatures")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -662,7 +662,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/heuristicSignatures")
-        public static class TestBucket3 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket003 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -689,7 +689,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class IfValue extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/ifValue")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -722,7 +722,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/ifValue")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -739,7 +739,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class InElvisOperator extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/inElvisOperator")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -772,7 +772,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/inElvisOperator")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -789,7 +789,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class InOperator extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/inOperator")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -822,7 +822,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/inOperator")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -859,7 +859,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class Inheritors extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/inheritors")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -892,7 +892,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/inheritors")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -924,7 +924,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class LambdaSignature extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/lambdaSignature")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -957,7 +957,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/lambdaSignature")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -979,7 +979,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class MultipleArgsItem extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/multipleArgsItem")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1012,7 +1012,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/multipleArgsItem")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1045,7 +1045,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/multipleArgsItem")
-        public static class TestBucket3 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket003 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1072,7 +1072,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class PropertyDelegate extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/propertyDelegate")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1105,7 +1105,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/propertyDelegate")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1138,7 +1138,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/propertyDelegate")
-        public static class TestBucket3 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket003 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1171,7 +1171,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/propertyDelegate")
-        public static class TestBucket4 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket004 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1204,7 +1204,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/propertyDelegate")
-        public static class TestBucket5 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket005 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1236,7 +1236,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class SmartCasts extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/smartCasts")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1269,7 +1269,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/smartCasts")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1306,7 +1306,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class This extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/this")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1339,7 +1339,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/this")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1366,7 +1366,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class Uncategorized extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1399,337 +1399,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart")
-        public static class TestBucket10 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("JavaEnumMembersAfterQualifier.kt")
-            public void testJavaEnumMembersAfterQualifier() throws Exception {
-                runTest("testData/smart/JavaEnumMembersAfterQualifier.kt");
-            }
-
-            @TestMetadata("JavaEnumMembersForNullable.kt")
-            public void testJavaEnumMembersForNullable() throws Exception {
-                runTest("testData/smart/JavaEnumMembersForNullable.kt");
-            }
-
-            @TestMetadata("JavaStaticFields.kt")
-            public void testJavaStaticFields() throws Exception {
-                runTest("testData/smart/JavaStaticFields.kt");
-            }
-
-            @TestMetadata("JavaStaticFieldsForNullable.kt")
-            public void testJavaStaticFieldsForNullable() throws Exception {
-                runTest("testData/smart/JavaStaticFieldsForNullable.kt");
-            }
-
-            @TestMetadata("JavaStaticMethods.kt")
-            public void testJavaStaticMethods() throws Exception {
-                runTest("testData/smart/JavaStaticMethods.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart")
-        public static class TestBucket11 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("kt5873.kt")
-            public void testKt5873() throws Exception {
-                runTest("testData/smart/kt5873.kt");
-            }
-
-            @TestMetadata("LambdaValue1.kt")
-            public void testLambdaValue1() throws Exception {
-                runTest("testData/smart/LambdaValue1.kt");
-            }
-
-            @TestMetadata("LambdaValue2.kt")
-            public void testLambdaValue2() throws Exception {
-                runTest("testData/smart/LambdaValue2.kt");
-            }
-
-            @TestMetadata("LambdaValue3.kt")
-            public void testLambdaValue3() throws Exception {
-                runTest("testData/smart/LambdaValue3.kt");
-            }
-
-            @TestMetadata("LambdaValue4.kt")
-            public void testLambdaValue4() throws Exception {
-                runTest("testData/smart/LambdaValue4.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart")
-        public static class TestBucket12 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("MapTo.kt")
-            public void testMapTo() throws Exception {
-                runTest("testData/smart/MapTo.kt");
-            }
-
-            @TestMetadata("MapTo2.kt")
-            public void testMapTo2() throws Exception {
-                runTest("testData/smart/MapTo2.kt");
-            }
-
-            @TestMetadata("MethodCallArgument.kt")
-            public void testMethodCallArgument() throws Exception {
-                runTest("testData/smart/MethodCallArgument.kt");
-            }
-
-            @TestMetadata("NamedArgument.kt")
-            public void testNamedArgument() throws Exception {
-                runTest("testData/smart/NamedArgument.kt");
-            }
-
-            @TestMetadata("NoAssertFailsWith.kt")
-            public void testNoAssertFailsWith() throws Exception {
-                runTest("testData/smart/NoAssertFailsWith.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart")
-        public static class TestBucket13 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("NoExtensionMethodFromClassObject.kt")
-            public void testNoExtensionMethodFromClassObject() throws Exception {
-                runTest("testData/smart/NoExtensionMethodFromClassObject.kt");
-            }
-
-            @TestMetadata("NoNothing.kt")
-            public void testNoNothing() throws Exception {
-                runTest("testData/smart/NoNothing.kt");
-            }
-
-            @TestMetadata("NoPrivateOverload.kt")
-            public void testNoPrivateOverload() throws Exception {
-                runTest("testData/smart/NoPrivateOverload.kt");
-            }
-
-            @TestMetadata("NoSillyAssignment.kt")
-            public void testNoSillyAssignment() throws Exception {
-                runTest("testData/smart/NoSillyAssignment.kt");
-            }
-
-            @TestMetadata("NotEqOperator.kt")
-            public void testNotEqOperator() throws Exception {
-                runTest("testData/smart/NotEqOperator.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart")
-        public static class TestBucket14 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("NotSillyAssignment.kt")
-            public void testNotSillyAssignment() throws Exception {
-                runTest("testData/smart/NotSillyAssignment.kt");
-            }
-
-            @TestMetadata("Null.kt")
-            public void testNull() throws Exception {
-                runTest("testData/smart/Null.kt");
-            }
-
-            @TestMetadata("NullableBooleanExpected.kt")
-            public void testNullableBooleanExpected() throws Exception {
-                runTest("testData/smart/NullableBooleanExpected.kt");
-            }
-
-            @TestMetadata("Object.kt")
-            public void testObject() throws Exception {
-                runTest("testData/smart/Object.kt");
-            }
-
-            @TestMetadata("ObjectsFromType.kt")
-            public void testObjectsFromType() throws Exception {
-                runTest("testData/smart/ObjectsFromType.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart")
-        public static class TestBucket15 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("OverloadedConstructorArgument.kt")
-            public void testOverloadedConstructorArgument() throws Exception {
-                runTest("testData/smart/OverloadedConstructorArgument.kt");
-            }
-
-            @TestMetadata("OverloadedMethodCallArgument1.kt")
-            public void testOverloadedMethodCallArgument1() throws Exception {
-                runTest("testData/smart/OverloadedMethodCallArgument1.kt");
-            }
-
-            @TestMetadata("OverloadedMethodCallArgument2.kt")
-            public void testOverloadedMethodCallArgument2() throws Exception {
-                runTest("testData/smart/OverloadedMethodCallArgument2.kt");
-            }
-
-            @TestMetadata("OverloadedMethodCallArgument3.kt")
-            public void testOverloadedMethodCallArgument3() throws Exception {
-                runTest("testData/smart/OverloadedMethodCallArgument3.kt");
-            }
-
-            @TestMetadata("ParameterWithDefaultValue.kt")
-            public void testParameterWithDefaultValue() throws Exception {
-                runTest("testData/smart/ParameterWithDefaultValue.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart")
-        public static class TestBucket16 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("PreviousArgError.kt")
-            public void testPreviousArgError() throws Exception {
-                runTest("testData/smart/PreviousArgError.kt");
-            }
-
-            @TestMetadata("PreviousArgMismatchedType.kt")
-            public void testPreviousArgMismatchedType() throws Exception {
-                runTest("testData/smart/PreviousArgMismatchedType.kt");
-            }
-
-            @TestMetadata("QualifiedOverloadedMethodCallArgument1.kt")
-            public void testQualifiedOverloadedMethodCallArgument1() throws Exception {
-                runTest("testData/smart/QualifiedOverloadedMethodCallArgument1.kt");
-            }
-
-            @TestMetadata("QualifiedOverloadedMethodCallArgument2.kt")
-            public void testQualifiedOverloadedMethodCallArgument2() throws Exception {
-                runTest("testData/smart/QualifiedOverloadedMethodCallArgument2.kt");
-            }
-
-            @TestMetadata("SAMConstructorForTypeAlias.kt")
-            public void testSAMConstructorForTypeAlias() throws Exception {
-                runTest("testData/smart/SAMConstructorForTypeAlias.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart")
-        public static class TestBucket17 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("SAMExpected1.kt")
-            public void testSAMExpected1() throws Exception {
-                runTest("testData/smart/SAMExpected1.kt");
-            }
-
-            @TestMetadata("SAMExpected2.kt")
-            public void testSAMExpected2() throws Exception {
-                runTest("testData/smart/SAMExpected2.kt");
-            }
-
-            @TestMetadata("SealedMembers.kt")
-            public void testSealedMembers() throws Exception {
-                runTest("testData/smart/SealedMembers.kt");
-            }
-
-            @TestMetadata("SkipDeclarationsOfType.kt")
-            public void testSkipDeclarationsOfType() throws Exception {
-                runTest("testData/smart/SkipDeclarationsOfType.kt");
-            }
-
-            @TestMetadata("SkipUnresolvedTypes.kt")
-            public void testSkipUnresolvedTypes() throws Exception {
-                runTest("testData/smart/SkipUnresolvedTypes.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart")
-        public static class TestBucket18 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("SuperConstructorArgument.kt")
-            public void testSuperConstructorArgument() throws Exception {
-                runTest("testData/smart/SuperConstructorArgument.kt");
-            }
-
-            @TestMetadata("SuperConstructorArgumentInClassHeader.kt")
-            public void testSuperConstructorArgumentInClassHeader() throws Exception {
-                runTest("testData/smart/SuperConstructorArgumentInClassHeader.kt");
-            }
-
-            @TestMetadata("SuperMembers.kt")
-            public void testSuperMembers() throws Exception {
-                runTest("testData/smart/SuperMembers.kt");
-            }
-
-            @TestMetadata("SuperMembers2.kt")
-            public void testSuperMembers2() throws Exception {
-                runTest("testData/smart/SuperMembers2.kt");
-            }
-
-            @TestMetadata("ThisConstructorArgument.kt")
-            public void testThisConstructorArgument() throws Exception {
-                runTest("testData/smart/ThisConstructorArgument.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart")
-        public static class TestBucket19 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("UnresolvedExpectedType.kt")
-            public void testUnresolvedExpectedType() throws Exception {
-                runTest("testData/smart/UnresolvedExpectedType.kt");
-            }
-
-            @TestMetadata("VariableAsFunction1.kt")
-            public void testVariableAsFunction1() throws Exception {
-                runTest("testData/smart/VariableAsFunction1.kt");
-            }
-
-            @TestMetadata("VariableAsFunction3.kt")
-            public void testVariableAsFunction3() throws Exception {
-                runTest("testData/smart/VariableAsFunction3.kt");
-            }
-
-            @TestMetadata("VariableInitializer.kt")
-            public void testVariableInitializer() throws Exception {
-                runTest("testData/smart/VariableInitializer.kt");
-            }
-
-            @TestMetadata("WithPrefix.kt")
-            public void testWithPrefix() throws Exception {
-                runTest("testData/smart/WithPrefix.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1762,30 +1432,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart")
-        public static class TestBucket20 extends AbstractJvmSmartCompletionTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("WithQualifier.kt")
-            public void testWithQualifier() throws Exception {
-                runTest("testData/smart/WithQualifier.kt");
-            }
-
-            @TestMetadata("WrongNumberOfTypeArguments.kt")
-            public void testWrongNumberOfTypeArguments() throws Exception {
-                runTest("testData/smart/WrongNumberOfTypeArguments.kt");
-            }
-
-            @TestMetadata("WrongReceiver.kt")
-            public void testWrongReceiver() throws Exception {
-                runTest("testData/smart/WrongReceiver.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/smart")
-        public static class TestBucket3 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket003 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1818,7 +1465,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart")
-        public static class TestBucket4 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket004 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1851,7 +1498,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart")
-        public static class TestBucket5 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket005 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1884,7 +1531,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart")
-        public static class TestBucket6 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket006 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1917,7 +1564,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart")
-        public static class TestBucket7 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket007 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1950,7 +1597,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart")
-        public static class TestBucket8 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket008 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1983,7 +1630,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart")
-        public static class TestBucket9 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket009 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2013,6 +1660,359 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
                 runTest("testData/smart/JavaEnumMembers.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/smart")
+        public static class TestBucket010 extends AbstractJvmSmartCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("JavaEnumMembersAfterQualifier.kt")
+            public void testJavaEnumMembersAfterQualifier() throws Exception {
+                runTest("testData/smart/JavaEnumMembersAfterQualifier.kt");
+            }
+
+            @TestMetadata("JavaEnumMembersForNullable.kt")
+            public void testJavaEnumMembersForNullable() throws Exception {
+                runTest("testData/smart/JavaEnumMembersForNullable.kt");
+            }
+
+            @TestMetadata("JavaStaticFields.kt")
+            public void testJavaStaticFields() throws Exception {
+                runTest("testData/smart/JavaStaticFields.kt");
+            }
+
+            @TestMetadata("JavaStaticFieldsForNullable.kt")
+            public void testJavaStaticFieldsForNullable() throws Exception {
+                runTest("testData/smart/JavaStaticFieldsForNullable.kt");
+            }
+
+            @TestMetadata("JavaStaticMethods.kt")
+            public void testJavaStaticMethods() throws Exception {
+                runTest("testData/smart/JavaStaticMethods.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/smart")
+        public static class TestBucket011 extends AbstractJvmSmartCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("kt5873.kt")
+            public void testKt5873() throws Exception {
+                runTest("testData/smart/kt5873.kt");
+            }
+
+            @TestMetadata("LambdaValue1.kt")
+            public void testLambdaValue1() throws Exception {
+                runTest("testData/smart/LambdaValue1.kt");
+            }
+
+            @TestMetadata("LambdaValue2.kt")
+            public void testLambdaValue2() throws Exception {
+                runTest("testData/smart/LambdaValue2.kt");
+            }
+
+            @TestMetadata("LambdaValue3.kt")
+            public void testLambdaValue3() throws Exception {
+                runTest("testData/smart/LambdaValue3.kt");
+            }
+
+            @TestMetadata("LambdaValue4.kt")
+            public void testLambdaValue4() throws Exception {
+                runTest("testData/smart/LambdaValue4.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/smart")
+        public static class TestBucket012 extends AbstractJvmSmartCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("MapTo.kt")
+            public void testMapTo() throws Exception {
+                runTest("testData/smart/MapTo.kt");
+            }
+
+            @TestMetadata("MapTo2.kt")
+            public void testMapTo2() throws Exception {
+                runTest("testData/smart/MapTo2.kt");
+            }
+
+            @TestMetadata("MethodCallArgument.kt")
+            public void testMethodCallArgument() throws Exception {
+                runTest("testData/smart/MethodCallArgument.kt");
+            }
+
+            @TestMetadata("NamedArgument.kt")
+            public void testNamedArgument() throws Exception {
+                runTest("testData/smart/NamedArgument.kt");
+            }
+
+            @TestMetadata("NoAssertFailsWith.kt")
+            public void testNoAssertFailsWith() throws Exception {
+                runTest("testData/smart/NoAssertFailsWith.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/smart")
+        public static class TestBucket013 extends AbstractJvmSmartCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("NoExtensionMethodFromClassObject.kt")
+            public void testNoExtensionMethodFromClassObject() throws Exception {
+                runTest("testData/smart/NoExtensionMethodFromClassObject.kt");
+            }
+
+            @TestMetadata("NoNothing.kt")
+            public void testNoNothing() throws Exception {
+                runTest("testData/smart/NoNothing.kt");
+            }
+
+            @TestMetadata("NoPrivateOverload.kt")
+            public void testNoPrivateOverload() throws Exception {
+                runTest("testData/smart/NoPrivateOverload.kt");
+            }
+
+            @TestMetadata("NoSillyAssignment.kt")
+            public void testNoSillyAssignment() throws Exception {
+                runTest("testData/smart/NoSillyAssignment.kt");
+            }
+
+            @TestMetadata("NotEqOperator.kt")
+            public void testNotEqOperator() throws Exception {
+                runTest("testData/smart/NotEqOperator.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/smart")
+        public static class TestBucket014 extends AbstractJvmSmartCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("NotSillyAssignment.kt")
+            public void testNotSillyAssignment() throws Exception {
+                runTest("testData/smart/NotSillyAssignment.kt");
+            }
+
+            @TestMetadata("Null.kt")
+            public void testNull() throws Exception {
+                runTest("testData/smart/Null.kt");
+            }
+
+            @TestMetadata("NullableBooleanExpected.kt")
+            public void testNullableBooleanExpected() throws Exception {
+                runTest("testData/smart/NullableBooleanExpected.kt");
+            }
+
+            @TestMetadata("Object.kt")
+            public void testObject() throws Exception {
+                runTest("testData/smart/Object.kt");
+            }
+
+            @TestMetadata("ObjectsFromType.kt")
+            public void testObjectsFromType() throws Exception {
+                runTest("testData/smart/ObjectsFromType.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/smart")
+        public static class TestBucket015 extends AbstractJvmSmartCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("OverloadedConstructorArgument.kt")
+            public void testOverloadedConstructorArgument() throws Exception {
+                runTest("testData/smart/OverloadedConstructorArgument.kt");
+            }
+
+            @TestMetadata("OverloadedMethodCallArgument1.kt")
+            public void testOverloadedMethodCallArgument1() throws Exception {
+                runTest("testData/smart/OverloadedMethodCallArgument1.kt");
+            }
+
+            @TestMetadata("OverloadedMethodCallArgument2.kt")
+            public void testOverloadedMethodCallArgument2() throws Exception {
+                runTest("testData/smart/OverloadedMethodCallArgument2.kt");
+            }
+
+            @TestMetadata("OverloadedMethodCallArgument3.kt")
+            public void testOverloadedMethodCallArgument3() throws Exception {
+                runTest("testData/smart/OverloadedMethodCallArgument3.kt");
+            }
+
+            @TestMetadata("ParameterWithDefaultValue.kt")
+            public void testParameterWithDefaultValue() throws Exception {
+                runTest("testData/smart/ParameterWithDefaultValue.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/smart")
+        public static class TestBucket016 extends AbstractJvmSmartCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("PreviousArgError.kt")
+            public void testPreviousArgError() throws Exception {
+                runTest("testData/smart/PreviousArgError.kt");
+            }
+
+            @TestMetadata("PreviousArgMismatchedType.kt")
+            public void testPreviousArgMismatchedType() throws Exception {
+                runTest("testData/smart/PreviousArgMismatchedType.kt");
+            }
+
+            @TestMetadata("QualifiedOverloadedMethodCallArgument1.kt")
+            public void testQualifiedOverloadedMethodCallArgument1() throws Exception {
+                runTest("testData/smart/QualifiedOverloadedMethodCallArgument1.kt");
+            }
+
+            @TestMetadata("QualifiedOverloadedMethodCallArgument2.kt")
+            public void testQualifiedOverloadedMethodCallArgument2() throws Exception {
+                runTest("testData/smart/QualifiedOverloadedMethodCallArgument2.kt");
+            }
+
+            @TestMetadata("SAMConstructorForTypeAlias.kt")
+            public void testSAMConstructorForTypeAlias() throws Exception {
+                runTest("testData/smart/SAMConstructorForTypeAlias.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/smart")
+        public static class TestBucket017 extends AbstractJvmSmartCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("SAMExpected1.kt")
+            public void testSAMExpected1() throws Exception {
+                runTest("testData/smart/SAMExpected1.kt");
+            }
+
+            @TestMetadata("SAMExpected2.kt")
+            public void testSAMExpected2() throws Exception {
+                runTest("testData/smart/SAMExpected2.kt");
+            }
+
+            @TestMetadata("SealedMembers.kt")
+            public void testSealedMembers() throws Exception {
+                runTest("testData/smart/SealedMembers.kt");
+            }
+
+            @TestMetadata("SkipDeclarationsOfType.kt")
+            public void testSkipDeclarationsOfType() throws Exception {
+                runTest("testData/smart/SkipDeclarationsOfType.kt");
+            }
+
+            @TestMetadata("SkipUnresolvedTypes.kt")
+            public void testSkipUnresolvedTypes() throws Exception {
+                runTest("testData/smart/SkipUnresolvedTypes.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/smart")
+        public static class TestBucket018 extends AbstractJvmSmartCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("SuperConstructorArgument.kt")
+            public void testSuperConstructorArgument() throws Exception {
+                runTest("testData/smart/SuperConstructorArgument.kt");
+            }
+
+            @TestMetadata("SuperConstructorArgumentInClassHeader.kt")
+            public void testSuperConstructorArgumentInClassHeader() throws Exception {
+                runTest("testData/smart/SuperConstructorArgumentInClassHeader.kt");
+            }
+
+            @TestMetadata("SuperMembers.kt")
+            public void testSuperMembers() throws Exception {
+                runTest("testData/smart/SuperMembers.kt");
+            }
+
+            @TestMetadata("SuperMembers2.kt")
+            public void testSuperMembers2() throws Exception {
+                runTest("testData/smart/SuperMembers2.kt");
+            }
+
+            @TestMetadata("ThisConstructorArgument.kt")
+            public void testThisConstructorArgument() throws Exception {
+                runTest("testData/smart/ThisConstructorArgument.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/smart")
+        public static class TestBucket019 extends AbstractJvmSmartCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("UnresolvedExpectedType.kt")
+            public void testUnresolvedExpectedType() throws Exception {
+                runTest("testData/smart/UnresolvedExpectedType.kt");
+            }
+
+            @TestMetadata("VariableAsFunction1.kt")
+            public void testVariableAsFunction1() throws Exception {
+                runTest("testData/smart/VariableAsFunction1.kt");
+            }
+
+            @TestMetadata("VariableAsFunction3.kt")
+            public void testVariableAsFunction3() throws Exception {
+                runTest("testData/smart/VariableAsFunction3.kt");
+            }
+
+            @TestMetadata("VariableInitializer.kt")
+            public void testVariableInitializer() throws Exception {
+                runTest("testData/smart/VariableInitializer.kt");
+            }
+
+            @TestMetadata("WithPrefix.kt")
+            public void testWithPrefix() throws Exception {
+                runTest("testData/smart/WithPrefix.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/smart")
+        public static class TestBucket020 extends AbstractJvmSmartCompletionTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("WithQualifier.kt")
+            public void testWithQualifier() throws Exception {
+                runTest("testData/smart/WithQualifier.kt");
+            }
+
+            @TestMetadata("WrongNumberOfTypeArguments.kt")
+            public void testWrongNumberOfTypeArguments() throws Exception {
+                runTest("testData/smart/WrongNumberOfTypeArguments.kt");
+            }
+
+            @TestMetadata("WrongReceiver.kt")
+            public void testWrongReceiver() throws Exception {
+                runTest("testData/smart/WrongReceiver.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
@@ -2020,7 +2020,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class Vararg extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/vararg")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2053,7 +2053,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/vararg")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2075,7 +2075,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
     public abstract static class WhenEntry extends AbstractJvmSmartCompletionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/whenEntry")
-        public static class TestBucket1 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket001 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2108,7 +2108,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/whenEntry")
-        public static class TestBucket2 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket002 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2141,7 +2141,7 @@ public abstract class JvmSmartCompletionTestGenerated extends AbstractJvmSmartCo
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/smart/whenEntry")
-        public static class TestBucket3 extends AbstractJvmSmartCompletionTest {
+        public static class TestBucket003 extends AbstractJvmSmartCompletionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

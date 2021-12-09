@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class SlicerNullnessGroupingTestGenerated extends AbstractSlicerNullnessGroupingTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/slicer/inflow")
-    public static class TestBucket1 extends AbstractSlicerNullnessGroupingTest {
+    public static class TestBucket001 extends AbstractSlicerNullnessGroupingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class SlicerNullnessGroupingTestGenerated extends AbstractSlicer
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/slicer/inflow")
-    public static class TestBucket2 extends AbstractSlicerNullnessGroupingTest {
+    public static class TestBucket002 extends AbstractSlicerNullnessGroupingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -237,7 +237,7 @@ public abstract class SlicerNullnessGroupingTestGenerated extends AbstractSlicer
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/slicer/inflow")
-    public static class TestBucket3 extends AbstractSlicerNullnessGroupingTest {
+    public static class TestBucket003 extends AbstractSlicerNullnessGroupingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -345,7 +345,7 @@ public abstract class SlicerNullnessGroupingTestGenerated extends AbstractSlicer
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/slicer/inflow")
-    public static class TestBucket4 extends AbstractSlicerNullnessGroupingTest {
+    public static class TestBucket004 extends AbstractSlicerNullnessGroupingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

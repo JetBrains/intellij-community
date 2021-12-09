@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class QuickDocProviderTestGenerated extends AbstractQuickDocProviderTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/editor/quickDoc")
-    public static class TestBucket1 extends AbstractQuickDocProviderTest {
+    public static class TestBucket001 extends AbstractQuickDocProviderTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class QuickDocProviderTestGenerated extends AbstractQuickDocProv
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/editor/quickDoc")
-    public static class TestBucket2 extends AbstractQuickDocProviderTest {
+    public static class TestBucket002 extends AbstractQuickDocProviderTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -237,7 +237,7 @@ public abstract class QuickDocProviderTestGenerated extends AbstractQuickDocProv
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/editor/quickDoc")
-    public static class TestBucket3 extends AbstractQuickDocProviderTest {
+    public static class TestBucket003 extends AbstractQuickDocProviderTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

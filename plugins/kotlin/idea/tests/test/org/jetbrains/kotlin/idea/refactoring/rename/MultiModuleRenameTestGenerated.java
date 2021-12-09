@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class MultiModuleRenameTestGenerated extends AbstractMultiModuleRenameTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/renameMultiModule")
-    public static class TestBucket1 extends AbstractMultiModuleRenameTest {
+    public static class TestBucket001 extends AbstractMultiModuleRenameTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class MultiModuleRenameTestGenerated extends AbstractMultiModule
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/renameMultiModule")
-    public static class TestBucket2 extends AbstractMultiModuleRenameTest {
+    public static class TestBucket002 extends AbstractMultiModuleRenameTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

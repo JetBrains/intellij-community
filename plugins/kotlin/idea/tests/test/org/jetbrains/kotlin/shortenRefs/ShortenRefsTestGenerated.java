@@ -410,7 +410,7 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
     public abstract static class Uncategorized extends AbstractShortenRefsTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/shortenRefs")
-        public static class TestBucket1 extends AbstractShortenRefsTest {
+        public static class TestBucket001 extends AbstractShortenRefsTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -518,7 +518,7 @@ public abstract class ShortenRefsTestGenerated extends AbstractShortenRefsTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/shortenRefs")
-        public static class TestBucket2 extends AbstractShortenRefsTest {
+        public static class TestBucket002 extends AbstractShortenRefsTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class MultiFileLocalInspectionTestGenerated extends AbstractMultiFileLocalInspectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiFileLocalInspections")
-    public static class TestBucket1 extends AbstractMultiFileLocalInspectionTest {
+    public static class TestBucket001 extends AbstractMultiFileLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class MultiFileLocalInspectionTestGenerated extends AbstractMult
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiFileLocalInspections")
-    public static class TestBucket2 extends AbstractMultiFileLocalInspectionTest {
+    public static class TestBucket002 extends AbstractMultiFileLocalInspectionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

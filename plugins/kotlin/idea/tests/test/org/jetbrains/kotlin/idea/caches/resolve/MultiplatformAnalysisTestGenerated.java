@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class MultiplatformAnalysisTestGenerated extends AbstractMultiplatformAnalysisTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiplatform")
-    public static class TestBucket1 extends AbstractMultiplatformAnalysisTest {
+    public static class TestBucket001 extends AbstractMultiplatformAnalysisTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class MultiplatformAnalysisTestGenerated extends AbstractMultipl
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiplatform")
-    public static class TestBucket2 extends AbstractMultiplatformAnalysisTest {
+    public static class TestBucket002 extends AbstractMultiplatformAnalysisTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -237,7 +237,7 @@ public abstract class MultiplatformAnalysisTestGenerated extends AbstractMultipl
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiplatform")
-    public static class TestBucket3 extends AbstractMultiplatformAnalysisTest {
+    public static class TestBucket003 extends AbstractMultiplatformAnalysisTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

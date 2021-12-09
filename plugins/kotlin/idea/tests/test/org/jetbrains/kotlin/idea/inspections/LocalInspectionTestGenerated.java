@@ -161,7 +161,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public abstract static class IfThenToElvis extends AbstractLocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/branched/ifThenToElvis")
-            public static class TestBucket1 extends AbstractLocalInspectionTest {
+            public static class TestBucket001 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -269,7 +269,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/branched/ifThenToElvis")
-            public static class TestBucket2 extends AbstractLocalInspectionTest {
+            public static class TestBucket002 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -377,7 +377,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/branched/ifThenToElvis")
-            public static class TestBucket3 extends AbstractLocalInspectionTest {
+            public static class TestBucket003 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -464,7 +464,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public abstract static class IfThenToSafeAccess extends AbstractLocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/branched/ifThenToSafeAccess")
-            public static class TestBucket1 extends AbstractLocalInspectionTest {
+            public static class TestBucket001 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -572,7 +572,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/branched/ifThenToSafeAccess")
-            public static class TestBucket2 extends AbstractLocalInspectionTest {
+            public static class TestBucket002 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -680,7 +680,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/branched/ifThenToSafeAccess")
-            public static class TestBucket3 extends AbstractLocalInspectionTest {
+            public static class TestBucket003 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -788,7 +788,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/branched/ifThenToSafeAccess")
-            public static class TestBucket4 extends AbstractLocalInspectionTest {
+            public static class TestBucket004 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1039,7 +1039,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             public abstract static class Termination extends AbstractLocalInspectionTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination")
-                public static class TestBucket1 extends AbstractLocalInspectionTest {
+                public static class TestBucket001 extends AbstractLocalInspectionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1147,7 +1147,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination")
-                public static class TestBucket2 extends AbstractLocalInspectionTest {
+                public static class TestBucket002 extends AbstractLocalInspectionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1255,7 +1255,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination")
-                public static class TestBucket3 extends AbstractLocalInspectionTest {
+                public static class TestBucket003 extends AbstractLocalInspectionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1363,7 +1363,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination")
-                public static class TestBucket4 extends AbstractLocalInspectionTest {
+                public static class TestBucket004 extends AbstractLocalInspectionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1471,7 +1471,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/convertCallChainIntoSequence/termination")
-                public static class TestBucket5 extends AbstractLocalInspectionTest {
+                public static class TestBucket005 extends AbstractLocalInspectionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1503,7 +1503,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             public abstract static class Uncategorized extends AbstractLocalInspectionTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/convertCallChainIntoSequence")
-                public static class TestBucket1 extends AbstractLocalInspectionTest {
+                public static class TestBucket001 extends AbstractLocalInspectionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1611,7 +1611,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/convertCallChainIntoSequence")
-                public static class TestBucket2 extends AbstractLocalInspectionTest {
+                public static class TestBucket002 extends AbstractLocalInspectionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1702,7 +1702,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public abstract static class SimplifiableCall extends AbstractLocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/collections/simplifiableCall")
-            public static class TestBucket1 extends AbstractLocalInspectionTest {
+            public static class TestBucket001 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1810,7 +1810,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/collections/simplifiableCall")
-            public static class TestBucket2 extends AbstractLocalInspectionTest {
+            public static class TestBucket002 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1898,7 +1898,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             public abstract static class Uncategorized extends AbstractLocalInspectionTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain")
-                public static class TestBucket1 extends AbstractLocalInspectionTest {
+                public static class TestBucket001 extends AbstractLocalInspectionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2006,7 +2006,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain")
-                public static class TestBucket2 extends AbstractLocalInspectionTest {
+                public static class TestBucket002 extends AbstractLocalInspectionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2114,7 +2114,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain")
-                public static class TestBucket3 extends AbstractLocalInspectionTest {
+                public static class TestBucket003 extends AbstractLocalInspectionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2222,7 +2222,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain")
-                public static class TestBucket4 extends AbstractLocalInspectionTest {
+                public static class TestBucket004 extends AbstractLocalInspectionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2330,7 +2330,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain")
-                public static class TestBucket5 extends AbstractLocalInspectionTest {
+                public static class TestBucket005 extends AbstractLocalInspectionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2438,7 +2438,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/collections/simplifiableCallChain")
-                public static class TestBucket6 extends AbstractLocalInspectionTest {
+                public static class TestBucket006 extends AbstractLocalInspectionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2466,7 +2466,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public abstract static class UselessCallOnCollection extends AbstractLocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/collections/uselessCallOnCollection")
-            public static class TestBucket1 extends AbstractLocalInspectionTest {
+            public static class TestBucket001 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2574,7 +2574,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/collections/uselessCallOnCollection")
-            public static class TestBucket2 extends AbstractLocalInspectionTest {
+            public static class TestBucket002 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2682,7 +2682,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/collections/uselessCallOnCollection")
-            public static class TestBucket3 extends AbstractLocalInspectionTest {
+            public static class TestBucket003 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2778,7 +2778,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class ComplexRedundantLet extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/complexRedundantLet")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2886,7 +2886,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/complexRedundantLet")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2994,7 +2994,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/complexRedundantLet")
-        public static class TestBucket3 extends AbstractLocalInspectionTest {
+        public static class TestBucket003 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3102,7 +3102,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/complexRedundantLet")
-        public static class TestBucket4 extends AbstractLocalInspectionTest {
+        public static class TestBucket004 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3545,7 +3545,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public abstract static class ReplaceCallWithBinaryOperator extends AbstractLocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/conventionNameCalls/replaceCallWithBinaryOperator")
-            public static class TestBucket1 extends AbstractLocalInspectionTest {
+            public static class TestBucket001 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3653,7 +3653,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/conventionNameCalls/replaceCallWithBinaryOperator")
-            public static class TestBucket2 extends AbstractLocalInspectionTest {
+            public static class TestBucket002 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3761,7 +3761,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/conventionNameCalls/replaceCallWithBinaryOperator")
-            public static class TestBucket3 extends AbstractLocalInspectionTest {
+            public static class TestBucket003 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3783,7 +3783,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public abstract static class ReplaceGetOrSet extends AbstractLocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet")
-            public static class TestBucket1 extends AbstractLocalInspectionTest {
+            public static class TestBucket001 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3891,7 +3891,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/conventionNameCalls/replaceGetOrSet")
-            public static class TestBucket2 extends AbstractLocalInspectionTest {
+            public static class TestBucket002 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3990,7 +3990,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class ConvertSealedSubClassToObject extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/convertSealedSubClassToObject")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4098,7 +4098,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/convertSealedSubClassToObject")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4125,7 +4125,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class ConvertTwoComparisonsToRangeCheck extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/convertTwoComparisonsToRangeCheck")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4233,7 +4233,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/convertTwoComparisonsToRangeCheck")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4703,7 +4703,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class DeprecatedCallableAddReplaceWith extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/deprecatedCallableAddReplaceWith")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4811,7 +4811,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/deprecatedCallableAddReplaceWith")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -4949,7 +4949,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class EqualsBetweenInconvertibleTypes extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/equalsBetweenInconvertibleTypes")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5057,7 +5057,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/equalsBetweenInconvertibleTypes")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5079,7 +5079,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class ExplicitThis extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/explicitThis")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5187,7 +5187,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/explicitThis")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5234,7 +5234,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class FloatingPointLiteralPrecision extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/floatingPointLiteralPrecision")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5342,7 +5342,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/floatingPointLiteralPrecision")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5359,7 +5359,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class FoldInitializerAndIfToElvis extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/foldInitializerAndIfToElvis")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5467,7 +5467,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/foldInitializerAndIfToElvis")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -6216,7 +6216,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public abstract static class IfToAssignment extends AbstractLocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/liftOut/ifToAssignment")
-            public static class TestBucket1 extends AbstractLocalInspectionTest {
+            public static class TestBucket001 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -6324,7 +6324,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/liftOut/ifToAssignment")
-            public static class TestBucket2 extends AbstractLocalInspectionTest {
+            public static class TestBucket002 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -7024,7 +7024,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class MayBeConstant extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/mayBeConstant")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7132,7 +7132,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/mayBeConstant")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7230,7 +7230,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class MoveLambdaOutsideParentheses extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/moveLambdaOutsideParentheses")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7338,7 +7338,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/moveLambdaOutsideParentheses")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7380,7 +7380,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class MoveVariableDeclarationIntoWhen extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/moveVariableDeclarationIntoWhen")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7488,7 +7488,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/moveVariableDeclarationIntoWhen")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7867,7 +7867,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class RedundantCompanionReference extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantCompanionReference")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7975,7 +7975,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantCompanionReference")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8083,7 +8083,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantCompanionReference")
-        public static class TestBucket3 extends AbstractLocalInspectionTest {
+        public static class TestBucket003 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8463,7 +8463,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class RedundantInnerClassModifier extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantInnerClassModifier")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8571,7 +8571,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantInnerClassModifier")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8679,7 +8679,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantInnerClassModifier")
-        public static class TestBucket3 extends AbstractLocalInspectionTest {
+        public static class TestBucket003 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8714,7 +8714,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class RedundantLambdaArrow extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantLambdaArrow")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8822,7 +8822,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantLambdaArrow")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -9230,7 +9230,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class RedundantOverride extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantOverride")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -9338,7 +9338,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantOverride")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -9569,7 +9569,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class RedundantSemicolon extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantSemicolon")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -9677,7 +9677,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantSemicolon")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -9820,7 +9820,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class RedundantUnitExpression extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantUnitExpression")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -9928,7 +9928,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantUnitExpression")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -10036,7 +10036,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantUnitExpression")
-        public static class TestBucket3 extends AbstractLocalInspectionTest {
+        public static class TestBucket003 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -10121,7 +10121,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class RedundantWith extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantWith")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -10229,7 +10229,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/redundantWith")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -10498,7 +10498,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class RemoveRedundantQualifierName extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/removeRedundantQualifierName")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -10606,7 +10606,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/removeRedundantQualifierName")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -10714,7 +10714,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/removeRedundantQualifierName")
-        public static class TestBucket3 extends AbstractLocalInspectionTest {
+        public static class TestBucket003 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -10822,7 +10822,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/removeRedundantQualifierName")
-        public static class TestBucket4 extends AbstractLocalInspectionTest {
+        public static class TestBucket004 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -10930,7 +10930,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/removeRedundantQualifierName")
-        public static class TestBucket5 extends AbstractLocalInspectionTest {
+        public static class TestBucket005 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -10992,7 +10992,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class RemoveRedundantSpreadOperator extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/removeRedundantSpreadOperator")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -11100,7 +11100,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/removeRedundantSpreadOperator")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -11960,7 +11960,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public abstract static class Collections extends AbstractLocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections")
-            public static class TestBucket1 extends AbstractLocalInspectionTest {
+            public static class TestBucket001 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -12068,7 +12068,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/collections")
-            public static class TestBucket2 extends AbstractLocalInspectionTest {
+            public static class TestBucket002 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -12191,7 +12191,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
         public abstract static class Math extends AbstractLocalInspectionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/math")
-            public static class TestBucket1 extends AbstractLocalInspectionTest {
+            public static class TestBucket001 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -12299,7 +12299,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/math")
-            public static class TestBucket2 extends AbstractLocalInspectionTest {
+            public static class TestBucket002 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -12407,7 +12407,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/inspectionsLocal/replaceJavaStaticMethodWithKotlinAnalog/math")
-            public static class TestBucket3 extends AbstractLocalInspectionTest {
+            public static class TestBucket003 extends AbstractLocalInspectionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -13704,7 +13704,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class SelfAssignment extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/selfAssignment")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -13812,7 +13812,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/selfAssignment")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -13950,7 +13950,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class SimpleRedundantLet extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/simpleRedundantLet")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -14058,7 +14058,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/simpleRedundantLet")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -14166,7 +14166,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/simpleRedundantLet")
-        public static class TestBucket3 extends AbstractLocalInspectionTest {
+        public static class TestBucket003 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -14274,7 +14274,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/simpleRedundantLet")
-        public static class TestBucket4 extends AbstractLocalInspectionTest {
+        public static class TestBucket004 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -14938,7 +14938,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class ThrowableNotThrown extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/throwableNotThrown")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15046,7 +15046,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/throwableNotThrown")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15083,7 +15083,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class TrailingComma extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/trailingComma")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15191,7 +15191,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/trailingComma")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15276,7 +15276,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class UnnecessaryVariable extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/unnecessaryVariable")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15384,7 +15384,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/unnecessaryVariable")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15674,7 +15674,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
     public abstract static class UnusedSymbol extends AbstractLocalInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/unusedSymbol")
-        public static class TestBucket1 extends AbstractLocalInspectionTest {
+        public static class TestBucket001 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15782,7 +15782,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspectionsLocal/unusedSymbol")
-        public static class TestBucket2 extends AbstractLocalInspectionTest {
+        public static class TestBucket002 extends AbstractLocalInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15986,7 +15986,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             public abstract static class Uncategorized extends AbstractLocalInspectionTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/useExpressionBody/convertToExpressionBody")
-                public static class TestBucket1 extends AbstractLocalInspectionTest {
+                public static class TestBucket001 extends AbstractLocalInspectionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -16094,7 +16094,7 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/inspectionsLocal/useExpressionBody/convertToExpressionBody")
-                public static class TestBucket2 extends AbstractLocalInspectionTest {
+                public static class TestBucket002 extends AbstractLocalInspectionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }

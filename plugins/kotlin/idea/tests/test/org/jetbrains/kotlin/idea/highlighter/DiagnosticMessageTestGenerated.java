@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class DiagnosticMessageTestGenerated extends AbstractDiagnosticMessageTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/diagnosticMessage")
-    public static class TestBucket1 extends AbstractDiagnosticMessageTest {
+    public static class TestBucket001 extends AbstractDiagnosticMessageTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class DiagnosticMessageTestGenerated extends AbstractDiagnosticM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/diagnosticMessage")
-    public static class TestBucket2 extends AbstractDiagnosticMessageTest {
+    public static class TestBucket002 extends AbstractDiagnosticMessageTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -237,7 +237,7 @@ public abstract class DiagnosticMessageTestGenerated extends AbstractDiagnosticM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/diagnosticMessage")
-    public static class TestBucket3 extends AbstractDiagnosticMessageTest {
+    public static class TestBucket003 extends AbstractDiagnosticMessageTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

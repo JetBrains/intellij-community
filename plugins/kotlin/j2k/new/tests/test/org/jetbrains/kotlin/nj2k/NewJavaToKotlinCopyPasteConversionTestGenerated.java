@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class NewJavaToKotlinCopyPasteConversionTestGenerated extends AbstractNewJavaToKotlinCopyPasteConversionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/copyPaste")
-    public static class TestBucket1 extends AbstractNewJavaToKotlinCopyPasteConversionTest {
+    public static class TestBucket001 extends AbstractNewJavaToKotlinCopyPasteConversionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class NewJavaToKotlinCopyPasteConversionTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/copyPaste")
-    public static class TestBucket2 extends AbstractNewJavaToKotlinCopyPasteConversionTest {
+    public static class TestBucket002 extends AbstractNewJavaToKotlinCopyPasteConversionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -237,7 +237,7 @@ public abstract class NewJavaToKotlinCopyPasteConversionTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/copyPaste")
-    public static class TestBucket3 extends AbstractNewJavaToKotlinCopyPasteConversionTest {
+    public static class TestBucket003 extends AbstractNewJavaToKotlinCopyPasteConversionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

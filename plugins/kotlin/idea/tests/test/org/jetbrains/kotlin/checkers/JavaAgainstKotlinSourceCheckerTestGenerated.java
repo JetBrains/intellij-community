@@ -23,7 +23,7 @@ public abstract class JavaAgainstKotlinSourceCheckerTestGenerated extends Abstra
     public abstract static class JavaAgainstKotlin extends AbstractJavaAgainstKotlinSourceCheckerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/kotlinAndJavaChecker/javaAgainstKotlin")
-        public static class TestBucket1 extends AbstractJavaAgainstKotlinSourceCheckerTest {
+        public static class TestBucket001 extends AbstractJavaAgainstKotlinSourceCheckerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -131,7 +131,7 @@ public abstract class JavaAgainstKotlinSourceCheckerTestGenerated extends Abstra
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/kotlinAndJavaChecker/javaAgainstKotlin")
-        public static class TestBucket2 extends AbstractJavaAgainstKotlinSourceCheckerTest {
+        public static class TestBucket002 extends AbstractJavaAgainstKotlinSourceCheckerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

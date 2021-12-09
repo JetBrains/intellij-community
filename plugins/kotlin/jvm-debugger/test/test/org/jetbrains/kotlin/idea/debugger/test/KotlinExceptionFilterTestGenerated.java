@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class KotlinExceptionFilterTestGenerated extends AbstractKotlinExceptionFilterTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/exceptionFilter")
-    public static class TestBucket1 extends AbstractKotlinExceptionFilterTest {
+    public static class TestBucket001 extends AbstractKotlinExceptionFilterTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class KotlinExceptionFilterTestGenerated extends AbstractKotlinE
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/exceptionFilter")
-    public static class TestBucket2 extends AbstractKotlinExceptionFilterTest {
+    public static class TestBucket002 extends AbstractKotlinExceptionFilterTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

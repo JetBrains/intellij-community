@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class MultiModuleMoveTestGenerated extends AbstractMultiModuleMoveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/moveMultiModule")
-    public static class TestBucket1 extends AbstractMultiModuleMoveTest {
+    public static class TestBucket001 extends AbstractMultiModuleMoveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class MultiModuleMoveTestGenerated extends AbstractMultiModuleMo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/moveMultiModule")
-    public static class TestBucket2 extends AbstractMultiModuleMoveTest {
+    public static class TestBucket002 extends AbstractMultiModuleMoveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

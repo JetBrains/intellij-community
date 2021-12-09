@@ -37,7 +37,7 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
     public abstract static class OverrideImplement extends AbstractLineMarkersTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/lineMarker/overrideImplement")
-        public static class TestBucket1 extends AbstractLineMarkersTest {
+        public static class TestBucket001 extends AbstractLineMarkersTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -145,7 +145,7 @@ public abstract class LineMarkersTestGenerated extends AbstractLineMarkersTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/lineMarker/overrideImplement")
-        public static class TestBucket2 extends AbstractLineMarkersTest {
+        public static class TestBucket002 extends AbstractLineMarkersTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

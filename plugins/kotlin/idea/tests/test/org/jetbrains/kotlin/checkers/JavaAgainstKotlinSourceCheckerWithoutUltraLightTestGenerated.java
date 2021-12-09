@@ -23,7 +23,7 @@ public abstract class JavaAgainstKotlinSourceCheckerWithoutUltraLightTestGenerat
     public abstract static class JavaAgainstKotlin extends AbstractJavaAgainstKotlinSourceCheckerWithoutUltraLightTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/kotlinAndJavaChecker/javaAgainstKotlin")
-        public static class TestBucket1 extends AbstractJavaAgainstKotlinSourceCheckerWithoutUltraLightTest {
+        public static class TestBucket001 extends AbstractJavaAgainstKotlinSourceCheckerWithoutUltraLightTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -131,7 +131,7 @@ public abstract class JavaAgainstKotlinSourceCheckerWithoutUltraLightTestGenerat
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/kotlinAndJavaChecker/javaAgainstKotlin")
-        public static class TestBucket2 extends AbstractJavaAgainstKotlinSourceCheckerWithoutUltraLightTest {
+        public static class TestBucket002 extends AbstractJavaAgainstKotlinSourceCheckerWithoutUltraLightTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

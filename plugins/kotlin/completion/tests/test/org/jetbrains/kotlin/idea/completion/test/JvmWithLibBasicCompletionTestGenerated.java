@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class JvmWithLibBasicCompletionTestGenerated extends AbstractJvmWithLibBasicCompletionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/basic/withLib")
-    public static class TestBucket1 extends AbstractJvmWithLibBasicCompletionTest {
+    public static class TestBucket001 extends AbstractJvmWithLibBasicCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -54,7 +54,7 @@ public abstract class JvmWithLibBasicCompletionTestGenerated extends AbstractJvm
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/basic/withLib")
-    public static class TestBucket2 extends AbstractJvmWithLibBasicCompletionTest {
+    public static class TestBucket002 extends AbstractJvmWithLibBasicCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

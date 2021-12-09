@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class JavaAgainstKotlinBinariesCheckerTestGenerated extends AbstractJavaAgainstKotlinBinariesCheckerTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/kotlinAndJavaChecker/javaAgainstKotlin")
-    public static class TestBucket1 extends AbstractJavaAgainstKotlinBinariesCheckerTest {
+    public static class TestBucket001 extends AbstractJavaAgainstKotlinBinariesCheckerTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class JavaAgainstKotlinBinariesCheckerTestGenerated extends Abst
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/kotlinAndJavaChecker/javaAgainstKotlin")
-    public static class TestBucket2 extends AbstractJavaAgainstKotlinBinariesCheckerTest {
+    public static class TestBucket002 extends AbstractJavaAgainstKotlinBinariesCheckerTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

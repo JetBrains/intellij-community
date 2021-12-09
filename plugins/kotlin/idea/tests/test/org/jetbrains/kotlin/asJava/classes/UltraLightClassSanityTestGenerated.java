@@ -393,7 +393,7 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
     public abstract static class Uncategorized extends AbstractUltraLightClassSanityTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compiler/asJava/lightClasses")
-        public static class TestBucket1 extends AbstractUltraLightClassSanityTest {
+        public static class TestBucket001 extends AbstractUltraLightClassSanityTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -501,7 +501,7 @@ public abstract class UltraLightClassSanityTestGenerated extends AbstractUltraLi
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compiler/asJava/lightClasses")
-        public static class TestBucket2 extends AbstractUltraLightClassSanityTest {
+        public static class TestBucket002 extends AbstractUltraLightClassSanityTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

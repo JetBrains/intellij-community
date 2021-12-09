@@ -581,7 +581,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class AddBraces extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addBraces")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -689,7 +689,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addBraces")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1494,7 +1494,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class AddNameToArgument extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addNameToArgument")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1602,7 +1602,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addNameToArgument")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2099,7 +2099,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class AddThrowsAnnotation extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addThrowsAnnotation")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2207,7 +2207,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/addThrowsAnnotation")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2360,7 +2360,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class AnonymousFunctionToLambda extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/anonymousFunctionToLambda")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2468,7 +2468,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/anonymousFunctionToLambda")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2591,7 +2591,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public abstract static class ElvisToIfThen extends AbstractIntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/elvisToIfThen")
-            public static class TestBucket1 extends AbstractIntentionTest {
+            public static class TestBucket001 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2699,7 +2699,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/elvisToIfThen")
-            public static class TestBucket2 extends AbstractIntentionTest {
+            public static class TestBucket002 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2834,7 +2834,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             public abstract static class IfToWhen extends AbstractIntentionTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/intentions/branched/ifWhen/ifToWhen")
-                public static class TestBucket1 extends AbstractIntentionTest {
+                public static class TestBucket001 extends AbstractIntentionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -2942,7 +2942,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/intentions/branched/ifWhen/ifToWhen")
-                public static class TestBucket2 extends AbstractIntentionTest {
+                public static class TestBucket002 extends AbstractIntentionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3049,7 +3049,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             public abstract static class WhenToIf extends AbstractIntentionTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/intentions/branched/ifWhen/whenToIf")
-                public static class TestBucket1 extends AbstractIntentionTest {
+                public static class TestBucket001 extends AbstractIntentionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3157,7 +3157,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/intentions/branched/ifWhen/whenToIf")
-                public static class TestBucket2 extends AbstractIntentionTest {
+                public static class TestBucket002 extends AbstractIntentionTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3185,7 +3185,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public abstract static class SafeAccessToIfThen extends AbstractIntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/safeAccessToIfThen")
-            public static class TestBucket1 extends AbstractIntentionTest {
+            public static class TestBucket001 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3293,7 +3293,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/branched/safeAccessToIfThen")
-            public static class TestBucket2 extends AbstractIntentionTest {
+            public static class TestBucket002 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3842,7 +3842,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public abstract static class Private extends AbstractIntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/changeVisibility/private")
-            public static class TestBucket1 extends AbstractIntentionTest {
+            public static class TestBucket001 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -3950,7 +3950,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/changeVisibility/private")
-            public static class TestBucket2 extends AbstractIntentionTest {
+            public static class TestBucket002 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4385,7 +4385,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public abstract static class ReplaceContains extends AbstractIntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/conventionNameCalls/replaceContains")
-            public static class TestBucket1 extends AbstractIntentionTest {
+            public static class TestBucket001 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -4493,7 +4493,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/conventionNameCalls/replaceContains")
-            public static class TestBucket2 extends AbstractIntentionTest {
+            public static class TestBucket002 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5400,7 +5400,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class ConvertFunctionToProperty extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertFunctionToProperty")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5508,7 +5508,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertFunctionToProperty")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -5767,7 +5767,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public abstract static class Uncategorized extends AbstractIntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertLambdaToReference")
-            public static class TestBucket1 extends AbstractIntentionTest {
+            public static class TestBucket001 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5875,7 +5875,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertLambdaToReference")
-            public static class TestBucket2 extends AbstractIntentionTest {
+            public static class TestBucket002 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -5983,7 +5983,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertLambdaToReference")
-            public static class TestBucket3 extends AbstractIntentionTest {
+            public static class TestBucket003 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -6091,7 +6091,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertLambdaToReference")
-            public static class TestBucket4 extends AbstractIntentionTest {
+            public static class TestBucket004 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -6199,7 +6199,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertLambdaToReference")
-            public static class TestBucket5 extends AbstractIntentionTest {
+            public static class TestBucket005 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -6809,7 +6809,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class ConvertPrimaryConstructorToSecondary extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertPrimaryConstructorToSecondary")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -6917,7 +6917,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertPrimaryConstructorToSecondary")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7160,7 +7160,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class ConvertPropertyToFunction extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertPropertyToFunction")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7268,7 +7268,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertPropertyToFunction")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7431,7 +7431,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class ConvertReferenceToLambda extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertReferenceToLambda")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7539,7 +7539,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertReferenceToLambda")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7647,7 +7647,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertReferenceToLambda")
-        public static class TestBucket3 extends AbstractIntentionTest {
+        public static class TestBucket003 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7737,7 +7737,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class ConvertSecondaryConstructorToPrimary extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertSecondaryConstructorToPrimary")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7845,7 +7845,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertSecondaryConstructorToPrimary")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7953,7 +7953,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class ConvertToBlockBody extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertToBlockBody")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8061,7 +8061,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertToBlockBody")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8113,7 +8113,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class ConvertToConcatenatedString extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertToConcatenatedString")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8221,7 +8221,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertToConcatenatedString")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8517,7 +8517,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public abstract static class ConvertToAlso extends AbstractIntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertToScope/convertToAlso")
-            public static class TestBucket1 extends AbstractIntentionTest {
+            public static class TestBucket001 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -8625,7 +8625,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertToScope/convertToAlso")
-            public static class TestBucket2 extends AbstractIntentionTest {
+            public static class TestBucket002 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -8647,7 +8647,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public abstract static class ConvertToApply extends AbstractIntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertToScope/convertToApply")
-            public static class TestBucket1 extends AbstractIntentionTest {
+            public static class TestBucket001 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -8755,7 +8755,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertToScope/convertToApply")
-            public static class TestBucket2 extends AbstractIntentionTest {
+            public static class TestBucket002 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -8802,7 +8802,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public abstract static class ConvertToRun extends AbstractIntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertToScope/convertToRun")
-            public static class TestBucket1 extends AbstractIntentionTest {
+            public static class TestBucket001 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -8910,7 +8910,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertToScope/convertToRun")
-            public static class TestBucket2 extends AbstractIntentionTest {
+            public static class TestBucket002 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -8972,7 +8972,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public abstract static class ConvertToWith extends AbstractIntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertToScope/convertToWith")
-            public static class TestBucket1 extends AbstractIntentionTest {
+            public static class TestBucket001 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -9080,7 +9080,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/convertToScope/convertToWith")
-            public static class TestBucket2 extends AbstractIntentionTest {
+            public static class TestBucket002 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -9123,7 +9123,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class ConvertToStringTemplate extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertToStringTemplate")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -9231,7 +9231,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertToStringTemplate")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -9339,7 +9339,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/convertToStringTemplate")
-        public static class TestBucket3 extends AbstractIntentionTest {
+        public static class TestBucket003 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -9617,7 +9617,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public abstract static class ConvertMemberToExtension extends AbstractIntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/declarations/convertMemberToExtension")
-            public static class TestBucket1 extends AbstractIntentionTest {
+            public static class TestBucket001 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -9725,7 +9725,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/declarations/convertMemberToExtension")
-            public static class TestBucket2 extends AbstractIntentionTest {
+            public static class TestBucket002 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -9833,7 +9833,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/declarations/convertMemberToExtension")
-            public static class TestBucket3 extends AbstractIntentionTest {
+            public static class TestBucket003 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -9954,7 +9954,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class DestructuringInLambda extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/destructuringInLambda")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -10062,7 +10062,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/destructuringInLambda")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -10619,7 +10619,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class ImportMember extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/importMember")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -10727,7 +10727,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/importMember")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -11069,7 +11069,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class IntroduceImportAlias extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/introduceImportAlias")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -11177,7 +11177,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/introduceImportAlias")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -11287,7 +11287,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class InvertIfCondition extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/invertIfCondition")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -11395,7 +11395,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/invertIfCondition")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -11503,7 +11503,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/invertIfCondition")
-        public static class TestBucket3 extends AbstractIntentionTest {
+        public static class TestBucket003 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -11673,7 +11673,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class IterationOverMap extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/iterationOverMap")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -11781,7 +11781,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/iterationOverMap")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -11961,7 +11961,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class JoinDeclarationAndAssignment extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/joinDeclarationAndAssignment")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -12069,7 +12069,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/joinDeclarationAndAssignment")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -12194,7 +12194,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class LambdaToAnonymousFunction extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/lambdaToAnonymousFunction")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -12302,7 +12302,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/lambdaToAnonymousFunction")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -12541,7 +12541,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public abstract static class Filter extends AbstractIntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/loopToCallChain/filter")
-            public static class TestBucket1 extends AbstractIntentionTest {
+            public static class TestBucket001 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -12649,7 +12649,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/loopToCallChain/filter")
-            public static class TestBucket2 extends AbstractIntentionTest {
+            public static class TestBucket002 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -12757,7 +12757,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/loopToCallChain/filter")
-            public static class TestBucket3 extends AbstractIntentionTest {
+            public static class TestBucket003 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -13124,7 +13124,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public abstract static class Map extends AbstractIntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/loopToCallChain/map")
-            public static class TestBucket1 extends AbstractIntentionTest {
+            public static class TestBucket001 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -13232,7 +13232,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/loopToCallChain/map")
-            public static class TestBucket2 extends AbstractIntentionTest {
+            public static class TestBucket002 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -14212,7 +14212,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class MoveToCompanion extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/moveToCompanion")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -14320,7 +14320,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/moveToCompanion")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -14375,7 +14375,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class ObjectLiteralToLambda extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/objectLiteralToLambda")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -14483,7 +14483,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/objectLiteralToLambda")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -14535,7 +14535,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class OperatorToFunction extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/operatorToFunction")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -14643,7 +14643,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/operatorToFunction")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -14751,7 +14751,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/operatorToFunction")
-        public static class TestBucket3 extends AbstractIntentionTest {
+        public static class TestBucket003 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15034,7 +15034,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class RemoveBraces extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/removeBraces")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15142,7 +15142,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/removeBraces")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15250,7 +15250,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/removeBraces")
-        public static class TestBucket3 extends AbstractIntentionTest {
+        public static class TestBucket003 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15408,7 +15408,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class RemoveEmptyClassBody extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/removeEmptyClassBody")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15516,7 +15516,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/removeEmptyClassBody")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15783,7 +15783,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class RemoveExplicitType extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/removeExplicitType")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15891,7 +15891,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/removeExplicitType")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15938,7 +15938,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class RemoveExplicitTypeArguments extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/removeExplicitTypeArguments")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -16046,7 +16046,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/removeExplicitTypeArguments")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -16383,7 +16383,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class RemoveUnnecessaryParentheses extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/removeUnnecessaryParentheses")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -16491,7 +16491,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/removeUnnecessaryParentheses")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -16609,7 +16609,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class ReplaceExplicitFunctionLiteralParamWithIt extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/replaceExplicitFunctionLiteralParamWithIt")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -16717,7 +16717,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/replaceExplicitFunctionLiteralParamWithIt")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -17115,7 +17115,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class SamConversionToAnonymousObject extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/samConversionToAnonymousObject")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -17223,7 +17223,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/samConversionToAnonymousObject")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -17250,7 +17250,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class SimplifyBooleanWithConstants extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/simplifyBooleanWithConstants")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -17358,7 +17358,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/simplifyBooleanWithConstants")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -17558,7 +17558,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class SpecifyTypeExplicitly extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/specifyTypeExplicitly")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -17666,7 +17666,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/specifyTypeExplicitly")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -17827,7 +17827,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
         public abstract static class Uncategorized extends AbstractIntentionTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/splitIf")
-            public static class TestBucket1 extends AbstractIntentionTest {
+            public static class TestBucket001 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -17935,7 +17935,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/intentions/splitIf")
-            public static class TestBucket2 extends AbstractIntentionTest {
+            public static class TestBucket002 extends AbstractIntentionTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -17973,7 +17973,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class SwapBinaryExpression extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/swapBinaryExpression")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -18081,7 +18081,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/swapBinaryExpression")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -18189,7 +18189,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/swapBinaryExpression")
-        public static class TestBucket3 extends AbstractIntentionTest {
+        public static class TestBucket003 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -18347,7 +18347,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class ToOrdinaryStringLiteral extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/toOrdinaryStringLiteral")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -18455,7 +18455,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/toOrdinaryStringLiteral")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -18678,7 +18678,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
     public abstract static class UsePropertyAccessSyntax extends AbstractIntentionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/usePropertyAccessSyntax")
-        public static class TestBucket1 extends AbstractIntentionTest {
+        public static class TestBucket001 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -18786,7 +18786,7 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/usePropertyAccessSyntax")
-        public static class TestBucket2 extends AbstractIntentionTest {
+        public static class TestBucket002 extends AbstractIntentionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

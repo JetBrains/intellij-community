@@ -322,7 +322,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
     public abstract static class CreateActual extends AbstractQuickFixMultiModuleTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/multiModuleQuickFix/createActual")
-        public static class TestBucket1 extends AbstractQuickFixMultiModuleTest {
+        public static class TestBucket001 extends AbstractQuickFixMultiModuleTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -430,7 +430,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/multiModuleQuickFix/createActual")
-        public static class TestBucket2 extends AbstractQuickFixMultiModuleTest {
+        public static class TestBucket002 extends AbstractQuickFixMultiModuleTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -517,7 +517,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
     public abstract static class CreateExpect extends AbstractQuickFixMultiModuleTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/multiModuleQuickFix/createExpect")
-        public static class TestBucket1 extends AbstractQuickFixMultiModuleTest {
+        public static class TestBucket001 extends AbstractQuickFixMultiModuleTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -625,7 +625,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/multiModuleQuickFix/createExpect")
-        public static class TestBucket2 extends AbstractQuickFixMultiModuleTest {
+        public static class TestBucket002 extends AbstractQuickFixMultiModuleTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -733,7 +733,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/multiModuleQuickFix/createExpect")
-        public static class TestBucket3 extends AbstractQuickFixMultiModuleTest {
+        public static class TestBucket003 extends AbstractQuickFixMultiModuleTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -977,7 +977,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
     public abstract static class Other extends AbstractQuickFixMultiModuleTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/multiModuleQuickFix/other")
-        public static class TestBucket1 extends AbstractQuickFixMultiModuleTest {
+        public static class TestBucket001 extends AbstractQuickFixMultiModuleTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1085,7 +1085,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/multiModuleQuickFix/other")
-        public static class TestBucket2 extends AbstractQuickFixMultiModuleTest {
+        public static class TestBucket002 extends AbstractQuickFixMultiModuleTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1193,7 +1193,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/multiModuleQuickFix/other")
-        public static class TestBucket3 extends AbstractQuickFixMultiModuleTest {
+        public static class TestBucket003 extends AbstractQuickFixMultiModuleTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1301,7 +1301,7 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/multiModuleQuickFix/other")
-        public static class TestBucket4 extends AbstractQuickFixMultiModuleTest {
+        public static class TestBucket004 extends AbstractQuickFixMultiModuleTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

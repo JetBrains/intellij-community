@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class CommonConstraintCollectorTestGenerated extends AbstractCommonConstraintCollectorTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inference/common")
-    public static class TestBucket1 extends AbstractCommonConstraintCollectorTest {
+    public static class TestBucket001 extends AbstractCommonConstraintCollectorTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class CommonConstraintCollectorTestGenerated extends AbstractCom
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/inference/common")
-    public static class TestBucket2 extends AbstractCommonConstraintCollectorTest {
+    public static class TestBucket002 extends AbstractCommonConstraintCollectorTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

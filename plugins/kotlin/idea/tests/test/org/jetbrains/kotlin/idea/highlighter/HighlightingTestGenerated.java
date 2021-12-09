@@ -112,7 +112,7 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
     public abstract static class Uncategorized extends AbstractHighlightingTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/highlighter")
-        public static class TestBucket1 extends AbstractHighlightingTest {
+        public static class TestBucket001 extends AbstractHighlightingTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -220,7 +220,7 @@ public abstract class HighlightingTestGenerated extends AbstractHighlightingTest
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/highlighter")
-        public static class TestBucket2 extends AbstractHighlightingTest {
+        public static class TestBucket002 extends AbstractHighlightingTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

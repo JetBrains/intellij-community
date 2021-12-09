@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class SmartSelectionTestGenerated extends AbstractSmartSelectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/smartSelection")
-    public static class TestBucket1 extends AbstractSmartSelectionTest {
+    public static class TestBucket001 extends AbstractSmartSelectionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestSmartSelection, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class SmartSelectionTestGenerated extends AbstractSmartSelection
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/smartSelection")
-    public static class TestBucket2 extends AbstractSmartSelectionTest {
+    public static class TestBucket002 extends AbstractSmartSelectionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTestSmartSelection, this, testDataFilePath);
         }

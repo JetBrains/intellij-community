@@ -497,7 +497,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         public abstract static class Uncategorized extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter")
-            public static class TestBucket1 extends AbstractFormatterTest {
+            public static class TestBucket001 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -605,7 +605,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter")
-            public static class TestBucket2 extends AbstractFormatterTest {
+            public static class TestBucket002 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -713,7 +713,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter")
-            public static class TestBucket3 extends AbstractFormatterTest {
+            public static class TestBucket003 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -821,7 +821,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter")
-            public static class TestBucket4 extends AbstractFormatterTest {
+            public static class TestBucket004 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -929,7 +929,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter")
-            public static class TestBucket5 extends AbstractFormatterTest {
+            public static class TestBucket005 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1037,7 +1037,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter")
-            public static class TestBucket6 extends AbstractFormatterTest {
+            public static class TestBucket006 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1145,7 +1145,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter")
-            public static class TestBucket7 extends AbstractFormatterTest {
+            public static class TestBucket007 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1253,7 +1253,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter")
-            public static class TestBucket8 extends AbstractFormatterTest {
+            public static class TestBucket008 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1361,7 +1361,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter")
-            public static class TestBucket9 extends AbstractFormatterTest {
+            public static class TestBucket009 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1777,7 +1777,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
         public abstract static class Uncategorized extends AbstractFormatterTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter")
-            public static class TestBucket1 extends AbstractFormatterTest {
+            public static class TestBucket001 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
                 }
@@ -1885,7 +1885,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter")
-            public static class TestBucket2 extends AbstractFormatterTest {
+            public static class TestBucket002 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
                 }
@@ -1993,7 +1993,7 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/formatter")
-            public static class TestBucket3 extends AbstractFormatterTest {
+            public static class TestBucket003 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestInverted, this, testDataFilePath);
                 }

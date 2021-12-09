@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class MultiPlatformHighlightingTestGenerated extends AbstractMultiPlatformHighlightingTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleHighlighting/multiplatform")
-    public static class TestBucket1 extends AbstractMultiPlatformHighlightingTest {
+    public static class TestBucket001 extends AbstractMultiPlatformHighlightingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class MultiPlatformHighlightingTestGenerated extends AbstractMul
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiModuleHighlighting/multiplatform")
-    public static class TestBucket2 extends AbstractMultiPlatformHighlightingTest {
+    public static class TestBucket002 extends AbstractMultiPlatformHighlightingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class MultiModuleSafeDeleteTestGenerated extends AbstractMultiModuleSafeDeleteTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDeleteMultiModule")
-    public static class TestBucket1 extends AbstractMultiModuleSafeDeleteTest {
+    public static class TestBucket001 extends AbstractMultiModuleSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class MultiModuleSafeDeleteTestGenerated extends AbstractMultiMo
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/safeDeleteMultiModule")
-    public static class TestBucket2 extends AbstractMultiModuleSafeDeleteTest {
+    public static class TestBucket002 extends AbstractMultiModuleSafeDeleteTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

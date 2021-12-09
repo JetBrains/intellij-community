@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class CompiledKotlinInJavaCompletionTestGenerated extends AbstractCompiledKotlinInJavaCompletionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/injava")
-    public static class TestBucket1 extends AbstractCompiledKotlinInJavaCompletionTest {
+    public static class TestBucket001 extends AbstractCompiledKotlinInJavaCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class CompiledKotlinInJavaCompletionTestGenerated extends Abstra
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/injava")
-    public static class TestBucket2 extends AbstractCompiledKotlinInJavaCompletionTest {
+    public static class TestBucket002 extends AbstractCompiledKotlinInJavaCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

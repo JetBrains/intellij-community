@@ -118,7 +118,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     public abstract static class ExtensionMethodInObject extends AbstractBasicCompletionHandlerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/extensionMethodInObject")
-        public static class TestBucket1 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket001 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -151,7 +151,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/extensionMethodInObject")
-        public static class TestBucket2 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -178,7 +178,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     public abstract static class HighOrderFunctions extends AbstractBasicCompletionHandlerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/highOrderFunctions")
-        public static class TestBucket1 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket001 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -211,7 +211,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/highOrderFunctions")
-        public static class TestBucket2 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -244,7 +244,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/highOrderFunctions")
-        public static class TestBucket3 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket003 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -277,7 +277,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/highOrderFunctions")
-        public static class TestBucket4 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket004 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -310,7 +310,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/highOrderFunctions")
-        public static class TestBucket5 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket005 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -337,7 +337,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     public abstract static class ImportAliases extends AbstractBasicCompletionHandlerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/importAliases")
-        public static class TestBucket1 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket001 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -370,7 +370,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/importAliases")
-        public static class TestBucket2 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -392,7 +392,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     public abstract static class Override extends AbstractBasicCompletionHandlerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/override")
-        public static class TestBucket1 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket001 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -425,7 +425,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/override")
-        public static class TestBucket2 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -458,7 +458,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/override")
-        public static class TestBucket3 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket003 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -491,7 +491,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/override")
-        public static class TestBucket4 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket004 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -524,7 +524,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/override")
-        public static class TestBucket5 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket005 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -546,7 +546,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     public abstract static class ParameterNameAndType extends AbstractBasicCompletionHandlerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/parameterNameAndType")
-        public static class TestBucket1 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket001 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -579,7 +579,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/parameterNameAndType")
-        public static class TestBucket2 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -612,7 +612,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/parameterNameAndType")
-        public static class TestBucket3 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket003 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -700,7 +700,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     public abstract static class StringTemplate extends AbstractBasicCompletionHandlerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/stringTemplate")
-        public static class TestBucket1 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket001 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -733,7 +733,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/stringTemplate")
-        public static class TestBucket2 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -766,7 +766,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/stringTemplate")
-        public static class TestBucket3 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket003 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -803,7 +803,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     public abstract static class TypeArgsForCall extends AbstractBasicCompletionHandlerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/typeArgsForCall")
-        public static class TestBucket1 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket001 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -836,7 +836,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/typeArgsForCall")
-        public static class TestBucket2 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -869,7 +869,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/typeArgsForCall")
-        public static class TestBucket3 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket003 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -901,7 +901,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     public abstract static class TypeArgsForGenericFun extends AbstractBasicCompletionHandlerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/typeArgsForGenericFun")
-        public static class TestBucket1 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket001 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -934,7 +934,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/typeArgsForGenericFun")
-        public static class TestBucket2 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -967,7 +967,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/typeArgsForGenericFun")
-        public static class TestBucket3 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket003 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1000,7 +1000,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/typeArgsForGenericFun")
-        public static class TestBucket4 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket004 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1033,7 +1033,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/typeArgsForGenericFun")
-        public static class TestBucket5 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket005 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1060,7 +1060,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
     public abstract static class Uncategorized extends AbstractBasicCompletionHandlerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic")
-        public static class TestBucket1 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket001 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1093,68 +1093,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic")
-        public static class TestBucket10 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("SuperTypeArg.kt")
-            public void testSuperTypeArg() throws Exception {
-                runTest("testData/handlers/basic/SuperTypeArg.kt");
-            }
-
-            @TestMetadata("SyntheticExtension.kt")
-            public void testSyntheticExtension() throws Exception {
-                runTest("testData/handlers/basic/SyntheticExtension.kt");
-            }
-
-            @TestMetadata("TypeAliasConfict.kt")
-            public void testTypeAliasConfict() throws Exception {
-                runTest("testData/handlers/basic/TypeAliasConfict.kt");
-            }
-
-            @TestMetadata("TypeAliasConfict1.kt")
-            public void testTypeAliasConfict1() throws Exception {
-                runTest("testData/handlers/basic/TypeAliasConfict1.kt");
-            }
-
-            @TestMetadata("TypeAliasConfict2.kt")
-            public void testTypeAliasConfict2() throws Exception {
-                runTest("testData/handlers/basic/TypeAliasConfict2.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic")
-        public static class TestBucket11 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("TypeAliasConfict3.kt")
-            public void testTypeAliasConfict3() throws Exception {
-                runTest("testData/handlers/basic/TypeAliasConfict3.kt");
-            }
-
-            @TestMetadata("TypeAliasConfict4.kt")
-            public void testTypeAliasConfict4() throws Exception {
-                runTest("testData/handlers/basic/TypeAliasConfict4.kt");
-            }
-
-            @TestMetadata("TypeInferedFromWrapperType.kt")
-            public void testTypeInferedFromWrapperType() throws Exception {
-                runTest("testData/handlers/basic/TypeInferedFromWrapperType.kt");
-            }
-
-            @TestMetadata("TypeParameter.kt")
-            public void testTypeParameter() throws Exception {
-                runTest("testData/handlers/basic/TypeParameter.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic")
-        public static class TestBucket2 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1187,7 +1126,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic")
-        public static class TestBucket3 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket003 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1220,7 +1159,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic")
-        public static class TestBucket4 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket004 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1253,7 +1192,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic")
-        public static class TestBucket5 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket005 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1286,7 +1225,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic")
-        public static class TestBucket6 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket006 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1319,7 +1258,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic")
-        public static class TestBucket7 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket007 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1352,7 +1291,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic")
-        public static class TestBucket8 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket008 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1385,7 +1324,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic")
-        public static class TestBucket9 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket009 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1413,6 +1352,67 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             @TestMetadata("SuperMethod2.kt")
             public void testSuperMethod2() throws Exception {
                 runTest("testData/handlers/basic/SuperMethod2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/handlers/basic")
+        public static class TestBucket010 extends AbstractBasicCompletionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("SuperTypeArg.kt")
+            public void testSuperTypeArg() throws Exception {
+                runTest("testData/handlers/basic/SuperTypeArg.kt");
+            }
+
+            @TestMetadata("SyntheticExtension.kt")
+            public void testSyntheticExtension() throws Exception {
+                runTest("testData/handlers/basic/SyntheticExtension.kt");
+            }
+
+            @TestMetadata("TypeAliasConfict.kt")
+            public void testTypeAliasConfict() throws Exception {
+                runTest("testData/handlers/basic/TypeAliasConfict.kt");
+            }
+
+            @TestMetadata("TypeAliasConfict1.kt")
+            public void testTypeAliasConfict1() throws Exception {
+                runTest("testData/handlers/basic/TypeAliasConfict1.kt");
+            }
+
+            @TestMetadata("TypeAliasConfict2.kt")
+            public void testTypeAliasConfict2() throws Exception {
+                runTest("testData/handlers/basic/TypeAliasConfict2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/handlers/basic")
+        public static class TestBucket011 extends AbstractBasicCompletionHandlerTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("TypeAliasConfict3.kt")
+            public void testTypeAliasConfict3() throws Exception {
+                runTest("testData/handlers/basic/TypeAliasConfict3.kt");
+            }
+
+            @TestMetadata("TypeAliasConfict4.kt")
+            public void testTypeAliasConfict4() throws Exception {
+                runTest("testData/handlers/basic/TypeAliasConfict4.kt");
+            }
+
+            @TestMetadata("TypeInferedFromWrapperType.kt")
+            public void testTypeInferedFromWrapperType() throws Exception {
+                runTest("testData/handlers/basic/TypeInferedFromWrapperType.kt");
+            }
+
+            @TestMetadata("TypeParameter.kt")
+            public void testTypeParameter() throws Exception {
+                runTest("testData/handlers/basic/TypeParameter.kt");
             }
         }
     }

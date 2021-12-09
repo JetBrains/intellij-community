@@ -80,7 +80,7 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
     public abstract static class FunctionCall extends AbstractParameterInfoTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/parameterInfo/functionCall")
-        public static class TestBucket1 extends AbstractParameterInfoTest {
+        public static class TestBucket001 extends AbstractParameterInfoTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -188,7 +188,7 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/parameterInfo/functionCall")
-        public static class TestBucket2 extends AbstractParameterInfoTest {
+        public static class TestBucket002 extends AbstractParameterInfoTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -296,7 +296,7 @@ public abstract class ParameterInfoTestGenerated extends AbstractParameterInfoTe
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/parameterInfo/functionCall")
-        public static class TestBucket3 extends AbstractParameterInfoTest {
+        public static class TestBucket003 extends AbstractParameterInfoTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

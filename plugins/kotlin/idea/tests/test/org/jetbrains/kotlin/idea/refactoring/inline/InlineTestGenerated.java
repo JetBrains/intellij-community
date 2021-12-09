@@ -158,7 +158,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
         public abstract static class AddParenthesis extends AbstractInlineTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/inlineVariableOrProperty/addParenthesis")
-            public static class TestBucket1 extends AbstractInlineTest {
+            public static class TestBucket001 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -266,7 +266,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/inlineVariableOrProperty/addParenthesis")
-            public static class TestBucket2 extends AbstractInlineTest {
+            public static class TestBucket002 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -831,7 +831,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
         public abstract static class Uncategorized extends AbstractInlineTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/inlineVariableOrProperty")
-            public static class TestBucket1 extends AbstractInlineTest {
+            public static class TestBucket001 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -939,7 +939,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/inlineVariableOrProperty")
-            public static class TestBucket2 extends AbstractInlineTest {
+            public static class TestBucket002 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1053,7 +1053,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
         public abstract static class ExpressionBody extends AbstractInlineTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/namedFunction/expressionBody")
-            public static class TestBucket1 extends AbstractInlineTest {
+            public static class TestBucket001 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1161,7 +1161,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/namedFunction/expressionBody")
-            public static class TestBucket2 extends AbstractInlineTest {
+            public static class TestBucket002 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1268,7 +1268,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
         public abstract static class FromFinalJavaToKotlin extends AbstractInlineTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/namedFunction/fromFinalJavaToKotlin")
-            public static class TestBucket1 extends AbstractInlineTest {
+            public static class TestBucket001 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1376,7 +1376,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/namedFunction/fromFinalJavaToKotlin")
-            public static class TestBucket2 extends AbstractInlineTest {
+            public static class TestBucket002 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1501,7 +1501,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
         public abstract static class FromJavaToKotlin extends AbstractInlineTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/namedFunction/fromJavaToKotlin")
-            public static class TestBucket1 extends AbstractInlineTest {
+            public static class TestBucket001 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1609,7 +1609,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/namedFunction/fromJavaToKotlin")
-            public static class TestBucket2 extends AbstractInlineTest {
+            public static class TestBucket002 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1669,7 +1669,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
         public abstract static class ReturnAtEnd extends AbstractInlineTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/namedFunction/returnAtEnd")
-            public static class TestBucket1 extends AbstractInlineTest {
+            public static class TestBucket001 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1777,7 +1777,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/namedFunction/returnAtEnd")
-            public static class TestBucket2 extends AbstractInlineTest {
+            public static class TestBucket002 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1885,7 +1885,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/namedFunction/returnAtEnd")
-            public static class TestBucket3 extends AbstractInlineTest {
+            public static class TestBucket003 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1917,7 +1917,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
         public abstract static class Uncategorized extends AbstractInlineTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/namedFunction")
-            public static class TestBucket1 extends AbstractInlineTest {
+            public static class TestBucket001 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2025,7 +2025,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/namedFunction")
-            public static class TestBucket2 extends AbstractInlineTest {
+            public static class TestBucket002 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2133,7 +2133,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/namedFunction")
-            public static class TestBucket3 extends AbstractInlineTest {
+            public static class TestBucket003 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2241,7 +2241,7 @@ public abstract class InlineTestGenerated extends AbstractInlineTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/refactoring/inline/namedFunction")
-            public static class TestBucket4 extends AbstractInlineTest {
+            public static class TestBucket004 extends AbstractInlineTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }

@@ -30,7 +30,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             public abstract static class InaccessibleMembers extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers")
-                public static class TestBucket1 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                public static class TestBucket001 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                     }
@@ -63,7 +63,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers")
-                public static class TestBucket2 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                public static class TestBucket002 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                     }
@@ -96,7 +96,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator/inaccessibleMembers")
-                public static class TestBucket3 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                public static class TestBucket003 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                     }
@@ -133,7 +133,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
             public abstract static class Uncategorized extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator")
-                public static class TestBucket1 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                public static class TestBucket001 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                     }
@@ -166,7 +166,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/evaluation/singleBreakpoint/compilingEvaluator")
-                public static class TestBucket2 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                public static class TestBucket002 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                     }
@@ -194,7 +194,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
         public abstract static class Coroutines extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/coroutines")
-            public static class TestBucket1 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket001 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -227,7 +227,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/coroutines")
-            public static class TestBucket2 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket002 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -260,7 +260,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/coroutines")
-            public static class TestBucket3 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket003 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -293,7 +293,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/coroutines")
-            public static class TestBucket4 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket004 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -343,7 +343,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
         public abstract static class ExtraVariables extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/extraVariables")
-            public static class TestBucket1 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket001 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -376,7 +376,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/extraVariables")
-            public static class TestBucket2 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket002 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -409,7 +409,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/extraVariables")
-            public static class TestBucket3 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket003 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -426,7 +426,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
         public abstract static class Frame extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/frame")
-            public static class TestBucket1 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket001 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -459,91 +459,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/frame")
-            public static class TestBucket10 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-                }
-
-                @TestMetadata("lambdaParameterMangling.kt")
-                public void testLambdaParameterMangling() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/frame/lambdaParameterMangling.kt");
-                }
-
-                @TestMetadata("lambdaThisMangling.kt")
-                public void testLambdaThisMangling() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/frame/lambdaThisMangling.kt");
-                }
-
-                @TestMetadata("localFunctionMangling.kt")
-                public void testLocalFunctionMangling() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/frame/localFunctionMangling.kt");
-                }
-
-                @TestMetadata("nestedInlineFun.kt")
-                public void testNestedInlineFun() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/frame/nestedInlineFun.kt");
-                }
-
-                @TestMetadata("nestedInlineFun2.kt")
-                public void testNestedInlineFun2() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/frame/nestedInlineFun2.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/evaluation/singleBreakpoint/frame")
-            public static class TestBucket11 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-                }
-
-                @TestMetadata("objectFields.kt")
-                public void testObjectFields() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/frame/objectFields.kt");
-                }
-
-                @TestMetadata("remapThis.kt")
-                public void testRemapThis() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/frame/remapThis.kt");
-                }
-
-                @TestMetadata("showPropertiesFromMethods.kt")
-                public void testShowPropertiesFromMethods() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/frame/showPropertiesFromMethods.kt");
-                }
-
-                @TestMetadata("sourcePositionForGetter.kt")
-                public void testSourcePositionForGetter() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/frame/sourcePositionForGetter.kt");
-                }
-
-                @TestMetadata("sourcePositionForGetterWithDelegatedInterface.kt")
-                public void testSourcePositionForGetterWithDelegatedInterface() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/frame/sourcePositionForGetterWithDelegatedInterface.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/evaluation/singleBreakpoint/frame")
-            public static class TestBucket12 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-                }
-
-                @TestMetadata("sourcePositionForGetterWithDiamondInterfaces.kt")
-                public void testSourcePositionForGetterWithDiamondInterfaces() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/frame/sourcePositionForGetterWithDiamondInterfaces.kt");
-                }
-
-                @TestMetadata("suspendContinuation.kt")
-                public void testSuspendContinuation() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/frame/suspendContinuation.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/evaluation/singleBreakpoint/frame")
-            public static class TestBucket2 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket002 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -576,7 +492,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/frame")
-            public static class TestBucket3 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket003 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -609,7 +525,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/frame")
-            public static class TestBucket4 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket004 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -642,7 +558,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/frame")
-            public static class TestBucket5 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket005 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -675,7 +591,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/frame")
-            public static class TestBucket6 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket006 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -708,7 +624,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/frame")
-            public static class TestBucket7 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket007 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -741,7 +657,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/frame")
-            public static class TestBucket8 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket008 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -774,7 +690,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/frame")
-            public static class TestBucket9 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket009 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -804,6 +720,90 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                     runTest("testData/evaluation/singleBreakpoint/frame/lambdaFun4.kt");
                 }
             }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint/frame")
+            public static class TestBucket010 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("lambdaParameterMangling.kt")
+                public void testLambdaParameterMangling() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/frame/lambdaParameterMangling.kt");
+                }
+
+                @TestMetadata("lambdaThisMangling.kt")
+                public void testLambdaThisMangling() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/frame/lambdaThisMangling.kt");
+                }
+
+                @TestMetadata("localFunctionMangling.kt")
+                public void testLocalFunctionMangling() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/frame/localFunctionMangling.kt");
+                }
+
+                @TestMetadata("nestedInlineFun.kt")
+                public void testNestedInlineFun() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/frame/nestedInlineFun.kt");
+                }
+
+                @TestMetadata("nestedInlineFun2.kt")
+                public void testNestedInlineFun2() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/frame/nestedInlineFun2.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint/frame")
+            public static class TestBucket011 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("objectFields.kt")
+                public void testObjectFields() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/frame/objectFields.kt");
+                }
+
+                @TestMetadata("remapThis.kt")
+                public void testRemapThis() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/frame/remapThis.kt");
+                }
+
+                @TestMetadata("showPropertiesFromMethods.kt")
+                public void testShowPropertiesFromMethods() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/frame/showPropertiesFromMethods.kt");
+                }
+
+                @TestMetadata("sourcePositionForGetter.kt")
+                public void testSourcePositionForGetter() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/frame/sourcePositionForGetter.kt");
+                }
+
+                @TestMetadata("sourcePositionForGetterWithDelegatedInterface.kt")
+                public void testSourcePositionForGetterWithDelegatedInterface() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/frame/sourcePositionForGetterWithDelegatedInterface.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint/frame")
+            public static class TestBucket012 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("sourcePositionForGetterWithDiamondInterfaces.kt")
+                public void testSourcePositionForGetterWithDiamondInterfaces() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/frame/sourcePositionForGetterWithDiamondInterfaces.kt");
+                }
+
+                @TestMetadata("suspendContinuation.kt")
+                public void testSuspendContinuation() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/frame/suspendContinuation.kt");
+                }
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -811,7 +811,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
         public abstract static class JavaContext extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/javaContext")
-            public static class TestBucket1 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket001 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -844,7 +844,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/javaContext")
-            public static class TestBucket2 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket002 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -894,7 +894,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
         public abstract static class Lambdas extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/lambdas")
-            public static class TestBucket1 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket001 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -927,7 +927,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint/lambdas")
-            public static class TestBucket2 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket002 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -987,7 +987,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
         public abstract static class Uncategorized extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket1 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket001 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -1020,337 +1020,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket10 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-                }
-
-                @TestMetadata("internalFunctionEvaluate.kt")
-                public void testInternalFunctionEvaluate() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/internalFunctionEvaluate.kt");
-                }
-
-                @TestMetadata("internalProperty.kt")
-                public void testInternalProperty() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/internalProperty.kt");
-                }
-
-                @TestMetadata("javaStaticMethods.kt")
-                public void testJavaStaticMethods() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/javaStaticMethods.kt");
-                }
-
-                @TestMetadata("kClass.kt")
-                public void testKClass() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/kClass.kt");
-                }
-
-                @TestMetadata("kt12206BasePropertyWithoutBackingField.kt")
-                public void testKt12206BasePropertyWithoutBackingField() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/kt12206BasePropertyWithoutBackingField.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket11 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-                }
-
-                @TestMetadata("kt15259.kt")
-                public void testKt15259() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/kt15259.kt");
-                }
-
-                @TestMetadata("kt17514.kt")
-                public void testKt17514() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/kt17514.kt");
-                }
-
-                @TestMetadata("kt22366.kt")
-                public void testKt22366() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/kt22366.kt");
-                }
-
-                @TestMetadata("kt25220.kt")
-                public void testKt25220() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/kt25220.kt");
-                }
-
-                @TestMetadata("kt25222.kt")
-                public void testKt25222() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/kt25222.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket12 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-                }
-
-                @TestMetadata("kt28087.kt")
-                public void testKt28087() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/kt28087.kt");
-                }
-
-                @TestMetadata("kt29179.kt")
-                public void testKt29179() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/kt29179.kt");
-                }
-
-                @TestMetadata("kt31709.kt")
-                public void testKt31709() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/kt31709.kt");
-                }
-
-                @TestMetadata("kt36404.kt")
-                public void testKt36404() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/kt36404.kt");
-                }
-
-                @TestMetadata("kt5554OnlyIntsShouldBeCoerced.kt")
-                public void testKt5554OnlyIntsShouldBeCoerced() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/kt5554OnlyIntsShouldBeCoerced.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket13 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-                }
-
-                @TestMetadata("kt7046localVarInInline.kt")
-                public void testKt7046localVarInInline() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/kt7046localVarInInline.kt");
-                }
-
-                @TestMetadata("lambdaToString.kt")
-                public void testLambdaToString() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/lambdaToString.kt");
-                }
-
-                @TestMetadata("lambdaWithDestructuring.kt")
-                public void testLambdaWithDestructuring() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/lambdaWithDestructuring.kt");
-                }
-
-                @TestMetadata("localClass.kt")
-                public void testLocalClass() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/localClass.kt");
-                }
-
-                @TestMetadata("localFunctionCapturedLocalVariable.kt")
-                public void testLocalFunctionCapturedLocalVariable() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/localFunctionCapturedLocalVariable.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket14 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-                }
-
-                @TestMetadata("localFunctionsWithReceivers.kt")
-                public void testLocalFunctionsWithReceivers() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/localFunctionsWithReceivers.kt");
-                }
-
-                @TestMetadata("localVariables.kt")
-                public void testLocalVariables() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/localVariables.kt");
-                }
-
-                @TestMetadata("methodWithBreakpoint.kt")
-                public void testMethodWithBreakpoint() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/methodWithBreakpoint.kt");
-                }
-
-                @TestMetadata("multilineExpressionAtBreakpoint.kt")
-                public void testMultilineExpressionAtBreakpoint() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/multilineExpressionAtBreakpoint.kt");
-                }
-
-                @TestMetadata("nestedInlineArguments.kt")
-                public void testNestedInlineArguments() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/nestedInlineArguments.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket15 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-                }
-
-                @TestMetadata("nonAssignmentLValue.kt")
-                public void testNonAssignmentLValue() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/nonAssignmentLValue.kt");
-                }
-
-                @TestMetadata("nothing.kt")
-                public void testNothing() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/nothing.kt");
-                }
-
-                @TestMetadata("onClassHeader.kt")
-                public void testOnClassHeader() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/onClassHeader.kt");
-                }
-
-                @TestMetadata("onGetter.kt")
-                public void testOnGetter() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/onGetter.kt");
-                }
-
-                @TestMetadata("onObjectHeader.kt")
-                public void testOnObjectHeader() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/onObjectHeader.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket16 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-                }
-
-                @TestMetadata("package.kt")
-                public void testPackage() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/package.kt");
-                }
-
-                @TestMetadata("parametersOfInlineFun.kt")
-                public void testParametersOfInlineFun() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/parametersOfInlineFun.kt");
-                }
-
-                @TestMetadata("parametersOfInlineFunSeveralOnLine.kt")
-                public void testParametersOfInlineFunSeveralOnLine() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/parametersOfInlineFunSeveralOnLine.kt");
-                }
-
-                @TestMetadata("privateClass.kt")
-                public void testPrivateClass() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/privateClass.kt");
-                }
-
-                @TestMetadata("privateFieldInCompanion.kt")
-                public void testPrivateFieldInCompanion() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/privateFieldInCompanion.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket17 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-                }
-
-                @TestMetadata("privateMember.kt")
-                public void testPrivateMember() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/privateMember.kt");
-                }
-
-                @TestMetadata("privatePropertyWithExplicitDefaultGetter.kt")
-                public void testPrivatePropertyWithExplicitDefaultGetter() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/privatePropertyWithExplicitDefaultGetter.kt");
-                }
-
-                @TestMetadata("protectedMember.kt")
-                public void testProtectedMember() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/protectedMember.kt");
-                }
-
-                @TestMetadata("rawTypeskt11831.kt")
-                public void testRawTypeskt11831() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/rawTypeskt11831.kt");
-                }
-
-                @TestMetadata("simple.kt")
-                public void testSimple() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/simple.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket18 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-                }
-
-                @TestMetadata("statements.kt")
-                public void testStatements() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/statements.kt");
-                }
-
-                @TestMetadata("staticField.kt")
-                public void testStaticField() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/staticField.kt");
-                }
-
-                @TestMetadata("stdlib.kt")
-                public void testStdlib() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/stdlib.kt");
-                }
-
-                @TestMetadata("superCallsCaptured.kt")
-                public void testSuperCallsCaptured() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/superCallsCaptured.kt");
-                }
-
-                @TestMetadata("superCallsSimple.kt")
-                public void testSuperCallsSimple() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/superCallsSimple.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket19 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-                }
-
-                @TestMetadata("synchronizedBlock.kt")
-                public void testSynchronizedBlock() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/synchronizedBlock.kt");
-                }
-
-                @TestMetadata("typeParameterRef.kt")
-                public void testTypeParameterRef() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/typeParameterRef.kt");
-                }
-
-                @TestMetadata("typedArray.kt")
-                public void testTypedArray() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/typedArray.kt");
-                }
-
-                @TestMetadata("unboxParam.kt")
-                public void testUnboxParam() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/unboxParam.kt");
-                }
-
-                @TestMetadata("unsafeCall.kt")
-                public void testUnsafeCall() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/unsafeCall.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket2 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket002 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -1383,40 +1053,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket20 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
-                }
-
-                @TestMetadata("valueParameterName.kt")
-                public void testValueParameterName() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/valueParameterName.kt");
-                }
-
-                @TestMetadata("variableAsFunction.kt")
-                public void testVariableAsFunction() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/variableAsFunction.kt");
-                }
-
-                @TestMetadata("vars.kt")
-                public void testVars() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/vars.kt");
-                }
-
-                @TestMetadata("whenEvaluation.kt")
-                public void testWhenEvaluation() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/whenEvaluation.kt");
-                }
-
-                @TestMetadata(".kt.kt")
-                public void test_kt() throws Exception {
-                    runTest("testData/evaluation/singleBreakpoint/.kt.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket3 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket003 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -1449,7 +1086,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket4 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket004 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -1482,7 +1119,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket5 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket005 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -1515,7 +1152,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket6 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket006 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -1548,7 +1185,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket7 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket007 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -1581,7 +1218,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket8 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket008 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -1614,7 +1251,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/singleBreakpoint")
-            public static class TestBucket9 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket009 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -1642,6 +1279,369 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
                 @TestMetadata("insertInBlock.kt")
                 public void testInsertInBlock() throws Exception {
                     runTest("testData/evaluation/singleBreakpoint/insertInBlock.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint")
+            public static class TestBucket010 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("internalFunctionEvaluate.kt")
+                public void testInternalFunctionEvaluate() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/internalFunctionEvaluate.kt");
+                }
+
+                @TestMetadata("internalProperty.kt")
+                public void testInternalProperty() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/internalProperty.kt");
+                }
+
+                @TestMetadata("javaStaticMethods.kt")
+                public void testJavaStaticMethods() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/javaStaticMethods.kt");
+                }
+
+                @TestMetadata("kClass.kt")
+                public void testKClass() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/kClass.kt");
+                }
+
+                @TestMetadata("kt12206BasePropertyWithoutBackingField.kt")
+                public void testKt12206BasePropertyWithoutBackingField() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/kt12206BasePropertyWithoutBackingField.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint")
+            public static class TestBucket011 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("kt15259.kt")
+                public void testKt15259() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/kt15259.kt");
+                }
+
+                @TestMetadata("kt17514.kt")
+                public void testKt17514() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/kt17514.kt");
+                }
+
+                @TestMetadata("kt22366.kt")
+                public void testKt22366() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/kt22366.kt");
+                }
+
+                @TestMetadata("kt25220.kt")
+                public void testKt25220() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/kt25220.kt");
+                }
+
+                @TestMetadata("kt25222.kt")
+                public void testKt25222() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/kt25222.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint")
+            public static class TestBucket012 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("kt28087.kt")
+                public void testKt28087() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/kt28087.kt");
+                }
+
+                @TestMetadata("kt29179.kt")
+                public void testKt29179() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/kt29179.kt");
+                }
+
+                @TestMetadata("kt31709.kt")
+                public void testKt31709() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/kt31709.kt");
+                }
+
+                @TestMetadata("kt36404.kt")
+                public void testKt36404() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/kt36404.kt");
+                }
+
+                @TestMetadata("kt5554OnlyIntsShouldBeCoerced.kt")
+                public void testKt5554OnlyIntsShouldBeCoerced() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/kt5554OnlyIntsShouldBeCoerced.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint")
+            public static class TestBucket013 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("kt7046localVarInInline.kt")
+                public void testKt7046localVarInInline() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/kt7046localVarInInline.kt");
+                }
+
+                @TestMetadata("lambdaToString.kt")
+                public void testLambdaToString() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/lambdaToString.kt");
+                }
+
+                @TestMetadata("lambdaWithDestructuring.kt")
+                public void testLambdaWithDestructuring() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/lambdaWithDestructuring.kt");
+                }
+
+                @TestMetadata("localClass.kt")
+                public void testLocalClass() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/localClass.kt");
+                }
+
+                @TestMetadata("localFunctionCapturedLocalVariable.kt")
+                public void testLocalFunctionCapturedLocalVariable() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/localFunctionCapturedLocalVariable.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint")
+            public static class TestBucket014 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("localFunctionsWithReceivers.kt")
+                public void testLocalFunctionsWithReceivers() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/localFunctionsWithReceivers.kt");
+                }
+
+                @TestMetadata("localVariables.kt")
+                public void testLocalVariables() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/localVariables.kt");
+                }
+
+                @TestMetadata("methodWithBreakpoint.kt")
+                public void testMethodWithBreakpoint() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/methodWithBreakpoint.kt");
+                }
+
+                @TestMetadata("multilineExpressionAtBreakpoint.kt")
+                public void testMultilineExpressionAtBreakpoint() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/multilineExpressionAtBreakpoint.kt");
+                }
+
+                @TestMetadata("nestedInlineArguments.kt")
+                public void testNestedInlineArguments() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/nestedInlineArguments.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint")
+            public static class TestBucket015 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("nonAssignmentLValue.kt")
+                public void testNonAssignmentLValue() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/nonAssignmentLValue.kt");
+                }
+
+                @TestMetadata("nothing.kt")
+                public void testNothing() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/nothing.kt");
+                }
+
+                @TestMetadata("onClassHeader.kt")
+                public void testOnClassHeader() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/onClassHeader.kt");
+                }
+
+                @TestMetadata("onGetter.kt")
+                public void testOnGetter() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/onGetter.kt");
+                }
+
+                @TestMetadata("onObjectHeader.kt")
+                public void testOnObjectHeader() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/onObjectHeader.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint")
+            public static class TestBucket016 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("package.kt")
+                public void testPackage() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/package.kt");
+                }
+
+                @TestMetadata("parametersOfInlineFun.kt")
+                public void testParametersOfInlineFun() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/parametersOfInlineFun.kt");
+                }
+
+                @TestMetadata("parametersOfInlineFunSeveralOnLine.kt")
+                public void testParametersOfInlineFunSeveralOnLine() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/parametersOfInlineFunSeveralOnLine.kt");
+                }
+
+                @TestMetadata("privateClass.kt")
+                public void testPrivateClass() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/privateClass.kt");
+                }
+
+                @TestMetadata("privateFieldInCompanion.kt")
+                public void testPrivateFieldInCompanion() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/privateFieldInCompanion.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint")
+            public static class TestBucket017 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("privateMember.kt")
+                public void testPrivateMember() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/privateMember.kt");
+                }
+
+                @TestMetadata("privatePropertyWithExplicitDefaultGetter.kt")
+                public void testPrivatePropertyWithExplicitDefaultGetter() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/privatePropertyWithExplicitDefaultGetter.kt");
+                }
+
+                @TestMetadata("protectedMember.kt")
+                public void testProtectedMember() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/protectedMember.kt");
+                }
+
+                @TestMetadata("rawTypeskt11831.kt")
+                public void testRawTypeskt11831() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/rawTypeskt11831.kt");
+                }
+
+                @TestMetadata("simple.kt")
+                public void testSimple() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/simple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint")
+            public static class TestBucket018 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("statements.kt")
+                public void testStatements() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/statements.kt");
+                }
+
+                @TestMetadata("staticField.kt")
+                public void testStaticField() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/staticField.kt");
+                }
+
+                @TestMetadata("stdlib.kt")
+                public void testStdlib() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/stdlib.kt");
+                }
+
+                @TestMetadata("superCallsCaptured.kt")
+                public void testSuperCallsCaptured() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/superCallsCaptured.kt");
+                }
+
+                @TestMetadata("superCallsSimple.kt")
+                public void testSuperCallsSimple() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/superCallsSimple.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint")
+            public static class TestBucket019 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("synchronizedBlock.kt")
+                public void testSynchronizedBlock() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/synchronizedBlock.kt");
+                }
+
+                @TestMetadata("typeParameterRef.kt")
+                public void testTypeParameterRef() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/typeParameterRef.kt");
+                }
+
+                @TestMetadata("typedArray.kt")
+                public void testTypedArray() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/typedArray.kt");
+                }
+
+                @TestMetadata("unboxParam.kt")
+                public void testUnboxParam() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/unboxParam.kt");
+                }
+
+                @TestMetadata("unsafeCall.kt")
+                public void testUnsafeCall() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/unsafeCall.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/evaluation/singleBreakpoint")
+            public static class TestBucket020 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doSingleBreakpointTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
+                }
+
+                @TestMetadata("valueParameterName.kt")
+                public void testValueParameterName() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/valueParameterName.kt");
+                }
+
+                @TestMetadata("variableAsFunction.kt")
+                public void testVariableAsFunction() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/variableAsFunction.kt");
+                }
+
+                @TestMetadata("vars.kt")
+                public void testVars() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/vars.kt");
+                }
+
+                @TestMetadata("whenEvaluation.kt")
+                public void testWhenEvaluation() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/whenEvaluation.kt");
+                }
+
+                @TestMetadata(".kt.kt")
+                public void test_kt() throws Exception {
+                    runTest("testData/evaluation/singleBreakpoint/.kt.kt");
                 }
             }
         }
@@ -1673,7 +1673,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
         public abstract static class Uncategorized extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/multipleBreakpoints")
-            public static class TestBucket1 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket001 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -1706,7 +1706,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/multipleBreakpoints")
-            public static class TestBucket2 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket002 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -1739,7 +1739,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/multipleBreakpoints")
-            public static class TestBucket3 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket003 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -1772,7 +1772,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/multipleBreakpoints")
-            public static class TestBucket4 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket004 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -1805,7 +1805,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/multipleBreakpoints")
-            public static class TestBucket5 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket005 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -1838,7 +1838,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/multipleBreakpoints")
-            public static class TestBucket6 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket006 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }
@@ -1871,7 +1871,7 @@ public abstract class IrKotlinEvaluateExpressionWithIRFragmentCompilerTestGenera
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/evaluation/multipleBreakpoints")
-            public static class TestBucket7 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
+            public static class TestBucket007 extends AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doMultipleBreakpointsTest, this, TargetBackend.JVM_IR_WITH_IR_EVALUATOR, testDataFilePath);
                 }

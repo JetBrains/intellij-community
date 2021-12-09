@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class ClsStubBuilderTestGenerated extends AbstractClsStubBuilderTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/decompiler/stubBuilder")
-    public static class TestBucket1 extends AbstractClsStubBuilderTest {
+    public static class TestBucket001 extends AbstractClsStubBuilderTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class ClsStubBuilderTestGenerated extends AbstractClsStubBuilder
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/decompiler/stubBuilder")
-    public static class TestBucket2 extends AbstractClsStubBuilderTest {
+    public static class TestBucket002 extends AbstractClsStubBuilderTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

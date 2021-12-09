@@ -23,7 +23,7 @@ public abstract class CodeFragmentHighlightingTestGenerated extends AbstractCode
     public abstract static class CodeFragments extends AbstractCodeFragmentHighlightingTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker/codeFragments")
-        public static class TestBucket1 extends AbstractCodeFragmentHighlightingTest {
+        public static class TestBucket001 extends AbstractCodeFragmentHighlightingTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -131,7 +131,7 @@ public abstract class CodeFragmentHighlightingTestGenerated extends AbstractCode
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker/codeFragments")
-        public static class TestBucket2 extends AbstractCodeFragmentHighlightingTest {
+        public static class TestBucket002 extends AbstractCodeFragmentHighlightingTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

@@ -332,7 +332,7 @@ public abstract class IdeLightClassTestGenerated extends AbstractIdeLightClassTe
     public abstract static class Uncategorized extends AbstractIdeLightClassTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compiler/asJava/lightClasses")
-        public static class TestBucket1 extends AbstractIdeLightClassTest {
+        public static class TestBucket001 extends AbstractIdeLightClassTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -440,7 +440,7 @@ public abstract class IdeLightClassTestGenerated extends AbstractIdeLightClassTe
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compiler/asJava/lightClasses")
-        public static class TestBucket2 extends AbstractIdeLightClassTest {
+        public static class TestBucket002 extends AbstractIdeLightClassTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

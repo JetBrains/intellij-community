@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class MultiFileJvmBasicCompletionTestGenerated extends AbstractMultiFileJvmBasicCompletionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/basic/multifile")
-    public static class TestBucket1 extends AbstractMultiFileJvmBasicCompletionTest {
+    public static class TestBucket001 extends AbstractMultiFileJvmBasicCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class MultiFileJvmBasicCompletionTestGenerated extends AbstractM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/basic/multifile")
-    public static class TestBucket2 extends AbstractMultiFileJvmBasicCompletionTest {
+    public static class TestBucket002 extends AbstractMultiFileJvmBasicCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -237,7 +237,7 @@ public abstract class MultiFileJvmBasicCompletionTestGenerated extends AbstractM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/basic/multifile")
-    public static class TestBucket3 extends AbstractMultiFileJvmBasicCompletionTest {
+    public static class TestBucket003 extends AbstractMultiFileJvmBasicCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -345,7 +345,7 @@ public abstract class MultiFileJvmBasicCompletionTestGenerated extends AbstractM
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/basic/multifile")
-    public static class TestBucket4 extends AbstractMultiFileJvmBasicCompletionTest {
+    public static class TestBucket004 extends AbstractMultiFileJvmBasicCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

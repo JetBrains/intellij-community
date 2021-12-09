@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class SlicerLeafGroupingTestGenerated extends AbstractSlicerLeafGroupingTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/slicer/inflow")
-    public static class TestBucket1 extends AbstractSlicerLeafGroupingTest {
+    public static class TestBucket001 extends AbstractSlicerLeafGroupingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class SlicerLeafGroupingTestGenerated extends AbstractSlicerLeaf
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/slicer/inflow")
-    public static class TestBucket2 extends AbstractSlicerLeafGroupingTest {
+    public static class TestBucket002 extends AbstractSlicerLeafGroupingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -237,7 +237,7 @@ public abstract class SlicerLeafGroupingTestGenerated extends AbstractSlicerLeaf
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/slicer/inflow")
-    public static class TestBucket3 extends AbstractSlicerLeafGroupingTest {
+    public static class TestBucket003 extends AbstractSlicerLeafGroupingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -345,7 +345,7 @@ public abstract class SlicerLeafGroupingTestGenerated extends AbstractSlicerLeaf
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/slicer/inflow")
-    public static class TestBucket4 extends AbstractSlicerLeafGroupingTest {
+    public static class TestBucket004 extends AbstractSlicerLeafGroupingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

@@ -23,7 +23,7 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
     public abstract static class Type extends AbstractHierarchyTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/hierarchy/class/type")
-        public static class TestBucket1 extends AbstractHierarchyTest {
+        public static class TestBucket001 extends AbstractHierarchyTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTypeClassHierarchyTest, this, testDataFilePath);
             }
@@ -131,7 +131,7 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/hierarchy/class/type")
-        public static class TestBucket2 extends AbstractHierarchyTest {
+        public static class TestBucket002 extends AbstractHierarchyTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTypeClassHierarchyTest, this, testDataFilePath);
             }
@@ -294,7 +294,7 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
     public abstract static class Callers extends AbstractHierarchyTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/hierarchy/calls/callers")
-        public static class TestBucket1 extends AbstractHierarchyTest {
+        public static class TestBucket001 extends AbstractHierarchyTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doCallerHierarchyTest, this, testDataFilePath);
             }
@@ -402,7 +402,7 @@ public abstract class HierarchyTestGenerated extends AbstractHierarchyTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/hierarchy/calls/callers")
-        public static class TestBucket2 extends AbstractHierarchyTest {
+        public static class TestBucket002 extends AbstractHierarchyTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doCallerHierarchyTest, this, testDataFilePath);
             }

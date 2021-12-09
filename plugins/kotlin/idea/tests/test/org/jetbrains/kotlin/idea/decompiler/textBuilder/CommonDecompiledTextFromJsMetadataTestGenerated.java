@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.test.TargetBackend;
 public abstract class CommonDecompiledTextFromJsMetadataTestGenerated extends AbstractCommonDecompiledTextFromJsMetadataTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/decompiler/decompiledText")
-    public static class TestBucket1 extends AbstractCommonDecompiledTextFromJsMetadataTest {
+    public static class TestBucket001 extends AbstractCommonDecompiledTextFromJsMetadataTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JS, testDataFilePath);
         }
@@ -130,7 +130,7 @@ public abstract class CommonDecompiledTextFromJsMetadataTestGenerated extends Ab
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/decompiler/decompiledText")
-    public static class TestBucket2 extends AbstractCommonDecompiledTextFromJsMetadataTest {
+    public static class TestBucket002 extends AbstractCommonDecompiledTextFromJsMetadataTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JS, testDataFilePath);
         }

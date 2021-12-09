@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class IncrementalJsJpsTestGenerated extends AbstractIncrementalJsJpsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/incremental/multiModule/common")
-    public static class TestBucket1 extends AbstractIncrementalJsJpsTest {
+    public static class TestBucket001 extends AbstractIncrementalJsJpsTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class IncrementalJsJpsTestGenerated extends AbstractIncrementalJ
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/incremental/multiModule/common")
-    public static class TestBucket2 extends AbstractIncrementalJsJpsTest {
+    public static class TestBucket002 extends AbstractIncrementalJsJpsTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

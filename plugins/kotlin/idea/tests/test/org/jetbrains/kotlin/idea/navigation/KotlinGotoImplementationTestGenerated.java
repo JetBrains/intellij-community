@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class KotlinGotoImplementationTestGenerated extends AbstractKotlinGotoImplementationTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/navigation/implementations")
-    public static class TestBucket1 extends AbstractKotlinGotoImplementationTest {
+    public static class TestBucket001 extends AbstractKotlinGotoImplementationTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class KotlinGotoImplementationTestGenerated extends AbstractKotl
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/navigation/implementations")
-    public static class TestBucket2 extends AbstractKotlinGotoImplementationTest {
+    public static class TestBucket002 extends AbstractKotlinGotoImplementationTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

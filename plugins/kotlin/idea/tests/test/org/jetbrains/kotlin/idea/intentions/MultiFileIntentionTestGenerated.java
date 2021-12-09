@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class MultiFileIntentionTestGenerated extends AbstractMultiFileIntentionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiFileIntentions")
-    public static class TestBucket1 extends AbstractMultiFileIntentionTest {
+    public static class TestBucket001 extends AbstractMultiFileIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class MultiFileIntentionTestGenerated extends AbstractMultiFileI
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/multiFileIntentions")
-    public static class TestBucket2 extends AbstractMultiFileIntentionTest {
+    public static class TestBucket002 extends AbstractMultiFileIntentionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

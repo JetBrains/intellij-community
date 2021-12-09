@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class OutOfBlockModificationTestGenerated extends AbstractOutOfBlockModificationTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/outOfBlock")
-    public static class TestBucket1 extends AbstractOutOfBlockModificationTest {
+    public static class TestBucket001 extends AbstractOutOfBlockModificationTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class OutOfBlockModificationTestGenerated extends AbstractOutOfB
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/outOfBlock")
-    public static class TestBucket2 extends AbstractOutOfBlockModificationTest {
+    public static class TestBucket002 extends AbstractOutOfBlockModificationTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -237,7 +237,7 @@ public abstract class OutOfBlockModificationTestGenerated extends AbstractOutOfB
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/outOfBlock")
-    public static class TestBucket3 extends AbstractOutOfBlockModificationTest {
+    public static class TestBucket003 extends AbstractOutOfBlockModificationTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -345,7 +345,7 @@ public abstract class OutOfBlockModificationTestGenerated extends AbstractOutOfB
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/outOfBlock")
-    public static class TestBucket4 extends AbstractOutOfBlockModificationTest {
+    public static class TestBucket004 extends AbstractOutOfBlockModificationTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -453,7 +453,7 @@ public abstract class OutOfBlockModificationTestGenerated extends AbstractOutOfB
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/outOfBlock")
-    public static class TestBucket5 extends AbstractOutOfBlockModificationTest {
+    public static class TestBucket005 extends AbstractOutOfBlockModificationTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

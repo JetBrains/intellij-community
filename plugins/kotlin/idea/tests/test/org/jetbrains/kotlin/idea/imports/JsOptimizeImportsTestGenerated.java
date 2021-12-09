@@ -72,7 +72,7 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
         public abstract static class Uncategorized extends AbstractJsOptimizeImportsTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/optimizeImports/common")
-            public static class TestBucket1 extends AbstractJsOptimizeImportsTest {
+            public static class TestBucket001 extends AbstractJsOptimizeImportsTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -180,7 +180,7 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/optimizeImports/common")
-            public static class TestBucket2 extends AbstractJsOptimizeImportsTest {
+            public static class TestBucket002 extends AbstractJsOptimizeImportsTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -288,7 +288,7 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/optimizeImports/common")
-            public static class TestBucket3 extends AbstractJsOptimizeImportsTest {
+            public static class TestBucket003 extends AbstractJsOptimizeImportsTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }

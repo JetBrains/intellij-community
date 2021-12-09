@@ -23,7 +23,7 @@ public abstract class PullUpTestGenerated extends AbstractPullUpTest {
     public abstract static class K2K extends AbstractPullUpTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/pullUp/k2k")
-        public static class TestBucket1 extends AbstractPullUpTest {
+        public static class TestBucket001 extends AbstractPullUpTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doKotlinTest, this, testDataFilePath);
             }
@@ -131,7 +131,7 @@ public abstract class PullUpTestGenerated extends AbstractPullUpTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/pullUp/k2k")
-        public static class TestBucket2 extends AbstractPullUpTest {
+        public static class TestBucket002 extends AbstractPullUpTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doKotlinTest, this, testDataFilePath);
             }
@@ -239,7 +239,7 @@ public abstract class PullUpTestGenerated extends AbstractPullUpTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/refactoring/pullUp/k2k")
-        public static class TestBucket3 extends AbstractPullUpTest {
+        public static class TestBucket003 extends AbstractPullUpTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doKotlinTest, this, testDataFilePath);
             }

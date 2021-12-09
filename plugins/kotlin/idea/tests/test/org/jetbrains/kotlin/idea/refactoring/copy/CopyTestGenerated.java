@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class CopyTestGenerated extends AbstractCopyTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/copy")
-    public static class TestBucket1 extends AbstractCopyTest {
+    public static class TestBucket001 extends AbstractCopyTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class CopyTestGenerated extends AbstractCopyTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/copy")
-    public static class TestBucket2 extends AbstractCopyTest {
+    public static class TestBucket002 extends AbstractCopyTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -237,7 +237,7 @@ public abstract class CopyTestGenerated extends AbstractCopyTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/copy")
-    public static class TestBucket3 extends AbstractCopyTest {
+    public static class TestBucket003 extends AbstractCopyTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

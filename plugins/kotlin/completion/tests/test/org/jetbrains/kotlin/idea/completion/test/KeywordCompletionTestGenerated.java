@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/keywords")
-    public static class TestBucket1 extends AbstractKeywordCompletionTest {
+    public static class TestBucket001 extends AbstractKeywordCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/keywords")
-    public static class TestBucket2 extends AbstractKeywordCompletionTest {
+    public static class TestBucket002 extends AbstractKeywordCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -237,7 +237,7 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/keywords")
-    public static class TestBucket3 extends AbstractKeywordCompletionTest {
+    public static class TestBucket003 extends AbstractKeywordCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -345,7 +345,7 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/keywords")
-    public static class TestBucket4 extends AbstractKeywordCompletionTest {
+    public static class TestBucket004 extends AbstractKeywordCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -453,7 +453,7 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/keywords")
-    public static class TestBucket5 extends AbstractKeywordCompletionTest {
+    public static class TestBucket005 extends AbstractKeywordCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -561,7 +561,7 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/keywords")
-    public static class TestBucket6 extends AbstractKeywordCompletionTest {
+    public static class TestBucket006 extends AbstractKeywordCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

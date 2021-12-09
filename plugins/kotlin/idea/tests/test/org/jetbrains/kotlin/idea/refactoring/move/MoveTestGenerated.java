@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class MoveTestGenerated extends AbstractMoveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/move")
-    public static class TestBucket1 extends AbstractMoveTest {
+    public static class TestBucket001 extends AbstractMoveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/move")
-    public static class TestBucket2 extends AbstractMoveTest {
+    public static class TestBucket002 extends AbstractMoveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -237,7 +237,7 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/move")
-    public static class TestBucket3 extends AbstractMoveTest {
+    public static class TestBucket003 extends AbstractMoveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -345,7 +345,7 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/move")
-    public static class TestBucket4 extends AbstractMoveTest {
+    public static class TestBucket004 extends AbstractMoveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -453,7 +453,7 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/move")
-    public static class TestBucket5 extends AbstractMoveTest {
+    public static class TestBucket005 extends AbstractMoveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -561,7 +561,7 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/move")
-    public static class TestBucket6 extends AbstractMoveTest {
+    public static class TestBucket006 extends AbstractMoveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -669,7 +669,7 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/move")
-    public static class TestBucket7 extends AbstractMoveTest {
+    public static class TestBucket007 extends AbstractMoveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -777,7 +777,7 @@ public abstract class MoveTestGenerated extends AbstractMoveTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/move")
-    public static class TestBucket8 extends AbstractMoveTest {
+    public static class TestBucket008 extends AbstractMoveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

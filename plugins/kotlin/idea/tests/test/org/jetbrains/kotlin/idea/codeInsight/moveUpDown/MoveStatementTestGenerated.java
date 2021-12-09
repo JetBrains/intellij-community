@@ -54,7 +54,7 @@ public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTe
         public abstract static class Class extends AbstractMoveStatementTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/codeInsight/moveUpDown/classBodyDeclarations/class")
-            public static class TestBucket1 extends AbstractMoveStatementTest {
+            public static class TestBucket001 extends AbstractMoveStatementTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestClassBodyDeclaration, this, testDataFilePath);
                 }
@@ -162,7 +162,7 @@ public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTe
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/codeInsight/moveUpDown/classBodyDeclarations/class")
-            public static class TestBucket2 extends AbstractMoveStatementTest {
+            public static class TestBucket002 extends AbstractMoveStatementTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestClassBodyDeclaration, this, testDataFilePath);
                 }
@@ -760,7 +760,7 @@ public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTe
     public abstract static class Expressions extends AbstractMoveStatementTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/moveUpDown/expressions")
-        public static class TestBucket1 extends AbstractMoveStatementTest {
+        public static class TestBucket001 extends AbstractMoveStatementTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestExpression, this, testDataFilePath);
             }
@@ -868,7 +868,7 @@ public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTe
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/moveUpDown/expressions")
-        public static class TestBucket2 extends AbstractMoveStatementTest {
+        public static class TestBucket002 extends AbstractMoveStatementTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestExpression, this, testDataFilePath);
             }
@@ -976,7 +976,7 @@ public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTe
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/moveUpDown/expressions")
-        public static class TestBucket3 extends AbstractMoveStatementTest {
+        public static class TestBucket003 extends AbstractMoveStatementTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestExpression, this, testDataFilePath);
             }
@@ -1084,7 +1084,7 @@ public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTe
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/moveUpDown/expressions")
-        public static class TestBucket4 extends AbstractMoveStatementTest {
+        public static class TestBucket004 extends AbstractMoveStatementTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestExpression, this, testDataFilePath);
             }
@@ -1192,7 +1192,7 @@ public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTe
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/moveUpDown/expressions")
-        public static class TestBucket5 extends AbstractMoveStatementTest {
+        public static class TestBucket005 extends AbstractMoveStatementTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestExpression, this, testDataFilePath);
             }
@@ -1312,7 +1312,7 @@ public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTe
     public abstract static class ParametersAndArguments extends AbstractMoveStatementTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/moveUpDown/parametersAndArguments")
-        public static class TestBucket1 extends AbstractMoveStatementTest {
+        public static class TestBucket001 extends AbstractMoveStatementTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestExpression, this, testDataFilePath);
             }
@@ -1420,7 +1420,7 @@ public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTe
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/moveUpDown/parametersAndArguments")
-        public static class TestBucket2 extends AbstractMoveStatementTest {
+        public static class TestBucket002 extends AbstractMoveStatementTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestExpression, this, testDataFilePath);
             }
@@ -1487,7 +1487,7 @@ public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTe
     public abstract static class TrailingComma extends AbstractMoveStatementTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/moveUpDown/trailingComma")
-        public static class TestBucket1 extends AbstractMoveStatementTest {
+        public static class TestBucket001 extends AbstractMoveStatementTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestExpressionWithTrailingComma, this, testDataFilePath);
             }
@@ -1595,7 +1595,7 @@ public abstract class MoveStatementTestGenerated extends AbstractMoveStatementTe
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/moveUpDown/trailingComma")
-        public static class TestBucket2 extends AbstractMoveStatementTest {
+        public static class TestBucket002 extends AbstractMoveStatementTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestExpressionWithTrailingComma, this, testDataFilePath);
             }

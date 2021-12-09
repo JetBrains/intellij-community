@@ -24,7 +24,7 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
     public abstract static class Inflow extends AbstractSlicerTreeTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/slicer/inflow")
-        public static class TestBucket1 extends AbstractSlicerTreeTest {
+        public static class TestBucket001 extends AbstractSlicerTreeTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -132,7 +132,7 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/slicer/inflow")
-        public static class TestBucket2 extends AbstractSlicerTreeTest {
+        public static class TestBucket002 extends AbstractSlicerTreeTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -240,7 +240,7 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/slicer/inflow")
-        public static class TestBucket3 extends AbstractSlicerTreeTest {
+        public static class TestBucket003 extends AbstractSlicerTreeTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -348,7 +348,7 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/slicer/inflow")
-        public static class TestBucket4 extends AbstractSlicerTreeTest {
+        public static class TestBucket004 extends AbstractSlicerTreeTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -455,7 +455,7 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
     public abstract static class Outflow extends AbstractSlicerTreeTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/slicer/outflow")
-        public static class TestBucket1 extends AbstractSlicerTreeTest {
+        public static class TestBucket001 extends AbstractSlicerTreeTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -563,7 +563,7 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/slicer/outflow")
-        public static class TestBucket2 extends AbstractSlicerTreeTest {
+        public static class TestBucket002 extends AbstractSlicerTreeTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -671,7 +671,7 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/slicer/outflow")
-        public static class TestBucket3 extends AbstractSlicerTreeTest {
+        public static class TestBucket003 extends AbstractSlicerTreeTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -779,7 +779,7 @@ public abstract class SlicerTreeTestGenerated extends AbstractSlicerTreeTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/slicer/outflow")
-        public static class TestBucket4 extends AbstractSlicerTreeTest {
+        public static class TestBucket004 extends AbstractSlicerTreeTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

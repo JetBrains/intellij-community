@@ -23,7 +23,7 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
     public abstract static class Checker extends AbstractKotlinHighlightVisitorTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker")
-        public static class TestBucket1 extends AbstractKotlinHighlightVisitorTest {
+        public static class TestBucket001 extends AbstractKotlinHighlightVisitorTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -131,7 +131,7 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker")
-        public static class TestBucket2 extends AbstractKotlinHighlightVisitorTest {
+        public static class TestBucket002 extends AbstractKotlinHighlightVisitorTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -239,7 +239,7 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker")
-        public static class TestBucket3 extends AbstractKotlinHighlightVisitorTest {
+        public static class TestBucket003 extends AbstractKotlinHighlightVisitorTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -347,7 +347,7 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker")
-        public static class TestBucket4 extends AbstractKotlinHighlightVisitorTest {
+        public static class TestBucket004 extends AbstractKotlinHighlightVisitorTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -399,7 +399,7 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
     public abstract static class Regression extends AbstractKotlinHighlightVisitorTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker/regression")
-        public static class TestBucket1 extends AbstractKotlinHighlightVisitorTest {
+        public static class TestBucket001 extends AbstractKotlinHighlightVisitorTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -507,7 +507,7 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker/regression")
-        public static class TestBucket2 extends AbstractKotlinHighlightVisitorTest {
+        public static class TestBucket002 extends AbstractKotlinHighlightVisitorTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -615,7 +615,7 @@ public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlin
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/checker/regression")
-        public static class TestBucket3 extends AbstractKotlinHighlightVisitorTest {
+        public static class TestBucket003 extends AbstractKotlinHighlightVisitorTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

@@ -61,7 +61,7 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
     public abstract static class Inspections extends AbstractInspectionTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspections")
-        public static class TestBucket1 extends AbstractInspectionTest {
+        public static class TestBucket001 extends AbstractInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -169,7 +169,7 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspections")
-        public static class TestBucket2 extends AbstractInspectionTest {
+        public static class TestBucket002 extends AbstractInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -277,7 +277,7 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspections")
-        public static class TestBucket3 extends AbstractInspectionTest {
+        public static class TestBucket003 extends AbstractInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -385,7 +385,7 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/inspections")
-        public static class TestBucket4 extends AbstractInspectionTest {
+        public static class TestBucket004 extends AbstractInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

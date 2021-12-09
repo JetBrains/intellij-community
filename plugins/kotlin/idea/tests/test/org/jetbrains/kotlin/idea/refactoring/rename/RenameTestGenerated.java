@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class RenameTestGenerated extends AbstractRenameTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/rename")
-    public static class TestBucket1 extends AbstractRenameTest {
+    public static class TestBucket001 extends AbstractRenameTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,349 +129,7 @@ public abstract class RenameTestGenerated extends AbstractRenameTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/rename")
-    public static class TestBucket10 extends AbstractRenameTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("renameKotlinParameterWithGetterSetterJvmName/renameKotlinParameterWithGetterSetterJvmName.test")
-        public void testRenameKotlinParameterWithGetterSetterJvmName_RenameKotlinParameterWithGetterSetterJvmName() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinParameterWithGetterSetterJvmName/renameKotlinParameterWithGetterSetterJvmName.test");
-        }
-
-        @TestMetadata("renameKotlinParameterWithSetterJvmNameByGetterRef/renameKotlinParameterWithSetterJvmNameByGetterRef.test")
-        public void testRenameKotlinParameterWithSetterJvmNameByGetterRef_RenameKotlinParameterWithSetterJvmNameByGetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinParameterWithSetterJvmNameByGetterRef/renameKotlinParameterWithSetterJvmNameByGetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinParameterWithSetterJvmNameBySetterRef/renameKotlinParameterWithSetterJvmNameBySetterRef.test")
-        public void testRenameKotlinParameterWithSetterJvmNameBySetterRef_RenameKotlinParameterWithSetterJvmNameBySetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinParameterWithSetterJvmNameBySetterRef/renameKotlinParameterWithSetterJvmNameBySetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinParameterWithSetterJvmNameToDefaultBySetterRef/renameKotlinParameterWithSetterJvmNameBySetterRef.test")
-        public void testRenameKotlinParameterWithSetterJvmNameToDefaultBySetterRef_RenameKotlinParameterWithSetterJvmNameBySetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinParameterWithSetterJvmNameToDefaultBySetterRef/renameKotlinParameterWithSetterJvmNameBySetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinParameterWithSetterJvmName/renameKotlinParameterWithSetterJvmName.test")
-        public void testRenameKotlinParameterWithSetterJvmName_RenameKotlinParameterWithSetterJvmName() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinParameterWithSetterJvmName/renameKotlinParameterWithSetterJvmName.test");
-        }
-
-        @TestMetadata("renameKotlinPrimaryConstructorPropertyFromOverride/renameKotlinPrimaryConstructorPropertyFromOverride.test")
-        public void testRenameKotlinPrimaryConstructorPropertyFromOverride_RenameKotlinPrimaryConstructorPropertyFromOverride() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPrimaryConstructorPropertyFromOverride/renameKotlinPrimaryConstructorPropertyFromOverride.test");
-        }
-
-        @TestMetadata("renameKotlinPrimaryConstructorPropertyWithPrivateModifier/renameKotlinPrimaryConstructorPropertyWithPrivateModifier.test")
-        public void testRenameKotlinPrimaryConstructorPropertyWithPrivateModifier_RenameKotlinPrimaryConstructorPropertyWithPrivateModifier() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPrimaryConstructorPropertyWithPrivateModifier/renameKotlinPrimaryConstructorPropertyWithPrivateModifier.test");
-        }
-
-        @TestMetadata("renameKotlinPrimaryConstructorProperty/renameKotlinPrimaryConstructorProperty.test")
-        public void testRenameKotlinPrimaryConstructorProperty_RenameKotlinPrimaryConstructorProperty() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPrimaryConstructorProperty/renameKotlinPrimaryConstructorProperty.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef.test")
-        public void testRenameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef_RenameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithCustomGetterSetterJvmNameBySetterRef/renameKotlinPropertyWithCustomGetterSetterJvmNameBySetterRef.test")
-        public void testRenameKotlinPropertyWithCustomGetterSetterJvmNameBySetterRef_RenameKotlinPropertyWithCustomGetterSetterJvmNameBySetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithCustomGetterSetterJvmNameBySetterRef/renameKotlinPropertyWithCustomGetterSetterJvmNameBySetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithGetterJvmNameByGetterRef/renameKotlinPropertyWithGetterJvmNameByGetterRef.test")
-        public void testRenameKotlinPropertyWithGetterJvmNameByGetterRef_RenameKotlinPropertyWithGetterJvmNameByGetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterJvmNameByGetterRef/renameKotlinPropertyWithGetterJvmNameByGetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithGetterJvmNameBySetterRef/renameKotlinPropertyWithGetterJvmNameBySetterRef.test")
-        public void testRenameKotlinPropertyWithGetterJvmNameBySetterRef_RenameKotlinPropertyWithGetterJvmNameBySetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterJvmNameBySetterRef/renameKotlinPropertyWithGetterJvmNameBySetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithGetterJvmNameToDefaultByGetterRef/renameKotlinPropertyWithGetterJvmNameByGetterRef.test")
-        public void testRenameKotlinPropertyWithGetterJvmNameToDefaultByGetterRef_RenameKotlinPropertyWithGetterJvmNameByGetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterJvmNameToDefaultByGetterRef/renameKotlinPropertyWithGetterJvmNameByGetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithGetterJvmName/renameKotlinPropertyWithGetterJvmName.test")
-        public void testRenameKotlinPropertyWithGetterJvmName_RenameKotlinPropertyWithGetterJvmName() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterJvmName/renameKotlinPropertyWithGetterJvmName.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithGetterSetterJvmNameByGetterRef.test")
-        public void testRenameKotlinPropertyWithGetterSetterJvmNameByGetterRef_RenameKotlinPropertyWithGetterSetterJvmNameByGetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithGetterSetterJvmNameByGetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithGetterSetterJvmNameBySetterRef/renameKotlinPropertyWithGetterSetterJvmNameBySetterRef.test")
-        public void testRenameKotlinPropertyWithGetterSetterJvmNameBySetterRef_RenameKotlinPropertyWithGetterSetterJvmNameBySetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterSetterJvmNameBySetterRef/renameKotlinPropertyWithGetterSetterJvmNameBySetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithGetterSetterJvmNameToDefaultByGetterRef/renameKotlinPropertyWithGetterSetterJvmNameByGetterRef.test")
-        public void testRenameKotlinPropertyWithGetterSetterJvmNameToDefaultByGetterRef_RenameKotlinPropertyWithGetterSetterJvmNameByGetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterSetterJvmNameToDefaultByGetterRef/renameKotlinPropertyWithGetterSetterJvmNameByGetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithGetterSetterJvmNameToDefaultBySetterRef/renameKotlinPropertyWithGetterSetterJvmNameBySetterRef.test")
-        public void testRenameKotlinPropertyWithGetterSetterJvmNameToDefaultBySetterRef_RenameKotlinPropertyWithGetterSetterJvmNameBySetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterSetterJvmNameToDefaultBySetterRef/renameKotlinPropertyWithGetterSetterJvmNameBySetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithGetterSetterJvmName/renameKotlinPropertyWithGetterSetterJvmName.test")
-        public void testRenameKotlinPropertyWithGetterSetterJvmName_RenameKotlinPropertyWithGetterSetterJvmName() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterSetterJvmName/renameKotlinPropertyWithGetterSetterJvmName.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithJvmField/renameKotlinPropertyWithJvmField.test")
-        public void testRenameKotlinPropertyWithJvmField_RenameKotlinPropertyWithJvmField() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithJvmField/renameKotlinPropertyWithJvmField.test");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/refactoring/rename")
-    public static class TestBucket11 extends AbstractRenameTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("renameKotlinPropertyWithMatchingGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithMatchingGetterSetterJvmNameByGetterRef.test")
-        public void testRenameKotlinPropertyWithMatchingGetterSetterJvmNameByGetterRef_RenameKotlinPropertyWithMatchingGetterSetterJvmNameByGetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithMatchingGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithMatchingGetterSetterJvmNameByGetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithMatchingGetterSetterJvmNameBySetterRef/renameKotlinPropertyWithMatchingGetterSetterJvmNameBySetterRef.test")
-        public void testRenameKotlinPropertyWithMatchingGetterSetterJvmNameBySetterRef_RenameKotlinPropertyWithMatchingGetterSetterJvmNameBySetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithMatchingGetterSetterJvmNameBySetterRef/renameKotlinPropertyWithMatchingGetterSetterJvmNameBySetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithSetterJvmNameByGetterRef/renameKotlinPropertyWithSetterJvmNameByGetterRef.test")
-        public void testRenameKotlinPropertyWithSetterJvmNameByGetterRef_RenameKotlinPropertyWithSetterJvmNameByGetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithSetterJvmNameByGetterRef/renameKotlinPropertyWithSetterJvmNameByGetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithSetterJvmNameBySetterRef/renameKotlinPropertyWithSetterJvmNameBySetterRef.test")
-        public void testRenameKotlinPropertyWithSetterJvmNameBySetterRef_RenameKotlinPropertyWithSetterJvmNameBySetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithSetterJvmNameBySetterRef/renameKotlinPropertyWithSetterJvmNameBySetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithSetterJvmNameToDefaultBySetterRef/renameKotlinPropertyWithSetterJvmNameBySetterRef.test")
-        public void testRenameKotlinPropertyWithSetterJvmNameToDefaultBySetterRef_RenameKotlinPropertyWithSetterJvmNameBySetterRef() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithSetterJvmNameToDefaultBySetterRef/renameKotlinPropertyWithSetterJvmNameBySetterRef.test");
-        }
-
-        @TestMetadata("renameKotlinPropertyWithSetterJvmName/renameKotlinPropertyWithSetterJvmName.test")
-        public void testRenameKotlinPropertyWithSetterJvmName_RenameKotlinPropertyWithSetterJvmName() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinPropertyWithSetterJvmName/renameKotlinPropertyWithSetterJvmName.test");
-        }
-
-        @TestMetadata("renameKotlinStaticMethodWithJvmOverloads/renameKotlinStaticMethodWithJvmOverloads.test")
-        public void testRenameKotlinStaticMethodWithJvmOverloads_RenameKotlinStaticMethodWithJvmOverloads() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinStaticMethodWithJvmOverloads/renameKotlinStaticMethodWithJvmOverloads.test");
-        }
-
-        @TestMetadata("renameKotlinStaticMethod/renameKotlinStaticMethod.test")
-        public void testRenameKotlinStaticMethod_RenameKotlinStaticMethod() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinStaticMethod/renameKotlinStaticMethod.test");
-        }
-
-        @TestMetadata("renameKotlinStaticProperty/renameKotlinStaticProperty.test")
-        public void testRenameKotlinStaticProperty_RenameKotlinStaticProperty() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinStaticProperty/renameKotlinStaticProperty.test");
-        }
-
-        @TestMetadata("renameKotlinTopLevelVarProperty/renameTopLevelVarProperty.test")
-        public void testRenameKotlinTopLevelVarProperty_RenameTopLevelVarProperty() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinTopLevelVarProperty/renameTopLevelVarProperty.test");
-        }
-
-        @TestMetadata("renameKotlinValPropertyInCompanionObject/renameKotlinValPropertyInCompanionObject.test")
-        public void testRenameKotlinValPropertyInCompanionObject_RenameKotlinValPropertyInCompanionObject() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinValPropertyInCompanionObject/renameKotlinValPropertyInCompanionObject.test");
-        }
-
-        @TestMetadata("renameKotlinValPropertyInObject/renameKotlinValPropertyInObject.test")
-        public void testRenameKotlinValPropertyInObject_RenameKotlinValPropertyInObject() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinValPropertyInObject/renameKotlinValPropertyInObject.test");
-        }
-
-        @TestMetadata("renameKotlinValProperty/renameAsJavaGetterForExplicitGetter.test")
-        public void testRenameKotlinValProperty_RenameAsJavaGetterForExplicitGetter() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinValProperty/renameAsJavaGetterForExplicitGetter.test");
-        }
-
-        @TestMetadata("renameKotlinValProperty/renameBase.test")
-        public void testRenameKotlinValProperty_RenameBase() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinValProperty/renameBase.test");
-        }
-
-        @TestMetadata("renameKotlinValProperty/renameOverriden.test")
-        public void testRenameKotlinValProperty_RenameOverriden() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinValProperty/renameOverriden.test");
-        }
-
-        @TestMetadata("renameKotlinVarProperty/renameAsJavaGetter.test")
-        public void testRenameKotlinVarProperty_RenameAsJavaGetter() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinVarProperty/renameAsJavaGetter.test");
-        }
-
-        @TestMetadata("renameKotlinVarProperty/renameAsJavaSetter.test")
-        public void testRenameKotlinVarProperty_RenameAsJavaSetter() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinVarProperty/renameAsJavaSetter.test");
-        }
-
-        @TestMetadata("renameKotlinVarProperty/renameBase.test")
-        public void testRenameKotlinVarProperty_RenameBase() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinVarProperty/renameBase.test");
-        }
-
-        @TestMetadata("renameKotlinVarProperty/renameOverriden.test")
-        public void testRenameKotlinVarProperty_RenameOverriden() throws Exception {
-            runTest("testData/refactoring/rename/renameKotlinVarProperty/renameOverriden.test");
-        }
-
-        @TestMetadata("renameOverriddenPropertyViaJavaGetter/renameOverriddenPropertyViaJavaGetter.test")
-        public void testRenameOverriddenPropertyViaJavaGetter_RenameOverriddenPropertyViaJavaGetter() throws Exception {
-            runTest("testData/refactoring/rename/renameOverriddenPropertyViaJavaGetter/renameOverriddenPropertyViaJavaGetter.test");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/refactoring/rename")
-    public static class TestBucket12 extends AbstractRenameTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("renameOverriddenPropertyViaJavaSetter/renameOverriddenPropertyViaJavaSetter.test")
-        public void testRenameOverriddenPropertyViaJavaSetter_RenameOverriddenPropertyViaJavaSetter() throws Exception {
-            runTest("testData/refactoring/rename/renameOverriddenPropertyViaJavaSetter/renameOverriddenPropertyViaJavaSetter.test");
-        }
-
-        @TestMetadata("renamePackageFqNameStarImport/renamePackageFqNameStarImport.test")
-        public void testRenamePackageFqNameStarImport_RenamePackageFqNameStarImport() throws Exception {
-            runTest("testData/refactoring/rename/renamePackageFqNameStarImport/renamePackageFqNameStarImport.test");
-        }
-
-        @TestMetadata("renamePackageWithQuotation/renamePackageWithQuotation.test")
-        public void testRenamePackageWithQuotation_RenamePackageWithQuotation() throws Exception {
-            runTest("testData/refactoring/rename/renamePackageWithQuotation/renamePackageWithQuotation.test");
-        }
-
-        @TestMetadata("renamePlusAssign/plusAssign.test")
-        public void testRenamePlusAssign_PlusAssign() throws Exception {
-            runTest("testData/refactoring/rename/renamePlusAssign/plusAssign.test");
-        }
-
-        @TestMetadata("renamePlus/plus.test")
-        public void testRenamePlus_Plus() throws Exception {
-            runTest("testData/refactoring/rename/renamePlus/plus.test");
-        }
-
-        @TestMetadata("renamePropertyInEnumCompanionWithEntryConflict/renameKotlinPropertyInEnumCompanionWithEntryConflict.test")
-        public void testRenamePropertyInEnumCompanionWithEntryConflict_RenameKotlinPropertyInEnumCompanionWithEntryConflict() throws Exception {
-            runTest("testData/refactoring/rename/renamePropertyInEnumCompanionWithEntryConflict/renameKotlinPropertyInEnumCompanionWithEntryConflict.test");
-        }
-
-        @TestMetadata("renameReferencedResourceFile/renameReferencedResourceFile.test")
-        public void testRenameReferencedResourceFile_RenameReferencedResourceFile() throws Exception {
-            runTest("testData/refactoring/rename/renameReferencedResourceFile/renameReferencedResourceFile.test");
-        }
-
-        @TestMetadata("renameSet/set.test")
-        public void testRenameSet_Set() throws Exception {
-            runTest("testData/refactoring/rename/renameSet/set.test");
-        }
-
-        @TestMetadata("renameSynthesizedComponentFunction/synthesizedComponentFunction.test")
-        public void testRenameSynthesizedComponentFunction_SynthesizedComponentFunction() throws Exception {
-            runTest("testData/refactoring/rename/renameSynthesizedComponentFunction/synthesizedComponentFunction.test");
-        }
-
-        @TestMetadata("renameUnaryMinus/unaryMinus.test")
-        public void testRenameUnaryMinus_UnaryMinus() throws Exception {
-            runTest("testData/refactoring/rename/renameUnaryMinus/unaryMinus.test");
-        }
-
-        @TestMetadata("renamedClassShadowingImplicitlyImportedClassUsage/renamedClassShadowingImplicitlyImportedClassUsage.test")
-        public void testRenamedClassShadowingImplicitlyImportedClassUsage_RenamedClassShadowingImplicitlyImportedClassUsage() throws Exception {
-            runTest("testData/refactoring/rename/renamedClassShadowingImplicitlyImportedClassUsage/renamedClassShadowingImplicitlyImportedClassUsage.test");
-        }
-
-        @TestMetadata("renamedClassShadowingImportedClassUsage/renamedClassShadowingImportedClassUsage.test")
-        public void testRenamedClassShadowingImportedClassUsage_RenamedClassShadowingImportedClassUsage() throws Exception {
-            runTest("testData/refactoring/rename/renamedClassShadowingImportedClassUsage/renamedClassShadowingImportedClassUsage.test");
-        }
-
-        @TestMetadata("samConstructorTypeAlias/samConstructorTypeAlias.test")
-        public void testSamConstructorTypeAlias_SamConstructorTypeAlias() throws Exception {
-            runTest("testData/refactoring/rename/samConstructorTypeAlias/samConstructorTypeAlias.test");
-        }
-
-        @TestMetadata("secondaryCnstructorParameterRedeclaration/secondaryConstructorParameterRedeclaration.test")
-        public void testSecondaryCnstructorParameterRedeclaration_SecondaryConstructorParameterRedeclaration() throws Exception {
-            runTest("testData/refactoring/rename/secondaryCnstructorParameterRedeclaration/secondaryConstructorParameterRedeclaration.test");
-        }
-
-        @TestMetadata("syntheticPropertyUsages1/renameGetMethod.test")
-        public void testSyntheticPropertyUsages1_RenameGetMethod() throws Exception {
-            runTest("testData/refactoring/rename/syntheticPropertyUsages1/renameGetMethod.test");
-        }
-
-        @TestMetadata("syntheticPropertyUsages2/renameSetMethod.test")
-        public void testSyntheticPropertyUsages2_RenameSetMethod() throws Exception {
-            runTest("testData/refactoring/rename/syntheticPropertyUsages2/renameSetMethod.test");
-        }
-
-        @TestMetadata("syntheticPropertyUsages3/renameSetMethod.test")
-        public void testSyntheticPropertyUsages3_RenameSetMethod() throws Exception {
-            runTest("testData/refactoring/rename/syntheticPropertyUsages3/renameSetMethod.test");
-        }
-
-        @TestMetadata("topLevelClassRedeclaration/topLevelClassRedeclaration.test")
-        public void testTopLevelClassRedeclaration_TopLevelClassRedeclaration() throws Exception {
-            runTest("testData/refactoring/rename/topLevelClassRedeclaration/topLevelClassRedeclaration.test");
-        }
-
-        @TestMetadata("topLevelFunctionRedeclaration/topLevelFunctionRedeclaration.test")
-        public void testTopLevelFunctionRedeclaration_TopLevelFunctionRedeclaration() throws Exception {
-            runTest("testData/refactoring/rename/topLevelFunctionRedeclaration/topLevelFunctionRedeclaration.test");
-        }
-
-        @TestMetadata("topLevelPropertyRedeclaration/topLevelPropertyRedeclaration.test")
-        public void testTopLevelPropertyRedeclaration_TopLevelPropertyRedeclaration() throws Exception {
-            runTest("testData/refactoring/rename/topLevelPropertyRedeclaration/topLevelPropertyRedeclaration.test");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/refactoring/rename")
-    public static class TestBucket13 extends AbstractRenameTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("valTextOccurrences/valTextOccurrences.test")
-        public void testValTextOccurrences_ValTextOccurrences() throws Exception {
-            runTest("testData/refactoring/rename/valTextOccurrences/valTextOccurrences.test");
-        }
-
-        @TestMetadata("varInDoWhile/varInDoWhile.test")
-        public void testVarInDoWhile_VarInDoWhile() throws Exception {
-            runTest("testData/refactoring/rename/varInDoWhile/varInDoWhile.test");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/refactoring/rename")
-    public static class TestBucket2 extends AbstractRenameTest {
+    public static class TestBucket002 extends AbstractRenameTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -579,7 +237,7 @@ public abstract class RenameTestGenerated extends AbstractRenameTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/rename")
-    public static class TestBucket3 extends AbstractRenameTest {
+    public static class TestBucket003 extends AbstractRenameTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -687,7 +345,7 @@ public abstract class RenameTestGenerated extends AbstractRenameTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/rename")
-    public static class TestBucket4 extends AbstractRenameTest {
+    public static class TestBucket004 extends AbstractRenameTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -795,7 +453,7 @@ public abstract class RenameTestGenerated extends AbstractRenameTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/rename")
-    public static class TestBucket5 extends AbstractRenameTest {
+    public static class TestBucket005 extends AbstractRenameTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -903,7 +561,7 @@ public abstract class RenameTestGenerated extends AbstractRenameTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/rename")
-    public static class TestBucket6 extends AbstractRenameTest {
+    public static class TestBucket006 extends AbstractRenameTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1011,7 +669,7 @@ public abstract class RenameTestGenerated extends AbstractRenameTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/rename")
-    public static class TestBucket7 extends AbstractRenameTest {
+    public static class TestBucket007 extends AbstractRenameTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1119,7 +777,7 @@ public abstract class RenameTestGenerated extends AbstractRenameTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/rename")
-    public static class TestBucket8 extends AbstractRenameTest {
+    public static class TestBucket008 extends AbstractRenameTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1227,7 +885,7 @@ public abstract class RenameTestGenerated extends AbstractRenameTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/refactoring/rename")
-    public static class TestBucket9 extends AbstractRenameTest {
+    public static class TestBucket009 extends AbstractRenameTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -1330,6 +988,348 @@ public abstract class RenameTestGenerated extends AbstractRenameTest {
         @TestMetadata("renameKotlinParameterWithGetterSetterJvmNameToDefaultBySetterRef/renameKotlinParameterWithGetterSetterJvmNameBySetterRef.test")
         public void testRenameKotlinParameterWithGetterSetterJvmNameToDefaultBySetterRef_RenameKotlinParameterWithGetterSetterJvmNameBySetterRef() throws Exception {
             runTest("testData/refactoring/rename/renameKotlinParameterWithGetterSetterJvmNameToDefaultBySetterRef/renameKotlinParameterWithGetterSetterJvmNameBySetterRef.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/refactoring/rename")
+    public static class TestBucket010 extends AbstractRenameTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("renameKotlinParameterWithGetterSetterJvmName/renameKotlinParameterWithGetterSetterJvmName.test")
+        public void testRenameKotlinParameterWithGetterSetterJvmName_RenameKotlinParameterWithGetterSetterJvmName() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinParameterWithGetterSetterJvmName/renameKotlinParameterWithGetterSetterJvmName.test");
+        }
+
+        @TestMetadata("renameKotlinParameterWithSetterJvmNameByGetterRef/renameKotlinParameterWithSetterJvmNameByGetterRef.test")
+        public void testRenameKotlinParameterWithSetterJvmNameByGetterRef_RenameKotlinParameterWithSetterJvmNameByGetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinParameterWithSetterJvmNameByGetterRef/renameKotlinParameterWithSetterJvmNameByGetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinParameterWithSetterJvmNameBySetterRef/renameKotlinParameterWithSetterJvmNameBySetterRef.test")
+        public void testRenameKotlinParameterWithSetterJvmNameBySetterRef_RenameKotlinParameterWithSetterJvmNameBySetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinParameterWithSetterJvmNameBySetterRef/renameKotlinParameterWithSetterJvmNameBySetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinParameterWithSetterJvmNameToDefaultBySetterRef/renameKotlinParameterWithSetterJvmNameBySetterRef.test")
+        public void testRenameKotlinParameterWithSetterJvmNameToDefaultBySetterRef_RenameKotlinParameterWithSetterJvmNameBySetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinParameterWithSetterJvmNameToDefaultBySetterRef/renameKotlinParameterWithSetterJvmNameBySetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinParameterWithSetterJvmName/renameKotlinParameterWithSetterJvmName.test")
+        public void testRenameKotlinParameterWithSetterJvmName_RenameKotlinParameterWithSetterJvmName() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinParameterWithSetterJvmName/renameKotlinParameterWithSetterJvmName.test");
+        }
+
+        @TestMetadata("renameKotlinPrimaryConstructorPropertyFromOverride/renameKotlinPrimaryConstructorPropertyFromOverride.test")
+        public void testRenameKotlinPrimaryConstructorPropertyFromOverride_RenameKotlinPrimaryConstructorPropertyFromOverride() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPrimaryConstructorPropertyFromOverride/renameKotlinPrimaryConstructorPropertyFromOverride.test");
+        }
+
+        @TestMetadata("renameKotlinPrimaryConstructorPropertyWithPrivateModifier/renameKotlinPrimaryConstructorPropertyWithPrivateModifier.test")
+        public void testRenameKotlinPrimaryConstructorPropertyWithPrivateModifier_RenameKotlinPrimaryConstructorPropertyWithPrivateModifier() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPrimaryConstructorPropertyWithPrivateModifier/renameKotlinPrimaryConstructorPropertyWithPrivateModifier.test");
+        }
+
+        @TestMetadata("renameKotlinPrimaryConstructorProperty/renameKotlinPrimaryConstructorProperty.test")
+        public void testRenameKotlinPrimaryConstructorProperty_RenameKotlinPrimaryConstructorProperty() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPrimaryConstructorProperty/renameKotlinPrimaryConstructorProperty.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef.test")
+        public void testRenameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef_RenameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithCustomGetterSetterJvmNameByGetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithCustomGetterSetterJvmNameBySetterRef/renameKotlinPropertyWithCustomGetterSetterJvmNameBySetterRef.test")
+        public void testRenameKotlinPropertyWithCustomGetterSetterJvmNameBySetterRef_RenameKotlinPropertyWithCustomGetterSetterJvmNameBySetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithCustomGetterSetterJvmNameBySetterRef/renameKotlinPropertyWithCustomGetterSetterJvmNameBySetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithGetterJvmNameByGetterRef/renameKotlinPropertyWithGetterJvmNameByGetterRef.test")
+        public void testRenameKotlinPropertyWithGetterJvmNameByGetterRef_RenameKotlinPropertyWithGetterJvmNameByGetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterJvmNameByGetterRef/renameKotlinPropertyWithGetterJvmNameByGetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithGetterJvmNameBySetterRef/renameKotlinPropertyWithGetterJvmNameBySetterRef.test")
+        public void testRenameKotlinPropertyWithGetterJvmNameBySetterRef_RenameKotlinPropertyWithGetterJvmNameBySetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterJvmNameBySetterRef/renameKotlinPropertyWithGetterJvmNameBySetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithGetterJvmNameToDefaultByGetterRef/renameKotlinPropertyWithGetterJvmNameByGetterRef.test")
+        public void testRenameKotlinPropertyWithGetterJvmNameToDefaultByGetterRef_RenameKotlinPropertyWithGetterJvmNameByGetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterJvmNameToDefaultByGetterRef/renameKotlinPropertyWithGetterJvmNameByGetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithGetterJvmName/renameKotlinPropertyWithGetterJvmName.test")
+        public void testRenameKotlinPropertyWithGetterJvmName_RenameKotlinPropertyWithGetterJvmName() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterJvmName/renameKotlinPropertyWithGetterJvmName.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithGetterSetterJvmNameByGetterRef.test")
+        public void testRenameKotlinPropertyWithGetterSetterJvmNameByGetterRef_RenameKotlinPropertyWithGetterSetterJvmNameByGetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithGetterSetterJvmNameByGetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithGetterSetterJvmNameBySetterRef/renameKotlinPropertyWithGetterSetterJvmNameBySetterRef.test")
+        public void testRenameKotlinPropertyWithGetterSetterJvmNameBySetterRef_RenameKotlinPropertyWithGetterSetterJvmNameBySetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterSetterJvmNameBySetterRef/renameKotlinPropertyWithGetterSetterJvmNameBySetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithGetterSetterJvmNameToDefaultByGetterRef/renameKotlinPropertyWithGetterSetterJvmNameByGetterRef.test")
+        public void testRenameKotlinPropertyWithGetterSetterJvmNameToDefaultByGetterRef_RenameKotlinPropertyWithGetterSetterJvmNameByGetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterSetterJvmNameToDefaultByGetterRef/renameKotlinPropertyWithGetterSetterJvmNameByGetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithGetterSetterJvmNameToDefaultBySetterRef/renameKotlinPropertyWithGetterSetterJvmNameBySetterRef.test")
+        public void testRenameKotlinPropertyWithGetterSetterJvmNameToDefaultBySetterRef_RenameKotlinPropertyWithGetterSetterJvmNameBySetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterSetterJvmNameToDefaultBySetterRef/renameKotlinPropertyWithGetterSetterJvmNameBySetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithGetterSetterJvmName/renameKotlinPropertyWithGetterSetterJvmName.test")
+        public void testRenameKotlinPropertyWithGetterSetterJvmName_RenameKotlinPropertyWithGetterSetterJvmName() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithGetterSetterJvmName/renameKotlinPropertyWithGetterSetterJvmName.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithJvmField/renameKotlinPropertyWithJvmField.test")
+        public void testRenameKotlinPropertyWithJvmField_RenameKotlinPropertyWithJvmField() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithJvmField/renameKotlinPropertyWithJvmField.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/refactoring/rename")
+    public static class TestBucket011 extends AbstractRenameTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("renameKotlinPropertyWithMatchingGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithMatchingGetterSetterJvmNameByGetterRef.test")
+        public void testRenameKotlinPropertyWithMatchingGetterSetterJvmNameByGetterRef_RenameKotlinPropertyWithMatchingGetterSetterJvmNameByGetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithMatchingGetterSetterJvmNameByGetterRef/renameKotlinPropertyWithMatchingGetterSetterJvmNameByGetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithMatchingGetterSetterJvmNameBySetterRef/renameKotlinPropertyWithMatchingGetterSetterJvmNameBySetterRef.test")
+        public void testRenameKotlinPropertyWithMatchingGetterSetterJvmNameBySetterRef_RenameKotlinPropertyWithMatchingGetterSetterJvmNameBySetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithMatchingGetterSetterJvmNameBySetterRef/renameKotlinPropertyWithMatchingGetterSetterJvmNameBySetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithSetterJvmNameByGetterRef/renameKotlinPropertyWithSetterJvmNameByGetterRef.test")
+        public void testRenameKotlinPropertyWithSetterJvmNameByGetterRef_RenameKotlinPropertyWithSetterJvmNameByGetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithSetterJvmNameByGetterRef/renameKotlinPropertyWithSetterJvmNameByGetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithSetterJvmNameBySetterRef/renameKotlinPropertyWithSetterJvmNameBySetterRef.test")
+        public void testRenameKotlinPropertyWithSetterJvmNameBySetterRef_RenameKotlinPropertyWithSetterJvmNameBySetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithSetterJvmNameBySetterRef/renameKotlinPropertyWithSetterJvmNameBySetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithSetterJvmNameToDefaultBySetterRef/renameKotlinPropertyWithSetterJvmNameBySetterRef.test")
+        public void testRenameKotlinPropertyWithSetterJvmNameToDefaultBySetterRef_RenameKotlinPropertyWithSetterJvmNameBySetterRef() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithSetterJvmNameToDefaultBySetterRef/renameKotlinPropertyWithSetterJvmNameBySetterRef.test");
+        }
+
+        @TestMetadata("renameKotlinPropertyWithSetterJvmName/renameKotlinPropertyWithSetterJvmName.test")
+        public void testRenameKotlinPropertyWithSetterJvmName_RenameKotlinPropertyWithSetterJvmName() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinPropertyWithSetterJvmName/renameKotlinPropertyWithSetterJvmName.test");
+        }
+
+        @TestMetadata("renameKotlinStaticMethodWithJvmOverloads/renameKotlinStaticMethodWithJvmOverloads.test")
+        public void testRenameKotlinStaticMethodWithJvmOverloads_RenameKotlinStaticMethodWithJvmOverloads() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinStaticMethodWithJvmOverloads/renameKotlinStaticMethodWithJvmOverloads.test");
+        }
+
+        @TestMetadata("renameKotlinStaticMethod/renameKotlinStaticMethod.test")
+        public void testRenameKotlinStaticMethod_RenameKotlinStaticMethod() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinStaticMethod/renameKotlinStaticMethod.test");
+        }
+
+        @TestMetadata("renameKotlinStaticProperty/renameKotlinStaticProperty.test")
+        public void testRenameKotlinStaticProperty_RenameKotlinStaticProperty() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinStaticProperty/renameKotlinStaticProperty.test");
+        }
+
+        @TestMetadata("renameKotlinTopLevelVarProperty/renameTopLevelVarProperty.test")
+        public void testRenameKotlinTopLevelVarProperty_RenameTopLevelVarProperty() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinTopLevelVarProperty/renameTopLevelVarProperty.test");
+        }
+
+        @TestMetadata("renameKotlinValPropertyInCompanionObject/renameKotlinValPropertyInCompanionObject.test")
+        public void testRenameKotlinValPropertyInCompanionObject_RenameKotlinValPropertyInCompanionObject() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinValPropertyInCompanionObject/renameKotlinValPropertyInCompanionObject.test");
+        }
+
+        @TestMetadata("renameKotlinValPropertyInObject/renameKotlinValPropertyInObject.test")
+        public void testRenameKotlinValPropertyInObject_RenameKotlinValPropertyInObject() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinValPropertyInObject/renameKotlinValPropertyInObject.test");
+        }
+
+        @TestMetadata("renameKotlinValProperty/renameAsJavaGetterForExplicitGetter.test")
+        public void testRenameKotlinValProperty_RenameAsJavaGetterForExplicitGetter() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinValProperty/renameAsJavaGetterForExplicitGetter.test");
+        }
+
+        @TestMetadata("renameKotlinValProperty/renameBase.test")
+        public void testRenameKotlinValProperty_RenameBase() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinValProperty/renameBase.test");
+        }
+
+        @TestMetadata("renameKotlinValProperty/renameOverriden.test")
+        public void testRenameKotlinValProperty_RenameOverriden() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinValProperty/renameOverriden.test");
+        }
+
+        @TestMetadata("renameKotlinVarProperty/renameAsJavaGetter.test")
+        public void testRenameKotlinVarProperty_RenameAsJavaGetter() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinVarProperty/renameAsJavaGetter.test");
+        }
+
+        @TestMetadata("renameKotlinVarProperty/renameAsJavaSetter.test")
+        public void testRenameKotlinVarProperty_RenameAsJavaSetter() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinVarProperty/renameAsJavaSetter.test");
+        }
+
+        @TestMetadata("renameKotlinVarProperty/renameBase.test")
+        public void testRenameKotlinVarProperty_RenameBase() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinVarProperty/renameBase.test");
+        }
+
+        @TestMetadata("renameKotlinVarProperty/renameOverriden.test")
+        public void testRenameKotlinVarProperty_RenameOverriden() throws Exception {
+            runTest("testData/refactoring/rename/renameKotlinVarProperty/renameOverriden.test");
+        }
+
+        @TestMetadata("renameOverriddenPropertyViaJavaGetter/renameOverriddenPropertyViaJavaGetter.test")
+        public void testRenameOverriddenPropertyViaJavaGetter_RenameOverriddenPropertyViaJavaGetter() throws Exception {
+            runTest("testData/refactoring/rename/renameOverriddenPropertyViaJavaGetter/renameOverriddenPropertyViaJavaGetter.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/refactoring/rename")
+    public static class TestBucket012 extends AbstractRenameTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("renameOverriddenPropertyViaJavaSetter/renameOverriddenPropertyViaJavaSetter.test")
+        public void testRenameOverriddenPropertyViaJavaSetter_RenameOverriddenPropertyViaJavaSetter() throws Exception {
+            runTest("testData/refactoring/rename/renameOverriddenPropertyViaJavaSetter/renameOverriddenPropertyViaJavaSetter.test");
+        }
+
+        @TestMetadata("renamePackageFqNameStarImport/renamePackageFqNameStarImport.test")
+        public void testRenamePackageFqNameStarImport_RenamePackageFqNameStarImport() throws Exception {
+            runTest("testData/refactoring/rename/renamePackageFqNameStarImport/renamePackageFqNameStarImport.test");
+        }
+
+        @TestMetadata("renamePackageWithQuotation/renamePackageWithQuotation.test")
+        public void testRenamePackageWithQuotation_RenamePackageWithQuotation() throws Exception {
+            runTest("testData/refactoring/rename/renamePackageWithQuotation/renamePackageWithQuotation.test");
+        }
+
+        @TestMetadata("renamePlusAssign/plusAssign.test")
+        public void testRenamePlusAssign_PlusAssign() throws Exception {
+            runTest("testData/refactoring/rename/renamePlusAssign/plusAssign.test");
+        }
+
+        @TestMetadata("renamePlus/plus.test")
+        public void testRenamePlus_Plus() throws Exception {
+            runTest("testData/refactoring/rename/renamePlus/plus.test");
+        }
+
+        @TestMetadata("renamePropertyInEnumCompanionWithEntryConflict/renameKotlinPropertyInEnumCompanionWithEntryConflict.test")
+        public void testRenamePropertyInEnumCompanionWithEntryConflict_RenameKotlinPropertyInEnumCompanionWithEntryConflict() throws Exception {
+            runTest("testData/refactoring/rename/renamePropertyInEnumCompanionWithEntryConflict/renameKotlinPropertyInEnumCompanionWithEntryConflict.test");
+        }
+
+        @TestMetadata("renameReferencedResourceFile/renameReferencedResourceFile.test")
+        public void testRenameReferencedResourceFile_RenameReferencedResourceFile() throws Exception {
+            runTest("testData/refactoring/rename/renameReferencedResourceFile/renameReferencedResourceFile.test");
+        }
+
+        @TestMetadata("renameSet/set.test")
+        public void testRenameSet_Set() throws Exception {
+            runTest("testData/refactoring/rename/renameSet/set.test");
+        }
+
+        @TestMetadata("renameSynthesizedComponentFunction/synthesizedComponentFunction.test")
+        public void testRenameSynthesizedComponentFunction_SynthesizedComponentFunction() throws Exception {
+            runTest("testData/refactoring/rename/renameSynthesizedComponentFunction/synthesizedComponentFunction.test");
+        }
+
+        @TestMetadata("renameUnaryMinus/unaryMinus.test")
+        public void testRenameUnaryMinus_UnaryMinus() throws Exception {
+            runTest("testData/refactoring/rename/renameUnaryMinus/unaryMinus.test");
+        }
+
+        @TestMetadata("renamedClassShadowingImplicitlyImportedClassUsage/renamedClassShadowingImplicitlyImportedClassUsage.test")
+        public void testRenamedClassShadowingImplicitlyImportedClassUsage_RenamedClassShadowingImplicitlyImportedClassUsage() throws Exception {
+            runTest("testData/refactoring/rename/renamedClassShadowingImplicitlyImportedClassUsage/renamedClassShadowingImplicitlyImportedClassUsage.test");
+        }
+
+        @TestMetadata("renamedClassShadowingImportedClassUsage/renamedClassShadowingImportedClassUsage.test")
+        public void testRenamedClassShadowingImportedClassUsage_RenamedClassShadowingImportedClassUsage() throws Exception {
+            runTest("testData/refactoring/rename/renamedClassShadowingImportedClassUsage/renamedClassShadowingImportedClassUsage.test");
+        }
+
+        @TestMetadata("samConstructorTypeAlias/samConstructorTypeAlias.test")
+        public void testSamConstructorTypeAlias_SamConstructorTypeAlias() throws Exception {
+            runTest("testData/refactoring/rename/samConstructorTypeAlias/samConstructorTypeAlias.test");
+        }
+
+        @TestMetadata("secondaryCnstructorParameterRedeclaration/secondaryConstructorParameterRedeclaration.test")
+        public void testSecondaryCnstructorParameterRedeclaration_SecondaryConstructorParameterRedeclaration() throws Exception {
+            runTest("testData/refactoring/rename/secondaryCnstructorParameterRedeclaration/secondaryConstructorParameterRedeclaration.test");
+        }
+
+        @TestMetadata("syntheticPropertyUsages1/renameGetMethod.test")
+        public void testSyntheticPropertyUsages1_RenameGetMethod() throws Exception {
+            runTest("testData/refactoring/rename/syntheticPropertyUsages1/renameGetMethod.test");
+        }
+
+        @TestMetadata("syntheticPropertyUsages2/renameSetMethod.test")
+        public void testSyntheticPropertyUsages2_RenameSetMethod() throws Exception {
+            runTest("testData/refactoring/rename/syntheticPropertyUsages2/renameSetMethod.test");
+        }
+
+        @TestMetadata("syntheticPropertyUsages3/renameSetMethod.test")
+        public void testSyntheticPropertyUsages3_RenameSetMethod() throws Exception {
+            runTest("testData/refactoring/rename/syntheticPropertyUsages3/renameSetMethod.test");
+        }
+
+        @TestMetadata("topLevelClassRedeclaration/topLevelClassRedeclaration.test")
+        public void testTopLevelClassRedeclaration_TopLevelClassRedeclaration() throws Exception {
+            runTest("testData/refactoring/rename/topLevelClassRedeclaration/topLevelClassRedeclaration.test");
+        }
+
+        @TestMetadata("topLevelFunctionRedeclaration/topLevelFunctionRedeclaration.test")
+        public void testTopLevelFunctionRedeclaration_TopLevelFunctionRedeclaration() throws Exception {
+            runTest("testData/refactoring/rename/topLevelFunctionRedeclaration/topLevelFunctionRedeclaration.test");
+        }
+
+        @TestMetadata("topLevelPropertyRedeclaration/topLevelPropertyRedeclaration.test")
+        public void testTopLevelPropertyRedeclaration_TopLevelPropertyRedeclaration() throws Exception {
+            runTest("testData/refactoring/rename/topLevelPropertyRedeclaration/topLevelPropertyRedeclaration.test");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/refactoring/rename")
+    public static class TestBucket013 extends AbstractRenameTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("valTextOccurrences/valTextOccurrences.test")
+        public void testValTextOccurrences_ValTextOccurrences() throws Exception {
+            runTest("testData/refactoring/rename/valTextOccurrences/valTextOccurrences.test");
+        }
+
+        @TestMetadata("varInDoWhile/varInDoWhile.test")
+        public void testVarInDoWhile_VarInDoWhile() throws Exception {
+            runTest("testData/refactoring/rename/varInDoWhile/varInDoWhile.test");
         }
     }
 }

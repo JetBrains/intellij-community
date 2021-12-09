@@ -23,7 +23,7 @@ public abstract class ScriptConfigurationHighlightingTestGenerated extends Abstr
     public abstract static class Highlighting extends AbstractScriptConfigurationHighlightingTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/script/definition/highlighting")
-        public static class TestBucket1 extends AbstractScriptConfigurationHighlightingTest {
+        public static class TestBucket001 extends AbstractScriptConfigurationHighlightingTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -131,7 +131,7 @@ public abstract class ScriptConfigurationHighlightingTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/script/definition/highlighting")
-        public static class TestBucket2 extends AbstractScriptConfigurationHighlightingTest {
+        public static class TestBucket002 extends AbstractScriptConfigurationHighlightingTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

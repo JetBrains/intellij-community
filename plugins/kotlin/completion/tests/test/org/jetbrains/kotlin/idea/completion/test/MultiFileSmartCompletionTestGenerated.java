@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class MultiFileSmartCompletionTestGenerated extends AbstractMultiFileSmartCompletionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/smartMultiFile")
-    public static class TestBucket1 extends AbstractMultiFileSmartCompletionTest {
+    public static class TestBucket001 extends AbstractMultiFileSmartCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class MultiFileSmartCompletionTestGenerated extends AbstractMult
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/smartMultiFile")
-    public static class TestBucket2 extends AbstractMultiFileSmartCompletionTest {
+    public static class TestBucket002 extends AbstractMultiFileSmartCompletionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

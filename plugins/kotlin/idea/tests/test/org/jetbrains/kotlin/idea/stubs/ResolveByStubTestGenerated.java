@@ -518,7 +518,7 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
         public abstract static class Uncategorized extends AbstractResolveByStubTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compiler/loadJava/compiledKotlin/class")
-            public static class TestBucket1 extends AbstractResolveByStubTest {
+            public static class TestBucket001 extends AbstractResolveByStubTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -626,7 +626,7 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compiler/loadJava/compiledKotlin/class")
-            public static class TestBucket2 extends AbstractResolveByStubTest {
+            public static class TestBucket002 extends AbstractResolveByStubTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1025,7 +1025,7 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
             public abstract static class Error extends AbstractResolveByStubTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compiler/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/error")
-                public static class TestBucket1 extends AbstractResolveByStubTest {
+                public static class TestBucket001 extends AbstractResolveByStubTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1133,7 +1133,7 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/compiler/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/error")
-                public static class TestBucket2 extends AbstractResolveByStubTest {
+                public static class TestBucket002 extends AbstractResolveByStubTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -1183,7 +1183,7 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
                 public abstract static class Parameter extends AbstractResolveByStubTest {
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compiler/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation/parameter")
-                    public static class TestBucket1 extends AbstractResolveByStubTest {
+                    public static class TestBucket001 extends AbstractResolveByStubTest {
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -1291,7 +1291,7 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
 
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compiler/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation/parameter")
-                    public static class TestBucket2 extends AbstractResolveByStubTest {
+                    public static class TestBucket002 extends AbstractResolveByStubTest {
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -1333,7 +1333,7 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
                 public abstract static class Return extends AbstractResolveByStubTest {
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compiler/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation/return")
-                    public static class TestBucket1 extends AbstractResolveByStubTest {
+                    public static class TestBucket001 extends AbstractResolveByStubTest {
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -1441,7 +1441,7 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
 
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/compiler/loadJava/compiledKotlin/fromLoadJava/kotlinSignature/propagation/return")
-                    public static class TestBucket2 extends AbstractResolveByStubTest {
+                    public static class TestBucket002 extends AbstractResolveByStubTest {
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -1748,7 +1748,7 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
         public abstract static class Uncategorized extends AbstractResolveByStubTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compiler/loadJava/compiledKotlin/fromLoadJava")
-            public static class TestBucket1 extends AbstractResolveByStubTest {
+            public static class TestBucket001 extends AbstractResolveByStubTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1856,7 +1856,7 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compiler/loadJava/compiledKotlin/fromLoadJava")
-            public static class TestBucket2 extends AbstractResolveByStubTest {
+            public static class TestBucket002 extends AbstractResolveByStubTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2361,7 +2361,7 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
         public abstract static class Uncategorized extends AbstractResolveByStubTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compiler/loadJava/compiledKotlin/prop")
-            public static class TestBucket1 extends AbstractResolveByStubTest {
+            public static class TestBucket001 extends AbstractResolveByStubTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2469,7 +2469,7 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/compiler/loadJava/compiledKotlin/prop")
-            public static class TestBucket2 extends AbstractResolveByStubTest {
+            public static class TestBucket002 extends AbstractResolveByStubTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2552,7 +2552,7 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
     public abstract static class Type extends AbstractResolveByStubTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compiler/loadJava/compiledKotlin/type")
-        public static class TestBucket1 extends AbstractResolveByStubTest {
+        public static class TestBucket001 extends AbstractResolveByStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2660,7 +2660,7 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/compiler/loadJava/compiledKotlin/type")
-        public static class TestBucket2 extends AbstractResolveByStubTest {
+        public static class TestBucket002 extends AbstractResolveByStubTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

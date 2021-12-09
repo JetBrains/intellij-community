@@ -343,7 +343,7 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
     public abstract static class Uncategorized extends AbstractBasicCompletionWeigherTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/weighers/basic")
-        public static class TestBucket1 extends AbstractBasicCompletionWeigherTest {
+        public static class TestBucket001 extends AbstractBasicCompletionWeigherTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -451,7 +451,7 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/weighers/basic")
-        public static class TestBucket2 extends AbstractBasicCompletionWeigherTest {
+        public static class TestBucket002 extends AbstractBasicCompletionWeigherTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -559,7 +559,7 @@ public abstract class BasicCompletionWeigherTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/weighers/basic")
-        public static class TestBucket3 extends AbstractBasicCompletionWeigherTest {
+        public static class TestBucket003 extends AbstractBasicCompletionWeigherTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

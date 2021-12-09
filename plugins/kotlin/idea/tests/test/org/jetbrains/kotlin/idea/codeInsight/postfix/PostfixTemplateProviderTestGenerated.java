@@ -24,7 +24,7 @@ public abstract class PostfixTemplateProviderTestGenerated extends AbstractPostf
     public abstract static class Uncategorized extends AbstractPostfixTemplateProviderTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/postfix")
-        public static class TestBucket1 extends AbstractPostfixTemplateProviderTest {
+        public static class TestBucket001 extends AbstractPostfixTemplateProviderTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -132,7 +132,7 @@ public abstract class PostfixTemplateProviderTestGenerated extends AbstractPostf
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/postfix")
-        public static class TestBucket2 extends AbstractPostfixTemplateProviderTest {
+        public static class TestBucket002 extends AbstractPostfixTemplateProviderTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -240,7 +240,7 @@ public abstract class PostfixTemplateProviderTestGenerated extends AbstractPostf
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/codeInsight/postfix")
-        public static class TestBucket3 extends AbstractPostfixTemplateProviderTest {
+        public static class TestBucket003 extends AbstractPostfixTemplateProviderTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

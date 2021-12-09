@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class UltraLightClassLoadingTestGenerated extends AbstractUltraLightClassLoadingTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/compiler/asJava/ultraLightClasses")
-    public static class TestBucket1 extends AbstractUltraLightClassLoadingTest {
+    public static class TestBucket001 extends AbstractUltraLightClassLoadingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class UltraLightClassLoadingTestGenerated extends AbstractUltraL
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/compiler/asJava/ultraLightClasses")
-    public static class TestBucket2 extends AbstractUltraLightClassLoadingTest {
+    public static class TestBucket002 extends AbstractUltraLightClassLoadingTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

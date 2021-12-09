@@ -182,7 +182,7 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
         public abstract static class Uncategorized extends AbstractQuickFixMultiFileTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/autoImports")
-            public static class TestBucket1 extends AbstractQuickFixMultiFileTest {
+            public static class TestBucket001 extends AbstractQuickFixMultiFileTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
                 }
@@ -290,7 +290,7 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/autoImports")
-            public static class TestBucket2 extends AbstractQuickFixMultiFileTest {
+            public static class TestBucket002 extends AbstractQuickFixMultiFileTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
                 }
@@ -398,7 +398,7 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/autoImports")
-            public static class TestBucket3 extends AbstractQuickFixMultiFileTest {
+            public static class TestBucket003 extends AbstractQuickFixMultiFileTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
                 }
@@ -506,7 +506,7 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/autoImports")
-            public static class TestBucket4 extends AbstractQuickFixMultiFileTest {
+            public static class TestBucket004 extends AbstractQuickFixMultiFileTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
                 }
@@ -614,7 +614,7 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/autoImports")
-            public static class TestBucket5 extends AbstractQuickFixMultiFileTest {
+            public static class TestBucket005 extends AbstractQuickFixMultiFileTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
                 }
@@ -722,7 +722,7 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/autoImports")
-            public static class TestBucket6 extends AbstractQuickFixMultiFileTest {
+            public static class TestBucket006 extends AbstractQuickFixMultiFileTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
                 }

@@ -335,7 +335,7 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
     public abstract static class Uncategorized extends AbstractReferenceResolveTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/resolve/references")
-        public static class TestBucket1 extends AbstractReferenceResolveTest {
+        public static class TestBucket001 extends AbstractReferenceResolveTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -443,7 +443,7 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/resolve/references")
-        public static class TestBucket2 extends AbstractReferenceResolveTest {
+        public static class TestBucket002 extends AbstractReferenceResolveTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -551,7 +551,7 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/resolve/references")
-        public static class TestBucket3 extends AbstractReferenceResolveTest {
+        public static class TestBucket003 extends AbstractReferenceResolveTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -659,7 +659,7 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/resolve/references")
-        public static class TestBucket4 extends AbstractReferenceResolveTest {
+        public static class TestBucket004 extends AbstractReferenceResolveTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -767,7 +767,7 @@ public abstract class ReferenceResolveTestGenerated extends AbstractReferenceRes
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/resolve/references")
-        public static class TestBucket5 extends AbstractReferenceResolveTest {
+        public static class TestBucket005 extends AbstractReferenceResolveTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

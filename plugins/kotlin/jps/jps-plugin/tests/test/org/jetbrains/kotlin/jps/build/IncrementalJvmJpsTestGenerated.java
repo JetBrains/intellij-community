@@ -24,7 +24,7 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
     public abstract static class Common extends AbstractIncrementalJvmJpsTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/incremental/multiModule/common")
-        public static class TestBucket1 extends AbstractIncrementalJvmJpsTest {
+        public static class TestBucket001 extends AbstractIncrementalJvmJpsTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
             }
@@ -132,7 +132,7 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/incremental/multiModule/common")
-        public static class TestBucket2 extends AbstractIncrementalJvmJpsTest {
+        public static class TestBucket002 extends AbstractIncrementalJvmJpsTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
             }
@@ -235,7 +235,7 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
     public abstract static class PureKotlin extends AbstractIncrementalJvmJpsTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/incremental/pureKotlin")
-        public static class TestBucket1 extends AbstractIncrementalJvmJpsTest {
+        public static class TestBucket001 extends AbstractIncrementalJvmJpsTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
             }
@@ -343,7 +343,7 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/incremental/pureKotlin")
-        public static class TestBucket2 extends AbstractIncrementalJvmJpsTest {
+        public static class TestBucket002 extends AbstractIncrementalJvmJpsTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
             }
@@ -451,7 +451,7 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/incremental/pureKotlin")
-        public static class TestBucket3 extends AbstractIncrementalJvmJpsTest {
+        public static class TestBucket003 extends AbstractIncrementalJvmJpsTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
             }
@@ -559,7 +559,7 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/incremental/pureKotlin")
-        public static class TestBucket4 extends AbstractIncrementalJvmJpsTest {
+        public static class TestBucket004 extends AbstractIncrementalJvmJpsTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
             }
@@ -667,7 +667,7 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/incremental/pureKotlin")
-        public static class TestBucket5 extends AbstractIncrementalJvmJpsTest {
+        public static class TestBucket005 extends AbstractIncrementalJvmJpsTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
             }
@@ -775,7 +775,7 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/incremental/pureKotlin")
-        public static class TestBucket6 extends AbstractIncrementalJvmJpsTest {
+        public static class TestBucket006 extends AbstractIncrementalJvmJpsTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
             }
@@ -883,7 +883,7 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/incremental/pureKotlin")
-        public static class TestBucket7 extends AbstractIncrementalJvmJpsTest {
+        public static class TestBucket007 extends AbstractIncrementalJvmJpsTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
             }
@@ -1169,7 +1169,7 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
         public abstract static class Other extends AbstractIncrementalJvmJpsTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/incremental/withJava/other")
-            public static class TestBucket1 extends AbstractIncrementalJvmJpsTest {
+            public static class TestBucket001 extends AbstractIncrementalJvmJpsTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
                 }
@@ -1277,7 +1277,7 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/incremental/withJava/other")
-            public static class TestBucket2 extends AbstractIncrementalJvmJpsTest {
+            public static class TestBucket002 extends AbstractIncrementalJvmJpsTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
                 }
@@ -1423,7 +1423,7 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
     public abstract static class ClassHierarchyAffected extends AbstractIncrementalJvmJpsTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/incremental/classHierarchyAffected")
-        public static class TestBucket1 extends AbstractIncrementalJvmJpsTest {
+        public static class TestBucket001 extends AbstractIncrementalJvmJpsTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
             }
@@ -1531,7 +1531,7 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/incremental/classHierarchyAffected")
-        public static class TestBucket2 extends AbstractIncrementalJvmJpsTest {
+        public static class TestBucket002 extends AbstractIncrementalJvmJpsTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
             }

@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class KeywordCompletionHandlerTestGenerated extends AbstractKeywordCompletionHandlerTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/handlers/keywords")
-    public static class TestBucket1 extends AbstractKeywordCompletionHandlerTest {
+    public static class TestBucket001 extends AbstractKeywordCompletionHandlerTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class KeywordCompletionHandlerTestGenerated extends AbstractKeyw
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/handlers/keywords")
-    public static class TestBucket2 extends AbstractKeywordCompletionHandlerTest {
+    public static class TestBucket002 extends AbstractKeywordCompletionHandlerTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

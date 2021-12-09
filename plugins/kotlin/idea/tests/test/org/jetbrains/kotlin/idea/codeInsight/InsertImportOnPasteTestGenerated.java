@@ -23,7 +23,7 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
     public abstract static class Copy extends AbstractInsertImportOnPasteTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/copyPaste/imports")
-        public static class TestBucket1 extends AbstractInsertImportOnPasteTest {
+        public static class TestBucket001 extends AbstractInsertImportOnPasteTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCopy, this, testDataFilePath);
             }
@@ -131,7 +131,7 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/copyPaste/imports")
-        public static class TestBucket2 extends AbstractInsertImportOnPasteTest {
+        public static class TestBucket002 extends AbstractInsertImportOnPasteTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCopy, this, testDataFilePath);
             }
@@ -239,7 +239,7 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/copyPaste/imports")
-        public static class TestBucket3 extends AbstractInsertImportOnPasteTest {
+        public static class TestBucket003 extends AbstractInsertImportOnPasteTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCopy, this, testDataFilePath);
             }
@@ -347,7 +347,7 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/copyPaste/imports")
-        public static class TestBucket4 extends AbstractInsertImportOnPasteTest {
+        public static class TestBucket004 extends AbstractInsertImportOnPasteTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCopy, this, testDataFilePath);
             }
@@ -409,7 +409,7 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
     public abstract static class Cut extends AbstractInsertImportOnPasteTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/copyPaste/imports")
-        public static class TestBucket1 extends AbstractInsertImportOnPasteTest {
+        public static class TestBucket001 extends AbstractInsertImportOnPasteTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCut, this, testDataFilePath);
             }
@@ -517,7 +517,7 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/copyPaste/imports")
-        public static class TestBucket2 extends AbstractInsertImportOnPasteTest {
+        public static class TestBucket002 extends AbstractInsertImportOnPasteTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCut, this, testDataFilePath);
             }
@@ -625,7 +625,7 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/copyPaste/imports")
-        public static class TestBucket3 extends AbstractInsertImportOnPasteTest {
+        public static class TestBucket003 extends AbstractInsertImportOnPasteTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCut, this, testDataFilePath);
             }
@@ -733,7 +733,7 @@ public abstract class InsertImportOnPasteTestGenerated extends AbstractInsertImp
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/copyPaste/imports")
-        public static class TestBucket4 extends AbstractInsertImportOnPasteTest {
+        public static class TestBucket004 extends AbstractInsertImportOnPasteTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTestCut, this, testDataFilePath);
             }

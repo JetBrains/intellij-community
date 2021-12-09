@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/smartStepInto")
-    public static class TestBucket1 extends AbstractSmartStepIntoTest {
+    public static class TestBucket001 extends AbstractSmartStepIntoTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class SmartStepIntoTestGenerated extends AbstractSmartStepIntoTe
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/smartStepInto")
-    public static class TestBucket2 extends AbstractSmartStepIntoTest {
+    public static class TestBucket002 extends AbstractSmartStepIntoTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

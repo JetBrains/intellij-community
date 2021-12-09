@@ -678,7 +678,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
     public abstract static class Class extends AbstractJavaToKotlinConverterSingleFileTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/class")
-        public static class TestBucket1 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket001 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -786,7 +786,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/class")
-        public static class TestBucket2 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket002 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -962,7 +962,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
     public abstract static class Constructors extends AbstractJavaToKotlinConverterSingleFileTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/constructors")
-        public static class TestBucket1 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket001 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1070,7 +1070,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/constructors")
-        public static class TestBucket2 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket002 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1178,7 +1178,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/constructors")
-        public static class TestBucket3 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket003 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1251,7 +1251,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
     public abstract static class DetectProperties extends AbstractJavaToKotlinConverterSingleFileTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/detectProperties")
-        public static class TestBucket1 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket001 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1359,7 +1359,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/detectProperties")
-        public static class TestBucket2 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket002 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1467,7 +1467,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/detectProperties")
-        public static class TestBucket3 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket003 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1834,7 +1834,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
     public abstract static class For extends AbstractJavaToKotlinConverterSingleFileTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/for")
-        public static class TestBucket1 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket001 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1942,7 +1942,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/for")
-        public static class TestBucket2 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket002 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2050,7 +2050,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/for")
-        public static class TestBucket3 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket003 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2163,7 +2163,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
     public abstract static class Function extends AbstractJavaToKotlinConverterSingleFileTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/function")
-        public static class TestBucket1 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket001 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2271,7 +2271,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/function")
-        public static class TestBucket2 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket002 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2518,7 +2518,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
     public abstract static class Issues extends AbstractJavaToKotlinConverterSingleFileTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/issues")
-        public static class TestBucket1 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket001 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2626,7 +2626,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/issues")
-        public static class TestBucket2 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket002 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2734,7 +2734,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/issues")
-        public static class TestBucket3 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket003 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3283,7 +3283,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
     public abstract static class Nullability extends AbstractJavaToKotlinConverterSingleFileTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/nullability")
-        public static class TestBucket1 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket001 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3391,7 +3391,7 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/fileOrElement/nullability")
-        public static class TestBucket2 extends AbstractJavaToKotlinConverterSingleFileTest {
+        public static class TestBucket002 extends AbstractJavaToKotlinConverterSingleFileTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

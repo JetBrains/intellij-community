@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest;
 public abstract class KdocResolveTestGenerated extends AbstractReferenceResolveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/kdoc/resolve")
-    public static class TestBucket1 extends AbstractReferenceResolveTest {
+    public static class TestBucket001 extends AbstractReferenceResolveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -130,7 +130,7 @@ public abstract class KdocResolveTestGenerated extends AbstractReferenceResolveT
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/kdoc/resolve")
-    public static class TestBucket2 extends AbstractReferenceResolveTest {
+    public static class TestBucket002 extends AbstractReferenceResolveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

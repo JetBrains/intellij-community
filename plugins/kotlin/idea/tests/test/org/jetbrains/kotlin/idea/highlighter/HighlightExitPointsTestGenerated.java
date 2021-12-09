@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class HighlightExitPointsTestGenerated extends AbstractHighlightExitPointsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/exitPoints")
-    public static class TestBucket1 extends AbstractHighlightExitPointsTest {
+    public static class TestBucket001 extends AbstractHighlightExitPointsTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class HighlightExitPointsTestGenerated extends AbstractHighlight
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/exitPoints")
-    public static class TestBucket2 extends AbstractHighlightExitPointsTest {
+    public static class TestBucket002 extends AbstractHighlightExitPointsTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

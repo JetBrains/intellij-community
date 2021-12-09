@@ -97,7 +97,7 @@ public abstract class PartialConverterTestGenerated extends AbstractPartialConve
     public abstract static class Function extends AbstractPartialConverterTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/partialConverter/function")
-        public static class TestBucket1 extends AbstractPartialConverterTest {
+        public static class TestBucket001 extends AbstractPartialConverterTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -205,7 +205,7 @@ public abstract class PartialConverterTestGenerated extends AbstractPartialConve
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/partialConverter/function")
-        public static class TestBucket2 extends AbstractPartialConverterTest {
+        public static class TestBucket002 extends AbstractPartialConverterTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

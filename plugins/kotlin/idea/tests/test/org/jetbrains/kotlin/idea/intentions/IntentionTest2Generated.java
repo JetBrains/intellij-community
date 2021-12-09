@@ -198,7 +198,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
     public abstract static class Filter extends AbstractIntentionTest2 {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/filter")
-        public static class TestBucket1 extends AbstractIntentionTest2 {
+        public static class TestBucket001 extends AbstractIntentionTest2 {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -306,7 +306,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/filter")
-        public static class TestBucket2 extends AbstractIntentionTest2 {
+        public static class TestBucket002 extends AbstractIntentionTest2 {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -414,7 +414,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/filter")
-        public static class TestBucket3 extends AbstractIntentionTest2 {
+        public static class TestBucket003 extends AbstractIntentionTest2 {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -781,7 +781,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
     public abstract static class Map extends AbstractIntentionTest2 {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/map")
-        public static class TestBucket1 extends AbstractIntentionTest2 {
+        public static class TestBucket001 extends AbstractIntentionTest2 {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -889,7 +889,7 @@ public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/intentions/loopToCallChain/map")
-        public static class TestBucket2 extends AbstractIntentionTest2 {
+        public static class TestBucket002 extends AbstractIntentionTest2 {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

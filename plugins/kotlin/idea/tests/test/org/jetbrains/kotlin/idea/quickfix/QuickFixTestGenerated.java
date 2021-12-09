@@ -24,7 +24,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     public abstract static class Abstract extends AbstractQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/abstract")
-        public static class TestBucket1 extends AbstractQuickFixTest {
+        public static class TestBucket001 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -132,7 +132,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/abstract")
-        public static class TestBucket2 extends AbstractQuickFixTest {
+        public static class TestBucket002 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -209,7 +209,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     public abstract static class AddAnnotationTarget extends AbstractQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/addAnnotationTarget")
-        public static class TestBucket1 extends AbstractQuickFixTest {
+        public static class TestBucket001 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -317,7 +317,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/addAnnotationTarget")
-        public static class TestBucket2 extends AbstractQuickFixTest {
+        public static class TestBucket002 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1280,7 +1280,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public abstract static class Cast extends AbstractQuickFixTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/addStarProjections/cast")
-            public static class TestBucket1 extends AbstractQuickFixTest {
+            public static class TestBucket001 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1388,7 +1388,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/addStarProjections/cast")
-            public static class TestBucket2 extends AbstractQuickFixTest {
+            public static class TestBucket002 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1784,7 +1784,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public abstract static class CallablesDeclaredInClasses extends AbstractQuickFixTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/autoImports/callablesDeclaredInClasses")
-            public static class TestBucket1 extends AbstractQuickFixTest {
+            public static class TestBucket001 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1892,7 +1892,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/autoImports/callablesDeclaredInClasses")
-            public static class TestBucket2 extends AbstractQuickFixTest {
+            public static class TestBucket002 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2000,7 +2000,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/autoImports/callablesDeclaredInClasses")
-            public static class TestBucket3 extends AbstractQuickFixTest {
+            public static class TestBucket003 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2055,7 +2055,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public abstract static class Uncategorized extends AbstractQuickFixTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/autoImports")
-            public static class TestBucket1 extends AbstractQuickFixTest {
+            public static class TestBucket001 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2163,7 +2163,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/autoImports")
-            public static class TestBucket2 extends AbstractQuickFixTest {
+            public static class TestBucket002 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2271,7 +2271,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/autoImports")
-            public static class TestBucket3 extends AbstractQuickFixTest {
+            public static class TestBucket003 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -2373,7 +2373,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     public abstract static class ChangeSignature extends AbstractQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/changeSignature")
-        public static class TestBucket1 extends AbstractQuickFixTest {
+        public static class TestBucket001 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2481,7 +2481,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/changeSignature")
-        public static class TestBucket2 extends AbstractQuickFixTest {
+        public static class TestBucket002 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2589,7 +2589,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/changeSignature")
-        public static class TestBucket3 extends AbstractQuickFixTest {
+        public static class TestBucket003 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2697,7 +2697,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/changeSignature")
-        public static class TestBucket4 extends AbstractQuickFixTest {
+        public static class TestBucket004 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -2805,7 +2805,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/changeSignature")
-        public static class TestBucket5 extends AbstractQuickFixTest {
+        public static class TestBucket005 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -3354,7 +3354,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 public abstract static class Uncategorized extends AbstractQuickFixTest {
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/quickfix/createFromUsage/createClass/callExpression")
-                    public static class TestBucket1 extends AbstractQuickFixTest {
+                    public static class TestBucket001 extends AbstractQuickFixTest {
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3462,7 +3462,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/quickfix/createFromUsage/createClass/callExpression")
-                    public static class TestBucket2 extends AbstractQuickFixTest {
+                    public static class TestBucket002 extends AbstractQuickFixTest {
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3570,7 +3570,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/quickfix/createFromUsage/createClass/callExpression")
-                    public static class TestBucket3 extends AbstractQuickFixTest {
+                    public static class TestBucket003 extends AbstractQuickFixTest {
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -3776,7 +3776,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             public abstract static class ReferenceExpression extends AbstractQuickFixTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/createFromUsage/createClass/referenceExpression")
-                public static class TestBucket1 extends AbstractQuickFixTest {
+                public static class TestBucket001 extends AbstractQuickFixTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3884,7 +3884,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/createFromUsage/createClass/referenceExpression")
-                public static class TestBucket2 extends AbstractQuickFixTest {
+                public static class TestBucket002 extends AbstractQuickFixTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -3992,7 +3992,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/createFromUsage/createClass/referenceExpression")
-                public static class TestBucket3 extends AbstractQuickFixTest {
+                public static class TestBucket003 extends AbstractQuickFixTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -4039,7 +4039,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             public abstract static class TypeReference extends AbstractQuickFixTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/createFromUsage/createClass/typeReference")
-                public static class TestBucket1 extends AbstractQuickFixTest {
+                public static class TestBucket001 extends AbstractQuickFixTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -4147,7 +4147,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/createFromUsage/createClass/typeReference")
-                public static class TestBucket2 extends AbstractQuickFixTest {
+                public static class TestBucket002 extends AbstractQuickFixTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -4483,7 +4483,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 public abstract static class Uncategorized extends AbstractQuickFixTest {
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/quickfix/createFromUsage/createFunction/call")
-                    public static class TestBucket1 extends AbstractQuickFixTest {
+                    public static class TestBucket001 extends AbstractQuickFixTest {
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -4591,7 +4591,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/quickfix/createFromUsage/createFunction/call")
-                    public static class TestBucket2 extends AbstractQuickFixTest {
+                    public static class TestBucket002 extends AbstractQuickFixTest {
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -4699,7 +4699,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/quickfix/createFromUsage/createFunction/call")
-                    public static class TestBucket3 extends AbstractQuickFixTest {
+                    public static class TestBucket003 extends AbstractQuickFixTest {
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -4807,7 +4807,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/quickfix/createFromUsage/createFunction/call")
-                    public static class TestBucket4 extends AbstractQuickFixTest {
+                    public static class TestBucket004 extends AbstractQuickFixTest {
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -5472,7 +5472,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             public abstract static class LocalVariable extends AbstractQuickFixTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/createFromUsage/createVariable/localVariable")
-                public static class TestBucket1 extends AbstractQuickFixTest {
+                public static class TestBucket001 extends AbstractQuickFixTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -5580,7 +5580,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/createFromUsage/createVariable/localVariable")
-                public static class TestBucket2 extends AbstractQuickFixTest {
+                public static class TestBucket002 extends AbstractQuickFixTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -5617,7 +5617,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             public abstract static class Parameter extends AbstractQuickFixTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/createFromUsage/createVariable/parameter")
-                public static class TestBucket1 extends AbstractQuickFixTest {
+                public static class TestBucket001 extends AbstractQuickFixTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -5725,7 +5725,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/createFromUsage/createVariable/parameter")
-                public static class TestBucket2 extends AbstractQuickFixTest {
+                public static class TestBucket002 extends AbstractQuickFixTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -5833,7 +5833,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/createFromUsage/createVariable/parameter")
-                public static class TestBucket3 extends AbstractQuickFixTest {
+                public static class TestBucket003 extends AbstractQuickFixTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -6029,7 +6029,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 public abstract static class Uncategorized extends AbstractQuickFixTest {
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/quickfix/createFromUsage/createVariable/property")
-                    public static class TestBucket1 extends AbstractQuickFixTest {
+                    public static class TestBucket001 extends AbstractQuickFixTest {
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -6137,7 +6137,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/quickfix/createFromUsage/createVariable/property")
-                    public static class TestBucket2 extends AbstractQuickFixTest {
+                    public static class TestBucket002 extends AbstractQuickFixTest {
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -6245,7 +6245,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
                     @RunWith(JUnit3RunnerWithInners.class)
                     @TestMetadata("testData/quickfix/createFromUsage/createVariable/property")
-                    public static class TestBucket3 extends AbstractQuickFixTest {
+                    public static class TestBucket003 extends AbstractQuickFixTest {
                         private void runTest(String testDataFilePath) throws Exception {
                             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                         }
@@ -6566,7 +6566,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             public abstract static class Uncategorized extends AbstractQuickFixTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/deprecatedSymbolUsage/classUsages")
-                public static class TestBucket1 extends AbstractQuickFixTest {
+                public static class TestBucket001 extends AbstractQuickFixTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -6674,7 +6674,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/deprecatedSymbolUsage/classUsages")
-                public static class TestBucket2 extends AbstractQuickFixTest {
+                public static class TestBucket002 extends AbstractQuickFixTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -6782,7 +6782,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/deprecatedSymbolUsage/classUsages")
-                public static class TestBucket3 extends AbstractQuickFixTest {
+                public static class TestBucket003 extends AbstractQuickFixTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -7377,7 +7377,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public abstract static class Uncategorized extends AbstractQuickFixTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/deprecatedSymbolUsage")
-            public static class TestBucket1 extends AbstractQuickFixTest {
+            public static class TestBucket001 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -7485,7 +7485,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/deprecatedSymbolUsage")
-            public static class TestBucket2 extends AbstractQuickFixTest {
+            public static class TestBucket002 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -7593,7 +7593,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/deprecatedSymbolUsage")
-            public static class TestBucket3 extends AbstractQuickFixTest {
+            public static class TestBucket003 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -7680,7 +7680,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public abstract static class Vararg extends AbstractQuickFixTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/deprecatedSymbolUsage/vararg")
-            public static class TestBucket1 extends AbstractQuickFixTest {
+            public static class TestBucket001 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -7788,7 +7788,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/deprecatedSymbolUsage/vararg")
-            public static class TestBucket2 extends AbstractQuickFixTest {
+            public static class TestBucket002 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -7816,7 +7816,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     public abstract static class Experimental extends AbstractQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/experimental")
-        public static class TestBucket1 extends AbstractQuickFixTest {
+        public static class TestBucket001 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7924,7 +7924,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/experimental")
-        public static class TestBucket2 extends AbstractQuickFixTest {
+        public static class TestBucket002 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -7966,7 +7966,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     public abstract static class Expressions extends AbstractQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/expressions")
-        public static class TestBucket1 extends AbstractQuickFixTest {
+        public static class TestBucket001 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8074,7 +8074,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/expressions")
-        public static class TestBucket2 extends AbstractQuickFixTest {
+        public static class TestBucket002 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8259,7 +8259,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     public abstract static class Implement extends AbstractQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/implement")
-        public static class TestBucket1 extends AbstractQuickFixTest {
+        public static class TestBucket001 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -8367,7 +8367,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/implement")
-        public static class TestBucket2 extends AbstractQuickFixTest {
+        public static class TestBucket002 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -9581,7 +9581,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public abstract static class Uncategorized extends AbstractQuickFixTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/modifiers")
-            public static class TestBucket1 extends AbstractQuickFixTest {
+            public static class TestBucket001 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -9689,7 +9689,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/modifiers")
-            public static class TestBucket2 extends AbstractQuickFixTest {
+            public static class TestBucket002 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -9797,7 +9797,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/modifiers")
-            public static class TestBucket3 extends AbstractQuickFixTest {
+            public static class TestBucket003 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -9905,7 +9905,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/modifiers")
-            public static class TestBucket4 extends AbstractQuickFixTest {
+            public static class TestBucket004 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -10292,7 +10292,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public abstract static class NothingToOverride extends AbstractQuickFixTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/override/nothingToOverride")
-            public static class TestBucket1 extends AbstractQuickFixTest {
+            public static class TestBucket001 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -10400,7 +10400,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/override/nothingToOverride")
-            public static class TestBucket2 extends AbstractQuickFixTest {
+            public static class TestBucket002 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -11387,7 +11387,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     public abstract static class RemoveUnused extends AbstractQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/removeUnused")
-        public static class TestBucket1 extends AbstractQuickFixTest {
+        public static class TestBucket001 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -11495,7 +11495,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/removeUnused")
-        public static class TestBucket2 extends AbstractQuickFixTest {
+        public static class TestBucket002 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -11871,7 +11871,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     public abstract static class ReplaceWithSafeCall extends AbstractQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/replaceWithSafeCall")
-        public static class TestBucket1 extends AbstractQuickFixTest {
+        public static class TestBucket001 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -11979,7 +11979,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/replaceWithSafeCall")
-        public static class TestBucket2 extends AbstractQuickFixTest {
+        public static class TestBucket002 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -12498,7 +12498,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     public abstract static class SupertypeInitialization extends AbstractQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/supertypeInitialization")
-        public static class TestBucket1 extends AbstractQuickFixTest {
+        public static class TestBucket001 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -12606,7 +12606,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/supertypeInitialization")
-        public static class TestBucket2 extends AbstractQuickFixTest {
+        public static class TestBucket002 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -12972,7 +12972,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             public abstract static class Uncategorized extends AbstractQuickFixTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/suppress/forStatement")
-                public static class TestBucket1 extends AbstractQuickFixTest {
+                public static class TestBucket001 extends AbstractQuickFixTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -13080,7 +13080,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/quickfix/suppress/forStatement")
-                public static class TestBucket2 extends AbstractQuickFixTest {
+                public static class TestBucket002 extends AbstractQuickFixTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -13235,7 +13235,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     public abstract static class SurroundWithNullCheck extends AbstractQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/surroundWithNullCheck")
-        public static class TestBucket1 extends AbstractQuickFixTest {
+        public static class TestBucket001 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -13343,7 +13343,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/surroundWithNullCheck")
-        public static class TestBucket2 extends AbstractQuickFixTest {
+        public static class TestBucket002 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -14288,7 +14288,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         public abstract static class Uncategorized extends AbstractQuickFixTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/typeMismatch")
-            public static class TestBucket1 extends AbstractQuickFixTest {
+            public static class TestBucket001 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -14396,7 +14396,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/typeMismatch")
-            public static class TestBucket2 extends AbstractQuickFixTest {
+            public static class TestBucket002 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -14504,7 +14504,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/typeMismatch")
-            public static class TestBucket3 extends AbstractQuickFixTest {
+            public static class TestBucket003 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -14612,7 +14612,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/typeMismatch")
-            public static class TestBucket4 extends AbstractQuickFixTest {
+            public static class TestBucket004 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -14720,7 +14720,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/quickfix/typeMismatch")
-            public static class TestBucket5 extends AbstractQuickFixTest {
+            public static class TestBucket005 extends AbstractQuickFixTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -15418,7 +15418,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
     public abstract static class When extends AbstractQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/when")
-        public static class TestBucket1 extends AbstractQuickFixTest {
+        public static class TestBucket001 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -15526,7 +15526,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/when")
-        public static class TestBucket2 extends AbstractQuickFixTest {
+        public static class TestBucket002 extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

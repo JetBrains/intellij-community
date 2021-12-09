@@ -160,7 +160,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
             public abstract static class Uncategorized extends AbstractFindUsagesTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/findUsages/kotlin/conventions")
-                public static class TestBucket1 extends AbstractFindUsagesTest {
+                public static class TestBucket001 extends AbstractFindUsagesTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -268,7 +268,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/findUsages/kotlin/conventions")
-                public static class TestBucket2 extends AbstractFindUsagesTest {
+                public static class TestBucket002 extends AbstractFindUsagesTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                     }
@@ -286,7 +286,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
         public abstract static class FindClassUsages extends AbstractFindUsagesTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/kotlin/findClassUsages")
-            public static class TestBucket1 extends AbstractFindUsagesTest {
+            public static class TestBucket001 extends AbstractFindUsagesTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -394,7 +394,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/kotlin/findClassUsages")
-            public static class TestBucket2 extends AbstractFindUsagesTest {
+            public static class TestBucket002 extends AbstractFindUsagesTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -502,7 +502,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/kotlin/findClassUsages")
-            public static class TestBucket3 extends AbstractFindUsagesTest {
+            public static class TestBucket003 extends AbstractFindUsagesTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -584,7 +584,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
         public abstract static class FindFunctionUsages extends AbstractFindUsagesTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestBucket1 extends AbstractFindUsagesTest {
+            public static class TestBucket001 extends AbstractFindUsagesTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -692,7 +692,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/kotlin/findFunctionUsages")
-            public static class TestBucket2 extends AbstractFindUsagesTest {
+            public static class TestBucket002 extends AbstractFindUsagesTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -969,7 +969,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
         public abstract static class FindPropertyUsages extends AbstractFindUsagesTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestBucket1 extends AbstractFindUsagesTest {
+            public static class TestBucket001 extends AbstractFindUsagesTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1077,7 +1077,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/kotlin/findPropertyUsages")
-            public static class TestBucket2 extends AbstractFindUsagesTest {
+            public static class TestBucket002 extends AbstractFindUsagesTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1471,7 +1471,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
         public abstract static class FindJavaClassUsages extends AbstractFindUsagesTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/java/findJavaClassUsages")
-            public static class TestBucket1 extends AbstractFindUsagesTest {
+            public static class TestBucket001 extends AbstractFindUsagesTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }
@@ -1579,7 +1579,7 @@ public abstract class FindUsagesTestGenerated extends AbstractFindUsagesTest {
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/findUsages/java/findJavaClassUsages")
-            public static class TestBucket2 extends AbstractFindUsagesTest {
+            public static class TestBucket002 extends AbstractFindUsagesTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
                 }

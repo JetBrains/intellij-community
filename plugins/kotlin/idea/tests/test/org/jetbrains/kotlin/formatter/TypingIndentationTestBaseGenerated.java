@@ -92,7 +92,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
         public abstract static class ControlFlowConstructions extends AbstractTypingIndentationTestBase {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/indentationOnNewline/controlFlowConstructions")
-            public static class TestBucket1 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket001 extends AbstractTypingIndentationTestBase {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -200,7 +200,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/indentationOnNewline/controlFlowConstructions")
-            public static class TestBucket2 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket002 extends AbstractTypingIndentationTestBase {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -308,7 +308,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/indentationOnNewline/controlFlowConstructions")
-            public static class TestBucket3 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket003 extends AbstractTypingIndentationTestBase {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -456,7 +456,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
         public abstract static class EmptyParameters extends AbstractTypingIndentationTestBase {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/indentationOnNewline/emptyParameters")
-            public static class TestBucket1 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket001 extends AbstractTypingIndentationTestBase {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -564,7 +564,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/indentationOnNewline/emptyParameters")
-            public static class TestBucket2 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket002 extends AbstractTypingIndentationTestBase {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -672,7 +672,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/indentationOnNewline/emptyParameters")
-            public static class TestBucket3 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket003 extends AbstractTypingIndentationTestBase {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -983,7 +983,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
         public abstract static class Templates extends AbstractTypingIndentationTestBase {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/indentationOnNewline/templates")
-            public static class TestBucket1 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket001 extends AbstractTypingIndentationTestBase {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -1091,7 +1091,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/indentationOnNewline/templates")
-            public static class TestBucket2 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket002 extends AbstractTypingIndentationTestBase {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -1118,7 +1118,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
         public abstract static class Uncategorized extends AbstractTypingIndentationTestBase {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/indentationOnNewline")
-            public static class TestBucket1 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket001 extends AbstractTypingIndentationTestBase {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -1226,7 +1226,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/indentationOnNewline")
-            public static class TestBucket2 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket002 extends AbstractTypingIndentationTestBase {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -1334,7 +1334,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/indentationOnNewline")
-            public static class TestBucket3 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket003 extends AbstractTypingIndentationTestBase {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }

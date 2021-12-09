@@ -108,7 +108,7 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
     public abstract static class Uncategorized extends AbstractSmartCompletionHandlerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/smart")
-        public static class TestBucket1 extends AbstractSmartCompletionHandlerTest {
+        public static class TestBucket001 extends AbstractSmartCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -216,7 +216,7 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/smart")
-        public static class TestBucket2 extends AbstractSmartCompletionHandlerTest {
+        public static class TestBucket002 extends AbstractSmartCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -324,7 +324,7 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/smart")
-        public static class TestBucket3 extends AbstractSmartCompletionHandlerTest {
+        public static class TestBucket003 extends AbstractSmartCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -432,7 +432,7 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/smart")
-        public static class TestBucket4 extends AbstractSmartCompletionHandlerTest {
+        public static class TestBucket004 extends AbstractSmartCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -540,7 +540,7 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/smart")
-        public static class TestBucket5 extends AbstractSmartCompletionHandlerTest {
+        public static class TestBucket005 extends AbstractSmartCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -648,7 +648,7 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/smart")
-        public static class TestBucket6 extends AbstractSmartCompletionHandlerTest {
+        public static class TestBucket006 extends AbstractSmartCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -756,7 +756,7 @@ public abstract class SmartCompletionHandlerTestGenerated extends AbstractSmartC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/smart")
-        public static class TestBucket7 extends AbstractSmartCompletionHandlerTest {
+        public static class TestBucket007 extends AbstractSmartCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }

@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class GenerateHashCodeAndEqualsActionTestGenerated extends AbstractGenerateHashCodeAndEqualsActionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/generate/equalsWithHashCode")
-    public static class TestBucket1 extends AbstractGenerateHashCodeAndEqualsActionTest {
+    public static class TestBucket001 extends AbstractGenerateHashCodeAndEqualsActionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class GenerateHashCodeAndEqualsActionTestGenerated extends Abstr
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/codeInsight/generate/equalsWithHashCode")
-    public static class TestBucket2 extends AbstractGenerateHashCodeAndEqualsActionTest {
+    public static class TestBucket002 extends AbstractGenerateHashCodeAndEqualsActionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class WorkSelectionTestGenerated extends AbstractWorkSelectionTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/wordSelection")
-    public static class TestBucket1 extends AbstractWorkSelectionTest {
+    public static class TestBucket001 extends AbstractWorkSelectionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class WorkSelectionTestGenerated extends AbstractWorkSelectionTe
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/wordSelection")
-    public static class TestBucket2 extends AbstractWorkSelectionTest {
+    public static class TestBucket002 extends AbstractWorkSelectionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -237,7 +237,7 @@ public abstract class WorkSelectionTestGenerated extends AbstractWorkSelectionTe
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/wordSelection")
-    public static class TestBucket3 extends AbstractWorkSelectionTest {
+    public static class TestBucket003 extends AbstractWorkSelectionTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }

@@ -21,7 +21,7 @@ import org.junit.runner.RunWith;
 public abstract class PartialBodyResolveTestGenerated extends AbstractPartialBodyResolveTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/partialBodyResolve")
-    public static class TestBucket1 extends AbstractPartialBodyResolveTest {
+    public static class TestBucket001 extends AbstractPartialBodyResolveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -129,7 +129,7 @@ public abstract class PartialBodyResolveTestGenerated extends AbstractPartialBod
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/partialBodyResolve")
-    public static class TestBucket2 extends AbstractPartialBodyResolveTest {
+    public static class TestBucket002 extends AbstractPartialBodyResolveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -237,7 +237,7 @@ public abstract class PartialBodyResolveTestGenerated extends AbstractPartialBod
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/partialBodyResolve")
-    public static class TestBucket3 extends AbstractPartialBodyResolveTest {
+    public static class TestBucket003 extends AbstractPartialBodyResolveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
@@ -345,7 +345,7 @@ public abstract class PartialBodyResolveTestGenerated extends AbstractPartialBod
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/resolve/partialBodyResolve")
-    public static class TestBucket4 extends AbstractPartialBodyResolveTest {
+    public static class TestBucket004 extends AbstractPartialBodyResolveTest {
         private void runTest(String testDataFilePath) throws Exception {
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
