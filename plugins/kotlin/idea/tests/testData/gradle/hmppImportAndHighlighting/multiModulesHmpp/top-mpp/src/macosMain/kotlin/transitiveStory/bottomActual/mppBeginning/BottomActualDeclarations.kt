@@ -9,7 +9,7 @@ actual open class <!LINE_MARKER("descr='Has declaration in common module'")!>Bot
     }
 }
 
-actual open class <!LINE_MARKER("descr='Is subclassed by ChildOfMPOuterInMacos  Click or press ... to navigate'"), LINE_MARKER("descr='Has declaration in common module'")!>MPOuter<!> {
+actual open class <!LINE_MARKER("descr='Has declaration in common module'"), LINE_MARKER("descr='Is subclassed by ChildOfMPOuterInMacos  Click or press ... to navigate'")!>MPOuter<!> {
     protected actual open val <!LINE_MARKER("descr='Has declaration in common module'")!>b<!>: Int = 4325
     internal actual val <!LINE_MARKER("descr='Has declaration in common module'")!>c<!>: Int = 2345
     actual val <!LINE_MARKER("descr='Has declaration in common module'")!>d<!>: Int = 325
