@@ -8,8 +8,6 @@ import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
-import com.intellij.platform.util.plugins.DataLoader;
-import com.intellij.platform.util.plugins.LocalFsDataLoader;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.rules.TempDirectory;

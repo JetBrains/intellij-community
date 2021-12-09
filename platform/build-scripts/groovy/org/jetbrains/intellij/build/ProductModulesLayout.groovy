@@ -5,7 +5,6 @@ import com.intellij.openapi.util.MultiValuesMap
 import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.intellij.build.impl.DistributionJARsBuilder
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.PluginLayout
 
@@ -147,13 +146,6 @@ class ProductModulesLayout {
                     .findAll { enabledPluginModules.contains(it.mainModule) }
                     .collectMany { it.includedModuleNames })
     return result
-  }
-
-  /**
-   * @deprecated this method isn't supposed to be used in product build scripts
-   */
-  List<String> getIncludedPlatformModules() {
-    DistributionJARsBuilder.getIncludedPlatformModules(this)
   }
 
   /**

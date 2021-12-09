@@ -180,7 +180,10 @@ public final class NotificationCollector {
 
     @Override
     protected @NotNull ValidationResultType doValidate(@NotNull String data, @NotNull EventContext context) {
-      if (UNKNOWN.equals(data)) return ValidationResultType.ACCEPTED;
+      if (UNKNOWN.equals(data)) {
+        return ValidationResultType.ACCEPTED;
+      }
+
       NotificationGroup group = NotificationGroupManager.getInstance().getNotificationGroup(data);
       if (group != null && getPluginInfoById(group.getPluginId()).isDevelopedByJetBrains()) {
         return ValidationResultType.ACCEPTED;

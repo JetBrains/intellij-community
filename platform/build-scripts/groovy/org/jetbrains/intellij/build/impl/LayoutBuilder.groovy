@@ -281,7 +281,7 @@ final class LayoutBuilder {
       context.findRequiredModule(name)
     }
 
-    void addLibraryMapping(JpsLibrary library, String outputFileName, Path libraryFile) {
+    private void addLibraryMapping(JpsLibrary library, String outputFileName, Path libraryFile) {
       def parentReference = library.createReference().parentReference
       if (parentReference instanceof JpsModuleReference) {
         projectStructureMapping.addEntry(new ModuleLibraryFileEntry(Path.of(getOutputFilePath(outputFileName)),

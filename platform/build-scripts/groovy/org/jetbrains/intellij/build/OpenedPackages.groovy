@@ -5,7 +5,7 @@ import groovy.transform.CompileStatic
 
 @CompileStatic
 final class OpenedPackages implements Iterable<String> {
-  private static final List<String> OPENED_PACKAGES = Collections.unmodifiableList([
+  private static final List<String> OPENED_PACKAGES = List.of(
     '--add-opens=java.base/java.lang=ALL-UNNAMED',
     '--add-opens=java.base/java.text=ALL-UNNAMED',
     '--add-opens=java.base/java.time=ALL-UNNAMED',
@@ -37,7 +37,7 @@ final class OpenedPackages implements Iterable<String> {
     '--add-opens=jdk.attach/sun.tools.attach=ALL-UNNAMED',
     '--add-opens=jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED',
     '--add-opens=jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED'
-  ])
+  )
 
   static final OpenedPackages INSTANCE = new OpenedPackages()
 
