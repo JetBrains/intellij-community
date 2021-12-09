@@ -3,8 +3,6 @@ package com.jetbrains.python.target
 
 import com.intellij.execution.target.*
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.remote.RemoteSdkProperties
 import com.intellij.remote.RemoteSdkPropertiesHolder
@@ -20,6 +18,7 @@ import org.jdom.Element
  */
 class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPropertiesHolder,
                                                       flavor: PythonSdkFlavor?) : PythonSdkAdditionalData(flavor),
+                                                                                  TargetBasedSdkAdditionalData,
                                                                                   RemoteSdkProperties by b,
                                                                                   PyRemoteSdkAdditionalDataMarker {
   /**
@@ -38,7 +37,7 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
    * Note that [targetEnvironmentConfiguration] could be `null` even if [targetState] is not `null`, when there is no appropriate
    * [TargetEnvironmentType] available for deserializing and handling [ContributedStateBase.innerState] of [targetState].
    */
-  var targetEnvironmentConfiguration: TargetEnvironmentConfiguration?
+  override var targetEnvironmentConfiguration: TargetEnvironmentConfiguration?
     get() = _targetEnvironmentConfiguration
     set(value) {
       targetState = value?.let { ContributedConfigurationsList.ContributedStateBase().apply { loadFromConfiguration(value) } }
@@ -46,10 +45,6 @@ class PyTargetAwareAdditionalData private constructor(private val b: RemoteSdkPr
     }
 
   constructor(flavor: PythonSdkFlavor?) : this(RemoteSdkPropertiesHolder(DEFAULT_PYCHARM_HELPERS_DIR_NAME), flavor)
-
-  fun getTargetEnvironmentRequest(project: Project?): TargetEnvironmentRequest? {
-    return targetEnvironmentConfiguration?.createEnvironmentRequest(project ?: ProjectManager.getInstance().defaultProject)
-  }
 
   override fun save(rootElement: Element) {
     // store "interpeter paths" (i.e. `PYTHONPATH` elements)

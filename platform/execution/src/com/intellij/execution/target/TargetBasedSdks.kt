@@ -7,12 +7,18 @@ import com.intellij.configurationStore.ComponentSerializationUtil
 import com.intellij.configurationStore.jdomSerializer
 import com.intellij.execution.target.ContributedConfigurationsList.Companion.getSerializer
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 
 private const val TARGET_ENVIRONMENT_CONFIGURATION = "targetEnvironmentConfiguration"
 
 private val LOG = Logger.getInstance("#" + "com.intellij.execution.target.TargetBasedSdks")
+
+fun TargetBasedSdkAdditionalData.getTargetEnvironmentRequest(project: Project?): TargetEnvironmentRequest? {
+  return targetEnvironmentConfiguration?.createEnvironmentRequest(project ?: ProjectManager.getInstance().defaultProject)
+}
 
 /**
  * @param element the "additional" element of IntelliJ SDK data to store state to
