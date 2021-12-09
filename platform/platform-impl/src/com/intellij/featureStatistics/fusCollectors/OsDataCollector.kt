@@ -1,9 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics.fusCollectors
 
-import com.intellij.execution.ExecutionException
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.util.ExecUtil
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -12,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidat
 import com.intellij.internal.statistic.eventLog.events.EventFields.Version
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
@@ -97,10 +95,12 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
 
   private fun detectIsUnderWsl(): Boolean =
     try {
-      val output = ExecUtil.execAndGetOutput(GeneralCommandLine("uname", "-a"))
-      "-microsoft-" in output.stdout
+      // We need to use loadLines and not loadText here, because loadText relies on getting the file size
+      // and the kernel returns size 0 for this special file.
+      val osrelease = FileUtil.loadLines("/proc/sys/kernel/osrelease")
+      osrelease.size > 0 && osrelease[0].contains("-microsoft-")
     }
-    catch(ignored: ExecutionException) {
+    catch(e: IOException) {
       false
     }
 }
