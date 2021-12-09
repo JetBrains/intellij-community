@@ -115,7 +115,7 @@ class KotlinMavenImporterTest04 : AbstractKotlinMavenImporterTest() {
         assertModules("project")
         assertImporterStatePresent()
 
-        Assert.assertEquals(JvmPlatforms.jvm16, facetSettings.targetPlatform)
+        Assert.assertEquals(JvmPlatforms.jvm17, facetSettings.targetPlatform)
 
         assertSources("project", "src/main/kotlin")
         assertTestSources("project", "src/test/java")
@@ -170,7 +170,7 @@ class KotlinMavenImporterTest04 : AbstractKotlinMavenImporterTest() {
         assertModules("project")
         assertImporterStatePresent()
 
-        Assert.assertEquals(JvmPlatforms.jvm16, facetSettings.targetPlatform)
+        Assert.assertEquals(JvmPlatforms.jvm17, facetSettings.targetPlatform)
     }
 
     fun testJvmDetectionByGoalWithCommonStdlib() {
@@ -220,7 +220,7 @@ class KotlinMavenImporterTest04 : AbstractKotlinMavenImporterTest() {
         assertModules("project")
         assertImporterStatePresent()
 
-        Assert.assertEquals(JvmPlatforms.jvm16, facetSettings.targetPlatform)
+        Assert.assertEquals(JvmPlatforms.jvm17, facetSettings.targetPlatform)
 
         assertSources("project", "src/main/kotlin")
         assertTestSources("project", "src/test/java")
