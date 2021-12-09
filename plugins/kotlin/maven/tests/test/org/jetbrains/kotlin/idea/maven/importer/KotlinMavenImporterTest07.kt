@@ -646,7 +646,7 @@ class KotlinMavenImporterTest07 : AbstractKotlinMavenImporterTest() {
         }
 
         with(facetSettings("my-jvm-module")) {
-            Assert.assertEquals(JvmPlatforms.jvm16, targetPlatform)
+            Assert.assertEquals(JvmPlatforms.jvm17, targetPlatform)
             Assert.assertEquals(listOf("my-common-module1", "my-common-module2"), implementedModuleNames)
         }
 
