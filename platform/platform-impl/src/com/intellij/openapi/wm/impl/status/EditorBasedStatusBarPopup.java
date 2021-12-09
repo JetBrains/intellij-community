@@ -9,7 +9,6 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -35,7 +34,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.IndexingBundle;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.*;
@@ -211,6 +210,10 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     return myComponent;
   }
 
+  protected Alarm getUpdateAlarm() {
+    return update;
+  }
+
   protected boolean isEmpty() {
     Boolean result = ObjectUtils.doIfCast(myComponent, TextPanel.WithIconAndArrows.class,
                                           textPanel -> StringUtil.isEmpty(textPanel.getText()) && !textPanel.hasIcon());
@@ -256,45 +259,44 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
 
   public void update(@Nullable Runnable finishUpdate) {
     if (update.isDisposed()) return;
-    VirtualFile file = getSelectedFile();
-    ReadAction.nonBlocking(() -> {
-        WidgetState state = getWidgetState(file);
-        update.cancelAllRequests();
-        update.addRequest(() -> {
-          if (state == WidgetState.NO_CHANGE) {
-            return;
-          }
 
-          if (state == WidgetState.NO_CHANGE_MAKE_VISIBLE) {
-            myComponent.setVisible(true);
-            return;
-          }
+    update.cancelAllRequests();
+    update.addRequest(() -> {
+      if (isDisposed()) return;
 
-          if (state == WidgetState.HIDDEN) {
-            myComponent.setVisible(false);
-            return;
-          }
-          if (isDisposed()) return;
+      VirtualFile file = getSelectedFile();
 
-          myComponent.setVisible(true);
-          actionEnabled = state.actionEnabled && isEnabledForFile(file);
-          myComponent.setEnabled(actionEnabled);
-          updateComponent(state);
+      WidgetState state = SlowOperations.allowSlowOperations(() -> getWidgetState(file));
+      if (state == WidgetState.NO_CHANGE) {
+        return;
+      }
 
-          if (myStatusBar != null && !myComponent.isValid()) {
-            myStatusBar.updateWidget(ID());
-          }
+      if (state == WidgetState.NO_CHANGE_MAKE_VISIBLE) {
+        myComponent.setVisible(true);
+        return;
+      }
 
-          if (finishUpdate != null) {
-            finishUpdate.run();
-          }
-          afterVisibleUpdate(state);
-        }, 200, ModalityState.any());
-        return state;
-      })
-      .expireWith(update)
-      .withDocumentsCommitted(myProject)
-      .submit(AppExecutorUtil.getAppExecutorService());
+      if (state == WidgetState.HIDDEN) {
+        myComponent.setVisible(false);
+        return;
+      }
+
+      myComponent.setVisible(true);
+
+      actionEnabled = state.actionEnabled && isEnabledForFile(file);
+
+      myComponent.setEnabled(actionEnabled);
+      updateComponent(state);
+
+      if (myStatusBar != null && !myComponent.isValid()) {
+        myStatusBar.updateWidget(ID());
+      }
+
+      if (finishUpdate != null) {
+        finishUpdate.run();
+      }
+      afterVisibleUpdate(state);
+    }, 200, ModalityState.any());
   }
 
   protected void afterVisibleUpdate(@NotNull WidgetState state) {}
@@ -352,6 +354,10 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     @Nls
     public String getText() {
       return text;
+    }
+
+    public boolean isActionEnabled() {
+      return actionEnabled;
     }
 
     public @Tooltip String getToolTip() {
