@@ -49,14 +49,14 @@ UFile (package = )
         UMethod (name = runAll)
             UBlockExpression
                 UForEachExpression
-                    UastEmptyExpression
+                    USimpleNameReferenceExpression (identifier = tasks)
                     UBlockExpression
                         UQualifiedReferenceExpression
-                            UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))
+                            UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 1))
                                 UIdentifier (Identifier (Thread))
-                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: Thread)
                                 USimpleNameReferenceExpression (identifier = t)
                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))
                                 UIdentifier (Identifier (start))
-                                USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null)
+                                USimpleNameReferenceExpression (identifier = start, resolvesTo = null)
         UMethod (name = RunnableManager)
