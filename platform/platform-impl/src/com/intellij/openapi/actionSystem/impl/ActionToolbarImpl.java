@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -157,8 +157,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private boolean myShowSeparatorTitles;
   private Image myCachedImage;
 
-  private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(composite -> {
-    super.setVisible(composite != null);
+  @ApiStatus.Internal
+  @ApiStatus.Experimental
+  public final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(composite -> {
     if (isShowing()) repaint();
   });
 
@@ -296,13 +297,17 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @Override
-  protected void paintComponent(final Graphics g) {
-    if (g instanceof Graphics2D) {
-      Graphics2D g2d = (Graphics2D)g;
-      AlphaComposite composite = myAlphaContext.getComposite();
-      if (composite == null) return; // do not paint a completely transparent component
-      g2d.setComposite(composite);
+  public void paint(Graphics g) {
+    if (g instanceof Graphics2D && ExperimentalUI.isNewUI()) {
+      myAlphaContext.paintWithComposite((Graphics2D)g, () -> super.paint(g));
     }
+    else {
+      super.paint(g);
+    }
+  }
+
+  @Override
+  protected void paintComponent(final Graphics g) {
     if (myCachedImage != null) {
       UIUtil.drawImage(g, myCachedImage, 0, 0, null);
       return;
@@ -1110,16 +1115,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       }
     }
     revalidate();
-  }
-
-  @Override
-  public void setVisible(boolean visible) {
-    if (ExperimentalUI.isNewUI()) {
-      myAlphaContext.setVisible(visible);
-    }
-    else {
-      super.setVisible(visible);
-    }
   }
 
   @Override

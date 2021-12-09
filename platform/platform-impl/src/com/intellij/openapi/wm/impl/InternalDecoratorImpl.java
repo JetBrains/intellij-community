@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.Queryable;
@@ -546,8 +547,9 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
 
   void updateActiveAndHoverState() {
     ActionToolbar toolbar = getHeaderToolbar();
-    if (toolbar != null) {
-      toolbar.getComponent().setVisible(!isNewUI() || isWindowHovered || toolWindow.isActive());
+    if (toolbar instanceof ActionToolbarImpl) {
+      ActionToolbarImpl impl = (ActionToolbarImpl)toolbar;
+      impl.myAlphaContext.setVisible(!isNewUI() || isWindowHovered || toolWindow.isActive());
     }
   }
 
