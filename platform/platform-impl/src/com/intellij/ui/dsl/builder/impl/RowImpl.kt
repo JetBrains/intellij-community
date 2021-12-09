@@ -96,11 +96,13 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun <T : JComponent> cell(component: T, viewComponent: JComponent): CellImpl<T> {
-    return cell(component, viewComponent, null)
+    val result = CellImpl(dialogPanelConfig, component, this, viewComponent)
+    cells.add(result)
+    return result
   }
 
   override fun <T : JComponent> cell(component: T): CellImpl<T> {
-    return cell(component, component, null)
+    return cell(component, component)
   }
 
   override fun cell() {
@@ -108,7 +110,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun <T : JComponent> scrollCell(component: T): CellImpl<T> {
-    return cell(component, JBScrollPane(component), null)
+    return cell(component, JBScrollPane(component))
   }
 
   fun cell(cell: CellBaseImpl<*>) {
@@ -357,7 +359,8 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     textArea.columns = COLUMNS_SHORT
     textArea.font = JBFont.regular()
     textArea.emptyText.setFont(JBFont.regular())
-    return cell(textArea, JBScrollPane(textArea), Gaps.EMPTY)
+    textArea.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+    return cell(textArea, JBScrollPane(textArea))
   }
 
   override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
@@ -397,12 +400,6 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
       cell?.enabledFromParent(isEnabled)
     }
     rowComment?.let { it.isEnabled = isEnabled }
-  }
-
-  private fun <T : JComponent> cell(component: T, viewComponent: JComponent, visualPaddings: Gaps?): CellImpl<T> {
-    val result = CellImpl(dialogPanelConfig, component, this, viewComponent, visualPaddings = visualPaddings)
-    cells.add(result)
-    return result
   }
 }
 

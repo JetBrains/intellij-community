@@ -2,6 +2,8 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.ide.BrowserUtil
+import com.intellij.ui.dsl.gridLayout.Gaps
+import javax.swing.JComponent
 import javax.swing.event.HyperlinkEvent
 
 /**
@@ -10,8 +12,17 @@ import javax.swing.event.HyperlinkEvent
 enum class DslComponentProperty {
   /**
    * A mark that component is a label of a row, see [Panel.row]
+   *
+   * Value: true
    */
-  ROW_LABEL
+  ROW_LABEL,
+
+  /**
+   * Custom visual paddings, which are used instead of [JComponent.getInsets]
+   *
+   * Value: [Gaps]
+   */
+  VISUAL_PADDINGS
 }
 
 /**

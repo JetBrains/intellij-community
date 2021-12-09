@@ -10,6 +10,8 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.ui.ClickListener;
+import com.intellij.ui.dsl.builder.DslComponentProperty;
+import com.intellij.ui.dsl.gridLayout.Gaps;
 import com.intellij.ui.popup.PopupState;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBUI;
@@ -42,6 +44,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
 
   protected VcsLogPopupComponent(@NotNull Supplier<@NlsContexts.Label String> displayName) {
     myDisplayName = displayName;
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.Companion.getEMPTY());
   }
 
   public JComponent initUi() {
