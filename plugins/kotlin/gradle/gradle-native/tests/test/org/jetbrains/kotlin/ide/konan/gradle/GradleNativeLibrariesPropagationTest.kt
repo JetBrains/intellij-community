@@ -17,7 +17,7 @@ abstract class GradleNativeLibrariesPropagationTest : TestCaseWithFakeKotlinNati
 
     private val testedTargets = setOf("ios_arm64", "ios_x64", "watchos_arm32", "watchos_x86")
 
-    class CommonIOS : GradleNativeLibrariesPropagationTest() {
+    class CommonIOS11 : GradleNativeLibrariesPropagationTest() {
         @Test
         fun testCommonIOS() {
             configureProject()

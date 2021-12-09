@@ -91,7 +91,7 @@ abstract class GradleConfiguratorPlatformSpecificTest : KotlinGradleImportingTes
         fun testAddLibraryMultiplatformGSK() = doTestAddLibrary()
     }
 
-    class AddLibraryMultiplatformGSK2 : GradleConfiguratorPlatformSpecificTest() {
+    class AddLibraryMultiplatformGSK210 : GradleConfiguratorPlatformSpecificTest() {
         @Test
         @TargetVersions("4.7+")
         fun testAddLibraryMultiplatformGSK2() = doTestAddLibrary()
@@ -103,7 +103,7 @@ abstract class GradleConfiguratorPlatformSpecificTest : KotlinGradleImportingTes
         fun testAddLibraryMultiplatformGSK3() = doTestAddLibrary()
     }
 
-    class AddLibraryMultiplatformGSK4 : GradleConfiguratorPlatformSpecificTest() {
+    class AddLibraryMultiplatformGSK43 : GradleConfiguratorPlatformSpecificTest() {
         @Test
         @TargetVersions("4.7+")
         fun testAddLibraryMultiplatformGSK4() = doTestAddLibrary()

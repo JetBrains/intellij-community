@@ -24,13 +24,13 @@ abstract class GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
         fun testCreateActualForJvm() = doMultiFileQuickFixTest()
     }
 
-    class CreateActualForJvmTest : GradleQuickFixTest() {
+    class CreateActualForJvmTest20 : GradleQuickFixTest() {
         @Test
         @PluginTargetVersions(pluginVersion = "1.5.31+")
         fun testCreateActualForJvmTest() = doMultiFileQuickFixTest()
     }
 
-    class CreateActualForJvmTestWithCustomPath : GradleQuickFixTest() {
+    class CreateActualForJvmTestWithCustomPath9 : GradleQuickFixTest() {
         @Test
         @PluginTargetVersions(pluginVersion = "1.5.31+")
         fun testCreateActualForJvmTestWithCustomPath() = doMultiFileQuickFixTest()
@@ -42,13 +42,13 @@ abstract class GradleQuickFixTest : AbstractGradleMultiFileQuickFixTest() {
         fun testCreateActualForJvmTestWithCustomExistentPath() = doMultiFileQuickFixTest()
     }
 
-    class CreateActualForNativeIOS : GradleQuickFixTest() {
+    class CreateActualForNativeIOS15 : GradleQuickFixTest() {
         @Test
         @PluginTargetVersions(pluginVersion = "1.5.31+")
         fun testCreateActualForNativeIOS() = doMultiFileQuickFixTest()
     }
 
-    class CreateActualForNativeIOSWithExistentPath : GradleQuickFixTest() {
+    class CreateActualForNativeIOSWithExistentPath2 : GradleQuickFixTest() {
         @Test
         @PluginTargetVersions(pluginVersion = "1.5.31+")
         fun testCreateActualForNativeIOSWithExistentPath() = doMultiFileQuickFixTest()

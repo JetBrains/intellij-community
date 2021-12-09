@@ -27,7 +27,7 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
     override fun testDataDirName(): String = "hmppImportAndHighlighting"
     override fun clearTextFromMarkup(text: String): String = clearTextFromDiagnosticMarkup(text)
 
-    class MultiModulesHmpp : HmppImportAndHighlightingTests() {
+    class MultiModulesHmpp26 : HmppImportAndHighlightingTests() {
         @Test
         @PluginTargetVersions(pluginVersion = "1.5.0+")
         fun testMultiModulesHmpp() {
@@ -479,7 +479,7 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
         }
     }
 
-    class HmppLibAndConsumer : HmppImportAndHighlightingTests() {
+    class HmppLibAndConsumer7 : HmppImportAndHighlightingTests() {
         @Test
         @PluginTargetVersions(pluginVersion = "1.4.30+")
         fun testHmppLibAndConsumer() {
@@ -868,7 +868,7 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
         }
     }
 
-    class Kt46625SupportedAndUnsupportedPlatform : HmppImportAndHighlightingTests() {
+    class Kt46625SupportedAndUnsupportedPlatform12 : HmppImportAndHighlightingTests() {
         @Test
         @PluginTargetVersions(pluginVersion = "1.5.30+")
         fun testKt46625SupportedAndUnsupportedPlatform() {

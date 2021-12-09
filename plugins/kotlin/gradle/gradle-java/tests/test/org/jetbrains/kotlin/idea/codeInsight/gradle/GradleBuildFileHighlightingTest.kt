@@ -17,7 +17,7 @@ import org.junit.Ignore
 import org.junit.Test
 
 abstract class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase() {
-    class KtsInJsProject : GradleBuildFileHighlightingTest() {
+    class KtsInJsProject21 : GradleBuildFileHighlightingTest() {
         @TargetVersions("4.8 <=> 6.0")
         @Test
         fun testKtsInJsProject() {

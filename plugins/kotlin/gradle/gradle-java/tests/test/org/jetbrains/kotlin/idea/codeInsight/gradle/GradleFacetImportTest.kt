@@ -643,7 +643,7 @@ abstract class GradleFacetImportTest : KotlinGradleImportingTestCase() {
         }
     }
 
-    class JDKImport : GradleFacetImportTest() {
+    class JDKImport0 : GradleFacetImportTest() {
         @Test
         fun testJDKImport() {
             val mockJdkPath = "${PathManager.getHomePath()}/community/java/mockJDK-1.8"

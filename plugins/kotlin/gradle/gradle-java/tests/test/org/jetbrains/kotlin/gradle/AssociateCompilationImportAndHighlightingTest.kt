@@ -6,7 +6,7 @@ import org.jetbrains.kotlin.idea.codeInsight.gradle.facetSettings
 import org.jetbrains.plugins.gradle.tooling.annotation.PluginTargetVersions
 import org.junit.Test
 
-class AssociateCompilationImportAndHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
+class AssociateCompilationImportAndHighlightingTest01 : MultiplePluginVersionGradleImportingTestCase() {
 
     @Test
     @PluginTargetVersions(pluginVersion = "1.4+")

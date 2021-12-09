@@ -1030,7 +1030,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         }
     }
 
-    class JvmDetectionByGoalWithJvmStdlib : AbstractKotlinMavenImporterTest() {
+    class JvmDetectionByGoalWithJvmStdlib6 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testJvmDetectionByGoalWithJvmStdlib() {
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")
@@ -1387,7 +1387,7 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
         }
     }
 
-    class CommonDetectionByGoalWithJvmStdlib : AbstractKotlinMavenImporterTest() {
+    class CommonDetectionByGoalWithJvmStdlib116 : AbstractKotlinMavenImporterTest() {
         @Test
         fun testCommonDetectionByGoalWithJvmStdlib() {
             createProjectSubDirs("src/main/kotlin", "src/main/kotlin.jvm", "src/test/kotlin", "src/test/kotlin.jvm")

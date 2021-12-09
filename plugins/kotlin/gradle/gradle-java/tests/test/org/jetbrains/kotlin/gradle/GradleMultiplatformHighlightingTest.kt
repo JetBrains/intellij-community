@@ -34,7 +34,7 @@ import org.junit.Test
 import java.io.File
 
 abstract class GradleMultiplatformHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
-    class First : GradleMultiplatformHighlightingTest() {
+    class First1 : GradleMultiplatformHighlightingTest() {
         @Test
         @PluginTargetVersions(pluginVersion = "1.3.0+")
         fun testFirst() {

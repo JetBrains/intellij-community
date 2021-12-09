@@ -31,7 +31,7 @@ import org.junit.Ignore
 import org.junit.Test
 
 abstract class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
-    class ProjectWithModule : GradleConfiguratorTest() {
+    class ProjectWithModule8 : GradleConfiguratorTest() {
         @Test
         fun testProjectWithModule() {
             importProjectFromTestData()
@@ -451,7 +451,7 @@ abstract class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         }
     }
 
-    class AddTestLibraryGSK : GradleConfiguratorTest() {
+    class AddTestLibraryGSK07 : GradleConfiguratorTest() {
         @Test
         fun testAddTestLibraryGSK() {
             val files = importProjectFromTestData()

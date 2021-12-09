@@ -37,7 +37,7 @@ abstract class GradleMppNoJvmRunConfigurationProducersTest : GradleTestRunConfig
 
     //// ALL IN CLASS /////
 
-    class AllTestsInJsClass : GradleMppNoJvmRunConfigurationProducersTest() {
+    class AllTestsInJsClass9 : GradleMppNoJvmRunConfigurationProducersTest() {
         @Test
         fun allTestsInJsClass() {
             assertConfigurationFromContext<KotlinMultiplatformJsTestClassGradleConfigurationProducer>(

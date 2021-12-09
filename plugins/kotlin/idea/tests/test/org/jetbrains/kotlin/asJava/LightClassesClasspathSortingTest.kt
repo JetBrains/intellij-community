@@ -21,7 +21,7 @@ import kotlin.test.assertNotNull
 @TestRoot("idea/tests")
 @TestMetadata("testData/decompiler/lightClassesOrder")
 @RunWith(JUnit38ClassRunner::class)
-class LightClassesClasspathSortingTest : KotlinLightCodeInsightFixtureTestCase() {
+class LightClassesClasspathSortingTest07 : KotlinLightCodeInsightFixtureTestCase() {
     private val mockLibraryFacility = MockLibraryFacility(File(testDataPath, getTestName(true)))
 
     fun testExplicitClass() {

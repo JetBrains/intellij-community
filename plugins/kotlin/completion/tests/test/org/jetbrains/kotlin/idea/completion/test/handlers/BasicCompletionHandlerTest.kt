@@ -13,7 +13,7 @@ import org.junit.runner.RunWith
 @TestRoot("completion/tests/testData")
 @TestMetadata("handlers")
 @RunWith(JUnit38ClassRunner::class)
-class BasicCompletionHandlerTest : CompletionHandlerTestBase() {
+class BasicCompletionHandlerTest13 : CompletionHandlerTestBase() {
     private fun checkResult() {
         fixture.checkResultByFile(getTestName(false) + ".kt.after")
     }
