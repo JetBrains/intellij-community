@@ -469,12 +469,14 @@ class KotlinConstantConditionsInspection : AbstractKotlinInspection() {
         ) {
             return true
         }
+
+        val rootElement = anchor.containingFile
         val suppressionCache = KotlinCacheService.getInstance(anchor.project).getSuppressionCache()
-        return suppressionCache.isSuppressed(anchor, "CAST_NEVER_SUCCEEDS", Severity.WARNING) ||
-                suppressionCache.isSuppressed(anchor, "SENSELESS_COMPARISON", Severity.WARNING) ||
-                suppressionCache.isSuppressed(anchor, "SENSELESS_NULL_IN_WHEN", Severity.WARNING) ||
-                suppressionCache.isSuppressed(anchor, "USELESS_IS_CHECK", Severity.WARNING) ||
-                suppressionCache.isSuppressed(anchor, "DUPLICATE_LABEL_IN_WHEN", Severity.WARNING)
+        return suppressionCache.isSuppressed(anchor, rootElement, "CAST_NEVER_SUCCEEDS", Severity.WARNING) ||
+                suppressionCache.isSuppressed(anchor, rootElement, "SENSELESS_COMPARISON", Severity.WARNING) ||
+                suppressionCache.isSuppressed(anchor, rootElement, "SENSELESS_NULL_IN_WHEN", Severity.WARNING) ||
+                suppressionCache.isSuppressed(anchor, rootElement, "USELESS_IS_CHECK", Severity.WARNING) ||
+                suppressionCache.isSuppressed(anchor, rootElement, "DUPLICATE_LABEL_IN_WHEN", Severity.WARNING)
     }
 
     private fun shouldSuppressWhenCondition(
