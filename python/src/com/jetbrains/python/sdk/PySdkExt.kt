@@ -256,7 +256,7 @@ fun Project?.excludeInnerVirtualEnv(sdk: Sdk) {
   possibleProjects.firstNotNullOfOrNull { ModuleUtil.findModuleForFile(binary, it) }?.excludeInnerVirtualEnv(sdk)
 }
 
-private fun getInnerVirtualEnvRoot(sdk: Sdk): VirtualFile? {
+fun getInnerVirtualEnvRoot(sdk: Sdk): VirtualFile? {
   val binaryPath = sdk.homePath ?: return null
 
   val possibleVirtualEnv = PythonSdkUtil.getVirtualEnvRoot(binaryPath)
