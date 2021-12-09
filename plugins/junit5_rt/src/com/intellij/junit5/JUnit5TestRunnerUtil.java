@@ -3,10 +3,7 @@ package com.intellij.junit5;
 
 import org.junit.platform.commons.util.AnnotationUtils;
 import org.junit.platform.engine.DiscoverySelector;
-import org.junit.platform.engine.discovery.ClassNameFilter;
-import org.junit.platform.engine.discovery.ClasspathRootSelector;
-import org.junit.platform.engine.discovery.DiscoverySelectors;
-import org.junit.platform.engine.discovery.PackageNameFilter;
+import org.junit.platform.engine.discovery.*;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
 import org.junit.platform.launcher.TagFilter;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
@@ -69,7 +66,7 @@ public class JUnit5TestRunnerUtil {
 
           List<DiscoverySelector> selectors = new ArrayList<>();
           while ((line = reader.readLine()) != null) {
-            DiscoverySelector selector = createSelector(line);
+            DiscoverySelector selector = createSelector(line, null);
             if (selector != null) {
               selectors.add(selector);
             }
@@ -119,7 +116,7 @@ public class JUnit5TestRunnerUtil {
         builder = builder.configurationParameter("junit.jupiter.conditions.deactivate", disableDisabledCondition);
       }
 
-      DiscoverySelector selector = createSelector(suiteClassNames[0]);
+      DiscoverySelector selector = createSelector(suiteClassNames[0], packageNameRef);
       assert selector != null : "selector by class name is never null";
       return builder.selectors(selector).build();
     }
@@ -205,7 +202,7 @@ public class JUnit5TestRunnerUtil {
    * Unique id is prepended with prefix: @see com.intellij.execution.junit.TestUniqueId#getUniqueIdPresentation()
    * Method contains ','
    */
-  protected static DiscoverySelector createSelector(String line) {
+  protected static DiscoverySelector createSelector(String line, String[] packageNameRef) {
     if (line.startsWith("\u001B")) {
       String uniqueId = line.substring("\u001B".length());
       return DiscoverySelectors.selectUniqueId(uniqueId);
@@ -220,9 +217,16 @@ public class JUnit5TestRunnerUtil {
       }
     }
     else if (line.contains(",")) {
-      return DiscoverySelectors.selectMethod(line.replaceFirst(",", "#"));
+      MethodSelector selector = DiscoverySelectors.selectMethod(line.replaceFirst(",", "#"));
+      if (packageNameRef != null) {
+        packageNameRef[0] = selector.getClassName();
+      }
+      return selector;
     }
     else {
+      if (packageNameRef != null) {
+        packageNameRef[0] = line;
+      }
       return DiscoverySelectors.selectClass(line);
     }
   }

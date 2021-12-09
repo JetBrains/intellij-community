@@ -89,7 +89,16 @@ public class JUnit5EventsTest {
     c.addChild(testDescriptor);
     TestIdentifier identifier = TestIdentifier.from(testDescriptor);
     final TestPlan testPlan = TestPlan.from(Collections.singleton(engineDescriptor), EMPTY_PARAMETER);
+    //run from class
+    myExecutionListener.setRootName("testClass");
+
     myExecutionListener.testPlanExecutionStarted(testPlan);
+
+    //engine
+    myExecutionListener.executionStarted(TestIdentifier.from(engineDescriptor));
+    //class
+    myExecutionListener.executionStarted(TestIdentifier.from(c));
+    
     myExecutionListener.executionStarted(identifier);
     MultipleFailuresError multipleFailuresError = new MultipleFailuresError("2 errors", Arrays.asList
       (new AssertionFailedError("message1", "expected1", "actual1"),
@@ -98,15 +107,19 @@ public class JUnit5EventsTest {
     myExecutionListener.reportingEntryPublished(identifier, reportEntry);
     myExecutionListener.executionFinished(identifier, TestExecutionResult.failed(multipleFailuresError));
 
+    myExecutionListener.executionFinished(TestIdentifier.from(c), TestExecutionResult.successful());
+    myExecutionListener.executionFinished(TestIdentifier.from(engineDescriptor), TestExecutionResult.successful());
+
 
     String lineSeparators = StringUtil.convertLineSeparators(myBuf.toString()).replaceAll("|r", "");
     Assertions.assertEquals("##teamcity[enteredTheMatrix]\n" +
-                            "##teamcity[testStarted id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass/test1' metainfo='']\n" +
-                            "##teamcity[testStdOut id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' out = 'timestamp = " + reportEntry.getTimestamp() + ", key1 = value1, stdout = out1|n']\n" +
-                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' message='message1|nComparison Failure: ' expected='expected1' actual='actual1' details='']\n" +
-                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' message='message2|nComparison Failure: ' expected='expected2' actual='actual2' details='']\n" +
-                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]' message='2 errors (2 failures)|n\torg.opentest4j.AssertionFailedError: message1|n\torg.opentest4j.AssertionFailedError: message2' details='TRACE']\n" +
-                            "##teamcity[testFinished id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='|[engine:engine|]/|[class:testClass|]']\n",
+                            "##teamcity[rootName name = 'testClass' location = 'java:suite://testClass']\n" +
+                            "##teamcity[testStarted id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' locationHint='java:test://com.intellij.junit5.JUnit5EventsTest$TestClass/test1' metainfo='']\n" +
+                            "##teamcity[testStdOut id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' out = 'timestamp = " + reportEntry.getTimestamp() +", key1 = value1, stdout = out1|n']\n" +
+                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' message='message1|nComparison Failure: ' expected='expected1' actual='actual1' details='']\n" +
+                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' message='message2|nComparison Failure: ' expected='expected2' actual='actual2' details='']\n" +
+                            "##teamcity[testFailed name='test1()' id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0' message='2 errors (2 failures)|n\torg.opentest4j.AssertionFailedError: message1|n\torg.opentest4j.AssertionFailedError: message2' details='TRACE']\n" +
+                            "##teamcity[testFinished id='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' name='test1()' nodeId='|[engine:engine|]/|[class:testClass|]/|[method:testMethod|]' parentNodeId='0']\n",
                             lineSeparators);
   }
 
