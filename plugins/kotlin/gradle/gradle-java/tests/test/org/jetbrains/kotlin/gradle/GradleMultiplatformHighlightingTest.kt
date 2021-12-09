@@ -33,24 +33,16 @@ import org.junit.Assert
 import org.junit.Test
 import java.io.File
 
-abstract class GradleMultiplatformHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
-    class First1 : GradleMultiplatformHighlightingTest() {
-        @Test
-        @PluginTargetVersions(pluginVersion = "1.3.0+")
-        fun testFirst() {
-            doTest()
-        }
-    }
+class GradleMultiplatformHighlightingTest : MultiplePluginVersionGradleImportingTestCase() {
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.3.0+")
+    fun testFirst(): Unit = doTest()
 
-    class NoErrors : GradleMultiplatformHighlightingTest() {
-        @Test
-        @PluginTargetVersions(pluginVersion = "1.3.0+")
-        fun testNoErrors() {
-            doTest()
-        }
-    }
+    @Test
+    @PluginTargetVersions(pluginVersion = "1.3.0+")
+    fun testNoErrors(): Unit = doTest()
 
-    protected fun doTest() {
+    private fun doTest() {
         val files = importProjectFromTestData()
         val project = myTestFixture.project
 

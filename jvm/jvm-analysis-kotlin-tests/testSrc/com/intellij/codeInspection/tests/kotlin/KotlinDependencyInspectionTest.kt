@@ -2,7 +2,7 @@ package com.intellij.codeInspection.tests.kotlin
 
 import com.intellij.codeInspection.tests.DependencyInspectionTestBase
 
-class KotlinDependencyInspectionTest : DependencyInspectionTestBase() {
+class KotlinDependencyInspectionTest0 : DependencyInspectionTestBase() {
   fun `test illegal imported dependency Java API`() = dependencyViolationTest(javaFoo, "ImportClientJava.kt", """
       package pkg.client
       

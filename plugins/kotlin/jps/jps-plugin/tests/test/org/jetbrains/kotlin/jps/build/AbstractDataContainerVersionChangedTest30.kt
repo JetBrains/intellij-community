@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.jps.targets.KotlinModuleBuildTarget
 /**
  * @see [jps-plugin/tests/testData/incremental/cacheVersionChanged/README.md]
  */
-abstract class AbstractDataContainerVersionChangedTest : AbstractIncrementalCacheVersionChangedTest() {
+abstract class AbstractDataContainerVersionChangedTest30 : AbstractIncrementalCacheVersionChangedTest35() {
     override val buildLogFinder: BuildLogFinder
         get() = BuildLogFinder(isDataContainerBuildLogEnabled = true)
 

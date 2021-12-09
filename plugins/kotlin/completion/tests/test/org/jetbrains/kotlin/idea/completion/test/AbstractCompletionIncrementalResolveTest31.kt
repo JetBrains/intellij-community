@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import java.io.File
 
-abstract class AbstractCompletionIncrementalResolveTest : KotlinLightCodeInsightFixtureTestCase() {
+abstract class AbstractCompletionIncrementalResolveTest31 : KotlinLightCodeInsightFixtureTestCase() {
     private val BEFORE_MARKER = "<before>" // position to invoke completion before
     private val CHANGE_MARKER = "<change>" // position to insert text specified by "TYPE" directive
     private val TYPE_DIRECTIVE_PREFIX = "// TYPE:"

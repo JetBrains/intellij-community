@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/incrementalResolve")
-public class CompletionIncrementalResolveTestGenerated extends AbstractCompletionIncrementalResolveTest {
+public class CompletionIncrementalResolveTest31Generated extends AbstractCompletionIncrementalResolveTest31 {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }

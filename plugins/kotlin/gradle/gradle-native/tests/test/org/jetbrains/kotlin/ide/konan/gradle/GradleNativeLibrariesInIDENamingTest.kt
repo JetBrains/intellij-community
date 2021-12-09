@@ -23,7 +23,7 @@ import org.junit.runners.Parameterized
 import java.io.File
 
 
-class GradleNativeLibrariesInIDENamingTest : TestCaseWithFakeKotlinNative() {
+class GradleNativeLibrariesInIDENamingTest15 : TestCaseWithFakeKotlinNative() {
     // Test naming of Kotlin/Native libraries
     @Test
     fun testLibrariesNaming() {

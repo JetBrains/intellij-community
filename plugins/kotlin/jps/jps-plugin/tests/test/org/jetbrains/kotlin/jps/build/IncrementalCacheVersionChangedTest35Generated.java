@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/incremental/cacheVersionChanged")
-public class IncrementalCacheVersionChangedTestGenerated extends AbstractIncrementalCacheVersionChangedTest {
+public class IncrementalCacheVersionChangedTest35Generated extends AbstractIncrementalCacheVersionChangedTest35 {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }

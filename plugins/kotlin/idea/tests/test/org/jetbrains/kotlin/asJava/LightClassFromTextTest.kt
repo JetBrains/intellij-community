@@ -23,7 +23,7 @@ import org.junit.runner.RunWith
 @TestRoot("idea/tests")
 @TestMetadata("testData/asJava/fileLightClass")
 @RunWith(JUnit38ClassRunner::class)
-class LightClassFromTextTest : KotlinLightCodeInsightFixtureTestCase() {
+class LightClassFromTextTest8 : KotlinLightCodeInsightFixtureTestCase() {
     override fun getProjectDescriptor(): LightProjectDescriptor = KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE
 
     fun testSimple() {

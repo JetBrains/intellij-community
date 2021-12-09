@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.utils.sure
 
-abstract class AbstractAddImportAliasTest : AbstractImportsTest() {
+abstract class AbstractAddImportAliasTest53 : AbstractImportsTest() {
     override fun doTest(file: KtFile): String? {
         val element = findNameReferenceExpression()
         KotlinIntroduceImportAliasHandler.doRefactoring(project, editor, element)

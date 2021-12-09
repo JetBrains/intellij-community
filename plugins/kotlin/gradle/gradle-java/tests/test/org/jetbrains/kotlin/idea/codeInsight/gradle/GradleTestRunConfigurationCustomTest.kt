@@ -15,7 +15,7 @@ import org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfig
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
-class GradleTestRunConfigurationCustomTest : KotlinGradleImportingTestCase() {
+class GradleTestRunConfigurationCustomTest16 : KotlinGradleImportingTestCase() {
     @Test
     @TargetVersions("4.7+")
     fun testPreferredConfigurations() {

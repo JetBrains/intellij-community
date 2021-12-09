@@ -53,7 +53,7 @@ abstract class PartialGradleImportTest : MultiplePluginVersionGradleImportingTes
         }
     }
 
-    class RunPartialGradleImport : PartialGradleImportTest() {
+    class RunPartialGradleImport7 : PartialGradleImportTest() {
         @Test
         @PluginTargetVersions(gradleVersion = "6.0+", pluginVersion = "1.6.0-SNAPSHOT+")
         fun `test 'runPartialGradleImport' is running in 'lenient' or 'classpath' mode`() {

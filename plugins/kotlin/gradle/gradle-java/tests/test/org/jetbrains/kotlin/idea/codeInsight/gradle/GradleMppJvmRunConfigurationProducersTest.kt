@@ -19,9 +19,9 @@ import org.jetbrains.plugins.gradle.util.runReadActionAndWait
 import org.junit.Test
 
 /**
- * See paired [GradleMppNoJvmRunConfigurationProducersTest]
+ * See paired [GradleMppNoJvmRunConfigurationProducersTest216]
  */
-class GradleMppJvmRunConfigurationProducersTest : GradleTestRunConfigurationProducerTestCase() {
+class GradleMppJvmRunConfigurationProducersTest4 : GradleTestRunConfigurationProducerTestCase() {
     private lateinit var projectData: ProjectData
 
     override fun setUp() {

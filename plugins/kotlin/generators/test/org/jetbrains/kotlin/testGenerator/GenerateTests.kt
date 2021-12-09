@@ -4,10 +4,10 @@ package org.jetbrains.kotlin.testGenerator
 
 import org.jetbrains.kotlin.AbstractDataFlowValueRenderingTest
 import org.jetbrains.kotlin.addImport.AbstractAddImportTest
-import org.jetbrains.kotlin.addImportAlias.AbstractAddImportAliasTest
+import org.jetbrains.kotlin.addImportAlias.AbstractAddImportAliasTest53
 import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightClassLoadingTest
 import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightClassSanityTest
-import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightFacadeClassTest
+import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightFacadeClassTest15
 import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightScriptLoadingTest
 import org.jetbrains.kotlin.checkers.*
 import org.jetbrains.kotlin.copyright.AbstractUpdateKotlinCopyrightTest
@@ -186,23 +186,23 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractKotlinEvaluateExpressionTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR, bucketSize = 5)
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR, bucketSize = 5)
+            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR)
+            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_WITH_OLD_EVALUATOR)
         }
 
         testClass<AbstractIrKotlinEvaluateExpressionTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, bucketSize = 5)
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR, bucketSize = 5)
+            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
+            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_OLD_EVALUATOR)
         }
 
         testClass<AbstractKotlinEvaluateExpressionWithIRFragmentCompilerTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR, bucketSize = 5)
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR, bucketSize = 5)
+            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR)
+            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_WITH_IR_EVALUATOR)
         }
 
         testClass<AbstractIrKotlinEvaluateExpressionWithIRFragmentCompilerTest> {
-            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR, bucketSize = 5)
-            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR, bucketSize = 5)
+            model("evaluation/singleBreakpoint", testMethodName = "doSingleBreakpointTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
+            model("evaluation/multipleBreakpoints", testMethodName = "doMultipleBreakpointsTest", targetBackend = TargetBackend.JVM_IR_WITH_IR_EVALUATOR)
         }
 
         testClass<AbstractSelectExpressionForDebuggerTest> {
@@ -746,7 +746,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("addImport", pattern = KT_WITHOUT_DOTS)
         }
 
-        testClass<AbstractAddImportAliasTest> {
+        testClass<AbstractAddImportAliasTest53> {
             model("addImportAlias", pattern = KT_WITHOUT_DOTS)
         }
 
@@ -1196,7 +1196,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("compiler/asJava/ultraLightScripts", pattern = KT_OR_KTS)
         }
 
-        testClass<AbstractUltraLightFacadeClassTest> {
+        testClass<AbstractUltraLightFacadeClassTest15> {
             model("compiler/asJava/ultraLightFacades", pattern = KT_OR_KTS)
         }
 
@@ -1233,17 +1233,17 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractJSBasicCompletionTest> {
-            model("basic/common", bucketSize = 5)
-            model("basic/js", bucketSize = 5)
+            model("basic/common")
+            model("basic/js")
         }
 
         testClass<AbstractJvmBasicCompletionTest> {
-            model("basic/common", bucketSize = 5)
-            model("basic/java", bucketSize = 5)
+            model("basic/common")
+            model("basic/java")
         }
 
         testClass<AbstractJvmSmartCompletionTest> {
-            model("smart", bucketSize = 5)
+            model("smart")
         }
 
         testClass<AbstractKeywordCompletionTest> {
@@ -1251,11 +1251,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
 
         testClass<AbstractJvmWithLibBasicCompletionTest> {
-            model("basic/withLib", isRecursive = false, bucketSize = 5)
+            model("basic/withLib", isRecursive = false)
         }
 
         testClass<AbstractBasicCompletionHandlerTest> {
-            model("handlers/basic", pattern = KT_WITHOUT_DOTS, bucketSize = 5)
+            model("handlers/basic", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractSmartCompletionHandlerTest> {
@@ -1290,7 +1290,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("basic/java8")
         }
 
-        testClass<AbstractCompletionIncrementalResolveTest> {
+        testClass<AbstractCompletionIncrementalResolveTest31> {
             model("incrementalResolve")
         }
 
@@ -1318,7 +1318,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
                     pattern = DIRECTORY,
                     testMethodName = "doTest${testClass}",
                     testClassName = testClass,
-                    testPerClass = true,
                 )
             }
         }
@@ -1423,11 +1422,11 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("incremental/changeIncrementalOption", pattern = DIRECTORY)
         }
 
-        testClass<AbstractIncrementalCacheVersionChangedTest> {
+        testClass<AbstractIncrementalCacheVersionChangedTest35> {
             model("incremental/cacheVersionChanged", pattern = DIRECTORY)
         }
 
-        testClass<AbstractDataContainerVersionChangedTest> {
+        testClass<AbstractDataContainerVersionChangedTest30> {
             model("incremental/cacheVersionChanged", pattern = DIRECTORY)
         }
 

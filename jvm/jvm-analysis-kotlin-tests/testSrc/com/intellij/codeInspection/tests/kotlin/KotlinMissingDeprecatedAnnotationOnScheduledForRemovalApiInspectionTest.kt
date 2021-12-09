@@ -7,7 +7,7 @@ import com.intellij.testFramework.TestDataPath
 private const val inspectionPath = "/codeInspection/missingDeprecatedAnnotationOnScheduledForRemovalApi"
 
 @TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
-class KotlinMissingDeprecatedAnnotationOnScheduledForRemovalApiInspectionTest
+class KotlinMissingDeprecatedAnnotationOnScheduledForRemovalApiInspectionTest21
   : MissingDeprecatedAnnotationOnScheduledForRemovalApiInspectionTestBase()
 {
   override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath

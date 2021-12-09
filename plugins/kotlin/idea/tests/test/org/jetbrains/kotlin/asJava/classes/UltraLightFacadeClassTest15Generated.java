@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/compiler/asJava/ultraLightFacades")
-public class UltraLightFacadeClassTestGenerated extends AbstractUltraLightFacadeClassTest {
+public class UltraLightFacadeClassTest15Generated extends AbstractUltraLightFacadeClassTest15 {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }

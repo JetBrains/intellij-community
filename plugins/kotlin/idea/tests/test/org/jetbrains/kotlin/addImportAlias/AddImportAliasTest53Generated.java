@@ -18,7 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/addImportAlias")
-public class AddImportAliasTestGenerated extends AbstractAddImportAliasTest {
+public class AddImportAliasTest53Generated extends AbstractAddImportAliasTest53 {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
