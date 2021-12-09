@@ -118,7 +118,7 @@ class KotlinMavenImporterTest06 : AbstractKotlinMavenImporterTest() {
         assertModules("project")
         assertImporterStatePresent()
 
-        Assert.assertEquals(JvmPlatforms.jvm16, facetSettings.targetPlatform)
+        Assert.assertEquals(JvmPlatforms.jvm17, facetSettings.targetPlatform)
 
         assertKotlinSources("project", "src/main/kotlin")
         assertKotlinTestSources("project", "src/test/java")

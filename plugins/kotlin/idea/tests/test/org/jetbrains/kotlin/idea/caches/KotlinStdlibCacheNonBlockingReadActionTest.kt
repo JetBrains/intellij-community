@@ -55,7 +55,7 @@ class KotlinStdlibCacheNonBlockingReadActionTest : AbstractMultiModuleTest() {
 
     private val moduleInfo: IdeaModuleInfo
         get() {
-            return getIdeaModelInfosCache(project).forPlatform(JvmPlatforms.jvm18).filterIsInstance<ModuleSourceInfo>().singleOrNull()
+            return getIdeaModelInfosCache(project).forPlatform(JvmPlatforms.jvm17).filterIsInstance<ModuleSourceInfo>().singleOrNull()
                 ?: throw AssertionError("Expected to find a single JVM module in the project")
         }
 
