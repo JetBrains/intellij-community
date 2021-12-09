@@ -164,11 +164,21 @@ def test_collect_try_except_info(data_regression):
         if key.startswith('_method'):
             info = collect_try_except_info(method.__code__, use_func_first_line=True)
 
-            if sys.version_info[:2] >= (3, 7):
-                for try_except_info in info:
-                    # On 3.7 the last bytecode actually has a different start line.
-                    if try_except_info.except_end_line == 8:
-                        try_except_info.except_end_line = 9
+            if key == "_method_try_except":
+                if sys.version_info[:2] == (3, 7):
+                    for try_except_info in info:
+                        # On 3.7 the last bytecode actually has a different start line.
+                        if try_except_info.except_end_line == 8:
+                            try_except_info.except_end_line = 9
+
+                elif sys.version_info[:2] >= (3, 8):
+                    for try_except_info in info:
+                        # On 3.8 the last bytecode actually has a different start line.
+                        if try_except_info.except_end_line == 7:
+                            try_except_info.except_end_line = 9
+
+            method_to_info[key] = [str(x) for x in info]
+
 
             method_to_info[key] = [str(x) for x in info]
 

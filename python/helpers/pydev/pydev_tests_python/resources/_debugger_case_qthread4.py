@@ -1,5 +1,5 @@
 try:
-    from PySide import QtCore
+    from PySide2 import QtCore
 except:
     try:
         from PyQt4 import QtCore
