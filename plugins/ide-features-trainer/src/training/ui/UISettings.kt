@@ -56,15 +56,15 @@ internal class UISettings {
   val completedColor: Color = JBColor.namedColor("Label.successForeground", 0x368746, 0x50A661)
   val activeTaskBorder: Color = JBColor.namedColor("Component.focusColor", 0x97C3F3, 0x3D6185)
 
-  val tooltipBackgroundColor: Color = JBColor.namedColor("Lesson.Tooltip.background", 0x1071E8, 0x0E62CF)
-  val tooltipBorderColor: Color = JBColor.namedColor("Lesson.Tooltip.borderColor", 0x1071E8, 0x0E62CF)
-  val tooltipButtonBackgroundColor: Color = JBColor.namedColor("Lesson.Tooltip.spanBackground", 0x0D5CBD, 0x0250B0)
-  val tooltipButtonForegroundColor: Color = JBColor.namedColor("Lesson.Tooltip.spanForeground", 0xF5F5F5)
-  val tooltipTextColor: Color = JBColor.namedColor("Lesson.Tooltip.foreground", 0xF5F5F5)
+  val tooltipBackgroundColor: Color = JBColor.namedColor("Tooltip.Learning.background", 0x1071E8, 0x0E62CF)
+  val tooltipBorderColor: Color = JBColor.namedColor("Tooltip.Learning.borderColor", 0x1071E8, 0x0E62CF)
+  val tooltipButtonBackgroundColor: Color = JBColor.namedColor("Tooltip.Learning.spanBackground", 0x0D5CBD, 0x0250B0)
+  val tooltipButtonForegroundColor: Color = JBColor.namedColor("Tooltip.Learning.spanForeground", 0xF5F5F5)
+  val tooltipTextColor: Color = JBColor.namedColor("Tooltip.Learning.foreground", 0xF5F5F5)
 
   val activeTaskNumberColor: Color = JBColor.namedColor("Lesson.stepNumberForeground", 0x808080, 0xFEFEFE)
   val futureTaskNumberColor: Color = activeTaskNumberColor.addAlpha(transparencyInactiveFactor)
-  val tooltipTaskNumberColor: Color = JBColor.namedColor("Lesson.Tooltip.stepNumberForeground", 0x6CA6ED, 0x6A9DDE)
+  val tooltipTaskNumberColor: Color = JBColor.namedColor("Tooltip.Learning.stepNumberForeground", 0x6CA6ED, 0x6A9DDE)
 
   val newContentBackgroundColor: Color = JBColor.namedColor("Lesson.Badge.newLessonBackground", 0x62B543, 0x499C54)
   val newContentForegroundColor: Color = JBColor.namedColor("Lesson.Badge.newLessonForeground", 0xFFFFFF, 0xFEFEFE)

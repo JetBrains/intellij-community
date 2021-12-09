@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
 
 import static org.jetbrains.plugins.gradle.util.GradleExecutionSettingsUtil.createTestWildcardFilter;
 
-public final class AllInDirectoryGradleConfigurationProducer extends AbstractGradleTestRunConfigurationProducer<PsiElement, PsiElement> {
+public class AllInDirectoryGradleConfigurationProducer extends AbstractGradleTestRunConfigurationProducer<PsiElement, PsiElement> {
   @Override
   public boolean isPreferredConfiguration(@NotNull ConfigurationFromContext self, @NotNull ConfigurationFromContext other) {
     return !other.isProducedBy(AllInPackageGradleConfigurationProducer.class) && super.isPreferredConfiguration(self, other);

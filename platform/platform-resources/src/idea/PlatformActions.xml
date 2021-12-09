@@ -1053,7 +1053,7 @@
               icon="AllIcons.Actions.ProjectDirectory"/>
       <separator/>
       <action id="FileChooser.NewFile" class="com.intellij.openapi.fileChooser.actions.NewFileAction"
-              icon="AllIcons.Actions.New"/>
+              icon="AllIcons.Actions.AddFile"/>
       <action id="FileChooser.NewFolder" class="com.intellij.openapi.fileChooser.actions.NewFolderAction"
               icon="AllIcons.Actions.NewFolder"/>
       <action id="FileChooser.Delete" class="com.intellij.openapi.fileChooser.actions.FileDeleteAction"
@@ -1062,7 +1062,7 @@
       <action id="FileChooser.Refresh" class="com.intellij.openapi.fileChooser.actions.RefreshFileChooserAction"
               icon="AllIcons.Actions.Refresh" use-shortcut-of="Synchronize"/>
       <separator/>
-      <action id="FileChooser.ShowHiddens" class="com.intellij.openapi.fileChooser.actions.ShowHiddensAction"
+      <action id="FileChooser.ShowHidden" class="com.intellij.openapi.fileChooser.actions.ShowHiddensAction"
               icon="AllIcons.Actions.ShowHiddens"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
@@ -1176,6 +1176,7 @@
         <action id="UIDefaults" internal="true" class="com.intellij.ui.ShowUIDefaultsAction">
           <abbreviation value="laf"/>
         </action>
+        <action id="EnableMetalRendering" internal="true" class="com.intellij.ui.EnableMetalRenderingAction"/>
         <action id="RulerGuide" internal="true" class="com.intellij.internal.rulerguide.RulerGuideAction"/>
         <separator/>
         <action id="AddTestProcessAction" internal="true" class="com.intellij.openapi.wm.impl.status.AddTestProcessAction"/>

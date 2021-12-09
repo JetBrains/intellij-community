@@ -7,7 +7,7 @@ import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 
 @CompileStatic
-class BuildOptions {
+final class BuildOptions {
   /**
    * By default build scripts compile project classes to a special output directory (to not interfere with the default project output if
    * invoked on a developer machine). Pass 'true' to this system property to skip compilation step and use compiled classes from the project output instead.
@@ -87,7 +87,7 @@ class BuildOptions {
   /** Build community distributives */
   static final String COMMUNITY_DIST_STEP = "community_dist"
   public static final String PREBUILD_SHARED_INDEXES = "prebuild_shared_indexes"
-  public static final String SETUP_BUNDLED_MAVE = "setup_bundled_maven"
+  public static final String SETUP_BUNDLED_MAVEN = "setup_bundled_maven"
   /**
    * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
    * Comprises many small publication steps.
@@ -206,28 +206,26 @@ class BuildOptions {
   List<String> nonBundledPluginDirectoriesToInclude = StringUtil.split(System.getProperty("intellij.build.non.bundled.plugin.dirs.to.include", ""), ",")
 
   /**
-   * Specifies JRE version to be bundled with distributions, 11 by default.
+   * Specifies {@link org.jetbrains.intellij.build.JetBrainsRuntimeDistribution} version to be bundled with distributions, 11 by default.
    */
-  int bundledJreVersion = System.getProperty("intellij.build.bundled.jre.version", "11").toInteger()
+  int bundledRuntimeVersion = System.getProperty("intellij.build.bundled.jre.version", "11").toInteger()
 
   /**
-   * Specifies JRE build to be bundled with distributions. If {@code null} then {@code jdkBuild} from gradle.properties will be used.
+   * Specifies {@link org.jetbrains.intellij.build.JetBrainsRuntimeDistribution} build to be bundled with distributions. If {@code null} then {@code runtimeBuild} from gradle.properties will be used.
    */
-  String bundledJreBuild = System.getProperty("intellij.build.bundled.jre.build")
+  String bundledRuntimeBuild = System.getProperty("intellij.build.bundled.jre.build")
 
   /**
-   * Specifies a prefix to use when looking for an artifact of a JRE to be bundled with distributions.
-   * If {@code null}, {@code "jbr-"} will be used.
-   *
-   * @see org.jetbrains.intellij.build.JetBrainsRuntimeDistribution
+   * Specifies a prefix to use when looking for an artifact of a {@link org.jetbrains.intellij.build.JetBrainsRuntimeDistribution} to be bundled with distributions.
+   * If {@code null}, {@code "jbr_dcevm-"} will be used.
    */
-  String bundledJrePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
+  String bundledRuntimePrefix = System.getProperty("intellij.build.bundled.jre.prefix")
 
   /**
    * Directory path to unpack JetBrains Runtime builds into
    */
-  static final String JDKS_TARGET_DIR_OPTION = "intellij.build.jdks.target.dir"
-  String jdksTargetDir = System.getProperty(JDKS_TARGET_DIR_OPTION)
+  static final String JBR_TARGET_DIR_OPTION = "intellij.build.jdks.target.dir"
+  String jbrTargetDir = System.getProperty(JBR_TARGET_DIR_OPTION)
 
   /**
    * Specifies JetBrains Runtime version to be used as project SDK, 11 by default.

@@ -553,7 +553,7 @@ public class SwingHelper {
         }
       };
       textPane.setFont(myFont != null ? myFont : UIUtil.getLabelFont());
-      textPane.setEditorKit(UIUtil.getHTMLEditorKit());
+      textPane.setEditorKit(HTMLEditorKitBuilder.simple());
       textPane.setEditable(false);
       if (myBackground != null) {
         textPane.setBackground(myBackground);
@@ -615,7 +615,7 @@ public class SwingHelper {
     }
     GraphicsUtil.setAntialiasingType(textPane, AntialiasingType.getAAHintForSwingComponent());
     textPane.setFont(font != null ? font : UIUtil.getLabelFont());
-    textPane.setEditorKit(UIUtil.getHTMLEditorKit());
+    textPane.setEditorKit(HTMLEditorKitBuilder.simple());
     textPane.setEditable(false);
     if (background != null) {
       textPane.setBackground(background);

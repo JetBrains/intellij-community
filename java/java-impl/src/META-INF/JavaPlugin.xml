@@ -667,14 +667,18 @@
     <stacktrace.fold substring="at com.jgoodies.binding.beans.ExtendedPropertyChangeSupport.firePropertyChange0("/>
     <stacktrace.fold substring="at javax.swing.plaf.basic.BasicComboPopup$Handler.mouseReleased("/>
     <stacktrace.fold substring="at java.util.ArrayList$ArrayListSpliterator"/>
-    <stacktrace.fold substring="at java.util.stream.ReferencePipeline."/>
-    <stacktrace.fold substring="at java.util.stream.ReferencePipeline$"/>
+    <stacktrace.fold substring="at java.util.stream.ReferencePipeline"/>
     <stacktrace.fold substring="at java.util.Spliterators$"/>
     <stacktrace.fold substring="at java.util.stream.AbstractPipeline.evaluate("/>
     <stacktrace.fold substring="at java.util.stream.AbstractPipeline.copyInto("/>
     <stacktrace.fold substring="at java.util.stream.AbstractPipeline.wrapAndCopyInto("/>
-    <stacktrace.fold substring="at java.util.stream.ReduceOps$"/>
-    <stacktrace.fold substring="at java.util.stream.ForEachOps$"/>
+    <stacktrace.fold substring="at java.util.stream.DistinctOps"/>
+    <stacktrace.fold substring="at java.util.stream.FindOps"/>
+    <stacktrace.fold substring="at java.util.stream.ForEachOps"/>
+    <stacktrace.fold substring="at java.util.stream.MatchOps"/>
+    <stacktrace.fold substring="at java.util.stream.ReduceOps"/>
+    <stacktrace.fold substring="at java.util.stream.SliceOps"/>
+    <stacktrace.fold substring="at java.util.stream.WhileOps"/>
 
     <stacktrace.fold substring="at java.util.concurrent.Executors$"/>
     <stacktrace.fold substring="at java.util.concurrent.ThreadPoolExecutor"/> <!-- methods and inner classes -->
@@ -1429,6 +1433,12 @@
                      bundle="messages.JavaBundle"
                      key="inspection.slow.abstract.set.remove.all.description"
                      implementationClass="com.intellij.codeInspection.SlowAbstractSetRemoveAllInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="SlowListContainsAll"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
+                     bundle="messages.JavaBundle"
+                     key="inspection.slow.list.contains.all.description"
+                     implementationClass="com.intellij.codeInspection.SlowListContainsAllInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantUnmodifiable"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
@@ -1571,6 +1581,11 @@
                      groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.java18api.Java8CollectionRemoveIfInspection"
                      key="inspection.java.8.collection.remove.if.display.name" bundle="messages.JavaBundle"/>
+    <localInspection groupPathKey="group.path.names.java.language.level.specific.issues.and.migration.aids" language="JAVA" shortName="Java8ListReplaceAll"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids8" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.java18api.Java8ListReplaceAllInspection"
+                     key="inspection.java.8.collection.remove.if.display.name" bundle="messages.JavaBundle"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ExplicitArrayFilling"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.verbose.or.redundant.code.constructs" enabledByDefault="true" level="WARNING"
@@ -1692,9 +1707,6 @@
     <localInspection groupPath="Java" language="JAVA" shortName="FieldCanBeLocal" bundle="messages.JavaBundle" key="inspection.field.can.be.local.display.name"
                      groupKey="group.names.class.structure" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="WARNING" runForWholeFile="true"
                      implementationClass="com.intellij.codeInspection.varScopeCanBeNarrowed.FieldCanBeLocalInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="Since15" bundle="messages.JavaBundle" key="inspection.1.5.display.name"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids" groupBundle="messages.InspectionsBundle" enabledByDefault="true" level="ERROR"
-                     implementationClass="com.intellij.codeInspection.java15api.Java15APIUsageInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EqualsAndHashcode" bundle="messages.JavaBundle" key="inspection.equals.hashcode.display.name"
                      groupKey="group.names.probable.bugs" groupBundle="messages.InspectionsBundle" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.equalsAndHashcode.EqualsAndHashcode"/>

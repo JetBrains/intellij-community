@@ -18,76 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/intentions/loopToCallChain")
-public class IntentionTest2Generated extends AbstractIntentionTest2 {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-    }
-
-    @TestMetadata("array.kt")
-    public void testArray() throws Exception {
-        runTest("testData/intentions/loopToCallChain/array.kt");
-    }
-
-    @TestMetadata("asSequenceOnly.kt")
-    public void testAsSequenceOnly() throws Exception {
-        runTest("testData/intentions/loopToCallChain/asSequenceOnly.kt");
-    }
-
-    @TestMetadata("customTypeWithIterator.kt")
-    public void testCustomTypeWithIterator() throws Exception {
-        runTest("testData/intentions/loopToCallChain/customTypeWithIterator.kt");
-    }
-
-    @TestMetadata("embeddedBreak1.kt")
-    public void testEmbeddedBreak1() throws Exception {
-        runTest("testData/intentions/loopToCallChain/embeddedBreak1.kt");
-    }
-
-    @TestMetadata("embeddedBreak2.kt")
-    public void testEmbeddedBreak2() throws Exception {
-        runTest("testData/intentions/loopToCallChain/embeddedBreak2.kt");
-    }
-
-    @TestMetadata("embeddedContinue.kt")
-    public void testEmbeddedContinue() throws Exception {
-        runTest("testData/intentions/loopToCallChain/embeddedContinue.kt");
-    }
-
-    @TestMetadata("intArray.kt")
-    public void testIntArray() throws Exception {
-        runTest("testData/intentions/loopToCallChain/intArray.kt");
-    }
-
-    @TestMetadata("itAlreadyUsed.kt")
-    public void testItAlreadyUsed() throws Exception {
-        runTest("testData/intentions/loopToCallChain/itAlreadyUsed.kt");
-    }
-
-    @TestMetadata("KT14191.kt")
-    public void testKT14191() throws Exception {
-        runTest("testData/intentions/loopToCallChain/KT14191.kt");
-    }
-
-    @TestMetadata("lastOrNull_ifAssign.kt")
-    public void testLastOrNull_ifAssign() throws Exception {
-        runTest("testData/intentions/loopToCallChain/lastOrNull_ifAssign.kt");
-    }
-
-    @TestMetadata("moveInitializationsCloserToLoop.kt")
-    public void testMoveInitializationsCloserToLoop() throws Exception {
-        runTest("testData/intentions/loopToCallChain/moveInitializationsCloserToLoop.kt");
-    }
-
-    @TestMetadata("range.kt")
-    public void testRange() throws Exception {
-        runTest("testData/intentions/loopToCallChain/range.kt");
-    }
-
-    @TestMetadata("twoInitializationsBeforeLoop.kt")
-    public void testTwoInitializationsBeforeLoop() throws Exception {
-        runTest("testData/intentions/loopToCallChain/twoInitializationsBeforeLoop.kt");
-    }
-
+public abstract class IntentionTest2Generated extends AbstractIntentionTest2 {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/any")
     public static class Any extends AbstractIntentionTest2 {
@@ -264,259 +195,279 @@ public class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/filter")
-    public static class Filter extends AbstractIntentionTest2 {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class Filter extends AbstractIntentionTest2 {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/loopToCallChain/filter")
+        public static class TestBucket001 extends AbstractIntentionTest2 {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("assign.kt")
+            public void testAssign() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/assign.kt");
+            }
+
+            @TestMetadata("assign2.kt")
+            public void testAssign2() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/assign2.kt");
+            }
+
+            @TestMetadata("assignFilterIndexed.kt")
+            public void testAssignFilterIndexed() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/assignFilterIndexed.kt");
+            }
+
+            @TestMetadata("assignFilterNotNull.kt")
+            public void testAssignFilterNotNull() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/assignFilterNotNull.kt");
+            }
+
+            @TestMetadata("assign_ArrayListRequired.kt")
+            public void testAssign_ArrayListRequired() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/assign_ArrayListRequired.kt");
+            }
+
+            @TestMetadata("assign_ArrayListRequired2.kt")
+            public void testAssign_ArrayListRequired2() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/assign_ArrayListRequired2.kt");
+            }
+
+            @TestMetadata("assign_ArrayListRequired3.kt")
+            public void testAssign_ArrayListRequired3() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/assign_ArrayListRequired3.kt");
+            }
+
+            @TestMetadata("assign_MutableListRequired.kt")
+            public void testAssign_MutableListRequired() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/assign_MutableListRequired.kt");
+            }
+
+            @TestMetadata("assign_breakAndContinue.kt")
+            public void testAssign_breakAndContinue() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/assign_breakAndContinue.kt");
+            }
+
+            @TestMetadata("cannotSplitOutFilterIsInstance.kt")
+            public void testCannotSplitOutFilterIsInstance() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/cannotSplitOutFilterIsInstance.kt");
+            }
+
+            @TestMetadata("doNotSplitOutFilterIsInstance.kt")
+            public void testDoNotSplitOutFilterIsInstance() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/doNotSplitOutFilterIsInstance.kt");
+            }
+
+            @TestMetadata("doNotSplitOutFilterNotNull.kt")
+            public void testDoNotSplitOutFilterNotNull() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/doNotSplitOutFilterNotNull.kt");
+            }
+
+            @TestMetadata("filterIndexed.kt")
+            public void testFilterIndexed() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIndexed.kt");
+            }
+
+            @TestMetadata("filterIndexed2.kt")
+            public void testFilterIndexed2() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIndexed2.kt");
+            }
+
+            @TestMetadata("filterIndexedAndFlatMapWithContinue.kt")
+            public void testFilterIndexedAndFlatMapWithContinue() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIndexedAndFlatMapWithContinue.kt");
+            }
+
+            @TestMetadata("filterIndexedTo.kt")
+            public void testFilterIndexedTo() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIndexedTo.kt");
+            }
+
+            @TestMetadata("filterIndexedTo2.kt")
+            public void testFilterIndexedTo2() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIndexedTo2.kt");
+            }
+
+            @TestMetadata("filterIndexed_indexChangedTwice.kt")
+            public void testFilterIndexed_indexChangedTwice() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIndexed_indexChangedTwice.kt");
+            }
+
+            @TestMetadata("filterIndexed_indexStartNotZero.kt")
+            public void testFilterIndexed_indexStartNotZero() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIndexed_indexStartNotZero.kt");
+            }
+
+            @TestMetadata("filterIndexed_indexUsedAfter.kt")
+            public void testFilterIndexed_indexUsedAfter() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIndexed_indexUsedAfter.kt");
+            }
         }
 
-        @TestMetadata("assign.kt")
-        public void testAssign() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/assign.kt");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/loopToCallChain/filter")
+        public static class TestBucket002 extends AbstractIntentionTest2 {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("filterIndexed_indexUsedEarlierInLoop.kt")
+            public void testFilterIndexed_indexUsedEarlierInLoop() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIndexed_indexUsedEarlierInLoop.kt");
+            }
+
+            @TestMetadata("filterIndexed_merge1.kt")
+            public void testFilterIndexed_merge1() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIndexed_merge1.kt");
+            }
+
+            @TestMetadata("filterIndexed_merge2.kt")
+            public void testFilterIndexed_merge2() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIndexed_merge2.kt");
+            }
+
+            @TestMetadata("filterIndexed_merge3.kt")
+            public void testFilterIndexed_merge3() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIndexed_merge3.kt");
+            }
+
+            @TestMetadata("filterIndexed_merge4.kt")
+            public void testFilterIndexed_merge4() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIndexed_merge4.kt");
+            }
+
+            @TestMetadata("filterIndexed_twoIndices.kt")
+            public void testFilterIndexed_twoIndices() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIndexed_twoIndices.kt");
+            }
+
+            @TestMetadata("filterIndexed_twoIndicesUsed.kt")
+            public void testFilterIndexed_twoIndicesUsed() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIndexed_twoIndicesUsed.kt");
+            }
+
+            @TestMetadata("filterIsInstance.kt")
+            public void testFilterIsInstance() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIsInstance.kt");
+            }
+
+            @TestMetadata("filterIsInstanceTo.kt")
+            public void testFilterIsInstanceTo() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIsInstanceTo.kt");
+            }
+
+            @TestMetadata("filterIsInstance_ifContinue.kt")
+            public void testFilterIsInstance_ifContinue() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterIsInstance_ifContinue.kt");
+            }
+
+            @TestMetadata("filterNotNull.kt")
+            public void testFilterNotNull() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterNotNull.kt");
+            }
+
+            @TestMetadata("filterNotNullTo.kt")
+            public void testFilterNotNullTo() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterNotNullTo.kt");
+            }
+
+            @TestMetadata("filterNotNullTo2.kt")
+            public void testFilterNotNullTo2() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterNotNullTo2.kt");
+            }
+
+            @TestMetadata("filterNotNull_ifContinue.kt")
+            public void testFilterNotNull_ifContinue() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterNotNull_ifContinue.kt");
+            }
+
+            @TestMetadata("filterNotTo.kt")
+            public void testFilterNotTo() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterNotTo.kt");
+            }
+
+            @TestMetadata("filterNot_ifContinue.kt")
+            public void testFilterNot_ifContinue() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterNot_ifContinue.kt");
+            }
+
+            @TestMetadata("filterTo.kt")
+            public void testFilterTo() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterTo.kt");
+            }
+
+            @TestMetadata("filterTo2.kt")
+            public void testFilterTo2() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/filterTo2.kt");
+            }
+
+            @TestMetadata("glueTogetherFilterNotNull.kt")
+            public void testGlueTogetherFilterNotNull() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/glueTogetherFilterNotNull.kt");
+            }
+
+            @TestMetadata("ifContinue.kt")
+            public void testIfContinue() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/ifContinue.kt");
+            }
         }
 
-        @TestMetadata("assign2.kt")
-        public void testAssign2() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/assign2.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/loopToCallChain/filter")
+        public static class TestBucket003 extends AbstractIntentionTest2 {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("assignFilterIndexed.kt")
-        public void testAssignFilterIndexed() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/assignFilterIndexed.kt");
-        }
+            @TestMetadata("ifContinue2.kt")
+            public void testIfContinue2() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/ifContinue2.kt");
+            }
 
-        @TestMetadata("assignFilterNotNull.kt")
-        public void testAssignFilterNotNull() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/assignFilterNotNull.kt");
-        }
+            @TestMetadata("ifContinueInBlock.kt")
+            public void testIfContinueInBlock() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/ifContinueInBlock.kt");
+            }
 
-        @TestMetadata("assign_ArrayListRequired.kt")
-        public void testAssign_ArrayListRequired() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/assign_ArrayListRequired.kt");
-        }
+            @TestMetadata("ifContinueWithLabel.kt")
+            public void testIfContinueWithLabel() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/ifContinueWithLabel.kt");
+            }
 
-        @TestMetadata("assign_ArrayListRequired2.kt")
-        public void testAssign_ArrayListRequired2() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/assign_ArrayListRequired2.kt");
-        }
+            @TestMetadata("ifElse.kt")
+            public void testIfElse() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/ifElse.kt");
+            }
 
-        @TestMetadata("assign_ArrayListRequired3.kt")
-        public void testAssign_ArrayListRequired3() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/assign_ArrayListRequired3.kt");
-        }
+            @TestMetadata("inputVarNotUsed.kt")
+            public void testInputVarNotUsed() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/inputVarNotUsed.kt");
+            }
 
-        @TestMetadata("assign_MutableListRequired.kt")
-        public void testAssign_MutableListRequired() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/assign_MutableListRequired.kt");
-        }
+            @TestMetadata("inputVariableNotUsed.kt")
+            public void testInputVariableNotUsed() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/inputVariableNotUsed.kt");
+            }
 
-        @TestMetadata("assign_breakAndContinue.kt")
-        public void testAssign_breakAndContinue() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/assign_breakAndContinue.kt");
-        }
+            @TestMetadata("mergeMultiple.kt")
+            public void testMergeMultiple() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/mergeMultiple.kt");
+            }
 
-        @TestMetadata("cannotSplitOutFilterIsInstance.kt")
-        public void testCannotSplitOutFilterIsInstance() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/cannotSplitOutFilterIsInstance.kt");
-        }
+            @TestMetadata("splitOutFilterIsInstance.kt")
+            public void testSplitOutFilterIsInstance() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/splitOutFilterIsInstance.kt");
+            }
 
-        @TestMetadata("doNotSplitOutFilterIsInstance.kt")
-        public void testDoNotSplitOutFilterIsInstance() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/doNotSplitOutFilterIsInstance.kt");
-        }
+            @TestMetadata("splitOutFilterNotNull.kt")
+            public void testSplitOutFilterNotNull() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/splitOutFilterNotNull.kt");
+            }
 
-        @TestMetadata("doNotSplitOutFilterNotNull.kt")
-        public void testDoNotSplitOutFilterNotNull() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/doNotSplitOutFilterNotNull.kt");
-        }
-
-        @TestMetadata("filterIndexed.kt")
-        public void testFilterIndexed() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIndexed.kt");
-        }
-
-        @TestMetadata("filterIndexed2.kt")
-        public void testFilterIndexed2() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIndexed2.kt");
-        }
-
-        @TestMetadata("filterIndexedAndFlatMapWithContinue.kt")
-        public void testFilterIndexedAndFlatMapWithContinue() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIndexedAndFlatMapWithContinue.kt");
-        }
-
-        @TestMetadata("filterIndexedTo.kt")
-        public void testFilterIndexedTo() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIndexedTo.kt");
-        }
-
-        @TestMetadata("filterIndexedTo2.kt")
-        public void testFilterIndexedTo2() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIndexedTo2.kt");
-        }
-
-        @TestMetadata("filterIndexed_indexChangedTwice.kt")
-        public void testFilterIndexed_indexChangedTwice() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIndexed_indexChangedTwice.kt");
-        }
-
-        @TestMetadata("filterIndexed_indexStartNotZero.kt")
-        public void testFilterIndexed_indexStartNotZero() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIndexed_indexStartNotZero.kt");
-        }
-
-        @TestMetadata("filterIndexed_indexUsedAfter.kt")
-        public void testFilterIndexed_indexUsedAfter() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIndexed_indexUsedAfter.kt");
-        }
-
-        @TestMetadata("filterIndexed_indexUsedEarlierInLoop.kt")
-        public void testFilterIndexed_indexUsedEarlierInLoop() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIndexed_indexUsedEarlierInLoop.kt");
-        }
-
-        @TestMetadata("filterIndexed_merge1.kt")
-        public void testFilterIndexed_merge1() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIndexed_merge1.kt");
-        }
-
-        @TestMetadata("filterIndexed_merge2.kt")
-        public void testFilterIndexed_merge2() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIndexed_merge2.kt");
-        }
-
-        @TestMetadata("filterIndexed_merge3.kt")
-        public void testFilterIndexed_merge3() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIndexed_merge3.kt");
-        }
-
-        @TestMetadata("filterIndexed_merge4.kt")
-        public void testFilterIndexed_merge4() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIndexed_merge4.kt");
-        }
-
-        @TestMetadata("filterIndexed_twoIndices.kt")
-        public void testFilterIndexed_twoIndices() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIndexed_twoIndices.kt");
-        }
-
-        @TestMetadata("filterIndexed_twoIndicesUsed.kt")
-        public void testFilterIndexed_twoIndicesUsed() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIndexed_twoIndicesUsed.kt");
-        }
-
-        @TestMetadata("filterIsInstance.kt")
-        public void testFilterIsInstance() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIsInstance.kt");
-        }
-
-        @TestMetadata("filterIsInstanceTo.kt")
-        public void testFilterIsInstanceTo() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIsInstanceTo.kt");
-        }
-
-        @TestMetadata("filterIsInstance_ifContinue.kt")
-        public void testFilterIsInstance_ifContinue() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterIsInstance_ifContinue.kt");
-        }
-
-        @TestMetadata("filterNotNull.kt")
-        public void testFilterNotNull() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterNotNull.kt");
-        }
-
-        @TestMetadata("filterNotNullTo.kt")
-        public void testFilterNotNullTo() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterNotNullTo.kt");
-        }
-
-        @TestMetadata("filterNotNullTo2.kt")
-        public void testFilterNotNullTo2() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterNotNullTo2.kt");
-        }
-
-        @TestMetadata("filterNotNull_ifContinue.kt")
-        public void testFilterNotNull_ifContinue() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterNotNull_ifContinue.kt");
-        }
-
-        @TestMetadata("filterNotTo.kt")
-        public void testFilterNotTo() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterNotTo.kt");
-        }
-
-        @TestMetadata("filterNot_ifContinue.kt")
-        public void testFilterNot_ifContinue() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterNot_ifContinue.kt");
-        }
-
-        @TestMetadata("filterTo.kt")
-        public void testFilterTo() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterTo.kt");
-        }
-
-        @TestMetadata("filterTo2.kt")
-        public void testFilterTo2() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/filterTo2.kt");
-        }
-
-        @TestMetadata("glueTogetherFilterNotNull.kt")
-        public void testGlueTogetherFilterNotNull() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/glueTogetherFilterNotNull.kt");
-        }
-
-        @TestMetadata("ifContinue.kt")
-        public void testIfContinue() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/ifContinue.kt");
-        }
-
-        @TestMetadata("ifContinue2.kt")
-        public void testIfContinue2() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/ifContinue2.kt");
-        }
-
-        @TestMetadata("ifContinueInBlock.kt")
-        public void testIfContinueInBlock() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/ifContinueInBlock.kt");
-        }
-
-        @TestMetadata("ifContinueWithLabel.kt")
-        public void testIfContinueWithLabel() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/ifContinueWithLabel.kt");
-        }
-
-        @TestMetadata("ifElse.kt")
-        public void testIfElse() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/ifElse.kt");
-        }
-
-        @TestMetadata("inputVarNotUsed.kt")
-        public void testInputVarNotUsed() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/inputVarNotUsed.kt");
-        }
-
-        @TestMetadata("inputVariableNotUsed.kt")
-        public void testInputVariableNotUsed() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/inputVariableNotUsed.kt");
-        }
-
-        @TestMetadata("mergeMultiple.kt")
-        public void testMergeMultiple() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/mergeMultiple.kt");
-        }
-
-        @TestMetadata("splitOutFilterIsInstance.kt")
-        public void testSplitOutFilterIsInstance() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/splitOutFilterIsInstance.kt");
-        }
-
-        @TestMetadata("splitOutFilterNotNull.kt")
-        public void testSplitOutFilterNotNull() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/splitOutFilterNotNull.kt");
-        }
-
-        @TestMetadata("splitOutFilterNotNull2.kt")
-        public void testSplitOutFilterNotNull2() throws Exception {
-            runTest("testData/intentions/loopToCallChain/filter/splitOutFilterNotNull2.kt");
+            @TestMetadata("splitOutFilterNotNull2.kt")
+            public void testSplitOutFilterNotNull2() throws Exception {
+                runTest("testData/intentions/loopToCallChain/filter/splitOutFilterNotNull2.kt");
+            }
         }
     }
 
@@ -827,149 +778,161 @@ public class IntentionTest2Generated extends AbstractIntentionTest2 {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/intentions/loopToCallChain/map")
-    public static class Map extends AbstractIntentionTest2 {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class Map extends AbstractIntentionTest2 {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/loopToCallChain/map")
+        public static class TestBucket001 extends AbstractIntentionTest2 {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("assignMap.kt")
+            public void testAssignMap() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/assignMap.kt");
+            }
+
+            @TestMetadata("assignMap2.kt")
+            public void testAssignMap2() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/assignMap2.kt");
+            }
+
+            @TestMetadata("KT18816.kt")
+            public void testKT18816() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/KT18816.kt");
+            }
+
+            @TestMetadata("map.kt")
+            public void testMap() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/map.kt");
+            }
+
+            @TestMetadata("mapAndFilterIndexed.kt")
+            public void testMapAndFilterIndexed() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapAndFilterIndexed.kt");
+            }
+
+            @TestMetadata("mapIndexed.kt")
+            public void testMapIndexed() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapIndexed.kt");
+            }
+
+            @TestMetadata("mapIndexedNotNull.kt")
+            public void testMapIndexedNotNull() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapIndexedNotNull.kt");
+            }
+
+            @TestMetadata("mapIndexedNotNullTo.kt")
+            public void testMapIndexedNotNullTo() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapIndexedNotNullTo.kt");
+            }
+
+            @TestMetadata("mapIndexedNotNullTo_elvisContinue.kt")
+            public void testMapIndexedNotNullTo_elvisContinue() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapIndexedNotNullTo_elvisContinue.kt");
+            }
+
+            @TestMetadata("mapIndexedNotNull_elvisContinue.kt")
+            public void testMapIndexedNotNull_elvisContinue() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapIndexedNotNull_elvisContinue.kt");
+            }
+
+            @TestMetadata("mapIndexedTo.kt")
+            public void testMapIndexedTo() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapIndexedTo.kt");
+            }
+
+            @TestMetadata("mapIndexed_afterFilter.kt")
+            public void testMapIndexed_afterFilter() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapIndexed_afterFilter.kt");
+            }
+
+            @TestMetadata("mapIndexed_twice.kt")
+            public void testMapIndexed_twice() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapIndexed_twice.kt");
+            }
+
+            @TestMetadata("mapNotNull.kt")
+            public void testMapNotNull() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapNotNull.kt");
+            }
+
+            @TestMetadata("mapNotNullTo.kt")
+            public void testMapNotNullTo() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapNotNullTo.kt");
+            }
+
+            @TestMetadata("mapNotNullTo_elvisContinue.kt")
+            public void testMapNotNullTo_elvisContinue() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapNotNullTo_elvisContinue.kt");
+            }
+
+            @TestMetadata("mapNotNull_elvisContinue.kt")
+            public void testMapNotNull_elvisContinue() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapNotNull_elvisContinue.kt");
+            }
+
+            @TestMetadata("mapNotNull_nestedLoopElvisContinue.kt")
+            public void testMapNotNull_nestedLoopElvisContinue() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapNotNull_nestedLoopElvisContinue.kt");
+            }
+
+            @TestMetadata("mapNotNull_wrongElvisContinue.kt")
+            public void testMapNotNull_wrongElvisContinue() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapNotNull_wrongElvisContinue.kt");
+            }
+
+            @TestMetadata("mapTo.kt")
+            public void testMapTo() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapTo.kt");
+            }
         }
 
-        @TestMetadata("assignMap.kt")
-        public void testAssignMap() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/assignMap.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/intentions/loopToCallChain/map")
+        public static class TestBucket002 extends AbstractIntentionTest2 {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("assignMap2.kt")
-        public void testAssignMap2() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/assignMap2.kt");
-        }
+            @TestMetadata("mapTo2.kt")
+            public void testMapTo2() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapTo2.kt");
+            }
 
-        @TestMetadata("KT18816.kt")
-        public void testKT18816() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/KT18816.kt");
-        }
+            @TestMetadata("mapTo3.kt")
+            public void testMapTo3() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapTo3.kt");
+            }
 
-        @TestMetadata("map.kt")
-        public void testMap() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/map.kt");
-        }
+            @TestMetadata("mapTo4.kt")
+            public void testMapTo4() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapTo4.kt");
+            }
 
-        @TestMetadata("mapAndFilterIndexed.kt")
-        public void testMapAndFilterIndexed() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapAndFilterIndexed.kt");
-        }
+            @TestMetadata("mapTo_inputVarNotUsed.kt")
+            public void testMapTo_inputVarNotUsed() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapTo_inputVarNotUsed.kt");
+            }
 
-        @TestMetadata("mapIndexed.kt")
-        public void testMapIndexed() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapIndexed.kt");
-        }
+            @TestMetadata("mapUsesOldIndexAfterFilter.kt")
+            public void testMapUsesOldIndexAfterFilter() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapUsesOldIndexAfterFilter.kt");
+            }
 
-        @TestMetadata("mapIndexedNotNull.kt")
-        public void testMapIndexedNotNull() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapIndexedNotNull.kt");
-        }
+            @TestMetadata("mapVar.kt")
+            public void testMapVar() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/mapVar.kt");
+            }
 
-        @TestMetadata("mapIndexedNotNullTo.kt")
-        public void testMapIndexedNotNullTo() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapIndexedNotNullTo.kt");
-        }
+            @TestMetadata("map_var.kt")
+            public void testMap_var() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/map_var.kt");
+            }
 
-        @TestMetadata("mapIndexedNotNullTo_elvisContinue.kt")
-        public void testMapIndexedNotNullTo_elvisContinue() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapIndexedNotNullTo_elvisContinue.kt");
-        }
-
-        @TestMetadata("mapIndexedNotNull_elvisContinue.kt")
-        public void testMapIndexedNotNull_elvisContinue() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapIndexedNotNull_elvisContinue.kt");
-        }
-
-        @TestMetadata("mapIndexedTo.kt")
-        public void testMapIndexedTo() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapIndexedTo.kt");
-        }
-
-        @TestMetadata("mapIndexed_afterFilter.kt")
-        public void testMapIndexed_afterFilter() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapIndexed_afterFilter.kt");
-        }
-
-        @TestMetadata("mapIndexed_twice.kt")
-        public void testMapIndexed_twice() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapIndexed_twice.kt");
-        }
-
-        @TestMetadata("mapNotNull.kt")
-        public void testMapNotNull() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapNotNull.kt");
-        }
-
-        @TestMetadata("mapNotNullTo.kt")
-        public void testMapNotNullTo() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapNotNullTo.kt");
-        }
-
-        @TestMetadata("mapNotNullTo_elvisContinue.kt")
-        public void testMapNotNullTo_elvisContinue() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapNotNullTo_elvisContinue.kt");
-        }
-
-        @TestMetadata("mapNotNull_elvisContinue.kt")
-        public void testMapNotNull_elvisContinue() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapNotNull_elvisContinue.kt");
-        }
-
-        @TestMetadata("mapNotNull_nestedLoopElvisContinue.kt")
-        public void testMapNotNull_nestedLoopElvisContinue() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapNotNull_nestedLoopElvisContinue.kt");
-        }
-
-        @TestMetadata("mapNotNull_wrongElvisContinue.kt")
-        public void testMapNotNull_wrongElvisContinue() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapNotNull_wrongElvisContinue.kt");
-        }
-
-        @TestMetadata("mapTo.kt")
-        public void testMapTo() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapTo.kt");
-        }
-
-        @TestMetadata("mapTo2.kt")
-        public void testMapTo2() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapTo2.kt");
-        }
-
-        @TestMetadata("mapTo3.kt")
-        public void testMapTo3() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapTo3.kt");
-        }
-
-        @TestMetadata("mapTo4.kt")
-        public void testMapTo4() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapTo4.kt");
-        }
-
-        @TestMetadata("mapTo_inputVarNotUsed.kt")
-        public void testMapTo_inputVarNotUsed() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapTo_inputVarNotUsed.kt");
-        }
-
-        @TestMetadata("mapUsesOldIndexAfterFilter.kt")
-        public void testMapUsesOldIndexAfterFilter() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapUsesOldIndexAfterFilter.kt");
-        }
-
-        @TestMetadata("mapVar.kt")
-        public void testMapVar() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/mapVar.kt");
-        }
-
-        @TestMetadata("map_var.kt")
-        public void testMap_var() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/map_var.kt");
-        }
-
-        @TestMetadata("map_variableStillNeeded.kt")
-        public void testMap_variableStillNeeded() throws Exception {
-            runTest("testData/intentions/loopToCallChain/map/map_variableStillNeeded.kt");
+            @TestMetadata("map_variableStillNeeded.kt")
+            public void testMap_variableStillNeeded() throws Exception {
+                runTest("testData/intentions/loopToCallChain/map/map_variableStillNeeded.kt");
+            }
         }
     }
 
@@ -1350,6 +1313,79 @@ public class IntentionTest2Generated extends AbstractIntentionTest2 {
         @TestMetadata("toSetWithMap.kt")
         public void testToSetWithMap() throws Exception {
             runTest("testData/intentions/loopToCallChain/toCollection/toSetWithMap.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/intentions/loopToCallChain")
+    public static class Uncategorized extends AbstractIntentionTest2 {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("array.kt")
+        public void testArray() throws Exception {
+            runTest("testData/intentions/loopToCallChain/array.kt");
+        }
+
+        @TestMetadata("asSequenceOnly.kt")
+        public void testAsSequenceOnly() throws Exception {
+            runTest("testData/intentions/loopToCallChain/asSequenceOnly.kt");
+        }
+
+        @TestMetadata("customTypeWithIterator.kt")
+        public void testCustomTypeWithIterator() throws Exception {
+            runTest("testData/intentions/loopToCallChain/customTypeWithIterator.kt");
+        }
+
+        @TestMetadata("embeddedBreak1.kt")
+        public void testEmbeddedBreak1() throws Exception {
+            runTest("testData/intentions/loopToCallChain/embeddedBreak1.kt");
+        }
+
+        @TestMetadata("embeddedBreak2.kt")
+        public void testEmbeddedBreak2() throws Exception {
+            runTest("testData/intentions/loopToCallChain/embeddedBreak2.kt");
+        }
+
+        @TestMetadata("embeddedContinue.kt")
+        public void testEmbeddedContinue() throws Exception {
+            runTest("testData/intentions/loopToCallChain/embeddedContinue.kt");
+        }
+
+        @TestMetadata("intArray.kt")
+        public void testIntArray() throws Exception {
+            runTest("testData/intentions/loopToCallChain/intArray.kt");
+        }
+
+        @TestMetadata("itAlreadyUsed.kt")
+        public void testItAlreadyUsed() throws Exception {
+            runTest("testData/intentions/loopToCallChain/itAlreadyUsed.kt");
+        }
+
+        @TestMetadata("KT14191.kt")
+        public void testKT14191() throws Exception {
+            runTest("testData/intentions/loopToCallChain/KT14191.kt");
+        }
+
+        @TestMetadata("lastOrNull_ifAssign.kt")
+        public void testLastOrNull_ifAssign() throws Exception {
+            runTest("testData/intentions/loopToCallChain/lastOrNull_ifAssign.kt");
+        }
+
+        @TestMetadata("moveInitializationsCloserToLoop.kt")
+        public void testMoveInitializationsCloserToLoop() throws Exception {
+            runTest("testData/intentions/loopToCallChain/moveInitializationsCloserToLoop.kt");
+        }
+
+        @TestMetadata("range.kt")
+        public void testRange() throws Exception {
+            runTest("testData/intentions/loopToCallChain/range.kt");
+        }
+
+        @TestMetadata("twoInitializationsBeforeLoop.kt")
+        public void testTwoInitializationsBeforeLoop() throws Exception {
+            runTest("testData/intentions/loopToCallChain/twoInitializationsBeforeLoop.kt");
         }
     }
 }

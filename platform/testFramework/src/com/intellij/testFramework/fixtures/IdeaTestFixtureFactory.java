@@ -38,10 +38,11 @@ public abstract class IdeaTestFixtureFactory {
   public abstract TestFixtureBuilder<IdeaProjectTestFixture> createFixtureBuilder(@NotNull String name, @Nullable Path projectPath, boolean isDirectoryBasedProject);
 
   @NotNull
-  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder();
+  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@NotNull String projectName);
 
   @NotNull
-  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor);
+  public abstract TestFixtureBuilder<IdeaProjectTestFixture> createLightFixtureBuilder(@Nullable LightProjectDescriptor projectDescriptor,
+                                                                                       @NotNull String projectName);
 
   @NotNull
   public abstract CodeInsightTestFixture createCodeInsightFixture(@NotNull IdeaProjectTestFixture projectFixture);

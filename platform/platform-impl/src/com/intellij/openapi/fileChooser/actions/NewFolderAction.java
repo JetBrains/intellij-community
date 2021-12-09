@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.ide.IdeBundle;
@@ -10,25 +10,19 @@ import com.intellij.openapi.fileChooser.ex.FileSystemTreeImpl;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NlsActions;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.function.Supplier;
 
 public class NewFolderAction extends FileChooserAction implements LightEditCompatible {
-  public NewFolderAction() {
-  }
+  public NewFolderAction() { }
 
-  public NewFolderAction(final String text, final String description, final Icon icon) {
-    this(() -> text, () -> description, icon);
-  }
-
-  public NewFolderAction(@NotNull Supplier<String> text, @NotNull Supplier<String> description, final Icon icon) {
+  public NewFolderAction(@NlsActions.ActionText String text, @NlsActions.ActionDescription String description, Icon icon) {
     super(text, description, icon);
   }
 

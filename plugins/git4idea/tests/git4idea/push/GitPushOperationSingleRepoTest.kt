@@ -17,6 +17,7 @@ import git4idea.branch.GitBranchUtil
 import git4idea.config.GitVersionSpecialty
 import git4idea.config.UpdateMethod
 import git4idea.push.GitPushRepoResult.Type.*
+import git4idea.push.GitRejectedPushUpdateDialog.Companion.PushRejectedExitCode
 import git4idea.repo.GitRepository
 import git4idea.test.*
 import git4idea.update.GitUpdateResult
@@ -101,7 +102,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     var dialogShown = false
     TestDialogManager.setTestDialog {
       dialogShown = true
-      GitRejectedPushUpdateDialog.CANCEL_EXIT_CODE
+      PushRejectedExitCode.CANCEL.exitCode
     }
     val result = push("master", "origin/master")
 
@@ -117,7 +118,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     var dialogShown = false
     TestDialogManager.setTestDialog {
       dialogShown = true
-      GitRejectedPushUpdateDialog.CANCEL_EXIT_CODE
+      PushRejectedExitCode.CANCEL.exitCode
     }
 
     val result = push("feature", "origin/master")
@@ -131,7 +132,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     cd(repository)
     val hash = makeCommit("afile.txt")
 
-    TestDialogManager.setTestDialog { GitRejectedPushUpdateDialog.MERGE_EXIT_CODE }
+    TestDialogManager.setTestDialog { PushRejectedExitCode.MERGE.exitCode }
 
     updateRepositories()
     val pushSpec = makePushSpec(repository, "master", "origin/master")
@@ -157,7 +158,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     cd(repository)
     makeCommit("afile.txt")
 
-    TestDialogManager.setTestDialog { GitRejectedPushUpdateDialog.REBASE_EXIT_CODE }
+    TestDialogManager.setTestDialog { PushRejectedExitCode.REBASE.exitCode }
 
     updateRepositories()
     val pushSpec = makePushSpec(repository, "master", "origin/master")
@@ -282,7 +283,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     var dialogShown = false
     TestDialogManager.setTestDialog {
       dialogShown = true
-      GitRejectedPushUpdateDialog.CANCEL_EXIT_CODE
+      PushRejectedExitCode.CANCEL.exitCode
     }
 
     val remoteTipAndPushResult = forcePushWithReject(true)
@@ -335,7 +336,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     cd(repository)
     val hash = makeCommit("file.txt")
 
-    TestDialogManager.setTestDialog { GitRejectedPushUpdateDialog.MERGE_EXIT_CODE }
+    TestDialogManager.setTestDialog { PushRejectedExitCode.MERGE.exitCode }
 
     val result = push("master", "origin/master")
 
@@ -387,7 +388,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     append("bro.txt", "main content")
     makeCommit("msg")
 
-    TestDialogManager.setTestDialog { GitRejectedPushUpdateDialog.REBASE_EXIT_CODE }
+    TestDialogManager.setTestDialog { PushRejectedExitCode.REBASE.exitCode }
     vcsHelper.onMerge {}
 
     val result = push("master", "origin/master")
@@ -442,7 +443,7 @@ class GitPushOperationSingleRepoTest : GitPushOperationBaseTest() {
     settings.updateMethod = UpdateMethod.BRANCH_DEFAULT
     git("config branch.master.rebase true")
 
-    TestDialogManager.setTestDialog { GitRejectedPushUpdateDialog.CANCEL_EXIT_CODE }
+    TestDialogManager.setTestDialog { PushRejectedExitCode.CANCEL.exitCode }
 
     push("master", "origin/master")
     assertEquals(UpdateMethod.BRANCH_DEFAULT, settings.updateMethod)

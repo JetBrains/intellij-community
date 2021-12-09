@@ -130,7 +130,6 @@ public final class PluginBooleanOptionDescriptor extends BooleanOptionDescriptio
   private static @NotNull Collection<? extends IdeaPluginDescriptor> getDependenciesToEnable(@NotNull Collection<? extends IdeaPluginDescriptor> descriptors) {
     Set<IdeaPluginDescriptor> result = new LinkedHashSet<>();
 
-    ModuleGraph moduleGraph = PluginManagerCore.getPluginSet().getModuleGraph();
     for (IdeaPluginDescriptor descriptor : descriptors) {
       result.add(descriptor);
 

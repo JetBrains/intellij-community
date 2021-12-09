@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.idea.search.codeUsageScopeRestrictedToKotlinSources
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.usagesSearch.processDelegationCallConstructorUsages
+import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.getReceiverTargetDescriptor
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
@@ -150,7 +151,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
         val element = callerUsage.element ?: return
 
-        for (ref in ReferencesSearch.search(element, element.useScope)) {
+        for (ref in ReferencesSearch.search(element, element.useScope())) {
             val callElement = ref.element.getParentOfTypeAndBranch<KtCallElement> { calleeExpression } ?: continue
             result.add(KotlinCallerCallUsage(callElement))
         }
@@ -204,7 +205,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
     private fun findReferences(functionPsi: PsiElement): Set<PsiReference> {
         val result = LinkedHashSet<PsiReference>()
-        val searchScope = functionPsi.useScope
+        val searchScope = functionPsi.useScope()
         val options = KotlinReferencesSearchOptions(
             acceptCallableOverrides = true,
             acceptOverloads = false,
@@ -283,7 +284,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
                 val oldParamName = oldParam.name
 
                 if (parameterInfo == newReceiverInfo || (oldParamName != null && oldParamName != parameterInfo.name) || isDataClass && i != parameterInfo.oldIndex) {
-                    for (reference in ReferencesSearch.search(oldParam, oldParam.useScope)) {
+                    for (reference in ReferencesSearch.search(oldParam, oldParam.useScope())) {
                         val element = reference.element
 
                         if (isDataClass &&
@@ -324,7 +325,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
             }
         }
 
-        functionPsi.processDelegationCallConstructorUsages(functionPsi.useScope) {
+        functionPsi.processDelegationCallConstructorUsages(functionPsi.useScope()) {
             when (it) {
                 is KtConstructorDelegationCall -> result.add(KotlinConstructorDelegationCallUsage(it, changeInfo))
                 is KtSuperTypeCallEntry -> result.add(KotlinFunctionCallUsage(it, functionUsageInfo))
@@ -529,7 +530,7 @@ class KotlinChangeSignatureUsageProcessor : ChangeSignatureUsageProcessor {
 
             if (!(oldParamName != null && oldParamName != parameterInfo.name)) continue
 
-            for (reference in ReferencesSearch.search(oldParam, oldParam.useScope)) {
+            for (reference in ReferencesSearch.search(oldParam, oldParam.useScope())) {
                 val element = reference.element
                 // Usages in named arguments of the calls usage will be changed when the function call is changed
                 if (!((element is KtSimpleNameExpression || element is KDocName) && element.parent !is KtValueArgumentName)) continue

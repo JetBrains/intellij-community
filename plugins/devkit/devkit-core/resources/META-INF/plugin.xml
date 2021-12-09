@@ -35,7 +35,6 @@
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestCaseAsRelatedFileProvider"/>
     <gotoRelatedProvider implementation="org.jetbrains.idea.devkit.navigation.DescriptionInspectionGotoRelatedProvider"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.testAssistant.TestDataReferenceContributor"/>
-    <getDataRule key="TestLocationData" implementationClass="org.jetbrains.idea.devkit.testAssistant.TestLocationDataRule"/>
 
     <automaticRenamerFactory implementation="org.jetbrains.idea.devkit.refactoring.InspectionAutomaticRenamerFactory"/>
     <httpRequestHandler implementation="org.jetbrains.idea.devkit.debug.HttpDebugListener"/>
@@ -285,6 +284,7 @@
     <implicitUsageProvider implementation="org.jetbrains.idea.devkit.inspections.DevKitImplicitUsageProvider"/>
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.dom.impl.I18nReferenceContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.ExperimentalFeatureIdContributor"/>
+    <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.AdvancedSettingsIdContributor"/>
     <psi.referenceContributor implementation="org.jetbrains.idea.devkit.references.IconsReferencesContributor"/>
     <psi.referenceContributor language="UAST" implementation="org.jetbrains.idea.devkit.references.TestDataFilesReferencesContributor"/>
     <psi.referenceContributor language="XML" implementation="org.jetbrains.idea.devkit.references.ThemeEPPathReferenceContributor"/>

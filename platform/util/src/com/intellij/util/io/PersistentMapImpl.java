@@ -82,7 +82,7 @@ public class PersistentMapImpl<Key, Value> implements PersistentMapBase<Key, Val
   private static final boolean doHardConsistencyChecks = false;
   private final PersistentEnumeratorBase<Key> myEnumerator;
   private final boolean myCompactOnClose;
-  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock(true);
+  private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   private final PersistentMapWal<Key, Value> myWal;
 
   @TestOnly

@@ -1,4 +1,4 @@
-/*
+/**
  * Copyright 2000-2017 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -154,7 +154,8 @@ public class JavaDocLexer extends MergingLexerAdapter {
         if (myBufferIndex < myTokenEndOffset) {
           myTokenType = lf ||
                         state == _JavaDocLexer.PARAM_TAG_SPACE || state == _JavaDocLexer.TAG_DOC_SPACE ||
-                        state == _JavaDocLexer.INLINE_TAG_NAME || state == _JavaDocLexer.DOC_TAG_VALUE_IN_PAREN
+                        state == _JavaDocLexer.INLINE_TAG_NAME || state == _JavaDocLexer.DOC_TAG_VALUE_IN_PAREN ||
+                        state == _JavaDocLexer.INDEX_COMMENT_DATA
                         ? myTokenTypes.space() : myTokenTypes.commentData();
 
           return;

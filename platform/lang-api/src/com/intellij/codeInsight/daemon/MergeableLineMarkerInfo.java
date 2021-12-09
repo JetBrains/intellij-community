@@ -42,7 +42,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
 
   private static final Logger LOG = Logger.getInstance(MergeableLineMarkerInfo.class);
 
-  private @Nullable Function<PsiElement, @Nls(capitalization = Nls.Capitalization.Title) String> myPresentationProvider = null;
+  private @Nullable Function<? super PsiElement, @Nls(capitalization = Nls.Capitalization.Title) String> myPresentationProvider;
 
   /**
    * @deprecated Use {@link #MergeableLineMarkerInfo(PsiElement, TextRange, Icon, Function, GutterIconNavigationHandler, GutterIconRenderer.Alignment, Supplier)} instead
@@ -50,7 +50,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   @Deprecated
   public MergeableLineMarkerInfo(@NotNull T element,
                                  @NotNull TextRange textRange,
-                                 Icon icon,
+                                 @Nullable Icon icon,
                                  int __,
                                  @Nullable Function<? super T, String> tooltipProvider,
                                  @Nullable GutterIconNavigationHandler<T> navHandler,
@@ -64,7 +64,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   @Deprecated
   public MergeableLineMarkerInfo(@NotNull T element,
                                  @NotNull TextRange textRange,
-                                 Icon icon,
+                                 @Nullable Icon icon,
                                  @Nullable Function<? super T, String> tooltipProvider,
                                  @Nullable GutterIconNavigationHandler<T> navHandler,
                                  @NotNull GutterIconRenderer.Alignment alignment) {
@@ -88,7 +88,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
                                  @NotNull TextRange textRange,
                                  @NotNull Icon icon,
                                  @Nullable Function<? super T, String> tooltipProvider,
-                                 @Nullable Function<PsiElement, @Nls(capitalization = Nls.Capitalization.Title) String> presentationProvider,
+                                 @Nullable Function<? super PsiElement, @Nls(capitalization = Nls.Capitalization.Title) String> presentationProvider,
                                  @Nullable GutterIconNavigationHandler<T> navHandler,
                                  @NotNull GutterIconRenderer.Alignment alignment,
                                  @NotNull Supplier<@NotNull @Nls String> accessibleNameProvider) {
@@ -101,7 +101,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   public abstract Icon getCommonIcon(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos);
 
   @NotNull
-  public Function<? super PsiElement, String> getCommonTooltip(final @NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
+  public Function<? super PsiElement, String> getCommonTooltip(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
     return (Function<PsiElement, String>)element -> {
       Set<String> tooltips = new HashSet<>(ContainerUtil.mapNotNull(infos, info -> info.getLineMarkerTooltip()));
       StringBuilder tooltip = new StringBuilder();
@@ -116,6 +116,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
 
+  @NotNull
   public GutterIconRenderer.Alignment getCommonIconAlignment(@NotNull List<? extends MergeableLineMarkerInfo<?>> infos) {
     return GutterIconRenderer.Alignment.LEFT;
   }
@@ -160,8 +161,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   }
 
   private static final class MyLineMarkerInfo extends LineMarkerInfo<PsiElement> {
-
-    private DefaultActionGroup myCommonActionGroup;
+    private final DefaultActionGroup myCommonActionGroup;
 
     private MyLineMarkerInfo(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
       this(markers, markers.get(0));
@@ -209,7 +209,7 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     }
 
     @NotNull
-    private static GutterIconNavigationHandler<PsiElement> getCommonNavigationHandler(@NotNull final List<? extends MergeableLineMarkerInfo<?>> markers) {
+    private static GutterIconNavigationHandler<PsiElement> getCommonNavigationHandler(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
       return new MergedGutterIconNavigationHandler(markers);
     }
 
@@ -239,8 +239,8 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
   static class MergedGutterIconNavigationHandler implements GutterIconNavigationHandler<PsiElement> {
     private final List<LineMarkerInfo<?>> myInfos;
 
-    MergedGutterIconNavigationHandler(List<? extends MergeableLineMarkerInfo<?>> markers) {
-      final List<LineMarkerInfo<?>> infos = new ArrayList<>(markers);
+    MergedGutterIconNavigationHandler(@NotNull List<? extends MergeableLineMarkerInfo<?>> markers) {
+      List<LineMarkerInfo<?>> infos = new ArrayList<>(markers);
       infos.sort(Comparator.comparingInt(o -> o.startOffset));
       myInfos = Collections.unmodifiableList(infos);
     }
@@ -251,15 +251,15 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
     }
 
     @Override
-    public void navigate(MouseEvent e, PsiElement elt) {
+    public void navigate(MouseEvent e, PsiElement __) {
       //list.setFixedCellHeight(UIUtil.LIST_FIXED_CELL_HEIGHT); // TODO[jetzajac]: do we need it?
       IPopupChooserBuilder<LineMarkerInfo<?>> builder = JBPopupFactory.getInstance().createPopupChooserBuilder(myInfos);
       builder.setRenderer(new SelectionAwareListCellRenderer<>(dom -> {
         Icon icon = null;
-        final GutterIconRenderer renderer = dom.createGutterRenderer();
+        GutterIconRenderer renderer = dom.createGutterRenderer();
         if (renderer != null) {
           Icon originalIcon = renderer.getIcon();
-          icon = IconUtil.scale(originalIcon, null, JBUIScale.scale(16f) / originalIcon.getIconWidth());
+          icon = IconUtil.scale(originalIcon, null, JBUIScale.scale(16.0f) / originalIcon.getIconWidth());
         }
         PsiElement element = dom.getElement();
         @NlsSafe String elementPresentation;
@@ -274,14 +274,14 @@ public abstract class MergeableLineMarkerInfo<T extends PsiElement> extends Line
         }
         String text = StringUtil.first(elementPresentation, 100, true).replace('\n', ' ');
 
-        final JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);
+        JBLabel label = new JBLabel(text, icon, SwingConstants.LEFT);
         label.setBorder(JBUI.Borders.empty(2));
         return label;
       }));
       builder.setItemChosenCallback(value -> {
-        final GutterIconNavigationHandler handler = value.getNavigationHandler();
+        //noinspection unchecked
+        GutterIconNavigationHandler<PsiElement> handler = (GutterIconNavigationHandler<PsiElement>)value.getNavigationHandler();
         if (handler != null) {
-          //noinspection unchecked
           handler.navigate(e, value.getElement());
         }
       }).createPopup().show(new RelativePoint(e));

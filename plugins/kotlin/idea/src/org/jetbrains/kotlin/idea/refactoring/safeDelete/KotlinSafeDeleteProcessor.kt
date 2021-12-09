@@ -34,6 +34,7 @@ import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOpt
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.projectScope
 import org.jetbrains.kotlin.idea.search.usagesSearch.processDelegationCallConstructorUsages
+import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.idea.util.liftToExpected
@@ -79,7 +80,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
             return elementsToSearch.asSequence().flatMap {
                 val searchParameters = KotlinReferencesSearchParameters(
                     it,
-                    if (it.hasActualModifier()) it.project.projectScope() else it.useScope,
+                    if (it.hasActualModifier()) it.project.projectScope() else it.useScope(),
                     kotlinOptions = KotlinReferencesSearchOptions(acceptCallableOverrides = true)
                 )
                 ReferencesSearch.search(searchParameters).asSequence()
@@ -236,7 +237,7 @@ class KotlinSafeDeleteProcessor : JavaSafeDeleteProcessor() {
                 else -> return
             }
             for (constructor in constructors) {
-                constructor.processDelegationCallConstructorUsages((constructor as PsiElement).useScope) {
+                constructor.processDelegationCallConstructorUsages((constructor as PsiElement).useScope()) {
                     if (!getIgnoranceCondition().value(it)) {
                         usages.add(SafeDeleteReferenceSimpleDeleteUsageInfo(it, element, false))
                     }

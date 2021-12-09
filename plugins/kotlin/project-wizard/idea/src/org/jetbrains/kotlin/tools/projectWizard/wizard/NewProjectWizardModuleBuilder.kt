@@ -84,7 +84,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
 
     override fun isAvailable(): Boolean = isCreatingNewProject()
 
-    private var wizardContext: WizardContext? = null
+    private lateinit var wizardContext: WizardContext
     private var finishButtonClicked: Boolean = false
 
     override fun getModuleType(): ModuleType<*> = NewProjectWizardModuleType()
@@ -205,7 +205,7 @@ class NewProjectWizardModuleBuilder : EmptyModuleBuilder() {
     private fun clickFinishButton() {
         if (finishButtonClicked) return
         finishButtonClicked = true
-        wizardContext?.getNextButton()?.doClick()
+        wizardContext.getNextButton()?.doClick()
     }
 
     override fun modifySettingsStep(settingsStep: SettingsStep): ModuleWizardStep? {

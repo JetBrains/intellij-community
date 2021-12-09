@@ -8,11 +8,15 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.SimpleFunctionDescriptor
+import org.jetbrains.kotlin.descriptors.VariableDescriptorWithAccessors
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.moveCaret
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.inspections.UnusedLambdaExpressionBodyInspection.Companion.replaceBlockExpressionWithLambdaBody
+import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
@@ -53,9 +57,7 @@ class RedundantWithInspection : AbstractKotlinInspection() {
                         return
                     }
 
-                    val resolvedCall = element.getResolvedCall(context) ?: return
-
-                    if (isUsageOfDescriptor(lambdaDescriptor, resolvedCall, context)) {
+                    if (isUsageOfDescriptor(lambdaDescriptor, element, context)) {
                         used = true
                     }
                 }

@@ -11,7 +11,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
-import org.jetbrains.annotations.Nullable
 import javax.swing.JComponent
 
 class OpenInRightSplitAction : AnAction(), DumbAware {
@@ -59,7 +58,7 @@ class OpenInRightSplitAction : AnAction(), DumbAware {
     private fun getVirtualFile(e: AnActionEvent): VirtualFile? = e.getData(CommonDataKeys.VIRTUAL_FILE)
 
     @JvmOverloads
-    fun openInRightSplit(project: @Nullable Project, file: VirtualFile, element: Navigatable? = null, requestFocus: Boolean = true): EditorWindow? {
+    fun openInRightSplit(project: Project, file: VirtualFile, element: Navigatable? = null, requestFocus: Boolean = true): EditorWindow? {
       val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
       val splitters = fileEditorManager.splitters
 

@@ -10,6 +10,7 @@ import org.jetbrains.jps.model.module.JpsModule
 import org.jetbrains.jps.model.module.JpsModuleReference
 
 import java.util.function.BiConsumer
+
 /**
  * Describes layout of the platform (*.jar files in IDE_HOME/lib directory).
  * <p>
@@ -30,16 +31,19 @@ final class PlatformLayout extends BaseLayout {
     body()
   }
 
-  /**
-   * Include all project libraries from dependencies of modules already included into layout to 'lib' directory
-   */
-
   void withProjectLibrary(String libraryName) {
     includedProjectLibraries.add(new ProjectLibraryData(libraryName, "", ProjectLibraryData.PackMode.MERGED))
   }
 
   void withProjectLibrary(String libraryName, ProjectLibraryData.PackMode packMode) {
     includedProjectLibraries.add(new ProjectLibraryData(libraryName, "", packMode))
+  }
+
+  /**
+   * Exclude project library {@code libraryName} even if it's added to dependencies of some module or plugin included into the product
+   */
+  void withoutProjectLibrary(String libraryName) {
+    excludedProjectLibraries.add(libraryName)
   }
 
   void removeVersionFromProjectLibraryJarNames(String libraryName) {
@@ -58,7 +62,7 @@ final class PlatformLayout extends BaseLayout {
      * Exclude project library {@code libraryName} even if it's added to dependencies of some module or plugin included into the product
      */
     void withoutProjectLibrary(String libraryName) {
-      layout.excludedProjectLibraries.add(libraryName)
+      layout.withoutProjectLibrary(libraryName)
     }
 
     /**

@@ -2,10 +2,11 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.testFramework.NonHeadlessRule;
 import com.intellij.ui.scale.TestScaleHelper;
-import org.junit.*;
-import org.junit.rules.TestRule;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 /**
  * Tests "ide.browser.jcef.jsQueryPoolSize" reg key.
@@ -13,7 +14,10 @@ import org.junit.rules.TestRule;
  * @author tav
  */
 public class JBCefJSQueryPoolSizeKeyTest {
-  @Rule public TestRule nonHeadless = new NonHeadlessRule();
+  static {
+    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
+  }
+
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   @Before

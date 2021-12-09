@@ -12,7 +12,7 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
                                   parent: PanelImpl,
                                   @NlsContexts.BorderTitle title: String,
                                   init: Panel.() -> Unit) :
-  RowImpl(dialogPanelConfig, panelContext, parent, false, RowLayout.INDEPENDENT), CollapsibleRow {
+  RowImpl(dialogPanelConfig, panelContext, parent, RowLayout.INDEPENDENT), CollapsibleRow {
 
   private val collapsibleTitledSeparator = CollapsibleTitledSeparator(title)
 

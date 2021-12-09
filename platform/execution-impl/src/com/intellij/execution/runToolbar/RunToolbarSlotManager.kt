@@ -229,7 +229,7 @@ class RunToolbarSlotManager(val project: Project) {
     }
 
   private fun updateState() {
-    state = when (activeProcesses.getEnvironmentCount()) {
+    state = when (activeProcesses.getActiveCount()) {
       0 -> State.INACTIVE
       1 -> {
         mainSlotData.environment?.let {
@@ -481,7 +481,7 @@ class ActiveProcesses {
   val processes = mutableMapOf<RunToolbarProcess, MutableList<ExecutionEnvironment>>()
   private var activeCount = 0
 
-  fun getEnvironmentCount(): Int = activeCount
+  fun getActiveCount(): Int = activeCount
 
   fun getText(): String? {
     return when {

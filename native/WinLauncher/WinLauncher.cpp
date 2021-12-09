@@ -38,14 +38,6 @@ HANDLE hEvent;
 HANDLE hSingleInstanceWatcherThread;
 const int FILE_MAPPING_SIZE = 16000;
 
-#ifdef _M_X64
-bool need64BitJRE = true;
-#define BITS_STR "64-bit"
-#else
-bool need64BitJRE = false;
-#define BITS_STR "32-bit"
-#endif
-
 void TrimLine(char* line);
 
 static std::string EncodeWideACP(const std::wstring &str)
@@ -80,13 +72,11 @@ static bool IsValidJRE(const std::string& path)
 
 bool Is64BitJRE(const char* path)
 {
-  std::string cfgPath(path);
   std::string cfgJava9Path(path);
   std::string accessbridgeVersion(path);
-  cfgPath += "\\lib\\amd64\\jvm.cfg";
   cfgJava9Path += "\\lib\\jvm.cfg";
   accessbridgeVersion += "\\bin\\windowsaccessbridge-32.dll";
-  return FileExists(cfgPath) || (FileExists(cfgJava9Path) && !FileExists(accessbridgeVersion));
+  return FileExists(cfgJava9Path) && !FileExists(accessbridgeVersion);
 }
 
 bool FindValidJVM(const char* path)
@@ -94,18 +84,6 @@ bool FindValidJVM(const char* path)
   if (IsValidJRE(path))
   {
     strcpy_s(jvmPath, _MAX_PATH - 1, path);
-    return true;
-  }
-  char jrePath[_MAX_PATH];
-  strcpy_s(jrePath, path);
-  if (jrePath[strlen(jrePath) - 1] != '\\')
-  {
-    strcat_s(jrePath, "\\");
-  }
-  strcat_s(jrePath, _MAX_PATH - 1, "jre");
-  if (IsValidJRE(jrePath))
-  {
-    strcpy_s(jvmPath, jrePath);
     return true;
   }
   return false;
@@ -132,7 +110,7 @@ bool FindJVMInEnvVar(const char* envVarName, bool& result)
   {
     if (FindValidJVM(envVarValue))
     {
-      if (Is64BitJRE(jvmPath) != need64BitJRE) return false;
+      if (!Is64BitJRE(jvmPath)) return false;
       result = true;
     }
     else
@@ -248,31 +226,6 @@ bool FindJVMInRegistry()
   return false;
 }
 
-// The following code is taken from http://msdn.microsoft.com/en-us/library/ms684139(v=vs.85).aspx
-// and provides a backwards compatible way to check if this application is a 32-bit process running
-// on a 64-bit OS
-typedef BOOL (WINAPI *LPFN_ISWOW64PROCESS) (HANDLE, PBOOL);
-
-LPFN_ISWOW64PROCESS fnIsWow64Process;
-
-BOOL IsWow64()
-{
-  BOOL bIsWow64 = FALSE;
-
-  //IsWow64Process is not available on all supported versions of Windows.
-  //Use GetModuleHandle to get a handle to the DLL that contains the function
-  //and GetProcAddress to get a pointer to the function if available.
-
-  fnIsWow64Process = (LPFN_ISWOW64PROCESS) GetProcAddress(
-      GetModuleHandle(TEXT("kernel32")), "IsWow64Process");
-
-  if (NULL != fnIsWow64Process)
-  {
-    fnIsWow64Process(GetCurrentProcess(), &bIsWow64);
-  }
-  return bIsWow64;
-}
-
 bool LocateJVM()
 {
   bool result;
@@ -283,7 +236,7 @@ bool LocateJVM()
 
   if (FindJVMInSettings()) return true;
 
-  if (FindValidJVM(GetAdjacentDir(need64BitJRE ? "jbr" : "jbr-x86").c_str()) && Is64BitJRE(jvmPath) == need64BitJRE)
+  if (FindValidJVM(GetAdjacentDir("jbr").c_str()) && Is64BitJRE(jvmPath))
   {
     return true;
   }
@@ -299,19 +252,9 @@ bool LocateJVM()
   }
 
   std::string jvmError;
-  jvmError = "No JVM installation found. Please install a " BITS_STR " JDK.\n"
+  jvmError = "No JVM installation found. Please install a JDK.\n"
     "If you already have a JDK installed, define a JAVA_HOME variable in\n"
     "Computer > System Properties > System Settings > Environment Variables.";
-
-  if (IsWow64())
-  {
-    // If WoW64, this means we are running a 32-bit program on 64-bit Windows. This may explain
-    // why we couldn't locate the JVM.
-    jvmError += "\n\nNOTE: We have detected that you are running a 64-bit version of the "
-        "Windows operating system but are running the 32-bit executable. This "
-        "can prevent you from finding a 64-bit installation of Java. Consider running "
-        "the 64-bit version instead, if this is the problem you're encountering.";
-  }
 
   std::string error = LoadStdString(IDS_ERROR_LAUNCHING_APP);
   MessageBoxA(NULL, jvmError.c_str(), error.c_str(), MB_OK);
@@ -347,34 +290,6 @@ static bool LoadVMOptionsFile(const char* path, std::vector<std::string>& vmOpti
   return true;
 }
 
-std::string FindToolsJar()
-{
-  std::string baseToolsJarPath = jvmPath;
-  // remove trailing slash if any
-  size_t lastSlash = baseToolsJarPath.rfind('\\');
-  if (lastSlash == baseToolsJarPath.length() - 1)
-  {
-      baseToolsJarPath = baseToolsJarPath.substr(0, lastSlash);
-  }
-  // 1) look in the base dir
-  std::string toolsJarPath = baseToolsJarPath + "\\lib\\tools.jar";
-  if (FileExists(toolsJarPath))
-  {
-    return toolsJarPath;
-  }
-  // 2) look in the up dir
-  lastSlash = baseToolsJarPath.rfind('\\');
-  if (lastSlash != std::string::npos)
-  {
-    toolsJarPath = baseToolsJarPath.substr(0, lastSlash + 1) + "lib\\tools.jar";
-    if (FileExists(toolsJarPath))
-    {
-      return toolsJarPath;
-    }
-  }
-  return "";
-}
-
 std::string CollectLibJars(const std::string& jarList)
 {
   std::string libDir = GetAdjacentDir("lib");
@@ -406,19 +321,7 @@ std::string CollectLibJars(const std::string& jarList)
 std::string BuildClassPath()
 {
   std::string classpathLibs = LoadStdString(IDS_CLASSPATH_LIBS);
-  std::string result = CollectLibJars(classpathLibs);
-
-  if (LoadStdString(IDS_JDK_ONLY) == std::string("true"))
-  {
-    std::string toolsJar = FindToolsJar();
-    if (toolsJar.size() > 0)
-    {
-      result += ";";
-      result += toolsJar;
-    }
-  }
-
-  return result;
+  return CollectLibJars(classpathLibs);
 }
 
 std::string BuildBootClassPath()
@@ -587,7 +490,7 @@ bool LoadJVMLibrary()
     std::string jvmError = "Failed to load JVM DLL ";
     jvmError += dllName.c_str();
     jvmError += "\n"
-        "If you already have a " BITS_STR " JDK installed, define a JAVA_HOME variable in "
+        "If you already have a JDK installed, define a JAVA_HOME variable in "
         "Computer > System Properties > System Settings > Environment Variables.";
     std::string error = LoadStdString(IDS_ERROR_LAUNCHING_APP);
     MessageBoxA(NULL, jvmError.c_str(), error.c_str(), MB_OK);
@@ -671,7 +574,7 @@ static JNIEnv* CreateJVM()
     std::stringstream buf;
     std::string jvmError = getErrorMessage(result);
     if (jvmError == "") {
-        jvmError = "If you already have a " BITS_STR " JDK installed, define a JAVA_HOME variable in \n";
+        jvmError = "If you already have a JDK installed, define a JAVA_HOME variable in \n";
         jvmError += "Computer > System Properties > System Settings > Environment Variables.\n";
     }
 

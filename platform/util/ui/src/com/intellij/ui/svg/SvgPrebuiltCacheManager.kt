@@ -6,9 +6,12 @@ import com.intellij.ui.icons.IconLoadMeasurer
 import com.intellij.util.ImageLoader
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.ikv.Ikv
+import org.jetbrains.ikv.UniversalHash
 import java.awt.Image
 import java.nio.ByteBuffer
 import java.nio.file.Path
+
+private val intKeyHash = UniversalHash.IntHash()
 
 @ApiStatus.Internal
 class SvgPrebuiltCacheManager(private val dbDir: Path) {
@@ -26,15 +29,15 @@ class SvgPrebuiltCacheManager(private val dbDir: Path) {
 
   private inner class StoreContainer(private val scale: Float, private val classifier: String) {
     @Volatile
-    private var store: Ikv.SizeUnawareIkv? = null
+    private var store: Ikv.SizeUnawareIkv<Int>? = null
 
     fun getOrCreate() = store ?: getSynchronized()
 
     @Synchronized
-    private fun getSynchronized(): Ikv.SizeUnawareIkv {
+    private fun getSynchronized(): Ikv.SizeUnawareIkv<Int> {
       var store = store
       if (store == null) {
-        store = Ikv.loadSizeUnawareIkv(dbDir.resolve("icons-v1-$scale$classifier.db"))
+        store = Ikv.loadSizeUnawareIkv(dbDir.resolve("icons-v1-$scale$classifier.db"), intKeyHash)
         this.store = store
       }
       return store

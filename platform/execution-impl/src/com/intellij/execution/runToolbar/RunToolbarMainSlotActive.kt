@@ -2,6 +2,8 @@
 package com.intellij.execution.runToolbar
 
 import com.intellij.execution.runToolbar.RunToolbarProcessStartedAction.Companion.PROP_ACTIVE_ENVIRONMENT
+import com.intellij.execution.runToolbar.components.MouseListenerHelper
+import com.intellij.execution.runToolbar.components.TrimmedMiddleLabel
 import com.intellij.icons.AllIcons
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionToolbar
@@ -11,16 +13,16 @@ import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustom
 import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomPanel
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Key
-import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBDimension
 import com.intellij.util.ui.UIUtil
 import net.miginfocom.swing.MigLayout
 import java.awt.Dimension
 import java.awt.Font
-import java.awt.event.MouseAdapter
-import java.awt.event.MouseEvent
 import java.beans.PropertyChangeEvent
-import javax.swing.*
+import javax.swing.Icon
+import javax.swing.JLabel
+import javax.swing.JPanel
+import javax.swing.UIManager
 
 class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
   companion object {
@@ -62,26 +64,26 @@ class RunToolbarMainSlotActive : SegmentedCustomAction(), RTBarAction {
 }
 
 private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCustomPanel(presentation), PopupControllerComponent {
-    private val arrow = JLabel()
+  private val arrow = JLabel()
 
-    private val setting = object : JLabel() {
-      override fun getFont(): Font {
-        return UIUtil.getToolbarFont()
-      }
+  private val setting = object : TrimmedMiddleLabel() {
+    override fun getFont(): Font {
+      return UIUtil.getToolbarFont()
     }
+  }
 
-    private val process = object : JLabel() {
-      override fun getFont(): Font {
-        return UIUtil.getToolbarFont()
-      }
-    }.apply {
-      foreground = JBColor.namedColor("infoPanelForeground", JBColor(0x808080, 0x8C8C8C))
+  private val process = object : JLabel() {
+    override fun getFont(): Font {
+      return UIUtil.getToolbarFont()
     }
+  }.apply {
+    foreground = UIUtil.getLabelInfoForeground()
+  }
 
-    init {
+  init {
       layout = MigLayout("ins 0 0 0 3, fill, ay center")
       val pane = JPanel().apply {
-        layout = MigLayout("ins 0, fill, novisualpadding, ay center, gap 0", "[pref!][min!]3[shp 1]3[]")
+        layout = MigLayout("ins 0, fill, novisualpadding, ay center, gap 0", "[pref!][min!]3[shp 1, push]3[]push")
         add(JPanel().apply {
           isOpaque = false
           add(arrow)
@@ -100,24 +102,8 @@ private class RunToolbarMainSlotActive(presentation: Presentation) : SegmentedCu
         isOpaque = false
       }
 
-      add(pane)
-
-      addMouseListener(object : MouseAdapter() {
-        override fun mousePressed(e: MouseEvent) {
-          if (SwingUtilities.isLeftMouseButton(e)) {
-            e.consume()
-            if (e.isShiftDown) {
-              doShiftClick()
-            }
-            else {
-              doClick()
-            }
-          }
-          else if (SwingUtilities.isRightMouseButton(e)) {
-            doRightClick()
-          }
-        }
-      })
+    add(pane, "growx")
+    MouseListenerHelper.addListener(this, { doClick() }, { doShiftClick() }, { doRightClick() })
     }
 
   fun doRightClick() {

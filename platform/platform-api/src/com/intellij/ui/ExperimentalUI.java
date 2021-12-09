@@ -140,15 +140,25 @@ public final class ExperimentalUI {
     paths.put("toolwindows/toolWindowTodo.svg", "/expui/toolwindow/todo.svg");
     paths.put("toolwindows/toolWindowChanges.svg", "/expui/toolwindow/vcs.svg");
     paths.put("toolwindows/webToolWindow.svg", "/expui/toolwindow/web.svg");
-    paths.put("actions/more.svg", "/expui/16x16/general/moreVertical.svg");
-    paths.put("general/hideToolWindow.svg", "/expui/16x16/general/close.svg");
-    paths.put("actions/find.svg", "/expui/16x16/general/search.svg");
-    paths.put("general/gearPlain.svg", "/expui/16x16/general/settings.svg");
-    paths.put("general/chevron-down.svg", "expui/16x16/general/chevronDown.svg");
-    paths.put("general/chevron-left.svg", "expui/16x16/general/chevronLeft.svg");
-    paths.put("general/chevron-right.svg", "expui/16x16/general/chevronRight.svg");
-    paths.put("general/chevron-up.svg", "expui/16x16/general/chevronUp.svg");
-    paths.put("vcs/branch.svg", "expui/16x16/toolwindow/vcs.svg");
+    paths.put("actions/more.svg", "/expui/general/moreVertical.svg");
+    paths.put("general/hideToolWindow.svg", "/expui/general/close.svg");
+    paths.put("actions/find.svg", "/expui/general/search.svg");
+    paths.put("general/gearPlain.svg", "/expui/general/settings.svg");
+    paths.put("general/chevron-down.svg", "expui/general/chevronDown.svg");
+    paths.put("general/chevron-left.svg", "expui/general/chevronLeft.svg");
+    paths.put("general/chevron-right.svg", "expui/general/chevronRight.svg");
+    paths.put("general/chevron-up.svg", "expui/general/chevronUp.svg");
+    paths.put("vcs/branch.svg", "expui/toolwindow/vcs.svg");
+    if (isNewToolbar()) {
+      paths.put("actions/execute.svg", "expui/run/widget/run.svg");
+      paths.put("actions/execute_dark.svg", "expui/run/widget/run_dark.svg");
+      paths.put("actions/startDebugger.svg", "expui/run/widget/debug.svg");
+      paths.put("actions/startDebugger_dark.svg", "expui/run/widget/debug_dark.svg");
+      paths.put("actions/restart.svg", "expui/run/widget/restart.svg");
+      paths.put("actions/restart_dark.svg", "expui/run/widget/restart_dark.svg");
+      paths.put("actions/suspend.svg", "expui/run/widget/stop.svg");
+      paths.put("actions/suspend_dark.svg", "expui/run/widget/stop_dark.svg");
+    }
     return new IconPathPatcher() {
       @Override
       public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {

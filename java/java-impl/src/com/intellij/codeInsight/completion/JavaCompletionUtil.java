@@ -11,13 +11,13 @@ import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.editorActions.TabOutScopesTracker;
 import com.intellij.codeInsight.guess.GuessManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.codeInspection.java15api.Java15APIUsageInspection;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -503,7 +503,7 @@ public final class JavaCompletionUtil {
 
     private boolean shouldMarkRed(@NotNull Object object) {
       if (!(object instanceof PsiMember)) return false;
-      if (Java15APIUsageInspection.getLastIncompatibleLanguageLevel((PsiMember)object, myLanguageLevel) != null) {
+      if (LanguageLevelUtil.getLastIncompatibleLanguageLevel((PsiMember)object, myLanguageLevel) != null) {
         return true;
       }
 

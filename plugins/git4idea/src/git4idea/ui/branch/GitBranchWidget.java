@@ -2,12 +2,11 @@
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.dvcs.branch.DvcsSyncSettings;
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener;
 import com.intellij.dvcs.ui.DvcsStatusWidget;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.navigationToolbar.experimental.ExperimentalToolbarStateListener;
 import com.intellij.ide.ui.ToolbarSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -18,7 +17,6 @@ import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.impl.status.widget.StatusBarWidgetsManager;
 import com.intellij.ui.ExperimentalUI;
-import com.intellij.ui.LayeredIcon;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -28,7 +26,6 @@ import git4idea.config.GitVcsSettings;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
-import icons.DvcsImplIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -153,6 +150,19 @@ public class GitBranchWidget extends DvcsStatusWidget<GitRepository> {
     @Override
     public boolean canBeEnabledOn(@NotNull StatusBar statusBar) {
       return true;
+    }
+  }
+
+  public static class MyExperimentalToolbarStateListener implements ExperimentalToolbarStateListener {
+    private final Project myProject;
+
+    public MyExperimentalToolbarStateListener(Project project) {
+      myProject = project;
+    }
+
+    @Override
+    public void refreshVisibility() {
+      myProject.getService(StatusBarWidgetsManager.class).updateWidget(Factory.class);
     }
   }
 }

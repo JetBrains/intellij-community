@@ -3,23 +3,16 @@
 
 package org.jetbrains.intellij.build.tasks
 
-import com.intellij.util.lang.ImmutableZipEntry
-import com.intellij.util.lang.ImmutableZipFile
 import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.context.Context
-import it.unimi.dsi.fastutil.ints.IntSet
+import it.unimi.dsi.fastutil.longs.LongSet
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap
-import org.jetbrains.intellij.build.io.ZipFileWriter
-import org.jetbrains.intellij.build.io.copyZipRaw
-import org.jetbrains.intellij.build.io.transformFile
-import org.jetbrains.intellij.build.io.writeNewZip
+import org.jetbrains.intellij.build.io.*
 import java.io.InputStream
 import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.*
-
-internal const val PACKAGE_INDEX_NAME = "__packageIndex__"
 
 @Suppress("ReplaceJavaStaticMethodWithKotlinAnalog")
 private val excludedLibJars = java.util.Set.of("testFramework.core.jar", "testFramework.jar", "testFramework-java.jar")
@@ -59,7 +52,7 @@ internal fun reorderJar(relativePath: String, file: Path, traceContext: Context)
     }
 }
 
-fun generateClasspath(homeDir: Path, mainJarName: String, antLibDir: Path?): List<String> {
+fun generateClasspath(homeDir: Path, mainJarName: String, antTargetFile: Path?): List<String> {
   val libDir = homeDir.resolve("lib")
   val appFile = libDir.resolve("app.jar")
 
@@ -87,7 +80,6 @@ fun generateClasspath(homeDir: Path, mainJarName: String, antLibDir: Path?): Lis
             Files.delete(productJar)
           }
 
-          packageIndexBuilder.writeDirs(zipCreator)
           packageIndexBuilder.writePackageIndex(zipCreator)
         }
       }
@@ -110,13 +102,17 @@ fun generateClasspath(homeDir: Path, mainJarName: String, antLibDir: Path?): Lis
         rootDir = homeDir,
         mainJarName = mainJarName
       )
-      val result = computeAppClassPath(sourceToNames, libDir, antLibDir).map { libDir.relativize(it).toString() }
+      val files = computeAppClassPath(sourceToNames, libDir)
+      if (antTargetFile != null) {
+        files.add(antTargetFile)
+      }
+      val result = files.map { libDir.relativize(it).toString() }
       span.setAttribute(AttributeKey.stringArrayKey("result"), result)
       return result
     }
 }
 
-private fun computeAppClassPath(sourceToNames: Map<Path, List<String>>, libDir: Path, antLibDir: Path?): LinkedHashSet<Path> {
+private fun computeAppClassPath(sourceToNames: Map<Path, List<String>>, libDir: Path): LinkedHashSet<Path> {
   // sorted to ensure stable performance results
   val existing = TreeSet<Path>()
   addJarsFromDir(libDir) { paths ->
@@ -127,14 +123,6 @@ private fun computeAppClassPath(sourceToNames: Map<Path, List<String>>, libDir: 
   // add first - should be listed first
   sourceToNames.keys.filterTo(result) { it.parent == libDir && existing.contains(it) }
   result.addAll(existing)
-
-  if (antLibDir != null) {
-    val distAntLib = libDir.resolve("ant/lib")
-    addJarsFromDir(antLibDir) { paths ->
-      // sort to ensure stable performance results
-      result.addAll(paths.map { distAntLib.resolve(antLibDir.relativize(it)) }.sorted())
-    }
-  }
   return result
 }
 
@@ -157,7 +145,10 @@ internal fun readClassLoadingLog(classLoadingLog: InputStream, rootDir: Path, ma
   return sourceToNames
 }
 
-data class PackageIndexEntry(val path: Path, val classPackageIndex: IntSet, val resourcePackageIndex: IntSet)
+data class PackageIndexEntry(val path: Path, val classPackageIndex: LongSet, val resourcePackageIndex: LongSet)
+
+
+private class EntryData(@JvmField val name: String, @JvmField val entry: ZipEntry)
 
 fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): PackageIndexEntry {
   val orderedNameToIndex = Object2IntOpenHashMap<String>(orderedNames.size)
@@ -170,16 +161,12 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
 
   val packageIndexBuilder = PackageIndexBuilder()
 
-  ImmutableZipFile.load(jarFile).use { zipFile ->
-    // ignore existing package index on reorder - a new one will be computed even if it is the same, do not optimize for simplicity
-    val entries = zipFile.entries.toMutableList()
-    // package index in the end
-    for (i in (entries.size - 1) downTo 0) {
-      if (entries.get(i).name == PACKAGE_INDEX_NAME) {
-        entries.removeAt(i)
-        break
-      }
+  mapFileAndUse(jarFile) { sourceBuffer, fileSize ->
+    val entries = mutableListOf<EntryData>()
+    readZipEntries(sourceBuffer, fileSize) { name, entry ->
+      entries.add(EntryData(name, entry))
     }
+    // ignore existing package index on reorder - a new one will be computed even if it is the same, do not optimize for simplicity
     entries.sortWith(Comparator { o1, o2 ->
       val o2p = o2.name
       if ("META-INF/plugin.xml" == o2p) {
@@ -203,8 +190,10 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
     })
 
     writeNewZip(tempJarFile) { zipCreator ->
-      writeEntries(entries.iterator(), zipCreator, zipFile, packageIndexBuilder)
-      packageIndexBuilder.writeDirs(zipCreator)
+      for (item in entries) {
+        packageIndexBuilder.addFile(item.name)
+        zipCreator.uncompressedData(item.name, item.entry.getByteBuffer())
+      }
       packageIndexBuilder.writePackageIndex(zipCreator)
     }
   }
@@ -218,28 +207,5 @@ fun reorderJar(jarFile: Path, orderedNames: List<String>, resultJarFile: Path): 
   finally {
     Files.deleteIfExists(tempJarFile)
   }
-
   return PackageIndexEntry(path = resultJarFile, packageIndexBuilder.classPackageHashSet, packageIndexBuilder.resourcePackageHashSet)
-}
-
-internal fun writeEntries(entries: Iterator<ImmutableZipEntry>,
-                          zipCreator: ZipFileWriter,
-                          sourceZipFile: ImmutableZipFile,
-                          packageIndexBuilder: PackageIndexBuilder?) {
-  for (entry in entries) {
-    if (entry.isDirectory) {
-      continue
-    }
-
-    val name = entry.name
-    packageIndexBuilder?.addFile(name)
-
-    val data = entry.getByteBuffer(sourceZipFile)
-    try {
-      zipCreator.uncompressedData(name, data)
-    }
-    finally {
-      entry.releaseBuffer(data)
-    }
-  }
 }

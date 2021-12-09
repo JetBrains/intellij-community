@@ -18,41 +18,7 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/editor/backspaceHandler")
-public class BackspaceHandlerTestGenerated extends AbstractBackspaceHandlerTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-    }
-
-    @TestMetadata("beforeUnpairedBrace.kt")
-    public void testBeforeUnpairedBrace() throws Exception {
-        runTest("testData/editor/backspaceHandler/beforeUnpairedBrace.kt");
-    }
-
-    @TestMetadata("betweenOpenBraceAndParenthesis.kt")
-    public void testBetweenOpenBraceAndParenthesis() throws Exception {
-        runTest("testData/editor/backspaceHandler/betweenOpenBraceAndParenthesis.kt");
-    }
-
-    @TestMetadata("rawStringDelete.kt")
-    public void testRawStringDelete() throws Exception {
-        runTest("testData/editor/backspaceHandler/rawStringDelete.kt");
-    }
-
-    @TestMetadata("rawStringInCloseQuote.kt")
-    public void testRawStringInCloseQuote() throws Exception {
-        runTest("testData/editor/backspaceHandler/rawStringInCloseQuote.kt");
-    }
-
-    @TestMetadata("rawStringInOpenQuote.kt")
-    public void testRawStringInOpenQuote() throws Exception {
-        runTest("testData/editor/backspaceHandler/rawStringInOpenQuote.kt");
-    }
-
-    @TestMetadata("typeArguments.kt")
-    public void testTypeArguments() throws Exception {
-        runTest("testData/editor/backspaceHandler/typeArguments.kt");
-    }
-
+public abstract class BackspaceHandlerTestGenerated extends AbstractBackspaceHandlerTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/editor/backspaceHandler/stringTemplate")
     public static class StringTemplate extends AbstractBackspaceHandlerTest {
@@ -68,6 +34,44 @@ public class BackspaceHandlerTestGenerated extends AbstractBackspaceHandlerTest 
         @TestMetadata("stringTemplateBrackets.kt")
         public void testStringTemplateBrackets() throws Exception {
             runTest("testData/editor/backspaceHandler/stringTemplate/stringTemplateBrackets.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/editor/backspaceHandler")
+    public static class Uncategorized extends AbstractBackspaceHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("beforeUnpairedBrace.kt")
+        public void testBeforeUnpairedBrace() throws Exception {
+            runTest("testData/editor/backspaceHandler/beforeUnpairedBrace.kt");
+        }
+
+        @TestMetadata("betweenOpenBraceAndParenthesis.kt")
+        public void testBetweenOpenBraceAndParenthesis() throws Exception {
+            runTest("testData/editor/backspaceHandler/betweenOpenBraceAndParenthesis.kt");
+        }
+
+        @TestMetadata("rawStringDelete.kt")
+        public void testRawStringDelete() throws Exception {
+            runTest("testData/editor/backspaceHandler/rawStringDelete.kt");
+        }
+
+        @TestMetadata("rawStringInCloseQuote.kt")
+        public void testRawStringInCloseQuote() throws Exception {
+            runTest("testData/editor/backspaceHandler/rawStringInCloseQuote.kt");
+        }
+
+        @TestMetadata("rawStringInOpenQuote.kt")
+        public void testRawStringInOpenQuote() throws Exception {
+            runTest("testData/editor/backspaceHandler/rawStringInOpenQuote.kt");
+        }
+
+        @TestMetadata("typeArguments.kt")
+        public void testTypeArguments() throws Exception {
+            runTest("testData/editor/backspaceHandler/typeArguments.kt");
         }
     }
 }

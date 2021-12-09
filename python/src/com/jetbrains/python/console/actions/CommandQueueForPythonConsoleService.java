@@ -3,6 +3,7 @@ package com.jetbrains.python.console.actions;
 
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.util.NlsSafe;
+import com.jetbrains.python.console.PydevConsoleCommunication;
 import com.jetbrains.python.console.PydevConsoleExecuteActionHandler;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ public final class CommandQueueForPythonConsoleService {
   @NlsSafe
   private static final String STUB = "pass";
 
-  @NotNull
+  @Nullable
   private Queue<ConsoleCommunication.ConsoleCodeFragment> getQueue(@NotNull ConsoleCommunication consoleComm) {
     return queues.get(consoleComm);
   }
@@ -37,12 +38,16 @@ public final class CommandQueueForPythonConsoleService {
   }
 
   public synchronized void removeFirstCommand(@NotNull ConsoleCommunication consoleComm) {
-    getQueue(consoleComm).remove();
+    var queue = getQueue(consoleComm);
+    if (queue != null) {
+      queue.remove();
+    }
   }
 
   @Nullable
   public synchronized ConsoleCommunication.ConsoleCodeFragment getFirstCommand(@NotNull ConsoleCommunication consoleComm) {
     var queue = getQueue(consoleComm);
+    if (queue == null) return null;
     for (var elem : queue) {
       if (!elem.getText().equals(STUB)) {
         return elem;
@@ -52,20 +57,32 @@ public final class CommandQueueForPythonConsoleService {
   }
 
   public boolean isEmpty(@NotNull ConsoleCommunication consoleComm) {
-    return getQueue(consoleComm).isEmpty();
+    if (consoleComm instanceof PydevConsoleCommunication) {
+      if (((PydevConsoleCommunication) consoleComm).isCommunicationClosed()) {
+        return true;
+      }
+    }
+    var queue = getQueue(consoleComm);
+    if (queue == null) return true;
+    return queue.isEmpty();
   }
 
   public synchronized boolean isOneElement(@NotNull ConsoleCommunication consoleComm) {
-    return getQueue(consoleComm).size() == 1;
+    var queue = getQueue(consoleComm);
+    if (queue == null) return false;
+    return queue.size() == 1;
   }
 
   public synchronized boolean isTwoElement(@NotNull ConsoleCommunication consoleComm) {
-    return getQueue(consoleComm).size() == 2;
+    var queue = getQueue(consoleComm);
+    if (queue == null) return false;
+    return queue.size() == 2;
   }
 
   // remove one or all commands from queue
   public synchronized void removeCommand(@NotNull ConsoleCommunication consoleComm, boolean exceptionOccurred) {
     var queue = getQueue(consoleComm);
+    if (queue == null) return;
     if (!queue.isEmpty()) {
       if (exceptionOccurred) {
         int value = queue.size();
@@ -92,6 +109,7 @@ public final class CommandQueueForPythonConsoleService {
   public synchronized void removeCommand(@NotNull ConsoleCommunication consoleComm,
                                          @NotNull ConsoleCommunication.ConsoleCodeFragment codeFragment) {
     var queue = getQueue(consoleComm);
+    if (queue == null) return;
     if (!queue.isEmpty()) {
       for (var code : queue) {
         if (code.equals(codeFragment)) {
@@ -114,6 +132,7 @@ public final class CommandQueueForPythonConsoleService {
       handlers.put(console, pydevConsoleExecuteActionHandler);
     }
     var queue = getQueue(console);
+    if (queue == null) return;
     if (!code.getText().isBlank()) {
       queue.add(code);
       myListeners.get(console).addCommand(code);

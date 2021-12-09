@@ -20,587 +20,635 @@ import org.junit.runner.RunWith;
 public abstract class KotlinHighlightVisitorTestGenerated extends AbstractKotlinHighlightVisitorTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker")
-    public static class Checker extends AbstractKotlinHighlightVisitorTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("Abstract.kt")
-        public void testAbstract() throws Exception {
-            runTest("testData/checker/Abstract.kt");
-        }
-
-        @TestMetadata("AnnotationOnFile.kt")
-        public void testAnnotationOnFile() throws Exception {
-            runTest("testData/checker/AnnotationOnFile.kt");
-        }
-
-        @TestMetadata("AnnotationSupressing.kt")
-        public void testAnnotationSupressing() throws Exception {
-            runTest("testData/checker/AnnotationSupressing.kt");
-        }
-
-        @TestMetadata("AnonymousInitializers.kt")
-        public void testAnonymousInitializers() throws Exception {
-            runTest("testData/checker/AnonymousInitializers.kt");
-        }
-
-        @TestMetadata("BinaryCallsOnNullableValues.kt")
-        public void testBinaryCallsOnNullableValues() throws Exception {
-            runTest("testData/checker/BinaryCallsOnNullableValues.kt");
-        }
-
-        @TestMetadata("Bounds.kt")
-        public void testBounds() throws Exception {
-            runTest("testData/checker/Bounds.kt");
-        }
-
-        @TestMetadata("Bounds2.kt")
-        public void testBounds2() throws Exception {
-            runTest("testData/checker/Bounds2.kt");
-        }
-
-        @TestMetadata("BoundsWithSubstitutors.kt")
-        public void testBoundsWithSubstitutors() throws Exception {
-            runTest("testData/checker/BoundsWithSubstitutors.kt");
-        }
-
-        @TestMetadata("BreakContinue.kt")
-        public void testBreakContinue() throws Exception {
-            runTest("testData/checker/BreakContinue.kt");
-        }
-
-        @TestMetadata("Builders.kt")
-        public void testBuilders() throws Exception {
-            runTest("testData/checker/Builders.kt");
-        }
-
-        @TestMetadata("Casts.kt")
-        public void testCasts() throws Exception {
-            runTest("testData/checker/Casts.kt");
-        }
-
-        @TestMetadata("ClassObjectInEnum.kt")
-        public void testClassObjectInEnum() throws Exception {
-            runTest("testData/checker/ClassObjectInEnum.kt");
-        }
-
-        @TestMetadata("ClassObjects.kt")
-        public void testClassObjects() throws Exception {
-            runTest("testData/checker/ClassObjects.kt");
-        }
-
-        @TestMetadata("Constants.kt")
-        public void testConstants() throws Exception {
-            runTest("testData/checker/Constants.kt");
-        }
-
-        @TestMetadata("Constructors.kt")
-        public void testConstructors() throws Exception {
-            runTest("testData/checker/Constructors.kt");
-        }
-
-        @TestMetadata("CyclicHierarchy.kt")
-        public void testCyclicHierarchy() throws Exception {
-            runTest("testData/checker/CyclicHierarchy.kt");
-        }
-
-        @TestMetadata("ExposedContainerType.kt")
-        public void testExposedContainerType() throws Exception {
-            runTest("testData/checker/ExposedContainerType.kt");
-        }
-
-        @TestMetadata("ExposedInferredType.kt")
-        public void testExposedInferredType() throws Exception {
-            runTest("testData/checker/ExposedInferredType.kt");
-        }
-
-        @TestMetadata("ExtensionFunctions.kt")
-        public void testExtensionFunctions() throws Exception {
-            runTest("testData/checker/ExtensionFunctions.kt");
-        }
-
-        @TestMetadata("ForRangeConventions.kt")
-        public void testForRangeConventions() throws Exception {
-            runTest("testData/checker/ForRangeConventions.kt");
-        }
-
-        @TestMetadata("FunctionOnlyOneTypeParametersList.kt")
-        public void testFunctionOnlyOneTypeParametersList() throws Exception {
-            runTest("testData/checker/FunctionOnlyOneTypeParametersList.kt");
-        }
-
-        @TestMetadata("FunctionReturnTypes.kt")
-        public void testFunctionReturnTypes() throws Exception {
-            runTest("testData/checker/FunctionReturnTypes.kt");
-        }
-
-        @TestMetadata("GenericArgumentConsistency.kt")
-        public void testGenericArgumentConsistency() throws Exception {
-            runTest("testData/checker/GenericArgumentConsistency.kt");
-        }
-
-        @TestMetadata("IncDec.kt")
-        public void testIncDec() throws Exception {
-            runTest("testData/checker/IncDec.kt");
-        }
-
-        @TestMetadata("IsExpressions.kt")
-        public void testIsExpressions() throws Exception {
-            runTest("testData/checker/IsExpressions.kt");
-        }
-
-        @TestMetadata("JvmStaticUsagesRuntime.kt")
-        public void testJvmStaticUsagesRuntime() throws Exception {
-            runTest("testData/checker/JvmStaticUsagesRuntime.kt");
-        }
-
-        @TestMetadata("kt32189returnTypeWithTypealiasSubtitution.kt")
-        public void testKt32189returnTypeWithTypealiasSubtitution() throws Exception {
-            runTest("testData/checker/kt32189returnTypeWithTypealiasSubtitution.kt");
-        }
-
-        @TestMetadata("LocalObjects.kt")
-        public void testLocalObjects() throws Exception {
-            runTest("testData/checker/LocalObjects.kt");
-        }
-
-        @TestMetadata("MainWithWarningOnUnusedParam.kt")
-        public void testMainWithWarningOnUnusedParam() throws Exception {
-            runTest("testData/checker/MainWithWarningOnUnusedParam.kt");
-        }
-
-        @TestMetadata("MainWithoutWarningOnUnusedParam.kt")
-        public void testMainWithoutWarningOnUnusedParam() throws Exception {
-            runTest("testData/checker/MainWithoutWarningOnUnusedParam.kt");
-        }
-
-        @TestMetadata("MultipleBounds.kt")
-        public void testMultipleBounds() throws Exception {
-            runTest("testData/checker/MultipleBounds.kt");
-        }
-
-        @TestMetadata("MultipleModality.kt")
-        public void testMultipleModality() throws Exception {
-            runTest("testData/checker/MultipleModality.kt");
-        }
-
-        @TestMetadata("NestedObjects.kt")
-        public void testNestedObjects() throws Exception {
-            runTest("testData/checker/NestedObjects.kt");
-        }
-
-        @TestMetadata("NotFinishedGenericDeclaration.kt")
-        public void testNotFinishedGenericDeclaration() throws Exception {
-            runTest("testData/checker/NotFinishedGenericDeclaration.kt");
-        }
-
-        @TestMetadata("NullAsAnnotationArgument.kt")
-        public void testNullAsAnnotationArgument() throws Exception {
-            runTest("testData/checker/NullAsAnnotationArgument.kt");
-        }
-
-        @TestMetadata("Nullability.kt")
-        public void testNullability() throws Exception {
-            runTest("testData/checker/Nullability.kt");
-        }
-
-        @TestMetadata("ObjectLiteralInDelegate.kt")
-        public void testObjectLiteralInDelegate() throws Exception {
-            runTest("testData/checker/ObjectLiteralInDelegate.kt");
-        }
-
-        @TestMetadata("Objects.kt")
-        public void testObjects() throws Exception {
-            runTest("testData/checker/Objects.kt");
-        }
-
-        @TestMetadata("Override.kt")
-        public void testOverride() throws Exception {
-            runTest("testData/checker/Override.kt");
-        }
-
-        @TestMetadata("OverridesAndGenerics.kt")
-        public void testOverridesAndGenerics() throws Exception {
-            runTest("testData/checker/OverridesAndGenerics.kt");
-        }
-
-        @TestMetadata("PackageQualified.kt")
-        public void testPackageQualified() throws Exception {
-            runTest("testData/checker/PackageQualified.kt");
-        }
-
-        @TestMetadata("PrimaryConstructors.kt")
-        public void testPrimaryConstructors() throws Exception {
-            runTest("testData/checker/PrimaryConstructors.kt");
-        }
-
-        @TestMetadata("ProjectionsInSupertypes.kt")
-        public void testProjectionsInSupertypes() throws Exception {
-            runTest("testData/checker/ProjectionsInSupertypes.kt");
-        }
-
-        @TestMetadata("Properties.kt")
-        public void testProperties() throws Exception {
-            runTest("testData/checker/Properties.kt");
-        }
-
-        @TestMetadata("QualifiedExpressions.kt")
-        public void testQualifiedExpressions() throws Exception {
-            runTest("testData/checker/QualifiedExpressions.kt");
-        }
-
-        @TestMetadata("QualifiedThis.kt")
-        public void testQualifiedThis() throws Exception {
-            runTest("testData/checker/QualifiedThis.kt");
-        }
-
-        @TestMetadata("QualifiedThisInClosures.kt")
-        public void testQualifiedThisInClosures() throws Exception {
-            runTest("testData/checker/QualifiedThisInClosures.kt");
-        }
-
-        @TestMetadata("Redeclaration.kt")
-        public void testRedeclaration() throws Exception {
-            runTest("testData/checker/Redeclaration.kt");
-        }
-
-        @TestMetadata("Redeclarations.kt")
-        public void testRedeclarations() throws Exception {
-            runTest("testData/checker/Redeclarations.kt");
-        }
-
-        @TestMetadata("ResolveToJava.kt")
-        public void testResolveToJava() throws Exception {
-            runTest("testData/checker/ResolveToJava.kt");
-        }
-
-        @TestMetadata("ResolveTypeInAnnotationArgumentRuntime.kt")
-        public void testResolveTypeInAnnotationArgumentRuntime() throws Exception {
-            runTest("testData/checker/ResolveTypeInAnnotationArgumentRuntime.kt");
-        }
-
-        @TestMetadata("ReturnTypeMismatchOnOverride.kt")
-        public void testReturnTypeMismatchOnOverride() throws Exception {
-            runTest("testData/checker/ReturnTypeMismatchOnOverride.kt");
-        }
-
-        @TestMetadata("SafeInvoke.kt")
-        public void testSafeInvoke() throws Exception {
-            runTest("testData/checker/SafeInvoke.kt");
-        }
-
-        @TestMetadata("Shadowing.kt")
-        public void testShadowing() throws Exception {
-            runTest("testData/checker/Shadowing.kt");
-        }
-
-        @TestMetadata("StringTemplates.kt")
-        public void testStringTemplates() throws Exception {
-            runTest("testData/checker/StringTemplates.kt");
-        }
-
-        @TestMetadata("SupertypeListChecks.kt")
-        public void testSupertypeListChecks() throws Exception {
-            runTest("testData/checker/SupertypeListChecks.kt");
-        }
-
-        @TestMetadata("SuppressedHighlighting.kt")
-        public void testSuppressedHighlighting() throws Exception {
-            runTest("testData/checker/SuppressedHighlighting.kt");
-        }
-
-        @TestMetadata("TraitSupertypeList.kt")
-        public void testTraitSupertypeList() throws Exception {
-            runTest("testData/checker/TraitSupertypeList.kt");
-        }
-
-        @TestMetadata("trivialHierarchyLoop.kt")
-        public void testTrivialHierarchyLoop() throws Exception {
-            runTest("testData/checker/trivialHierarchyLoop.kt");
-        }
-
-        @TestMetadata("TypeArgumentsNotAllowed.kt")
-        public void testTypeArgumentsNotAllowed() throws Exception {
-            runTest("testData/checker/TypeArgumentsNotAllowed.kt");
-        }
-
-        @TestMetadata("TypeParameterBounds.kt")
-        public void testTypeParameterBounds() throws Exception {
-            runTest("testData/checker/TypeParameterBounds.kt");
-        }
-
-        @TestMetadata("UnreachableCode.kt")
-        public void testUnreachableCode() throws Exception {
-            runTest("testData/checker/UnreachableCode.kt");
-        }
-
-        @TestMetadata("Unresolved.kt")
-        public void testUnresolved() throws Exception {
-            runTest("testData/checker/Unresolved.kt");
-        }
-
-        @TestMetadata("Unused.kt")
-        public void testUnused() throws Exception {
-            runTest("testData/checker/Unused.kt");
-        }
-
-        @TestMetadata("Variance.kt")
-        public void testVariance() throws Exception {
-            runTest("testData/checker/Variance.kt");
-        }
-
-        @TestMetadata("When.kt")
-        public void testWhen() throws Exception {
-            runTest("testData/checker/When.kt");
-        }
-
-        @TestMetadata("WhenInEnumInExtensionProperty.kt")
-        public void testWhenInEnumInExtensionProperty() throws Exception {
-            runTest("testData/checker/WhenInEnumInExtensionProperty.kt");
-        }
-
-        @TestMetadata("WhenNonExhaustive.kt")
-        public void testWhenNonExhaustive() throws Exception {
-            runTest("testData/checker/WhenNonExhaustive.kt");
+    public abstract static class Checker extends AbstractKotlinHighlightVisitorTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/checker")
+        public static class TestBucket001 extends AbstractKotlinHighlightVisitorTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("Abstract.kt")
+            public void testAbstract() throws Exception {
+                runTest("testData/checker/Abstract.kt");
+            }
+
+            @TestMetadata("AnnotationOnFile.kt")
+            public void testAnnotationOnFile() throws Exception {
+                runTest("testData/checker/AnnotationOnFile.kt");
+            }
+
+            @TestMetadata("AnnotationSupressing.kt")
+            public void testAnnotationSupressing() throws Exception {
+                runTest("testData/checker/AnnotationSupressing.kt");
+            }
+
+            @TestMetadata("AnonymousInitializers.kt")
+            public void testAnonymousInitializers() throws Exception {
+                runTest("testData/checker/AnonymousInitializers.kt");
+            }
+
+            @TestMetadata("BinaryCallsOnNullableValues.kt")
+            public void testBinaryCallsOnNullableValues() throws Exception {
+                runTest("testData/checker/BinaryCallsOnNullableValues.kt");
+            }
+
+            @TestMetadata("Bounds.kt")
+            public void testBounds() throws Exception {
+                runTest("testData/checker/Bounds.kt");
+            }
+
+            @TestMetadata("Bounds2.kt")
+            public void testBounds2() throws Exception {
+                runTest("testData/checker/Bounds2.kt");
+            }
+
+            @TestMetadata("BoundsWithSubstitutors.kt")
+            public void testBoundsWithSubstitutors() throws Exception {
+                runTest("testData/checker/BoundsWithSubstitutors.kt");
+            }
+
+            @TestMetadata("BreakContinue.kt")
+            public void testBreakContinue() throws Exception {
+                runTest("testData/checker/BreakContinue.kt");
+            }
+
+            @TestMetadata("Builders.kt")
+            public void testBuilders() throws Exception {
+                runTest("testData/checker/Builders.kt");
+            }
+
+            @TestMetadata("Casts.kt")
+            public void testCasts() throws Exception {
+                runTest("testData/checker/Casts.kt");
+            }
+
+            @TestMetadata("ClassObjectInEnum.kt")
+            public void testClassObjectInEnum() throws Exception {
+                runTest("testData/checker/ClassObjectInEnum.kt");
+            }
+
+            @TestMetadata("ClassObjects.kt")
+            public void testClassObjects() throws Exception {
+                runTest("testData/checker/ClassObjects.kt");
+            }
+
+            @TestMetadata("Constants.kt")
+            public void testConstants() throws Exception {
+                runTest("testData/checker/Constants.kt");
+            }
+
+            @TestMetadata("Constructors.kt")
+            public void testConstructors() throws Exception {
+                runTest("testData/checker/Constructors.kt");
+            }
+
+            @TestMetadata("CyclicHierarchy.kt")
+            public void testCyclicHierarchy() throws Exception {
+                runTest("testData/checker/CyclicHierarchy.kt");
+            }
+
+            @TestMetadata("ExposedContainerType.kt")
+            public void testExposedContainerType() throws Exception {
+                runTest("testData/checker/ExposedContainerType.kt");
+            }
+
+            @TestMetadata("ExposedInferredType.kt")
+            public void testExposedInferredType() throws Exception {
+                runTest("testData/checker/ExposedInferredType.kt");
+            }
+
+            @TestMetadata("ExtensionFunctions.kt")
+            public void testExtensionFunctions() throws Exception {
+                runTest("testData/checker/ExtensionFunctions.kt");
+            }
+
+            @TestMetadata("ForRangeConventions.kt")
+            public void testForRangeConventions() throws Exception {
+                runTest("testData/checker/ForRangeConventions.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/checker")
+        public static class TestBucket002 extends AbstractKotlinHighlightVisitorTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("FunctionOnlyOneTypeParametersList.kt")
+            public void testFunctionOnlyOneTypeParametersList() throws Exception {
+                runTest("testData/checker/FunctionOnlyOneTypeParametersList.kt");
+            }
+
+            @TestMetadata("FunctionReturnTypes.kt")
+            public void testFunctionReturnTypes() throws Exception {
+                runTest("testData/checker/FunctionReturnTypes.kt");
+            }
+
+            @TestMetadata("GenericArgumentConsistency.kt")
+            public void testGenericArgumentConsistency() throws Exception {
+                runTest("testData/checker/GenericArgumentConsistency.kt");
+            }
+
+            @TestMetadata("IncDec.kt")
+            public void testIncDec() throws Exception {
+                runTest("testData/checker/IncDec.kt");
+            }
+
+            @TestMetadata("IsExpressions.kt")
+            public void testIsExpressions() throws Exception {
+                runTest("testData/checker/IsExpressions.kt");
+            }
+
+            @TestMetadata("JvmStaticUsagesRuntime.kt")
+            public void testJvmStaticUsagesRuntime() throws Exception {
+                runTest("testData/checker/JvmStaticUsagesRuntime.kt");
+            }
+
+            @TestMetadata("kt32189returnTypeWithTypealiasSubtitution.kt")
+            public void testKt32189returnTypeWithTypealiasSubtitution() throws Exception {
+                runTest("testData/checker/kt32189returnTypeWithTypealiasSubtitution.kt");
+            }
+
+            @TestMetadata("LocalObjects.kt")
+            public void testLocalObjects() throws Exception {
+                runTest("testData/checker/LocalObjects.kt");
+            }
+
+            @TestMetadata("MainWithWarningOnUnusedParam.kt")
+            public void testMainWithWarningOnUnusedParam() throws Exception {
+                runTest("testData/checker/MainWithWarningOnUnusedParam.kt");
+            }
+
+            @TestMetadata("MainWithoutWarningOnUnusedParam.kt")
+            public void testMainWithoutWarningOnUnusedParam() throws Exception {
+                runTest("testData/checker/MainWithoutWarningOnUnusedParam.kt");
+            }
+
+            @TestMetadata("MultipleBounds.kt")
+            public void testMultipleBounds() throws Exception {
+                runTest("testData/checker/MultipleBounds.kt");
+            }
+
+            @TestMetadata("MultipleModality.kt")
+            public void testMultipleModality() throws Exception {
+                runTest("testData/checker/MultipleModality.kt");
+            }
+
+            @TestMetadata("NestedObjects.kt")
+            public void testNestedObjects() throws Exception {
+                runTest("testData/checker/NestedObjects.kt");
+            }
+
+            @TestMetadata("NotFinishedGenericDeclaration.kt")
+            public void testNotFinishedGenericDeclaration() throws Exception {
+                runTest("testData/checker/NotFinishedGenericDeclaration.kt");
+            }
+
+            @TestMetadata("NullAsAnnotationArgument.kt")
+            public void testNullAsAnnotationArgument() throws Exception {
+                runTest("testData/checker/NullAsAnnotationArgument.kt");
+            }
+
+            @TestMetadata("Nullability.kt")
+            public void testNullability() throws Exception {
+                runTest("testData/checker/Nullability.kt");
+            }
+
+            @TestMetadata("ObjectLiteralInDelegate.kt")
+            public void testObjectLiteralInDelegate() throws Exception {
+                runTest("testData/checker/ObjectLiteralInDelegate.kt");
+            }
+
+            @TestMetadata("Objects.kt")
+            public void testObjects() throws Exception {
+                runTest("testData/checker/Objects.kt");
+            }
+
+            @TestMetadata("Override.kt")
+            public void testOverride() throws Exception {
+                runTest("testData/checker/Override.kt");
+            }
+
+            @TestMetadata("OverridesAndGenerics.kt")
+            public void testOverridesAndGenerics() throws Exception {
+                runTest("testData/checker/OverridesAndGenerics.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/checker")
+        public static class TestBucket003 extends AbstractKotlinHighlightVisitorTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("PackageQualified.kt")
+            public void testPackageQualified() throws Exception {
+                runTest("testData/checker/PackageQualified.kt");
+            }
+
+            @TestMetadata("PrimaryConstructors.kt")
+            public void testPrimaryConstructors() throws Exception {
+                runTest("testData/checker/PrimaryConstructors.kt");
+            }
+
+            @TestMetadata("ProjectionsInSupertypes.kt")
+            public void testProjectionsInSupertypes() throws Exception {
+                runTest("testData/checker/ProjectionsInSupertypes.kt");
+            }
+
+            @TestMetadata("Properties.kt")
+            public void testProperties() throws Exception {
+                runTest("testData/checker/Properties.kt");
+            }
+
+            @TestMetadata("QualifiedExpressions.kt")
+            public void testQualifiedExpressions() throws Exception {
+                runTest("testData/checker/QualifiedExpressions.kt");
+            }
+
+            @TestMetadata("QualifiedThis.kt")
+            public void testQualifiedThis() throws Exception {
+                runTest("testData/checker/QualifiedThis.kt");
+            }
+
+            @TestMetadata("QualifiedThisInClosures.kt")
+            public void testQualifiedThisInClosures() throws Exception {
+                runTest("testData/checker/QualifiedThisInClosures.kt");
+            }
+
+            @TestMetadata("Redeclaration.kt")
+            public void testRedeclaration() throws Exception {
+                runTest("testData/checker/Redeclaration.kt");
+            }
+
+            @TestMetadata("Redeclarations.kt")
+            public void testRedeclarations() throws Exception {
+                runTest("testData/checker/Redeclarations.kt");
+            }
+
+            @TestMetadata("ResolveToJava.kt")
+            public void testResolveToJava() throws Exception {
+                runTest("testData/checker/ResolveToJava.kt");
+            }
+
+            @TestMetadata("ResolveTypeInAnnotationArgumentRuntime.kt")
+            public void testResolveTypeInAnnotationArgumentRuntime() throws Exception {
+                runTest("testData/checker/ResolveTypeInAnnotationArgumentRuntime.kt");
+            }
+
+            @TestMetadata("ReturnTypeMismatchOnOverride.kt")
+            public void testReturnTypeMismatchOnOverride() throws Exception {
+                runTest("testData/checker/ReturnTypeMismatchOnOverride.kt");
+            }
+
+            @TestMetadata("SafeInvoke.kt")
+            public void testSafeInvoke() throws Exception {
+                runTest("testData/checker/SafeInvoke.kt");
+            }
+
+            @TestMetadata("Shadowing.kt")
+            public void testShadowing() throws Exception {
+                runTest("testData/checker/Shadowing.kt");
+            }
+
+            @TestMetadata("StringTemplates.kt")
+            public void testStringTemplates() throws Exception {
+                runTest("testData/checker/StringTemplates.kt");
+            }
+
+            @TestMetadata("SupertypeListChecks.kt")
+            public void testSupertypeListChecks() throws Exception {
+                runTest("testData/checker/SupertypeListChecks.kt");
+            }
+
+            @TestMetadata("SuppressedHighlighting.kt")
+            public void testSuppressedHighlighting() throws Exception {
+                runTest("testData/checker/SuppressedHighlighting.kt");
+            }
+
+            @TestMetadata("TraitSupertypeList.kt")
+            public void testTraitSupertypeList() throws Exception {
+                runTest("testData/checker/TraitSupertypeList.kt");
+            }
+
+            @TestMetadata("trivialHierarchyLoop.kt")
+            public void testTrivialHierarchyLoop() throws Exception {
+                runTest("testData/checker/trivialHierarchyLoop.kt");
+            }
+
+            @TestMetadata("TypeArgumentsNotAllowed.kt")
+            public void testTypeArgumentsNotAllowed() throws Exception {
+                runTest("testData/checker/TypeArgumentsNotAllowed.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/checker")
+        public static class TestBucket004 extends AbstractKotlinHighlightVisitorTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("TypeParameterBounds.kt")
+            public void testTypeParameterBounds() throws Exception {
+                runTest("testData/checker/TypeParameterBounds.kt");
+            }
+
+            @TestMetadata("UnreachableCode.kt")
+            public void testUnreachableCode() throws Exception {
+                runTest("testData/checker/UnreachableCode.kt");
+            }
+
+            @TestMetadata("Unresolved.kt")
+            public void testUnresolved() throws Exception {
+                runTest("testData/checker/Unresolved.kt");
+            }
+
+            @TestMetadata("Unused.kt")
+            public void testUnused() throws Exception {
+                runTest("testData/checker/Unused.kt");
+            }
+
+            @TestMetadata("Variance.kt")
+            public void testVariance() throws Exception {
+                runTest("testData/checker/Variance.kt");
+            }
+
+            @TestMetadata("When.kt")
+            public void testWhen() throws Exception {
+                runTest("testData/checker/When.kt");
+            }
+
+            @TestMetadata("WhenInEnumInExtensionProperty.kt")
+            public void testWhenInEnumInExtensionProperty() throws Exception {
+                runTest("testData/checker/WhenInEnumInExtensionProperty.kt");
+            }
+
+            @TestMetadata("WhenNonExhaustive.kt")
+            public void testWhenNonExhaustive() throws Exception {
+                runTest("testData/checker/WhenNonExhaustive.kt");
+            }
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/checker/regression")
-    public static class Regression extends AbstractKotlinHighlightVisitorTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class Regression extends AbstractKotlinHighlightVisitorTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/checker/regression")
+        public static class TestBucket001 extends AbstractKotlinHighlightVisitorTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("AmbiguityOnLazyTypeComputation.kt")
+            public void testAmbiguityOnLazyTypeComputation() throws Exception {
+                runTest("testData/checker/regression/AmbiguityOnLazyTypeComputation.kt");
+            }
+
+            @TestMetadata("AnnotationOnNamedParameterOfFunctionType.kt")
+            public void testAnnotationOnNamedParameterOfFunctionType() throws Exception {
+                runTest("testData/checker/regression/AnnotationOnNamedParameterOfFunctionType.kt");
+            }
+
+            @TestMetadata("AnnotationOnParameterOfFunctionType.kt")
+            public void testAnnotationOnParameterOfFunctionType() throws Exception {
+                runTest("testData/checker/regression/AnnotationOnParameterOfFunctionType.kt");
+            }
+
+            @TestMetadata("AssignmentsUnderOperators.kt")
+            public void testAssignmentsUnderOperators() throws Exception {
+                runTest("testData/checker/regression/AssignmentsUnderOperators.kt");
+            }
+
+            @TestMetadata("BadParseForClass.kt")
+            public void testBadParseForClass() throws Exception {
+                runTest("testData/checker/regression/BadParseForClass.kt");
+            }
+
+            @TestMetadata("callVariableAsFunctionWithAnonymousObjectArg.kt")
+            public void testCallVariableAsFunctionWithAnonymousObjectArg() throws Exception {
+                runTest("testData/checker/regression/callVariableAsFunctionWithAnonymousObjectArg.kt");
+            }
+
+            @TestMetadata("callVariableAsFunctionWithLambdaArg.kt")
+            public void testCallVariableAsFunctionWithLambdaArg() throws Exception {
+                runTest("testData/checker/regression/callVariableAsFunctionWithLambdaArg.kt");
+            }
+
+            @TestMetadata("ClassDeclarationAfterDot.kt")
+            public void testClassDeclarationAfterDot() throws Exception {
+                runTest("testData/checker/regression/ClassDeclarationAfterDot.kt");
+            }
+
+            @TestMetadata("ClassDeclarationAfterDot2.kt")
+            public void testClassDeclarationAfterDot2() throws Exception {
+                runTest("testData/checker/regression/ClassDeclarationAfterDot2.kt");
+            }
+
+            @TestMetadata("ClassDeclarationAsExpression.kt")
+            public void testClassDeclarationAsExpression() throws Exception {
+                runTest("testData/checker/regression/ClassDeclarationAsExpression.kt");
+            }
+
+            @TestMetadata("ClassDeclarationAsExpression2.kt")
+            public void testClassDeclarationAsExpression2() throws Exception {
+                runTest("testData/checker/regression/ClassDeclarationAsExpression2.kt");
+            }
+
+            @TestMetadata("ClassDeclarationAsExpression3.kt")
+            public void testClassDeclarationAsExpression3() throws Exception {
+                runTest("testData/checker/regression/ClassDeclarationAsExpression3.kt");
+            }
+
+            @TestMetadata("CoercionToUnit.kt")
+            public void testCoercionToUnit() throws Exception {
+                runTest("testData/checker/regression/CoercionToUnit.kt");
+            }
+
+            @TestMetadata("createInnerInstance.kt")
+            public void testCreateInnerInstance() throws Exception {
+                runTest("testData/checker/regression/createInnerInstance.kt");
+            }
+
+            @TestMetadata("DescructuringDeclarationInForLoop.kt")
+            public void testDescructuringDeclarationInForLoop() throws Exception {
+                runTest("testData/checker/regression/DescructuringDeclarationInForLoop.kt");
+            }
+
+            @TestMetadata("DestructuringDeclarationInLambda.kt")
+            public void testDestructuringDeclarationInLambda() throws Exception {
+                runTest("testData/checker/regression/DestructuringDeclarationInLambda.kt");
+            }
+
+            @TestMetadata("DollarsInName.kt")
+            public void testDollarsInName() throws Exception {
+                runTest("testData/checker/regression/DollarsInName.kt");
+            }
+
+            @TestMetadata("DoubleDefine.kt")
+            public void testDoubleDefine() throws Exception {
+                runTest("testData/checker/regression/DoubleDefine.kt");
+            }
+
+            @TestMetadata("extensionMemberInClassObject.kt")
+            public void testExtensionMemberInClassObject() throws Exception {
+                runTest("testData/checker/regression/extensionMemberInClassObject.kt");
+            }
+
+            @TestMetadata("FunDeclarationAfterDot.kt")
+            public void testFunDeclarationAfterDot() throws Exception {
+                runTest("testData/checker/regression/FunDeclarationAfterDot.kt");
+            }
         }
 
-        @TestMetadata("AmbiguityOnLazyTypeComputation.kt")
-        public void testAmbiguityOnLazyTypeComputation() throws Exception {
-            runTest("testData/checker/regression/AmbiguityOnLazyTypeComputation.kt");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/checker/regression")
+        public static class TestBucket002 extends AbstractKotlinHighlightVisitorTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("FunctionLiteralInsideAnnotation.kt")
+            public void testFunctionLiteralInsideAnnotation() throws Exception {
+                runTest("testData/checker/regression/FunctionLiteralInsideAnnotation.kt");
+            }
+
+            @TestMetadata("FunctionTypes.kt")
+            public void testFunctionTypes() throws Exception {
+                runTest("testData/checker/regression/FunctionTypes.kt");
+            }
+
+            @TestMetadata("IncompleteClassDelegation.kt")
+            public void testIncompleteClassDelegation() throws Exception {
+                runTest("testData/checker/regression/IncompleteClassDelegation.kt");
+            }
+
+            @TestMetadata("InitializerInInterface.kt")
+            public void testInitializerInInterface() throws Exception {
+                runTest("testData/checker/regression/InitializerInInterface.kt");
+            }
+
+            @TestMetadata("InterfaceDeclarationAsExpression.kt")
+            public void testInterfaceDeclarationAsExpression() throws Exception {
+                runTest("testData/checker/regression/InterfaceDeclarationAsExpression.kt");
+            }
+
+            @TestMetadata("javaStyleClassLiteralInAnnotationArguments.kt")
+            public void testJavaStyleClassLiteralInAnnotationArguments() throws Exception {
+                runTest("testData/checker/regression/javaStyleClassLiteralInAnnotationArguments.kt");
+            }
+
+            @TestMetadata("Jet11.kt")
+            public void testJet11() throws Exception {
+                runTest("testData/checker/regression/Jet11.kt");
+            }
+
+            @TestMetadata("Jet121.kt")
+            public void testJet121() throws Exception {
+                runTest("testData/checker/regression/Jet121.kt");
+            }
+
+            @TestMetadata("Jet124.kt")
+            public void testJet124() throws Exception {
+                runTest("testData/checker/regression/Jet124.kt");
+            }
+
+            @TestMetadata("Jet169.kt")
+            public void testJet169() throws Exception {
+                runTest("testData/checker/regression/Jet169.kt");
+            }
+
+            @TestMetadata("Jet183.kt")
+            public void testJet183() throws Exception {
+                runTest("testData/checker/regression/Jet183.kt");
+            }
+
+            @TestMetadata("Jet183-1.kt")
+            public void testJet183_1() throws Exception {
+                runTest("testData/checker/regression/Jet183-1.kt");
+            }
+
+            @TestMetadata("Jet53.kt")
+            public void testJet53() throws Exception {
+                runTest("testData/checker/regression/Jet53.kt");
+            }
+
+            @TestMetadata("Jet67.kt")
+            public void testJet67() throws Exception {
+                runTest("testData/checker/regression/Jet67.kt");
+            }
+
+            @TestMetadata("Jet68.kt")
+            public void testJet68() throws Exception {
+                runTest("testData/checker/regression/Jet68.kt");
+            }
+
+            @TestMetadata("Jet69.kt")
+            public void testJet69() throws Exception {
+                runTest("testData/checker/regression/Jet69.kt");
+            }
+
+            @TestMetadata("Jet72.kt")
+            public void testJet72() throws Exception {
+                runTest("testData/checker/regression/Jet72.kt");
+            }
+
+            @TestMetadata("kt251.kt")
+            public void testKt251() throws Exception {
+                runTest("testData/checker/regression/kt251.kt");
+            }
+
+            @TestMetadata("kt303.kt")
+            public void testKt303() throws Exception {
+                runTest("testData/checker/regression/kt303.kt");
+            }
+
+            @TestMetadata("kt9887.kt")
+            public void testKt9887() throws Exception {
+                runTest("testData/checker/regression/kt9887.kt");
+            }
         }
 
-        @TestMetadata("AnnotationOnNamedParameterOfFunctionType.kt")
-        public void testAnnotationOnNamedParameterOfFunctionType() throws Exception {
-            runTest("testData/checker/regression/AnnotationOnNamedParameterOfFunctionType.kt");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/checker/regression")
+        public static class TestBucket003 extends AbstractKotlinHighlightVisitorTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("AnnotationOnParameterOfFunctionType.kt")
-        public void testAnnotationOnParameterOfFunctionType() throws Exception {
-            runTest("testData/checker/regression/AnnotationOnParameterOfFunctionType.kt");
-        }
+            @TestMetadata("objectLiteralInSupertypeList.kt")
+            public void testObjectLiteralInSupertypeList() throws Exception {
+                runTest("testData/checker/regression/objectLiteralInSupertypeList.kt");
+            }
 
-        @TestMetadata("AssignmentsUnderOperators.kt")
-        public void testAssignmentsUnderOperators() throws Exception {
-            runTest("testData/checker/regression/AssignmentsUnderOperators.kt");
-        }
+            @TestMetadata("OverrideResolution.kt")
+            public void testOverrideResolution() throws Exception {
+                runTest("testData/checker/regression/OverrideResolution.kt");
+            }
 
-        @TestMetadata("BadParseForClass.kt")
-        public void testBadParseForClass() throws Exception {
-            runTest("testData/checker/regression/BadParseForClass.kt");
-        }
+            @TestMetadata("PropertyDeclarationAsExpression.kt")
+            public void testPropertyDeclarationAsExpression() throws Exception {
+                runTest("testData/checker/regression/PropertyDeclarationAsExpression.kt");
+            }
 
-        @TestMetadata("callVariableAsFunctionWithAnonymousObjectArg.kt")
-        public void testCallVariableAsFunctionWithAnonymousObjectArg() throws Exception {
-            runTest("testData/checker/regression/callVariableAsFunctionWithAnonymousObjectArg.kt");
-        }
+            @TestMetadata("ScopeForSecondaryConstructors.kt")
+            public void testScopeForSecondaryConstructors() throws Exception {
+                runTest("testData/checker/regression/ScopeForSecondaryConstructors.kt");
+            }
 
-        @TestMetadata("callVariableAsFunctionWithLambdaArg.kt")
-        public void testCallVariableAsFunctionWithLambdaArg() throws Exception {
-            runTest("testData/checker/regression/callVariableAsFunctionWithLambdaArg.kt");
-        }
+            @TestMetadata("SpecififcityByReceiver.kt")
+            public void testSpecififcityByReceiver() throws Exception {
+                runTest("testData/checker/regression/SpecififcityByReceiver.kt");
+            }
 
-        @TestMetadata("ClassDeclarationAfterDot.kt")
-        public void testClassDeclarationAfterDot() throws Exception {
-            runTest("testData/checker/regression/ClassDeclarationAfterDot.kt");
-        }
-
-        @TestMetadata("ClassDeclarationAfterDot2.kt")
-        public void testClassDeclarationAfterDot2() throws Exception {
-            runTest("testData/checker/regression/ClassDeclarationAfterDot2.kt");
-        }
-
-        @TestMetadata("ClassDeclarationAsExpression.kt")
-        public void testClassDeclarationAsExpression() throws Exception {
-            runTest("testData/checker/regression/ClassDeclarationAsExpression.kt");
-        }
-
-        @TestMetadata("ClassDeclarationAsExpression2.kt")
-        public void testClassDeclarationAsExpression2() throws Exception {
-            runTest("testData/checker/regression/ClassDeclarationAsExpression2.kt");
-        }
-
-        @TestMetadata("ClassDeclarationAsExpression3.kt")
-        public void testClassDeclarationAsExpression3() throws Exception {
-            runTest("testData/checker/regression/ClassDeclarationAsExpression3.kt");
-        }
-
-        @TestMetadata("CoercionToUnit.kt")
-        public void testCoercionToUnit() throws Exception {
-            runTest("testData/checker/regression/CoercionToUnit.kt");
-        }
-
-        @TestMetadata("createInnerInstance.kt")
-        public void testCreateInnerInstance() throws Exception {
-            runTest("testData/checker/regression/createInnerInstance.kt");
-        }
-
-        @TestMetadata("DescructuringDeclarationInForLoop.kt")
-        public void testDescructuringDeclarationInForLoop() throws Exception {
-            runTest("testData/checker/regression/DescructuringDeclarationInForLoop.kt");
-        }
-
-        @TestMetadata("DestructuringDeclarationInLambda.kt")
-        public void testDestructuringDeclarationInLambda() throws Exception {
-            runTest("testData/checker/regression/DestructuringDeclarationInLambda.kt");
-        }
-
-        @TestMetadata("DollarsInName.kt")
-        public void testDollarsInName() throws Exception {
-            runTest("testData/checker/regression/DollarsInName.kt");
-        }
-
-        @TestMetadata("DoubleDefine.kt")
-        public void testDoubleDefine() throws Exception {
-            runTest("testData/checker/regression/DoubleDefine.kt");
-        }
-
-        @TestMetadata("extensionMemberInClassObject.kt")
-        public void testExtensionMemberInClassObject() throws Exception {
-            runTest("testData/checker/regression/extensionMemberInClassObject.kt");
-        }
-
-        @TestMetadata("FunDeclarationAfterDot.kt")
-        public void testFunDeclarationAfterDot() throws Exception {
-            runTest("testData/checker/regression/FunDeclarationAfterDot.kt");
-        }
-
-        @TestMetadata("FunctionLiteralInsideAnnotation.kt")
-        public void testFunctionLiteralInsideAnnotation() throws Exception {
-            runTest("testData/checker/regression/FunctionLiteralInsideAnnotation.kt");
-        }
-
-        @TestMetadata("FunctionTypes.kt")
-        public void testFunctionTypes() throws Exception {
-            runTest("testData/checker/regression/FunctionTypes.kt");
-        }
-
-        @TestMetadata("IncompleteClassDelegation.kt")
-        public void testIncompleteClassDelegation() throws Exception {
-            runTest("testData/checker/regression/IncompleteClassDelegation.kt");
-        }
-
-        @TestMetadata("InitializerInInterface.kt")
-        public void testInitializerInInterface() throws Exception {
-            runTest("testData/checker/regression/InitializerInInterface.kt");
-        }
-
-        @TestMetadata("InterfaceDeclarationAsExpression.kt")
-        public void testInterfaceDeclarationAsExpression() throws Exception {
-            runTest("testData/checker/regression/InterfaceDeclarationAsExpression.kt");
-        }
-
-        @TestMetadata("javaStyleClassLiteralInAnnotationArguments.kt")
-        public void testJavaStyleClassLiteralInAnnotationArguments() throws Exception {
-            runTest("testData/checker/regression/javaStyleClassLiteralInAnnotationArguments.kt");
-        }
-
-        @TestMetadata("Jet11.kt")
-        public void testJet11() throws Exception {
-            runTest("testData/checker/regression/Jet11.kt");
-        }
-
-        @TestMetadata("Jet121.kt")
-        public void testJet121() throws Exception {
-            runTest("testData/checker/regression/Jet121.kt");
-        }
-
-        @TestMetadata("Jet124.kt")
-        public void testJet124() throws Exception {
-            runTest("testData/checker/regression/Jet124.kt");
-        }
-
-        @TestMetadata("Jet169.kt")
-        public void testJet169() throws Exception {
-            runTest("testData/checker/regression/Jet169.kt");
-        }
-
-        @TestMetadata("Jet183.kt")
-        public void testJet183() throws Exception {
-            runTest("testData/checker/regression/Jet183.kt");
-        }
-
-        @TestMetadata("Jet183-1.kt")
-        public void testJet183_1() throws Exception {
-            runTest("testData/checker/regression/Jet183-1.kt");
-        }
-
-        @TestMetadata("Jet53.kt")
-        public void testJet53() throws Exception {
-            runTest("testData/checker/regression/Jet53.kt");
-        }
-
-        @TestMetadata("Jet67.kt")
-        public void testJet67() throws Exception {
-            runTest("testData/checker/regression/Jet67.kt");
-        }
-
-        @TestMetadata("Jet68.kt")
-        public void testJet68() throws Exception {
-            runTest("testData/checker/regression/Jet68.kt");
-        }
-
-        @TestMetadata("Jet69.kt")
-        public void testJet69() throws Exception {
-            runTest("testData/checker/regression/Jet69.kt");
-        }
-
-        @TestMetadata("Jet72.kt")
-        public void testJet72() throws Exception {
-            runTest("testData/checker/regression/Jet72.kt");
-        }
-
-        @TestMetadata("kt251.kt")
-        public void testKt251() throws Exception {
-            runTest("testData/checker/regression/kt251.kt");
-        }
-
-        @TestMetadata("kt303.kt")
-        public void testKt303() throws Exception {
-            runTest("testData/checker/regression/kt303.kt");
-        }
-
-        @TestMetadata("kt9887.kt")
-        public void testKt9887() throws Exception {
-            runTest("testData/checker/regression/kt9887.kt");
-        }
-
-        @TestMetadata("objectLiteralInSupertypeList.kt")
-        public void testObjectLiteralInSupertypeList() throws Exception {
-            runTest("testData/checker/regression/objectLiteralInSupertypeList.kt");
-        }
-
-        @TestMetadata("OverrideResolution.kt")
-        public void testOverrideResolution() throws Exception {
-            runTest("testData/checker/regression/OverrideResolution.kt");
-        }
-
-        @TestMetadata("PropertyDeclarationAsExpression.kt")
-        public void testPropertyDeclarationAsExpression() throws Exception {
-            runTest("testData/checker/regression/PropertyDeclarationAsExpression.kt");
-        }
-
-        @TestMetadata("ScopeForSecondaryConstructors.kt")
-        public void testScopeForSecondaryConstructors() throws Exception {
-            runTest("testData/checker/regression/ScopeForSecondaryConstructors.kt");
-        }
-
-        @TestMetadata("SpecififcityByReceiver.kt")
-        public void testSpecififcityByReceiver() throws Exception {
-            runTest("testData/checker/regression/SpecififcityByReceiver.kt");
-        }
-
-        @TestMetadata("WrongTraceInCallResolver.kt")
-        public void testWrongTraceInCallResolver() throws Exception {
-            runTest("testData/checker/regression/WrongTraceInCallResolver.kt");
+            @TestMetadata("WrongTraceInCallResolver.kt")
+            public void testWrongTraceInCallResolver() throws Exception {
+                runTest("testData/checker/regression/WrongTraceInCallResolver.kt");
+            }
         }
     }
 

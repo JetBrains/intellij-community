@@ -70,6 +70,22 @@ public final class FilesScanExecutor {
     }
   }
 
+  public static boolean processDequeueOnAllThreadsInReadAction(@NotNull ConcurrentLinkedDeque<Object> deque,
+                                                               @NotNull Processor<Object> consumer) {
+    ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
+    return processDequeOnAllThreads(deque, o -> {
+      if (application.isReadAccessAllowed()) {
+        return consumer.process(o);
+      }
+      Ref<Boolean> result = Ref.create(true);
+      if (!application.tryRunReadAction(
+        () -> result.set(consumer.process(o)))) {
+        throw new StopWorker();
+      }
+      return result.get();
+    });
+  }
+
   public static <T> boolean processDequeOnAllThreads(@NotNull ConcurrentLinkedDeque<T> deque,
                                                      @NotNull Processor<? super T> processor) {
     ProgressManager.checkCanceled();
@@ -95,7 +111,7 @@ public final class FilesScanExecutor {
           idleCount.decrementAndGet();
         }
         if (idle) {
-          if (idleCount.get() == runnersCount.get()) break;
+          if (idleCount.get() == runnersCount.get() && deque.isEmpty()) break;
           TimeoutUtil.sleep(1L);
           continue;
         }
@@ -187,17 +203,6 @@ public final class FilesScanExecutor {
       }
       return true;
     };
-    ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
-    return processDequeOnAllThreads(deque, o -> {
-      if (application.isReadAccessAllowed()) {
-        return consumer.process(o);
-      }
-      Ref<Boolean> result = Ref.create(true);
-      if (!application.tryRunReadAction(
-        () -> result.set(consumer.process(o)))) {
-        throw new StopWorker();
-      }
-      return result.get();
-    });
+    return processDequeueOnAllThreadsInReadAction(deque, consumer);
   }
 }

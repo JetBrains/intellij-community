@@ -73,9 +73,15 @@ Supports Maven and Gradle projects.
 
         <projectService
                 serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.lifecycle.ProjectLifecycleHolderService"/>
+        <projectService
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchProjectCachesService"/>
 
         <applicationService
-                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizerService"/>
+                serviceImplementation="com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchCachesService"/>
+
+        <recoveryAction implementation="com.jetbrains.packagesearch.intellij.plugin.extensibility.DeletePackageSearchProjectCachesAction"/>
+
+        <recoveryAction implementation="com.jetbrains.packagesearch.intellij.plugin.extensibility.DeletePackageSearchCachesAction"/>
 
         <toolWindow id="Dependencies" anchor="bottom" secondary="false"
                     icon="/icons/artifactSmall.svg"

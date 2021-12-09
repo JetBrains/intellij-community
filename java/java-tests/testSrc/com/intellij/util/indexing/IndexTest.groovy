@@ -5,6 +5,7 @@ import com.intellij.find.ngrams.TrigramIndex
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.ide.plugins.DynamicPluginsTestUtil
 import com.intellij.ide.scratch.ScratchRootType
+import com.intellij.ide.startup.ServiceNotReadyException
 import com.intellij.ide.todo.TodoConfiguration
 import com.intellij.java.index.StringIndex
 import com.intellij.lang.Language
@@ -81,12 +82,16 @@ import com.intellij.util.indexing.impl.UpdatableValueContainer
 import com.intellij.util.indexing.impl.forward.IntForwardIndex
 import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage
 import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex
+import com.intellij.util.indexing.roots.IndexableEntityProviderMethods
+import com.intellij.util.indexing.roots.IndexableFilesIterator
 import com.intellij.util.io.CaseInsensitiveEnumeratorStringDescriptor
 import com.intellij.util.io.EnumeratorStringDescriptor
 import com.intellij.util.io.PersistentMapBase
 import com.intellij.util.ref.GCUtil
 import com.intellij.util.ref.GCWatcher
 import com.intellij.util.ui.UIUtil
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.siyeh.ig.JavaOverridingMethodUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -1034,6 +1039,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     TodoPattern[] oldPatterns = TodoConfiguration.getInstance().getTodoPatterns()
     TodoPattern[] newPatterns = [pattern]
     TodoConfiguration.getInstance().setTodoPatterns(newPatterns)
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue()
     FileBasedIndex.instance.ensureUpToDate(TodoIndex.NAME, project, GlobalSearchScope.allScope(project))
     myFixture.addFileToProject("Foo.txt", "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
 
@@ -1488,8 +1494,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void 'test requestReindex'() {
     def file = ScratchRootType.getInstance().createScratchFile(project, "Foo.java", JavaLanguage.INSTANCE, "class Foo {}")
 
-    def text = "<fileBasedIndex implementation=\"" + CountingFileBasedIndexExtension.class.getName() + "\"/>"
-    Disposer.register(testRootDisposable, DynamicPluginsTestUtil.loadExtensionWithText(text))
+    CountingFileBasedIndexExtension.registerCountingFileBasedIndex(testRootDisposable)
 
     FileBasedIndex.getInstance().getFileData(CountingFileBasedIndexExtension.INDEX_ID, file, project)
     assertTrue(CountingFileBasedIndexExtension.COUNTER.get() > 0)

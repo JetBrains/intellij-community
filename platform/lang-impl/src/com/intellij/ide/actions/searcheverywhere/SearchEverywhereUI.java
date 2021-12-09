@@ -54,6 +54,7 @@ import com.intellij.ui.components.fields.ExtendableTextField;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.Alarm;
@@ -996,7 +997,8 @@ public final class SearchEverywhereUI extends BigPopupUI implements DataProvider
               tooManyUsagesStatus.pauseProcessingIfTooManyUsages();
               if (foundElements.size() + alreadyFoundCount >= UsageLimitUtil.USAGES_LIMIT &&
                   tooManyUsagesStatus.switchTooManyUsagesStatus()) {
-                UsageViewManagerImpl.showTooManyUsagesWarningLater(getProject(), tooManyUsagesStatus, progressIndicator, null, null);
+                UsageViewManagerImpl.showTooManyUsagesWarningLater(getProject(), tooManyUsagesStatus, progressIndicator, null,
+                                                                   () -> UsageViewBundle.message("find.excessive.usage.count.prompt"), null);
                 return !progressIndicator.isCanceled();
               }
               return true;

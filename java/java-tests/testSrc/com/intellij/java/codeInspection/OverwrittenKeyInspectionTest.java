@@ -12,6 +12,12 @@ import org.jetbrains.annotations.NotNull;
 
 public class OverwrittenKeyInspectionTest extends LightJavaInspectionTestCase {
   public void testOverwrittenKey() {
+    myFixture.addClass("package com.google.common.collect;\n" +
+                       "public abstract class ImmutableSet<E> implements Set<E> {\n" +
+                       "  public static <E> ImmutableSet<E> of(E... e) {\n" +
+                       "    throw new UnsupportedOperationException();\n" +
+                       "  }\n" +
+                       "}");
     doTest();
   }
   public void testOverwrittenKeyArray() {

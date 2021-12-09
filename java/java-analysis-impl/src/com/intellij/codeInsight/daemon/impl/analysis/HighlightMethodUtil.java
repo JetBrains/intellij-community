@@ -559,7 +559,7 @@ public final class HighlightMethodUtil {
     return null;
   }
 
-  static HighlightInfo createIncompatibleTypeHighlightInfo(@NotNull PsiCallExpression methodCall,
+  static HighlightInfo createIncompatibleTypeHighlightInfo(@NotNull PsiCall methodCall,
                                                            @NotNull PsiResolveHelper resolveHelper,
                                                            @NotNull MethodCandidateInfo resolveResult,
                                                            @NotNull PsiElement elementToHighlight) {
@@ -1657,16 +1657,33 @@ public final class HighlightMethodUtil {
     }
 
     PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
-    checkConstructorCall(typeResult, expression, type, classReference, holder, javaSdkVersion);
+    checkConstructorCall(typeResult, expression, type, classReference, holder, javaSdkVersion, expression.getArgumentList());
   }
 
+  static void checkAmbiguousConstructorCall(PsiJavaCodeReferenceElement ref,
+                                            PsiElement resolved,
+                                            PsiElement parent, 
+                                            HighlightInfoHolder holder, 
+                                            JavaSdkVersion version) {
+    if (resolved instanceof PsiClass && parent instanceof PsiNewExpression && ((PsiClass)resolved).getConstructors().length > 0) {
+      PsiNewExpression newExpression = (PsiNewExpression)parent;
+      if (newExpression.resolveMethod() == null && !PsiTreeUtil.findChildrenOfType(newExpression.getArgumentList(), PsiFunctionalExpression.class).isEmpty()) {
+        PsiType type = newExpression.getType();
+        if (type != null) {
+          checkConstructorCall(((PsiClassType)type).resolveGenerics(), newExpression, type, newExpression.getClassReference(), holder, version, ref);
+        }
+      }
+    }
+  }
 
   static void checkConstructorCall(@NotNull PsiClassType.ClassResolveResult typeResolveResult,
                                    @NotNull PsiConstructorCall constructorCall,
                                    @NotNull PsiType type,
                                    @Nullable PsiJavaCodeReferenceElement classReference,
                                    @NotNull HighlightInfoHolder holder,
-                                   @NotNull JavaSdkVersion javaSdkVersion) {
+                                   @NotNull JavaSdkVersion javaSdkVersion, 
+                                   @Nullable PsiElement elementToHighlight) {
+    if (elementToHighlight == null) return;
     PsiExpressionList list = constructorCall.getArgumentList();
     if (list == null) return;
     PsiClass aClass = typeResolveResult.getElement();
@@ -1754,10 +1771,12 @@ public final class HighlightMethodUtil {
         String name = aClass.getName();
         name += buildArgTypesList(list);
         String description = JavaErrorBundle.message("cannot.resolve.constructor", name);
-        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(list).descriptionAndTooltip(description).navigationShift(+1).create();
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .range(elementToHighlight).descriptionAndTooltip(description).create();
         if (info != null) {
-          WrapExpressionFix.registerWrapAction(results, list.getExpressions(), info, getFixRange(list));
-          registerFixesOnInvalidConstructorCall(constructorCall, classReference, list, aClass, constructors, results, info);
+          TextRange fixRange = getFixRange(elementToHighlight);
+          WrapExpressionFix.registerWrapAction(results, list.getExpressions(), info, fixRange);
+          registerFixesOnInvalidConstructorCall(constructorCall, classReference, list, aClass, constructors, results, info, fixRange);
           holder.add(info);
         }
       }
@@ -1773,7 +1792,7 @@ public final class HighlightMethodUtil {
           if (constructorCall instanceof PsiNewExpression) {
             methodCandidates = resolveHelper.getReferencedMethodCandidates((PsiCallExpression)constructorCall, true);
           }
-          registerFixesOnInvalidConstructorCall(constructorCall, classReference, list, aClass, constructors, methodCandidates, info);
+          registerFixesOnInvalidConstructorCall(constructorCall, classReference, list, aClass, constructors, methodCandidates, info, getFixRange(list));
           registerMethodReturnFixAction(info, result, constructorCall);
           holder.add(info);
         }
@@ -1788,6 +1807,9 @@ public final class HighlightMethodUtil {
 
       if (result != null && !holder.hasErrorResults()) {
         holder.add(checkVarargParameterErasureToBeAccessible(result, constructorCall));
+      }
+      if (result != null && !holder.hasErrorResults()) {
+        holder.add(createIncompatibleTypeHighlightInfo(constructorCall, resolveHelper, result, constructorCall));
       }
     }
   }
@@ -1822,8 +1844,8 @@ public final class HighlightMethodUtil {
                                                             @NotNull PsiClass aClass,
                                                             PsiMethod @NotNull [] constructors,
                                                             JavaResolveResult @NotNull [] results,
-                                                            @NotNull final HighlightInfo info) {
-    TextRange fixRange = getFixRange(list);
+                                                            @NotNull final HighlightInfo info, 
+                                                            TextRange fixRange) {
     if (classReference != null) {
       ConstructorParametersFixer.registerFixActions(classReference, constructorCall, info, fixRange);
       ChangeTypeArgumentsFix.registerIntentions(results, list, info, aClass, fixRange);

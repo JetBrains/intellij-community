@@ -1221,6 +1221,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       if (!myHolder.hasErrorResults() && resolved instanceof PsiModifierListOwner) {
         ref.accept(myPreviewFeatureVisitor);
       }
+      if (!myHolder.hasErrorResults()) {
+        HighlightMethodUtil.checkAmbiguousConstructorCall(ref, resolved, ref.getParent(), myHolder, myJavaSdkVersion);
+      }
     }
   }
 

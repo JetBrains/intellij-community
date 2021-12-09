@@ -13,6 +13,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.advanced.AdvancedSettings;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -179,15 +180,19 @@ public class GitImpl extends GitImplBase {
 
   @Override
   @NotNull
-  public GitCommandResult clone(@NotNull final Project project, @NotNull final File parentDirectory, @NotNull final String url,
+  public GitCommandResult clone(@Nullable final Project project, @NotNull final File parentDirectory, @NotNull final String url,
                                 @NotNull final String clonedDirectoryName, final GitLineHandlerListener @NotNull ... listeners) {
     return runCommand(() -> {
-      GitLineHandler handler = new GitLineHandler(project, parentDirectory, GitCommand.CLONE);
+      // do not use per-project executable for 'clone' command
+      Project defaultProject = ProjectManager.getInstance().getDefaultProject();
+      GitExecutable executable = GitExecutableManager.getInstance().getExecutable(defaultProject, parentDirectory);
+      GitLineHandler handler = new GitLineHandler(defaultProject, parentDirectory, executable, GitCommand.CLONE, emptyList());
       handler.setSilent(false);
       handler.setStderrSuppressed(false);
       handler.setUrl(url);
       handler.addParameters("--progress");
-      if (GitVersionSpecialty.CLONE_RECURSE_SUBMODULES.existsIn(project) && AdvancedSettings.getBoolean("git.clone.recurse.submodules")) {
+      if (GitVersionSpecialty.CLONE_RECURSE_SUBMODULES.existsIn(project, handler.getExecutable()) &&
+          AdvancedSettings.getBoolean("git.clone.recurse.submodules")) {
         handler.addParameters("--recurse-submodules");
       }
       handler.addParameters(url);

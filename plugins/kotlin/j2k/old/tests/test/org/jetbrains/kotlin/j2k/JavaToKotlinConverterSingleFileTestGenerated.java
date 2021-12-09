@@ -675,184 +675,196 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/fileOrElement/class")
-    public static class Class extends AbstractJavaToKotlinConverterSingleFileTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class Class extends AbstractJavaToKotlinConverterSingleFileTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/class")
+        public static class TestBucket001 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("abstractClass.java")
+            public void testAbstractClass() throws Exception {
+                runTest("testData/fileOrElement/class/abstractClass.java");
+            }
+
+            @TestMetadata("abstractClassShape.java")
+            public void testAbstractClassShape() throws Exception {
+                runTest("testData/fileOrElement/class/abstractClassShape.java");
+            }
+
+            @TestMetadata("anonymousClass.java")
+            public void testAnonymousClass() throws Exception {
+                runTest("testData/fileOrElement/class/anonymousClass.java");
+            }
+
+            @TestMetadata("class.java")
+            public void testClass() throws Exception {
+                runTest("testData/fileOrElement/class/class.java");
+            }
+
+            @TestMetadata("ClassShadowing.java")
+            public void testClassShadowing() throws Exception {
+                runTest("testData/fileOrElement/class/ClassShadowing.java");
+            }
+
+            @TestMetadata("classWithEmptyMethods.java")
+            public void testClassWithEmptyMethods() throws Exception {
+                runTest("testData/fileOrElement/class/classWithEmptyMethods.java");
+            }
+
+            @TestMetadata("classWithFields.java")
+            public void testClassWithFields() throws Exception {
+                runTest("testData/fileOrElement/class/classWithFields.java");
+            }
+
+            @TestMetadata("classWithMultiplyFields.java")
+            public void testClassWithMultiplyFields() throws Exception {
+                runTest("testData/fileOrElement/class/classWithMultiplyFields.java");
+            }
+
+            @TestMetadata("emptyClass.java")
+            public void testEmptyClass() throws Exception {
+                runTest("testData/fileOrElement/class/emptyClass.java");
+            }
+
+            @TestMetadata("extendsOneClassAndImplementsOneInterface.java")
+            public void testExtendsOneClassAndImplementsOneInterface() throws Exception {
+                runTest("testData/fileOrElement/class/extendsOneClassAndImplementsOneInterface.java");
+            }
+
+            @TestMetadata("extendsOneClassAndImplementsSeveralInterfaces.java")
+            public void testExtendsOneClassAndImplementsSeveralInterfaces() throws Exception {
+                runTest("testData/fileOrElement/class/extendsOneClassAndImplementsSeveralInterfaces.java");
+            }
+
+            @TestMetadata("finalClass.java")
+            public void testFinalClass() throws Exception {
+                runTest("testData/fileOrElement/class/finalClass.java");
+            }
+
+            @TestMetadata("genericClass.java")
+            public void testGenericClass() throws Exception {
+                runTest("testData/fileOrElement/class/genericClass.java");
+            }
+
+            @TestMetadata("innerClassInInterface.java")
+            public void testInnerClassInInterface() throws Exception {
+                runTest("testData/fileOrElement/class/innerClassInInterface.java");
+            }
+
+            @TestMetadata("innerEmptyClass.java")
+            public void testInnerEmptyClass() throws Exception {
+                runTest("testData/fileOrElement/class/innerEmptyClass.java");
+            }
+
+            @TestMetadata("innerEnum.java")
+            public void testInnerEnum() throws Exception {
+                runTest("testData/fileOrElement/class/innerEnum.java");
+            }
+
+            @TestMetadata("innerInterface.java")
+            public void testInnerInterface() throws Exception {
+                runTest("testData/fileOrElement/class/innerInterface.java");
+            }
+
+            @TestMetadata("innerStaticClass.java")
+            public void testInnerStaticClass() throws Exception {
+                runTest("testData/fileOrElement/class/innerStaticClass.java");
+            }
+
+            @TestMetadata("internalClass.java")
+            public void testInternalClass() throws Exception {
+                runTest("testData/fileOrElement/class/internalClass.java");
+            }
+
+            @TestMetadata("kt-639.java")
+            public void testKt_639() throws Exception {
+                runTest("testData/fileOrElement/class/kt-639.java");
+            }
         }
 
-        @TestMetadata("abstractClass.java")
-        public void testAbstractClass() throws Exception {
-            runTest("testData/fileOrElement/class/abstractClass.java");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/class")
+        public static class TestBucket002 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("abstractClassShape.java")
-        public void testAbstractClassShape() throws Exception {
-            runTest("testData/fileOrElement/class/abstractClassShape.java");
-        }
+            @TestMetadata("notUtilityClass.java")
+            public void testNotUtilityClass() throws Exception {
+                runTest("testData/fileOrElement/class/notUtilityClass.java");
+            }
 
-        @TestMetadata("anonymousClass.java")
-        public void testAnonymousClass() throws Exception {
-            runTest("testData/fileOrElement/class/anonymousClass.java");
-        }
+            @TestMetadata("oneStaticFieldOneNonStatic.java")
+            public void testOneStaticFieldOneNonStatic() throws Exception {
+                runTest("testData/fileOrElement/class/oneStaticFieldOneNonStatic.java");
+            }
 
-        @TestMetadata("class.java")
-        public void testClass() throws Exception {
-            runTest("testData/fileOrElement/class/class.java");
-        }
+            @TestMetadata("oneStaticMethod.java")
+            public void testOneStaticMethod() throws Exception {
+                runTest("testData/fileOrElement/class/oneStaticMethod.java");
+            }
 
-        @TestMetadata("ClassShadowing.java")
-        public void testClassShadowing() throws Exception {
-            runTest("testData/fileOrElement/class/ClassShadowing.java");
-        }
+            @TestMetadata("oneStaticMethodOneNonStatic.java")
+            public void testOneStaticMethodOneNonStatic() throws Exception {
+                runTest("testData/fileOrElement/class/oneStaticMethodOneNonStatic.java");
+            }
 
-        @TestMetadata("classWithEmptyMethods.java")
-        public void testClassWithEmptyMethods() throws Exception {
-            runTest("testData/fileOrElement/class/classWithEmptyMethods.java");
-        }
+            @TestMetadata("pivateClass.java")
+            public void testPivateClass() throws Exception {
+                runTest("testData/fileOrElement/class/pivateClass.java");
+            }
 
-        @TestMetadata("classWithFields.java")
-        public void testClassWithFields() throws Exception {
-            runTest("testData/fileOrElement/class/classWithFields.java");
-        }
+            @TestMetadata("privateInit.java")
+            public void testPrivateInit() throws Exception {
+                runTest("testData/fileOrElement/class/privateInit.java");
+            }
 
-        @TestMetadata("classWithMultiplyFields.java")
-        public void testClassWithMultiplyFields() throws Exception {
-            runTest("testData/fileOrElement/class/classWithMultiplyFields.java");
-        }
+            @TestMetadata("protectedClass.java")
+            public void testProtectedClass() throws Exception {
+                runTest("testData/fileOrElement/class/protectedClass.java");
+            }
 
-        @TestMetadata("emptyClass.java")
-        public void testEmptyClass() throws Exception {
-            runTest("testData/fileOrElement/class/emptyClass.java");
-        }
+            @TestMetadata("publicClass.java")
+            public void testPublicClass() throws Exception {
+                runTest("testData/fileOrElement/class/publicClass.java");
+            }
 
-        @TestMetadata("extendsOneClassAndImplementsOneInterface.java")
-        public void testExtendsOneClassAndImplementsOneInterface() throws Exception {
-            runTest("testData/fileOrElement/class/extendsOneClassAndImplementsOneInterface.java");
-        }
+            @TestMetadata("simpleInheritance.java")
+            public void testSimpleInheritance() throws Exception {
+                runTest("testData/fileOrElement/class/simpleInheritance.java");
+            }
 
-        @TestMetadata("extendsOneClassAndImplementsSeveralInterfaces.java")
-        public void testExtendsOneClassAndImplementsSeveralInterfaces() throws Exception {
-            runTest("testData/fileOrElement/class/extendsOneClassAndImplementsSeveralInterfaces.java");
-        }
+            @TestMetadata("twoStaticMethod.java")
+            public void testTwoStaticMethod() throws Exception {
+                runTest("testData/fileOrElement/class/twoStaticMethod.java");
+            }
 
-        @TestMetadata("finalClass.java")
-        public void testFinalClass() throws Exception {
-            runTest("testData/fileOrElement/class/finalClass.java");
-        }
+            @TestMetadata("utilityClass1.java")
+            public void testUtilityClass1() throws Exception {
+                runTest("testData/fileOrElement/class/utilityClass1.java");
+            }
 
-        @TestMetadata("genericClass.java")
-        public void testGenericClass() throws Exception {
-            runTest("testData/fileOrElement/class/genericClass.java");
-        }
+            @TestMetadata("utilityClass2.java")
+            public void testUtilityClass2() throws Exception {
+                runTest("testData/fileOrElement/class/utilityClass2.java");
+            }
 
-        @TestMetadata("innerClassInInterface.java")
-        public void testInnerClassInInterface() throws Exception {
-            runTest("testData/fileOrElement/class/innerClassInInterface.java");
-        }
+            @TestMetadata("utilityClass3.java")
+            public void testUtilityClass3() throws Exception {
+                runTest("testData/fileOrElement/class/utilityClass3.java");
+            }
 
-        @TestMetadata("innerEmptyClass.java")
-        public void testInnerEmptyClass() throws Exception {
-            runTest("testData/fileOrElement/class/innerEmptyClass.java");
-        }
+            @TestMetadata("utilityClass4.java")
+            public void testUtilityClass4() throws Exception {
+                runTest("testData/fileOrElement/class/utilityClass4.java");
+            }
 
-        @TestMetadata("innerEnum.java")
-        public void testInnerEnum() throws Exception {
-            runTest("testData/fileOrElement/class/innerEnum.java");
-        }
-
-        @TestMetadata("innerInterface.java")
-        public void testInnerInterface() throws Exception {
-            runTest("testData/fileOrElement/class/innerInterface.java");
-        }
-
-        @TestMetadata("innerStaticClass.java")
-        public void testInnerStaticClass() throws Exception {
-            runTest("testData/fileOrElement/class/innerStaticClass.java");
-        }
-
-        @TestMetadata("internalClass.java")
-        public void testInternalClass() throws Exception {
-            runTest("testData/fileOrElement/class/internalClass.java");
-        }
-
-        @TestMetadata("kt-639.java")
-        public void testKt_639() throws Exception {
-            runTest("testData/fileOrElement/class/kt-639.java");
-        }
-
-        @TestMetadata("notUtilityClass.java")
-        public void testNotUtilityClass() throws Exception {
-            runTest("testData/fileOrElement/class/notUtilityClass.java");
-        }
-
-        @TestMetadata("oneStaticFieldOneNonStatic.java")
-        public void testOneStaticFieldOneNonStatic() throws Exception {
-            runTest("testData/fileOrElement/class/oneStaticFieldOneNonStatic.java");
-        }
-
-        @TestMetadata("oneStaticMethod.java")
-        public void testOneStaticMethod() throws Exception {
-            runTest("testData/fileOrElement/class/oneStaticMethod.java");
-        }
-
-        @TestMetadata("oneStaticMethodOneNonStatic.java")
-        public void testOneStaticMethodOneNonStatic() throws Exception {
-            runTest("testData/fileOrElement/class/oneStaticMethodOneNonStatic.java");
-        }
-
-        @TestMetadata("pivateClass.java")
-        public void testPivateClass() throws Exception {
-            runTest("testData/fileOrElement/class/pivateClass.java");
-        }
-
-        @TestMetadata("privateInit.java")
-        public void testPrivateInit() throws Exception {
-            runTest("testData/fileOrElement/class/privateInit.java");
-        }
-
-        @TestMetadata("protectedClass.java")
-        public void testProtectedClass() throws Exception {
-            runTest("testData/fileOrElement/class/protectedClass.java");
-        }
-
-        @TestMetadata("publicClass.java")
-        public void testPublicClass() throws Exception {
-            runTest("testData/fileOrElement/class/publicClass.java");
-        }
-
-        @TestMetadata("simpleInheritance.java")
-        public void testSimpleInheritance() throws Exception {
-            runTest("testData/fileOrElement/class/simpleInheritance.java");
-        }
-
-        @TestMetadata("twoStaticMethod.java")
-        public void testTwoStaticMethod() throws Exception {
-            runTest("testData/fileOrElement/class/twoStaticMethod.java");
-        }
-
-        @TestMetadata("utilityClass1.java")
-        public void testUtilityClass1() throws Exception {
-            runTest("testData/fileOrElement/class/utilityClass1.java");
-        }
-
-        @TestMetadata("utilityClass2.java")
-        public void testUtilityClass2() throws Exception {
-            runTest("testData/fileOrElement/class/utilityClass2.java");
-        }
-
-        @TestMetadata("utilityClass3.java")
-        public void testUtilityClass3() throws Exception {
-            runTest("testData/fileOrElement/class/utilityClass3.java");
-        }
-
-        @TestMetadata("utilityClass4.java")
-        public void testUtilityClass4() throws Exception {
-            runTest("testData/fileOrElement/class/utilityClass4.java");
-        }
-
-        @TestMetadata("utilityClass5.java")
-        public void testUtilityClass5() throws Exception {
-            runTest("testData/fileOrElement/class/utilityClass5.java");
+            @TestMetadata("utilityClass5.java")
+            public void testUtilityClass5() throws Exception {
+                runTest("testData/fileOrElement/class/utilityClass5.java");
+            }
         }
     }
 
@@ -947,214 +959,234 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/fileOrElement/constructors")
-    public static class Constructors extends AbstractJavaToKotlinConverterSingleFileTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class Constructors extends AbstractJavaToKotlinConverterSingleFileTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/constructors")
+        public static class TestBucket001 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("allCallsPrimary.java")
+            public void testAllCallsPrimary() throws Exception {
+                runTest("testData/fileOrElement/constructors/allCallsPrimary.java");
+            }
+
+            @TestMetadata("allCallsPrimary2.java")
+            public void testAllCallsPrimary2() throws Exception {
+                runTest("testData/fileOrElement/constructors/allCallsPrimary2.java");
+            }
+
+            @TestMetadata("artificialPrimary.java")
+            public void testArtificialPrimary() throws Exception {
+                runTest("testData/fileOrElement/constructors/artificialPrimary.java");
+            }
+
+            @TestMetadata("chain.java")
+            public void testChain() throws Exception {
+                runTest("testData/fileOrElement/constructors/chain.java");
+            }
+
+            @TestMetadata("constructorAnnotations.java")
+            public void testConstructorAnnotations() throws Exception {
+                runTest("testData/fileOrElement/constructors/constructorAnnotations.java");
+            }
+
+            @TestMetadata("customerBuilder.java")
+            public void testCustomerBuilder() throws Exception {
+                runTest("testData/fileOrElement/constructors/customerBuilder.java");
+            }
+
+            @TestMetadata("fieldsInitializedFromParams1.java")
+            public void testFieldsInitializedFromParams1() throws Exception {
+                runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams1.java");
+            }
+
+            @TestMetadata("fieldsInitializedFromParams2.java")
+            public void testFieldsInitializedFromParams2() throws Exception {
+                runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams2.java");
+            }
+
+            @TestMetadata("fieldsInitializedFromParams3.java")
+            public void testFieldsInitializedFromParams3() throws Exception {
+                runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams3.java");
+            }
+
+            @TestMetadata("fieldsInitializedFromParams4.java")
+            public void testFieldsInitializedFromParams4() throws Exception {
+                runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams4.java");
+            }
+
+            @TestMetadata("fieldsInitializedFromParams5.java")
+            public void testFieldsInitializedFromParams5() throws Exception {
+                runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams5.java");
+            }
+
+            @TestMetadata("fieldsInitializedFromParams6.java")
+            public void testFieldsInitializedFromParams6() throws Exception {
+                runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams6.java");
+            }
+
+            @TestMetadata("fieldsInitializedFromParams7.java")
+            public void testFieldsInitializedFromParams7() throws Exception {
+                runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams7.java");
+            }
+
+            @TestMetadata("fieldsInitializedFromParams8.java")
+            public void testFieldsInitializedFromParams8() throws Exception {
+                runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams8.java");
+            }
+
+            @TestMetadata("fieldsInitializedFromParams9.java")
+            public void testFieldsInitializedFromParams9() throws Exception {
+                runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams9.java");
+            }
+
+            @TestMetadata("fieldsInitializedFromParamsAnnotations.java")
+            public void testFieldsInitializedFromParamsAnnotations() throws Exception {
+                runTest("testData/fileOrElement/constructors/fieldsInitializedFromParamsAnnotations.java");
+            }
+
+            @TestMetadata("genericIdentifier.java")
+            public void testGenericIdentifier() throws Exception {
+                runTest("testData/fileOrElement/constructors/genericIdentifier.java");
+            }
+
+            @TestMetadata("identifier.java")
+            public void testIdentifier() throws Exception {
+                runTest("testData/fileOrElement/constructors/identifier.java");
+            }
+
+            @TestMetadata("lineBreaksBetweenParameters.java")
+            public void testLineBreaksBetweenParameters() throws Exception {
+                runTest("testData/fileOrElement/constructors/lineBreaksBetweenParameters.java");
+            }
+
+            @TestMetadata("methodCallInFactoryFun.java")
+            public void testMethodCallInFactoryFun() throws Exception {
+                runTest("testData/fileOrElement/constructors/methodCallInFactoryFun.java");
+            }
         }
 
-        @TestMetadata("allCallsPrimary.java")
-        public void testAllCallsPrimary() throws Exception {
-            runTest("testData/fileOrElement/constructors/allCallsPrimary.java");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/constructors")
+        public static class TestBucket002 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("nestedClassNameInParameterDefaults.java")
+            public void testNestedClassNameInParameterDefaults() throws Exception {
+                runTest("testData/fileOrElement/constructors/nestedClassNameInParameterDefaults.java");
+            }
+
+            @TestMetadata("nestedClassNameInParameterDefaults2.java")
+            public void testNestedClassNameInParameterDefaults2() throws Exception {
+                runTest("testData/fileOrElement/constructors/nestedClassNameInParameterDefaults2.java");
+            }
+
+            @TestMetadata("nestedClassNameInParameterDefaults3.java")
+            public void testNestedClassNameInParameterDefaults3() throws Exception {
+                runTest("testData/fileOrElement/constructors/nestedClassNameInParameterDefaults3.java");
+            }
+
+            @TestMetadata("nestedClassNameInParameterDefaults4.java")
+            public void testNestedClassNameInParameterDefaults4() throws Exception {
+                runTest("testData/fileOrElement/constructors/nestedClassNameInParameterDefaults4.java");
+            }
+
+            @TestMetadata("nestedClassNameInSuperParameters.java")
+            public void testNestedClassNameInSuperParameters() throws Exception {
+                runTest("testData/fileOrElement/constructors/nestedClassNameInSuperParameters.java");
+            }
+
+            @TestMetadata("noPrimary.java")
+            public void testNoPrimary() throws Exception {
+                runTest("testData/fileOrElement/constructors/noPrimary.java");
+            }
+
+            @TestMetadata("parameterDefaults1.java")
+            public void testParameterDefaults1() throws Exception {
+                runTest("testData/fileOrElement/constructors/parameterDefaults1.java");
+            }
+
+            @TestMetadata("parameterDefaults2.java")
+            public void testParameterDefaults2() throws Exception {
+                runTest("testData/fileOrElement/constructors/parameterDefaults2.java");
+            }
+
+            @TestMetadata("parameterDefaults3.java")
+            public void testParameterDefaults3() throws Exception {
+                runTest("testData/fileOrElement/constructors/parameterDefaults3.java");
+            }
+
+            @TestMetadata("parameterDefaults4.java")
+            public void testParameterDefaults4() throws Exception {
+                runTest("testData/fileOrElement/constructors/parameterDefaults4.java");
+            }
+
+            @TestMetadata("parameterDefaults5.java")
+            public void testParameterDefaults5() throws Exception {
+                runTest("testData/fileOrElement/constructors/parameterDefaults5.java");
+            }
+
+            @TestMetadata("parameterModification.java")
+            public void testParameterModification() throws Exception {
+                runTest("testData/fileOrElement/constructors/parameterModification.java");
+            }
+
+            @TestMetadata("privateConstructors.java")
+            public void testPrivateConstructors() throws Exception {
+                runTest("testData/fileOrElement/constructors/privateConstructors.java");
+            }
+
+            @TestMetadata("qualifiedRefInFactoryFun.java")
+            public void testQualifiedRefInFactoryFun() throws Exception {
+                runTest("testData/fileOrElement/constructors/qualifiedRefInFactoryFun.java");
+            }
+
+            @TestMetadata("secondaryConstructorWithDefaultValues.java")
+            public void testSecondaryConstructorWithDefaultValues() throws Exception {
+                runTest("testData/fileOrElement/constructors/secondaryConstructorWithDefaultValues.java");
+            }
+
+            @TestMetadata("secondaryConstructorWithDefaultValues2.java")
+            public void testSecondaryConstructorWithDefaultValues2() throws Exception {
+                runTest("testData/fileOrElement/constructors/secondaryConstructorWithDefaultValues2.java");
+            }
+
+            @TestMetadata("secondaryConstructorsInInnerClass.java")
+            public void testSecondaryConstructorsInInnerClass() throws Exception {
+                runTest("testData/fileOrElement/constructors/secondaryConstructorsInInnerClass.java");
+            }
+
+            @TestMetadata("secondaryConstructorsInNestedClass.java")
+            public void testSecondaryConstructorsInNestedClass() throws Exception {
+                runTest("testData/fileOrElement/constructors/secondaryConstructorsInNestedClass.java");
+            }
+
+            @TestMetadata("secondaryConstructorsVisibility.java")
+            public void testSecondaryConstructorsVisibility() throws Exception {
+                runTest("testData/fileOrElement/constructors/secondaryConstructorsVisibility.java");
+            }
+
+            @TestMetadata("staticFieldRefInFactoryFun.java")
+            public void testStaticFieldRefInFactoryFun() throws Exception {
+                runTest("testData/fileOrElement/constructors/staticFieldRefInFactoryFun.java");
+            }
         }
 
-        @TestMetadata("allCallsPrimary2.java")
-        public void testAllCallsPrimary2() throws Exception {
-            runTest("testData/fileOrElement/constructors/allCallsPrimary2.java");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/constructors")
+        public static class TestBucket003 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("artificialPrimary.java")
-        public void testArtificialPrimary() throws Exception {
-            runTest("testData/fileOrElement/constructors/artificialPrimary.java");
-        }
-
-        @TestMetadata("chain.java")
-        public void testChain() throws Exception {
-            runTest("testData/fileOrElement/constructors/chain.java");
-        }
-
-        @TestMetadata("constructorAnnotations.java")
-        public void testConstructorAnnotations() throws Exception {
-            runTest("testData/fileOrElement/constructors/constructorAnnotations.java");
-        }
-
-        @TestMetadata("customerBuilder.java")
-        public void testCustomerBuilder() throws Exception {
-            runTest("testData/fileOrElement/constructors/customerBuilder.java");
-        }
-
-        @TestMetadata("fieldsInitializedFromParams1.java")
-        public void testFieldsInitializedFromParams1() throws Exception {
-            runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams1.java");
-        }
-
-        @TestMetadata("fieldsInitializedFromParams2.java")
-        public void testFieldsInitializedFromParams2() throws Exception {
-            runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams2.java");
-        }
-
-        @TestMetadata("fieldsInitializedFromParams3.java")
-        public void testFieldsInitializedFromParams3() throws Exception {
-            runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams3.java");
-        }
-
-        @TestMetadata("fieldsInitializedFromParams4.java")
-        public void testFieldsInitializedFromParams4() throws Exception {
-            runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams4.java");
-        }
-
-        @TestMetadata("fieldsInitializedFromParams5.java")
-        public void testFieldsInitializedFromParams5() throws Exception {
-            runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams5.java");
-        }
-
-        @TestMetadata("fieldsInitializedFromParams6.java")
-        public void testFieldsInitializedFromParams6() throws Exception {
-            runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams6.java");
-        }
-
-        @TestMetadata("fieldsInitializedFromParams7.java")
-        public void testFieldsInitializedFromParams7() throws Exception {
-            runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams7.java");
-        }
-
-        @TestMetadata("fieldsInitializedFromParams8.java")
-        public void testFieldsInitializedFromParams8() throws Exception {
-            runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams8.java");
-        }
-
-        @TestMetadata("fieldsInitializedFromParams9.java")
-        public void testFieldsInitializedFromParams9() throws Exception {
-            runTest("testData/fileOrElement/constructors/fieldsInitializedFromParams9.java");
-        }
-
-        @TestMetadata("fieldsInitializedFromParamsAnnotations.java")
-        public void testFieldsInitializedFromParamsAnnotations() throws Exception {
-            runTest("testData/fileOrElement/constructors/fieldsInitializedFromParamsAnnotations.java");
-        }
-
-        @TestMetadata("genericIdentifier.java")
-        public void testGenericIdentifier() throws Exception {
-            runTest("testData/fileOrElement/constructors/genericIdentifier.java");
-        }
-
-        @TestMetadata("identifier.java")
-        public void testIdentifier() throws Exception {
-            runTest("testData/fileOrElement/constructors/identifier.java");
-        }
-
-        @TestMetadata("lineBreaksBetweenParameters.java")
-        public void testLineBreaksBetweenParameters() throws Exception {
-            runTest("testData/fileOrElement/constructors/lineBreaksBetweenParameters.java");
-        }
-
-        @TestMetadata("methodCallInFactoryFun.java")
-        public void testMethodCallInFactoryFun() throws Exception {
-            runTest("testData/fileOrElement/constructors/methodCallInFactoryFun.java");
-        }
-
-        @TestMetadata("nestedClassNameInParameterDefaults.java")
-        public void testNestedClassNameInParameterDefaults() throws Exception {
-            runTest("testData/fileOrElement/constructors/nestedClassNameInParameterDefaults.java");
-        }
-
-        @TestMetadata("nestedClassNameInParameterDefaults2.java")
-        public void testNestedClassNameInParameterDefaults2() throws Exception {
-            runTest("testData/fileOrElement/constructors/nestedClassNameInParameterDefaults2.java");
-        }
-
-        @TestMetadata("nestedClassNameInParameterDefaults3.java")
-        public void testNestedClassNameInParameterDefaults3() throws Exception {
-            runTest("testData/fileOrElement/constructors/nestedClassNameInParameterDefaults3.java");
-        }
-
-        @TestMetadata("nestedClassNameInParameterDefaults4.java")
-        public void testNestedClassNameInParameterDefaults4() throws Exception {
-            runTest("testData/fileOrElement/constructors/nestedClassNameInParameterDefaults4.java");
-        }
-
-        @TestMetadata("nestedClassNameInSuperParameters.java")
-        public void testNestedClassNameInSuperParameters() throws Exception {
-            runTest("testData/fileOrElement/constructors/nestedClassNameInSuperParameters.java");
-        }
-
-        @TestMetadata("noPrimary.java")
-        public void testNoPrimary() throws Exception {
-            runTest("testData/fileOrElement/constructors/noPrimary.java");
-        }
-
-        @TestMetadata("parameterDefaults1.java")
-        public void testParameterDefaults1() throws Exception {
-            runTest("testData/fileOrElement/constructors/parameterDefaults1.java");
-        }
-
-        @TestMetadata("parameterDefaults2.java")
-        public void testParameterDefaults2() throws Exception {
-            runTest("testData/fileOrElement/constructors/parameterDefaults2.java");
-        }
-
-        @TestMetadata("parameterDefaults3.java")
-        public void testParameterDefaults3() throws Exception {
-            runTest("testData/fileOrElement/constructors/parameterDefaults3.java");
-        }
-
-        @TestMetadata("parameterDefaults4.java")
-        public void testParameterDefaults4() throws Exception {
-            runTest("testData/fileOrElement/constructors/parameterDefaults4.java");
-        }
-
-        @TestMetadata("parameterDefaults5.java")
-        public void testParameterDefaults5() throws Exception {
-            runTest("testData/fileOrElement/constructors/parameterDefaults5.java");
-        }
-
-        @TestMetadata("parameterModification.java")
-        public void testParameterModification() throws Exception {
-            runTest("testData/fileOrElement/constructors/parameterModification.java");
-        }
-
-        @TestMetadata("privateConstructors.java")
-        public void testPrivateConstructors() throws Exception {
-            runTest("testData/fileOrElement/constructors/privateConstructors.java");
-        }
-
-        @TestMetadata("qualifiedRefInFactoryFun.java")
-        public void testQualifiedRefInFactoryFun() throws Exception {
-            runTest("testData/fileOrElement/constructors/qualifiedRefInFactoryFun.java");
-        }
-
-        @TestMetadata("secondaryConstructorWithDefaultValues.java")
-        public void testSecondaryConstructorWithDefaultValues() throws Exception {
-            runTest("testData/fileOrElement/constructors/secondaryConstructorWithDefaultValues.java");
-        }
-
-        @TestMetadata("secondaryConstructorWithDefaultValues2.java")
-        public void testSecondaryConstructorWithDefaultValues2() throws Exception {
-            runTest("testData/fileOrElement/constructors/secondaryConstructorWithDefaultValues2.java");
-        }
-
-        @TestMetadata("secondaryConstructorsInInnerClass.java")
-        public void testSecondaryConstructorsInInnerClass() throws Exception {
-            runTest("testData/fileOrElement/constructors/secondaryConstructorsInInnerClass.java");
-        }
-
-        @TestMetadata("secondaryConstructorsInNestedClass.java")
-        public void testSecondaryConstructorsInNestedClass() throws Exception {
-            runTest("testData/fileOrElement/constructors/secondaryConstructorsInNestedClass.java");
-        }
-
-        @TestMetadata("secondaryConstructorsVisibility.java")
-        public void testSecondaryConstructorsVisibility() throws Exception {
-            runTest("testData/fileOrElement/constructors/secondaryConstructorsVisibility.java");
-        }
-
-        @TestMetadata("staticFieldRefInFactoryFun.java")
-        public void testStaticFieldRefInFactoryFun() throws Exception {
-            runTest("testData/fileOrElement/constructors/staticFieldRefInFactoryFun.java");
-        }
-
-        @TestMetadata("withManyDefaultParams.java")
-        public void testWithManyDefaultParams() throws Exception {
-            runTest("testData/fileOrElement/constructors/withManyDefaultParams.java");
+            @TestMetadata("withManyDefaultParams.java")
+            public void testWithManyDefaultParams() throws Exception {
+                runTest("testData/fileOrElement/constructors/withManyDefaultParams.java");
+            }
         }
     }
 
@@ -1216,239 +1248,259 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/fileOrElement/detectProperties")
-    public static class DetectProperties extends AbstractJavaToKotlinConverterSingleFileTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class DetectProperties extends AbstractJavaToKotlinConverterSingleFileTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/detectProperties")
+        public static class TestBucket001 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("AbstractPropertyPrivateSetter.java")
+            public void testAbstractPropertyPrivateSetter() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/AbstractPropertyPrivateSetter.java");
+            }
+
+            @TestMetadata("AccessInGetterWithThis.java")
+            public void testAccessInGetterWithThis() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/AccessInGetterWithThis.java");
+            }
+
+            @TestMetadata("AccessorsImplementInterface.java")
+            public void testAccessorsImplementInterface() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/AccessorsImplementInterface.java");
+            }
+
+            @TestMetadata("AnonymousClass.java")
+            public void testAnonymousClass() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/AnonymousClass.java");
+            }
+
+            @TestMetadata("AssignFieldInsideSetter.java")
+            public void testAssignFieldInsideSetter() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/AssignFieldInsideSetter.java");
+            }
+
+            @TestMetadata("AssignFieldInsideSetter2.java")
+            public void testAssignFieldInsideSetter2() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/AssignFieldInsideSetter2.java");
+            }
+
+            @TestMetadata("CannotDropOnlySetter.java")
+            public void testCannotDropOnlySetter() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/CannotDropOnlySetter.java");
+            }
+
+            @TestMetadata("Comments.java")
+            public void testComments() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/Comments.java");
+            }
+
+            @TestMetadata("DataClass.java")
+            public void testDataClass() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/DataClass.java");
+            }
+
+            @TestMetadata("DataClassWithAnnotations.java")
+            public void testDataClassWithAnnotations() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/DataClassWithAnnotations.java");
+            }
+
+            @TestMetadata("DataClassWithMutableField.java")
+            public void testDataClassWithMutableField() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/DataClassWithMutableField.java");
+            }
+
+            @TestMetadata("DifferentFieldName.java")
+            public void testDifferentFieldName() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/DifferentFieldName.java");
+            }
+
+            @TestMetadata("DifferentFieldNameAndDefaultParameterValue.java")
+            public void testDifferentFieldNameAndDefaultParameterValue() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/DifferentFieldNameAndDefaultParameterValue.java");
+            }
+
+            @TestMetadata("DifferentFieldNameAndSuperClass.java")
+            public void testDifferentFieldNameAndSuperClass() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/DifferentFieldNameAndSuperClass.java");
+            }
+
+            @TestMetadata("DifferentProtectedFieldName.java")
+            public void testDifferentProtectedFieldName() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/DifferentProtectedFieldName.java");
+            }
+
+            @TestMetadata("DropGetter.java")
+            public void testDropGetter() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/DropGetter.java");
+            }
+
+            @TestMetadata("DropGetterAndSetter.java")
+            public void testDropGetterAndSetter() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/DropGetterAndSetter.java");
+            }
+
+            @TestMetadata("DropGetterForMutable.java")
+            public void testDropGetterForMutable() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/DropGetterForMutable.java");
+            }
+
+            @TestMetadata("FalseGetter.java")
+            public void testFalseGetter() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/FalseGetter.java");
+            }
+
+            @TestMetadata("FalseSetter.java")
+            public void testFalseSetter() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/FalseSetter.java");
+            }
         }
 
-        @TestMetadata("AbstractPropertyPrivateSetter.java")
-        public void testAbstractPropertyPrivateSetter() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/AbstractPropertyPrivateSetter.java");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/detectProperties")
+        public static class TestBucket002 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("FieldUsagesInFactoryMethods.java")
+            public void testFieldUsagesInFactoryMethods() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/FieldUsagesInFactoryMethods.java");
+            }
+
+            @TestMetadata("GetterAndSetterNamesDifferent.java")
+            public void testGetterAndSetterNamesDifferent() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/GetterAndSetterNamesDifferent.java");
+            }
+
+            @TestMetadata("GetterSetterUsages.java")
+            public void testGetterSetterUsages() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/GetterSetterUsages.java");
+            }
+
+            @TestMetadata("GetterTypeNotMatch.java")
+            public void testGetterTypeNotMatch() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/GetterTypeNotMatch.java");
+            }
+
+            @TestMetadata("GetterWithSideEffect1.java")
+            public void testGetterWithSideEffect1() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/GetterWithSideEffect1.java");
+            }
+
+            @TestMetadata("GetterWithSideEffect2.java")
+            public void testGetterWithSideEffect2() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/GetterWithSideEffect2.java");
+            }
+
+            @TestMetadata("GetterWithSideEffect3.java")
+            public void testGetterWithSideEffect3() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/GetterWithSideEffect3.java");
+            }
+
+            @TestMetadata("GetterWithSideEffect4.java")
+            public void testGetterWithSideEffect4() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/GetterWithSideEffect4.java");
+            }
+
+            @TestMetadata("GetterWithSideEffect5.java")
+            public void testGetterWithSideEffect5() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/GetterWithSideEffect5.java");
+            }
+
+            @TestMetadata("InCompanionObject.java")
+            public void testInCompanionObject() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/InCompanionObject.java");
+            }
+
+            @TestMetadata("InInterface.java")
+            public void testInInterface() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/InInterface.java");
+            }
+
+            @TestMetadata("InObject.java")
+            public void testInObject() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/InObject.java");
+            }
+
+            @TestMetadata("IsPrefix.java")
+            public void testIsPrefix() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/IsPrefix.java");
+            }
+
+            @TestMetadata("JavaKeywordPropertyName.java")
+            public void testJavaKeywordPropertyName() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/JavaKeywordPropertyName.java");
+            }
+
+            @TestMetadata("KeywordPropertyName.java")
+            public void testKeywordPropertyName() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/KeywordPropertyName.java");
+            }
+
+            @TestMetadata("Overrides.java")
+            public void testOverrides() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/Overrides.java");
+            }
+
+            @TestMetadata("OverridesOfExternalCode.java")
+            public void testOverridesOfExternalCode() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/OverridesOfExternalCode.java");
+            }
+
+            @TestMetadata("PropertyAndFieldConflicts.java")
+            public void testPropertyAndFieldConflicts() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/PropertyAndFieldConflicts.java");
+            }
+
+            @TestMetadata("PropertyType.java")
+            public void testPropertyType() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/PropertyType.java");
+            }
+
+            @TestMetadata("SetterTypeNotMatch.java")
+            public void testSetterTypeNotMatch() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/SetterTypeNotMatch.java");
+            }
         }
 
-        @TestMetadata("AccessInGetterWithThis.java")
-        public void testAccessInGetterWithThis() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/AccessInGetterWithThis.java");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/detectProperties")
+        public static class TestBucket003 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("AccessorsImplementInterface.java")
-        public void testAccessorsImplementInterface() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/AccessorsImplementInterface.java");
-        }
+            @TestMetadata("SetterWithSideEffect1.java")
+            public void testSetterWithSideEffect1() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/SetterWithSideEffect1.java");
+            }
 
-        @TestMetadata("AnonymousClass.java")
-        public void testAnonymousClass() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/AnonymousClass.java");
-        }
+            @TestMetadata("SetterWithSideEffect2.java")
+            public void testSetterWithSideEffect2() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/SetterWithSideEffect2.java");
+            }
 
-        @TestMetadata("AssignFieldInsideSetter.java")
-        public void testAssignFieldInsideSetter() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/AssignFieldInsideSetter.java");
-        }
+            @TestMetadata("SetterWithSideEffect3.java")
+            public void testSetterWithSideEffect3() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/SetterWithSideEffect3.java");
+            }
 
-        @TestMetadata("AssignFieldInsideSetter2.java")
-        public void testAssignFieldInsideSetter2() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/AssignFieldInsideSetter2.java");
-        }
+            @TestMetadata("SetterWithSideEffect4.java")
+            public void testSetterWithSideEffect4() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/SetterWithSideEffect4.java");
+            }
 
-        @TestMetadata("CannotDropOnlySetter.java")
-        public void testCannotDropOnlySetter() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/CannotDropOnlySetter.java");
-        }
+            @TestMetadata("SetterWithSideEffect5.java")
+            public void testSetterWithSideEffect5() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/SetterWithSideEffect5.java");
+            }
 
-        @TestMetadata("Comments.java")
-        public void testComments() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/Comments.java");
-        }
-
-        @TestMetadata("DataClass.java")
-        public void testDataClass() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/DataClass.java");
-        }
-
-        @TestMetadata("DataClassWithAnnotations.java")
-        public void testDataClassWithAnnotations() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/DataClassWithAnnotations.java");
-        }
-
-        @TestMetadata("DataClassWithMutableField.java")
-        public void testDataClassWithMutableField() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/DataClassWithMutableField.java");
-        }
-
-        @TestMetadata("DifferentFieldName.java")
-        public void testDifferentFieldName() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/DifferentFieldName.java");
-        }
-
-        @TestMetadata("DifferentFieldNameAndDefaultParameterValue.java")
-        public void testDifferentFieldNameAndDefaultParameterValue() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/DifferentFieldNameAndDefaultParameterValue.java");
-        }
-
-        @TestMetadata("DifferentFieldNameAndSuperClass.java")
-        public void testDifferentFieldNameAndSuperClass() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/DifferentFieldNameAndSuperClass.java");
-        }
-
-        @TestMetadata("DifferentProtectedFieldName.java")
-        public void testDifferentProtectedFieldName() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/DifferentProtectedFieldName.java");
-        }
-
-        @TestMetadata("DropGetter.java")
-        public void testDropGetter() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/DropGetter.java");
-        }
-
-        @TestMetadata("DropGetterAndSetter.java")
-        public void testDropGetterAndSetter() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/DropGetterAndSetter.java");
-        }
-
-        @TestMetadata("DropGetterForMutable.java")
-        public void testDropGetterForMutable() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/DropGetterForMutable.java");
-        }
-
-        @TestMetadata("FalseGetter.java")
-        public void testFalseGetter() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/FalseGetter.java");
-        }
-
-        @TestMetadata("FalseSetter.java")
-        public void testFalseSetter() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/FalseSetter.java");
-        }
-
-        @TestMetadata("FieldUsagesInFactoryMethods.java")
-        public void testFieldUsagesInFactoryMethods() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/FieldUsagesInFactoryMethods.java");
-        }
-
-        @TestMetadata("GetterAndSetterNamesDifferent.java")
-        public void testGetterAndSetterNamesDifferent() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/GetterAndSetterNamesDifferent.java");
-        }
-
-        @TestMetadata("GetterSetterUsages.java")
-        public void testGetterSetterUsages() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/GetterSetterUsages.java");
-        }
-
-        @TestMetadata("GetterTypeNotMatch.java")
-        public void testGetterTypeNotMatch() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/GetterTypeNotMatch.java");
-        }
-
-        @TestMetadata("GetterWithSideEffect1.java")
-        public void testGetterWithSideEffect1() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/GetterWithSideEffect1.java");
-        }
-
-        @TestMetadata("GetterWithSideEffect2.java")
-        public void testGetterWithSideEffect2() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/GetterWithSideEffect2.java");
-        }
-
-        @TestMetadata("GetterWithSideEffect3.java")
-        public void testGetterWithSideEffect3() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/GetterWithSideEffect3.java");
-        }
-
-        @TestMetadata("GetterWithSideEffect4.java")
-        public void testGetterWithSideEffect4() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/GetterWithSideEffect4.java");
-        }
-
-        @TestMetadata("GetterWithSideEffect5.java")
-        public void testGetterWithSideEffect5() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/GetterWithSideEffect5.java");
-        }
-
-        @TestMetadata("InCompanionObject.java")
-        public void testInCompanionObject() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/InCompanionObject.java");
-        }
-
-        @TestMetadata("InInterface.java")
-        public void testInInterface() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/InInterface.java");
-        }
-
-        @TestMetadata("InObject.java")
-        public void testInObject() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/InObject.java");
-        }
-
-        @TestMetadata("IsPrefix.java")
-        public void testIsPrefix() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/IsPrefix.java");
-        }
-
-        @TestMetadata("JavaKeywordPropertyName.java")
-        public void testJavaKeywordPropertyName() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/JavaKeywordPropertyName.java");
-        }
-
-        @TestMetadata("KeywordPropertyName.java")
-        public void testKeywordPropertyName() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/KeywordPropertyName.java");
-        }
-
-        @TestMetadata("Overrides.java")
-        public void testOverrides() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/Overrides.java");
-        }
-
-        @TestMetadata("OverridesOfExternalCode.java")
-        public void testOverridesOfExternalCode() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/OverridesOfExternalCode.java");
-        }
-
-        @TestMetadata("PropertyAndFieldConflicts.java")
-        public void testPropertyAndFieldConflicts() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/PropertyAndFieldConflicts.java");
-        }
-
-        @TestMetadata("PropertyType.java")
-        public void testPropertyType() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/PropertyType.java");
-        }
-
-        @TestMetadata("SetterTypeNotMatch.java")
-        public void testSetterTypeNotMatch() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/SetterTypeNotMatch.java");
-        }
-
-        @TestMetadata("SetterWithSideEffect1.java")
-        public void testSetterWithSideEffect1() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/SetterWithSideEffect1.java");
-        }
-
-        @TestMetadata("SetterWithSideEffect2.java")
-        public void testSetterWithSideEffect2() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/SetterWithSideEffect2.java");
-        }
-
-        @TestMetadata("SetterWithSideEffect3.java")
-        public void testSetterWithSideEffect3() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/SetterWithSideEffect3.java");
-        }
-
-        @TestMetadata("SetterWithSideEffect4.java")
-        public void testSetterWithSideEffect4() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/SetterWithSideEffect4.java");
-        }
-
-        @TestMetadata("SetterWithSideEffect5.java")
-        public void testSetterWithSideEffect5() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/SetterWithSideEffect5.java");
-        }
-
-        @TestMetadata("SetterWithSideEffect6.java")
-        public void testSetterWithSideEffect6() throws Exception {
-            runTest("testData/fileOrElement/detectProperties/SetterWithSideEffect6.java");
+            @TestMetadata("SetterWithSideEffect6.java")
+            public void testSetterWithSideEffect6() throws Exception {
+                runTest("testData/fileOrElement/detectProperties/SetterWithSideEffect6.java");
+            }
         }
     }
 
@@ -1779,229 +1831,249 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/fileOrElement/for")
-    public static class For extends AbstractJavaToKotlinConverterSingleFileTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class For extends AbstractJavaToKotlinConverterSingleFileTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/for")
+        public static class TestBucket001 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("arrayIndicesReversed.java")
+            public void testArrayIndicesReversed() throws Exception {
+                runTest("testData/fileOrElement/for/arrayIndicesReversed.java");
+            }
+
+            @TestMetadata("assignmentAsExpressionInBody.java")
+            public void testAssignmentAsExpressionInBody() throws Exception {
+                runTest("testData/fileOrElement/for/assignmentAsExpressionInBody.java");
+            }
+
+            @TestMetadata("commonCaseForTest.java")
+            public void testCommonCaseForTest() throws Exception {
+                runTest("testData/fileOrElement/for/commonCaseForTest.java");
+            }
+
+            @TestMetadata("downTo1.java")
+            public void testDownTo1() throws Exception {
+                runTest("testData/fileOrElement/for/downTo1.java");
+            }
+
+            @TestMetadata("downTo2.java")
+            public void testDownTo2() throws Exception {
+                runTest("testData/fileOrElement/for/downTo2.java");
+            }
+
+            @TestMetadata("downTo3.java")
+            public void testDownTo3() throws Exception {
+                runTest("testData/fileOrElement/for/downTo3.java");
+            }
+
+            @TestMetadata("downTo4.java")
+            public void testDownTo4() throws Exception {
+                runTest("testData/fileOrElement/for/downTo4.java");
+            }
+
+            @TestMetadata("falseArrayIndicesReversed.java")
+            public void testFalseArrayIndicesReversed() throws Exception {
+                runTest("testData/fileOrElement/for/falseArrayIndicesReversed.java");
+            }
+
+            @TestMetadata("falseArrayIndicesReversed2.java")
+            public void testFalseArrayIndicesReversed2() throws Exception {
+                runTest("testData/fileOrElement/for/falseArrayIndicesReversed2.java");
+            }
+
+            @TestMetadata("falseForRange.java")
+            public void testFalseForRange() throws Exception {
+                runTest("testData/fileOrElement/for/falseForRange.java");
+            }
+
+            @TestMetadata("falseIndicesReversed.java")
+            public void testFalseIndicesReversed() throws Exception {
+                runTest("testData/fileOrElement/for/falseIndicesReversed.java");
+            }
+
+            @TestMetadata("forRangeWithBlock.java")
+            public void testForRangeWithBlock() throws Exception {
+                runTest("testData/fileOrElement/for/forRangeWithBlock.java");
+            }
+
+            @TestMetadata("forRangeWithLE.java")
+            public void testForRangeWithLE() throws Exception {
+                runTest("testData/fileOrElement/for/forRangeWithLE.java");
+            }
+
+            @TestMetadata("forRangeWithLT.java")
+            public void testForRangeWithLT() throws Exception {
+                runTest("testData/fileOrElement/for/forRangeWithLT.java");
+            }
+
+            @TestMetadata("forRangeWithLT2.java")
+            public void testForRangeWithLT2() throws Exception {
+                runTest("testData/fileOrElement/for/forRangeWithLT2.java");
+            }
+
+            @TestMetadata("forRangeWithNE.java")
+            public void testForRangeWithNE() throws Exception {
+                runTest("testData/fileOrElement/for/forRangeWithNE.java");
+            }
+
+            @TestMetadata("forThroughArrayIndices.java")
+            public void testForThroughArrayIndices() throws Exception {
+                runTest("testData/fileOrElement/for/forThroughArrayIndices.java");
+            }
+
+            @TestMetadata("forThroughCollectionIndices.java")
+            public void testForThroughCollectionIndices() throws Exception {
+                runTest("testData/fileOrElement/for/forThroughCollectionIndices.java");
+            }
+
+            @TestMetadata("forThroughListIndices.java")
+            public void testForThroughListIndices() throws Exception {
+                runTest("testData/fileOrElement/for/forThroughListIndices.java");
+            }
+
+            @TestMetadata("forThroughListIndicesNE.java")
+            public void testForThroughListIndicesNE() throws Exception {
+                runTest("testData/fileOrElement/for/forThroughListIndicesNE.java");
+            }
         }
 
-        @TestMetadata("arrayIndicesReversed.java")
-        public void testArrayIndicesReversed() throws Exception {
-            runTest("testData/fileOrElement/for/arrayIndicesReversed.java");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/for")
+        public static class TestBucket002 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("forThroughNonArrayIndices.java")
+            public void testForThroughNonArrayIndices() throws Exception {
+                runTest("testData/fileOrElement/for/forThroughNonArrayIndices.java");
+            }
+
+            @TestMetadata("forThroughNonCollectionIndices.java")
+            public void testForThroughNonCollectionIndices() throws Exception {
+                runTest("testData/fileOrElement/for/forThroughNonCollectionIndices.java");
+            }
+
+            @TestMetadata("forWithBlock.java")
+            public void testForWithBlock() throws Exception {
+                runTest("testData/fileOrElement/for/forWithBlock.java");
+            }
+
+            @TestMetadata("forWithBlockAndDoubleUpdate.java")
+            public void testForWithBlockAndDoubleUpdate() throws Exception {
+                runTest("testData/fileOrElement/for/forWithBlockAndDoubleUpdate.java");
+            }
+
+            @TestMetadata("forWithEmptyBlock.java")
+            public void testForWithEmptyBlock() throws Exception {
+                runTest("testData/fileOrElement/for/forWithEmptyBlock.java");
+            }
+
+            @TestMetadata("forWithExpression.java")
+            public void testForWithExpression() throws Exception {
+                runTest("testData/fileOrElement/for/forWithExpression.java");
+            }
+
+            @TestMetadata("forWithNullCondition.java")
+            public void testForWithNullCondition() throws Exception {
+                runTest("testData/fileOrElement/for/forWithNullCondition.java");
+            }
+
+            @TestMetadata("forWithNullInit.java")
+            public void testForWithNullInit() throws Exception {
+                runTest("testData/fileOrElement/for/forWithNullInit.java");
+            }
+
+            @TestMetadata("forWithNullUpdate.java")
+            public void testForWithNullUpdate() throws Exception {
+                runTest("testData/fileOrElement/for/forWithNullUpdate.java");
+            }
+
+            @TestMetadata("forWithReturn.java")
+            public void testForWithReturn() throws Exception {
+                runTest("testData/fileOrElement/for/forWithReturn.java");
+            }
+
+            @TestMetadata("forWithoutBody.java")
+            public void testForWithoutBody() throws Exception {
+                runTest("testData/fileOrElement/for/forWithoutBody.java");
+            }
+
+            @TestMetadata("indicesReversed.java")
+            public void testIndicesReversed() throws Exception {
+                runTest("testData/fileOrElement/for/indicesReversed.java");
+            }
+
+            @TestMetadata("infiniteFor.java")
+            public void testInfiniteFor() throws Exception {
+                runTest("testData/fileOrElement/for/infiniteFor.java");
+            }
+
+            @TestMetadata("nameConflict1.java")
+            public void testNameConflict1() throws Exception {
+                runTest("testData/fileOrElement/for/nameConflict1.java");
+            }
+
+            @TestMetadata("nameConflict2.java")
+            public void testNameConflict2() throws Exception {
+                runTest("testData/fileOrElement/for/nameConflict2.java");
+            }
+
+            @TestMetadata("nameConflict3.java")
+            public void testNameConflict3() throws Exception {
+                runTest("testData/fileOrElement/for/nameConflict3.java");
+            }
+
+            @TestMetadata("nameConflict4.java")
+            public void testNameConflict4() throws Exception {
+                runTest("testData/fileOrElement/for/nameConflict4.java");
+            }
+
+            @TestMetadata("nameConflict5.java")
+            public void testNameConflict5() throws Exception {
+                runTest("testData/fileOrElement/for/nameConflict5.java");
+            }
+
+            @TestMetadata("notInBlock.java")
+            public void testNotInBlock() throws Exception {
+                runTest("testData/fileOrElement/for/notInBlock.java");
+            }
+
+            @TestMetadata("overMapEntries.java")
+            public void testOverMapEntries() throws Exception {
+                runTest("testData/fileOrElement/for/overMapEntries.java");
+            }
         }
 
-        @TestMetadata("assignmentAsExpressionInBody.java")
-        public void testAssignmentAsExpressionInBody() throws Exception {
-            runTest("testData/fileOrElement/for/assignmentAsExpressionInBody.java");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/for")
+        public static class TestBucket003 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("commonCaseForTest.java")
-        public void testCommonCaseForTest() throws Exception {
-            runTest("testData/fileOrElement/for/commonCaseForTest.java");
-        }
+            @TestMetadata("withContinue1.java")
+            public void testWithContinue1() throws Exception {
+                runTest("testData/fileOrElement/for/withContinue1.java");
+            }
 
-        @TestMetadata("downTo1.java")
-        public void testDownTo1() throws Exception {
-            runTest("testData/fileOrElement/for/downTo1.java");
-        }
+            @TestMetadata("withContinue2.java")
+            public void testWithContinue2() throws Exception {
+                runTest("testData/fileOrElement/for/withContinue2.java");
+            }
 
-        @TestMetadata("downTo2.java")
-        public void testDownTo2() throws Exception {
-            runTest("testData/fileOrElement/for/downTo2.java");
-        }
+            @TestMetadata("withContinue3.java")
+            public void testWithContinue3() throws Exception {
+                runTest("testData/fileOrElement/for/withContinue3.java");
+            }
 
-        @TestMetadata("downTo3.java")
-        public void testDownTo3() throws Exception {
-            runTest("testData/fileOrElement/for/downTo3.java");
-        }
-
-        @TestMetadata("downTo4.java")
-        public void testDownTo4() throws Exception {
-            runTest("testData/fileOrElement/for/downTo4.java");
-        }
-
-        @TestMetadata("falseArrayIndicesReversed.java")
-        public void testFalseArrayIndicesReversed() throws Exception {
-            runTest("testData/fileOrElement/for/falseArrayIndicesReversed.java");
-        }
-
-        @TestMetadata("falseArrayIndicesReversed2.java")
-        public void testFalseArrayIndicesReversed2() throws Exception {
-            runTest("testData/fileOrElement/for/falseArrayIndicesReversed2.java");
-        }
-
-        @TestMetadata("falseForRange.java")
-        public void testFalseForRange() throws Exception {
-            runTest("testData/fileOrElement/for/falseForRange.java");
-        }
-
-        @TestMetadata("falseIndicesReversed.java")
-        public void testFalseIndicesReversed() throws Exception {
-            runTest("testData/fileOrElement/for/falseIndicesReversed.java");
-        }
-
-        @TestMetadata("forRangeWithBlock.java")
-        public void testForRangeWithBlock() throws Exception {
-            runTest("testData/fileOrElement/for/forRangeWithBlock.java");
-        }
-
-        @TestMetadata("forRangeWithLE.java")
-        public void testForRangeWithLE() throws Exception {
-            runTest("testData/fileOrElement/for/forRangeWithLE.java");
-        }
-
-        @TestMetadata("forRangeWithLT.java")
-        public void testForRangeWithLT() throws Exception {
-            runTest("testData/fileOrElement/for/forRangeWithLT.java");
-        }
-
-        @TestMetadata("forRangeWithLT2.java")
-        public void testForRangeWithLT2() throws Exception {
-            runTest("testData/fileOrElement/for/forRangeWithLT2.java");
-        }
-
-        @TestMetadata("forRangeWithNE.java")
-        public void testForRangeWithNE() throws Exception {
-            runTest("testData/fileOrElement/for/forRangeWithNE.java");
-        }
-
-        @TestMetadata("forThroughArrayIndices.java")
-        public void testForThroughArrayIndices() throws Exception {
-            runTest("testData/fileOrElement/for/forThroughArrayIndices.java");
-        }
-
-        @TestMetadata("forThroughCollectionIndices.java")
-        public void testForThroughCollectionIndices() throws Exception {
-            runTest("testData/fileOrElement/for/forThroughCollectionIndices.java");
-        }
-
-        @TestMetadata("forThroughListIndices.java")
-        public void testForThroughListIndices() throws Exception {
-            runTest("testData/fileOrElement/for/forThroughListIndices.java");
-        }
-
-        @TestMetadata("forThroughListIndicesNE.java")
-        public void testForThroughListIndicesNE() throws Exception {
-            runTest("testData/fileOrElement/for/forThroughListIndicesNE.java");
-        }
-
-        @TestMetadata("forThroughNonArrayIndices.java")
-        public void testForThroughNonArrayIndices() throws Exception {
-            runTest("testData/fileOrElement/for/forThroughNonArrayIndices.java");
-        }
-
-        @TestMetadata("forThroughNonCollectionIndices.java")
-        public void testForThroughNonCollectionIndices() throws Exception {
-            runTest("testData/fileOrElement/for/forThroughNonCollectionIndices.java");
-        }
-
-        @TestMetadata("forWithBlock.java")
-        public void testForWithBlock() throws Exception {
-            runTest("testData/fileOrElement/for/forWithBlock.java");
-        }
-
-        @TestMetadata("forWithBlockAndDoubleUpdate.java")
-        public void testForWithBlockAndDoubleUpdate() throws Exception {
-            runTest("testData/fileOrElement/for/forWithBlockAndDoubleUpdate.java");
-        }
-
-        @TestMetadata("forWithEmptyBlock.java")
-        public void testForWithEmptyBlock() throws Exception {
-            runTest("testData/fileOrElement/for/forWithEmptyBlock.java");
-        }
-
-        @TestMetadata("forWithExpression.java")
-        public void testForWithExpression() throws Exception {
-            runTest("testData/fileOrElement/for/forWithExpression.java");
-        }
-
-        @TestMetadata("forWithNullCondition.java")
-        public void testForWithNullCondition() throws Exception {
-            runTest("testData/fileOrElement/for/forWithNullCondition.java");
-        }
-
-        @TestMetadata("forWithNullInit.java")
-        public void testForWithNullInit() throws Exception {
-            runTest("testData/fileOrElement/for/forWithNullInit.java");
-        }
-
-        @TestMetadata("forWithNullUpdate.java")
-        public void testForWithNullUpdate() throws Exception {
-            runTest("testData/fileOrElement/for/forWithNullUpdate.java");
-        }
-
-        @TestMetadata("forWithReturn.java")
-        public void testForWithReturn() throws Exception {
-            runTest("testData/fileOrElement/for/forWithReturn.java");
-        }
-
-        @TestMetadata("forWithoutBody.java")
-        public void testForWithoutBody() throws Exception {
-            runTest("testData/fileOrElement/for/forWithoutBody.java");
-        }
-
-        @TestMetadata("indicesReversed.java")
-        public void testIndicesReversed() throws Exception {
-            runTest("testData/fileOrElement/for/indicesReversed.java");
-        }
-
-        @TestMetadata("infiniteFor.java")
-        public void testInfiniteFor() throws Exception {
-            runTest("testData/fileOrElement/for/infiniteFor.java");
-        }
-
-        @TestMetadata("nameConflict1.java")
-        public void testNameConflict1() throws Exception {
-            runTest("testData/fileOrElement/for/nameConflict1.java");
-        }
-
-        @TestMetadata("nameConflict2.java")
-        public void testNameConflict2() throws Exception {
-            runTest("testData/fileOrElement/for/nameConflict2.java");
-        }
-
-        @TestMetadata("nameConflict3.java")
-        public void testNameConflict3() throws Exception {
-            runTest("testData/fileOrElement/for/nameConflict3.java");
-        }
-
-        @TestMetadata("nameConflict4.java")
-        public void testNameConflict4() throws Exception {
-            runTest("testData/fileOrElement/for/nameConflict4.java");
-        }
-
-        @TestMetadata("nameConflict5.java")
-        public void testNameConflict5() throws Exception {
-            runTest("testData/fileOrElement/for/nameConflict5.java");
-        }
-
-        @TestMetadata("notInBlock.java")
-        public void testNotInBlock() throws Exception {
-            runTest("testData/fileOrElement/for/notInBlock.java");
-        }
-
-        @TestMetadata("overMapEntries.java")
-        public void testOverMapEntries() throws Exception {
-            runTest("testData/fileOrElement/for/overMapEntries.java");
-        }
-
-        @TestMetadata("withContinue1.java")
-        public void testWithContinue1() throws Exception {
-            runTest("testData/fileOrElement/for/withContinue1.java");
-        }
-
-        @TestMetadata("withContinue2.java")
-        public void testWithContinue2() throws Exception {
-            runTest("testData/fileOrElement/for/withContinue2.java");
-        }
-
-        @TestMetadata("withContinue3.java")
-        public void testWithContinue3() throws Exception {
-            runTest("testData/fileOrElement/for/withContinue3.java");
-        }
-
-        @TestMetadata("withContinueAndLabels.java")
-        public void testWithContinueAndLabels() throws Exception {
-            runTest("testData/fileOrElement/for/withContinueAndLabels.java");
+            @TestMetadata("withContinueAndLabels.java")
+            public void testWithContinueAndLabels() throws Exception {
+                runTest("testData/fileOrElement/for/withContinueAndLabels.java");
+            }
         }
     }
 
@@ -2088,184 +2160,196 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/fileOrElement/function")
-    public static class Function extends AbstractJavaToKotlinConverterSingleFileTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class Function extends AbstractJavaToKotlinConverterSingleFileTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/function")
+        public static class TestBucket001 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("abstractMethod.java")
+            public void testAbstractMethod() throws Exception {
+                runTest("testData/fileOrElement/function/abstractMethod.java");
+            }
+
+            @TestMetadata("classGenericParam.java")
+            public void testClassGenericParam() throws Exception {
+                runTest("testData/fileOrElement/function/classGenericParam.java");
+            }
+
+            @TestMetadata("emptyVoidMethod.java")
+            public void testEmptyVoidMethod() throws Exception {
+                runTest("testData/fileOrElement/function/emptyVoidMethod.java");
+            }
+
+            @TestMetadata("extendsBaseWhichExtendsObject.java")
+            public void testExtendsBaseWhichExtendsObject() throws Exception {
+                runTest("testData/fileOrElement/function/extendsBaseWhichExtendsObject.java");
+            }
+
+            @TestMetadata("final.java")
+            public void testFinal() throws Exception {
+                runTest("testData/fileOrElement/function/final.java");
+            }
+
+            @TestMetadata("functionInFinalClass.java")
+            public void testFunctionInFinalClass() throws Exception {
+                runTest("testData/fileOrElement/function/functionInFinalClass.java");
+            }
+
+            @TestMetadata("internal.java")
+            public void testInternal() throws Exception {
+                runTest("testData/fileOrElement/function/internal.java");
+            }
+
+            @TestMetadata("java8Lambdas.java")
+            public void testJava8Lambdas() throws Exception {
+                runTest("testData/fileOrElement/function/java8Lambdas.java");
+            }
+
+            @TestMetadata("java8MRKFunctionExpectedType.java")
+            public void testJava8MRKFunctionExpectedType() throws Exception {
+                runTest("testData/fileOrElement/function/java8MRKFunctionExpectedType.java");
+            }
+
+            @TestMetadata("java8MRSamConstructor.java")
+            public void testJava8MRSamConstructor() throws Exception {
+                runTest("testData/fileOrElement/function/java8MRSamConstructor.java");
+            }
+
+            @TestMetadata("lineBreaksBetweenParameters.java")
+            public void testLineBreaksBetweenParameters() throws Exception {
+                runTest("testData/fileOrElement/function/lineBreaksBetweenParameters.java");
+            }
+
+            @TestMetadata("main.java")
+            public void testMain() throws Exception {
+                runTest("testData/fileOrElement/function/main.java");
+            }
+
+            @TestMetadata("main2.java")
+            public void testMain2() throws Exception {
+                runTest("testData/fileOrElement/function/main2.java");
+            }
+
+            @TestMetadata("mainAndNullabilitySetting.java")
+            public void testMainAndNullabilitySetting() throws Exception {
+                runTest("testData/fileOrElement/function/mainAndNullabilitySetting.java");
+            }
+
+            @TestMetadata("methodClassType.java")
+            public void testMethodClassType() throws Exception {
+                runTest("testData/fileOrElement/function/methodClassType.java");
+            }
+
+            @TestMetadata("methodPrimitiveType.java")
+            public void testMethodPrimitiveType() throws Exception {
+                runTest("testData/fileOrElement/function/methodPrimitiveType.java");
+            }
+
+            @TestMetadata("methodPrimitiveType2.java")
+            public void testMethodPrimitiveType2() throws Exception {
+                runTest("testData/fileOrElement/function/methodPrimitiveType2.java");
+            }
+
+            @TestMetadata("methodWithReturnStatement.java")
+            public void testMethodWithReturnStatement() throws Exception {
+                runTest("testData/fileOrElement/function/methodWithReturnStatement.java");
+            }
+
+            @TestMetadata("nativeMethods.java")
+            public void testNativeMethods() throws Exception {
+                runTest("testData/fileOrElement/function/nativeMethods.java");
+            }
+
+            @TestMetadata("open.java")
+            public void testOpen() throws Exception {
+                runTest("testData/fileOrElement/function/open.java");
+            }
         }
 
-        @TestMetadata("abstractMethod.java")
-        public void testAbstractMethod() throws Exception {
-            runTest("testData/fileOrElement/function/abstractMethod.java");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/function")
+        public static class TestBucket002 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("classGenericParam.java")
-        public void testClassGenericParam() throws Exception {
-            runTest("testData/fileOrElement/function/classGenericParam.java");
-        }
+            @TestMetadata("override.java")
+            public void testOverride() throws Exception {
+                runTest("testData/fileOrElement/function/override.java");
+            }
 
-        @TestMetadata("emptyVoidMethod.java")
-        public void testEmptyVoidMethod() throws Exception {
-            runTest("testData/fileOrElement/function/emptyVoidMethod.java");
-        }
+            @TestMetadata("overrideAndOpen.java")
+            public void testOverrideAndOpen() throws Exception {
+                runTest("testData/fileOrElement/function/overrideAndOpen.java");
+            }
 
-        @TestMetadata("extendsBaseWhichExtendsObject.java")
-        public void testExtendsBaseWhichExtendsObject() throws Exception {
-            runTest("testData/fileOrElement/function/extendsBaseWhichExtendsObject.java");
-        }
+            @TestMetadata("overrideObject.java")
+            public void testOverrideObject() throws Exception {
+                runTest("testData/fileOrElement/function/overrideObject.java");
+            }
 
-        @TestMetadata("final.java")
-        public void testFinal() throws Exception {
-            runTest("testData/fileOrElement/function/final.java");
-        }
+            @TestMetadata("overrideObject2.java")
+            public void testOverrideObject2() throws Exception {
+                runTest("testData/fileOrElement/function/overrideObject2.java");
+            }
 
-        @TestMetadata("functionInFinalClass.java")
-        public void testFunctionInFinalClass() throws Exception {
-            runTest("testData/fileOrElement/function/functionInFinalClass.java");
-        }
+            @TestMetadata("overrideObject3.java")
+            public void testOverrideObject3() throws Exception {
+                runTest("testData/fileOrElement/function/overrideObject3.java");
+            }
 
-        @TestMetadata("internal.java")
-        public void testInternal() throws Exception {
-            runTest("testData/fileOrElement/function/internal.java");
-        }
+            @TestMetadata("overrideWithHigherVisibility.java")
+            public void testOverrideWithHigherVisibility() throws Exception {
+                runTest("testData/fileOrElement/function/overrideWithHigherVisibility.java");
+            }
 
-        @TestMetadata("java8Lambdas.java")
-        public void testJava8Lambdas() throws Exception {
-            runTest("testData/fileOrElement/function/java8Lambdas.java");
-        }
+            @TestMetadata("ownGenericParam.java")
+            public void testOwnGenericParam() throws Exception {
+                runTest("testData/fileOrElement/function/ownGenericParam.java");
+            }
 
-        @TestMetadata("java8MRKFunctionExpectedType.java")
-        public void testJava8MRKFunctionExpectedType() throws Exception {
-            runTest("testData/fileOrElement/function/java8MRKFunctionExpectedType.java");
-        }
+            @TestMetadata("ownSeveralGenericParams.java")
+            public void testOwnSeveralGenericParams() throws Exception {
+                runTest("testData/fileOrElement/function/ownSeveralGenericParams.java");
+            }
 
-        @TestMetadata("java8MRSamConstructor.java")
-        public void testJava8MRSamConstructor() throws Exception {
-            runTest("testData/fileOrElement/function/java8MRSamConstructor.java");
-        }
+            @TestMetadata("parameterModification.java")
+            public void testParameterModification() throws Exception {
+                runTest("testData/fileOrElement/function/parameterModification.java");
+            }
 
-        @TestMetadata("lineBreaksBetweenParameters.java")
-        public void testLineBreaksBetweenParameters() throws Exception {
-            runTest("testData/fileOrElement/function/lineBreaksBetweenParameters.java");
-        }
+            @TestMetadata("private.java")
+            public void testPrivate() throws Exception {
+                runTest("testData/fileOrElement/function/private.java");
+            }
 
-        @TestMetadata("main.java")
-        public void testMain() throws Exception {
-            runTest("testData/fileOrElement/function/main.java");
-        }
+            @TestMetadata("protected.java")
+            public void testProtected() throws Exception {
+                runTest("testData/fileOrElement/function/protected.java");
+            }
 
-        @TestMetadata("main2.java")
-        public void testMain2() throws Exception {
-            runTest("testData/fileOrElement/function/main2.java");
-        }
+            @TestMetadata("public.java")
+            public void testPublic() throws Exception {
+                runTest("testData/fileOrElement/function/public.java");
+            }
 
-        @TestMetadata("mainAndNullabilitySetting.java")
-        public void testMainAndNullabilitySetting() throws Exception {
-            runTest("testData/fileOrElement/function/mainAndNullabilitySetting.java");
-        }
+            @TestMetadata("synchronizedMethod.java")
+            public void testSynchronizedMethod() throws Exception {
+                runTest("testData/fileOrElement/function/synchronizedMethod.java");
+            }
 
-        @TestMetadata("methodClassType.java")
-        public void testMethodClassType() throws Exception {
-            runTest("testData/fileOrElement/function/methodClassType.java");
-        }
+            @TestMetadata("throws.java")
+            public void testThrows() throws Exception {
+                runTest("testData/fileOrElement/function/throws.java");
+            }
 
-        @TestMetadata("methodPrimitiveType.java")
-        public void testMethodPrimitiveType() throws Exception {
-            runTest("testData/fileOrElement/function/methodPrimitiveType.java");
-        }
-
-        @TestMetadata("methodPrimitiveType2.java")
-        public void testMethodPrimitiveType2() throws Exception {
-            runTest("testData/fileOrElement/function/methodPrimitiveType2.java");
-        }
-
-        @TestMetadata("methodWithReturnStatement.java")
-        public void testMethodWithReturnStatement() throws Exception {
-            runTest("testData/fileOrElement/function/methodWithReturnStatement.java");
-        }
-
-        @TestMetadata("nativeMethods.java")
-        public void testNativeMethods() throws Exception {
-            runTest("testData/fileOrElement/function/nativeMethods.java");
-        }
-
-        @TestMetadata("open.java")
-        public void testOpen() throws Exception {
-            runTest("testData/fileOrElement/function/open.java");
-        }
-
-        @TestMetadata("override.java")
-        public void testOverride() throws Exception {
-            runTest("testData/fileOrElement/function/override.java");
-        }
-
-        @TestMetadata("overrideAndOpen.java")
-        public void testOverrideAndOpen() throws Exception {
-            runTest("testData/fileOrElement/function/overrideAndOpen.java");
-        }
-
-        @TestMetadata("overrideObject.java")
-        public void testOverrideObject() throws Exception {
-            runTest("testData/fileOrElement/function/overrideObject.java");
-        }
-
-        @TestMetadata("overrideObject2.java")
-        public void testOverrideObject2() throws Exception {
-            runTest("testData/fileOrElement/function/overrideObject2.java");
-        }
-
-        @TestMetadata("overrideObject3.java")
-        public void testOverrideObject3() throws Exception {
-            runTest("testData/fileOrElement/function/overrideObject3.java");
-        }
-
-        @TestMetadata("overrideWithHigherVisibility.java")
-        public void testOverrideWithHigherVisibility() throws Exception {
-            runTest("testData/fileOrElement/function/overrideWithHigherVisibility.java");
-        }
-
-        @TestMetadata("ownGenericParam.java")
-        public void testOwnGenericParam() throws Exception {
-            runTest("testData/fileOrElement/function/ownGenericParam.java");
-        }
-
-        @TestMetadata("ownSeveralGenericParams.java")
-        public void testOwnSeveralGenericParams() throws Exception {
-            runTest("testData/fileOrElement/function/ownSeveralGenericParams.java");
-        }
-
-        @TestMetadata("parameterModification.java")
-        public void testParameterModification() throws Exception {
-            runTest("testData/fileOrElement/function/parameterModification.java");
-        }
-
-        @TestMetadata("private.java")
-        public void testPrivate() throws Exception {
-            runTest("testData/fileOrElement/function/private.java");
-        }
-
-        @TestMetadata("protected.java")
-        public void testProtected() throws Exception {
-            runTest("testData/fileOrElement/function/protected.java");
-        }
-
-        @TestMetadata("public.java")
-        public void testPublic() throws Exception {
-            runTest("testData/fileOrElement/function/public.java");
-        }
-
-        @TestMetadata("synchronizedMethod.java")
-        public void testSynchronizedMethod() throws Exception {
-            runTest("testData/fileOrElement/function/synchronizedMethod.java");
-        }
-
-        @TestMetadata("throws.java")
-        public void testThrows() throws Exception {
-            runTest("testData/fileOrElement/function/throws.java");
-        }
-
-        @TestMetadata("varVararg.java")
-        public void testVarVararg() throws Exception {
-            runTest("testData/fileOrElement/function/varVararg.java");
+            @TestMetadata("varVararg.java")
+            public void testVarVararg() throws Exception {
+                runTest("testData/fileOrElement/function/varVararg.java");
+            }
         }
     }
 
@@ -2431,234 +2515,254 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/fileOrElement/issues")
-    public static class Issues extends AbstractJavaToKotlinConverterSingleFileTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class Issues extends AbstractJavaToKotlinConverterSingleFileTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/issues")
+        public static class TestBucket001 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("arrayLength.java")
+            public void testArrayLength() throws Exception {
+                runTest("testData/fileOrElement/issues/arrayLength.java");
+            }
+
+            @TestMetadata("comments.java")
+            public void testComments() throws Exception {
+                runTest("testData/fileOrElement/issues/comments.java");
+            }
+
+            @TestMetadata("doNotQualifyStatic.java")
+            public void testDoNotQualifyStatic() throws Exception {
+                runTest("testData/fileOrElement/issues/doNotQualifyStatic.java");
+            }
+
+            @TestMetadata("kt-1016.java")
+            public void testKt_1016() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-1016.java");
+            }
+
+            @TestMetadata("kt-1048.java")
+            public void testKt_1048() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-1048.java");
+            }
+
+            @TestMetadata("kt-1074.java")
+            public void testKt_1074() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-1074.java");
+            }
+
+            @TestMetadata("kt-14248.java")
+            public void testKt_14248() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-14248.java");
+            }
+
+            @TestMetadata("kt-17379.java")
+            public void testKt_17379() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-17379.java");
+            }
+
+            @TestMetadata("kt-19634.java")
+            public void testKt_19634() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-19634.java");
+            }
+
+            @TestMetadata("kt-19943.java")
+            public void testKt_19943() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-19943.java");
+            }
+
+            @TestMetadata("kt-5294.java")
+            public void testKt_5294() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-5294.java");
+            }
+
+            @TestMetadata("kt-5400.java")
+            public void testKt_5400() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-5400.java");
+            }
+
+            @TestMetadata("kt-543.java")
+            public void testKt_543() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-543.java");
+            }
+
+            @TestMetadata("kt-543-boxed.java")
+            public void testKt_543_boxed() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-543-boxed.java");
+            }
+
+            @TestMetadata("kt-543-mixed.java")
+            public void testKt_543_mixed() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-543-mixed.java");
+            }
+
+            @TestMetadata("kt-638.java")
+            public void testKt_638() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-638.java");
+            }
+
+            @TestMetadata("kt-6790.java")
+            public void testKt_6790() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-6790.java");
+            }
+
+            @TestMetadata("kt-696.java")
+            public void testKt_696() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-696.java");
+            }
+
+            @TestMetadata("kt-792.java")
+            public void testKt_792() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-792.java");
+            }
+
+            @TestMetadata("kt-792-mixed.java")
+            public void testKt_792_mixed() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-792-mixed.java");
+            }
         }
 
-        @TestMetadata("arrayLength.java")
-        public void testArrayLength() throws Exception {
-            runTest("testData/fileOrElement/issues/arrayLength.java");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/issues")
+        public static class TestBucket002 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("kt-794.java")
+            public void testKt_794() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-794.java");
+            }
+
+            @TestMetadata("kt-794-mixed.java")
+            public void testKt_794_mixed() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-794-mixed.java");
+            }
+
+            @TestMetadata("kt-807.java")
+            public void testKt_807() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-807.java");
+            }
+
+            @TestMetadata("kt-809.java")
+            public void testKt_809() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-809.java");
+            }
+
+            @TestMetadata("kt-809-string.java")
+            public void testKt_809_string() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-809-string.java");
+            }
+
+            @TestMetadata("kt-820.java")
+            public void testKt_820() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-820.java");
+            }
+
+            @TestMetadata("kt-820-field.java")
+            public void testKt_820_field() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-820-field.java");
+            }
+
+            @TestMetadata("kt-820-string.java")
+            public void testKt_820_string() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-820-string.java");
+            }
+
+            @TestMetadata("kt-824.java")
+            public void testKt_824() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-824.java");
+            }
+
+            @TestMetadata("kt-824-isDir.java")
+            public void testKt_824_isDir() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-824-isDir.java");
+            }
+
+            @TestMetadata("kt-828.java")
+            public void testKt_828() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-828.java");
+            }
+
+            @TestMetadata("kt-836.java")
+            public void testKt_836() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-836.java");
+            }
+
+            @TestMetadata("kt-837.java")
+            public void testKt_837() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-837.java");
+            }
+
+            @TestMetadata("kt-851.java")
+            public void testKt_851() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-851.java");
+            }
+
+            @TestMetadata("kt-852.java")
+            public void testKt_852() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-852.java");
+            }
+
+            @TestMetadata("kt-871.java")
+            public void testKt_871() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-871.java");
+            }
+
+            @TestMetadata("kt-879.java")
+            public void testKt_879() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-879.java");
+            }
+
+            @TestMetadata("kt-893.java")
+            public void testKt_893() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-893.java");
+            }
+
+            @TestMetadata("kt-899.java")
+            public void testKt_899() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-899.java");
+            }
+
+            @TestMetadata("kt-963.java")
+            public void testKt_963() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-963.java");
+            }
         }
 
-        @TestMetadata("comments.java")
-        public void testComments() throws Exception {
-            runTest("testData/fileOrElement/issues/comments.java");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/issues")
+        public static class TestBucket003 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("doNotQualifyStatic.java")
-        public void testDoNotQualifyStatic() throws Exception {
-            runTest("testData/fileOrElement/issues/doNotQualifyStatic.java");
-        }
+            @TestMetadata("kt-9997.java")
+            public void testKt_9997() throws Exception {
+                runTest("testData/fileOrElement/issues/kt-9997.java");
+            }
 
-        @TestMetadata("kt-1016.java")
-        public void testKt_1016() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-1016.java");
-        }
+            @TestMetadata("operationsWithChar.java")
+            public void testOperationsWithChar() throws Exception {
+                runTest("testData/fileOrElement/issues/operationsWithChar.java");
+            }
 
-        @TestMetadata("kt-1048.java")
-        public void testKt_1048() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-1048.java");
-        }
+            @TestMetadata("qualifyStatic.java")
+            public void testQualifyStatic() throws Exception {
+                runTest("testData/fileOrElement/issues/qualifyStatic.java");
+            }
 
-        @TestMetadata("kt-1074.java")
-        public void testKt_1074() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-1074.java");
-        }
+            @TestMetadata("spaceBeforeAssignment.java")
+            public void testSpaceBeforeAssignment() throws Exception {
+                runTest("testData/fileOrElement/issues/spaceBeforeAssignment.java");
+            }
 
-        @TestMetadata("kt-14248.java")
-        public void testKt_14248() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-14248.java");
-        }
-
-        @TestMetadata("kt-17379.java")
-        public void testKt_17379() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-17379.java");
-        }
-
-        @TestMetadata("kt-19634.java")
-        public void testKt_19634() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-19634.java");
-        }
-
-        @TestMetadata("kt-19943.java")
-        public void testKt_19943() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-19943.java");
-        }
-
-        @TestMetadata("kt-5294.java")
-        public void testKt_5294() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-5294.java");
-        }
-
-        @TestMetadata("kt-5400.java")
-        public void testKt_5400() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-5400.java");
-        }
-
-        @TestMetadata("kt-543.java")
-        public void testKt_543() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-543.java");
-        }
-
-        @TestMetadata("kt-543-boxed.java")
-        public void testKt_543_boxed() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-543-boxed.java");
-        }
-
-        @TestMetadata("kt-543-mixed.java")
-        public void testKt_543_mixed() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-543-mixed.java");
-        }
-
-        @TestMetadata("kt-638.java")
-        public void testKt_638() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-638.java");
-        }
-
-        @TestMetadata("kt-6790.java")
-        public void testKt_6790() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-6790.java");
-        }
-
-        @TestMetadata("kt-696.java")
-        public void testKt_696() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-696.java");
-        }
-
-        @TestMetadata("kt-792.java")
-        public void testKt_792() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-792.java");
-        }
-
-        @TestMetadata("kt-792-mixed.java")
-        public void testKt_792_mixed() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-792-mixed.java");
-        }
-
-        @TestMetadata("kt-794.java")
-        public void testKt_794() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-794.java");
-        }
-
-        @TestMetadata("kt-794-mixed.java")
-        public void testKt_794_mixed() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-794-mixed.java");
-        }
-
-        @TestMetadata("kt-807.java")
-        public void testKt_807() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-807.java");
-        }
-
-        @TestMetadata("kt-809.java")
-        public void testKt_809() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-809.java");
-        }
-
-        @TestMetadata("kt-809-string.java")
-        public void testKt_809_string() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-809-string.java");
-        }
-
-        @TestMetadata("kt-820.java")
-        public void testKt_820() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-820.java");
-        }
-
-        @TestMetadata("kt-820-field.java")
-        public void testKt_820_field() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-820-field.java");
-        }
-
-        @TestMetadata("kt-820-string.java")
-        public void testKt_820_string() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-820-string.java");
-        }
-
-        @TestMetadata("kt-824.java")
-        public void testKt_824() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-824.java");
-        }
-
-        @TestMetadata("kt-824-isDir.java")
-        public void testKt_824_isDir() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-824-isDir.java");
-        }
-
-        @TestMetadata("kt-828.java")
-        public void testKt_828() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-828.java");
-        }
-
-        @TestMetadata("kt-836.java")
-        public void testKt_836() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-836.java");
-        }
-
-        @TestMetadata("kt-837.java")
-        public void testKt_837() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-837.java");
-        }
-
-        @TestMetadata("kt-851.java")
-        public void testKt_851() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-851.java");
-        }
-
-        @TestMetadata("kt-852.java")
-        public void testKt_852() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-852.java");
-        }
-
-        @TestMetadata("kt-871.java")
-        public void testKt_871() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-871.java");
-        }
-
-        @TestMetadata("kt-879.java")
-        public void testKt_879() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-879.java");
-        }
-
-        @TestMetadata("kt-893.java")
-        public void testKt_893() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-893.java");
-        }
-
-        @TestMetadata("kt-899.java")
-        public void testKt_899() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-899.java");
-        }
-
-        @TestMetadata("kt-963.java")
-        public void testKt_963() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-963.java");
-        }
-
-        @TestMetadata("kt-9997.java")
-        public void testKt_9997() throws Exception {
-            runTest("testData/fileOrElement/issues/kt-9997.java");
-        }
-
-        @TestMetadata("operationsWithChar.java")
-        public void testOperationsWithChar() throws Exception {
-            runTest("testData/fileOrElement/issues/operationsWithChar.java");
-        }
-
-        @TestMetadata("qualifyStatic.java")
-        public void testQualifyStatic() throws Exception {
-            runTest("testData/fileOrElement/issues/qualifyStatic.java");
-        }
-
-        @TestMetadata("spaceBeforeAssignment.java")
-        public void testSpaceBeforeAssignment() throws Exception {
-            runTest("testData/fileOrElement/issues/spaceBeforeAssignment.java");
-        }
-
-        @TestMetadata("unfinishedReferenceExpression.java")
-        public void testUnfinishedReferenceExpression() throws Exception {
-            runTest("testData/fileOrElement/issues/unfinishedReferenceExpression.java");
+            @TestMetadata("unfinishedReferenceExpression.java")
+            public void testUnfinishedReferenceExpression() throws Exception {
+                runTest("testData/fileOrElement/issues/unfinishedReferenceExpression.java");
+            }
         }
     }
 
@@ -3176,194 +3280,206 @@ public abstract class JavaToKotlinConverterSingleFileTestGenerated extends Abstr
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/fileOrElement/nullability")
-    public static class Nullability extends AbstractJavaToKotlinConverterSingleFileTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+    public abstract static class Nullability extends AbstractJavaToKotlinConverterSingleFileTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/nullability")
+        public static class TestBucket001 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("autoNotNull.java")
+            public void testAutoNotNull() throws Exception {
+                runTest("testData/fileOrElement/nullability/autoNotNull.java");
+            }
+
+            @TestMetadata("FieldAssignedWithNull.java")
+            public void testFieldAssignedWithNull() throws Exception {
+                runTest("testData/fileOrElement/nullability/FieldAssignedWithNull.java");
+            }
+
+            @TestMetadata("FieldComparedWithNull.java")
+            public void testFieldComparedWithNull() throws Exception {
+                runTest("testData/fileOrElement/nullability/FieldComparedWithNull.java");
+            }
+
+            @TestMetadata("FieldComparedWithNull2.java")
+            public void testFieldComparedWithNull2() throws Exception {
+                runTest("testData/fileOrElement/nullability/FieldComparedWithNull2.java");
+            }
+
+            @TestMetadata("FieldComparedWithNull3.java")
+            public void testFieldComparedWithNull3() throws Exception {
+                runTest("testData/fileOrElement/nullability/FieldComparedWithNull3.java");
+            }
+
+            @TestMetadata("FieldComparedWithNull4.java")
+            public void testFieldComparedWithNull4() throws Exception {
+                runTest("testData/fileOrElement/nullability/FieldComparedWithNull4.java");
+            }
+
+            @TestMetadata("FieldInitializedWithNull.java")
+            public void testFieldInitializedWithNull() throws Exception {
+                runTest("testData/fileOrElement/nullability/FieldInitializedWithNull.java");
+            }
+
+            @TestMetadata("IndirectOverride.java")
+            public void testIndirectOverride() throws Exception {
+                runTest("testData/fileOrElement/nullability/IndirectOverride.java");
+            }
+
+            @TestMetadata("LocalValReassignment.java")
+            public void testLocalValReassignment() throws Exception {
+                runTest("testData/fileOrElement/nullability/LocalValReassignment.java");
+            }
+
+            @TestMetadata("MethodInvokedWithNullArg.java")
+            public void testMethodInvokedWithNullArg() throws Exception {
+                runTest("testData/fileOrElement/nullability/MethodInvokedWithNullArg.java");
+            }
+
+            @TestMetadata("MethodInvokedWithNullArg2.java")
+            public void testMethodInvokedWithNullArg2() throws Exception {
+                runTest("testData/fileOrElement/nullability/MethodInvokedWithNullArg2.java");
+            }
+
+            @TestMetadata("MethodInvokedWithTernaryNullArg.java")
+            public void testMethodInvokedWithTernaryNullArg() throws Exception {
+                runTest("testData/fileOrElement/nullability/MethodInvokedWithTernaryNullArg.java");
+            }
+
+            @TestMetadata("MethodResultComparedWithNull.java")
+            public void testMethodResultComparedWithNull() throws Exception {
+                runTest("testData/fileOrElement/nullability/MethodResultComparedWithNull.java");
+            }
+
+            @TestMetadata("MethodResultComparedWithNull2.java")
+            public void testMethodResultComparedWithNull2() throws Exception {
+                runTest("testData/fileOrElement/nullability/MethodResultComparedWithNull2.java");
+            }
+
+            @TestMetadata("MethodResultComparedWithNull3.java")
+            public void testMethodResultComparedWithNull3() throws Exception {
+                runTest("testData/fileOrElement/nullability/MethodResultComparedWithNull3.java");
+            }
+
+            @TestMetadata("MethodResultComparedWithNull4.java")
+            public void testMethodResultComparedWithNull4() throws Exception {
+                runTest("testData/fileOrElement/nullability/MethodResultComparedWithNull4.java");
+            }
+
+            @TestMetadata("MethodResultInitializesNullableField.java")
+            public void testMethodResultInitializesNullableField() throws Exception {
+                runTest("testData/fileOrElement/nullability/MethodResultInitializesNullableField.java");
+            }
+
+            @TestMetadata("MethodReturnsNull.java")
+            public void testMethodReturnsNull() throws Exception {
+                runTest("testData/fileOrElement/nullability/MethodReturnsNull.java");
+            }
+
+            @TestMetadata("MethodReturnsNullInAnonymousClass.java")
+            public void testMethodReturnsNullInAnonymousClass() throws Exception {
+                runTest("testData/fileOrElement/nullability/MethodReturnsNullInAnonymousClass.java");
+            }
+
+            @TestMetadata("MethodReturnsNullInLocalClass.java")
+            public void testMethodReturnsNullInLocalClass() throws Exception {
+                runTest("testData/fileOrElement/nullability/MethodReturnsNullInLocalClass.java");
+            }
         }
 
-        @TestMetadata("autoNotNull.java")
-        public void testAutoNotNull() throws Exception {
-            runTest("testData/fileOrElement/nullability/autoNotNull.java");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/fileOrElement/nullability")
+        public static class TestBucket002 extends AbstractJavaToKotlinConverterSingleFileTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
 
-        @TestMetadata("FieldAssignedWithNull.java")
-        public void testFieldAssignedWithNull() throws Exception {
-            runTest("testData/fileOrElement/nullability/FieldAssignedWithNull.java");
-        }
+            @TestMetadata("MethodReturnsTernaryNull.java")
+            public void testMethodReturnsTernaryNull() throws Exception {
+                runTest("testData/fileOrElement/nullability/MethodReturnsTernaryNull.java");
+            }
 
-        @TestMetadata("FieldComparedWithNull.java")
-        public void testFieldComparedWithNull() throws Exception {
-            runTest("testData/fileOrElement/nullability/FieldComparedWithNull.java");
-        }
+            @TestMetadata("notNullCast.java")
+            public void testNotNullCast() throws Exception {
+                runTest("testData/fileOrElement/nullability/notNullCast.java");
+            }
 
-        @TestMetadata("FieldComparedWithNull2.java")
-        public void testFieldComparedWithNull2() throws Exception {
-            runTest("testData/fileOrElement/nullability/FieldComparedWithNull2.java");
-        }
+            @TestMetadata("nullableField.java")
+            public void testNullableField() throws Exception {
+                runTest("testData/fileOrElement/nullability/nullableField.java");
+            }
 
-        @TestMetadata("FieldComparedWithNull3.java")
-        public void testFieldComparedWithNull3() throws Exception {
-            runTest("testData/fileOrElement/nullability/FieldComparedWithNull3.java");
-        }
+            @TestMetadata("nullableInitializer1.java")
+            public void testNullableInitializer1() throws Exception {
+                runTest("testData/fileOrElement/nullability/nullableInitializer1.java");
+            }
 
-        @TestMetadata("FieldComparedWithNull4.java")
-        public void testFieldComparedWithNull4() throws Exception {
-            runTest("testData/fileOrElement/nullability/FieldComparedWithNull4.java");
-        }
+            @TestMetadata("nullableInitializer2.java")
+            public void testNullableInitializer2() throws Exception {
+                runTest("testData/fileOrElement/nullability/nullableInitializer2.java");
+            }
 
-        @TestMetadata("FieldInitializedWithNull.java")
-        public void testFieldInitializedWithNull() throws Exception {
-            runTest("testData/fileOrElement/nullability/FieldInitializedWithNull.java");
-        }
+            @TestMetadata("nullableInitializer3.java")
+            public void testNullableInitializer3() throws Exception {
+                runTest("testData/fileOrElement/nullability/nullableInitializer3.java");
+            }
 
-        @TestMetadata("IndirectOverride.java")
-        public void testIndirectOverride() throws Exception {
-            runTest("testData/fileOrElement/nullability/IndirectOverride.java");
-        }
+            @TestMetadata("nullableInitializer4.java")
+            public void testNullableInitializer4() throws Exception {
+                runTest("testData/fileOrElement/nullability/nullableInitializer4.java");
+            }
 
-        @TestMetadata("LocalValReassignment.java")
-        public void testLocalValReassignment() throws Exception {
-            runTest("testData/fileOrElement/nullability/LocalValReassignment.java");
-        }
+            @TestMetadata("NullableIntNoCrash.java")
+            public void testNullableIntNoCrash() throws Exception {
+                runTest("testData/fileOrElement/nullability/NullableIntNoCrash.java");
+            }
 
-        @TestMetadata("MethodInvokedWithNullArg.java")
-        public void testMethodInvokedWithNullArg() throws Exception {
-            runTest("testData/fileOrElement/nullability/MethodInvokedWithNullArg.java");
-        }
+            @TestMetadata("NullableMethodDotAccess.java")
+            public void testNullableMethodDotAccess() throws Exception {
+                runTest("testData/fileOrElement/nullability/NullableMethodDotAccess.java");
+            }
 
-        @TestMetadata("MethodInvokedWithNullArg2.java")
-        public void testMethodInvokedWithNullArg2() throws Exception {
-            runTest("testData/fileOrElement/nullability/MethodInvokedWithNullArg2.java");
-        }
+            @TestMetadata("NullableVariableDotAccess.java")
+            public void testNullableVariableDotAccess() throws Exception {
+                runTest("testData/fileOrElement/nullability/NullableVariableDotAccess.java");
+            }
 
-        @TestMetadata("MethodInvokedWithTernaryNullArg.java")
-        public void testMethodInvokedWithTernaryNullArg() throws Exception {
-            runTest("testData/fileOrElement/nullability/MethodInvokedWithTernaryNullArg.java");
-        }
+            @TestMetadata("OverrideWithInheritanceLoop.java")
+            public void testOverrideWithInheritanceLoop() throws Exception {
+                runTest("testData/fileOrElement/nullability/OverrideWithInheritanceLoop.java");
+            }
 
-        @TestMetadata("MethodResultComparedWithNull.java")
-        public void testMethodResultComparedWithNull() throws Exception {
-            runTest("testData/fileOrElement/nullability/MethodResultComparedWithNull.java");
-        }
+            @TestMetadata("Overrides.java")
+            public void testOverrides() throws Exception {
+                runTest("testData/fileOrElement/nullability/Overrides.java");
+            }
 
-        @TestMetadata("MethodResultComparedWithNull2.java")
-        public void testMethodResultComparedWithNull2() throws Exception {
-            runTest("testData/fileOrElement/nullability/MethodResultComparedWithNull2.java");
-        }
+            @TestMetadata("ParameterComparedWithNull.java")
+            public void testParameterComparedWithNull() throws Exception {
+                runTest("testData/fileOrElement/nullability/ParameterComparedWithNull.java");
+            }
 
-        @TestMetadata("MethodResultComparedWithNull3.java")
-        public void testMethodResultComparedWithNull3() throws Exception {
-            runTest("testData/fileOrElement/nullability/MethodResultComparedWithNull3.java");
-        }
+            @TestMetadata("VariableAssignedWithNull.java")
+            public void testVariableAssignedWithNull() throws Exception {
+                runTest("testData/fileOrElement/nullability/VariableAssignedWithNull.java");
+            }
 
-        @TestMetadata("MethodResultComparedWithNull4.java")
-        public void testMethodResultComparedWithNull4() throws Exception {
-            runTest("testData/fileOrElement/nullability/MethodResultComparedWithNull4.java");
-        }
+            @TestMetadata("VariableComparedWithNull.java")
+            public void testVariableComparedWithNull() throws Exception {
+                runTest("testData/fileOrElement/nullability/VariableComparedWithNull.java");
+            }
 
-        @TestMetadata("MethodResultInitializesNullableField.java")
-        public void testMethodResultInitializesNullableField() throws Exception {
-            runTest("testData/fileOrElement/nullability/MethodResultInitializesNullableField.java");
-        }
+            @TestMetadata("VariableInitializedWithNull.java")
+            public void testVariableInitializedWithNull() throws Exception {
+                runTest("testData/fileOrElement/nullability/VariableInitializedWithNull.java");
+            }
 
-        @TestMetadata("MethodReturnsNull.java")
-        public void testMethodReturnsNull() throws Exception {
-            runTest("testData/fileOrElement/nullability/MethodReturnsNull.java");
-        }
-
-        @TestMetadata("MethodReturnsNullInAnonymousClass.java")
-        public void testMethodReturnsNullInAnonymousClass() throws Exception {
-            runTest("testData/fileOrElement/nullability/MethodReturnsNullInAnonymousClass.java");
-        }
-
-        @TestMetadata("MethodReturnsNullInLocalClass.java")
-        public void testMethodReturnsNullInLocalClass() throws Exception {
-            runTest("testData/fileOrElement/nullability/MethodReturnsNullInLocalClass.java");
-        }
-
-        @TestMetadata("MethodReturnsTernaryNull.java")
-        public void testMethodReturnsTernaryNull() throws Exception {
-            runTest("testData/fileOrElement/nullability/MethodReturnsTernaryNull.java");
-        }
-
-        @TestMetadata("notNullCast.java")
-        public void testNotNullCast() throws Exception {
-            runTest("testData/fileOrElement/nullability/notNullCast.java");
-        }
-
-        @TestMetadata("nullableField.java")
-        public void testNullableField() throws Exception {
-            runTest("testData/fileOrElement/nullability/nullableField.java");
-        }
-
-        @TestMetadata("nullableInitializer1.java")
-        public void testNullableInitializer1() throws Exception {
-            runTest("testData/fileOrElement/nullability/nullableInitializer1.java");
-        }
-
-        @TestMetadata("nullableInitializer2.java")
-        public void testNullableInitializer2() throws Exception {
-            runTest("testData/fileOrElement/nullability/nullableInitializer2.java");
-        }
-
-        @TestMetadata("nullableInitializer3.java")
-        public void testNullableInitializer3() throws Exception {
-            runTest("testData/fileOrElement/nullability/nullableInitializer3.java");
-        }
-
-        @TestMetadata("nullableInitializer4.java")
-        public void testNullableInitializer4() throws Exception {
-            runTest("testData/fileOrElement/nullability/nullableInitializer4.java");
-        }
-
-        @TestMetadata("NullableIntNoCrash.java")
-        public void testNullableIntNoCrash() throws Exception {
-            runTest("testData/fileOrElement/nullability/NullableIntNoCrash.java");
-        }
-
-        @TestMetadata("NullableMethodDotAccess.java")
-        public void testNullableMethodDotAccess() throws Exception {
-            runTest("testData/fileOrElement/nullability/NullableMethodDotAccess.java");
-        }
-
-        @TestMetadata("NullableVariableDotAccess.java")
-        public void testNullableVariableDotAccess() throws Exception {
-            runTest("testData/fileOrElement/nullability/NullableVariableDotAccess.java");
-        }
-
-        @TestMetadata("OverrideWithInheritanceLoop.java")
-        public void testOverrideWithInheritanceLoop() throws Exception {
-            runTest("testData/fileOrElement/nullability/OverrideWithInheritanceLoop.java");
-        }
-
-        @TestMetadata("Overrides.java")
-        public void testOverrides() throws Exception {
-            runTest("testData/fileOrElement/nullability/Overrides.java");
-        }
-
-        @TestMetadata("ParameterComparedWithNull.java")
-        public void testParameterComparedWithNull() throws Exception {
-            runTest("testData/fileOrElement/nullability/ParameterComparedWithNull.java");
-        }
-
-        @TestMetadata("VariableAssignedWithNull.java")
-        public void testVariableAssignedWithNull() throws Exception {
-            runTest("testData/fileOrElement/nullability/VariableAssignedWithNull.java");
-        }
-
-        @TestMetadata("VariableComparedWithNull.java")
-        public void testVariableComparedWithNull() throws Exception {
-            runTest("testData/fileOrElement/nullability/VariableComparedWithNull.java");
-        }
-
-        @TestMetadata("VariableInitializedWithNull.java")
-        public void testVariableInitializedWithNull() throws Exception {
-            runTest("testData/fileOrElement/nullability/VariableInitializedWithNull.java");
-        }
-
-        @TestMetadata("VariableInitializedWithTernaryNull.java")
-        public void testVariableInitializedWithTernaryNull() throws Exception {
-            runTest("testData/fileOrElement/nullability/VariableInitializedWithTernaryNull.java");
+            @TestMetadata("VariableInitializedWithTernaryNull.java")
+            public void testVariableInitializedWithTernaryNull() throws Exception {
+                runTest("testData/fileOrElement/nullability/VariableInitializedWithTernaryNull.java");
+            }
         }
     }
 

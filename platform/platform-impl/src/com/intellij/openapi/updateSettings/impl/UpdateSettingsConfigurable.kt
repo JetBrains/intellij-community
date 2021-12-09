@@ -122,9 +122,7 @@ class UpdateSettingsConfigurable @JvmOverloads constructor (private val checkNow
                 .customize(customGaps = Gaps(right = JBUI.scale(10)))
               panel {
                 row {
-                  label(IdeBundle.message("updates.settings.recommend.toolbox.first.part") + " ")
-                    .bold()
-                  browserLink(ExternalUpdateManager.TOOLBOX.toolName, TOOLBOX_URL)
+                  text(IdeBundle.message("updates.settings.recommend.toolbox", TOOLBOX_URL, ExternalUpdateManager.TOOLBOX.toolName))
                     .bold()
                 }
                 row {

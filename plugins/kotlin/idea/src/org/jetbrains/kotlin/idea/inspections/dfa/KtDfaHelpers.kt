@@ -110,7 +110,11 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
                     else -> {
                         val psiClass =
                             JavaPsiFacade.getInstance(context.project).findClass(typeFqName, context.resolveScope) ?: return DfType.TOP
-                        TypeConstraints.exactClass(psiClass).instanceOf()
+                        if (descriptor.kind == ClassKind.OBJECT) {
+                            TypeConstraints.singleton(psiClass)
+                        } else {
+                            TypeConstraints.exactClass(psiClass).instanceOf()
+                        }
                     }
                 }
                 return typeConstraint.asDfType().meet(DfTypes.NOT_NULL_OBJECT)

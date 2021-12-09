@@ -150,8 +150,8 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private Path buildTarGz(String jreDirectoryPath, Path unixDistPath, String suffix, BuildContext buildContext) {
     def tarRoot = customizer.getRootDirectoryName(buildContext.applicationInfo, buildContext.buildNumber)
     def baseName = buildContext.productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-    Path tarPath = Path.of("${buildContext.paths.artifacts}/${baseName}${suffix}.tar.gz")
-    def paths = [buildContext.paths.distAll, unixDistPath.toString()]
+    Path tarPath = buildContext.paths.artifactDir.resolve("${baseName}${suffix}.tar.gz")
+    List<String> paths = [buildContext.paths.distAll, unixDistPath.toString()]
 
     String javaExecutablePath = null
     if (jreDirectoryPath != null) {
@@ -292,8 +292,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         arg(value: "result/$snapArtifact")
       }
 
-      BuildHelper.moveFileToDir(resultDir.resolve(snapArtifact), Path.of(buildContext.paths.artifacts))
-      buildContext.notifyArtifactBuilt("${buildContext.paths.artifacts}/" + snapArtifact)
+      BuildHelper.moveFileToDir(resultDir.resolve(snapArtifact), buildContext.paths.artifactDir)
     }
   }
 

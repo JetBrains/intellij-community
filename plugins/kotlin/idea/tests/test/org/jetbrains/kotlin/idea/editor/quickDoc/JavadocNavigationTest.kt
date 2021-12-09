@@ -32,7 +32,7 @@ class JavadocNavigationTest() : KotlinLightCodeInsightFixtureTestCase() {
         Assert.assertEquals(
             """<div class='definition'><pre><span style="color:#000080;font-weight:bold;">class</span> <span style="color:#000000;">ExtMethod</span>
 <span style="color:#000080;font-weight:bold;">extends</span> <a href="psi_element://Super"><code><span style="color:#000000;">Super</span></code></a></pre></div><div class='content'>
-   <a href="psi_element://Project#guessDir()"><code>directory</code></a>
+  <a href="psi_element://Project#guessDir()"><code>directory</code></a>
  </div><table class='sections'><p></table>""", docInfo)
     }
     

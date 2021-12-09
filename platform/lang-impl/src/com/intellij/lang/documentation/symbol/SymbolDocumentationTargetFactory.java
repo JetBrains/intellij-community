@@ -17,6 +17,8 @@ import org.jetbrains.annotations.Nullable;
  * <li>implement {@link DocumentationSymbol} in a Symbol to provide the documentation target for the symbol</li>
  * <li>implement {@link DocumentationTarget} directly in a Symbol</li>
  * </ul>
+ *
+ * @see com.intellij.lang.documentation.psi.PsiDocumentationTargetFactory
  */
 @Experimental
 public interface SymbolDocumentationTargetFactory {

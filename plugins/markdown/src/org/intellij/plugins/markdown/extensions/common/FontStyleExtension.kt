@@ -3,14 +3,11 @@ package org.intellij.plugins.markdown.extensions.common
 
 import com.intellij.openapi.project.Project
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
-import org.intellij.plugins.markdown.extensions.MarkdownExtension
+import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
 
 internal class FontStyleExtension(private val project: Project): MarkdownBrowserPreviewExtension, ResourceProvider {
-  private val settings
-    get() = MarkdownExtension.currentProjectSettings
-
   override val priority: MarkdownBrowserPreviewExtension.Priority
     get() = MarkdownBrowserPreviewExtension.Priority.AFTER_ALL
 
@@ -21,6 +18,7 @@ internal class FontStyleExtension(private val project: Project): MarkdownBrowser
   override fun canProvide(resourceName: String): Boolean = resourceName in styles
 
   override fun loadResource(resourceName: String): ResourceProvider.Resource {
+    val settings = MarkdownSettings.getInstance(project)
     val css = getFontSizeCss(settings.fontSize, checkNotNull(settings.fontFamily))
     return ResourceProvider.Resource(css.toByteArray())
   }

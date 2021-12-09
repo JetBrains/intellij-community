@@ -21,7 +21,8 @@ public class HgExecutableValidator extends ExecutableValidator {
   public HgExecutableValidator(@NotNull Project project) {
     super(project,
           HgBundle.message("hg4idea.executable.notification.title"),
-          HgBundle.message("hg4idea.executable.notification.description"));
+          HgBundle.message("hg4idea.executable.notification.description"),
+          HgBundle.message("hg4idea.executable.notification.cant.run.in.safe.mode"));
   }
 
   @Override

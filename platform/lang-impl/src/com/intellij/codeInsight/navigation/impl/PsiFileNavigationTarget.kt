@@ -4,10 +4,10 @@ package com.intellij.codeInsight.navigation.impl
 import com.intellij.codeInsight.navigation.fileLocation
 import com.intellij.codeInsight.navigation.fileStatusAttributes
 import com.intellij.model.Pointer
+import com.intellij.navigation.NavigationRequest
 import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil
-import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.createSmartPointer
 
@@ -18,8 +18,6 @@ internal class PsiFileNavigationTarget(
   override fun createPointer(): Pointer<out NavigationTarget> = Pointer.delegatingPointer(
     psiFile.createSmartPointer(), PsiFileNavigationTarget::class.java, ::PsiFileNavigationTarget
   )
-
-  override fun getNavigatable(): Navigatable = psiFile
 
   override fun getTargetPresentation(): TargetPresentation {
     val project = psiFile.project
@@ -42,5 +40,9 @@ internal class PsiFileNavigationTarget(
     builder = builder.locationText(locationAndIcon.text, locationAndIcon.icon)
 
     return builder.presentation()
+  }
+
+  override fun navigationRequest(): NavigationRequest? {
+    return psiFile.navigationRequest()
   }
 }

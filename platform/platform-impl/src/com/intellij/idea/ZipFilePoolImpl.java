@@ -2,8 +2,8 @@
 package com.intellij.idea;
 
 import com.intellij.util.lang.ClassLoadingLocks;
-import com.intellij.util.lang.ImmutableZipEntry;
 import com.intellij.util.lang.ImmutableZipFile;
+import com.intellij.util.lang.ZipFile;
 import com.intellij.util.lang.ZipFilePool;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -21,7 +21,7 @@ public final class ZipFilePoolImpl extends ZipFilePool {
   private final ClassLoadingLocks<Path> lock = new ClassLoadingLocks<>();
 
   @Override
-  public @NotNull ImmutableZipFile loadZipFile(@NotNull Path file) throws IOException {
+  public @NotNull ZipFile loadZipFile(@NotNull Path file) throws IOException {
     MyEntryResolver resolver = pool.get(file);
     if (resolver == null) {
       // doesn't make sense to use pool for requests from class loader (requested only once per class loader)
@@ -39,7 +39,7 @@ public final class ZipFilePoolImpl extends ZipFilePool {
       synchronized (lock.getOrCreateLock(file)) {
         resolver = pool.get(file);
         if (resolver == null) {
-          ImmutableZipFile zipFile = ImmutableZipFile.load(file);
+          ZipFile zipFile = ImmutableZipFile.load(file);
           resolver = new MyEntryResolver(zipFile);
           pool.put(file, resolver);
         }
@@ -49,16 +49,15 @@ public final class ZipFilePoolImpl extends ZipFilePool {
   }
 
   private static final class MyEntryResolver implements ZipFilePool.EntryResolver {
-    private final ImmutableZipFile zipFile;
+    private final ZipFile zipFile;
 
-    MyEntryResolver(ImmutableZipFile zipFile) {
+    MyEntryResolver(ZipFile zipFile) {
       this.zipFile = zipFile;
     }
 
     @Override
     public @Nullable InputStream loadZipEntry(@NotNull String path) throws IOException {
-      ImmutableZipEntry entry = zipFile.getEntry(path.charAt(0) == '/' ? path.substring(1) : path);
-      return entry == null ? null : entry.getInputStream(zipFile);
+      return zipFile.getInputStream(path.charAt(0) == '/' ? path.substring(1) : path);
     }
 
     @Override

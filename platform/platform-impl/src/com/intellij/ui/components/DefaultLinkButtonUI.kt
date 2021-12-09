@@ -6,6 +6,7 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.JBColor
 import com.intellij.ui.paint.RectanglePainter
 import com.intellij.ui.scale.JBUIScale.scale
+import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI.CurrentTheme.Link
 import com.intellij.util.ui.UIUtilities
@@ -31,7 +32,6 @@ import javax.swing.text.Element
 import javax.swing.text.Position.Bias
 import javax.swing.text.View
 import javax.swing.text.html.HTMLDocument
-import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.ImageView
 import javax.swing.text.html.StyleSheet
 
@@ -243,22 +243,14 @@ private val sharedUnderlineStyles by lazy {
 }
 
 private val sharedEditorKit by lazy {
-  object : HTMLEditorKit() {
-    override fun getViewFactory() = lazyViewFactory
-
-    private val lazyViewFactory by lazy {
-      object : HTMLFactory() {
-        override fun create(elem: Element): View {
-          val view = super.create(elem)
-          if (view is ImageView) {
-            // force images to be loaded synchronously
-            view.loadsSynchronously = true
-          }
-          return view
-        }
+  HTMLEditorKitBuilder().withViewFactoryExtensions(
+    { _, view ->
+      if (view is ImageView) {
+        // force images to be loaded synchronously
+        view.loadsSynchronously = true
       }
-    }
-  }
+      view
+    }).build()
 }
 
 private class UnderlinedView(private val button: AbstractButton, private val view: View) : View(null) {

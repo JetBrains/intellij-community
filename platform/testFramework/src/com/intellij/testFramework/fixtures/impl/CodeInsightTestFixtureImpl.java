@@ -1540,6 +1540,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
     Editor editor = instance.openTextEditor(new OpenFileDescriptor(project, file), false);
+    UIUtil.markAsFocused(editor.getContentComponent(), true); // to make UIUtil.hasFocus return true to make ShowAutoImportPass.showImports work
     EditorTestUtil.waitForLoading(editor);
     DaemonCodeAnalyzer.getInstance(getProject()).restart();
     return editor;

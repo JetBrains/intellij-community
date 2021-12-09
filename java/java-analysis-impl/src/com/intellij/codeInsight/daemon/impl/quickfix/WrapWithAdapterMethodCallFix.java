@@ -237,14 +237,17 @@ public final class WrapWithAdapterMethodCallFix extends LocalQuickFixAndIntentio
     @NotNull
     @Override
     public String getText() {
-      return myArgList.getExpressionCount() == 1
+      PsiExpressionList list = myArgList.getElement();
+      return list != null && list.getExpressionCount() == 1
              ? QuickFixBundle.message("wrap.with.adapter.parameter.single.text", myArgumentFixerActionFactory)
              : QuickFixBundle.message("wrap.with.adapter.parameter.multiple.text", myIndex + 1, myArgumentFixerActionFactory);
     }
 
     @Override
     public @Nullable FileModifier getFileModifierForPreview(@NotNull PsiFile target) {
-      return new MyMethodArgumentFix(PsiTreeUtil.findSameElementInCopy(myArgList, target), myIndex, myToType,
+      PsiExpressionList list = myArgList.getElement();
+      if (list == null) return null;
+      return new MyMethodArgumentFix(PsiTreeUtil.findSameElementInCopy(list, target), myIndex, myToType,
                                      (Wrapper)myArgumentFixerActionFactory);
     }
   }

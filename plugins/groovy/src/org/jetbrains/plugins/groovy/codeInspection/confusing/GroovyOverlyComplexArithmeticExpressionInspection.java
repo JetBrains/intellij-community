@@ -15,15 +15,15 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.confusing;
 
-import com.siyeh.InspectionGadgetsBundle;
 import com.intellij.codeInspection.ui.SingleIntegerFieldOptionsPanel;
+import com.siyeh.InspectionGadgetsBundle;
 
 import javax.swing.*;
 
 public class GroovyOverlyComplexArithmeticExpressionInspection extends GroovyOverlyComplexArithmeticExpressionInspectionBase {
 
   @Override
-  public JComponent createOptionsPanel() {
+  public JComponent createGroovyOptionsPanel() {
     return new SingleIntegerFieldOptionsPanel(InspectionGadgetsBundle.message("overly.complex.arithmetic.expression.max.number.option"),
                                               this, "m_limit");
   }

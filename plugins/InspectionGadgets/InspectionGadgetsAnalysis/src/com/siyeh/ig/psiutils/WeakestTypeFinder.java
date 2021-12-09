@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.psiutils;
 
 import com.intellij.openapi.progress.ProgressManager;
@@ -133,6 +133,12 @@ public final class WeakestTypeFinder {
           return Collections.emptyList();
         }
       }
+      else if (referenceParent instanceof PsiNameValuePair) {
+        final PsiType type = ExpectedTypeUtils.findExpectedType((PsiExpression)referenceElement, true);
+        if (!checkType(type, weakestTypeClasses)) {
+          return Collections.emptyList();
+        }
+      }
       else if (referenceParent instanceof PsiVariable) {
         final PsiVariable variable = (PsiVariable)referenceParent;
         final PsiType type = variable.getType();
@@ -191,22 +197,42 @@ public final class WeakestTypeFinder {
           return Collections.emptyList();
         }
       }
-      else if (referenceParent instanceof PsiBinaryExpression) {
-        // strings only
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)referenceParent;
-        final PsiType type = binaryExpression.getType();
-        if (variableOrMethodType.equals(type)) {
-          if (!checkType(type, weakestTypeClasses)) {
-            return Collections.emptyList();
+      else if (referenceParent instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)referenceParent;
+        final PsiType type = polyadicExpression.getType();
+        if (TypeUtils.isJavaLangString(type)) {
+          if (ExpressionUtils.hasStringType((PsiExpression)referenceElement)) {
+            final PsiExpression[] operands = polyadicExpression.getOperands();
+            boolean first = true;
+            boolean stringSeen = false;
+            for (PsiExpression operand : operands) {
+              if (operand == reference) {
+                break;
+              }
+              first = false;
+              if (ExpressionUtils.hasStringType(operand)) {
+                stringSeen = true;
+                break;
+              }
+            }
+            if (!stringSeen && (!first || !ExpressionUtils.hasStringType(operands[1]))) {
+              if (!checkType(type, weakestTypeClasses)) {
+                return Collections.emptyList();
+              }
+            }
           }
         }
+        else if (!ComparisonUtils.isEqualityComparison(polyadicExpression)) {
+          return Collections.emptyList();
+        }
       }
-      else if (referenceParent instanceof PsiSwitchStatement) {
-        // only enums and primitives can be a switch expression
+      else if (referenceParent instanceof PsiSwitchBlock) {
+        // only enums, Strings and primitives can be a switch expression
+        // pattern matching not yet supported
         return Collections.emptyList();
       }
       else if (referenceParent instanceof PsiUnaryExpression) {
-        // only primitives and boxed types are the target of an unary
+        // only primitives and boxed types are the target of a unary
         // expression
         return Collections.emptyList();
       }

@@ -7,12 +7,12 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import org.intellij.plugins.markdown.MarkdownTestingUtil;
-import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider;
+import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider;
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles;
 import org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLCodeGeneratingProvider;
 import org.intellij.plugins.markdown.extensions.common.plantuml.PlantUMLJarManager;
 import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings;
-import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCache;
+import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceHtmlCache;
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
 
 import java.io.IOException;
@@ -39,7 +39,7 @@ public class MarkdownPlantUMLTest extends BasePlatformTestCase {
     myFixture = IdeaTestFixtureFactory.getFixtureFactory().createTempDirTestFixture();
     myFixture.setUp();
 
-    extension = MarkdownCodeFencePluginGeneratingProvider.Companion.getAll().stream()
+    extension = CodeFenceGeneratingProvider.Companion.getAll().stream()
       .filter(PlantUMLCodeGeneratingProvider.class::isInstance)
       .map(PlantUMLCodeGeneratingProvider.class::cast)
       .findFirst().orElse(null);
@@ -88,7 +88,7 @@ public class MarkdownPlantUMLTest extends BasePlatformTestCase {
     VirtualFile mdVFile = myFixture.getFile("plantuml/" + getTestName(true) + ".md");
     try {
       assertTrue(MarkdownUtil.INSTANCE.generateMarkdownHtml(mdVFile, VfsUtilCore.loadText(mdVFile), getProject()).contains(
-        MarkdownUtil.INSTANCE.md5(mdVFile.getPath(), MarkdownCodeFencePluginCache.MARKDOWN_FILE_PATH_KEY)));
+        MarkdownUtil.INSTANCE.md5(mdVFile.getPath(), MarkdownCodeFenceHtmlCache.MARKDOWN_FILE_PATH_KEY)));
     }
     catch (IOException e) {
       e.printStackTrace();

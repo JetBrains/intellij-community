@@ -75,6 +75,7 @@ public class NavBarUpdateQueue extends MergingUpdateQueue {
       NavBarModel model = myPanel.getModel();
       if (dataContext != null) {
         Component parent = UIUtil.findUltimateParent(PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(dataContext));
+        if (parent == null) return;
         Project project = parent instanceof IdeFrame ? ((IdeFrame)parent).getProject() : null;
         if (myPanel.getProject() != project || myPanel.isNodePopupActive()) {
           requestModelUpdate(null, myPanel.getContextObject(), true);

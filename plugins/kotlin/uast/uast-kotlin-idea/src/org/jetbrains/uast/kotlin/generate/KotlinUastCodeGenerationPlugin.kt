@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.scopes.utils.findClassifier
-import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.generate.UParameterInfo
@@ -66,9 +65,9 @@ class KotlinUastCodeGenerationPlugin : UastCodeGenerationPlugin {
             else ->
                 oldPsi to newPsi
         }
-
-        return when (val replaced = updOldPsi.replace(updNewPsi)?.safeAs<KtElement>()?.let { ShortenReferences.DEFAULT.process(it) }) {
-            is KtCallExpression, is KtQualifiedExpression -> replaced.cast<KtExpression>().getPossiblyQualifiedCallExpression()
+        val replaced = updOldPsi.replace(updNewPsi)?.safeAs<KtElement>()?.let { ShortenReferences.DEFAULT.process(it) }
+        return when  {
+            newElement.sourcePsi is KtCallExpression && replaced is KtQualifiedExpression -> replaced.selectorExpression
             else -> replaced
         }?.toUElementOfExpectedTypes(elementType)
     }

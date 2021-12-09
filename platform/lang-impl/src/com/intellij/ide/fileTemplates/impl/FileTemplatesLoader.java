@@ -13,14 +13,12 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ClearableLazyValue;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.objectTree.ThrowableInterner;
 import com.intellij.project.ProjectKt;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.UriUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.URLUtil;
 import org.apache.velocity.runtime.ParserPool;
@@ -49,12 +47,12 @@ class FileTemplatesLoader implements Disposable {
   private static final String DESCRIPTION_FILE_EXTENSION = "html";
   private static final String DESCRIPTION_EXTENSION_SUFFIX = "." + DESCRIPTION_FILE_EXTENSION;
 
-  private static final Map<String, String> MANAGER_TO_DIR = ContainerUtil.newHashMap(
-    Pair.create(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, ""),
-    Pair.create(FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, "internal"),
-    Pair.create(FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, "includes"),
-    Pair.create(FileTemplateManager.CODE_TEMPLATES_CATEGORY, "code"),
-    Pair.create(FileTemplateManager.J2EE_TEMPLATES_CATEGORY, "j2ee")
+  private static final Map<String, String> MANAGER_TO_DIR = Map.of(
+    FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, "",
+    FileTemplateManager.INTERNAL_TEMPLATES_CATEGORY, "internal",
+    FileTemplateManager.INCLUDES_TEMPLATES_CATEGORY, "includes",
+    FileTemplateManager.CODE_TEMPLATES_CATEGORY, "code",
+    FileTemplateManager.J2EE_TEMPLATES_CATEGORY, "j2ee"
   );
 
   private final ClearableLazyValue<LoadedConfiguration> myManagers;
@@ -176,10 +174,10 @@ class FileTemplatesLoader implements Disposable {
   private static @NotNull FileTemplateLoadResult loadDefaultTemplates(@NotNull List<String> prefixes) {
     FileTemplateLoadResult result = new FileTemplateLoadResult(new MultiMap<>());
     Set<URL> processedUrls = new HashSet<>();
-    Set<ClassLoader> processedLoaders = new HashSet<>();
+    Set<ClassLoader> processedLoaders = Collections.newSetFromMap(new IdentityHashMap<>());
     for (IdeaPluginDescriptorImpl plugin : PluginManagerCore.getPluginSet().enabledPlugins) {
       ClassLoader loader = plugin.getClassLoader();
-      if (loader instanceof PluginAwareClassLoader && ((PluginAwareClassLoader)loader).getFiles().isEmpty() ||
+      if (((loader instanceof PluginAwareClassLoader) && ((PluginAwareClassLoader)loader).getFiles().isEmpty()) ||
           !processedLoaders.add(loader)) {
         // test or development mode, when IDEA_CORE's loader contains all the classpath
         continue;

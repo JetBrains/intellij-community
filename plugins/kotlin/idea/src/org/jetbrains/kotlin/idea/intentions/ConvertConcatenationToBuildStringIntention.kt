@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.core.ShortenReferences
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.calls.callUtil.getType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
@@ -25,7 +26,7 @@ class ConvertConcatenationToBuildStringIntention : SelfTargetingIntention<KtBina
 ) {
 
     override fun isApplicableTo(element: KtBinaryExpression, caretOffset: Int): Boolean {
-        return element.isConcatenation() && !element.parent.isConcatenation()
+        return element.isConcatenation() && !element.parent.isConcatenation() && !element.mustBeConstant()
     }
 
     override fun applyTo(element: KtBinaryExpression, editor: Editor?) {
@@ -102,3 +103,5 @@ class ConvertConcatenationToBuildStringIntention : SelfTargetingIntention<KtBina
 
     private fun PsiElement.isWhiteSpaceWithLineBreak() = this is PsiWhiteSpace && this.textContains('\n')
 }
+
+internal fun KtExpression.mustBeConstant(): Boolean = this.parents.any { it is KtAnnotationEntry }

@@ -8,8 +8,8 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
-import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.ide.plugins.marketplace.statistics.PluginManagerUsageCollector;
+import com.intellij.ide.plugins.org.PluginManagerFilters;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.IdeUrlTrackingParametersProvider;
@@ -18,7 +18,7 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.text.HtmlChunk;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
@@ -42,9 +42,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.text.Element;
 import javax.swing.text.View;
-import javax.swing.text.ViewFactory;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.ImageView;
 import javax.swing.text.html.ParagraphView;
@@ -60,8 +58,7 @@ import java.util.function.Consumer;
 /**
  * @author Alexander Lobas
  */
-public class PluginDetailsPageComponent extends MultiPanel {
-
+public final class PluginDetailsPageComponent extends MultiPanel {
   private static final String MARKETPLACE_LINK = "/plugin/index?xmlId=";
 
   private final MyPluginModel myPluginModel;
@@ -116,7 +113,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
     setEmptyState(EmptyState.NONE_SELECTED);
   }
 
-  final @Nullable IdeaPluginDescriptor getPlugin() {
+  @Nullable IdeaPluginDescriptor getPlugin() {
     return myPlugin;
   }
 
@@ -428,34 +425,23 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
   @NotNull
   public static JEditorPane createDescriptionComponent(@Nullable Consumer<? super View> imageViewHandler) {
-    HTMLEditorKit kit = new JBHtmlEditorKit() {
-      private final ViewFactory myFactory = new JBHtmlFactory() {
-        @Override
-        public View create(Element e) {
-          View view = super.create(e);
-          if (view instanceof ParagraphView) {
-            return new ParagraphView(e) {
-              {
-                super.setLineSpacing(0.3f);
-              }
-
-              @Override
-              protected void setLineSpacing(float ls) {
-              }
-            };
+    HTMLEditorKit kit = new HTMLEditorKitBuilder().withViewFactoryExtensions((e, view) -> {
+      if (view instanceof ParagraphView) {
+        return new ParagraphView(e) {
+          {
+            super.setLineSpacing(0.3f);
           }
-          if (imageViewHandler != null && view instanceof ImageView) {
-            imageViewHandler.accept(view);
-          }
-          return view;
-        }
-      };
 
-      @Override
-      public ViewFactory getViewFactory() {
-        return myFactory;
+          @Override
+          protected void setLineSpacing(float ls) {
+          }
+        };
       }
-    };
+      if (imageViewHandler != null && view instanceof ImageView) {
+        imageViewHandler.accept(view);
+      }
+      return view;
+    }).build();
 
     StyleSheet sheet = kit.getStyleSheet();
     sheet.addRule("ul { margin-left-ltr: 30; margin-right-rtl: 30; }");
@@ -485,12 +471,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
     return editorPane;
   }
 
-  public final void showPlugins(@NotNull List<? extends ListPluginComponent> selection) {
+  public void showPlugins(@NotNull List<? extends ListPluginComponent> selection) {
     int size = selection.size();
     showPlugin(size == 1 ? selection.get(0) : null, size > 1);
   }
 
-  public final void showPlugin(@Nullable ListPluginComponent component) {
+  public void showPlugin(@Nullable ListPluginComponent component) {
     showPlugin(component, false);
   }
 
@@ -531,7 +517,6 @@ public class PluginDetailsPageComponent extends MultiPanel {
                 stopLoading();
                 showPluginImpl(component.getPluginDescriptor(), component.myUpdateDescriptor);
                 PluginManagerUsageCollector.pluginCardOpened(component.getPluginDescriptor(), component.getGroup());
-
               }
             }, ModalityState.stateForComponent(component));
           });
@@ -591,7 +576,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
 
     String version = myPlugin.getVersion();
     if (myPlugin.isBundled() && !myPlugin.allowBundledUpdate()) {
-      version = IdeBundle.message("plugin.version.bundled") + (StringUtil.isEmptyOrSpaces(version) ? "" : " " + version);
+      version = IdeBundle.message("plugin.version.bundled") + (Strings.isEmptyOrSpaces(version) ? "" : " " + version);
     }
     if (myUpdateDescriptor != null) {
       version = NewUiUtil.getVersion(myPlugin, myUpdateDescriptor);
@@ -603,7 +588,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
       .setPreferredSize(
         new Dimension(myVersionSize.getPreferredSize().width + JBUIScale.scale(4), myVersionSize.getPreferredSize().height));
 
-    myVersion.setVisible(!StringUtil.isEmptyOrSpaces(version));
+    myVersion.setVisible(!Strings.isEmptyOrSpaces(version));
 
     myTagPanel.setTags(PluginManagerConfigurable.getTags(myPlugin));
 
@@ -631,19 +616,20 @@ public class PluginDetailsPageComponent extends MultiPanel {
       updateEnabledForProject();
     }
 
-    String vendor = myPlugin.isBundled() ? null : StringUtil.trim(myPlugin.getVendor());
-    String organization = myPlugin.isBundled() ? null : StringUtil.trim(myPlugin.getOrganization());
-    if (StringUtil.isEmptyOrSpaces(vendor)) {
+    String vendor = myPlugin.isBundled() ? null : Strings.trim(myPlugin.getVendor());
+    String organization = myPlugin.isBundled() ? null : Strings.trim(myPlugin.getOrganization());
+    if (Strings.isEmptyOrSpaces(vendor)) {
       myAuthor.hide();
     }
     else {
-      if (StringUtil.isEmptyOrSpaces(organization)) {
+      if (Strings.isEmptyOrSpaces(organization)) {
         myAuthor.show(vendor, null);
-      } else {
+      }
+      else {
         myAuthor.show(organization, () -> mySearchListener.linkSelected(
           null,
           SearchWords.ORGANIZATION.getValue() +
-          (organization.indexOf(' ') == -1 ? organization : StringUtil.wrapWithDoubleQuote(organization))
+          (organization.indexOf(' ') == -1 ? organization : '\"' + organization + "\"")
         ));
       }
     }
@@ -657,7 +643,9 @@ public class PluginDetailsPageComponent extends MultiPanel {
       myHomePage.show(IdeBundle.message(
                         "plugins.configurable.plugin.homepage.link"),
                       () -> {
-                        String url = ((ApplicationInfoEx) ApplicationInfo.getInstance()).getPluginManagerUrl() + MARKETPLACE_LINK + URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString());
+                        String url = ((ApplicationInfoEx)ApplicationInfo.getInstance()).getPluginManagerUrl() +
+                                     MARKETPLACE_LINK +
+                                     URLUtil.encodeURIComponent(myPlugin.getPluginId().getIdString());
                         BrowserUtil.browse(IdeUrlTrackingParametersProvider.getInstance().augmentUrl(url));
                       });
     }
@@ -932,7 +920,7 @@ public class PluginDetailsPageComponent extends MultiPanel {
   @Nullable
   private @Nls String getDescription() {
     String description = myPlugin.getDescription();
-    return StringUtil.isEmptyOrSpaces(description) ? null : description;
+    return Strings.isEmptyOrSpaces(description) ? null : description;
   }
 
   @Nullable
@@ -940,12 +928,12 @@ public class PluginDetailsPageComponent extends MultiPanel {
   private String getChangeNotes() {
     if (myUpdateDescriptor != null) {
       String notes = myUpdateDescriptor.getChangeNotes();
-      if (!StringUtil.isEmptyOrSpaces(notes)) {
+      if (!Strings.isEmptyOrSpaces(notes)) {
         return notes;
       }
     }
     String notes = myPlugin.getChangeNotes();
-    return StringUtil.isEmptyOrSpaces(notes) ? null : notes;
+    return Strings.isEmptyOrSpaces(notes) ? null : notes;
   }
 
   private @NotNull SelectionBasedPluginModelAction.EnableDisableAction<PluginDetailsPageComponent> createEnableDisableAction(@NotNull PluginEnableDisableAction action) {

@@ -2,11 +2,13 @@
 package git4idea.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationTooltipBuilder;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
@@ -17,12 +19,12 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
-import com.intellij.vcs.log.impl.CommonUiProperties;
-import com.intellij.vcs.log.impl.VcsLogApplicationSettings;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
@@ -42,6 +44,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 
 public final class GitFileAnnotation extends FileAnnotation {
   private final Project myProject;
@@ -261,8 +264,24 @@ public final class GitFileAnnotation extends FileAnnotation {
       if (lineNum >= 0 && lineNum < myLines.size()) {
         LineInfo info = myLines.get(lineNum);
 
-        AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myProject, info.getRevisionNumber(), myFilePath, false,
-                                                                 () -> getRevisionsChangesProvider().getChangesIn(lineNum));
+        VirtualFile root = ProjectLevelVcsManager.getInstance(myProject).getVcsRootFor(myFilePath);
+        if (root == null) return;
+
+        CompletableFuture<Boolean> shownInLog;
+        if (ModalityState.current() == ModalityState.NON_MODAL &&
+            Registry.is("vcs.blame.show.affected.files.in.log")) {
+          Hash hash = HashImpl.build(info.getRevisionNumber().asString());
+          shownInLog = VcsLogContentUtil.jumpToRevisionAsync(myProject, root, hash, info.getFilePath());
+        }
+        else {
+          shownInLog = CompletableFuture.completedFuture(false); // can't use log tabs in modal dialogs (ex: commit, merge)
+        }
+        shownInLog.thenAcceptAsync(success -> {
+          if (!success) {
+            AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myProject, info.getRevisionNumber(), myFilePath, false,
+                                                                     () -> getRevisionsChangesProvider().getChangesIn(lineNum));
+          }
+        }, EdtExecutorService.getInstance());
       }
     }
   }

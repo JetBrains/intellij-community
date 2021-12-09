@@ -176,12 +176,22 @@ final class JavaLangReflectHandleInvocationChecker {
     if (actualArguments == null) return true;
 
     final int requiredArgumentCount = lazyMethodSignature.size() - 1; // -1 excludes the return type
-    if (!checkArgumentCount(actualArguments.expressions, requiredArgumentCount, argumentOffset, argumentList, holder)) return false;
+    final boolean maybeVararg;
+    if (!isExact && requiredArgumentCount > 0) {
+      ReflectiveType type = lazyMethodSignature.get(requiredArgumentCount).get();
+      maybeVararg = type.getType() instanceof PsiArrayType;
+    } else {
+      maybeVararg = false;
+    }
+    PsiExpression[] expressions = actualArguments.expressions;
+    if (!maybeVararg || expressions.length < requiredArgumentCount - 1) {
+      if (!checkArgumentCount(expressions, requiredArgumentCount, argumentOffset, argumentList, holder)) return false;
+    }
 
-    LOG.assertTrue(actualArguments.expressions.length == requiredArgumentCount);
-    for (int i = 0; i < requiredArgumentCount; i++) {
-      final ReflectiveType requiredType = lazyMethodSignature.get(i + 1).get();
-      checkArgumentType(actualArguments.expressions[i], requiredType, argumentList, isExact, holder);
+    for (int i = 0; i < expressions.length; i++) {
+      int parameterIndex = maybeVararg && i >= requiredArgumentCount - 1 ? requiredArgumentCount : i + 1;
+      final ReflectiveType requiredType = lazyMethodSignature.get(parameterIndex).get();
+      checkArgumentType(expressions[i], requiredType, argumentList, isExact, maybeVararg && i >= requiredArgumentCount - 1, holder);
     }
     return true;
   }
@@ -191,28 +201,34 @@ final class JavaLangReflectHandleInvocationChecker {
                                 @Nullable ReflectiveType requiredType,
                                 @NotNull PsiExpressionList argumentList,
                                 boolean isExact,
+                                boolean maybeVararg,
                                 @NotNull ProblemsHolder holder) {
-    if (requiredType != null) {
-      final PsiType actualType = argument.getType();
-      if (actualType != null) {
-        if (!isCompatible(requiredType, actualType, isExact)) {
-          if (PsiTreeUtil.isAncestor(argumentList, argument, false)) {
-            holder.registerProblem(argument,
-                                   JavaBundle.message(isExact
-                                                             ? "inspection.reflect.handle.invocation.argument.not.exact"
-                                                             : "inspection.reflection.invocation.argument.not.assignable",
-                                                             requiredType.getQualifiedName()));
-          }
+    if (requiredType == null) return;
+    final PsiType actualType = argument.getType();
+    if (actualType == null) return;
+    if (!isCompatible(requiredType, actualType, isExact)) {
+      if (maybeVararg) {
+        ReflectiveType componentType = requiredType.getArrayComponentType();
+        if (componentType != null) {
+          requiredType = componentType;
+          if (isCompatible(requiredType, actualType, isExact)) return;
         }
-        else if (requiredType.isPrimitive()) {
-          final PsiExpression definition = findDefinition(argument);
-          if (definition != null && PsiType.NULL.equals(definition.getType())) {
-            if (PsiTreeUtil.isAncestor(argumentList, argument, false)) {
-              holder.registerProblem(argument,
-                                     JavaBundle.message("inspection.reflect.handle.invocation.primitive.argument.null",
-                                                               requiredType.getQualifiedName()));
-            }
-          }
+      }
+      if (PsiTreeUtil.isAncestor(argumentList, argument, false)) {
+        holder.registerProblem(argument,
+                               JavaBundle.message(isExact
+                                                         ? "inspection.reflect.handle.invocation.argument.not.exact"
+                                                         : "inspection.reflection.invocation.argument.not.assignable",
+                                                         requiredType.getQualifiedName()));
+      }
+    }
+    else if (requiredType.isPrimitive()) {
+      final PsiExpression definition = findDefinition(argument);
+      if (definition != null && PsiType.NULL.equals(definition.getType())) {
+        if (PsiTreeUtil.isAncestor(argumentList, argument, false)) {
+          holder.registerProblem(argument,
+                                 JavaBundle.message("inspection.reflect.handle.invocation.primitive.argument.null",
+                                                           requiredType.getQualifiedName()));
         }
       }
     }
@@ -373,7 +389,7 @@ final class JavaLangReflectHandleInvocationChecker {
 
     LOG.assertTrue(arguments.length == argumentOffset + 1);
     final ReflectiveType requiredType = getReflectiveType(typeExpression);
-    checkArgumentType(arguments[argumentOffset], requiredType, argumentList, isExact, holder);
+    checkArgumentType(arguments[argumentOffset], requiredType, argumentList, isExact, false, holder);
 
     final PsiElement invokeParent = invokeCall.getParent();
     if (!(invokeParent instanceof PsiStatement)) {

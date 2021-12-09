@@ -200,16 +200,17 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
    */
   @NotNull
   static RangeMarker createRangeMarkerForVirtualFile(@NotNull VirtualFile file,
-                                                     int startOffset,
-                                                     int endOffset,
+                                                     int offset,
                                                      int startLine,
                                                      int startCol,
                                                      int endLine,
                                                      int endCol,
                                                      boolean persistent) {
+    int estimatedLength = RangeMarkerImpl.estimateDocumentLength(file);
+    offset = Math.min(offset, estimatedLength);
     RangeMarkerImpl marker = persistent
-                             ? new PersistentRangeMarker(file, startOffset, endOffset, startLine, startCol, endLine, endCol, false)
-                             : new RangeMarkerImpl(file, startOffset, endOffset, false);
+                             ? new PersistentRangeMarker(file, offset, offset, startLine, startCol, endLine, endCol, estimatedLength, false)
+                             : new RangeMarkerImpl(file, offset, offset, estimatedLength, false);
     Key<Reference<RangeMarkerTree<RangeMarkerEx>>> key = persistent ? PERSISTENT_RANGE_MARKERS_KEY : RANGE_MARKERS_KEY;
     RangeMarkerTree<RangeMarkerEx> tree;
     while (true) {
@@ -220,7 +221,7 @@ public final class DocumentImpl extends UserDataHolderBase implements DocumentEx
       RMTreeReference reference = new RMTreeReference(tree, file);
       if (file.replace(key, oldRef, reference)) break;
     }
-    tree.addInterval(marker, startOffset, endOffset, false, false, false, 0);
+    tree.addInterval(marker, offset, offset, false, false, false, 0);
 
     return marker;
 

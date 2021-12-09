@@ -1027,19 +1027,25 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  public boolean isPerformanceTest() {
+  /**
+   * @return true for a test which performs A LOT of computations to test resources consumption, not correctness.
+   * Such test should avoid performing expensive consistency checks, e.g. data structure consistency complex validations.
+   * If you want your test to be treated as "Performance", mention "Performance" word in its class/method name.
+   * For example: {@code public void testHighlightingPerformance()}
+   */
+  public final boolean isPerformanceTest() {
     String testName = getName();
     String className = getClass().getSimpleName();
     return TestFrameworkUtil.isPerformanceTest(testName, className);
   }
 
   /**
-   * @return true for a test which performs A LOT of computations.
+   * @return true for a test which performs A LOT of computations, but which does care about correctness of operations it performs.
    * Such test should typically avoid performing expensive checks, e.g. data structure consistency complex validations.
    * If you want your test to be treated as "Stress", please mention one of these words in its name: "Stress", "Slow".
    * For example: {@code public void testStressPSIFromDifferentThreads()}
    */
-  public boolean isStressTest() {
+  public final boolean isStressTest() {
     return isStressTest(getName(), getClass().getName());
   }
 

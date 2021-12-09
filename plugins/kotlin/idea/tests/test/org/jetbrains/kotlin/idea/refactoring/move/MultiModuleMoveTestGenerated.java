@@ -18,138 +18,150 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/refactoring/moveMultiModule")
-public class MultiModuleMoveTestGenerated extends AbstractMultiModuleMoveTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+public abstract class MultiModuleMoveTestGenerated extends AbstractMultiModuleMoveTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/refactoring/moveMultiModule")
+    public static class TestBucket001 extends AbstractMultiModuleMoveTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("moveClassWithInternalMemberFromJvmToCommon/moveClassWithInternalMemberFromJvmToCommon.test")
+        public void testMoveClassWithInternalMemberFromJvmToCommon_MoveClassWithInternalMemberFromJvmToCommon() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveClassWithInternalMemberFromJvmToCommon/moveClassWithInternalMemberFromJvmToCommon.test");
+        }
+
+        @TestMetadata("moveDirectoryKeepPackageDirective/moveDirectoryKeepPackageDirective.test")
+        public void testMoveDirectoryKeepPackageDirective_MoveDirectoryKeepPackageDirective() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveDirectoryKeepPackageDirective/moveDirectoryKeepPackageDirective.test");
+        }
+
+        @TestMetadata("moveDirectoryToUnrelatedModuleConflict/moveDirectoryToUnrelatedModuleConflict.test")
+        public void testMoveDirectoryToUnrelatedModuleConflict_MoveDirectoryToUnrelatedModuleConflict() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveDirectoryToUnrelatedModuleConflict/moveDirectoryToUnrelatedModuleConflict.test");
+        }
+
+        @TestMetadata("moveFileToNonSrc/moveFileToNonSrc.test")
+        public void testMoveFileToNonSrc_MoveFileToNonSrc() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveFileToNonSrc/moveFileToNonSrc.test");
+        }
+
+        @TestMetadata("moveFileWithDeclarationsToUnrelatedModuleConflict/moveFileWithDeclarationsToUnrelatedModuleConflict.test")
+        public void testMoveFileWithDeclarationsToUnrelatedModuleConflict_MoveFileWithDeclarationsToUnrelatedModuleConflict() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveFileWithDeclarationsToUnrelatedModuleConflict/moveFileWithDeclarationsToUnrelatedModuleConflict.test");
+        }
+
+        @TestMetadata("moveFromJsModuleToJvmModule/moveFromJsModuleToJvmModule.test")
+        public void testMoveFromJsModuleToJvmModule_MoveFromJsModuleToJvmModule() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveFromJsModuleToJvmModule/moveFromJsModuleToJvmModule.test");
+        }
+
+        @TestMetadata("moveFromJvmModuleToJsModule/moveFromJvmModuleToJsModule.test")
+        public void testMoveFromJvmModuleToJsModule_MoveFromJvmModuleToJsModule() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveFromJvmModuleToJsModule/moveFromJvmModuleToJsModule.test");
+        }
+
+        @TestMetadata("moveInternalToAnotherModule/moveInternalToAnotherModule.test")
+        public void testMoveInternalToAnotherModule_MoveInternalToAnotherModule() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveInternalToAnotherModule/moveInternalToAnotherModule.test");
+        }
+
+        @TestMetadata("moveJdkDependentToJsModule/moveJdkDependentToJsModule.test")
+        public void testMoveJdkDependentToJsModule_MoveJdkDependentToJsModule() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveJdkDependentToJsModule/moveJdkDependentToJsModule.test");
+        }
+
+        @TestMetadata("moveMultipleFilesToUnrelatedModuleConflict/moveMultipleFilesToUnrelatedModuleConflict.test")
+        public void testMoveMultipleFilesToUnrelatedModuleConflict_MoveMultipleFilesToUnrelatedModuleConflict() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveMultipleFilesToUnrelatedModuleConflict/moveMultipleFilesToUnrelatedModuleConflict.test");
+        }
+
+        @TestMetadata("movePackageToUnrelatedModuleConflict/movePackageToUnrelatedModuleConflict.test")
+        public void testMovePackageToUnrelatedModuleConflict_MovePackageToUnrelatedModuleConflict() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/movePackageToUnrelatedModuleConflict/movePackageToUnrelatedModuleConflict.test");
+        }
+
+        @TestMetadata("moveRefToLibTypeAliasImplementingLibExpectClass/moveRefToLibTypeAliasImplementingLibExpectClass.test")
+        public void testMoveRefToLibTypeAliasImplementingLibExpectClass_MoveRefToLibTypeAliasImplementingLibExpectClass() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveRefToLibTypeAliasImplementingLibExpectClass/moveRefToLibTypeAliasImplementingLibExpectClass.test");
+        }
+
+        @TestMetadata("moveSealedCheckEntireHierarchy/moveSealedCheckEntireHierarchy.test")
+        public void testMoveSealedCheckEntireHierarchy_MoveSealedCheckEntireHierarchy() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveSealedCheckEntireHierarchy/moveSealedCheckEntireHierarchy.test");
+        }
+
+        @TestMetadata("moveSealedCheckNotMember/moveSealedCheckNotMember.test")
+        public void testMoveSealedCheckNotMember_MoveSealedCheckNotMember() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveSealedCheckNotMember/moveSealedCheckNotMember.test");
+        }
+
+        @TestMetadata("moveSealedCheckOriginalPackageHasMemberCrossModule/moveSealedCheckOriginalPackageHasMemberCrossModule.test")
+        public void testMoveSealedCheckOriginalPackageHasMemberCrossModule_MoveSealedCheckOriginalPackageHasMemberCrossModule() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveSealedCheckOriginalPackageHasMemberCrossModule/moveSealedCheckOriginalPackageHasMemberCrossModule.test");
+        }
+
+        @TestMetadata("moveSealedCheckOriginalPackageHasMember/moveSealedCheckOriginalPackageHasMember.test")
+        public void testMoveSealedCheckOriginalPackageHasMember_MoveSealedCheckOriginalPackageHasMember() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveSealedCheckOriginalPackageHasMember/moveSealedCheckOriginalPackageHasMember.test");
+        }
+
+        @TestMetadata("moveSealedCheckSingleSealed/moveSealedCheckSingleSealed.test")
+        public void testMoveSealedCheckSingleSealed_MoveSealedCheckSingleSealed() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveSealedCheckSingleSealed/moveSealedCheckSingleSealed.test");
+        }
+
+        @TestMetadata("moveSealedCheckTargetPackageHasMemberCrossModule/moveSealedCheckTargetPackageHasMemberCrossModule.test")
+        public void testMoveSealedCheckTargetPackageHasMemberCrossModule_MoveSealedCheckTargetPackageHasMemberCrossModule() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveSealedCheckTargetPackageHasMemberCrossModule/moveSealedCheckTargetPackageHasMemberCrossModule.test");
+        }
+
+        @TestMetadata("moveSealedCheckTargetPackageHasMember/moveSealedCheckTargetPackageHasMember.test")
+        public void testMoveSealedCheckTargetPackageHasMember_MoveSealedCheckTargetPackageHasMember() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveSealedCheckTargetPackageHasMember/moveSealedCheckTargetPackageHasMember.test");
+        }
+
+        @TestMetadata("moveSealedCheckTargetPackageHasNoMembersCrossModuleBig/moveSealedCheckTargetPackageHasNoMembersCrossModuleBig.test")
+        public void testMoveSealedCheckTargetPackageHasNoMembersCrossModuleBig_MoveSealedCheckTargetPackageHasNoMembersCrossModuleBig() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveSealedCheckTargetPackageHasNoMembersCrossModuleBig/moveSealedCheckTargetPackageHasNoMembersCrossModuleBig.test");
+        }
     }
 
-    @TestMetadata("moveClassWithInternalMemberFromJvmToCommon/moveClassWithInternalMemberFromJvmToCommon.test")
-    public void testMoveClassWithInternalMemberFromJvmToCommon_MoveClassWithInternalMemberFromJvmToCommon() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveClassWithInternalMemberFromJvmToCommon/moveClassWithInternalMemberFromJvmToCommon.test");
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/refactoring/moveMultiModule")
+    public static class TestBucket002 extends AbstractMultiModuleMoveTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("moveDirectoryKeepPackageDirective/moveDirectoryKeepPackageDirective.test")
-    public void testMoveDirectoryKeepPackageDirective_MoveDirectoryKeepPackageDirective() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveDirectoryKeepPackageDirective/moveDirectoryKeepPackageDirective.test");
-    }
+        @TestMetadata("moveSealedCheckTargetPackageHasNoMembersCrossModule/moveSealedCheckTargetPackageHasNoMembersCrossModule.test")
+        public void testMoveSealedCheckTargetPackageHasNoMembersCrossModule_MoveSealedCheckTargetPackageHasNoMembersCrossModule() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveSealedCheckTargetPackageHasNoMembersCrossModule/moveSealedCheckTargetPackageHasNoMembersCrossModule.test");
+        }
 
-    @TestMetadata("moveDirectoryToUnrelatedModuleConflict/moveDirectoryToUnrelatedModuleConflict.test")
-    public void testMoveDirectoryToUnrelatedModuleConflict_MoveDirectoryToUnrelatedModuleConflict() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveDirectoryToUnrelatedModuleConflict/moveDirectoryToUnrelatedModuleConflict.test");
-    }
+        @TestMetadata("moveSealedCheckTargetPackageHasNoMembers/moveSealedCheckTargetPackageHasNoMembers.test")
+        public void testMoveSealedCheckTargetPackageHasNoMembers_MoveSealedCheckTargetPackageHasNoMembers() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveSealedCheckTargetPackageHasNoMembers/moveSealedCheckTargetPackageHasNoMembers.test");
+        }
 
-    @TestMetadata("moveFileToNonSrc/moveFileToNonSrc.test")
-    public void testMoveFileToNonSrc_MoveFileToNonSrc() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveFileToNonSrc/moveFileToNonSrc.test");
-    }
+        @TestMetadata("moveSealedCheckWithinPackage/moveSealedCheckWithinPackage.test")
+        public void testMoveSealedCheckWithinPackage_MoveSealedCheckWithinPackage() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveSealedCheckWithinPackage/moveSealedCheckWithinPackage.test");
+        }
 
-    @TestMetadata("moveFileWithDeclarationsToUnrelatedModuleConflict/moveFileWithDeclarationsToUnrelatedModuleConflict.test")
-    public void testMoveFileWithDeclarationsToUnrelatedModuleConflict_MoveFileWithDeclarationsToUnrelatedModuleConflict() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveFileWithDeclarationsToUnrelatedModuleConflict/moveFileWithDeclarationsToUnrelatedModuleConflict.test");
-    }
+        @TestMetadata("moveToModuleWithoutLibConflict/moveToModuleWithoutLibConflict.test")
+        public void testMoveToModuleWithoutLibConflict_MoveToModuleWithoutLibConflict() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveToModuleWithoutLibConflict/moveToModuleWithoutLibConflict.test");
+        }
 
-    @TestMetadata("moveFromJsModuleToJvmModule/moveFromJsModuleToJvmModule.test")
-    public void testMoveFromJsModuleToJvmModule_MoveFromJsModuleToJvmModule() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveFromJsModuleToJvmModule/moveFromJsModuleToJvmModule.test");
-    }
+        @TestMetadata("moveToUnrelatedModuleConflict/moveToUnrelatedModuleConflict.test")
+        public void testMoveToUnrelatedModuleConflict_MoveToUnrelatedModuleConflict() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/moveToUnrelatedModuleConflict/moveToUnrelatedModuleConflict.test");
+        }
 
-    @TestMetadata("moveFromJvmModuleToJsModule/moveFromJvmModuleToJsModule.test")
-    public void testMoveFromJvmModuleToJsModule_MoveFromJvmModuleToJsModule() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveFromJvmModuleToJsModule/moveFromJvmModuleToJsModule.test");
-    }
-
-    @TestMetadata("moveInternalToAnotherModule/moveInternalToAnotherModule.test")
-    public void testMoveInternalToAnotherModule_MoveInternalToAnotherModule() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveInternalToAnotherModule/moveInternalToAnotherModule.test");
-    }
-
-    @TestMetadata("moveJdkDependentToJsModule/moveJdkDependentToJsModule.test")
-    public void testMoveJdkDependentToJsModule_MoveJdkDependentToJsModule() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveJdkDependentToJsModule/moveJdkDependentToJsModule.test");
-    }
-
-    @TestMetadata("moveMultipleFilesToUnrelatedModuleConflict/moveMultipleFilesToUnrelatedModuleConflict.test")
-    public void testMoveMultipleFilesToUnrelatedModuleConflict_MoveMultipleFilesToUnrelatedModuleConflict() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveMultipleFilesToUnrelatedModuleConflict/moveMultipleFilesToUnrelatedModuleConflict.test");
-    }
-
-    @TestMetadata("movePackageToUnrelatedModuleConflict/movePackageToUnrelatedModuleConflict.test")
-    public void testMovePackageToUnrelatedModuleConflict_MovePackageToUnrelatedModuleConflict() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/movePackageToUnrelatedModuleConflict/movePackageToUnrelatedModuleConflict.test");
-    }
-
-    @TestMetadata("moveRefToLibTypeAliasImplementingLibExpectClass/moveRefToLibTypeAliasImplementingLibExpectClass.test")
-    public void testMoveRefToLibTypeAliasImplementingLibExpectClass_MoveRefToLibTypeAliasImplementingLibExpectClass() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveRefToLibTypeAliasImplementingLibExpectClass/moveRefToLibTypeAliasImplementingLibExpectClass.test");
-    }
-
-    @TestMetadata("moveSealedCheckEntireHierarchy/moveSealedCheckEntireHierarchy.test")
-    public void testMoveSealedCheckEntireHierarchy_MoveSealedCheckEntireHierarchy() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveSealedCheckEntireHierarchy/moveSealedCheckEntireHierarchy.test");
-    }
-
-    @TestMetadata("moveSealedCheckNotMember/moveSealedCheckNotMember.test")
-    public void testMoveSealedCheckNotMember_MoveSealedCheckNotMember() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveSealedCheckNotMember/moveSealedCheckNotMember.test");
-    }
-
-    @TestMetadata("moveSealedCheckOriginalPackageHasMemberCrossModule/moveSealedCheckOriginalPackageHasMemberCrossModule.test")
-    public void testMoveSealedCheckOriginalPackageHasMemberCrossModule_MoveSealedCheckOriginalPackageHasMemberCrossModule() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveSealedCheckOriginalPackageHasMemberCrossModule/moveSealedCheckOriginalPackageHasMemberCrossModule.test");
-    }
-
-    @TestMetadata("moveSealedCheckOriginalPackageHasMember/moveSealedCheckOriginalPackageHasMember.test")
-    public void testMoveSealedCheckOriginalPackageHasMember_MoveSealedCheckOriginalPackageHasMember() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveSealedCheckOriginalPackageHasMember/moveSealedCheckOriginalPackageHasMember.test");
-    }
-
-    @TestMetadata("moveSealedCheckSingleSealed/moveSealedCheckSingleSealed.test")
-    public void testMoveSealedCheckSingleSealed_MoveSealedCheckSingleSealed() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveSealedCheckSingleSealed/moveSealedCheckSingleSealed.test");
-    }
-
-    @TestMetadata("moveSealedCheckTargetPackageHasMemberCrossModule/moveSealedCheckTargetPackageHasMemberCrossModule.test")
-    public void testMoveSealedCheckTargetPackageHasMemberCrossModule_MoveSealedCheckTargetPackageHasMemberCrossModule() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveSealedCheckTargetPackageHasMemberCrossModule/moveSealedCheckTargetPackageHasMemberCrossModule.test");
-    }
-
-    @TestMetadata("moveSealedCheckTargetPackageHasMember/moveSealedCheckTargetPackageHasMember.test")
-    public void testMoveSealedCheckTargetPackageHasMember_MoveSealedCheckTargetPackageHasMember() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveSealedCheckTargetPackageHasMember/moveSealedCheckTargetPackageHasMember.test");
-    }
-
-    @TestMetadata("moveSealedCheckTargetPackageHasNoMembersCrossModuleBig/moveSealedCheckTargetPackageHasNoMembersCrossModuleBig.test")
-    public void testMoveSealedCheckTargetPackageHasNoMembersCrossModuleBig_MoveSealedCheckTargetPackageHasNoMembersCrossModuleBig() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveSealedCheckTargetPackageHasNoMembersCrossModuleBig/moveSealedCheckTargetPackageHasNoMembersCrossModuleBig.test");
-    }
-
-    @TestMetadata("moveSealedCheckTargetPackageHasNoMembersCrossModule/moveSealedCheckTargetPackageHasNoMembersCrossModule.test")
-    public void testMoveSealedCheckTargetPackageHasNoMembersCrossModule_MoveSealedCheckTargetPackageHasNoMembersCrossModule() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveSealedCheckTargetPackageHasNoMembersCrossModule/moveSealedCheckTargetPackageHasNoMembersCrossModule.test");
-    }
-
-    @TestMetadata("moveSealedCheckTargetPackageHasNoMembers/moveSealedCheckTargetPackageHasNoMembers.test")
-    public void testMoveSealedCheckTargetPackageHasNoMembers_MoveSealedCheckTargetPackageHasNoMembers() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveSealedCheckTargetPackageHasNoMembers/moveSealedCheckTargetPackageHasNoMembers.test");
-    }
-
-    @TestMetadata("moveSealedCheckWithinPackage/moveSealedCheckWithinPackage.test")
-    public void testMoveSealedCheckWithinPackage_MoveSealedCheckWithinPackage() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveSealedCheckWithinPackage/moveSealedCheckWithinPackage.test");
-    }
-
-    @TestMetadata("moveToModuleWithoutLibConflict/moveToModuleWithoutLibConflict.test")
-    public void testMoveToModuleWithoutLibConflict_MoveToModuleWithoutLibConflict() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveToModuleWithoutLibConflict/moveToModuleWithoutLibConflict.test");
-    }
-
-    @TestMetadata("moveToUnrelatedModuleConflict/moveToUnrelatedModuleConflict.test")
-    public void testMoveToUnrelatedModuleConflict_MoveToUnrelatedModuleConflict() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/moveToUnrelatedModuleConflict/moveToUnrelatedModuleConflict.test");
-    }
-
-    @TestMetadata("visibilityConflictInImport/visibilityConflictInImport.test")
-    public void testVisibilityConflictInImport_VisibilityConflictInImport() throws Exception {
-        runTest("testData/refactoring/moveMultiModule/visibilityConflictInImport/visibilityConflictInImport.test");
+        @TestMetadata("visibilityConflictInImport/visibilityConflictInImport.test")
+        public void testVisibilityConflictInImport_VisibilityConflictInImport() throws Exception {
+            runTest("testData/refactoring/moveMultiModule/visibilityConflictInImport/visibilityConflictInImport.test");
+        }
     }
 }

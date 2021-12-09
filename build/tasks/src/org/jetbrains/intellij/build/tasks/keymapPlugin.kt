@@ -6,6 +6,7 @@ package org.jetbrains.intellij.build.tasks
 import org.jetbrains.intellij.build.io.ZipFileWriter
 import org.jetbrains.intellij.build.io.writeNewZip
 import java.nio.ByteBuffer
+import java.nio.channels.SeekableByteChannel
 import java.nio.channels.WritableByteChannel
 import java.nio.file.Files
 import java.nio.file.Path
@@ -103,7 +104,7 @@ ${
 </idea-plugin>"""
 }
 
-private class WritableByteChannelBackedByByteBuffer(private val buffer: ByteBuffer) : WritableByteChannel {
+private class WritableByteChannelBackedByByteBuffer(private val buffer: ByteBuffer) : WritableByteChannel, SeekableByteChannel {
   private var isOpen = true
 
   override fun isOpen() = isOpen
@@ -112,9 +113,31 @@ private class WritableByteChannelBackedByByteBuffer(private val buffer: ByteBuff
     isOpen = false
   }
 
+  override fun read(dst: ByteBuffer): Int {
+    throw UnsupportedOperationException()
+  }
+
   override fun write(src: ByteBuffer): Int {
     val r = src.remaining()
     buffer.put(src)
     return r
+  }
+
+  override fun position(): Long = buffer.position().toLong()
+
+  @Synchronized
+  override fun position(newPosition: Long): SeekableByteChannel {
+    buffer.position(newPosition.toInt())
+    return this
+  }
+
+  override fun size(): Long = buffer.limit().toLong()
+
+  override fun truncate(size: Long): SeekableByteChannel {
+    val limit = buffer.limit()
+    if (limit > size) {
+      buffer.limit(size.toInt())
+    }
+    return this
   }
 }

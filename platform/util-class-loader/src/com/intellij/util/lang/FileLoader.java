@@ -1,10 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.openapi.diagnostic.LoggerRt;
-import com.intellij.util.io.DirectByteBufferPool;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.xxh3.Xx3UnencodedString;
 
 import java.io.BufferedInputStream;
 import java.io.File;
@@ -14,23 +13,20 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.IntBuffer;
+import java.nio.LongBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.*;
-import java.util.*;
-import java.util.concurrent.BlockingDeque;
-import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingDeque;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.ArrayDeque;
+import java.util.Deque;
+import java.util.EnumSet;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.BiConsumer;
 import java.util.function.Predicate;
 
-final class FileLoader extends Loader {
+final class FileLoader implements Loader {
   private static final EnumSet<StandardOpenOption> READ_OPTIONS = EnumSet.of(StandardOpenOption.READ);
-  private static final  EnumSet<StandardOpenOption> WRITE_OPTIONS = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+  private static final EnumSet<StandardOpenOption> WRITE_OPTIONS = EnumSet.of(StandardOpenOption.WRITE, StandardOpenOption.CREATE);
 
   private static final AtomicInteger totalLoaders = new AtomicInteger();
   private static final AtomicLong totalScanning = new AtomicLong();
@@ -39,23 +35,38 @@ final class FileLoader extends Loader {
 
   private static final Boolean doFsActivityLogging = false;
   // find . -name "classpath.index" -delete
-  private static final short ourVersion = 23;
+  private static final short indexFileVersion = 24;
 
   private final int rootDirAbsolutePathLength;
-  private final boolean isClassPathIndexEnabled;
 
-  private static final BlockingDeque<Map.Entry<ClasspathCache.LoaderData, Path>> loaderDataToSave = new LinkedBlockingDeque<>();
-  private static final AtomicBoolean isSaveThreadStarted = new AtomicBoolean();
+  private final @NotNull Predicate<String> nameFilter;
+  private final @NotNull Path path;
 
-  FileLoader(@NotNull Path path, boolean isClassPathIndexEnabled) {
-    super(path);
+  FileLoader(@NotNull Path path,
+             @Nullable Predicate<String> nameFilter,
+             @Nullable BiConsumer<ClasspathCache.IndexRegistrar, Loader> registrar,
+             boolean isClassPathIndexEnabled) {
+    this.path = path;
 
     rootDirAbsolutePathLength = path.toString().length();
-    this.isClassPathIndexEnabled = isClassPathIndexEnabled;
+    if (nameFilter == null) {
+      this.nameFilter = registrar == null ? __ -> true : buildData(registrar, isClassPathIndexEnabled);
+    }
+    else {
+      assert registrar == null;
+      this.nameFilter = nameFilter;
+    }
   }
 
   @Override
-  void processResources(@NotNull String dir, @NotNull Predicate<? super String> fileNameFilter, @NotNull BiConsumer<? super String, ? super InputStream> consumer)
+  public @NotNull Path getPath() {
+    return path;
+  }
+
+  @Override
+  public void processResources(@NotNull String dir,
+                               @NotNull Predicate<? super String> fileNameFilter,
+                               @NotNull BiConsumer<? super String, ? super InputStream> consumer)
     throws IOException {
     try (DirectoryStream<Path> paths = Files.newDirectoryStream(path.resolve(dir))) {
       for (Path childPath : paths) {
@@ -71,12 +82,9 @@ final class FileLoader extends Loader {
     }
   }
 
-  @Override
-  public @Nullable Map<Loader.Attribute, String> getAttributes() throws IOException {
-    return null;
-  }
-
-  private void buildPackageCache(@NotNull Path startDir, @NotNull ClasspathCache.LoaderDataBuilder context) {
+  private void buildPackageAndNameCache(Path startDir,
+                                        ClasspathCache.LoaderDataBuilder context,
+                                        StrippedLongArrayList nameHashes) {
     // FileVisitor is not used to avoid getting file attributes for class files
     // (.class extension is a strong indicator that it is file and not a directory)
     Deque<Path> dirCandidates = new ArrayDeque<>();
@@ -88,12 +96,12 @@ final class FileLoader extends Loader {
         boolean containsResources = false;
         for (Path file : dirStream) {
           String path = startDir.relativize(file).toString().replace(File.separatorChar, '/');
-          if (path.endsWith(ClassPath.CLASS_EXTENSION)) {
-            context.andClassName(path);
+          if (path.endsWith(ClasspathCache.CLASS_EXTENSION)) {
+            nameHashes.add(Xx3UnencodedString.hashUnencodedString(path));
             containsClasses = true;
           }
           else {
-            context.addResourceName(path, path.length());
+            nameHashes.add(Xx3UnencodedString.hashUnencodedString(path));
             containsResources = true;
             if (!path.endsWith(".svg") && !path.endsWith(".png") && !path.endsWith(".xml")) {
               dirCandidates.addLast(file);
@@ -128,13 +136,13 @@ final class FileLoader extends Loader {
   }
 
   @Override
-  @Nullable Resource getResource(@NotNull String name) {
+  public @Nullable Resource getResource(@NotNull String name) {
     Path file = path.resolve(name);
     return Files.exists(file) ? new FileResource(file) : null;
   }
 
   @Override
-  @Nullable Class<?> findClass(@NotNull String fileName, String className, ClassPath.ClassDataConsumer classConsumer) throws IOException {
+  public @Nullable Class<?> findClass(String fileName, String className, ClassPath.ClassDataConsumer classConsumer) throws IOException {
     Path file = path.resolve(fileName);
     byte[] data;
     try {
@@ -143,10 +151,10 @@ final class FileLoader extends Loader {
     catch (NoSuchFileException e) {
       return null;
     }
-    return classConsumer.consumeClassData(className, data, this, null);
+    return classConsumer.consumeClassData(className, data, this);
   }
 
-  private static ClasspathCache.LoaderData readFromIndex(Path index) {
+  private static @Nullable LoaderData readFromIndex(Path index) {
     long started = System.nanoTime();
     boolean isOk = false;
     short version = -1;
@@ -162,15 +170,14 @@ final class FileLoader extends Loader {
         // little endian - native order for Intel and Apple ARM
         buffer.order(ByteOrder.LITTLE_ENDIAN);
         version = buffer.getShort();
-        if (version == ourVersion) {
-          int[] classPackageHashes = new int[buffer.getInt()];
-          int[] resourcePackageHashes = new int[buffer.getInt()];
-          IntBuffer intBuffer = buffer.asIntBuffer();
-          intBuffer.get(classPackageHashes);
-          intBuffer.get(resourcePackageHashes);
-          buffer.position(buffer.position() + intBuffer.position() * Integer.BYTES);
-          ClasspathCache.LoaderData loaderData =
-            new ClasspathCache.LoaderData(resourcePackageHashes, classPackageHashes, new ClasspathCache.NameFilter(buffer));
+        if (version == indexFileVersion) {
+          long[] classPackageHashes = new long[buffer.getInt()];
+          long[] resourcePackageHashes = new long[buffer.getInt()];
+          LongBuffer longBuffer = buffer.asLongBuffer();
+          longBuffer.get(classPackageHashes);
+          longBuffer.get(resourcePackageHashes);
+          buffer.position(buffer.position() + (longBuffer.position() * Long.BYTES));
+          LoaderData loaderData = new LoaderData(resourcePackageHashes, classPackageHashes, new NameFilter(new Xor16(buffer)));
           isOk = true;
           return loaderData;
         }
@@ -183,7 +190,10 @@ final class FileLoader extends Loader {
       isOk = true;
     }
     catch (Exception e) {
-      LoggerRt.getInstance(FileLoader.class).warn("Cannot read classpath index (version=" + version + ", module=" + index.getParent().getFileName() + ")", e);
+      //noinspection UseOfSystemOutOrSystemErr
+      System.err.println("Cannot read classpath index (version=" + version + ", module=" + index.getParent().getFileName() + ")");
+      //noinspection CallToPrintStackTrace
+      e.printStackTrace();
     }
     finally {
       if (!isOk) {
@@ -199,74 +209,47 @@ final class FileLoader extends Loader {
     return null;
   }
 
-  private static void saveToIndex(@NotNull ClasspathCache.LoaderData data, @NotNull Path indexFile) throws IOException {
+  private static void saveIndex(@NotNull LoaderData data, @NotNull Path indexFile) throws IOException {
     long started = System.nanoTime();
-    boolean isOk = false;
-    SeekableByteChannel channel = null;
+    ByteBuffer buffer = DirectByteBufferPool.DEFAULT_POOL.allocate(Short.BYTES + data.approximateSizeInBytes());
     try {
-      ByteBuffer buffer = DirectByteBufferPool.DEFAULT_POOL.allocate(Short.BYTES + data.sizeInBytes());
-      try {
-        buffer.order(ByteOrder.LITTLE_ENDIAN);
+      buffer.order(ByteOrder.LITTLE_ENDIAN);
 
-        buffer.putShort(ourVersion);
-        data.save(buffer);
-        assert buffer.remaining() == 0;
-        buffer.flip();
-        channel = Files.newByteChannel(indexFile, WRITE_OPTIONS);
+      buffer.putShort(indexFileVersion);
+      data.save(buffer);
+      assert buffer.remaining() == 0;
+      buffer.flip();
+      try (SeekableByteChannel channel = Files.newByteChannel(indexFile, WRITE_OPTIONS)) {
         do {
           channel.write(buffer);
         }
         while (buffer.hasRemaining());
-
-        isOk = true;
-      }
-      finally {
-        DirectByteBufferPool.DEFAULT_POOL.release(buffer);
       }
     }
     finally {
-      if (channel != null) {
-        try {
-          channel.close();
-        }
-        catch (Exception e) {
-          if (isOk) {
-            LoggerRt.getInstance(FileLoader.class).warn(e);
-          }
-        }
-      }
-      if (!isOk) {
-        try {
-          Files.deleteIfExists(indexFile);
-        }
-        catch (IOException ignore) {
-        }
-      }
+      DirectByteBufferPool.DEFAULT_POOL.release(buffer);
       totalSaving.addAndGet(System.nanoTime() - started);
     }
   }
 
-  private Path getIndexFileFile() {
-    return path.resolve("classpath.index");
-  }
+  private @NotNull Predicate<String> buildData(@NotNull BiConsumer<ClasspathCache.IndexRegistrar, Loader> registrar,
+                                               boolean isClassPathIndexEnabled) {
+    Path indexFile = isClassPathIndexEnabled ? path.resolve("classpath.index") : null;
+    LoaderData loaderData = indexFile == null ? null : readFromIndex(indexFile);
 
-  @Override
-  public @NotNull ClasspathCache.IndexRegistrar buildData() {
-    ClasspathCache.LoaderData loaderData = null;
-    Path indexFile = isClassPathIndexEnabled ? getIndexFileFile() : null;
-    if (indexFile != null) {
-      loaderData = readFromIndex(indexFile);
-    }
-
-    int nsMsFactor = 1000000;
+    int nsMsFactor = 1_000_000;
     int currentLoaders = totalLoaders.incrementAndGet();
     long currentScanningTime;
     if (loaderData == null) {
       long started = System.nanoTime();
 
-      ClasspathCache.LoaderDataBuilder loaderDataBuilder = new ClasspathCache.LoaderDataBuilder(true);
-      buildPackageCache(path, loaderDataBuilder);
-      loaderData = loaderDataBuilder.build();
+      StrippedLongArrayList nameHashes = new StrippedLongArrayList();
+
+      ClasspathCache.LoaderDataBuilder loaderDataBuilder = new ClasspathCache.LoaderDataBuilder();
+      buildPackageAndNameCache(path, loaderDataBuilder, nameHashes);
+      loaderData = new LoaderData(loaderDataBuilder.resourcePackageHashes.toArray(),
+                                  loaderDataBuilder.classPackageHashes.toArray(),
+                                  new NameFilter(Xor16.construct(nameHashes.elements(), 0, nameHashes.size())));
       long doneNanos = System.nanoTime() - started;
       currentScanningTime = totalScanning.addAndGet(doneNanos);
       if (doFsActivityLogging) {
@@ -274,9 +257,21 @@ final class FileLoader extends Loader {
         System.out.println("Scanned: " + path + " for " + (doneNanos / nsMsFactor) + "ms");
       }
 
-      if (indexFile != null) {
-        loaderDataToSave.addLast(new AbstractMap.SimpleImmutableEntry<>(loaderData, indexFile));
-        startCacheSavingIfNeeded();
+      if (isClassPathIndexEnabled) {
+        try {
+          Path tempFile = indexFile.getParent().resolve("classpath.index.tmp");
+          saveIndex(loaderData, tempFile);
+          try {
+            Files.move(tempFile, indexFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
+          }
+          catch (AtomicMoveNotSupportedException e) {
+            Files.move(tempFile, indexFile, StandardCopyOption.REPLACE_EXISTING);
+          }
+        }
+        catch (IOException e) {
+          //noinspection CallToPrintStackTrace
+          e.printStackTrace();
+        }
       }
     }
     else {
@@ -289,43 +284,8 @@ final class FileLoader extends Loader {
                          ", loading: " + (totalReading.get() / nsMsFactor) + "ms for " + currentLoaders + " loaders");
     }
 
-    return loaderData;
-  }
-
-  private static void startCacheSavingIfNeeded() {
-    if (!isSaveThreadStarted.compareAndSet(false, true)) {
-      return;
-    }
-
-    Executors.newSingleThreadScheduledExecutor(r -> {
-      Thread thread = new Thread(r, "Save classpath indexes for file loader");
-      thread.setDaemon(true);
-      thread.setPriority(Thread.MIN_PRIORITY);
-      return thread;
-    }).schedule(() -> {
-      while (true) {
-        try {
-          Map.Entry<ClasspathCache.LoaderData, Path> entry = loaderDataToSave.takeFirst();
-          Path finalFile = entry.getValue();
-          Path tempFile = finalFile.getParent().resolve("classpath.index.tmp");
-          try {
-            saveToIndex(entry.getKey(), tempFile);
-            try {
-              Files.move(tempFile, finalFile, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-            }
-            catch (AtomicMoveNotSupportedException e) {
-              Files.move(tempFile, finalFile, StandardCopyOption.REPLACE_EXISTING);
-            }
-          }
-          catch (Exception e) {
-            LoggerRt.getInstance(FileLoader.class).warn("Cannot save classpath index for module " + finalFile.getParent().getFileName(), e);
-          }
-        }
-        catch (InterruptedException ignored) {
-          break;
-        }
-      }
-    }, 10, TimeUnit.SECONDS);
+    registrar.accept(loaderData, this);
+    return loaderData.nameFilter;
   }
 
   private static final class FileResource implements Resource {
@@ -370,5 +330,79 @@ final class FileLoader extends Loader {
   @Override
   public String toString() {
     return "FileLoader(path=" + path + ')';
+  }
+
+  @Override
+  public boolean containsName(String name) {
+    return name.isEmpty() || nameFilter.test(name);
+  }
+
+  private static final class LoaderData implements ClasspathCache.IndexRegistrar {
+    private final long[] resourcePackageHashes;
+    private final long[] classPackageHashes;
+    private final NameFilter nameFilter;
+
+    LoaderData(long[] resourcePackageHashes, long[] classPackageHashes, NameFilter nameFilter) {
+      this.resourcePackageHashes = resourcePackageHashes;
+      this.classPackageHashes = classPackageHashes;
+      this.nameFilter = nameFilter;
+    }
+
+    @Override
+    public int classPackageCount() {
+      return classPackageHashes.length;
+    }
+
+    @Override
+    public int resourcePackageCount() {
+      return resourcePackageHashes.length;
+    }
+
+    @Override
+    public Predicate<String> getNameFilter() {
+      return nameFilter;
+    }
+
+    @Override
+    public long[] classPackages() {
+      return classPackageHashes;
+    }
+
+    @Override
+    public long[] resourcePackages() {
+      return resourcePackageHashes;
+    }
+
+    int approximateSizeInBytes() {
+      return Integer.BYTES * 2 +
+             classPackageHashes.length * Long.BYTES +
+             resourcePackageHashes.length * Long.BYTES +
+             nameFilter.filter.sizeInBytes();
+    }
+
+    void save(@NotNull ByteBuffer buffer) {
+      buffer.putInt(classPackageHashes.length);
+      buffer.putInt(resourcePackageHashes.length);
+      LongBuffer longBuffer = buffer.asLongBuffer();
+      longBuffer.put(classPackageHashes);
+      longBuffer.put(resourcePackageHashes);
+      buffer.position(buffer.position() + longBuffer.position() * Long.BYTES);
+      nameFilter.filter.write(buffer);
+    }
+  }
+
+  private static final class NameFilter implements Predicate<String> {
+    final Xor16 filter;
+
+    NameFilter(Xor16 filter) {
+      this.filter = filter;
+    }
+
+    @Override
+    public boolean test(@NotNull String name) {
+      int lastIndex = name.length() - 1;
+      int end = name.charAt(lastIndex) == '/' ? lastIndex : name.length();
+      return filter.mightContain(Xx3UnencodedString.hashUnencodedStringRange(name, 0, end));
+    }
   }
 }

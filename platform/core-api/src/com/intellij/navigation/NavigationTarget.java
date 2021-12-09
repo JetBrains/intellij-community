@@ -6,7 +6,9 @@ import com.intellij.pom.Navigatable;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents a minimal entity participating in navigation actions.
@@ -23,24 +25,25 @@ public interface NavigationTarget {
   @NotNull Pointer<? extends NavigationTarget> createPointer();
 
   /**
-   * This method is called once before the actual navigation.
-   * In other words it is safe to unstub PSI in the implementation of this method.
-   * <p/>
-   * This method is called in read action.
-   *
-   * @return navigatable instance to use when this target is selected
-   */
-  @NotNull Navigatable getNavigatable();
-
-  /**
    * This method is called if the platform decides to display the target in the UI (e.g., popup).
-   * If the target is not displayed in the UI, then only {@link #getNavigatable()} is called.
+   * If the target is not displayed in the UI, then only {@link #navigationRequest()} is called.
    * <p/>
    * This method is called in read action.
    *
    * @return presentation to render this target in navigation popup
    */
   @NotNull TargetPresentation getTargetPresentation();
+
+  /**
+   * This method is called once before the actual navigation.
+   * It is safe to unstub PSI in the implementation of this method.
+   *
+   * @return a request instance to use when this target is selected,
+   * or {@code null} if navigation cannot be performed for any reason
+   */
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  @Nullable NavigationRequest navigationRequest();
 
   /**
    * Two different symbols may have the same navigation target.
@@ -51,4 +54,14 @@ public interface NavigationTarget {
 
   @Override
   int hashCode();
+
+  /**
+   * @deprecated This method is not used by the platform. Implement {@link #navigationRequest()} instead.
+   * Please define your own interface if you need this method in your implementation.
+   */
+  @Deprecated
+  @ScheduledForRemoval(inVersion = "2022.1")
+  default @NotNull Navigatable getNavigatable() {
+    return EmptyNavigatable.INSTANCE;
+  }
 }

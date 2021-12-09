@@ -21,7 +21,6 @@ import com.intellij.ui.mac.MacMessages
 import com.intellij.ui.mac.touchbar.Touchbar
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.*
-import com.intellij.util.ui.UIUtil.JBWordWrapHtmlEditorKit
 import org.jetbrains.annotations.Nls
 import java.awt.*
 import java.awt.event.ActionEvent
@@ -357,15 +356,18 @@ private class AlertDialog(project: Project?,
     val textPanel = JPanel(BorderLayout(0, JBUI.scale(8)))
     dialogPanel.add(textPanel)
 
+    val singleSelectionHandler = SingleTextSelectionHandler()
+
     if (myIsTitleComponent && !StringUtil.isEmpty(myTitle)) {
       val title = UIUtil.replaceMnemonicAmpersand(myTitle!!).replace(BundleBase.MNEMONIC_STRING, "")
-      val titleComponent = createTextComponent(JTextPane(), title)
+      val titleComponent = createTextComponent(JEditorPane(), title)
       titleComponent.font = JBFont.h4()
       textPanel.add(titleComponent, BorderLayout.NORTH)
+      singleSelectionHandler.add(titleComponent, false)
     }
 
     if (!StringUtil.isEmpty(myMessage)) {
-      val messageComponent = createTextComponent(object : JTextPane() {
+      val messageComponent = createTextComponent(object : JEditorPane() {
         override fun getPreferredSize(): Dimension {
           val parentWidth = getClientProperty(PARENT_WIDTH_KEY)
           if (parentWidth is Int) {
@@ -379,6 +381,7 @@ private class AlertDialog(project: Project?,
 
       messageComponent.font = JBFont.regular()
       myMessageComponent = messageComponent
+      singleSelectionHandler.add(messageComponent, false)
 
       val lines = myMessage.length / 100
       val scrollPane = Messages.wrapToScrollPaneIfNeeded(messageComponent, 100, 15, if (lines < 4) 4 else lines)
@@ -437,16 +440,19 @@ private class AlertDialog(project: Project?,
 
     mySouthPanel.add(myButtonsPanel)
 
+    singleSelectionHandler.start()
+
     return dialogPanel
   }
 
-  private fun createTextComponent(component: JTextPane, message: @Nls String?): JTextPane {
+  private fun createTextComponent(component: JEditorPane, message: @Nls String?): JEditorPane {
     component.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, java.lang.Boolean.TRUE)
     component.contentType = "text/html"
+    component.isEditable = false
     component.isOpaque = false
     component.border = null
 
-    val kit = JBWordWrapHtmlEditorKit()
+    val kit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
     kit.styleSheet.addRule("a {color: " + ColorUtil.toHtmlColor(JBUI.CurrentTheme.Link.Foreground.ENABLED) + "}")
     component.editorKit = kit
     component.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)

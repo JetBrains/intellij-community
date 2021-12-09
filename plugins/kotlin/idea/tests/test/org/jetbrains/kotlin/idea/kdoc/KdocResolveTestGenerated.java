@@ -19,128 +19,140 @@ import org.jetbrains.kotlin.idea.resolve.AbstractReferenceResolveTest;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/kdoc/resolve")
-public class KdocResolveTestGenerated extends AbstractReferenceResolveTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+public abstract class KdocResolveTestGenerated extends AbstractReferenceResolveTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/kdoc/resolve")
+    public static class TestBucket001 extends AbstractReferenceResolveTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("AmbiguousReference.kt")
+        public void testAmbiguousReference() throws Exception {
+            runTest("testData/kdoc/resolve/AmbiguousReference.kt");
+        }
+
+        @TestMetadata("AmbiguousReferenceTypeParameter.kt")
+        public void testAmbiguousReferenceTypeParameter() throws Exception {
+            runTest("testData/kdoc/resolve/AmbiguousReferenceTypeParameter.kt");
+        }
+
+        @TestMetadata("CheckExtensionReceiver.kt")
+        public void testCheckExtensionReceiver() throws Exception {
+            runTest("testData/kdoc/resolve/CheckExtensionReceiver.kt");
+        }
+
+        @TestMetadata("ClassSelfReference.kt")
+        public void testClassSelfReference() throws Exception {
+            runTest("testData/kdoc/resolve/ClassSelfReference.kt");
+        }
+
+        @TestMetadata("CodeReference.kt")
+        public void testCodeReference() throws Exception {
+            runTest("testData/kdoc/resolve/CodeReference.kt");
+        }
+
+        @TestMetadata("CompanionObjectMember.kt")
+        public void testCompanionObjectMember() throws Exception {
+            runTest("testData/kdoc/resolve/CompanionObjectMember.kt");
+        }
+
+        @TestMetadata("ConstructorParamReference.kt")
+        public void testConstructorParamReference() throws Exception {
+            runTest("testData/kdoc/resolve/ConstructorParamReference.kt");
+        }
+
+        @TestMetadata("ExtensionFromImports.kt")
+        public void testExtensionFromImports() throws Exception {
+            runTest("testData/kdoc/resolve/ExtensionFromImports.kt");
+        }
+
+        @TestMetadata("ExtensionFun.kt")
+        public void testExtensionFun() throws Exception {
+            runTest("testData/kdoc/resolve/ExtensionFun.kt");
+        }
+
+        @TestMetadata("ExtensionNonQualified.kt")
+        public void testExtensionNonQualified() throws Exception {
+            runTest("testData/kdoc/resolve/ExtensionNonQualified.kt");
+        }
+
+        @TestMetadata("ExtensionVal.kt")
+        public void testExtensionVal() throws Exception {
+            runTest("testData/kdoc/resolve/ExtensionVal.kt");
+        }
+
+        @TestMetadata("ImportAliasClass.kt")
+        public void testImportAliasClass() throws Exception {
+            runTest("testData/kdoc/resolve/ImportAliasClass.kt");
+        }
+
+        @TestMetadata("ImportedClassReference.kt")
+        public void testImportedClassReference() throws Exception {
+            runTest("testData/kdoc/resolve/ImportedClassReference.kt");
+        }
+
+        @TestMetadata("OnlyMembersFromClass.kt")
+        public void testOnlyMembersFromClass() throws Exception {
+            runTest("testData/kdoc/resolve/OnlyMembersFromClass.kt");
+        }
+
+        @TestMetadata("Overloads.kt")
+        public void testOverloads() throws Exception {
+            runTest("testData/kdoc/resolve/Overloads.kt");
+        }
+
+        @TestMetadata("ParamReference.kt")
+        public void testParamReference() throws Exception {
+            runTest("testData/kdoc/resolve/ParamReference.kt");
+        }
+
+        @TestMetadata("PropertyTypeParamReference.kt")
+        public void testPropertyTypeParamReference() throws Exception {
+            runTest("testData/kdoc/resolve/PropertyTypeParamReference.kt");
+        }
+
+        @TestMetadata("QualifiedCodeReference.kt")
+        public void testQualifiedCodeReference() throws Exception {
+            runTest("testData/kdoc/resolve/QualifiedCodeReference.kt");
+        }
+
+        @TestMetadata("QualifiedNameFunctionReference.kt")
+        public void testQualifiedNameFunctionReference() throws Exception {
+            runTest("testData/kdoc/resolve/QualifiedNameFunctionReference.kt");
+        }
+
+        @TestMetadata("QualifiedNameReference.kt")
+        public void testQualifiedNameReference() throws Exception {
+            runTest("testData/kdoc/resolve/QualifiedNameReference.kt");
+        }
     }
 
-    @TestMetadata("AmbiguousReference.kt")
-    public void testAmbiguousReference() throws Exception {
-        runTest("testData/kdoc/resolve/AmbiguousReference.kt");
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/kdoc/resolve")
+    public static class TestBucket002 extends AbstractReferenceResolveTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("AmbiguousReferenceTypeParameter.kt")
-    public void testAmbiguousReferenceTypeParameter() throws Exception {
-        runTest("testData/kdoc/resolve/AmbiguousReferenceTypeParameter.kt");
-    }
+        @TestMetadata("ReceiverReference.kt")
+        public void testReceiverReference() throws Exception {
+            runTest("testData/kdoc/resolve/ReceiverReference.kt");
+        }
 
-    @TestMetadata("CheckExtensionReceiver.kt")
-    public void testCheckExtensionReceiver() throws Exception {
-        runTest("testData/kdoc/resolve/CheckExtensionReceiver.kt");
-    }
+        @TestMetadata("SeeReference.kt")
+        public void testSeeReference() throws Exception {
+            runTest("testData/kdoc/resolve/SeeReference.kt");
+        }
 
-    @TestMetadata("ClassSelfReference.kt")
-    public void testClassSelfReference() throws Exception {
-        runTest("testData/kdoc/resolve/ClassSelfReference.kt");
-    }
+        @TestMetadata("StaticMember.kt")
+        public void testStaticMember() throws Exception {
+            runTest("testData/kdoc/resolve/StaticMember.kt");
+        }
 
-    @TestMetadata("CodeReference.kt")
-    public void testCodeReference() throws Exception {
-        runTest("testData/kdoc/resolve/CodeReference.kt");
-    }
-
-    @TestMetadata("CompanionObjectMember.kt")
-    public void testCompanionObjectMember() throws Exception {
-        runTest("testData/kdoc/resolve/CompanionObjectMember.kt");
-    }
-
-    @TestMetadata("ConstructorParamReference.kt")
-    public void testConstructorParamReference() throws Exception {
-        runTest("testData/kdoc/resolve/ConstructorParamReference.kt");
-    }
-
-    @TestMetadata("ExtensionFromImports.kt")
-    public void testExtensionFromImports() throws Exception {
-        runTest("testData/kdoc/resolve/ExtensionFromImports.kt");
-    }
-
-    @TestMetadata("ExtensionFun.kt")
-    public void testExtensionFun() throws Exception {
-        runTest("testData/kdoc/resolve/ExtensionFun.kt");
-    }
-
-    @TestMetadata("ExtensionNonQualified.kt")
-    public void testExtensionNonQualified() throws Exception {
-        runTest("testData/kdoc/resolve/ExtensionNonQualified.kt");
-    }
-
-    @TestMetadata("ExtensionVal.kt")
-    public void testExtensionVal() throws Exception {
-        runTest("testData/kdoc/resolve/ExtensionVal.kt");
-    }
-
-    @TestMetadata("ImportAliasClass.kt")
-    public void testImportAliasClass() throws Exception {
-        runTest("testData/kdoc/resolve/ImportAliasClass.kt");
-    }
-
-    @TestMetadata("ImportedClassReference.kt")
-    public void testImportedClassReference() throws Exception {
-        runTest("testData/kdoc/resolve/ImportedClassReference.kt");
-    }
-
-    @TestMetadata("OnlyMembersFromClass.kt")
-    public void testOnlyMembersFromClass() throws Exception {
-        runTest("testData/kdoc/resolve/OnlyMembersFromClass.kt");
-    }
-
-    @TestMetadata("Overloads.kt")
-    public void testOverloads() throws Exception {
-        runTest("testData/kdoc/resolve/Overloads.kt");
-    }
-
-    @TestMetadata("ParamReference.kt")
-    public void testParamReference() throws Exception {
-        runTest("testData/kdoc/resolve/ParamReference.kt");
-    }
-
-    @TestMetadata("PropertyTypeParamReference.kt")
-    public void testPropertyTypeParamReference() throws Exception {
-        runTest("testData/kdoc/resolve/PropertyTypeParamReference.kt");
-    }
-
-    @TestMetadata("QualifiedCodeReference.kt")
-    public void testQualifiedCodeReference() throws Exception {
-        runTest("testData/kdoc/resolve/QualifiedCodeReference.kt");
-    }
-
-    @TestMetadata("QualifiedNameFunctionReference.kt")
-    public void testQualifiedNameFunctionReference() throws Exception {
-        runTest("testData/kdoc/resolve/QualifiedNameFunctionReference.kt");
-    }
-
-    @TestMetadata("QualifiedNameReference.kt")
-    public void testQualifiedNameReference() throws Exception {
-        runTest("testData/kdoc/resolve/QualifiedNameReference.kt");
-    }
-
-    @TestMetadata("ReceiverReference.kt")
-    public void testReceiverReference() throws Exception {
-        runTest("testData/kdoc/resolve/ReceiverReference.kt");
-    }
-
-    @TestMetadata("SeeReference.kt")
-    public void testSeeReference() throws Exception {
-        runTest("testData/kdoc/resolve/SeeReference.kt");
-    }
-
-    @TestMetadata("StaticMember.kt")
-    public void testStaticMember() throws Exception {
-        runTest("testData/kdoc/resolve/StaticMember.kt");
-    }
-
-    @TestMetadata("TypeParamReference.kt")
-    public void testTypeParamReference() throws Exception {
-        runTest("testData/kdoc/resolve/TypeParamReference.kt");
+        @TestMetadata("TypeParamReference.kt")
+        public void testTypeParamReference() throws Exception {
+            runTest("testData/kdoc/resolve/TypeParamReference.kt");
+        }
     }
 }

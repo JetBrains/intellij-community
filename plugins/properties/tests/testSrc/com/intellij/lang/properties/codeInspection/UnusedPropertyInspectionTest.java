@@ -45,7 +45,7 @@ public class UnusedPropertyInspectionTest extends CodeInsightFixtureTestCase<Mod
 
     final Module module = WriteAction.compute(() -> moduleManager.newModule(path, StdModuleTypes.JAVA.getId()));
 
-    ModuleRootModificationUtil.addDependency(myModule, module);
+    ModuleRootModificationUtil.addDependency(module, myModule);
     configureSources(module);
   }
 

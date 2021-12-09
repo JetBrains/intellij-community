@@ -10,10 +10,13 @@ import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.util.Disposer
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
-import org.jetbrains.kotlin.util.compareTo
-import org.jetbrains.kotlin.util.matches
-import org.jetbrains.kotlin.util.parseKotlinVersion
-import org.jetbrains.kotlin.util.parseKotlinVersionRequirement
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.KotlinVersion
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.LAST_SNAPSHOT
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_3_30
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_3_72
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_4_32
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_21
+import org.jetbrains.kotlin.idea.codeInsight.gradle.GradleKotlinTestUtils.TestedKotlinGradlePluginVersions.V_1_5_31
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
@@ -27,17 +30,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     sealed class KotlinVersionRequirement {
         data class Exact(val version: KotlinVersion) : KotlinVersionRequirement()
         data class Range(val lowestIncludedVersion: KotlinVersion?, val highestIncludedVersion: KotlinVersion?) : KotlinVersionRequirement()
-    }
-
-    data class KotlinVersion(
-        val major: Int,
-        val minor: Int,
-        val patch: Int,
-        val classifier: String? = null
-    ) {
-        override fun toString(): String {
-            return "$major.$minor.$patch" + if (classifier != null) "-$classifier" else ""
-        }
     }
 
     @Rule
@@ -54,11 +46,6 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
 
     override fun setUp() {
-        if (kotlinPluginVersionString == masterKotlinPluginVersion && IS_UNDER_TEAMCITY) {
-            assertTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
-        } else if (kotlinPluginVersionString == masterKotlinPluginVersion) {
-            assumeTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
-        }
         super.setUp()
         setupSystemProperties()
     }
@@ -89,7 +76,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     }
 
     companion object {
-        val masterKotlinPluginVersion: String = System.getenv("KOTLIN_GRADLE_PLUGIN_VERSION") ?: "1.6.255-SNAPSHOT"
+        val masterKotlinPluginVersion: String = "1.6.20-dev-6372"
         const val kotlinAndGradleParametersName: String = "{index}: Gradle-{0}, KotlinGradlePlugin-{1}"
         private val safePushParams: Collection<Array<Any>> = listOf(arrayOf("7.2", "master"))
 
@@ -101,41 +88,23 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
                 return safePushParams
             else
                 return listOf<Array<Any>>(
-                    arrayOf("4.9", "1.3.30"),
-                    arrayOf("5.6.4", "1.3.72"),
-                    arrayOf("6.8.2", "1.4.32"),
+                    arrayOf("4.9", V_1_3_30.toString()),
+                    arrayOf("5.6.4", V_1_3_72.toString()),
+                    arrayOf("6.8.2", V_1_4_32.toString()),
                     arrayOf("6.8.2", "master"),
-                    arrayOf("7.2", "1.5.21"),
-                    arrayOf("7.2", "1.5.31"),
+                    arrayOf("7.2", V_1_5_21.toString()),
+                    arrayOf("7.2", V_1_5_31.toString()),
                 ).plus(safePushParams)
         }
     }
 
-    fun androidProperties(): Map<String, String> {
-        return mapOf(
-            "compile_sdk_version" to "30",
-            "build_tools_version" to "28.0.3"
-        )
-    }
+    fun androidProperties(): Map<String, String> = mapOf(
+        "android_gradle_plugin_version" to "4.0.2",
+        "compile_sdk_version" to "30",
+        "build_tools_version" to "28.0.3",
+    )
 
-    protected fun repositories(useKts: Boolean): String {
-        val repositories = mutableListOf<String>()
-
-        fun MutableList<String>.addUrl(url: String) {
-            this += if (useKts) "maven(\"$url\")" else "maven { url '$url' }"
-        }
-
-        repositories.addUrl("https://cache-redirector.jetbrains.com/repo.maven.apache.org/maven2/")
-        repositories.add("mavenLocal()")
-        repositories.addUrl("https://cache-redirector.jetbrains.com/dl.google.com.android.maven2/")
-        repositories.addUrl("https://cache-redirector.jetbrains.com/plugins.gradle.org/m2/")
-        repositories.addUrl("https://cache-redirector.jetbrains.com/maven.pkg.jetbrains.space/kotlin/p/kotlin/dev")
-
-        if (!gradleVersionMatches("7.0+")) {
-            repositories.addUrl("https://cache-redirector.jetbrains.com/jcenter/")
-        }
-        return repositories.joinToString("\n")
-    }
+    protected fun repositories(useKts: Boolean): String = GradleKotlinTestUtils.listRepositories(useKts, gradleVersion)
 
     override val defaultProperties: Map<String, String>
         get() = super.defaultProperties.toMutableMap().apply {

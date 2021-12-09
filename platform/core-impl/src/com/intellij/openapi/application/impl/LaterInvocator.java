@@ -102,7 +102,7 @@ public final class LaterInvocator {
   }
 
   static void invokeAndWait(@NotNull ModalityState modalityState, @NotNull final Runnable runnable) {
-    LOG.assertTrue(!isDispatchThread());
+    LOG.assertTrue(!ApplicationManager.getApplication().isDispatchThread());
 
     final Semaphore semaphore = new Semaphore();
     semaphore.down();
@@ -153,7 +153,7 @@ public final class LaterInvocator {
   }
 
   public static void enterModal(@NotNull Object modalEntity, @NotNull ModalityStateEx appendedState) {
-    LOG.assertTrue(isWriteThread(), "enterModal() should be invoked in write thread");
+    assertIsDispatchThread();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("enterModal:" + modalEntity);
@@ -175,7 +175,7 @@ public final class LaterInvocator {
   }
 
   public static void enterModal(@NotNull Project project, @NotNull Dialog dialog) {
-    LOG.assertTrue(isDispatchThread(), "enterModal() should be invoked in event-dispatch thread");
+    assertIsDispatchThread();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("enterModal:" + dialog.getName() + " ; for project: " + project.getName());
@@ -191,19 +191,19 @@ public final class LaterInvocator {
   }
 
   /**
-   * Marks the given modality state (not {@code any()}} as transparent, i.e. {@code invokeLater} calls with its "parent" modality state
-   * will also be executed within it. NB: this will cause all VFS/PSI/etc events be executed inside your modal dialog, so you'll need
+   * Marks the given modality state (not {@code any()}) as transparent, i.e. {@code invokeLater} calls with its "parent" modality state
+   * will also be executed within it. NB: this will cause all VFS/PSI/etc. events be executed inside your modal dialog, so you'll need
    * to handle them appropriately, so please consider making the dialog non-modal instead of using this API.
    */
   @ApiStatus.Internal
   public static void markTransparent(@NotNull ModalityState state) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     ((ModalityStateEx)state).markTransparent();
     reincludeSkippedItemsAndRequestFlush();
   }
 
   public static void leaveModal(Project project, @NotNull Dialog dialog) {
-    LOG.assertTrue(isDispatchThread(), "leaveModal() should be invoked in write thread");
+    assertIsDispatchThread();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("leaveModal:" + dialog.getName() + " ; for project: " + project.getName());
@@ -244,7 +244,7 @@ public final class LaterInvocator {
 
 
   public static void leaveModal(@NotNull Object modalEntity) {
-    LOG.assertTrue(isWriteThread(), "leaveModal() should be invoked in write thread");
+    assertIsDispatchThread();
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("leaveModal:" + modalEntity);
@@ -261,7 +261,7 @@ public final class LaterInvocator {
 
   @TestOnly
   public static void leaveAllModals() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     while (!ourModalEntities.isEmpty()) {
       leaveModal(ourModalEntities.get(ourModalEntities.size() - 1));
     }
@@ -281,7 +281,7 @@ public final class LaterInvocator {
     if (currentState != ModalityState.NON_MODAL) {
       currentState.cancelAllEntities();
       // let event queue pump once before trying to cancel next modal
-      invokeLater(ModalityState.any(), Conditions.alwaysFalse(), () -> { forceLeaveAllModals(); });
+      invokeLater(ModalityState.any(), Conditions.alwaysFalse(), () -> forceLeaveAllModals());
     }
   }
 
@@ -299,7 +299,7 @@ public final class LaterInvocator {
   }
 
   public static boolean isInModalContextForProject(@Nullable Project project) {
-    LOG.assertTrue(isDispatchThread());
+    assertIsDispatchThread();
 
     if (ourModalEntities.isEmpty()) return false;
     if (project == null) return true;
@@ -312,8 +312,8 @@ public final class LaterInvocator {
     return isInModalContextForProject(null);
   }
 
-  private static boolean isDispatchThread() {
-    return ApplicationManager.getApplication().isDispatchThread();
+  private static void assertIsDispatchThread() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
   }
 
   private static boolean isWriteThread() {
@@ -335,11 +335,12 @@ public final class LaterInvocator {
   }
 
   private static void reincludeSkippedItemsAndRequestFlush() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    assertIsDispatchThread();
     ourEdtQueue.reincludeSkippedItems();
   }
 
   public static void purgeExpiredItems() {
+    assertIsDispatchThread();
     ourEdtQueue.purgeExpiredItems();
   }
 

@@ -19,7 +19,7 @@ The repository contains sources code of SimagePlugins as well as demo maya proje
 
 <!-- /TOC </fold>-->
 
-<fold text='h2: ## What is this repository for'><fold text='h2: ## What is this repository for'>## What is this repository for
+<fold text='h2: ## What is this repository for'>## What is this repository for
 
 <fold text='unordered list: - Maya plugins for Sim... beta'>- Maya plugins for Simage Animation & Media Limited
 - Version: 0.0.1 beta</fold></fold>
@@ -146,4 +146,4 @@ deformer -type "Simage_SmoothDeformer"
 
 <fold text='unordered list: - Max Tong: maxtong198...e.hk>'>- Max Tong: maxtong198776@gmail.com
 
-- Simage Animation and Media Limited: <https://www.simage.hk></fold></fold></fold></fold>
+- Simage Animation and Media Limited: <https://www.simage.hk></fold></fold></fold>

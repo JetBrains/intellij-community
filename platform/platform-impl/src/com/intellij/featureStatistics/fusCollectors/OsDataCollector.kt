@@ -1,8 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.featureStatistics.fusCollectors
 
+import com.intellij.execution.ExecutionException
+import com.intellij.execution.configurations.GeneralCommandLine
+import com.intellij.execution.util.ExecUtil
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventFields.String
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByRegexp
 import com.intellij.internal.statistic.eventLog.events.EventFields.Version
@@ -31,7 +35,7 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     "parrot", "pop", "pureos", "raspbian", "rhel", "rocky", "rosa", "sabayon", "slackware", "solus", "ubuntu", "void", "zorin",
     "other", "unknown")
 
-  private val GROUP = EventLogGroup("system.os", 12)
+  private val GROUP = EventLogGroup("system.os", 13)
   private val OS_NAME = String("name", OS_NAMES)
   private val OS_LANG = String("locale", LOCALES)
   private val OS_TZ = StringValidatedByRegexp("time_zone", "time_zone")
@@ -39,7 +43,7 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
   @ApiStatus.ScheduledForRemoval(inVersion = "2024.1")
   @Suppress("MissingDeprecatedAnnotationOnScheduledForRemovalApi")
   private val TIMEZONE = GROUP.registerEvent("os.timezone", StringValidatedByRegexp("value", "time_zone"))  // backward compatibility
-  private val LINUX = GROUP.registerEvent("linux", String("distro", DISTROS), StringValidatedByRegexp("release", "version"))
+  private val LINUX = GROUP.registerEvent("linux", String("distro", DISTROS), StringValidatedByRegexp("release", "version"), EventFields.Boolean("wsl"))
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -50,7 +54,8 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
       TIMEZONE.metric(tz))
     if (SystemInfo.isLinux) {
       val (distro, release) = getReleaseData()
-      metrics += LINUX.metric(distro, release)
+      val isUnderWsl = detectIsUnderWsl()
+      metrics += LINUX.metric(distro, release, isUnderWsl)
     }
     return metrics
   }
@@ -88,5 +93,14 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     }
     catch (ignored: IOException) {
       "unknown" to null
+    }
+
+  private fun detectIsUnderWsl(): Boolean =
+    try {
+      val output = ExecUtil.execAndGetOutput(GeneralCommandLine("uname", "-a"))
+      "-microsoft-" in output.stdout
+    }
+    catch(ignored: ExecutionException) {
+      false
     }
 }

@@ -54,7 +54,7 @@ public final class Main {
   private static final List<String> HEADLESS_COMMANDS = List.of(
     "ant", "duplocate", "dump-shared-index", "traverseUI", "buildAppcodeCache", "format", "keymap", "update", "inspections", "intentions",
     "rdserver-headless", "thinClient-headless", "installPlugins", "dumpActions", "cwmHostStatus", "warmup", "buildEventsScheme",
-    "remoteDevShowHelp", "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler");
+    "remoteDevShowHelp", "installGatewayProtocolHandler", "uninstallGatewayProtocolHandler", "remoteDevRegisterBackend");
   private static final List<String> GUI_COMMANDS = List.of("diff", "merge");
 
   private static boolean isHeadless;
@@ -103,21 +103,31 @@ public final class Main {
     Thread.currentThread().setContextClassLoader(newClassLoader);
 
     startupTimings.put("MainRunner search", System.nanoTime());
-    Class<?> mainClass = newClassLoader.loadClassInsideSelf(MAIN_RUNNER_CLASS_NAME, true);
+
+    Class<?> mainClass = newClassLoader.loadClassInsideSelf(MAIN_RUNNER_CLASS_NAME, "com/intellij/idea/StartupUtil.class",
+                                                            -635775336887217634L, true);
     if (mainClass == null) {
       throw new ClassNotFoundException(MAIN_RUNNER_CLASS_NAME);
     }
 
     WindowsCommandLineProcessor.ourMainRunnerClass = mainClass;
     MethodHandles.lookup()
-      .findStatic(mainClass, "start", MethodType.methodType(void.class, String.class, String[].class, LinkedHashMap.class))
-      .invokeExact(Main.class.getName() + "Impl", args, startupTimings);
+      .findStatic(mainClass, "start", MethodType.methodType(void.class, String.class,
+                                                            boolean.class, boolean.class,
+                                                            String[].class, LinkedHashMap.class))
+      .invokeExact(Main.class.getName() + "Impl", isHeadless, newClassLoader != Main.class.getClassLoader(), args, startupTimings);
   }
 
   @SuppressWarnings("HardCodedStringLiteral")
   private static void installPluginUpdates() {
     try {
-      StartupActionScriptManager.executeActionScript();
+      // referencing StartupActionScriptManager.ACTION_SCRIPT_FILE is ok - string constant will be inlined
+      Path scriptFile = Path.of(PathManager.getPluginTempPath(), StartupActionScriptManager.ACTION_SCRIPT_FILE);
+      if (Files.isRegularFile(scriptFile)) {
+        // load StartupActionScriptManager and all others related class (ObjectInputStream and so on loaded as part of class define)
+        // only if there is action script to execute
+        StartupActionScriptManager.executeActionScript();
+      }
     }
     catch (IOException e) {
       showMessage("Plugin Installation Error",
@@ -146,7 +156,7 @@ public final class Main {
     if (isHeadless) {
       System.setProperty(AWT_HEADLESS, Boolean.TRUE.toString());
     }
-    isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || !isCommandLine && isFileAfterOptions(args);
+    isLightEdit = "LightEdit".equals(System.getProperty(PLATFORM_PREFIX_PROPERTY)) || (!isCommandLine && isFileAfterOptions(args));
   }
 
   private static boolean isFileAfterOptions(String @NotNull [] args) {

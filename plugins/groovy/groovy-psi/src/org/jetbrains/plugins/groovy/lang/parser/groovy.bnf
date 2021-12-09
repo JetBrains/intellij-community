@@ -506,7 +506,7 @@ private parameter_start_after_no_modifiers ::= parameter_type_element_silent ell
 private parameter_type_element_silent ::= parameter_type_element | clear_variants_and_fail
 private parameter_type_element ::= primitive_type_element array_type_elements
                                  | qualified_class_type_element array_type_elements
-                                 | unqualified_class_type_element &(IDENTIFIER | ellipsis)
+                                 | unqualified_class_type_element &(weak_keyword | IDENTIFIER | ellipsis)
                                  | unqualified_class_type_element array_type_element array_type_elements
 private ellipsis ::= '...' { consumeTokenMethod = 'consumeTokenFast' }
 parameter ::= var { elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrParameterElementType' }
@@ -1285,7 +1285,7 @@ private named_argument_tail ::= ':' (mb_nl expression)
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
-argument_label ::= IDENTIFIER | string_literal_tokens | primitive_type | modifier | keyword | '*' { consumeTokenMethod = 'fast' }
+argument_label ::= weak_keyword | IDENTIFIER | string_literal_tokens | primitive_type | modifier | keyword | '*' { consumeTokenMethod = 'fast' }
 // endregion
 
 

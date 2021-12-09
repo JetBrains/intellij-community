@@ -145,7 +145,7 @@ private fun parseGitStatusOutput(output: String): List<LightFileStatus.StatusRec
   while (it.hasNext()) {
     val line = it.next()
     if (StringUtil.isEmptyOrSpaces(line)) continue // skip empty lines if any (e.g. the whole output may be empty on a clean working tree).
-    if (line.startsWith("starting fsmonitor-daemon in ")) continue; // skip debug output from experimental daemon in git-for-windows-2.33
+    if (line.startsWith("starting fsmonitor-daemon in ")) continue // skip debug output from experimental daemon in git-for-windows-2.33
     // format: XY_filename where _ stands for space.
     if (line.length < 4 || line[2] != ' ') { // X, Y, space and at least one symbol for the file
       throwGFE(GitBundle.message("status.exception.message.line.is.too.short"), output, line, '0', '0')

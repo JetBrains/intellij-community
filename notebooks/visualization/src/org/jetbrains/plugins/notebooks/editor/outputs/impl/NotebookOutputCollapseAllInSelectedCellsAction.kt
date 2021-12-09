@@ -40,8 +40,10 @@ internal class NotebookOutputCollapseAllAction private constructor() : ToggleAct
 internal class NotebookOutputCollapseAllInSelectedCellsAction private constructor() : ToggleAction(), DumbAware {
   override fun update(e: AnActionEvent) {
     super.update(e)
-    e.presentation.isEnabledAndVisible = e.notebookEditor != null
-  }
+    val editor = e.notebookEditor
+    e.presentation.isEnabled = editor != null
+    e.presentation.isVisible = editor?.cellSelectionModel?.let { it.selectedCells.size > 1 } ?: false
+   }
 
   override fun isSelected(e: AnActionEvent): Boolean =
     !getSelectedCollapsingComponents(e).any { it.isSeen }

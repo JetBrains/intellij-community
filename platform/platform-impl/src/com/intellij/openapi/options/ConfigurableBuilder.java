@@ -22,9 +22,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- * See also {@link UiDslConfigurable.Simple} for more flexible alternative.
+ * See also {@link UiDslUnnamedConfigurable.Simple} for more flexible alternative.
  */
-public abstract class ConfigurableBuilder extends UiDslConfigurable.Simple
+public abstract class ConfigurableBuilder extends UiDslUnnamedConfigurable.Simple
   implements UiDslConfigurable, UiDslUnnamedConfigurable, ConfigurableWithOptionDescriptors {
   private @NlsContexts.BorderTitle String myTitle;
 

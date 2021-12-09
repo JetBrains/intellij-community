@@ -17,14 +17,17 @@ import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.ex.FileChooserDialogImpl
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
+import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.project.NOTIFICATIONS_SILENT_MODE
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.io.createDirectories
@@ -260,6 +263,35 @@ object ProjectUtils {
   }
 
   private fun versionFile(dest: Path) = dest.resolve(FEATURE_TRAINER_VERSION)
+
+  fun markDirectoryAsSourcesRoot(project: Project, pathToSources: String) {
+    val modules = ModuleManager.getInstance(project).modules
+    if (modules.size > 1) {
+      thisLogger().error("The learning project has more than one module: ${modules.map { it.name }}")
+    }
+    val module = modules.first()
+    val sourcesPath = project.basePath!! + '/' + pathToSources
+    val sourcesRoot = LocalFileSystem.getInstance().refreshAndFindFileByPath(sourcesPath)
+    if (sourcesRoot == null) {
+      val status = when {
+        !File(sourcesPath).exists() -> "does not exist"
+        File(sourcesPath).isDirectory -> "existed directory"
+        else -> "it is regular file"
+      }
+      error("Failed to find directory with source files: $sourcesPath ($status)")
+    }
+    val rootsModel = ModuleRootManager.getInstance(module).modifiableModel
+    val contentEntry = rootsModel.contentEntries.find {
+      val contentEntryFile = it.file
+      contentEntryFile != null && VfsUtilCore.isAncestor(contentEntryFile, sourcesRoot, false)
+    } ?: error("Failed to find content entry for file: ${sourcesRoot.name}")
+
+    contentEntry.addSourceFolder(sourcesRoot, false)
+    runWriteAction {
+      rootsModel.commit()
+      project.save()
+    }
+  }
 
   fun createSdkDownloadingNotification(): Notification {
     return iftNotificationGroup.createNotification(LearnBundle.message("learn.project.initializing.jdk.download.notification.title"),

@@ -6,6 +6,7 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.ColorUtil
+import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
@@ -66,7 +67,7 @@ class PrivacyNoticeComponent(@NlsContexts.Label private val label: String, @NlsC
     privacyPolicyPane.background = backgroundColor()
     privacyPolicyPane.foreground = noticeColor()
     privacyPolicyPane.font = privacyPolicyPane.font.deriveFont((privacyPolicyPane.font.size - if (SystemInfo.isWindows) 2 else 1).toFloat())
-    privacyPolicyPane.editorKit = UIUtil.getHTMLEditorKit()
+    privacyPolicyPane.editorKit = HTMLEditorKitBuilder.simple()
     privacyPolicyPane.border = JBUI.Borders.empty(0, 0, 6, 6)
     privacyPolicyPane.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
 

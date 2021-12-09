@@ -226,4 +226,11 @@ public final class MarkdownPsiElementFactory {
     final var contents = ContainerUtil.map(widths, width -> " ".repeat(width));
     return createTableRow(project, contents);
   }
+
+  @ApiStatus.Experimental
+  public static @NotNull PsiElement createBlockquoteArrow(@NotNull Project project) {
+    final var contents = "> ";
+    final var file = createFile(project, contents);
+    return Objects.requireNonNull(file.findElementAt(1));
+  }
 }

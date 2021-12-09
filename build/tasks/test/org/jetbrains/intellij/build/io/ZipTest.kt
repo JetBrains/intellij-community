@@ -4,7 +4,9 @@ package org.jetbrains.intellij.build.io
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.testFramework.rules.InMemoryFsExtension
 import com.intellij.util.io.write
+import com.intellij.util.lang.HashMapZipFile
 import com.intellij.util.lang.ImmutableZipFile
+import com.intellij.util.lang.ZipFile
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.assertj.core.api.Assertions.assertThat
 import org.assertj.core.configuration.ConfigurationProvider
@@ -30,28 +32,29 @@ class ZipTest {
   @Test
   fun `interrupt thread`(@TempDir tempDir: Path) {
     val (list, archiveFile) = createLargeArchive(128, tempDir)
-    val zipFile = ImmutableZipFile.load(archiveFile)
-    val tasks = mutableListOf<ForkJoinTask<*>>()
-    // force init of AssertJ to avoid ClosedByInterruptException on reading FileLoader index
-    ConfigurationProvider.CONFIGURATION_PROVIDER
-    for (i in 0..100) {
-      tasks.add(ForkJoinTask.adapt(Runnable {
-        val ioThread = runInThread {
-          while (!Thread.currentThread().isInterrupted()) {
-            for (name in list) {
-              assertThat(zipFile.getEntry(name)).isNotNull()
+    checkZip(archiveFile) { zipFile ->
+      val tasks = mutableListOf<ForkJoinTask<*>>()
+      // force init of AssertJ to avoid ClosedByInterruptException on reading FileLoader index
+      ConfigurationProvider.CONFIGURATION_PROVIDER
+      for (i in 0..100) {
+        tasks.add(ForkJoinTask.adapt(Runnable {
+          val ioThread = runInThread {
+            while (!Thread.currentThread().isInterrupted()) {
+              for (name in list) {
+                assertThat(zipFile.getResource(name)).isNotNull()
+              }
             }
           }
-        }
 
-        // once in a while, the IO thread is stopped
-        Thread.sleep(50)
-        ioThread.interrupt()
-        Thread.sleep(10)
-        ioThread.join()
-      }))
+          // once in a while, the IO thread is stopped
+          Thread.sleep(50)
+          ioThread.interrupt()
+          Thread.sleep(10)
+          ioThread.join()
+        }))
+      }
+      ForkJoinTask.invokeAll(tasks)
     }
-    ForkJoinTask.invokeAll(tasks)
   }
 
   @Test
@@ -59,13 +62,10 @@ class ZipTest {
     Assumptions.assumeTrue(SystemInfoRt.isUnix)
 
     val (list, archiveFile) = createLargeArchive(Short.MAX_VALUE * 2 + 20, fs.root)
-    ImmutableZipFile.load(archiveFile).use { zipFile ->
-      zipFile.getEntry("qweqw")
-
+    checkZip(archiveFile) { zipFile ->
       for (name in list) {
-        assertThat(zipFile.getEntry(name)).isNotNull()
+        assertThat(zipFile.getResource(name)).isNotNull()
       }
-
     }
   }
 
@@ -102,9 +102,9 @@ class ZipTest {
     val archiveFile = tempDir.resolve("archive.zip")
     zip(archiveFile, mapOf(dir to "test"), compress = false)
 
-    ImmutableZipFile.load(archiveFile).use { zipFile ->
+    checkZip(archiveFile) { zipFile ->
       for (name in list) {
-        assertThat(zipFile.getEntry("test/$name")).isNotNull()
+        assertThat(zipFile.getResource("test/$name")).isNotNull()
       }
     }
   }
@@ -137,14 +137,32 @@ class ZipTest {
       fs.getPathMatcher("glob:**/icon-robots.txt"),
     ))))
 
-    ImmutableZipFile.load(archiveFile).use { zipFile ->
-      for (name in list) {
-        assertThat(zipFile.getEntry("test/$name")).isNull()
+    checkZip(archiveFile) { zipFile ->
+      if (zipFile is ImmutableZipFile) {
+        assertThat(zipFile.getOrComputeNames()).containsExactly(
+          "entry-item663137163-10",
+          "entry-item972016666-0",
+          "entry-item1791766502-3",
+          "entry-item1705343313-9",
+          "entry-item-942605861-5",
+          "entry-item1578011503-7",
+          "entry-item949746295-2",
+          "entry-item-245744780-1",
+          "do-not-ignore-me",
+          "icon-robots.txt",
+          "entry-item-2145949183-8",
+          "entry-item-1326272896-6",
+          "entry-item828400960-4"
+        )
       }
-      assertThat(zipFile.getEntry("do-not-ignore-me")).isNotNull()
-      assertThat(zipFile.getEntry("test-relative-ignore")).isNull()
-      assertThat(zipFile.getEntry("some/nested/dir/icon-robots.txt")).isNull()
-      assertThat(zipFile.getEntry("unknown")).isNull()
+
+      for (name in list) {
+        assertThat(zipFile.getResource("test/$name")).isNull()
+      }
+      assertThat(zipFile.getResource("do-not-ignore-me")).isNotNull()
+      assertThat(zipFile.getResource("test-relative-ignore")).isNull()
+      assertThat(zipFile.getResource("some/nested/dir/icon-robots.txt")).isNull()
+      assertThat(zipFile.getResource("unknown")).isNull()
     }
   }
 
@@ -158,9 +176,9 @@ class ZipTest {
     val archiveFile = tempDir.resolve("archive.zip")
     zip(archiveFile, mapOf(dir to ""), compress = true)
 
-    ImmutableZipFile.load(archiveFile).use { zipFile ->
+    HashMapZipFile.load(archiveFile).use { zipFile ->
       for (name in zipFile.entries) {
-        val entry = zipFile.getEntry("samples/nested_dir/__init__.py")
+        val entry = zipFile.getRawEntry("samples/nested_dir/__init__.py")
         assertThat(entry).isNotNull()
         assertThat(entry!!.isCompressed()).isFalse()
         assertThat(String(entry.getData(zipFile), Charsets.UTF_8)).isEqualTo("\n")
@@ -197,12 +215,10 @@ class ZipTest {
     val archiveFile = tempDir.resolve("archive.zip")
     zip(archiveFile, mapOf(dir to ""), compress = true)
 
-    ImmutableZipFile.load(archiveFile).use { zipFile ->
-      for (name in zipFile.entries) {
-        val entry = zipFile.getEntry("file")
-        assertThat(entry).isNotNull()
-        assertThat(entry!!.isCompressed()).isTrue()
-      }
+    HashMapZipFile.load(archiveFile).use { zipFile ->
+      val entry = zipFile.getRawEntry("file")
+      assertThat(entry).isNotNull()
+      assertThat(entry!!.isCompressed()).isTrue()
     }
   }
 
@@ -218,11 +234,9 @@ class ZipTest {
     val archiveFile = tempDir.resolve("archive.zip")
     zip(archiveFile, mapOf(dir to ""), compress = false)
 
-    ImmutableZipFile.load(archiveFile).use { zipFile ->
-      for (name in zipFile.entries) {
-        val entry = zipFile.getEntry("largeFile1")
-        assertThat(entry).isNotNull()
-      }
+    checkZip(archiveFile) { zipFile ->
+      val entry = zipFile.getResource("largeFile1")
+      assertThat(entry).isNotNull()
     }
   }
 
@@ -240,11 +254,9 @@ class ZipTest {
     val archiveFile = tempDir.resolve("archive.zip")
     zip(archiveFile, mapOf(dir to ""), compress = true)
 
-    ImmutableZipFile.load(archiveFile).use { zipFile ->
-      for (name in zipFile.entries) {
-        val entry = zipFile.getEntry("largeFile1")
-        assertThat(entry).isNotNull()
-      }
+    checkZip(archiveFile) { zipFile ->
+      val entry = zipFile.getResource("largeFile1")
+      assertThat(entry).isNotNull()
     }
   }
 
@@ -262,11 +274,19 @@ class ZipTest {
     val archiveFile = tempDir.resolve("archive.zip")
     zip(archiveFile, mapOf(dir to ""), compress = true)
 
-    ImmutableZipFile.load(archiveFile).use { zipFile ->
-      for (name in zipFile.entries) {
-        val entry = zipFile.getEntry("largeFile1")
-        assertThat(entry).isNotNull()
-      }
+    checkZip(archiveFile) { zipFile ->
+      val entry = zipFile.getResource("largeFile1")
+      assertThat(entry).isNotNull()
+    }
+  }
+
+  // check both IKV- and non-IKV varians of immutable zip file
+  private fun checkZip(file: Path, checker: (ZipFile) -> Unit) {
+    HashMapZipFile.load(file).use { zipFile ->
+      checker(zipFile)
+    }
+    ImmutableZipFile.load(file).use { zipFile ->
+      checker(zipFile)
     }
   }
 }

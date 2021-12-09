@@ -7,9 +7,11 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.project.DumbUtilImpl
 import com.intellij.openapi.project.Project
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-internal class ReindexAction : RecoveryAction {
+@ApiStatus.Internal
+class ReindexAction : RecoveryAction {
   override val performanceRate: Int
     get() = 1000
   override val presentableName: @Nls(capitalization = Nls.Capitalization.Title) String

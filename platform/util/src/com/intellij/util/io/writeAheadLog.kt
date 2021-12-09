@@ -17,6 +17,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.ExecutorService
+import java.util.function.Function
 import java.util.zip.CRC32
 import java.util.zip.CheckedInputStream
 import java.util.zip.CheckedOutputStream
@@ -315,12 +316,12 @@ private fun <K, V> tryCompact(walFile: Path,
 
     for (walEvent in it.readWal()) {
       when (walEvent) {
-        is WalEvent.AppendEvent -> keyToLastEvent.computeIfAbsent(walEvent.key) { IntLinkedOpenHashSet() }.add(eventCount)
+        is WalEvent.AppendEvent -> keyToLastEvent.computeIfAbsent(walEvent.key, Function { IntLinkedOpenHashSet() }).add(eventCount)
         is WalEvent.PutEvent -> keyToLastEvent.put(walEvent.key, IntLinkedOpenHashSet().also{ set -> set.add(eventCount) })
         is WalEvent.RemoveEvent -> keyToLastEvent.put(walEvent.key, IntLinkedOpenHashSet())
         is WalEvent.CorruptionEvent -> throw CorruptionException("wal has been corrupted")
       }
-      keyToLastEvent.computeIfAbsent(walEvent.key) { IntLinkedOpenHashSet() }.add(eventCount)
+      keyToLastEvent.computeIfAbsent(walEvent.key, Function { IntLinkedOpenHashSet() }).add(eventCount)
       eventCount++
     }
 

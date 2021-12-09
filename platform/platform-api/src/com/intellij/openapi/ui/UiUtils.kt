@@ -8,13 +8,16 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.DropDownLink
+import com.intellij.util.ui.tree.TreeModelAdapter
 import java.awt.ItemSelectable
 import java.awt.event.*
 import javax.swing.InputMap
 import javax.swing.JComponent
+import javax.swing.JTree
 import javax.swing.KeyStroke
 import javax.swing.event.DocumentEvent
 import javax.swing.text.JTextComponent
+import javax.swing.tree.TreeModel
 
 
 fun JTextComponent.isTextUnderMouse(e: MouseEvent): Boolean {
@@ -79,6 +82,18 @@ fun <T> ItemSelectable.whenItemSelected(listener: (T) -> Unit) {
       listener(event.item as T)
     }
   }
+}
+
+fun JTree.whenStructureChanged(listener: () -> Unit) {
+  model.whenStructureChanged(listener)
+}
+
+fun TreeModel.whenStructureChanged(listener: () -> Unit) {
+  addTreeModelListener(
+    TreeModelAdapter.create { _, _ ->
+      listener()
+    }
+  )
 }
 
 fun JTextComponent.whenTextModified(listener: () -> Unit) {

@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.idea.search.excludeFileTypes
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
 import org.jetbrains.kotlin.idea.search.restrictToKotlinSources
+import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
@@ -58,7 +59,7 @@ class ExpressionsOfTypeProcessor(
 
     companion object {
         @get:TestOnly
-        var mode = if (isUnitTestMode()) Mode.ALWAYS_SMART else Mode.PLAIN_WHEN_NEEDED
+        var mode = Mode.ALWAYS_SMART
 
         @TestOnly
         fun prodMode() {
@@ -311,8 +312,7 @@ class ExpressionsOfTypeProcessor(
             throw ProcessCanceledException()
         }
 
-        val file = psiClass.containingFile
-        if (file != null) file.useScope else psiClass.useScope
+        psiClass.containingFile?.useScope() ?: psiClass.useScope()
     }
 
     private fun addStaticMemberToProcess(psiMember: PsiMember, scope: SearchScope, processor: ReferenceProcessor) {

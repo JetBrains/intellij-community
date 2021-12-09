@@ -24,7 +24,7 @@ class VcsLogFileType private constructor() : FileType {
   override fun getName(): String = "VcsLog"
   override fun getDescription(): String = VcsLogBundle.message("filetype.vcs.log.description")
   override fun getDefaultExtension(): String = ""
-  override fun getIcon(): Icon? = AllIcons.Vcs.Branch
+  override fun getIcon(): Icon = AllIcons.Vcs.Branch
   override fun isBinary(): Boolean = true
   override fun isReadOnly(): Boolean = true
 

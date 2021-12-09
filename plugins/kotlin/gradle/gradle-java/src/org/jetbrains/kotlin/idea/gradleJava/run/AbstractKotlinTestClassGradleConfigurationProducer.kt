@@ -47,6 +47,16 @@ abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer :
         return other.isJpsJunitConfiguration()
     }
 
+    override fun getAllTestsTaskToRun(
+        context: ConfigurationContext,
+        element: PsiClass,
+        chosenElements: List<PsiClass>
+    ): List<TestTasksToRun> {
+        val tasks = mppTestTasksChooser.listAvailableTasks(listOf(element))
+        val wildcardFilter = createTestFilterFrom(element)
+        return tasks.map { TestTasksToRun(it, wildcardFilter) }
+    }
+
     override fun onFirstRun(fromContext: ConfigurationFromContext, context: ConfigurationContext, performRunnable: Runnable) {
         val inheritorChooser: InheritorChooser = object : InheritorChooser() {
             override fun runForClasses(classes: List<PsiClass>, method: PsiMethod?, context: ConfigurationContext, runnable: Runnable) {
@@ -79,7 +89,7 @@ abstract class AbstractKotlinMultiplatformTestClassGradleConfigurationProducer :
             val configuration = fromContext.configuration as GradleRunConfiguration
             val settings = configuration.settings
 
-          val createFilter = { clazz: PsiClass -> createTestFilterFrom(clazz) }
+            val createFilter = { clazz: PsiClass -> createTestFilterFrom(clazz) }
             if (!settings.applyTestConfiguration(context.module, tasks, classes, createFilter)) {
                 LOG.warn("Cannot apply class test configuration, uses raw run configuration")
                 performRunnable.run()

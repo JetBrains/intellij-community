@@ -2,7 +2,6 @@
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.FrameDiffTool
-import com.intellij.diff.actions.impl.OpenInEditorAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
@@ -70,7 +69,7 @@ private class CombinedSimpleDiffHeader(block: CombinedDiffBlock, path: FilePath,
 
   private fun buildToolbar(path: FilePath, block: CombinedDiffBlock): ActionToolbar {
     val toolbarGroup = DefaultActionGroup()
-    toolbarGroup.add(OpenInEditorAction())
+    toolbarGroup.add(CombinedOpenInEditorAction(path))
     toolbarGroup.addSeparator()
     toolbarGroup.add(SelectableFilePathLabel(path))
 

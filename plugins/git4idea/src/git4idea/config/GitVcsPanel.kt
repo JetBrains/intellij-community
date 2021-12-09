@@ -26,8 +26,13 @@ import com.intellij.ui.EnumComboBoxModel
 import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.components.fields.ExpandableTextField
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.panel
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import com.intellij.util.Function
 import com.intellij.util.execution.ParametersListUtil
@@ -91,45 +96,40 @@ internal class GitVcsPanel(private val project: Project) :
 
   private val projectSettings get() = GitVcsSettings.getInstance(project)
 
-  private fun RowBuilder.branchUpdateInfoRow() {
-    row {
-      cell {
-        label(message("settings.explicitly.check") + " ")
-        comboBox(
-          EnumComboBoxModel(GitIncomingCheckStrategy::class.java),
-          {
-            projectSettings.incomingCheckStrategy
-          },
-          { selectedStrategy ->
-            projectSettings.incomingCheckStrategy = selectedStrategy as GitIncomingCheckStrategy
-            if (!project.isDefault) {
-              GitBranchIncomingOutgoingManager.getInstance(project).updateIncomingScheduling()
-            }
-          })
-      }
-      enableIf(AdvancedSettingsPredicate("git.update.incoming.outgoing.info", disposable!!))
-    }
+  private fun Panel.branchUpdateInfoRow() {
+    row(message("settings.explicitly.check")) {
+      comboBox(EnumComboBoxModel(GitIncomingCheckStrategy::class.java))
+        .bindItem({
+                    projectSettings.incomingCheckStrategy
+                  },
+                  { selectedStrategy ->
+                    projectSettings.incomingCheckStrategy = selectedStrategy as GitIncomingCheckStrategy
+                    if (!project.isDefault) {
+                      GitBranchIncomingOutgoingManager.getInstance(project).updateIncomingScheduling()
+                    }
+                  })
+    }.enabledIf(AdvancedSettingsPredicate("git.update.incoming.outgoing.info", disposable!!))
   }
 
-  private fun RowBuilder.protectedBranchesRow() {
-    row {
-      cell {
-        label(message("settings.protected.branched"))
-        val sharedSettings = gitSharedSettings(project)
-        val protectedBranchesField =
-          ExpandableTextFieldWithReadOnlyText(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER)
-        if (sharedSettings.isSynchronizeBranchProtectionRules) {
-          protectedBranchesField.readOnlyText = ParametersListUtil.COLON_LINE_JOINER.`fun`(sharedSettings.additionalProhibitedPatterns)
-        }
-        protectedBranchesField(growX)
-          .withBinding<List<String>>(
-            { ParametersListUtil.COLON_LINE_PARSER.`fun`(it.text) },
-            { component, value -> component.text = ParametersListUtil.COLON_LINE_JOINER.`fun`(value) },
-            PropertyBinding(
-              { sharedSettings.forcePushProhibitedPatterns },
-              { sharedSettings.forcePushProhibitedPatterns = it })
-          )
+  private fun Panel.protectedBranchesRow() {
+    row(message("settings.protected.branched")) {
+      val sharedSettings = gitSharedSettings(project)
+      val protectedBranchesField =
+        ExpandableTextFieldWithReadOnlyText(ParametersListUtil.COLON_LINE_PARSER, ParametersListUtil.COLON_LINE_JOINER)
+      if (sharedSettings.isSynchronizeBranchProtectionRules) {
+        protectedBranchesField.readOnlyText = ParametersListUtil.COLON_LINE_JOINER.`fun`(sharedSettings.additionalProhibitedPatterns)
       }
+      cell(protectedBranchesField)
+        .horizontalAlign(HorizontalAlign.FILL)
+        .bind<List<String>>(
+          { ParametersListUtil.COLON_LINE_PARSER.`fun`(it.text) },
+          { component, value -> component.text = ParametersListUtil.COLON_LINE_JOINER.`fun`(value) },
+          PropertyBinding(
+            { sharedSettings.forcePushProhibitedPatterns },
+            { sharedSettings.forcePushProhibitedPatterns = it })
+        )
+    }
+    indent {
       row {
         checkBox(synchronizeBranchProtectionRules(project))
       }
@@ -144,10 +144,10 @@ internal class GitVcsPanel(private val project: Project) :
 
   override fun createPanel(): DialogPanel = panel {
     createGitExecutableSelectorRow(project, disposable!!)
-    titledRow(message("settings.commit.group.title")) {
+    group(message("settings.commit.group.title")) {
       row {
         checkBox(cdEnableStagingArea)
-          .enableIf(StagingAreaAvailablePredicate(project, disposable!!))
+          .enabledIf(StagingAreaAvailablePredicate(project, disposable!!))
       }
       row {
         checkBox(cdWarnAboutCrlf(project))
@@ -161,41 +161,38 @@ internal class GitVcsPanel(private val project: Project) :
       createGpgSignRow(project, disposable!!)
     }
 
-    titledRow(message("settings.push.group.title")) {
+    group(message("settings.push.group.title")) {
       row {
         checkBox(cdAutoUpdateOnPush(project))
       }
+      lateinit var previewPushOnCommitAndPush: Cell<JBCheckBox>
       row {
-        val previewPushOnCommitAndPush = checkBox(cdShowCommitAndPushDialog(project))
+        previewPushOnCommitAndPush = checkBox(cdShowCommitAndPushDialog(project))
+      }
+      indent {
         row {
           checkBox(cdHidePushDialogForNonProtectedBranches(project))
-            .enableIf(previewPushOnCommitAndPush.selected)
+            .enabledIf(previewPushOnCommitAndPush.selected)
         }
       }
       protectedBranchesRow()
     }
 
-    titledRow(message("settings.update.group.title")) {
-      row {
-        cell {
-          label(message("settings.update.method"))
-          buttonGroup({ projectSettings.updateMethod }, { projectSettings.updateMethod = it }) {
-            getUpdateMethods().forEach { saveSetting ->
-              radioButton(saveSetting.methodName, saveSetting)
-            }
+    group(message("settings.update.group.title")) {
+      buttonsGroup {
+        row(message("settings.update.method")) {
+          getUpdateMethods().forEach { saveSetting ->
+            radioButton(saveSetting.methodName, saveSetting)
           }
-        }
-      }
-      row {
-        cell {
-          label(message("settings.clean.working.tree"))
-          buttonGroup({ projectSettings.saveChangesPolicy }, { projectSettings.saveChangesPolicy = it }) {
-            GitSaveChangesPolicy.values().forEach { saveSetting ->
-              radioButton(saveSetting.text, saveSetting)
-            }
+        }.layout(RowLayout.INDEPENDENT)
+      }.bind({ projectSettings.updateMethod }, { projectSettings.updateMethod = it })
+      buttonsGroup {
+        row(message("settings.clean.working.tree")) {
+          GitSaveChangesPolicy.values().forEach { saveSetting ->
+            radioButton(saveSetting.text, saveSetting)
           }
-        }
-      }
+        }.layout(RowLayout.INDEPENDENT)
+      }.bind({ projectSettings.saveChangesPolicy }, { projectSettings.saveChangesPolicy = it })
       if (AbstractCommonUpdateAction.showsCustomNotification(listOf(GitVcs.getInstance(project)))) {
         updateProjectInfoFilter()
       }
@@ -213,40 +210,36 @@ internal class GitVcsPanel(private val project: Project) :
       checkBox(cdOverrideCredentialHelper)
     }
     for (configurable in configurables) {
-      appendDslConfigurableRow(configurable)
+      appendDslConfigurable(configurable)
     }
   }
 
-  private fun RowBuilder.updateProjectInfoFilter() {
+  private fun Panel.updateProjectInfoFilter() {
     val currentUpdateInfoFilterProperties = MyLogProperties(project.service())
-    row {
-      cell {
-        val storedProperties = project.service<GitUpdateProjectInfoLogProperties>()
-        val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toSet()
-        val model = VcsLogClassicFilterUi.FileFilterModel(roots, currentUpdateInfoFilterProperties, null)
-        val component = object : StructureFilterPopupComponent(currentUpdateInfoFilterProperties, model, VcsLogColorManagerImpl(roots)) {
-          override fun shouldDrawLabel(): Boolean = false
-          override fun shouldIndicateHovering(): Boolean = false
-          override fun getDefaultSelectorForeground(): Color = UIUtil.getLabelForeground()
-          override fun createUnfocusedBorder(): Border {
-            return FilledRoundedBorder(JBColor.namedColor("Component.borderColor", Gray.xBF), ARC_SIZE, 1)
-          }
-        }.initUi()
+    row(message("settings.filter.update.info")) {
+      val storedProperties = project.service<GitUpdateProjectInfoLogProperties>()
+      val roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(GitVcs.getInstance(project)).toSet()
+      val model = VcsLogClassicFilterUi.FileFilterModel(roots, currentUpdateInfoFilterProperties, null)
+      val component = object : StructureFilterPopupComponent(currentUpdateInfoFilterProperties, model, VcsLogColorManagerImpl(roots)) {
+        override fun shouldDrawLabel(): Boolean = false
+        override fun shouldIndicateHovering(): Boolean = false
+        override fun getDefaultSelectorForeground(): Color = UIUtil.getLabelForeground()
+        override fun createUnfocusedBorder(): Border {
+          return FilledRoundedBorder(JBColor.namedColor("Component.borderColor", Gray.xBF), ARC_SIZE, 1)
+        }
+      }.initUi()
 
-        label(message("settings.filter.update.info") + " ")
-
-        component()
-          .onIsModified {
-            storedProperties.getFilterValues(STRUCTURE_FILTER.name) != currentUpdateInfoFilterProperties.structureFilter
-          }
-          .onApply {
-            storedProperties.saveFilterValues(STRUCTURE_FILTER.name, currentUpdateInfoFilterProperties.structureFilter)
-          }
-          .onReset {
-            currentUpdateInfoFilterProperties.structureFilter = storedProperties.getFilterValues(STRUCTURE_FILTER.name)
-            model.updateFilterFromProperties()
-          }
-      }
+      cell(component)
+        .onIsModified {
+          storedProperties.getFilterValues(STRUCTURE_FILTER.name) != currentUpdateInfoFilterProperties.structureFilter
+        }
+        .onApply {
+          storedProperties.saveFilterValues(STRUCTURE_FILTER.name, currentUpdateInfoFilterProperties.structureFilter)
+        }
+        .onReset {
+          currentUpdateInfoFilterProperties.structureFilter = storedProperties.getFilterValues(STRUCTURE_FILTER.name)
+          model.updateFilterFromProperties()
+        }
     }
   }
 

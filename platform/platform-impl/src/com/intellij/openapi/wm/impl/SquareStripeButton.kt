@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -69,7 +70,9 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
       }
 
     private fun Presentation.scaleIcon() {
-      if (icon is ScalableIcon && icon.iconWidth == 13) icon = (icon as ScalableIcon).scale(20 / 13f)
+      if (icon is ScalableIcon && icon.iconWidth != 20) {
+        icon = IconLoader.loadCustomVersionOrScale(icon as ScalableIcon, 20f)
+      }
     }
 
     private fun createPopupGroup(project: Project, toolWindowsPane: ToolWindowsPane, toolWindow: ToolWindow) = DefaultActionGroup()

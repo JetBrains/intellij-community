@@ -101,7 +101,12 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public boolean SPACE_BEFORE_OPENING_ANGLE_BRACKET_IN_TYPE_PARAMETER;
   public boolean SPACE_AROUND_TYPE_BOUNDS_IN_TYPE_PARAMETERS = true;
 
+  // Only related to fields!
+  // @Foo int field;
   public boolean DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION;
+
+  // @Foo int param
+  public boolean DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER = false;
 
   @WrapConstant
   public int ANNOTATION_PARAMETER_WRAP = CommonCodeStyleSettings.DO_NOT_WRAP;

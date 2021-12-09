@@ -46,5 +46,9 @@ interface CompilationContext {
   // "Was" added due to Groovy bug (compilation error - cannot find method with same name but different parameter type)
   void notifyArtifactWasBuilt(Path artifactPath)
 
+  /**
+   * @deprecated Use {@link #notifyArtifactWasBuilt(java.nio.file.Path)}
+   */
+  @Deprecated
   void notifyArtifactBuilt(String artifactPath)
 }

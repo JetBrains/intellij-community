@@ -23,6 +23,7 @@ abstract class DifferencesLabel(private val goToChangeAction: AnAction?, private
   init {
     goToChangeAction?.let(::copyFrom)
     templatePresentation.icon = null
+    templatePresentation.description = null //disable label tooltip
   }
 
   override fun actionPerformed(e: AnActionEvent) {
@@ -44,6 +45,9 @@ abstract class DifferencesLabel(private val goToChangeAction: AnAction?, private
   }
 
   override fun isCopyable(): Boolean = true
+
+  @Suppress("DialogTitleCapitalization")
+  override fun getHyperlinkTooltip(): String = templatePresentation.text
 
   override fun createHyperlinkListener(): HyperlinkListener = object : HyperlinkAdapter() {
 

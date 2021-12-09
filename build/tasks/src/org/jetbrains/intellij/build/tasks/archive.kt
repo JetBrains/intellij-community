@@ -7,6 +7,7 @@ import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.jetbrains.intellij.build.io.isWindows
+import org.jetbrains.intellij.build.io.readZipFile
 import org.jetbrains.intellij.build.io.writeNewFile
 import java.nio.file.Files
 import java.nio.file.LinkOption
@@ -153,6 +154,14 @@ fun crossPlatformZip(macDistDir: Path,
         !(p.startsWith("bin/$executableName") && p.endsWith(".exe")) &&
         !winExcludes.contains(p)
       }, entryCustomizer = entryCustomizer)
+    }
+  }
+}
+
+fun consumeDataByPrefix(file: Path, prefixWithEndingSlash: String, consumer: BiConsumer<String, ByteArray>) {
+  readZipFile(file) { name, entry ->
+    if (name.startsWith(prefixWithEndingSlash)) {
+      consumer.accept(name, entry.getData())
     }
   }
 }

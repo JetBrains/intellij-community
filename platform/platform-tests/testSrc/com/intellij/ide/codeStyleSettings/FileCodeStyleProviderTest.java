@@ -24,7 +24,7 @@ public class FileCodeStyleProviderTest extends UsefulTestCase {
     super.setUp();
 
     final IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    final IdeaProjectTestFixture fixture = factory.createLightFixtureBuilder().getFixture();
+    final IdeaProjectTestFixture fixture = factory.createLightFixtureBuilder(getTestName(false)).getFixture();
     myFixture = factory.createCodeInsightFixture(fixture);
 
     myFixture.setTestDataPath(getTestDataPath());

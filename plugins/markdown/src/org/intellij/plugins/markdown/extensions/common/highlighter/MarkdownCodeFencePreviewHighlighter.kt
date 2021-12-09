@@ -8,15 +8,15 @@ import com.intellij.ui.ColorUtil
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.HtmlGenerator
-import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
+import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
-import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceGeneratingProvider
+import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import java.lang.ref.SoftReference
 import java.util.concurrent.ConcurrentHashMap
 
-internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGeneratingProvider {
+internal class MarkdownCodeFencePreviewHighlighter : CodeFenceGeneratingProvider {
   companion object {
     private const val expiration = 5 * 60 * 1000
   }
@@ -50,7 +50,7 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
   }
 
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
-    val lang = LanguageGuesser.guessLanguageForInjection(language) ?: return MarkdownCodeFenceGeneratingProvider.escape(raw)
+    val lang = LanguageGuesser.guessLanguageForInjection(language) ?: return DefaultCodeFenceGeneratingProvider.escape(raw)
 
     val md5 = MarkdownUtil.md5(raw, language)
 
@@ -88,13 +88,13 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
     HtmlSyntaxHighlighter.parseContent(null, lang, text) { content, intRange, color ->
       if (color != null) {
         highlightTokens[intRange] = "<span style=\"color:${ColorUtil.toHtmlColor(color)}\">${
-          MarkdownCodeFenceGeneratingProvider.escape(content)
+          DefaultCodeFenceGeneratingProvider.escape(content)
         }</span>"
       }
     }
 
     // Mannually walk over each line and recalculate line offsets
-    val baseOffset = MarkdownCodeFenceGeneratingProvider.calcCodeFenceContentBaseOffset(node)
+    val baseOffset = DefaultCodeFenceGeneratingProvider.calcCodeFenceContentBaseOffset(node)
     val lines = ArrayList<String>()
     var left = 0
     for (line in text.lines()) {
@@ -128,12 +128,12 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
     var actualLine = line
     var left = 0
     for ((range, replacement) in targets.sortedBy { it.first.first }) {
-      builder.append(MarkdownCodeFenceGeneratingProvider.escape(actualLine.substring(0, range.first - left)))
+      builder.append(DefaultCodeFenceGeneratingProvider.escape(actualLine.substring(0, range.first - left)))
       builder.append(replacement)
       actualLine = actualLine.substring(range.last - left)
       left = range.last
     }
-    builder.append(MarkdownCodeFenceGeneratingProvider.escape(actualLine))
+    builder.append(DefaultCodeFenceGeneratingProvider.escape(actualLine))
   }
 
   private fun processCodeLine(rawCodeLine: String): String = currentFile.get()?.let { file ->

@@ -28,6 +28,7 @@ import kotlinx.coroutines.*
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import java.awt.Rectangle
+import javax.swing.Icon
 import javax.swing.JScrollPane
 import javax.swing.SwingUtilities
 
@@ -39,29 +40,29 @@ internal class DocumentationUI(
   val scrollPane: JScrollPane
   val editorPane: DocumentationHintEditorPane
 
-  private val htmlFactory: DocumentationHtmlFactory get() = (editorPane.editorKit as DocumentationHtmlEditorKit).viewFactory
+  private val icons = mutableMapOf<String, Icon>()
   private var imageResolver: DocumentationImageResolver? = null
   private val linkHandler: DocumentationLinkHandler
   private val cs = CoroutineScope(Dispatchers.EDT)
   private val contentListeners: MutableList<() -> Unit> = SmartList()
 
   override fun dispose() {
-    htmlFactory.clearIcons()
+    icons.clear()
     imageResolver = null
     cs.cancel()
   }
 
   init {
     scrollPane = DocumentationScrollPane()
-    editorPane = DocumentationHintEditorPane(project, DocumentationScrollPane.keyboardActions(scrollPane)) {
+    editorPane = DocumentationHintEditorPane(project, DocumentationScrollPane.keyboardActions(scrollPane), {
       imageResolver?.resolveImage(it)
-    }
+    }, { icons[it] })
     editorPane.applyFontProps(DocumentationComponent.getQuickDocFontSize())
     scrollPane.setViewportView(editorPane)
     scrollPane.addMouseWheelListener(FontSizeMouseWheelListener(editorPane::applyFontProps))
     linkHandler = DocumentationLinkHandler.createAndRegister(editorPane, this, browser::navigateByLink)
 
-    browser.snapshooter = ::uiSnapshot
+    browser.ui = this
     Disposer.register(this, browser)
     Disposer.register(this, browser.addStateListener { request, result, _ ->
       applyStateLater(request, result)
@@ -132,12 +133,11 @@ internal class DocumentationUI(
         null // normal situation, nothing to do
       }
       applyState(request, data)
-      fireContentChanged()
     }
   }
 
   private fun applyState(request: DocumentationRequest, data: DocumentationData?) {
-    htmlFactory.clearIcons()
+    icons.clear()
     imageResolver = null
     if (data == null) {
       showMessage(CodeInsightBundle.message("no.documentation.found"))
@@ -147,7 +147,7 @@ internal class DocumentationUI(
     val presentation = request.presentation
     val locationChunk = presentation.locationText?.let { locationText ->
       presentation.locationIcon?.let { locationIcon ->
-        val iconKey = htmlFactory.registerIcon(locationIcon)
+        val iconKey = registerIcon(locationIcon)
         HtmlChunk.fragment(
           HtmlChunk.tag("icon").attr("src", iconKey),
           HtmlChunk.nbsp(),
@@ -157,7 +157,14 @@ internal class DocumentationUI(
     }
     val linkChunk = getLink(presentation.presentableText, data.externalUrl)
     val decorated = decorate(data.html, locationChunk, linkChunk)
-    update(decorated, data.anchor)
+    val scrollingPosition = data.anchor?.let(ScrollingPosition::Anchor) ?: ScrollingPosition.Reset
+    update(decorated, scrollingPosition)
+  }
+
+  private fun registerIcon(icon: Icon): String {
+    val key = icons.size.toString()
+    icons[key] = icon
+    return key
   }
 
   private fun fetchingProgress() {
@@ -170,40 +177,35 @@ internal class DocumentationUI(
       .addText(message)
       .wrapWith("body")
       .wrapWith("html")
-    update(element.toString(), null)
+    update(element.toString(), ScrollingPosition.Reset)
   }
 
-  private sealed class AnchorOrRect {
-    class Anchor(val anchor: String) : AnchorOrRect()
-    class Rect(val rect: Rectangle) : AnchorOrRect()
-  }
-
-  private fun update(text: @Nls String, anchor: String?) {
+  fun update(text: @Nls String, scrollingPosition: ScrollingPosition) {
     EDT.assertIsEdt()
-    editorPane.text = text
-
-    val anchorOrRect = when {
-      DocumentationManagerProtocol.KEEP_SCROLLING_POSITION_REF == anchor -> AnchorOrRect.Rect(
-        scrollPane.viewport.viewRect) // save current scroll position
-      anchor != null -> AnchorOrRect.Anchor(anchor)
-      else -> null
+    if (editorPane.text == text) {
+      return
     }
-
+    editorPane.text = text
+    fireContentChanged()
     SwingUtilities.invokeLater {
-      when (anchorOrRect) {
-        is AnchorOrRect.Anchor -> UIUtil.scrollToReference(editorPane, anchorOrRect.anchor)
-        is AnchorOrRect.Rect -> editorPane.scrollRectToVisible(anchorOrRect.rect)
-        null -> {
+      when (scrollingPosition) {
+        ScrollingPosition.Keep -> {
+          // do nothing
+        }
+        ScrollingPosition.Reset -> {
           editorPane.scrollRectToVisible(Rectangle(0, 0))
           if (ScreenReader.isActive()) {
             editorPane.caretPosition = 0
           }
         }
+        is ScrollingPosition.Anchor -> {
+          UIUtil.scrollToReference(editorPane, scrollingPosition.anchor)
+        }
       }
     }
   }
 
-  private fun uiSnapshot(): UISnapshot {
+  fun uiSnapshot(): UISnapshot {
     val viewRect = scrollPane.viewport.viewRect
     val highlightedLink = linkHandler.highlightedLink
     return {

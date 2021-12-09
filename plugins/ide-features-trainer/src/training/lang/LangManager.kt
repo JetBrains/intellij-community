@@ -9,11 +9,7 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.util.xmlb.annotations.XMap
-import training.ui.LearnToolWindowFactory
-import training.util.WeakReferenceDelegator
-import training.util.courseCanBeUsed
-import training.util.findLanguageByID
-import training.util.trainerPluginConfigName
+import training.util.*
 
 @State(name = "LangManager", storages = [
   Storage(value = StoragePathMacros.NON_ROAMABLE_FILE),
@@ -68,7 +64,7 @@ internal class LangManager : SimplePersistentStateComponent<LangManager.State>(S
     this.langSupportRef = langSupport
     state.languageName = supportedLanguagesExtensions.find { it.instance == langSupport }?.language
                          ?: throw Exception("Unable to get language.")
-    LearnToolWindowFactory.learnWindowPerProject.values.forEach { it.reinitViews() }
+    getAllLearnToolWindows().forEach { it.reinitViews() }
   }
 
   fun getLangSupport(): LangSupport? = langSupportRef

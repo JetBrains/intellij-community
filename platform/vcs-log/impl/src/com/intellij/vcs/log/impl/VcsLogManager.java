@@ -156,6 +156,11 @@ public class VcsLogManager implements Disposable {
     return getTabsWatcher().getTabs();
   }
 
+  @NotNull
+  public List<? extends VcsLogUi> getVisibleLogUis(@NotNull LogWindowKind kind) {
+    return getTabsWatcher().getVisibleTabs(kind);
+  }
+
   /*
    * For diagnostic purposes only
    */

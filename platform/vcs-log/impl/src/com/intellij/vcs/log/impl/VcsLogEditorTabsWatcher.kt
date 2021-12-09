@@ -7,9 +7,8 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow
-import com.intellij.vcs.log.visible.VisiblePackRefresher
-import org.jetbrains.annotations.NonNls
 import com.intellij.vcs.log.ui.VcsLogUiEx
+import org.jetbrains.annotations.NonNls
 
 internal class VcsLogEditorTabsWatcher(private val project: Project,
                                        parentDisposable: Disposable) : VcsLogTabsWatcherExtension<VcsLogEditorTabsWatcher.VcsLogEditorTab> {

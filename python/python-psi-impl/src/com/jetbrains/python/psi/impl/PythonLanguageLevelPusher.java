@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.psi.impl;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Maps;
 import com.intellij.ProjectTopics;
 import com.intellij.injected.editor.VirtualFileWindow;
@@ -22,7 +21,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
@@ -39,6 +37,7 @@ import com.jetbrains.python.PythonRuntimeService;
 import com.jetbrains.python.codeInsight.typing.PyTypeShed;
 import com.jetbrains.python.module.PyModuleService;
 import com.jetbrains.python.psi.LanguageLevel;
+import com.jetbrains.python.psi.PyUtil;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.sdk.PythonSdkUtil;
 import org.jetbrains.annotations.NotNull;
@@ -216,7 +215,7 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     resetProjectLanguageLevel(project);
     updateSdkLanguageLevels(project, distinctSdks);
 
-    if (needToReparseOpenFiles) {
+    if (needToReparseOpenFiles) {//todo[lene] move it after updating SDKs?
       ApplicationManager.getApplication().invokeLater(() -> {
         if (project.isDisposed()) {
           return;
@@ -251,6 +250,13 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
 
   private List<Runnable> getRootUpdateTasks(@NotNull Project project, @NotNull Set<? extends Sdk> sdks) {
     final List<Runnable> results = new ArrayList<>();
+    for (Module module : ModuleManager.getInstance(project).getModules()) {
+      final Sdk sdk = PythonSdkUtil.findPythonSdk(module);
+      final LanguageLevel languageLevel = PythonRuntimeService.getInstance().getLanguageLevelForSdk(sdk);
+      for (VirtualFile root : PyUtil.getSourceRoots(module)) { //todo fix to proper project root collection for Python
+        addRootIndexingTask(root, results, project, languageLevel);
+      }
+    }
     for (Sdk sdk : sdks) {
       if (PythonSdkUtil.isDisposed(sdk)) continue;
 
@@ -259,12 +265,19 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
         if (!root.isValid() || PyTypeShed.INSTANCE.isInside(root)) {
           continue;
         }
-        final VirtualFile parent = root.getParent();
-        final boolean shouldSuppressSizeLimit = parent != null && parent.getName().equals(PythonSdkUtil.SKELETON_DIR_NAME);
-        results.add(new UpdateRootTask(project, root, languageLevel, shouldSuppressSizeLimit));
+        addRootIndexingTask(root, results, project, languageLevel);
       }
     }
     return results;
+  }
+
+  private void addRootIndexingTask(@NotNull VirtualFile root,
+                                   @NotNull List<Runnable> results,
+                                   @NotNull Project project,
+                                   @NotNull LanguageLevel languageLevel) {
+    final VirtualFile parent = root.getParent();
+    final boolean shouldSuppressSizeLimit = parent != null && parent.getName().equals(PythonSdkUtil.SKELETON_DIR_NAME);
+    results.add(new UpdateRootTask(project, root, languageLevel, shouldSuppressSizeLimit));
   }
 
   @NotNull
@@ -409,7 +422,6 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
     private final SimpleMessageBusConnection connection;
 
     private MyDumbModeTask(@NotNull Project project, @NotNull Set<? extends Sdk> sdks) {
-      super(Pair.create(project, ImmutableSet.copyOf(sdks)));
       this.project = project;
       this.sdks = sdks;
       connection = project.getMessageBus().simpleConnect();
@@ -441,6 +453,16 @@ public final class PythonLanguageLevelPusher implements FilePropertyPusher<Strin
       //  snapshot.logResponsivenessSinceCreation("Pushing Python language level to " + tasks.size() + " roots in " + sdks.size() +
       //                                          " SDKs");
       //}
+    }
+
+    @Override
+    public @Nullable DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
+      if (taskFromQueue instanceof MyDumbModeTask &&
+          ((MyDumbModeTask)taskFromQueue).project.equals(project) &&
+          ((MyDumbModeTask)taskFromQueue).sdks.equals(sdks)) {
+        return this;
+      }
+      return null;
     }
   }
 }

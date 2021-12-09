@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -326,12 +326,12 @@ public class SSAUConstructorSparseEx {
               VarVersionNode vernode = ssuversions.nodes.getWithKey(varpaar);
 
               FastSparseSet<Integer> vers = factory.spawnEmptySet();
-              if (vernode.preds.size() == 1) {
-                vers.add(vernode.preds.iterator().next().source.version);
+              if (vernode.predecessors.size() == 1) {
+                vers.add(vernode.predecessors.iterator().next().source.version);
               }
               else {
-                for (VarVersionEdge edge : vernode.preds) {
-                  vers.add(edge.source.preds.iterator().next().source.version);
+                for (VarVersionEdge edge : vernode.predecessors) {
+                  vers.add(edge.source.predecessors.iterator().next().source.version);
                 }
               }
               vers.add(nextver);
@@ -416,7 +416,7 @@ public class SSAUConstructorSparseEx {
 
     // ssu graph
     VarVersionNode phinode = ssuversions.nodes.getWithKey(phivar);
-    List<VarVersionEdge> lstPreds = new ArrayList<>(phinode.preds);
+    List<VarVersionEdge> lstPreds = new ArrayList<>(phinode.predecessors);
     if (lstPreds.size() == 1) {
       // not yet a phi node
       VarVersionEdge edge = lstPreds.get(0);
@@ -425,7 +425,7 @@ public class SSAUConstructorSparseEx {
     }
     else {
       for (VarVersionEdge edge : lstPreds) {
-        int verssrc = edge.source.preds.iterator().next().source.version;
+        int verssrc = edge.source.predecessors.iterator().next().source.version;
         if (!vers.contains(verssrc) && verssrc != ppvers) {
           edge.source.removeSuccessor(edge);
           phinode.removePredecessor(edge);
@@ -639,7 +639,7 @@ public class SSAUConstructorSparseEx {
 
                 VarVersionNode exitnode = ssuversions.nodes.getWithKey(exitvar);
                 VarVersionNode phantomnode = ssuversions.createNode(phantomvar);
-                phantomnode.flags |= VarVersionNode.FLAG_PHANTOM_FINEXIT;
+                phantomnode.flags |= VarVersionNode.FLAG_PHANTOM_FIN_EXIT;
 
                 VarVersionEdge edge = new VarVersionEdge(VarVersionEdge.EDGE_PHANTOM, exitnode, phantomnode);
                 exitnode.addSuccessor(edge);

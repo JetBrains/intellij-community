@@ -59,7 +59,7 @@ class CreateTBXReferenceTest : BasePlatformTestCase() {
     action.actionPerformed(AnActionEvent(null, dataContext, ActionPlaces.MAIN_MENU, action.templatePresentation, ActionManager.getInstance(), 0))
 
     val content = CopyPasteManager.getInstance().contents?.getTransferData(DataFlavor.stringFlavor) as String
-    assertThat(content).startsWith("jetbrains://idea/navigate/reference?project=light_temp")
+    assertThat(content).startsWith("jetbrains://idea/navigate/reference?project=" + project.name)
     assertThat(content).endsWith("&$expectedURL")
   }
 }

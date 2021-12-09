@@ -74,6 +74,10 @@
                      groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
                      groupKey="jvm.inspections.group.name" key="jvm.inspections.serializable.class.without.serialversionuid.display.name"
                      implementationClass="com.intellij.codeInspection.SerializableHasSerialVersionUidFieldInspection"/>
+    <localInspection language="UAST" enabledByDefault="true" level="ERROR" shortName="Since15"
+                     groupBundle="messages.JvmAnalysisBundle" bundle="messages.JvmAnalysisBundle"
+                     groupKey="jvm.inspections.group.name" key="jvm.inspections.api.display.name"
+                     implementationClass="com.intellij.codeInspection.javaapi.JavaApiUsageInspection"/>
     <notificationGroup id="UAST" displayType="BALLOON"/>
     <projectService serviceInterface="com.intellij.codeInsight.AnnotationCacheOwnerNormalizer"
                     serviceImplementation="com.intellij.psi.UastAnnotationCacheOwnerNormalizer"/>

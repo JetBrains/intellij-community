@@ -123,8 +123,8 @@ class GitMergeDialog(private val project: Project,
     setOKButtonText(GitBundle.message("merge.action.name"))
     loadSettings()
     updateBranchesField()
-    updateUi()
     init()
+    updateUi()
   }
 
   override fun createCenterPanel() = panel

@@ -2289,7 +2289,7 @@ enum class ToolWindowProperty {
 
 private fun isInActiveToolWindow(component: Any?, activeToolWindow: ToolWindowImpl): Boolean {
   var source = if (component is JComponent) component else null
-  val activeToolWindowComponent = activeToolWindow.getComponentIfInitialized()
+  val activeToolWindowComponent = activeToolWindow.decoratorComponent
   if (activeToolWindowComponent != null) {
     while (source != null && source !== activeToolWindowComponent) {
       source = ComponentUtil.getClientProperty(source, ToolWindowManagerImpl.PARENT_COMPONENT) ?: source.parent as? JComponent

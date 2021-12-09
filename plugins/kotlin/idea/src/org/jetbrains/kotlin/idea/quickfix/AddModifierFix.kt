@@ -2,11 +2,11 @@
 
 package org.jetbrains.kotlin.idea.quickfix
 
-import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiNameIdentifierOwner
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -20,12 +20,15 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.quickfix.QuickFixUtil
 import org.jetbrains.kotlin.idea.inspections.KotlinUniversalQuickFix
 import org.jetbrains.kotlin.idea.refactoring.canRefactor
-import org.jetbrains.kotlin.idea.util.runOnExpectAndAllActuals
+import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.collectAllExpectAndActualDeclaration
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.hasActualModifier
+import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -58,10 +61,27 @@ open class AddModifierFix(
         }
     }
 
+    override fun startInWriteAction(): Boolean = !modifier.isMultiplatformPersistent() ||
+            (element?.hasActualModifier() != true && element?.hasExpectModifier() != true)
+
     override fun invokeImpl(project: Project, editor: Editor?, file: PsiFile) {
         val originalElement = element
         if (originalElement is KtDeclaration && modifier.isMultiplatformPersistent()) {
-            originalElement.runOnExpectAndAllActuals(useOnSelf = true) { invokeOnElement(it) }
+            val elementsToMutate = originalElement.collectAllExpectAndActualDeclaration(withSelf = true)
+            if (elementsToMutate.size > 1 && modifier in modifiersWithWarning) {
+                val dialog = MessageDialogBuilder.okCancel(
+                    KotlinBundle.message("fix.potentially.broken.inheritance.title"),
+                    KotlinBundle.message("fix.potentially.broken.inheritance.message"),
+                ).asWarning()
+
+                if (!dialog.ask(project)) return
+            }
+
+            runWriteAction {
+                for (declaration in elementsToMutate) {
+                    invokeOnElement(declaration)
+                }
+            }
         } else {
             invokeOnElement(originalElement)
         }
@@ -77,7 +97,9 @@ open class AddModifierFix(
         private fun KtModifierKeywordToken.isMultiplatformPersistent(): Boolean =
             this in MODALITY_MODIFIERS || this == INLINE_KEYWORD
 
-        private val modalityModifiers = setOf(ABSTRACT_KEYWORD, OPEN_KEYWORD, FINAL_KEYWORD)
+        private val modifiersWithWarning = setOf(ABSTRACT_KEYWORD, FINAL_KEYWORD)
+
+        private val modalityModifiers = modifiersWithWarning + OPEN_KEYWORD
 
         fun getElementName(modifierListOwner: KtModifierListOwner): String {
             var name: String? = null

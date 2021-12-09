@@ -7,6 +7,8 @@ import org.jetbrains.intellij.build.impl.LayoutBuilder
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 import org.jetbrains.jps.model.library.JpsLibrary
 
+import java.nio.file.Path
+
 /**
  * Creates JARs containing classes required to run the external build for IDEA project without IDE.
  */
@@ -104,7 +106,7 @@ final class CommunityStandaloneJpsBuilder {
         moduleTests("intellij.platform.jps.model.serialization.tests")
       }
     }
-    buildContext.notifyArtifactBuilt(targetDir)
+    buildContext.notifyArtifactWasBuilt(Path.of(targetDir).normalize().toAbsolutePath())
   }
 
   static String getZipName(String buildNumber) {

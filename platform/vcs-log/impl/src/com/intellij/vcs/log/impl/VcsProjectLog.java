@@ -31,6 +31,7 @@ import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.messages.MessageBus;
@@ -48,22 +49,20 @@ import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.vcs.log.VcsLogProvider.LOG_PROVIDER_EP;
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
+import static java.util.Objects.*;
 
 @Service(Service.Level.PROJECT)
 public final class VcsProjectLog implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsProjectLog.class);
-  public static final Topic<ProjectLogListener> VCS_PROJECT_LOG_CHANGED =
-    Topic.create("Project Vcs Log Created or Disposed", ProjectLogListener.class);
+  public static final Topic<ProjectLogListener> VCS_PROJECT_LOG_CHANGED = new Topic<>(ProjectLogListener.class,
+                                                                                      Topic.BroadcastDirection.TO_CHILDREN, true);
   private static final int RECREATE_LOG_TRIES = 5;
   @NotNull private final Project myProject;
   @NotNull private final MessageBus myMessageBus;
@@ -212,8 +211,8 @@ public final class VcsProjectLog implements Disposable {
   }
 
   @NotNull
-  Future<VcsLogManager> createLogInBackground(boolean forceInit) {
-    return myExecutor.submit(() -> createLog(forceInit));
+  CompletableFuture<Boolean> createLogInBackground(boolean forceInit) {
+    return CompletableFuture.supplyAsync(() -> createLog(forceInit), myExecutor).thenApply(Objects::nonNull);
   }
 
   @Nullable
@@ -237,7 +236,7 @@ public final class VcsProjectLog implements Disposable {
     }
 
     if (PostponableLogRefresher.keepUpToDate()) {
-      VcsLogCachesInvalidator invalidator = CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class);
+      VcsLogCachesInvalidator invalidator = requireNonNull(CachesInvalidator.EP_NAME.findExtension(VcsLogCachesInvalidator.class));
       if (invalidator.isValid()) {
         HeavyAwareExecutor.executeOutOfHeavyProcessLater(logManager::scheduleInitialization, 5000);
         return;
@@ -292,12 +291,12 @@ public final class VcsProjectLog implements Disposable {
       action.consume(manager);
     }
     else { // schedule showing the log, wait its initialization, and then open the tab
-      Future<VcsLogManager> futureLogManager = log.createLogInBackground(true);
+      Future<Boolean> futureResult = log.createLogInBackground(true);
       new Task.Backgroundable(project, VcsLogBundle.message("vcs.log.creating.process")) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            futureLogManager.get(5, TimeUnit.SECONDS);
+            futureResult.get(5, TimeUnit.SECONDS);
           }
           catch (InterruptedException ignored) {
           }
@@ -320,15 +319,22 @@ public final class VcsProjectLog implements Disposable {
     }
   }
 
+  static @NotNull Future<Boolean> waitWhenLogIsReady(@NotNull Project project) {
+    VcsProjectLog log = getInstance(project);
+    VcsLogManager manager = log.getLogManager();
+    if (manager != null) {
+      return new FutureResult<>(true);
+    }
+    return log.createLogInBackground(true);
+  }
+
   @ApiStatus.Internal
   @RequiresBackgroundThread
   public static boolean ensureLogCreated(@NotNull Project project) {
     ApplicationManager.getApplication().assertIsNonDispatchThread();
 
-    if (getInstance(project).getLogManager() != null) return true;
-
     try {
-      return getInstance(project).createLogInBackground(true).get() != null;
+      return waitWhenLogIsReady(project).get() == Boolean.TRUE;
     }
     catch (InterruptedException ignored) {
     }
@@ -354,7 +360,7 @@ public final class VcsProjectLog implements Disposable {
           myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logCreated(value);
         }, getModality());
       }
-      return myValue;
+      return requireNonNull(myValue);
     }
 
     @Nullable
@@ -365,7 +371,7 @@ public final class VcsProjectLog implements Disposable {
         VcsLogManager oldValue = myValue;
         myValue = null;
 
-        LOG.debug("Disposing Vcs Log for " + VcsLogUtil.getProvidersMapText(oldValue.getDataManager().getLogProviders()));
+        LOG.debug("Disposing Vcs Log for " + VcsLogUtil.getProvidersMapText(requireNonNull(oldValue).getDataManager().getLogProviders()));
         myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(oldValue);
 
         return oldValue;

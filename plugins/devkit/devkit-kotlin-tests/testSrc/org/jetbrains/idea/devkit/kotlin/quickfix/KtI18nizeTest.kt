@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.kotlin.quickfix
 
+import com.intellij.codeInsight.MetaAnnotationUtil
 import com.intellij.codeInspection.i18n.I18nQuickFixHandler
 import com.intellij.codeInspection.i18n.I18nizeAction
 import com.intellij.codeInspection.i18n.I18nizeConcatenationQuickFix
@@ -10,8 +11,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import junit.framework.TestCase
+import org.jetbrains.uast.UClass
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.expressions.UStringConcatenationsFacade.Companion.createFromTopConcatenation
+import org.jetbrains.uast.toUElementOfType
 import org.junit.Assert
 import java.util.*
 
@@ -202,5 +205,25 @@ class KtI18nizeTest : LightJavaCodeInsightFixtureTestCase() {
     val args = ArrayList<UExpression?>()
     Assert.assertEquals("part in suffix {0} and prefix '{1}'",
                         JavaI18nUtil.buildUnescapedFormatString(concatenation!!, args, project))
+  }
+
+  fun testLightAnnotationTypeResolve() {
+    myFixture.configureByText("Test.kt", """
+      annotation class MyMetaAnnotation
+      
+      @MyMetaAnnotation
+      annotation class MyAnnotation
+
+      @MyAnnotation
+      class MyClass<caret>
+    """.trimIndent())
+
+    val psiClass = myFixture.elementAtCaret.toUElementOfType<UClass>()?.javaPsi
+                   ?: error("PsiClass not found")
+
+    val resolvedAnnotationType = psiClass.annotations.firstOrNull()?.resolveAnnotationType()
+    assertNull(resolvedAnnotationType)
+
+    assertTrue(MetaAnnotationUtil.isMetaAnnotated(psiClass, listOf("MyMetaAnnotation")))
   }
 }

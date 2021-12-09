@@ -31,7 +31,7 @@ public class MissingArrayInitializerBraceFixer implements Fixer {
     if (!PsiUtil.isJavaToken(child, JavaTokenType.LBRACE)) return;
     if (!EnterAfterUnmatchedBraceHandler.isAfterUnmatchedLBrace(editor, child.getTextRange().getEndOffset(),
                                                                 psiElement.getContainingFile().getFileType())) return;
-    PsiElement anchor = ContainerUtil.findInstance(psiElement.getChildren(), PsiErrorElement.class);
+    PsiElement anchor = PsiTreeUtil.getChildOfType(psiElement, PsiErrorElement.class);
     if (anchor == null) {
       PsiElement last = PsiTreeUtil.getDeepestVisibleLast(psiElement);
       while (PsiUtil.isJavaToken(last, JavaTokenType.RBRACE)) {

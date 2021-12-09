@@ -553,12 +553,12 @@ internal class LessonMessagePane(private val panelMode: Boolean = true) : JTextP
             }
           }
           MessagePart.MessageType.ICON_IDX -> {
-            val rect = modelToView2D(myMessage.startOffset + 1)
+            val rect = modelToView2D(myMessage.startOffset)
             var icon = LearningUiManager.iconMap[myMessage.text] ?: continue
             if (inactiveMessages.contains(lessonMessage)) {
               icon = getInactiveIcon(icon)
             }
-            icon.paintIcon(this, g2d, rect.x.toInt(), rect.y.toInt())
+            icon.paintIcon(this, g2d, (rect.x + JBUIScale.scale(1f)).toInt(), rect.y.toInt())
           }
           MessagePart.MessageType.ILLUSTRATION -> {
             val x = modelToView2D(myMessage.startOffset).x.toInt()

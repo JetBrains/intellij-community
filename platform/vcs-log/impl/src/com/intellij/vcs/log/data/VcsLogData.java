@@ -107,7 +107,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
     myTopCommitsDetailsCache = new TopCommitsCache(myStorage);
     myMiniDetailsGetter = new MiniDetailsGetter(myProject, myStorage, logProviders, myTopCommitsDetailsCache, myIndex, this);
-    myDetailsGetter = new CommitDetailsGetter(myStorage, logProviders, myIndex, this);
+    myDetailsGetter = new CommitDetailsGetter(myStorage, logProviders, this);
 
     myRefresher = new VcsLogRefresherImpl(myProject, myStorage, myLogProviders, myUserRegistry, myIndex, progress, myTopCommitsDetailsCache,
                                           this::fireDataPackChangeEvent, RECENT_COMMITS_COUNT);

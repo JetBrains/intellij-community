@@ -18,6 +18,7 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -41,7 +42,7 @@ public final class RegExHelpPopup extends JPanel {
 
     JEditorPane editorPane = new JEditorPane();
     editorPane.setEditable(false);
-    editorPane.setEditorKit(UIUtil.getHTMLEditorKit());
+    editorPane.setEditorKit(HTMLEditorKitBuilder.simple());
     editorPane.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
     editorPane.setBackground(HintUtil.getInformationColor());
 

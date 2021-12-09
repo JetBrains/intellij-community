@@ -12,7 +12,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.log.VcsLogRefresher;
-import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.visible.VisiblePackRefresher;

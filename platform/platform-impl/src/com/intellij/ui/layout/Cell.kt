@@ -12,6 +12,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableClearableProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
@@ -28,10 +29,8 @@ import com.intellij.util.Function
 import com.intellij.util.MathUtil
 import com.intellij.util.execution.ParametersListUtil
 import com.intellij.util.lockOrSkip
-import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.*
 import com.intellij.util.ui.StatusText
-import com.intellij.util.ui.ThreeStateCheckBox
-import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -51,6 +50,8 @@ annotation class CellMarker
 data class PropertyBinding<V>(val get: () -> V, val set: (V) -> Unit)
 
 @PublishedApi
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
 internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Class<T>): PropertyBinding<T> {
   if (prop is CallableReference) {
     val name = prop.name
@@ -106,7 +107,11 @@ interface CellBuilder<out T : JComponent> {
 
   fun comment(@DetailedDescription text: String, maxLineLength: Int = ComponentPanelBuilder.MAX_COMMENT_WIDTH,
               forComponent: Boolean = false): CellBuilder<T>
+
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun commentComponent(component: JComponent, forComponent: Boolean = false): CellBuilder<T>
+
   fun focused(): CellBuilder<T>
   fun withValidationOnApply(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>
   fun withValidationOnInput(callback: ValidationInfoBuilder.(T) -> ValidationInfo?): CellBuilder<T>
@@ -654,10 +659,14 @@ abstract class Cell : BaseBuilder {
     return component(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength, true))
   }
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun commentNoWrap(@DetailedDescription text: String): CellBuilder<JLabel> {
     return component(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
   }
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun placeholder(): CellBuilder<JComponent> {
     return component(JPanel().apply {
       minimumSize = Dimension(0, 0)
@@ -690,6 +699,8 @@ class InnerCell(val cell: Cell) : Cell() {
     return cell.component(component, viewComponent)
   }
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {
     cell.withButtonGroup(title, buttonGroup, body)
   }
@@ -767,6 +778,16 @@ fun <T, C : JList<T>> C.bind(property: ObservableClearableProperty<T>): C = appl
 
 private val TextFieldWithBrowseButton.emptyText
   get() = (textField as JBTextField).emptyText
+
+fun <C : Component> C.bindEnabled(property: ObservableProperty<Boolean>): C = apply {
+  property.afterChange {
+    UIUtil.setEnabledRecursively(this, it)
+  }
+}
+
+fun <C : ComponentWithEmptyText> C.bindEmptyText(property: ObservableClearableProperty<@NlsContexts.StatusText String>): C = apply {
+  emptyText.bind(property)
+}
 
 fun <C : StatusText> C.bind(property: ObservableClearableProperty<@NlsContexts.StatusText String>): C = apply {
   property.afterChange {

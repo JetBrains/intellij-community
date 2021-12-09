@@ -49,7 +49,6 @@ import javax.swing.plaf.basic.ComboPopup;
 import javax.swing.text.*;
 import javax.swing.text.html.HTMLDocument;
 import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.ParagraphView;
 import javax.swing.text.html.StyleSheet;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
@@ -97,6 +96,9 @@ public final class UIUtil {
    */
   @ApiStatus.Internal
   public static final String NO_BORDER_UNDER_WINDOW_TITLE_KEY = "";
+
+  //TODO: lazy
+  static final StyleSheet NO_GAPS_BETWEEN_PARAGRAPHS_STYLE = StyleSheetUtil.createStyleSheet("p { margin-top: 0; }");
 
   // cannot be static because logging maybe not configured yet
   private static @NotNull Logger getLogger() {
@@ -2055,46 +2057,40 @@ public final class UIUtil {
     return StartupUiUtil.getLabelFont();
   }
 
+  /**
+   * @deprecated use {@link StyleSheetUtil#loadStyleSheet}
+   */
+  @Deprecated
   public static @Nullable StyleSheet loadStyleSheet(@Nullable URL url) {
-    return StartupUiUtil.loadStyleSheet(url);
+    return StyleSheetUtil.loadStyleSheet(url);
   }
 
+  /**
+   * @deprecated use {@link HTMLEditorKitBuilder}
+   */
+  @Deprecated
   public static @NotNull HTMLEditorKit getHTMLEditorKit() {
-    return getHTMLEditorKit(true);
+    return HTMLEditorKitBuilder.simple();
   }
 
+  /**
+   * @deprecated use {@link HTMLEditorKitBuilder}
+   */
+  @Deprecated
   public static @NotNull HTMLEditorKit getHTMLEditorKit(boolean noGapsBetweenParagraphs) {
-    return new JBHtmlEditorKit(noGapsBetweenParagraphs);
+    HTMLEditorKitBuilder builder = new HTMLEditorKitBuilder();
+    if(!noGapsBetweenParagraphs) builder.withGapsBetweenParagraphs();
+    return builder.build();
   }
 
+  /**
+   * @deprecated use {@link HTMLEditorKitBuilder#withWordWrapViewFactory()}
+   */
+  @Deprecated
   public static final class JBWordWrapHtmlEditorKit extends JBHtmlEditorKit {
-    private final ViewFactory myFactory = new HTMLFactory() {
-      @Override
-      public View create(Element e) {
-        View view = super.create(e);
-        if (view instanceof javax.swing.text.html.ParagraphView) {
-          // wrap too long words, for example: ATEST_TABLE_SIGNLE_ROW_UPDATE_AUTOCOMMIT_A_FIK
-          return new ParagraphView(e) {
-            @Override
-            protected SizeRequirements calculateMinorAxisRequirements(int axis, SizeRequirements r) {
-              if (r == null) {
-                r = new SizeRequirements();
-              }
-              r.minimum = (int)layoutPool.getMinimumSpan(axis);
-              r.preferred = Math.max(r.minimum, (int)layoutPool.getPreferredSpan(axis));
-              r.maximum = Integer.MAX_VALUE;
-              r.alignment = 0.5f;
-              return r;
-            }
-          };
-        }
-        return view;
-      }
-    };
-
     @Override
     public ViewFactory getViewFactory() {
-      return myFactory;
+      return ExtendableHTMLViewFactory.DEFAULT_WORD_WRAP;
     }
   }
 
@@ -3430,7 +3426,7 @@ public final class UIUtil {
     editorPane.setOpaque(false);
     editorPane.setBorder(null);
     editorPane.setContentType("text/html");
-    editorPane.setEditorKit(getHTMLEditorKit());
+    editorPane.setEditorKit(HTMLEditorKitBuilder.simple());
   }
 
   /**
@@ -3482,7 +3478,7 @@ public final class UIUtil {
    */
   @ApiStatus.Experimental
   public static boolean isShowing(@NotNull Component component) {
-    if (GraphicsEnvironment.isHeadless() || component.isShowing()) {
+    if (Boolean.getBoolean("java.awt.headless") || component.isShowing()) {
       return true;
     }
 
@@ -3503,7 +3499,7 @@ public final class UIUtil {
   @ApiStatus.Internal
   @ApiStatus.Experimental
   public static void markAsShowing(@NotNull JComponent component, boolean value) {
-    if (GraphicsEnvironment.isHeadless()) {
+    if (Boolean.getBoolean("java.awt.headless")) {
       return;
     }
     component.putClientProperty(IS_SHOWING, value ? Boolean.TRUE : null);

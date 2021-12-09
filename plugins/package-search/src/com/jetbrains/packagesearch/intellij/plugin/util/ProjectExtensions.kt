@@ -25,7 +25,8 @@ import com.jetbrains.packagesearch.intellij.plugin.lifecycle.ProjectLifecycleHol
 import com.jetbrains.packagesearch.intellij.plugin.ui.UiCommandsService
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateModifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.UiStateSource
-import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageVersionNormalizerService
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchCachesService
+import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.versions.PackageSearchProjectCachesService
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.ProducerScope
 import kotlinx.coroutines.channels.awaitClose
@@ -38,8 +39,14 @@ import kotlin.streams.toList
 internal val Project.packageSearchProjectService
     get() = service<PackageSearchProjectService>()
 
+internal val packageSearchApplicationCaches
+    get() = service<PackageSearchCachesService>()
+
 internal val packageVersionNormalizer
-    get() = service<PackageVersionNormalizerService>().normalizer
+    get() = packageSearchApplicationCaches.normalizer
+
+internal val Project.packageSearchProjectCachesService
+    get() = service<PackageSearchProjectCachesService>()
 
 @OptIn(ExperimentalTypeInference::class)
 internal fun <L : Any, K> Project.messageBusFlow(

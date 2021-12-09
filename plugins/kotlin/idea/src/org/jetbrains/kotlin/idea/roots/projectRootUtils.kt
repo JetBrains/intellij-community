@@ -33,9 +33,16 @@ import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
+import org.jetbrains.kotlin.idea.caches.resolve.returnIfNoDescriptorForDeclarationException
 import org.jetbrains.kotlin.idea.configuration.GRADLE_SYSTEM_ID
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
+import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
+import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 private fun JpsModuleSourceRoot.getOrCreateProperties() =
@@ -94,6 +101,23 @@ fun isUnderKotlinSourceRootTypes(psiFile: PsiFile?): Boolean {
     val projectFileIndex = ProjectRootManager.getInstance(ktFile.project).fileIndex
     return projectFileIndex.isUnderSourceRootOfType(file, KOTLIN_AWARE_SOURCE_ROOT_TYPES)
 }
+
+@JvmOverloads
+fun KtElement.safeAnalyzeNonSourceRootCode(
+    bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
+): BindingContext = safeAnalyzeNonSourceRootCode(getResolutionFacade(), bodyResolveMode)
+
+fun KtElement.safeAnalyzeNonSourceRootCode(
+    resolutionFacade: ResolutionFacade,
+    bodyResolveMode: BodyResolveMode = BodyResolveMode.FULL
+): BindingContext =
+    try {
+        analyze(resolutionFacade, bodyResolveMode)
+    } catch (e: Exception) {
+        e.returnIfNoDescriptorForDeclarationException(condition = {
+            it && (!isPhysical || !isUnderKotlinSourceRootTypes(containingFile))
+        }) { BindingContext.EMPTY }
+    }
 
 fun isOutsideSourceRootSet(psiFile: PsiFile?, sourceRootTypes: Set<JpsModuleSourceRootType<*>>): Boolean {
     if (psiFile == null || psiFile is PsiCodeFragment) return false

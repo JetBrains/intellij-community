@@ -18,173 +18,185 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/inference/common")
-public class CommonConstraintCollectorTestGenerated extends AbstractCommonConstraintCollectorTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+public abstract class CommonConstraintCollectorTestGenerated extends AbstractCommonConstraintCollectorTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inference/common")
+    public static class TestBucket001 extends AbstractCommonConstraintCollectorTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("arrayAssignment.kt")
+        public void testArrayAssignment() throws Exception {
+            runTest("testData/inference/common/arrayAssignment.kt");
+        }
+
+        @TestMetadata("arrayOfArrays.kt")
+        public void testArrayOfArrays() throws Exception {
+            runTest("testData/inference/common/arrayOfArrays.kt");
+        }
+
+        @TestMetadata("callFunctionWithTypeParamFromOuterScope.kt")
+        public void testCallFunctionWithTypeParamFromOuterScope() throws Exception {
+            runTest("testData/inference/common/callFunctionWithTypeParamFromOuterScope.kt");
+        }
+
+        @TestMetadata("callWithTypeParams.kt")
+        public void testCallWithTypeParams() throws Exception {
+            runTest("testData/inference/common/callWithTypeParams.kt");
+        }
+
+        @TestMetadata("constructorCall.kt")
+        public void testConstructorCall() throws Exception {
+            runTest("testData/inference/common/constructorCall.kt");
+        }
+
+        @TestMetadata("delegationConstructorCall.kt")
+        public void testDelegationConstructorCall() throws Exception {
+            runTest("testData/inference/common/delegationConstructorCall.kt");
+        }
+
+        @TestMetadata("elementOfArrayAssignment.kt")
+        public void testElementOfArrayAssignment() throws Exception {
+            runTest("testData/inference/common/elementOfArrayAssignment.kt");
+        }
+
+        @TestMetadata("elementOfListAssignment.kt")
+        public void testElementOfListAssignment() throws Exception {
+            runTest("testData/inference/common/elementOfListAssignment.kt");
+        }
+
+        @TestMetadata("forLoop.kt")
+        public void testForLoop() throws Exception {
+            runTest("testData/inference/common/forLoop.kt");
+        }
+
+        @TestMetadata("functionCall.kt")
+        public void testFunctionCall() throws Exception {
+            runTest("testData/inference/common/functionCall.kt");
+        }
+
+        @TestMetadata("functionReturn.kt")
+        public void testFunctionReturn() throws Exception {
+            runTest("testData/inference/common/functionReturn.kt");
+        }
+
+        @TestMetadata("functionWithTypeParamCall.kt")
+        public void testFunctionWithTypeParamCall() throws Exception {
+            runTest("testData/inference/common/functionWithTypeParamCall.kt");
+        }
+
+        @TestMetadata("lambdaAsParameter.kt")
+        public void testLambdaAsParameter() throws Exception {
+            runTest("testData/inference/common/lambdaAsParameter.kt");
+        }
+
+        @TestMetadata("lambdaAssign.kt")
+        public void testLambdaAssign() throws Exception {
+            runTest("testData/inference/common/lambdaAssign.kt");
+        }
+
+        @TestMetadata("lambdaImplicitReturn.kt")
+        public void testLambdaImplicitReturn() throws Exception {
+            runTest("testData/inference/common/lambdaImplicitReturn.kt");
+        }
+
+        @TestMetadata("lambdaReturn.kt")
+        public void testLambdaReturn() throws Exception {
+            runTest("testData/inference/common/lambdaReturn.kt");
+        }
+
+        @TestMetadata("listAssignment.kt")
+        public void testListAssignment() throws Exception {
+            runTest("testData/inference/common/listAssignment.kt");
+        }
+
+        @TestMetadata("listGenerator.kt")
+        public void testListGenerator() throws Exception {
+            runTest("testData/inference/common/listGenerator.kt");
+        }
+
+        @TestMetadata("listOfLists.kt")
+        public void testListOfLists() throws Exception {
+            runTest("testData/inference/common/listOfLists.kt");
+        }
+
+        @TestMetadata("listOfListsGenerator.kt")
+        public void testListOfListsGenerator() throws Exception {
+            runTest("testData/inference/common/listOfListsGenerator.kt");
+        }
     }
 
-    @TestMetadata("arrayAssignment.kt")
-    public void testArrayAssignment() throws Exception {
-        runTest("testData/inference/common/arrayAssignment.kt");
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/inference/common")
+    public static class TestBucket002 extends AbstractCommonConstraintCollectorTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("arrayOfArrays.kt")
-    public void testArrayOfArrays() throws Exception {
-        runTest("testData/inference/common/arrayOfArrays.kt");
-    }
+        @TestMetadata("memberCall.kt")
+        public void testMemberCall() throws Exception {
+            runTest("testData/inference/common/memberCall.kt");
+        }
 
-    @TestMetadata("callFunctionWithTypeParamFromOuterScope.kt")
-    public void testCallFunctionWithTypeParamFromOuterScope() throws Exception {
-        runTest("testData/inference/common/callFunctionWithTypeParamFromOuterScope.kt");
-    }
+        @TestMetadata("newExpression.kt")
+        public void testNewExpression() throws Exception {
+            runTest("testData/inference/common/newExpression.kt");
+        }
 
-    @TestMetadata("callWithTypeParams.kt")
-    public void testCallWithTypeParams() throws Exception {
-        runTest("testData/inference/common/callWithTypeParams.kt");
-    }
+        @TestMetadata("returnFromLambda.kt")
+        public void testReturnFromLambda() throws Exception {
+            runTest("testData/inference/common/returnFromLambda.kt");
+        }
 
-    @TestMetadata("constructorCall.kt")
-    public void testConstructorCall() throws Exception {
-        runTest("testData/inference/common/constructorCall.kt");
-    }
+        @TestMetadata("sequenceOfCalls.kt")
+        public void testSequenceOfCalls() throws Exception {
+            runTest("testData/inference/common/sequenceOfCalls.kt");
+        }
 
-    @TestMetadata("delegationConstructorCall.kt")
-    public void testDelegationConstructorCall() throws Exception {
-        runTest("testData/inference/common/delegationConstructorCall.kt");
-    }
+        @TestMetadata("sequenceOfCallsWIthLambda.kt")
+        public void testSequenceOfCallsWIthLambda() throws Exception {
+            runTest("testData/inference/common/sequenceOfCallsWIthLambda.kt");
+        }
 
-    @TestMetadata("elementOfArrayAssignment.kt")
-    public void testElementOfArrayAssignment() throws Exception {
-        runTest("testData/inference/common/elementOfArrayAssignment.kt");
-    }
+        @TestMetadata("simpleAssignment.kt")
+        public void testSimpleAssignment() throws Exception {
+            runTest("testData/inference/common/simpleAssignment.kt");
+        }
 
-    @TestMetadata("elementOfListAssignment.kt")
-    public void testElementOfListAssignment() throws Exception {
-        runTest("testData/inference/common/elementOfListAssignment.kt");
-    }
+        @TestMetadata("superCall.kt")
+        public void testSuperCall() throws Exception {
+            runTest("testData/inference/common/superCall.kt");
+        }
 
-    @TestMetadata("forLoop.kt")
-    public void testForLoop() throws Exception {
-        runTest("testData/inference/common/forLoop.kt");
-    }
+        @TestMetadata("superConstuctorCall.kt")
+        public void testSuperConstuctorCall() throws Exception {
+            runTest("testData/inference/common/superConstuctorCall.kt");
+        }
 
-    @TestMetadata("functionCall.kt")
-    public void testFunctionCall() throws Exception {
-        runTest("testData/inference/common/functionCall.kt");
-    }
+        @TestMetadata("superFunctionReturnTypeWithTypeParameters.kt")
+        public void testSuperFunctionReturnTypeWithTypeParameters() throws Exception {
+            runTest("testData/inference/common/superFunctionReturnTypeWithTypeParameters.kt");
+        }
 
-    @TestMetadata("functionReturn.kt")
-    public void testFunctionReturn() throws Exception {
-        runTest("testData/inference/common/functionReturn.kt");
-    }
+        @TestMetadata("superFunctionReturnTypeWithTypeParametersSubstitution.kt")
+        public void testSuperFunctionReturnTypeWithTypeParametersSubstitution() throws Exception {
+            runTest("testData/inference/common/superFunctionReturnTypeWithTypeParametersSubstitution.kt");
+        }
 
-    @TestMetadata("functionWithTypeParamCall.kt")
-    public void testFunctionWithTypeParamCall() throws Exception {
-        runTest("testData/inference/common/functionWithTypeParamCall.kt");
-    }
+        @TestMetadata("superFunctionType.kt")
+        public void testSuperFunctionType() throws Exception {
+            runTest("testData/inference/common/superFunctionType.kt");
+        }
 
-    @TestMetadata("lambdaAsParameter.kt")
-    public void testLambdaAsParameter() throws Exception {
-        runTest("testData/inference/common/lambdaAsParameter.kt");
-    }
+        @TestMetadata("typeParamsBounds.kt")
+        public void testTypeParamsBounds() throws Exception {
+            runTest("testData/inference/common/typeParamsBounds.kt");
+        }
 
-    @TestMetadata("lambdaAssign.kt")
-    public void testLambdaAssign() throws Exception {
-        runTest("testData/inference/common/lambdaAssign.kt");
-    }
-
-    @TestMetadata("lambdaImplicitReturn.kt")
-    public void testLambdaImplicitReturn() throws Exception {
-        runTest("testData/inference/common/lambdaImplicitReturn.kt");
-    }
-
-    @TestMetadata("lambdaReturn.kt")
-    public void testLambdaReturn() throws Exception {
-        runTest("testData/inference/common/lambdaReturn.kt");
-    }
-
-    @TestMetadata("listAssignment.kt")
-    public void testListAssignment() throws Exception {
-        runTest("testData/inference/common/listAssignment.kt");
-    }
-
-    @TestMetadata("listGenerator.kt")
-    public void testListGenerator() throws Exception {
-        runTest("testData/inference/common/listGenerator.kt");
-    }
-
-    @TestMetadata("listOfLists.kt")
-    public void testListOfLists() throws Exception {
-        runTest("testData/inference/common/listOfLists.kt");
-    }
-
-    @TestMetadata("listOfListsGenerator.kt")
-    public void testListOfListsGenerator() throws Exception {
-        runTest("testData/inference/common/listOfListsGenerator.kt");
-    }
-
-    @TestMetadata("memberCall.kt")
-    public void testMemberCall() throws Exception {
-        runTest("testData/inference/common/memberCall.kt");
-    }
-
-    @TestMetadata("newExpression.kt")
-    public void testNewExpression() throws Exception {
-        runTest("testData/inference/common/newExpression.kt");
-    }
-
-    @TestMetadata("returnFromLambda.kt")
-    public void testReturnFromLambda() throws Exception {
-        runTest("testData/inference/common/returnFromLambda.kt");
-    }
-
-    @TestMetadata("sequenceOfCalls.kt")
-    public void testSequenceOfCalls() throws Exception {
-        runTest("testData/inference/common/sequenceOfCalls.kt");
-    }
-
-    @TestMetadata("sequenceOfCallsWIthLambda.kt")
-    public void testSequenceOfCallsWIthLambda() throws Exception {
-        runTest("testData/inference/common/sequenceOfCallsWIthLambda.kt");
-    }
-
-    @TestMetadata("simpleAssignment.kt")
-    public void testSimpleAssignment() throws Exception {
-        runTest("testData/inference/common/simpleAssignment.kt");
-    }
-
-    @TestMetadata("superCall.kt")
-    public void testSuperCall() throws Exception {
-        runTest("testData/inference/common/superCall.kt");
-    }
-
-    @TestMetadata("superConstuctorCall.kt")
-    public void testSuperConstuctorCall() throws Exception {
-        runTest("testData/inference/common/superConstuctorCall.kt");
-    }
-
-    @TestMetadata("superFunctionReturnTypeWithTypeParameters.kt")
-    public void testSuperFunctionReturnTypeWithTypeParameters() throws Exception {
-        runTest("testData/inference/common/superFunctionReturnTypeWithTypeParameters.kt");
-    }
-
-    @TestMetadata("superFunctionReturnTypeWithTypeParametersSubstitution.kt")
-    public void testSuperFunctionReturnTypeWithTypeParametersSubstitution() throws Exception {
-        runTest("testData/inference/common/superFunctionReturnTypeWithTypeParametersSubstitution.kt");
-    }
-
-    @TestMetadata("superFunctionType.kt")
-    public void testSuperFunctionType() throws Exception {
-        runTest("testData/inference/common/superFunctionType.kt");
-    }
-
-    @TestMetadata("typeParamsBounds.kt")
-    public void testTypeParamsBounds() throws Exception {
-        runTest("testData/inference/common/typeParamsBounds.kt");
-    }
-
-    @TestMetadata("varargsInCall.kt")
-    public void testVarargsInCall() throws Exception {
-        runTest("testData/inference/common/varargsInCall.kt");
+        @TestMetadata("varargsInCall.kt")
+        public void testVarargsInCall() throws Exception {
+            runTest("testData/inference/common/varargsInCall.kt");
+        }
     }
 }

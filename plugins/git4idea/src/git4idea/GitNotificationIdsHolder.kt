@@ -11,6 +11,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
       BRANCH_DELETION_ROLLBACK_ERROR,
       BRANCH_OPERATION_ERROR,
       BRANCH_OPERATION_SUCCESS,
+      BRANCH_SET_UPSTREAM_ERROR,
       BRANCH_RENAME_ROLLBACK_FAILED,
       BRANCH_RENAME_ROLLBACK_SUCCESS,
       BRANCHES_UPDATE_SUCCESSFUL,
@@ -91,6 +92,7 @@ class GitNotificationIdsHolder : NotificationIdsHolder {
     const val BRANCH_DELETION_ROLLBACK_ERROR = "git.branch.deletion.rollback.error"
     const val BRANCH_OPERATION_ERROR = "git.branch.operation.error"
     const val BRANCH_OPERATION_SUCCESS = "git.branch.operation.success"
+    const val BRANCH_SET_UPSTREAM_ERROR = "git.branch.set.upstream.failed"
     const val BRANCH_RENAME_ROLLBACK_FAILED = "git.branch.rename.rollback.failed"
     const val BRANCH_RENAME_ROLLBACK_SUCCESS = "git.branch.rename.rollback.success"
     const val BRANCHES_UPDATE_SUCCESSFUL = "git.branches.update.successful"

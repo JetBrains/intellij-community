@@ -26,8 +26,12 @@ import org.jetbrains.annotations.NotNull;
  * test is finished so other test aren't affected. The project is initialized with single module that have single
  * content and source entry. For your convenience the project may be equipped with some mock JDK so your tests may
  * refer to external classes. In order to enable this feature you have to have a folder named "mockJDK" under
- * idea installation home that is used for test running. Place src.zip under that folder. We'd suggest this is real mock
- * so it contains classes that is really needed in order to speed up tests startup.
+ * idea installation home that is used for test running. Place src.zip under that folder. We'd suggest this to be real mock SDK
+ * (i.e. it should contain only classes that are really needed in your test) in order to speed up tests startup.
+ * Since the light project is a test speed optimization and thus a quite leaky abstraction at that, there are a number of restrictions the light test should obey:
+ * <li>The test should not depend on any way on the project name, location, internal project files, like "*.iml". All these can change unpredictably or be absent.</li>
+ * <li>The test should not modify the project components in any way to reduce interference with the next test. Or, it should revert all changes in the end</li>
+ * <li>The test should not count on usual project lifecycle, like "onProjectClose()" event or project being disposed on close, etc. All these can be absent.</li>
  */
 public abstract class LightIdeaTestCase extends LightPlatformTestCase {
   public JavaPsiFacadeEx getJavaFacade() {

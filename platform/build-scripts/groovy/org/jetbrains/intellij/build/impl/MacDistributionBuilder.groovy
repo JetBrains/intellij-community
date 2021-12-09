@@ -17,7 +17,6 @@ import java.nio.file.Path
 import java.time.LocalDate
 import java.util.concurrent.ForkJoinTask
 import java.util.function.BiConsumer
-import java.util.function.Consumer
 import java.util.function.Supplier
 import java.util.zip.Deflater
 
@@ -137,7 +136,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
     String baseName = context.productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
     boolean publishArchive = context.proprietaryBuildTools.macHostProperties == null
 
-    Path macZip = ((publishArchive || customizer.publishArchive) ? Path.of(context.paths.artifacts) : context.paths.tempDir)
+    Path macZip = ((publishArchive || customizer.publishArchive) ? context.paths.artifactDir : context.paths.tempDir)
       .resolve(baseName + ".mac.zip")
     String zipRoot = getZipRoot(context, customizer)
 
@@ -158,8 +157,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
       return
     }
 
-    boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true) &&
-                       !SystemProperties.getBooleanProperty("build.is.personal", false)
+    boolean notarize = SystemProperties.getBooleanProperty("intellij.build.mac.notarize", true)
     BuildHelper.invokeAllSettled(List.of(
       createBuildForArchTask(JvmArchitecture.x64, macZip, notarize, customizer, context),
       createBuildForArchTask(JvmArchitecture.aarch64, macZip, notarize, customizer, context),
@@ -204,25 +202,11 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                               .setAttribute("arch", arch.name()), BuildOptions.MAC_SIGN_STEP, new Runnable() {
           @Override
           void run() {
-            String remoteDirPrefix = "intellij-builds/" + archStr + "-" + context.fullBuildNumber
-            MacHostProperties hostProperties = context.proprietaryBuildTools.macHostProperties
-            //noinspection SpellCheckingInspection
-            BuildHelper.getInstance(context).signMac.invokeWithArguments(
-              hostProperties.host,
-              hostProperties.userName,
-              hostProperties.password,
-              hostProperties.codesignString,
-              remoteDirPrefix,
-              context.paths.communityHomeDir.resolve("platform/build-scripts/tools/mac/scripts/signbin.sh"),
-              binariesToSign.collect { additional.resolve(it) },
-              Path.of(context.paths.artifacts),
-              new Consumer<Path>() {
-                @Override
-                void accept(Path file) {
-                  context.notifyArtifactWasBuilt(file)
-                }
-              }
-            )
+            context.signFiles(binariesToSign.collect { additional.resolve(it) }, Map.of(
+              "mac_codesign_options", "runtime",
+              "mac_codesign_force", "true",
+              "mac_codesign_deep", "true",
+              ))
           }
         })
       }
@@ -268,7 +252,9 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                             BuildContext context) {
     MacDistributionCustomizer macCustomizer = customizer
     BuildHelper buildHelper = BuildHelper.getInstance(context)
-    buildHelper.copyDir(context.paths.communityHomeDir.resolve("bin/mac"), macDistDir.resolve("bin"))
+    buildHelper.copyDirWithFileFilter(context.paths.communityHomeDir.resolve("bin/mac"),
+                                      macDistDir.resolve("bin"),
+                                      customizer.binFilesFilter)
     buildHelper.copyDir(context.paths.communityHomeDir.resolve("platform/build-scripts/resources/mac/Contents"), macDistDir)
 
     String executable = context.productProperties.baseFileName

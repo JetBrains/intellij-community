@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.abstraction;
 
 import com.intellij.codeInsight.daemon.impl.UnusedSymbolUtil;
@@ -382,8 +382,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
         if (declarationScope instanceof PsiMethod) {
           final PsiMethod method = (PsiMethod)declarationScope;
           final PsiClass containingClass = method.getContainingClass();
-          if (containingClass == null ||
-              containingClass.isInterface()) {
+          if (containingClass == null || containingClass.isInterface()) {
             return;
           }
           if (JavaHighlightUtil.isSerializationRelatedMethod(method, containingClass)) {
@@ -405,7 +404,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
       if (myIsOnTheFly && variable instanceof PsiField) {
         // checking variables with greater visibility is too expensive
         // for error checking in the editor
-        if (!variable.hasModifierProperty(PsiModifier.PRIVATE)) {
+        if (!variable.hasModifierProperty(PsiModifier.PRIVATE) || variable instanceof PsiEnumConstant) {
           return;
         }
       }
@@ -458,7 +457,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
     @Override
     public void visitMethod(PsiMethod method) {
       super.visitMethod(method);
-      if (doNotWeakenReturnType) return;
+      if (doNotWeakenReturnType || method instanceof PsiAnnotationMethod) return;
       if (myIsOnTheFly && !method.hasModifierProperty(PsiModifier.PRIVATE) && !ApplicationManager.getApplication().isUnitTestMode()) {
         // checking methods with greater visibility is too expensive.
         // for error checking in the editor

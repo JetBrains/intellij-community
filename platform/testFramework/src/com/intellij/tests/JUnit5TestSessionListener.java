@@ -19,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Assertions;
 import org.junit.platform.launcher.LauncherSession;
 import org.junit.platform.launcher.LauncherSessionListener;
+import org.junit.platform.launcher.TestExecutionListener;
+import org.junit.platform.launcher.TestPlan;
 
 import java.io.File;
 import java.nio.charset.Charset;
@@ -31,34 +33,41 @@ import java.util.concurrent.TimeUnit;
 public class JUnit5TestSessionListener implements LauncherSessionListener {
   boolean includeFirstLast = !"true".equals(System.getProperty("intellij.build.test.ignoreFirstAndLastTests")) && 
                              UsefulTestCase.IS_UNDER_TEAMCITY;
-  private long suiteStarted;
+  private long suiteStarted = 0;
 
   @ReviseWhenPortedToJDK("13")
   @Override
   public void launcherSessionOpened(LauncherSession session) {
-    if (!includeFirstLast) return;
-    suiteStarted = System.nanoTime();
-    Logger.setFactory(TestLoggerFactory.class);
-    IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
-    String tempDirectory = FileUtilRt.getTempDirectory();
-    String[] list = new File(tempDirectory).list();
-    assert list != null;
-    System.out.println("FileUtil.getTempDirectory() = " + tempDirectory + " (" + list.length + " files)");
+    session.getLauncher().registerTestExecutionListeners(new TestExecutionListener() {
+      @Override
+      public void testPlanExecutionStarted(TestPlan testPlan) {
+        if (suiteStarted == 0) {
+          if (!includeFirstLast) return;
+          suiteStarted = System.nanoTime();
+          Logger.setFactory(TestLoggerFactory.class);
+          IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true);
+          String tempDirectory = FileUtilRt.getTempDirectory();
+          String[] list = new File(tempDirectory).list();
+          assert list != null;
+          System.out.println("FileUtil.getTempDirectory() = " + tempDirectory + " (" + list.length + " files)");
 
-    System.out.println(Timings.getStatistics());
+          System.out.println(Timings.getStatistics());
 
-    Assertions.assertAll(() -> assertEncoding("file.encoding"),
-                         () -> assertEncoding("sun.jnu.encoding"),
+          Assertions.assertAll(() -> assertEncoding("file.encoding"),
+                               () -> assertEncoding("sun.jnu.encoding"),
 
-                         () -> Assertions.assertTrue(
-                           IoTestUtil.isSymLinkCreationSupported,
-                           String.format("Symlink creation not supported for %s on %s (%s)", SystemProperties.getUserName(),
-                                         SystemInfo.OS_NAME,
-                                         SystemInfo.OS_VERSION)),
-                         () ->
-                           Assertions.assertEquals(
-                             "false", System.getProperty("sun.io.useCanonCaches", Runtime.version().feature() >= 13 ? "false" : ""),
-                             "The `sun.io.useCanonCaches` makes `File#getCanonical*` methods unreliable and should be set to `false`"));
+                               () -> Assertions.assertTrue(
+                                 IoTestUtil.isSymLinkCreationSupported,
+                                 String.format("Symlink creation not supported for %s on %s (%s)", SystemProperties.getUserName(),
+                                               SystemInfo.OS_NAME,
+                                               SystemInfo.OS_VERSION)),
+                               () ->
+                                 Assertions.assertEquals(
+                                   "false", System.getProperty("sun.io.useCanonCaches", Runtime.version().feature() >= 13 ? "false" : ""),
+                                   "The `sun.io.useCanonCaches` makes `File#getCanonical*` methods unreliable and should be set to `false`"));
+        }
+      }
+    });
   }
 
   private static void assertEncoding(@NotNull String property) {
@@ -72,7 +81,7 @@ public class JUnit5TestSessionListener implements LauncherSessionListener {
 
   @Override
   public void launcherSessionClosed(LauncherSession session) {
-    if (!includeFirstLast) return;
+    if (!includeFirstLast || suiteStarted == 0) return;
 
     try {
       Assertions.assertAll(() -> {

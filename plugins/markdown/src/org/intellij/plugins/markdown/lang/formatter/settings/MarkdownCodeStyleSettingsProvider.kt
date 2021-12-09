@@ -34,7 +34,13 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
           MarkdownCustomCodeStyleSettings::class.java,
           MarkdownCustomCodeStyleSettings::KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS.name,
           MarkdownBundle.message("markdown.style.settings.line.breaks.inside.text.blocks"),
-          CodeStyleSettingsCustomizableOptions.getInstance().WRAPPING_KEEP
+          MarkdownBundle.message("markdown.style.settings.group.when.reformatting")
+        )
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::INSERT_QUOTE_ARROWS_ON_WRAP.name,
+          MarkdownBundle.message("markdown.style.settings.insert.quote.arrows"),
+          MarkdownBundle.message("markdown.style.settings.group.when.reformatting")
         )
       }
       SettingsType.BLANK_LINES_SETTINGS -> {

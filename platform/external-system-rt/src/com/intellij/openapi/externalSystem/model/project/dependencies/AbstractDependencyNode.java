@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.model.project.dependencies;
 
 import com.intellij.openapi.externalSystem.util.BooleanBiFunction;
@@ -16,6 +16,7 @@ public abstract class AbstractDependencyNode implements DependencyNode, Serializ
   @NotNull
   private final List<DependencyNode> dependencies;
   private String resolutionState;
+  private String selectionReason;
 
   protected AbstractDependencyNode(long id) {
     this.id = id;
@@ -43,6 +44,16 @@ public abstract class AbstractDependencyNode implements DependencyNode, Serializ
     this.resolutionState = resolutionState;
   }
 
+  @Nullable
+  @Override
+  public String getSelectionReason() {
+    return selectionReason;
+  }
+
+  public void setSelectionReason(@Nullable String selectionReason) {
+    this.selectionReason = selectionReason;
+  }
+
   @Override
   public final boolean equals(Object o) {
     if (this == o) return true;
@@ -51,6 +62,7 @@ public abstract class AbstractDependencyNode implements DependencyNode, Serializ
     AbstractDependencyNode node = (AbstractDependencyNode)o;
     if (id != node.id) return false;
     if (resolutionState != null ? !resolutionState.equals(node.resolutionState) : node.resolutionState != null) return false;
+    if (selectionReason != null ? !selectionReason.equals(node.selectionReason) : node.selectionReason != null) return false;
     if (!match(node)) return false;
     if (!match(dependencies, node.dependencies)) return false;
     return true;
@@ -61,6 +73,7 @@ public abstract class AbstractDependencyNode implements DependencyNode, Serializ
     int result = (int)(id ^ (id >>> 32));
     result = 31 * result + dependencies.size();
     result = 31 * result + (resolutionState != null ? resolutionState.hashCode() : 0);
+    result = 31 * result + (selectionReason != null ? selectionReason.hashCode() : 0);
     return result;
   }
 

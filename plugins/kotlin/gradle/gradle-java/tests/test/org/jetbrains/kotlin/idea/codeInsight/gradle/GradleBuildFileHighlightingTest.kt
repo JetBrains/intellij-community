@@ -16,48 +16,58 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Ignore
 import org.junit.Test
 
-class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase() {
-    @TargetVersions("4.8 <=> 6.0")
-    @Test
-    fun testKtsInJsProject() {
-        val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
-        importProjectUsingSingeModulePerGradleProject()
-        checkHighlighting(buildGradleKts)
+abstract class GradleBuildFileHighlightingTest : KotlinGradleImportingTestCase() {
+    class KtsInJsProject : GradleBuildFileHighlightingTest() {
+        @TargetVersions("4.8 <=> 6.0")
+        @Test
+        fun testKtsInJsProject() {
+            val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
+            importProjectUsingSingeModulePerGradleProject()
+            checkHighlighting(buildGradleKts)
+        }
     }
 
-    @TargetVersions("4.8+")
-    @Test
-    fun testSimple() {
-        val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
-        importProjectUsingSingeModulePerGradleProject()
-        checkHighlighting(buildGradleKts)
+    class Simple : GradleBuildFileHighlightingTest() {
+        @TargetVersions("5.3+")
+        @Test
+        fun testSimple() {
+            val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
+            importProjectUsingSingeModulePerGradleProject()
+            checkHighlighting(buildGradleKts)
+        }
     }
 
-    @Ignore
-    @TargetVersions("4.8+")
-    @Test
-    fun testComplexBuildGradleKts() {
-        val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
-        importProjectUsingSingeModulePerGradleProject()
-        checkHighlighting(buildGradleKts)
+    class ComplexBuildGradleKts : GradleBuildFileHighlightingTest() {
+        @Ignore
+        @TargetVersions("4.8+")
+        @Test
+        fun testComplexBuildGradleKts() {
+            val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
+            importProjectUsingSingeModulePerGradleProject()
+            checkHighlighting(buildGradleKts)
+        }
+
     }
 
-    @Test
-    @TargetVersions("6.0.1+")
-    fun testJavaLibraryPlugin() {
-        val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
-        importProject()
+    class JavaLibraryPlugin : GradleBuildFileHighlightingTest() {
+        @Test
+        @TargetVersions("6.0.1+")
+        fun testJavaLibraryPlugin() {
+            val buildGradleKts = configureByFiles().findBuildGradleKtsFile()
+            importProject()
 
-        checkHighlighting(buildGradleKts)
+            checkHighlighting(buildGradleKts)
+        }
+
     }
 
 
-    private fun List<VirtualFile>.findBuildGradleKtsFile(): VirtualFile {
+    protected fun List<VirtualFile>.findBuildGradleKtsFile(): VirtualFile {
         return singleOrNull { it.name == GradleConstants.KOTLIN_DSL_SCRIPT_NAME }
             ?: error("Couldn't find any build.gradle.kts file")
     }
 
-    private fun checkHighlighting(file: VirtualFile) {
+    protected fun checkHighlighting(file: VirtualFile) {
         runInEdtAndWait {
             runReadAction {
                 val psiFile = PsiManager.getInstance(myProject).findFile(file) as? KtFile

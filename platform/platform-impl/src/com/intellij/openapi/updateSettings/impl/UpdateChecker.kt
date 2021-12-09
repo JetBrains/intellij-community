@@ -33,7 +33,7 @@ import com.intellij.util.Urls
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.util.concurrency.annotations.RequiresNoReadLock
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.URLUtil
@@ -317,7 +317,7 @@ object UpdateChecker {
    * otherwise, returns versions compatible with the specified build.
    */
   @RequiresBackgroundThread
-  @RequiresNoReadLock
+  @RequiresReadLockAbsence
   @JvmOverloads
   @JvmStatic
   fun getInternalPluginUpdates(
@@ -422,7 +422,7 @@ object UpdateChecker {
   }
 
   @RequiresBackgroundThread
-  @RequiresNoReadLock
+  @RequiresReadLockAbsence
   private fun findUpdatesInJetBrainsRepository(updateable: MutableMap<PluginId, IdeaPluginDescriptor?>,
                                                toUpdate: MutableMap<PluginId, PluginDownloader>,
                                                toUpdateDisabled: MutableMap<PluginId, PluginDownloader>,

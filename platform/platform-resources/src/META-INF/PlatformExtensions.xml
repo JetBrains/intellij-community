@@ -16,6 +16,7 @@
     <appStarter implementation="com.intellij.help.impl.ShowProductVersion"/>
     <appStarter implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
     <appStarter implementation="com.intellij.ide.plugins.HeadlessPluginsInstaller"/>
+    <appStarter implementation="com.intellij.warmup.ProjectIndexesWarmup"/>
     <appStarter implementation="com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilderAppStarter"/>
     <appStarter implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter"/>
     <protocolHandler implementation="com.intellij.openapi.application.JBProtocolHandler"/>
@@ -124,6 +125,8 @@
     </experimentalFeature>
     <registryKey key="wsl.list.prefer.verbose.output" os="windows" defaultValue="true" restartRequired="false"
                  description="Use 'wsl.exe -l -v' to get distribution list. If it's disabled 'wsl.exe -l -q' will be used."/>
+    <registryKey key="wsl.use.utf8.encoding" os="windows" defaultValue="true" restartRequired="false"
+                 description="Use UTF-8 as default encoding for all WSL distributions, otherwise default console encoding will be used (see Preferences | Editor | General | Console )"/>
     <applicationService serviceInterface="com.intellij.execution.wsl.WslDistributionManager"
                         serviceImplementation="com.intellij.execution.wsl.WslDistributionManagerImpl"/>
     <executionTargetType implementation="com.intellij.execution.wsl.target.WslTargetType"/>
@@ -571,7 +574,7 @@
     <fileType name="PLAIN_TEXT" implementationClass="com.intellij.openapi.fileTypes.PlainTextFileType" fieldName="INSTANCE" language="TEXT"
               extensions="txt"/>
     <fileType name="Native" implementationClass="com.intellij.openapi.fileTypes.NativeFileType" fieldName="INSTANCE"
-              extensions="chm;doc;docx;hlp;mdb;odt;pdf;ppt;pptx;vsd;xls;xlsx"/>
+              extensions="doc;docx;hlp;mdb;odt;pdf;ppt;pptx;vsd;xls;xlsx"/>
     <fileType name="UNKNOWN" implementationClass="com.intellij.openapi.fileTypes.UnknownFileType" fieldName="INSTANCE"/>
     <fileType name="AUTO_DETECTED" implementationClass="com.intellij.openapi.fileTypes.ex.DetectedByContentFileType" fieldName="INSTANCE"/>
 
@@ -620,6 +623,15 @@
         bundle="messages.IdeBundle"
         key="configurable.font.name"
         instance="com.intellij.application.options.editor.fonts.AppEditorFontConfigurable"
+    />
+
+    <applicationConfigurable
+      groupId="editor"
+      groupWeight="188"
+      bundle="messages.IdeBundle"
+      key="configurable.console.font.name"
+      provider="com.intellij.application.options.editor.fonts.AppConsoleFontConfigurable$Provider"
+      parentId="editor.preferences.fonts.default"
     />
 
     <applicationService serviceImplementation="com.intellij.codeInsight.hints.settings.ParameterNameHintsSettings"/>
@@ -744,7 +756,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.updateSettings.impl.IdeUpdateUsageTriggerCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.application.ImportOldConfigsUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.application.OldDirectoryCleaner$Stats"/>
-    <statistics.counterUsagesCollector groupId="file.editor" version="2"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.featureStatistics.fusCollectors.FileEditorCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.TipsOfTheDayUsagesCollector"/>
     <statistics.counterUsagesCollector groupId="gutter.icon.click" version="2"/>
     <statistics.counterUsagesCollector groupId="inspection.widget" version="2"/>
@@ -1132,7 +1144,6 @@
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.MemorySizeConfigurator"/>
     <applicationService serviceImplementation="com.intellij.diagnostic.MemorySizeConfiguratorService"/>
 
-    <httpRequestHandler implementation="com.intellij.ide.FavIconHttpRequestHandler" order="last"/>
     <registryKey key="show.last.visited.timestamps" defaultValue="true"
                  description="Shows recent files or code locations last visited timestamps"/>
 

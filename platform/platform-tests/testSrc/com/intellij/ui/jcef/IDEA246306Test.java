@@ -2,10 +2,11 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.testFramework.NonHeadlessRule;
 import com.intellij.ui.scale.TestScaleHelper;
-import org.junit.*;
-import org.junit.rules.TestRule;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 import javax.swing.*;
 import java.awt.*;
@@ -21,12 +22,17 @@ import static com.intellij.ui.jcef.JBCefTestHelper.invokeAndWaitForLoad;
  * @author tav
  */
 public class IDEA246306Test {
-  @Rule public TestRule nonHeadless = new NonHeadlessRule();
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
+  }
+
+  @After
+  public void after() {
+    TestScaleHelper.restoreProperties();
   }
 
   @Test

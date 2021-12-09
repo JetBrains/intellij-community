@@ -31,6 +31,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.LightVirtualFile
+import com.intellij.ui.tree.project.ProjectFileNode
 import com.intellij.util.Alarm.ThreadToUse.POOLED_THREAD
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.tree.TreeUtil
@@ -102,6 +103,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
     // above // migrate old bookmarks and favorites
     is PsiElement -> createBookmark(context)
     is VirtualFile -> createBookmark(context, -1)
+    is ProjectFileNode -> createBookmark(context.virtualFile)
     is TreePath -> createBookmark(context)
     else -> null
   }
@@ -144,7 +146,7 @@ class LineBookmarkProvider(private val project: Project) : BookmarkProvider, Edi
   private val TreePath.asVirtualFile
     get() = TreeUtil.getLastUserObject(ProjectViewNode::class.java, this)?.virtualFile
 
-  private val MouseEvent.isUnexpected
+  private val MouseEvent.isUnexpected // see MouseEvent.isUnexpected in ToggleBookmarkAction
     get() = !SwingUtilities.isLeftMouseButton(this) || isPopupTrigger || if (SystemInfo.isMac) !isMetaDown else !isControlDown
 
   private val EditorMouseEvent.isUnexpected

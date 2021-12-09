@@ -3,12 +3,10 @@ package com.intellij.ui.jcef;
 
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.testFramework.NonHeadlessRule;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.scale.TestScaleHelper;
 import junit.framework.TestCase;
 import org.junit.*;
-import org.junit.rules.TestRule;
 
 import javax.swing.*;
 import java.awt.*;
@@ -23,12 +21,20 @@ import static com.intellij.ui.jcef.JBCefTestHelper.*;
  * @author tav
  */
 public class JBCefHwPopupTest {
-  @Rule public TestRule nonHeadless = new NonHeadlessRule();
+  static {
+    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
+  }
+
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+  }
+
+  @After
+  public void after() {
+    TestScaleHelper.restoreSystemProperties();
   }
 
   @Test

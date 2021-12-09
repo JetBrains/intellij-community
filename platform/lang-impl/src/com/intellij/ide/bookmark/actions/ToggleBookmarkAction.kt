@@ -7,7 +7,11 @@ import com.intellij.ide.bookmark.BookmarkType
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Toggleable
+import com.intellij.openapi.editor.EditorGutter
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.util.SystemInfo
+import java.awt.event.MouseEvent
+import javax.swing.SwingUtilities
 
 internal class ToggleBookmarkAction : Toggleable, DumbAwareAction(BookmarkBundle.messagePointer("bookmark.toggle.action.text")) {
 
@@ -33,11 +37,16 @@ internal class ToggleBookmarkAction : Toggleable, DumbAwareAction(BookmarkBundle
   }
 
   override fun actionPerformed(event: AnActionEvent) {
+    val unexpectedGutterClick = (event.inputEvent as? MouseEvent)?.run { source is EditorGutter && isUnexpected }
+    if (unexpectedGutterClick == true) return
     val manager = event.bookmarksManager ?: return
     val bookmark = event.contextBookmark ?: return
     val type = manager.getType(bookmark) ?: BookmarkType.DEFAULT
     manager.toggle(bookmark, type)
   }
+
+  private val MouseEvent.isUnexpected // see MouseEvent.isUnexpected in LineBookmarkProvider
+    get() = !SwingUtilities.isLeftMouseButton(this) || isPopupTrigger || if (SystemInfo.isMac) !isMetaDown else !isControlDown
 
   init {
     isEnabledInModalContext = true

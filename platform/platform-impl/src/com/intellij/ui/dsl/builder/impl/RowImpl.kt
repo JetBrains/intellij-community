@@ -48,7 +48,6 @@ import javax.swing.*
 internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                        private val panelContext: PanelContext,
                        private val parent: PanelImpl,
-                       val firstCellLabel: Boolean,
                        rowLayout: RowLayout) : Row {
 
   var rowLayout = rowLayout
@@ -189,34 +188,11 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(JBCheckBox(text))
   }
 
-  override fun radioButton(text: String): Cell<JBRadioButton> {
-    val group = dialogPanelConfig.context.getButtonGroup() ?: throw UiDslException(
+  override fun radioButton(text: String, value: Any?): Cell<JBRadioButton> {
+    val buttonsGroup = dialogPanelConfig.context.getButtonsGroup() ?: throw UiDslException(
       "Button group must be defined before using radio button")
-    if (group is BindButtonGroup<*>) {
-      throw UiDslException("Parent button group provides binding but value for radioButton is not provided")
-    }
     val result = cell(JBRadioButton(text))
-    group.add(result.component)
-    return result
-  }
-
-  override fun radioButton(text: String, value: Any): Cell<JBRadioButton> {
-    val group = dialogPanelConfig.context.getButtonGroup() ?: throw UiDslException(
-      "Button group must be defined before using radio button with value")
-    if (group !is BindButtonGroup<*>) {
-      throw UiDslException("Parent button group doesn't provide binding for $value")
-    }
-    if (value::class.java != group.type) {
-      throw UiDslException("Value $value is incompatible with button group binding class ${group.type.simpleName}")
-    }
-    val binding = group.binding
-    val result = cell(JBRadioButton(text))
-    val component = result.component
-    group.add(component)
-    component.isSelected = binding.get() == value
-    result.onApply { if (component.isSelected) group.set(value) }
-    result.onReset { component.isSelected = binding.get() == value }
-    result.onIsModified { component.isSelected != (binding.get() == value) }
+    buttonsGroup.add(result, value)
     return result
   }
 
@@ -278,6 +254,10 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun comment(comment: String, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<JEditorPane> {
     return cell(createComment(comment, maxLineLength, action))
+  }
+
+  override fun commentHtml(text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
+    return comment(text, MAX_LINE_LENGTH_WORD_WRAP, action)
   }
 
   override fun link(text: String, action: (ActionEvent) -> Unit): CellImpl<ActionLink> {

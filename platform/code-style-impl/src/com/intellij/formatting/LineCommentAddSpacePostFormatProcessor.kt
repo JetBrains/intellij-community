@@ -6,7 +6,6 @@ import com.intellij.lang.LanguageCommenters
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.psi.codeStyle.CodeStyleSettingsService
 import com.intellij.psi.codeStyle.LanguageCodeStyleProvider
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 
@@ -24,7 +23,7 @@ class LineCommentAddSpacePostFormatProcessor : PostFormatProcessor {
     }
 
     val commenter = LanguageCommenters.INSTANCE.forLanguage(language) ?: return rangeToReformat
-    val languageCodeStyleSettingsProvider = CodeStyleSettingsService.getLanguageCodeStyleProviderUsingBaseLanguage(language) ?: return rangeToReformat
+    val languageCodeStyleSettingsProvider = LanguageCodeStyleProvider.findUsingBaseLanguage(language) ?: return rangeToReformat
 
     val commentFinder = SingleLineCommentFinder(rangeToReformat, languageCodeStyleSettingsProvider, commenter)
     source.accept(commentFinder)

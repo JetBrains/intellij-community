@@ -1,0 +1,89 @@
+{header}
+<title>{repo|escape}: revision graph</title>
+<link rel="alternate" type="application/atom+xml"
+   href="{url|urlescape}atom-log" title="Atom feed for {repo|escape}: log" />
+<link rel="alternate" type="application/rss+xml"
+   href="{url|urlescape}rss-log" title="RSS feed for {repo|escape}: log" />
+</head>
+<body>
+
+<div class="container">
+<div class="menu">
+<div class="logo">
+<a href="{logourl}">
+<img src="{staticurl|urlescape}{logoimg}" alt="mercurial" /></a>
+</div>
+<ul>
+<li><a href="{url|urlescape}shortlog/{symrev}{sessionvars%urlparameter}">log</a></li>
+<li class="active">graph</li>
+<li><a href="{url|urlescape}tags{sessionvars%urlparameter}">tags</a></li>
+<li><a href="{url|urlescape}bookmarks{sessionvars%urlparameter}">bookmarks</a></li>
+<li><a href="{url|urlescape}branches{sessionvars%urlparameter}">branches</a></li>
+</ul>
+<ul>
+<li><a href="{url|urlescape}rev/{symrev}{sessionvars%urlparameter}">changeset</a></li>
+<li><a href="{url|urlescape}file/{symrev}{path|urlescape}{sessionvars%urlparameter}">browse</a></li>
+</ul>
+<ul>
+{archives%archiveentry}
+</ul>
+<ul>
+ <li><a href="{url|urlescape}help{sessionvars%urlparameter}">help</a></li>
+</ul>
+<div class="atom-logo">
+<a href="{url|urlescape}atom-log" title="subscribe to atom feed">
+<img class="atom-logo" src="{staticurl|urlescape}feed-icon-14x14.png" alt="atom feed" />
+</a>
+</div>
+</div>
+
+<div class="main">
+<h2 class="breadcrumb"><a href="/">Mercurial</a> {pathdef%breadcrumb}</h2>
+<h3>graph</h3>
+
+{searchform}
+
+<div class="navigate">
+<a href="{url|urlescape}graph/{symrev}{lessvars%urlparameter}">less</a>
+<a href="{url|urlescape}graph/{symrev}{morevars%urlparameter}">more</a>
+| rev {rev}: {changenav%navgraph}
+</div>
+
+<noscript><p>The revision graph only works with JavaScript-enabled browsers.</p></noscript>
+
+<div id="wrapper">
+<canvas id="graph"></canvas>
+<ul id="graphnodes" class="stripes2">{nodes%graphentry}</ul>
+</div>
+
+<script type="text/javascript"{if(nonce, ' nonce="{nonce}"')}>
+var data = {jsdata|json};
+var graph = new Graph();
+graph.scale({bg_height});
+graph.render(data);
+</script>
+
+<div class="navigate">
+<a href="{url|urlescape}graph/{symrev}{lessvars%urlparameter}">less</a>
+<a href="{url|urlescape}graph/{symrev}{morevars%urlparameter}">more</a>
+| rev {rev}: {changenav%navgraph}
+</div>
+
+<script type="text/javascript"{if(nonce, ' nonce="{nonce}"')}>
+    ajaxScrollInit(
+            '{url|urlescape}graph/%next%{graphvars%urlparameter}',
+            '{nextentry%"{node}"}', <!-- NEXTHASH
+            function (htmlText) \{
+                var m = htmlText.match(/'(\w+)', <!-- NEXTHASH/);
+                return m ? m[1] : null;
+            },
+            '#wrapper',
+            '<div class="%class%" style="text-align: center;">%text%</div>',
+            'graph'
+    );
+</script>
+
+</div>
+</div>
+
+{footer}

@@ -109,7 +109,7 @@ class CommandExceptionManager:
                     not sys.stdin.isatty()):
                 self.original_hook(type, value, tb)
             else:
-                traceback.print_exception(type, value, tb)
+                import traceback;traceback.print_exception(type, value, tb)
         sys.excepthook = info
         return self
 
@@ -289,7 +289,7 @@ def process_exec_queue(interpreter):
             raise
         except:
             type, value, tb = sys.exc_info()
-            traceback.print_exception(type, value, tb, file=sys.__stderr__)
+            import traceback;traceback.print_exception(type, value, tb, file=sys.__stderr__)
             exit()
 
 

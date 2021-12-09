@@ -484,8 +484,9 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
 
       if (implementation != null) {
         val componentAdapter = ServiceComponentAdapter(descriptor, pluginDescriptor, this)
-        if (componentKeyToAdapter.putIfAbsent(key, componentAdapter) != null) {
-          throw PluginException("Key $key duplicated", pluginDescriptor.pluginId)
+        val existingAdapter = componentKeyToAdapter.putIfAbsent(key, componentAdapter)
+        if (existingAdapter != null) {
+          throw PluginException("Key $key duplicated; existingAdapter: $existingAdapter; descriptor: ${descriptor.implementation}; app: $app; current plugin: ${pluginDescriptor.pluginId}", pluginDescriptor.pluginId)
         }
       }
     }

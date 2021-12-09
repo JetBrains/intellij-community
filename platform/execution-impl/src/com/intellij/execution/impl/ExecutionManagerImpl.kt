@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl
 
 import com.intellij.CommonBundle
@@ -706,7 +706,7 @@ class ExecutionManagerImpl(private val project: Project) : ExecutionManager(), D
           val runner = ProgramRunner.getRunner(environment.executor.id, environment.runnerAndConfigurationSettings!!.configuration)
           if (runner == null) {
             ExecutionUtil.handleExecutionError(environment,
-                                               ExecutionException(ExecutionBundle.message("dialog.message.cannot.find.runner.for",
+                                               ExecutionException(ExecutionBundle.message("dialog.message.cannot.find.runner",
                                                                                           environment.runProfile.name)))
           }
           else {

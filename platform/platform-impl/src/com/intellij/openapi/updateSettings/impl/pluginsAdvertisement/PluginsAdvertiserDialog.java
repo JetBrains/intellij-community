@@ -4,6 +4,7 @@ package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.*;
 import com.intellij.ide.plugins.org.PluginManagerFilters;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -30,17 +31,20 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   private final @Nullable Project myProject;
   private final @NotNull List<PluginNode> myCustomPlugins;
   private final @Nullable Consumer<? super Boolean> myFinishFunction;
+  private final boolean mySelectAllSuggestions;
   private @Nullable DetectedPluginsPanel myPanel;
 
   PluginsAdvertiserDialog(@Nullable Project project,
                           @NotNull Collection<PluginDownloader> pluginsToInstall,
                           @NotNull List<PluginNode> customPlugins,
+                          boolean selectAllSuggestions,
                           @Nullable Consumer<? super Boolean> finishFunction) {
     super(project);
     myProject = project;
     myPluginToInstall = pluginsToInstall;
     myCustomPlugins = customPlugins;
     myFinishFunction = finishFunction;
+    mySelectAllSuggestions = selectAllSuggestions;
     setTitle(IdeBundle.message("dialog.title.choose.plugins.to.install.or.enable"));
     init();
   }
@@ -48,14 +52,15 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   PluginsAdvertiserDialog(@Nullable Project project,
                           @NotNull Collection<PluginDownloader> pluginsToInstall,
                           @NotNull List<PluginNode> customPlugins) {
-    this(project, pluginsToInstall, customPlugins, null);
+    this(project, pluginsToInstall, customPlugins, false, null);
   }
 
   @Override
   protected @NotNull JComponent createCenterPanel() {
     if (myPanel == null) {
       myPanel = new DetectedPluginsPanel(myProject);
-      myPanel.addAll(myPluginToInstall, myPluginToInstall.iterator().next());
+      Iterator<PluginDownloader> iterator = myPluginToInstall.iterator();
+      myPanel.addAll(myPluginToInstall, mySelectAllSuggestions || !iterator.hasNext() ? null : iterator.next());
     }
     return myPanel;
   }
@@ -63,7 +68,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     assert myPanel != null;
-    if (doInstallPlugins(myPanel::isChecked)) {
+    if (doInstallPlugins(myPanel::isChecked, ModalityState.stateForComponent(myPanel))) {
       super.doOKAction();
     }
   }
@@ -73,11 +78,11 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
       showAndGet();
     }
     else {
-      doInstallPlugins(__ -> true);
+      doInstallPlugins(__ -> true, ModalityState.NON_MODAL);
     }
   }
 
-  private boolean doInstallPlugins(@NotNull Predicate<? super PluginDownloader> predicate) {
+  private boolean doInstallPlugins(@NotNull Predicate<? super PluginDownloader> predicate, @NotNull ModalityState modalityState) {
     ArrayList<IdeaPluginDescriptor> pluginsToEnable = new ArrayList<>();
     ArrayList<PluginNode> nodes = new ArrayList<>();
     for (PluginDownloader downloader : myPluginToInstall) {
@@ -119,7 +124,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
       }
     };
 
-    PluginEnabler.HEADLESS.enablePlugins(pluginsToEnable);
+    PluginEnabler.HEADLESS.enable(pluginsToEnable);
     if (!nodes.isEmpty()) {
       try {
         PluginManagerMain.downloadPlugins(nodes,
@@ -127,6 +132,7 @@ public final class PluginsAdvertiserDialog extends DialogWrapper {
                                           true,
                                           notifyRunnable,
                                           PluginEnabler.HEADLESS,
+                                          modalityState,
                                           myFinishFunction);
       }
       catch (IOException e) {

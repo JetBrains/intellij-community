@@ -112,7 +112,7 @@ final class ScopeUtils {
     // scope to inside switch branch
     if (commonParent != null) {
       final PsiElement parent = commonParent.getParent();
-      if (parent instanceof PsiSwitchStatement) {
+      if (parent instanceof PsiSwitchBlock) {
         if (referenceElements.size() > 1) {
           return PsiTreeUtil.getParentOfType(parent, PsiCodeBlock.class, false);
         }

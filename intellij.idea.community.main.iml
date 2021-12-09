@@ -151,6 +151,7 @@
     <orderEntry type="module" module-name="intellij.externalSystem.dependencyUpdater.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.gradle.dependencyUpdater" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.settingsRepository.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.settingsSync" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.featuresTrainer" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.idea.community.build.tasks" scope="TEST" />
     <orderEntry type="module" module-name="intellij.junit.v5.rt.tests" scope="TEST" />

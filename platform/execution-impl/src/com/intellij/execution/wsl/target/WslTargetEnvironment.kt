@@ -42,6 +42,9 @@ class WslTargetEnvironment constructor(override val request: WslTargetEnvironmen
       if (targetRoot != null) {
         myUploadVolumes[uploadRoot] = Volume(uploadRoot.localRootPath, targetRoot)
       }
+      else {
+        LOG.error("Cannot register upload volume: WSL path not found for local path: " + uploadRoot.localRootPath)
+      }
     }
     for (downloadRoot in request.downloadVolumes) {
       val localRootPath = downloadRoot.localRootPath ?: FileUtil.createTempDirectory("intellij-target.", "").toPath()

@@ -11,9 +11,12 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.dsl.builder.impl.DialogPanelConfig
+import org.jetbrains.annotations.ApiStatus
 import java.awt.Dimension
 import java.util.function.Supplier
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
 fun <T> Row.buttonSelector(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): ButtonSelectorToolbar {
   val actionGroup = DefaultActionGroup(options.map { ButtonSelectorAction(it, property, renderer(it)) })
   val config = DialogPanelConfig()
@@ -23,6 +26,8 @@ fun <T> Row.buttonSelector(options: Collection<T>, property: GraphProperty<T>, r
   return toolbar
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
 class ButtonSelectorAction<T> @JvmOverloads constructor(private val option: T,
                                                         private val property: GraphProperty<T>,
                                                         optionText: Supplier<@NlsActions.ActionText String>,
@@ -65,6 +70,8 @@ private class ButtonSelector(
   }
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
 class ButtonSelectorToolbar internal constructor(
   place: String,
   actionGroup: ActionGroup,

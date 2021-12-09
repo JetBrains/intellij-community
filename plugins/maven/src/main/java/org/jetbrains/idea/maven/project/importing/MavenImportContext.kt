@@ -17,14 +17,12 @@ sealed abstract class MavenImportContext(val project: Project)
 
 
 class MavenInitialImportContext internal constructor(project: Project,
-                                                     val pomFiles: List<VirtualFile>,
+                                                     val paths: ImportPaths,
                                                      val profiles: MavenExplicitProfiles,
                                                      val generalSettings: MavenGeneralSettings,
                                                      val importingSettings: MavenImportingSettings,
-                                                     val indicator: MavenProgressIndicator
-) : MavenImportContext(project) {
+                                                     val indicator: MavenProgressIndicator) : MavenImportContext(project)
 
-}
 
 class MavenReadContext internal constructor(project: Project,
                                             val projectsTree: MavenProjectsTree,
@@ -48,11 +46,24 @@ class MavenPluginResolvedContext internal constructor(project: Project,
                                                       val unresolvedPlugins: Map<MavenPlugin, Path?>,
                                                       val resolvedContext: MavenResolvedContext) : MavenImportContext(project)
 
-class MavenFoldersContext internal constructor(project: Project) : MavenImportContext(project)
+class MavenSourcesGeneratedContext internal constructor(val resolvedContext: MavenResolvedContext,
+                                                        val projectsFoldersResolved: ArrayList<MavenProject>) : MavenImportContext(
+  resolvedContext.project)
+
 class MavenImportedContext internal constructor(project: Project,
                                                 val modulesCreated: MutableList<Module>,
                                                 val postImportTasks: MutableList<MavenProjectsProcessorTask>?,
                                                 val initialContext: MavenInitialImportContext) : MavenImportContext(project)
 
 class MavenImportingExtensionsContext internal constructor(project: Project) : MavenImportContext(project)
-class MavenImportFinishedContext internal constructor(project: Project) : MavenImportContext(project)
+class MavenImportFinishedContext internal constructor(val context: MavenImportedContext?,
+                                                      val error: Throwable?,
+                                                      project: Project) : MavenImportContext(project) {
+  constructor(e: Throwable, project: Project) : this(null, e, project)
+  constructor(context: MavenImportedContext) : this(context, null, context.project)
+}
+
+
+sealed class ImportPaths
+class FilesList(val poms: List<VirtualFile>) : ImportPaths()
+class RootPath(val path: VirtualFile) : ImportPaths()

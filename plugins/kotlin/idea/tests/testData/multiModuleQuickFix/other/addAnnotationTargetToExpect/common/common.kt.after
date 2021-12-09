@@ -1,0 +1,7 @@
+// "Add annotation target" "true"
+
+@Target(AnnotationTarget.CLASS, AnnotationTarget.PROPERTY)
+expect annotation class Ann()
+
+@Ann<caret>
+val commonProperty = 42

@@ -404,6 +404,11 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
     },
 
+    "MainToolbar": {
+      "icon.borderInsets": "10,10,10,10",
+      "dropdown.borderInsets": "12,6,12,6"
+    },
+
     "control": "#f2f2f2",
     "darcula.selectionBackground": "#4A6EB7",
     "darcula.selectionForeground": "#ffffff",

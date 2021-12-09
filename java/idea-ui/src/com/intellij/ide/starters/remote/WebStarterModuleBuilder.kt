@@ -18,7 +18,10 @@ import com.intellij.ide.starters.local.StarterModuleBuilder.Companion.preprocess
 import com.intellij.ide.starters.remote.wizard.WebStarterInitialStep
 import com.intellij.ide.starters.remote.wizard.WebStarterLibrariesStep
 import com.intellij.ide.starters.shared.*
-import com.intellij.ide.util.projectWizard.*
+import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.ide.util.projectWizard.ModuleWizardStep
+import com.intellij.ide.util.projectWizard.SettingsStep
+import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.notification.NotificationAction
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.Disposable
@@ -26,15 +29,14 @@ import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
-import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys
-import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
 import com.intellij.openapi.options.ConfigurationException
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkType
@@ -48,10 +50,10 @@ import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndEnable
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.notificationGroup
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.util.Url
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
@@ -59,6 +61,8 @@ import com.intellij.util.io.HttpRequests
 import com.intellij.util.io.HttpRequests.RequestProcessor
 import java.io.File
 import java.io.IOException
+import java.net.URLConnection
+import java.net.UnknownHostException
 import java.util.concurrent.TimeUnit
 import javax.swing.Icon
 
@@ -186,7 +190,6 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
 
   protected abstract fun composeGeneratorUrl(serverUrl: String, starterContext: WebStarterContext): Url
 
-  @RequiresBackgroundThread
   protected abstract fun extractGeneratorResult(tempZipFile: File, contentEntryDir: File)
 
   protected open fun getPluginRecommendations(): List<PluginRecommendation> = emptyList()
@@ -204,11 +207,28 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
       project.putUserData(ExternalSystemDataKeys.NEWLY_IMPORTED_PROJECT, java.lang.Boolean.TRUE)
     }
 
+    try {
+      extractTemplate() // should be quite fast, only extracts single small ZIP file
+    }
+    catch (e: Exception) {
+      thisLogger().info(e)
+
+      StartupManager.getInstance(project).runAfterOpened {
+        EdtExecutorService.getScheduledExecutorInstance().schedule(
+          {
+            var message = JavaStartersBundle.message("error.text.with.error.content", e.message)
+            message = StringUtil.shortenTextWithEllipsis(message, 1024, 0) // exactly 1024 because why not
+            Messages.showErrorDialog(message, presentableName)
+          },
+          3, TimeUnit.SECONDS)
+      }
+      return
+    }
+
     preprocessModuleCreated(module, this, starterContext.frameworkVersion?.id)
 
     StartupManager.getInstance(project).runAfterOpened {
-      // a hack to avoid "Assertion failed: Network shouldn't be accessed in EDT or inside read action"
-      ApplicationManager.getApplication().invokeLater({ extractAndImport(module) },
+      ApplicationManager.getApplication().invokeLater({ runImport(module) },
                                                       ModalityState.NON_MODAL, module.disposed)
     }
   }
@@ -229,25 +249,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     doAddContentEntry(modifiableRootModel)
   }
 
-  private fun extractAndImport(module: Module) {
-    ProgressManager.getInstance().runProcessWithProgressSynchronously(
-      {
-        try {
-          extractTemplate()
-        }
-        catch (e: Exception) {
-          logger<WebStarterModuleBuilder>().info(e)
-
-          EdtExecutorService.getScheduledExecutorInstance().schedule(
-            {
-              var message = JavaStartersBundle.message("error.text.with.error.content", e.message)
-              message = StringUtil.shortenTextWithEllipsis(message, 1024, 0) // exactly 1024 because why not
-              Messages.showErrorDialog(message, presentableName)
-            },
-            3, TimeUnit.SECONDS)
-        }
-      }, JavaStartersBundle.message("message.state.preparing.template"), true, module.project)
-
+  private fun runImport(module: Module) {
     LocalFileSystem.getInstance().refresh(false) // to avoid IDEA-232806
 
     preprocessModuleOpened(module, this, starterContext.frameworkVersion?.id)
@@ -277,9 +279,6 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     else {
       FileUtil.copy(tempFile, File(contentEntryDir, downloadResult.filename))
     }
-
-    val vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(contentEntryDir)
-    VfsUtil.markDirtyAndRefresh(false, true, false, vf)
   }
 
   private fun verifyIdePlugins(project: Project) {
@@ -306,7 +305,8 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
     if (toInstallOrEnable.isEmpty()) return
 
     notificationGroup
-      .createNotification(IdeBundle.message("plugins.advertiser.plugins.suggestions.title"), IdeBundle.message("plugins.advertiser.plugins.suggestions.text"), NotificationType.INFORMATION)
+      .createNotification(IdeBundle.message("plugins.advertiser.plugins.suggestions.title"),
+                          IdeBundle.message("plugins.advertiser.plugins.suggestions.text"), NotificationType.INFORMATION)
       .addAction(NotificationAction.create(IdeBundle.message("plugins.advertiser.action.enable.plugins")) { _, notification ->
         installAndEnable(project, toInstallOrEnable) { notification.expire() }
       })
@@ -331,7 +331,7 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
           request.reader
         }
         catch (e: IOException) {
-          logger<WebStarterModuleBuilder>().info("IOException loading JSON response from " + request.url, e)
+          thisLogger().info("IOException loading JSON response from " + request.url, e)
           throw IOException(HttpRequests.createErrorMessage(e, request, false), e)
         }
 
@@ -341,11 +341,75 @@ abstract class WebStarterModuleBuilder : ModuleBuilder() {
           })
         }
         catch (e: Throwable) {
-          logger<WebStarterModuleBuilder>().info("Unable to read JSON response from " + request.url, e)
+          thisLogger().info("Unable to read JSON response from " + request.url, e)
           throw IOException("Error parsing JSON response", e)
         }
         jsonRootElement ?: throw IOException("Error parsing JSON response: empty document")
       })
+  }
+
+  @RequiresBackgroundThread
+  internal fun downloadResultInternal(progressIndicator: ProgressIndicator): DownloadResult {
+    val tempFile = FileUtil.createTempFile(builderId, ".tmp", true)
+    return downloadResult(progressIndicator, tempFile)
+  }
+
+  @RequiresBackgroundThread
+  protected open fun downloadResult(progressIndicator: ProgressIndicator, tempFile: File): DownloadResult {
+    val url = getGeneratorUrlInternal(starterContext.serverUrl, starterContext).toExternalForm()
+    thisLogger().info("Loading project from ${url}")
+
+    return HttpRequests
+      .request(url)
+      .userAgent(getUserAgentInternal())
+      .connectTimeout(10000)
+      .isReadResponseOnError(true)
+      .connect(RequestProcessor { request ->
+        handleDownloadResponse(request, tempFile, progressIndicator)
+      })
+  }
+
+  protected fun handleDownloadResponse(request: HttpRequests.Request,
+                                       tempFile: File,
+                                       progressIndicator: ProgressIndicator): DownloadResult {
+    val connection: URLConnection = try {
+      request.connection
+    }
+    catch (e: IOException) {
+      thisLogger().warn("Can't download project. Message (with headers info): "
+                        + HttpRequests.createErrorMessage(e, request, true))
+      throw IOException(HttpRequests.createErrorMessage(e, request, false), e)
+    }
+    catch (he: UnknownHostException) {
+      thisLogger().warn("Can't download project: " + he.message)
+      throw IOException(HttpRequests.createErrorMessage(he, request, false), he)
+    }
+
+    val contentType = connection.contentType
+    val contentDisposition = connection.getHeaderField("Content-Disposition")
+    val filename = getFilename(contentDisposition)
+    val isZip = StringUtil.isNotEmpty(contentType) && contentType.startsWith("application/zip")
+                || filename.endsWith(".zip")
+    // Micronaut has broken content-type (it's "text") but zip-file as attachment
+    // (https://github.com/micronaut-projects/micronaut-starter/issues/268)
+
+    request.saveToFile(tempFile, progressIndicator)
+
+    return DownloadResult(isZip, tempFile, filename)
+  }
+
+  @NlsSafe
+  private fun getFilename(contentDisposition: String?): String {
+    val filenameField = "filename="
+    if (StringUtil.isEmpty(contentDisposition)) return "unknown"
+
+    val startIdx = contentDisposition!!.indexOf(filenameField)
+    val endIdx = contentDisposition.indexOf(';', startIdx)
+    var fileName = contentDisposition.substring(startIdx + filenameField.length, if (endIdx > 0) endIdx else contentDisposition.length)
+    if (StringUtil.startsWithChar(fileName, '\"') && StringUtil.endsWithChar(fileName, '\"')) {
+      fileName = fileName.substring(1, fileName.length - 1)
+    }
+    return fileName
   }
 
   fun JsonObject.getNullable(field: String): JsonElement? {

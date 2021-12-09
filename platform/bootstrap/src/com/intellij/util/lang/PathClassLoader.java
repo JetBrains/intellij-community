@@ -3,11 +3,9 @@ package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.security.ProtectionDomain;
 import java.util.function.Function;
 
 @ApiStatus.Internal
@@ -23,14 +21,13 @@ public final class PathClassLoader extends UrlClassLoader {
   }
 
   public interface BytecodeTransformer {
-    default boolean isApplicable(String className, ClassLoader loader, @Nullable ProtectionDomain protectionDomain) {
+    default boolean isApplicable(String className, ClassLoader loader) {
       return true;
     }
 
-    byte[] transform(ClassLoader loader, String className, @Nullable ProtectionDomain protectionDomain, byte[] classBytes);
+    byte[] transform(ClassLoader loader, String className, byte[] classBytes);
   }
 
-  @SuppressWarnings("unused")
   public static Function<Path, ResourceFile> getResourceFileFactory() {
     return RESOURCE_FILE_FACTORY;
   }
@@ -51,8 +48,8 @@ public final class PathClassLoader extends UrlClassLoader {
   }
 
   @Override
-  public boolean isByteBufferSupported(@NotNull String name, @Nullable ProtectionDomain protectionDomain) {
-    return transformer == null || !transformer.isApplicable(name, this, protectionDomain);
+  public boolean isByteBufferSupported(@NotNull String name) {
+    return transformer == null || !transformer.isApplicable(name, this);
   }
 
   @Override
@@ -61,15 +58,15 @@ public final class PathClassLoader extends UrlClassLoader {
   }
 
   @Override
-  public Class<?> consumeClassData(@NotNull String name, byte[] data, Loader loader, @Nullable ProtectionDomain protectionDomain)
+  public Class<?> consumeClassData(@NotNull String name, byte[] data, Loader loader)
     throws IOException {
     BytecodeTransformer transformer = this.transformer;
-    if (transformer != null && transformer.isApplicable(name, this, protectionDomain)) {
-      byte[] transformedData = transformer.transform(this, name, protectionDomain, data);
+    if (transformer != null && transformer.isApplicable(name, this)) {
+      byte[] transformedData = transformer.transform(this, name, data);
       if (transformedData != null) {
-        return super.consumeClassData(name, transformedData, loader, protectionDomain);
+        return super.consumeClassData(name, transformedData, loader);
       }
     }
-    return super.consumeClassData(name, data, loader, protectionDomain);
+    return super.consumeClassData(name, data, loader);
   }
 }

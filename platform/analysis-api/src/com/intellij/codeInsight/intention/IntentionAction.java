@@ -136,7 +136,7 @@ public interface IntentionAction extends FileModifier {
    * @param project current project
    * @param editor editor. Could be a simplified headless Editor implementation that lacks some features.
    * @param file non-physical file to apply
-   * @return true if the action was applied successfully to the non-physical file.
+   * @return an object that describes the action preview to display
    */
   default @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!startInWriteAction()) return IntentionPreviewInfo.EMPTY;

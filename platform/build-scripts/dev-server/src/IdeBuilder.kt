@@ -20,7 +20,7 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
-const val UNMODIFIED_MARK_FILE_NAME = ".unmodified"
+internal const val UNMODIFIED_MARK_FILE_NAME = ".unmodified"
 
 class IdeBuilder(val pluginBuilder: PluginBuilder,
                  homePath: Path,
@@ -65,7 +65,7 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
   val runDir = createRunDirForProduct(homePath, platformPrefix)
 
   val buildContext = BuildContext.createContext(getCommunityHomePath(homePath).toString(), homePath.toString(), productProperties,
-                                                ProprietaryBuildTools.DUMMY, createBuildOptions(homePath))
+                                                ProprietaryBuildTools.DUMMY, createBuildOptions(runDir))
   val pluginsDir = runDir.resolve("plugins")
 
   val mainModuleToNonTrivialPlugin = HashMap<String, BuildItem>(bundledMainModuleNames.size)
@@ -121,28 +121,44 @@ internal fun initialBuild(productConfiguration: ProductConfiguration, homePath: 
 
 private fun createLibClassPath(context: BuildContext, homePath: Path): String {
   val platformLayout = DistributionJARsBuilder.createPlatformLayout(emptySet(), context)
+  val isPackagedLib = System.getProperty("dev.server.pack.lib") == "true"
   val projectStructureMapping = DistributionJARsBuilder.processLibDirectoryLayout(ModuleOutputPatcher(),
                                                                                   platformLayout,
                                                                                   context,
-                                                                                  false).fork().join()
+                                                                                  isPackagedLib).fork().join()
   // for some reasons maybe duplicated paths - use set
   val classPath = LinkedHashSet<String>()
-  for (entry in projectStructureMapping) {
-    when (entry) {
-      is ModuleOutputEntry -> {
-        classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)).toString())
-      }
-      is LibraryFileEntry -> {
-        classPath.add(entry.libraryFile.toString())
-      }
-      else -> throw UnsupportedOperationException("Entry $entry is not supported")
-    }
+  if (isPackagedLib) {
+    projectStructureMapping.mapTo(classPath) { it.path.toString() }
   }
+  else {
+    for (entry in projectStructureMapping) {
+      when (entry) {
+        is ModuleOutputEntry -> {
+          if (isPackagedLib) {
+            classPath.add(entry.path.toString())
+          }
+          else {
+            classPath.add(context.getModuleOutputDir(context.findRequiredModule(entry.moduleName)).toString())
+          }
+        }
+        is LibraryFileEntry -> {
+          if (isPackagedLib) {
+            classPath.add(entry.path.toString())
+          }
+          else {
+            classPath.add(entry.libraryFile.toString())
+          }
+        }
+        else -> throw UnsupportedOperationException("Entry $entry is not supported")
+      }
+    }
 
-  for (libName in platformLayout.projectLibrariesToUnpack.values()) {
-    val library = context.project.libraryCollection.findLibrary(libName) ?: throw IllegalStateException("Cannot find library $libName")
-    library.getRootUrls(JpsOrderRootType.COMPILED).mapTo(classPath) {
-      JpsPathUtil.urlToPath(it)
+    for (libName in platformLayout.projectLibrariesToUnpack.values()) {
+      val library = context.project.libraryCollection.findLibrary(libName) ?: throw IllegalStateException("Cannot find library $libName")
+      library.getRootUrls(JpsOrderRootType.COMPILED).mapTo(classPath) {
+        JpsPathUtil.urlToPath(it)
+      }
     }
   }
 
@@ -195,13 +211,13 @@ private fun getCommunityHomePath(homePath: Path): Path {
   return if (Files.isDirectory(communityDotIdea)) communityDotIdea.parent else homePath
 }
 
-private fun createBuildOptions(homePath: Path): BuildOptions {
+private fun createBuildOptions(runDir: Path): BuildOptions {
   val buildOptions = BuildOptions()
   buildOptions.useCompiledClassesFromProjectOutput = true
   buildOptions.targetOS = BuildOptions.OS_NONE
   buildOptions.cleanOutputFolder = false
   buildOptions.skipDependencySetup = true
-  buildOptions.outputRootPath = homePath.resolve("out/dev-server").toString()
+  buildOptions.outputRootPath = runDir.toString()
   buildOptions.buildStepsToSkip.add(BuildOptions.PREBUILD_SHARED_INDEXES)
   return buildOptions
 }

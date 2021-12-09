@@ -20,261 +20,7 @@ import org.junit.runner.RunWith;
 public abstract class PerformanceTypingIndentationTestGenerated extends AbstractPerformanceTypingIndentationTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/indentationOnNewline")
-    public static class DirectSettings extends AbstractPerformanceTypingIndentationTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("AfterCatch.after.kt")
-        public void testAfterCatch() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/AfterCatch.after.kt");
-        }
-
-        @TestMetadata("AfterClassNameBeforeFun.after.kt")
-        public void testAfterClassNameBeforeFun() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/AfterClassNameBeforeFun.after.kt");
-        }
-
-        @TestMetadata("AfterExtensionPropertyGetter.after.kt")
-        public void testAfterExtensionPropertyGetter() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/AfterExtensionPropertyGetter.after.kt");
-        }
-
-        @TestMetadata("AfterExtensionPropertySetter.after.kt")
-        public void testAfterExtensionPropertySetter() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/AfterExtensionPropertySetter.after.kt");
-        }
-
-        @TestMetadata("AfterFinally.after.kt")
-        public void testAfterFinally() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/AfterFinally.after.kt");
-        }
-
-        @TestMetadata("AfterImport.after.kt")
-        public void testAfterImport() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/AfterImport.after.kt");
-        }
-
-        @TestMetadata("AfterPropertyGetter.after.kt")
-        public void testAfterPropertyGetter() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/AfterPropertyGetter.after.kt");
-        }
-
-        @TestMetadata("AfterPropertySetter.after.kt")
-        public void testAfterPropertySetter() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/AfterPropertySetter.after.kt");
-        }
-
-        @TestMetadata("AfterTry.after.kt")
-        public void testAfterTry() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/AfterTry.after.kt");
-        }
-
-        @TestMetadata("Annotation.after.kt")
-        public void testAnnotation() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/Annotation.after.kt");
-        }
-
-        @TestMetadata("AnnotationInDeclaration.after.kt")
-        public void testAnnotationInDeclaration() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/AnnotationInDeclaration.after.kt");
-        }
-
-        @TestMetadata("ArgumentListNormalIndent.after.kt")
-        public void testArgumentListNormalIndent() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/ArgumentListNormalIndent.after.kt");
-        }
-
-        @TestMetadata("BlockCommentAfterCatch.after.kt")
-        public void testBlockCommentAfterCatch() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/BlockCommentAfterCatch.after.kt");
-        }
-
-        @TestMetadata("ConsecutiveCallsAfterDot.after.kt")
-        public void testConsecutiveCallsAfterDot() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/ConsecutiveCallsAfterDot.after.kt");
-        }
-
-        @TestMetadata("ConsecutiveCallsInSaeCallsMiddle.after.kt")
-        public void testConsecutiveCallsInSaeCallsMiddle() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/ConsecutiveCallsInSaeCallsMiddle.after.kt");
-        }
-
-        @TestMetadata("ConsecutiveCallsInSafeCallsEnd.after.kt")
-        public void testConsecutiveCallsInSafeCallsEnd() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/ConsecutiveCallsInSafeCallsEnd.after.kt");
-        }
-
-        @TestMetadata("EoLCommentAfterCatch.after.kt")
-        public void testEoLCommentAfterCatch() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/EoLCommentAfterCatch.after.kt");
-        }
-
-        @TestMetadata("EoLCommentAfterFor.after.kt")
-        public void testEoLCommentAfterFor() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/EoLCommentAfterFor.after.kt");
-        }
-
-        @TestMetadata("EoLCommentAfterIf.after.kt")
-        public void testEoLCommentAfterIf() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/EoLCommentAfterIf.after.kt");
-        }
-
-        @TestMetadata("FunctionBlock.after.kt")
-        public void testFunctionBlock() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/FunctionBlock.after.kt");
-        }
-
-        @TestMetadata("HigherOrderFunction.after.kt")
-        public void testHigherOrderFunction() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/HigherOrderFunction.after.kt");
-        }
-
-        @TestMetadata("HigherOrderFunction2.after.kt")
-        public void testHigherOrderFunction2() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/HigherOrderFunction2.after.kt");
-        }
-
-        @TestMetadata("HigherOrderFunction3.after.kt")
-        public void testHigherOrderFunction3() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/HigherOrderFunction3.after.kt");
-        }
-
-        @TestMetadata("InDelegationListAfterColon.after.kt")
-        public void testInDelegationListAfterColon() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InDelegationListAfterColon.after.kt");
-        }
-
-        @TestMetadata("InDelegationListAfterComma.after.kt")
-        public void testInDelegationListAfterComma() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InDelegationListAfterComma.after.kt");
-        }
-
-        @TestMetadata("InDelegationListNotEmpty.after.kt")
-        public void testInDelegationListNotEmpty() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InDelegationListNotEmpty.after.kt");
-        }
-
-        @TestMetadata("InEnumAfterSemicolon.after.kt")
-        public void testInEnumAfterSemicolon() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InEnumAfterSemicolon.after.kt");
-        }
-
-        @TestMetadata("InEnumInitializerListAfterComma.after.kt")
-        public void testInEnumInitializerListAfterComma() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InEnumInitializerListAfterComma.after.kt");
-        }
-
-        @TestMetadata("InEnumInitializerListNotEmpty.after.kt")
-        public void testInEnumInitializerListNotEmpty() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InEnumInitializerListNotEmpty.after.kt");
-        }
-
-        @TestMetadata("InLabmdaAfterArrow.after.kt")
-        public void testInLabmdaAfterArrow() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InLabmdaAfterArrow.after.kt");
-        }
-
-        @TestMetadata("InLambdaAfterArrowWithSpaces.after.kt")
-        public void testInLambdaAfterArrowWithSpaces() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InLambdaAfterArrowWithSpaces.after.kt");
-        }
-
-        @TestMetadata("InLambdaBeforeParams.after.kt")
-        public void testInLambdaBeforeParams() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InLambdaBeforeParams.after.kt");
-        }
-
-        @TestMetadata("InLambdaInsideChainCallSameLine.after.kt")
-        public void testInLambdaInsideChainCallSameLine() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InLambdaInsideChainCallSameLine.after.kt");
-        }
-
-        @TestMetadata("InLambdaInsideChainCallSameLineWithSpaces.after.kt")
-        public void testInLambdaInsideChainCallSameLineWithSpaces() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InLambdaInsideChainCallSameLineWithSpaces.after.kt");
-        }
-
-        @TestMetadata("InLambdaInsideChainCallWithNewLine.after.kt")
-        public void testInLambdaInsideChainCallWithNewLine() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InLambdaInsideChainCallWithNewLine.after.kt");
-        }
-
-        @TestMetadata("InLambdaInsideChainCallWithNewLineWithSpaces.after.kt")
-        public void testInLambdaInsideChainCallWithNewLineWithSpaces() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InLambdaInsideChainCallWithNewLineWithSpaces.after.kt");
-        }
-
-        @TestMetadata("InMultilineLambdaAfterArrow.after.kt")
-        public void testInMultilineLambdaAfterArrow() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InMultilineLambdaAfterArrow.after.kt");
-        }
-
-        @TestMetadata("KT20783.after.kt")
-        public void testKT20783() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/KT20783.after.kt");
-        }
-
-        @TestMetadata("LambdaInArguments.after.kt")
-        public void testLambdaInArguments() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/LambdaInArguments.after.kt");
-        }
-
-        @TestMetadata("LambdaInArguments2.after.kt")
-        public void testLambdaInArguments2() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/LambdaInArguments2.after.kt");
-        }
-
-        @TestMetadata("LargeFile.after.kt")
-        public void testLargeFile() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/LargeFile.after.kt");
-        }
-
-        @TestMetadata("LiteralExpression.after.kt")
-        public void testLiteralExpression() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/LiteralExpression.after.kt");
-        }
-
-        @TestMetadata("LiteralExpression2.after.kt")
-        public void testLiteralExpression2() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/LiteralExpression2.after.kt");
-        }
-
-        @TestMetadata("LiteralExpression3.after.kt")
-        public void testLiteralExpression3() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/LiteralExpression3.after.kt");
-        }
-
-        @TestMetadata("ModifierListInUnfinishedDeclaration.after.kt")
-        public void testModifierListInUnfinishedDeclaration() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/ModifierListInUnfinishedDeclaration.after.kt");
-        }
-
-        @TestMetadata("NotFirstParameter.after.kt")
-        public void testNotFirstParameter() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/NotFirstParameter.after.kt");
-        }
-
-        @TestMetadata("ReturnContinue.after.kt")
-        public void testReturnContinue() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/ReturnContinue.after.kt");
-        }
-
-        @TestMetadata("Semicolon.after.kt")
-        public void testSemicolon() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/Semicolon.after.kt");
-        }
-
-        @TestMetadata("Semicolon2.after.kt")
-        public void testSemicolon2() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/Semicolon2.after.kt");
-        }
-
-        @TestMetadata("SettingAlignMultilineParametersInCalls.after.kt")
-        public void testSettingAlignMultilineParametersInCalls() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/SettingAlignMultilineParametersInCalls.after.kt");
-        }
-
+    public abstract static class DirectSettings extends AbstractPerformanceTypingIndentationTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/indentationOnNewline/afterUnmatchedBrace")
         public static class AfterUnmatchedBrace extends AbstractPerformanceTypingIndentationTest {
@@ -1314,60 +1060,269 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/indentationOnNewline/templates/TemplateEntryOpenWithoutContent5.after.kt");
             }
         }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../idea/tests/testData/indentationOnNewline")
+        public static class Uncategorized extends AbstractPerformanceTypingIndentationTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("AfterCatch.after.kt")
+            public void testAfterCatch() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/AfterCatch.after.kt");
+            }
+
+            @TestMetadata("AfterClassNameBeforeFun.after.kt")
+            public void testAfterClassNameBeforeFun() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/AfterClassNameBeforeFun.after.kt");
+            }
+
+            @TestMetadata("AfterExtensionPropertyGetter.after.kt")
+            public void testAfterExtensionPropertyGetter() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/AfterExtensionPropertyGetter.after.kt");
+            }
+
+            @TestMetadata("AfterExtensionPropertySetter.after.kt")
+            public void testAfterExtensionPropertySetter() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/AfterExtensionPropertySetter.after.kt");
+            }
+
+            @TestMetadata("AfterFinally.after.kt")
+            public void testAfterFinally() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/AfterFinally.after.kt");
+            }
+
+            @TestMetadata("AfterImport.after.kt")
+            public void testAfterImport() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/AfterImport.after.kt");
+            }
+
+            @TestMetadata("AfterPropertyGetter.after.kt")
+            public void testAfterPropertyGetter() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/AfterPropertyGetter.after.kt");
+            }
+
+            @TestMetadata("AfterPropertySetter.after.kt")
+            public void testAfterPropertySetter() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/AfterPropertySetter.after.kt");
+            }
+
+            @TestMetadata("AfterTry.after.kt")
+            public void testAfterTry() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/AfterTry.after.kt");
+            }
+
+            @TestMetadata("Annotation.after.kt")
+            public void testAnnotation() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/Annotation.after.kt");
+            }
+
+            @TestMetadata("AnnotationInDeclaration.after.kt")
+            public void testAnnotationInDeclaration() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/AnnotationInDeclaration.after.kt");
+            }
+
+            @TestMetadata("ArgumentListNormalIndent.after.kt")
+            public void testArgumentListNormalIndent() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/ArgumentListNormalIndent.after.kt");
+            }
+
+            @TestMetadata("BlockCommentAfterCatch.after.kt")
+            public void testBlockCommentAfterCatch() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/BlockCommentAfterCatch.after.kt");
+            }
+
+            @TestMetadata("ConsecutiveCallsAfterDot.after.kt")
+            public void testConsecutiveCallsAfterDot() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/ConsecutiveCallsAfterDot.after.kt");
+            }
+
+            @TestMetadata("ConsecutiveCallsInSaeCallsMiddle.after.kt")
+            public void testConsecutiveCallsInSaeCallsMiddle() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/ConsecutiveCallsInSaeCallsMiddle.after.kt");
+            }
+
+            @TestMetadata("ConsecutiveCallsInSafeCallsEnd.after.kt")
+            public void testConsecutiveCallsInSafeCallsEnd() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/ConsecutiveCallsInSafeCallsEnd.after.kt");
+            }
+
+            @TestMetadata("EoLCommentAfterCatch.after.kt")
+            public void testEoLCommentAfterCatch() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/EoLCommentAfterCatch.after.kt");
+            }
+
+            @TestMetadata("EoLCommentAfterFor.after.kt")
+            public void testEoLCommentAfterFor() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/EoLCommentAfterFor.after.kt");
+            }
+
+            @TestMetadata("EoLCommentAfterIf.after.kt")
+            public void testEoLCommentAfterIf() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/EoLCommentAfterIf.after.kt");
+            }
+
+            @TestMetadata("FunctionBlock.after.kt")
+            public void testFunctionBlock() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/FunctionBlock.after.kt");
+            }
+
+            @TestMetadata("HigherOrderFunction.after.kt")
+            public void testHigherOrderFunction() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/HigherOrderFunction.after.kt");
+            }
+
+            @TestMetadata("HigherOrderFunction2.after.kt")
+            public void testHigherOrderFunction2() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/HigherOrderFunction2.after.kt");
+            }
+
+            @TestMetadata("HigherOrderFunction3.after.kt")
+            public void testHigherOrderFunction3() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/HigherOrderFunction3.after.kt");
+            }
+
+            @TestMetadata("InDelegationListAfterColon.after.kt")
+            public void testInDelegationListAfterColon() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InDelegationListAfterColon.after.kt");
+            }
+
+            @TestMetadata("InDelegationListAfterComma.after.kt")
+            public void testInDelegationListAfterComma() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InDelegationListAfterComma.after.kt");
+            }
+
+            @TestMetadata("InDelegationListNotEmpty.after.kt")
+            public void testInDelegationListNotEmpty() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InDelegationListNotEmpty.after.kt");
+            }
+
+            @TestMetadata("InEnumAfterSemicolon.after.kt")
+            public void testInEnumAfterSemicolon() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InEnumAfterSemicolon.after.kt");
+            }
+
+            @TestMetadata("InEnumInitializerListAfterComma.after.kt")
+            public void testInEnumInitializerListAfterComma() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InEnumInitializerListAfterComma.after.kt");
+            }
+
+            @TestMetadata("InEnumInitializerListNotEmpty.after.kt")
+            public void testInEnumInitializerListNotEmpty() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InEnumInitializerListNotEmpty.after.kt");
+            }
+
+            @TestMetadata("InLabmdaAfterArrow.after.kt")
+            public void testInLabmdaAfterArrow() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InLabmdaAfterArrow.after.kt");
+            }
+
+            @TestMetadata("InLambdaAfterArrowWithSpaces.after.kt")
+            public void testInLambdaAfterArrowWithSpaces() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InLambdaAfterArrowWithSpaces.after.kt");
+            }
+
+            @TestMetadata("InLambdaBeforeParams.after.kt")
+            public void testInLambdaBeforeParams() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InLambdaBeforeParams.after.kt");
+            }
+
+            @TestMetadata("InLambdaInsideChainCallSameLine.after.kt")
+            public void testInLambdaInsideChainCallSameLine() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InLambdaInsideChainCallSameLine.after.kt");
+            }
+
+            @TestMetadata("InLambdaInsideChainCallSameLineWithSpaces.after.kt")
+            public void testInLambdaInsideChainCallSameLineWithSpaces() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InLambdaInsideChainCallSameLineWithSpaces.after.kt");
+            }
+
+            @TestMetadata("InLambdaInsideChainCallWithNewLine.after.kt")
+            public void testInLambdaInsideChainCallWithNewLine() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InLambdaInsideChainCallWithNewLine.after.kt");
+            }
+
+            @TestMetadata("InLambdaInsideChainCallWithNewLineWithSpaces.after.kt")
+            public void testInLambdaInsideChainCallWithNewLineWithSpaces() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InLambdaInsideChainCallWithNewLineWithSpaces.after.kt");
+            }
+
+            @TestMetadata("InMultilineLambdaAfterArrow.after.kt")
+            public void testInMultilineLambdaAfterArrow() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InMultilineLambdaAfterArrow.after.kt");
+            }
+
+            @TestMetadata("KT20783.after.kt")
+            public void testKT20783() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/KT20783.after.kt");
+            }
+
+            @TestMetadata("LambdaInArguments.after.kt")
+            public void testLambdaInArguments() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/LambdaInArguments.after.kt");
+            }
+
+            @TestMetadata("LambdaInArguments2.after.kt")
+            public void testLambdaInArguments2() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/LambdaInArguments2.after.kt");
+            }
+
+            @TestMetadata("LargeFile.after.kt")
+            public void testLargeFile() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/LargeFile.after.kt");
+            }
+
+            @TestMetadata("LiteralExpression.after.kt")
+            public void testLiteralExpression() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/LiteralExpression.after.kt");
+            }
+
+            @TestMetadata("LiteralExpression2.after.kt")
+            public void testLiteralExpression2() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/LiteralExpression2.after.kt");
+            }
+
+            @TestMetadata("LiteralExpression3.after.kt")
+            public void testLiteralExpression3() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/LiteralExpression3.after.kt");
+            }
+
+            @TestMetadata("ModifierListInUnfinishedDeclaration.after.kt")
+            public void testModifierListInUnfinishedDeclaration() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/ModifierListInUnfinishedDeclaration.after.kt");
+            }
+
+            @TestMetadata("NotFirstParameter.after.kt")
+            public void testNotFirstParameter() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/NotFirstParameter.after.kt");
+            }
+
+            @TestMetadata("ReturnContinue.after.kt")
+            public void testReturnContinue() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/ReturnContinue.after.kt");
+            }
+
+            @TestMetadata("Semicolon.after.kt")
+            public void testSemicolon() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/Semicolon.after.kt");
+            }
+
+            @TestMetadata("Semicolon2.after.kt")
+            public void testSemicolon2() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/Semicolon2.after.kt");
+            }
+
+            @TestMetadata("SettingAlignMultilineParametersInCalls.after.kt")
+            public void testSettingAlignMultilineParametersInCalls() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/SettingAlignMultilineParametersInCalls.after.kt");
+            }
+        }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../idea/tests/testData/indentationOnNewline")
-    public static class InvertedSettings extends AbstractPerformanceTypingIndentationTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
-        }
-
-        @TestMetadata("ArgumentListNormalIndent.after.inv.kt")
-        public void testArgumentListNormalIndent() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/ArgumentListNormalIndent.after.inv.kt");
-        }
-
-        @TestMetadata("HigherOrderFunction2.after.inv.kt")
-        public void testHigherOrderFunction2() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/HigherOrderFunction2.after.inv.kt");
-        }
-
-        @TestMetadata("InDelegationListAfterColon.after.inv.kt")
-        public void testInDelegationListAfterColon() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InDelegationListAfterColon.after.inv.kt");
-        }
-
-        @TestMetadata("InDelegationListAfterComma.after.inv.kt")
-        public void testInDelegationListAfterComma() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InDelegationListAfterComma.after.inv.kt");
-        }
-
-        @TestMetadata("InDelegationListNotEmpty.after.inv.kt")
-        public void testInDelegationListNotEmpty() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InDelegationListNotEmpty.after.inv.kt");
-        }
-
-        @TestMetadata("InEnumAfterSemicolon.after.inv.kt")
-        public void testInEnumAfterSemicolon() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InEnumAfterSemicolon.after.inv.kt");
-        }
-
-        @TestMetadata("InEnumInitializerListAfterComma.after.inv.kt")
-        public void testInEnumInitializerListAfterComma() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InEnumInitializerListAfterComma.after.inv.kt");
-        }
-
-        @TestMetadata("InEnumInitializerListNotEmpty.after.inv.kt")
-        public void testInEnumInitializerListNotEmpty() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/InEnumInitializerListNotEmpty.after.inv.kt");
-        }
-
-        @TestMetadata("SettingAlignMultilineParametersInCalls.after.inv.kt")
-        public void testSettingAlignMultilineParametersInCalls() throws Exception {
-            runTest("../idea/tests/testData/indentationOnNewline/SettingAlignMultilineParametersInCalls.after.inv.kt");
-        }
-
+    public abstract static class InvertedSettings extends AbstractPerformanceTypingIndentationTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/indentationOnNewline/elvis")
         public static class Elvis extends AbstractPerformanceTypingIndentationTest {
@@ -1602,6 +1557,59 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
             @TestMetadata("PropertyWithTypeParameterReceiver.after.inv.kt")
             public void testPropertyWithTypeParameterReceiver() throws Exception {
                 runTest("../idea/tests/testData/indentationOnNewline/expressionBody/PropertyWithTypeParameterReceiver.after.inv.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../idea/tests/testData/indentationOnNewline")
+        public static class Uncategorized extends AbstractPerformanceTypingIndentationTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
+            }
+
+            @TestMetadata("ArgumentListNormalIndent.after.inv.kt")
+            public void testArgumentListNormalIndent() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/ArgumentListNormalIndent.after.inv.kt");
+            }
+
+            @TestMetadata("HigherOrderFunction2.after.inv.kt")
+            public void testHigherOrderFunction2() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/HigherOrderFunction2.after.inv.kt");
+            }
+
+            @TestMetadata("InDelegationListAfterColon.after.inv.kt")
+            public void testInDelegationListAfterColon() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InDelegationListAfterColon.after.inv.kt");
+            }
+
+            @TestMetadata("InDelegationListAfterComma.after.inv.kt")
+            public void testInDelegationListAfterComma() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InDelegationListAfterComma.after.inv.kt");
+            }
+
+            @TestMetadata("InDelegationListNotEmpty.after.inv.kt")
+            public void testInDelegationListNotEmpty() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InDelegationListNotEmpty.after.inv.kt");
+            }
+
+            @TestMetadata("InEnumAfterSemicolon.after.inv.kt")
+            public void testInEnumAfterSemicolon() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InEnumAfterSemicolon.after.inv.kt");
+            }
+
+            @TestMetadata("InEnumInitializerListAfterComma.after.inv.kt")
+            public void testInEnumInitializerListAfterComma() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InEnumInitializerListAfterComma.after.inv.kt");
+            }
+
+            @TestMetadata("InEnumInitializerListNotEmpty.after.inv.kt")
+            public void testInEnumInitializerListNotEmpty() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InEnumInitializerListNotEmpty.after.inv.kt");
+            }
+
+            @TestMetadata("SettingAlignMultilineParametersInCalls.after.inv.kt")
+            public void testSettingAlignMultilineParametersInCalls() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/SettingAlignMultilineParametersInCalls.after.inv.kt");
             }
         }
     }

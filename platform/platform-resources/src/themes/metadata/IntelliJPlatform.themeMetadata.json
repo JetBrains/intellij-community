@@ -1303,32 +1303,32 @@
       "since": "2021.2"
     },
     {
-      "key": "Lesson.Tooltip.background",
+      "key": "Tooltip.Learning.background",
       "description": "Background for tooltips used in lessons",
       "since": "2021.2"
     },
     {
-      "key": "Lesson.Tooltip.borderColor",
+      "key": "Tooltip.Learning.borderColor",
       "description": "Border color for tooltips used in lessons",
       "since": "2021.2"
     },
     {
-      "key": "Lesson.Tooltip.spanBackground",
+      "key": "Tooltip.Learning.spanBackground",
       "description": "Background for buttons and shortcuts used in lesson tooltips",
       "since": "2021.2"
     },
     {
-      "key": "Lesson.Tooltip.spanForeground",
+      "key": "Tooltip.Learning.spanForeground",
       "description": "Foreground for buttons and shortcuts used in lesson tooltips",
       "since": "2021.2"
     },
     {
-      "key": "Lesson.Tooltip.foreground",
+      "key": "Tooltip.Learning.foreground",
       "description": "Foreground for tooltips text used in lessons",
       "since": "2021.2"
     },
     {
-      "key": "Lesson.Tooltip.stepNumberForeground",
+      "key": "Tooltip.Learning.stepNumberForeground",
       "description": "Foreground for task numbers in lesson tooltips",
       "since": "2021.2"
     },

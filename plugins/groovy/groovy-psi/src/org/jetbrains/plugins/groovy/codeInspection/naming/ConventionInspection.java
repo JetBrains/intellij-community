@@ -86,7 +86,7 @@ public abstract class ConventionInspection extends BaseInspection {
   }
 
   @Override
-  public JComponent createOptionsPanel() {
+  public JComponent createGroovyOptionsPanel() {
     return new ConventionOptionsPanel(this, "m_minLength", "m_maxLength", "m_regex", "m_regexPattern");
   }
 }

@@ -17,11 +17,8 @@ package com.jetbrains.python.sdk.flavors;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.regex.Pattern;
-
 
 public abstract class CPythonSdkFlavor extends PythonSdkFlavor {
-  public final static Pattern PYTHON_RE = Pattern.compile("python-?(\\d\\.\\d)?|python-?(\\d)?");
   @NotNull
   @Override
   public String getName() {

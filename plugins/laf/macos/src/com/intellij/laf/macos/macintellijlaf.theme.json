@@ -224,6 +224,11 @@
       "paintLines": false
     },
 
+    "MainToolbar": {
+      "icon.borderInsets": "10,10,10,10",
+      "dropdown.borderInsets": "12,6,12,6"
+    },
+
     "window": "#ececec"
   }
 }

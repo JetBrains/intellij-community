@@ -8,6 +8,7 @@ import com.intellij.lang.LangBundle
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
+import com.intellij.openapi.project.DumbModeTask
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileWithId
@@ -15,11 +16,13 @@ import com.intellij.psi.stubs.StubTreeBuilder
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.util.BooleanFunction
 import com.intellij.util.indexing.diagnostic.ProjectIndexingHistoryImpl
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.util.*
 import java.util.concurrent.CompletableFuture
 
-internal class RescanIndexesAction : RecoveryAction {
+@ApiStatus.Internal
+class RescanIndexesAction : RecoveryAction {
   override val performanceRate: Int
     get() = 9990
   override val presentableName: @Nls(capitalization = Nls.Capitalization.Title) String
@@ -73,6 +76,9 @@ internal class RescanIndexesAction : RecoveryAction {
           throw e
         }
       }
+
+      override fun tryMergeWith(taskFromQueue: DumbModeTask): DumbModeTask? =
+        if (taskFromQueue is UnindexedFilesUpdater && project == taskFromQueue.myProject && taskFromQueue.javaClass == javaClass) this else null
     }.queue(project)
     try {
       return ProgressIndicatorUtils.awaitWithCheckCanceled(historyFuture).extractConsistencyProblems() +

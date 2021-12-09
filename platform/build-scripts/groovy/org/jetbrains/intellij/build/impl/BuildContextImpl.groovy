@@ -86,7 +86,7 @@ final class BuildContextImpl extends BuildContext {
     buildNumber = options.buildNumber ?: readSnapshotBuildNumber(paths.communityHomeDir)
 
     xBootClassPathJarNames = productProperties.xBootClassPathJarNames
-    bootClassPathJarNames = List.of("util.jar", "bootstrap.jar")
+    bootClassPathJarNames = List.of("util.jar")
     dependenciesProperties = new DependenciesProperties(this)
     applicationInfo = new ApplicationInfoProperties(project, productProperties, messages).patch(this)
     if (productProperties.productCode == null && applicationInfo.productCode != null) {
@@ -285,13 +285,12 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  void signFile(String path, Map<String, String> options) {
-    if (proprietaryBuildTools.signTool != null) {
-      proprietaryBuildTools.signTool.signFile(path, this, options)
-      messages.info("Signed $path")
+  void signFiles(@NotNull List<Path> files, Map<String, String> options) {
+    if (proprietaryBuildTools.signTool == null) {
+      messages.warning("Sign tool isn't defined, $files won't be signed")
     }
     else {
-      messages.warning("Sign tool isn't defined, $path won't be signed")
+      proprietaryBuildTools.signTool.signFiles(files, this, options)
     }
   }
 
@@ -381,6 +380,7 @@ final class BuildContextImpl extends BuildContext {
     BuildContextImpl copy = new BuildContextImpl(compilationContextCopy, productProperties,
                                                  windowsDistributionCustomizer, linuxDistributionCustomizer, macDistributionCustomizer,
                                                  proprietaryBuildTools, new ConcurrentLinkedQueue<>())
+    copy.paths.artifactDir = paths.artifactDir.resolve(productProperties.productCode)
     copy.paths.artifacts = paths.artifacts + "/" + productProperties.productCode
     copy.compilationContext.prepareForBuild()
     return copy
@@ -433,36 +433,8 @@ final class BuildContextImpl extends BuildContext {
       jvmArgs.add('-Dsplash=true')
     }
 
-    if (options.bundledJreVersion >= 17) {
-      jvmArgs.addAll([
-        '--add-opens=java.base/java.lang=ALL-UNNAMED',
-        '--add-opens=java.base/java.text=ALL-UNNAMED',
-        '--add-opens=java.base/java.time=ALL-UNNAMED',
-        '--add-opens=java.base/java.util=ALL-UNNAMED',
-        '--add-opens=java.base/jdk.internal.vm=ALL-UNNAMED',
-        '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
-        '--add-opens=java.desktop/java.awt=ALL-UNNAMED',
-        '--add-opens=java.desktop/java.awt.event=ALL-UNNAMED',
-        '--add-opens=java.desktop/java.awt.image=ALL-UNNAMED',
-        '--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED',
-        '--add-opens=java.desktop/javax.swing=ALL-UNNAMED',
-        '--add-opens=java.desktop/javax.swing.plaf.basic=ALL-UNNAMED',
-        '--add-opens=java.desktop/javax.swing.text.html=ALL-UNNAMED',
-        '--add-opens=java.desktop/sun.awt=ALL-UNNAMED',
-        '--add-opens=java.desktop/sun.awt.image=ALL-UNNAMED',
-        '--add-opens=java.desktop/sun.awt.windows=ALL-UNNAMED',
-        '--add-opens=java.desktop/sun.font=ALL-UNNAMED',
-        '--add-opens=java.desktop/sun.java2d=ALL-UNNAMED',
-        '--add-opens=java.desktop/sun.lwawt=ALL-UNNAMED',
-        '--add-opens=java.desktop/sun.lwawt.macosx=ALL-UNNAMED',
-        '--add-opens=java.desktop/sun.swing=ALL-UNNAMED',
-        '--add-opens=java.desktop/com.apple.eawt=ALL-UNNAMED',
-        '--add-opens=java.desktop/com.apple.eawt.event=ALL-UNNAMED',
-        '--add-opens=java.desktop/com.apple.laf=ALL-UNNAMED',
-        '--add-opens=jdk.attach/sun.tools.attach=ALL-UNNAMED',
-        '--add-opens=jdk.internal.jvmstat/sun.jvmstat.monitor=ALL-UNNAMED',
-        '--add-opens=jdk.jdi/com.sun.tools.jdi=ALL-UNNAMED'
-      ])
+    if (options.bundledRuntimeVersion >= 17) {
+      jvmArgs.addAll(OpenedPackages.INSTANCE)
     }
 
     return jvmArgs

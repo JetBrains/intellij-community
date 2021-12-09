@@ -9,9 +9,9 @@ import com.intellij.util.LineSeparator
 import com.intellij.util.containers.CollectionFactory
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.diff.Diff
-import com.intellij.util.io.Murmur3_32Hash
 import com.intellij.util.io.directoryStreamIfExists
 import com.intellij.util.io.systemIndependentPath
+import com.intellij.util.lang.Murmur3_32Hash
 import com.intellij.util.readXmlAsModel
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaResourceRootType

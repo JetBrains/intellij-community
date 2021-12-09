@@ -43,8 +43,8 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -177,7 +177,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myFileName.setShowPlaceholderWhenFocused(true);
 
     myDescriptionComponent = new JEditorPane();
-    myDescriptionComponent.setEditorKit(UIUtil.getHTMLEditorKit());
+    myDescriptionComponent.setEditorKit(HTMLEditorKitBuilder.simple());
     myDescriptionComponent.setText(EMPTY_HTML);
     myDescriptionComponent.setEditable(false);
     myDescriptionComponent.addHyperlinkListener(new BrowserHyperlinkListener());

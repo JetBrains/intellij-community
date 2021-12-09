@@ -562,6 +562,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
 
   @Override
   protected String validateAndCommitData() {
+    Ref<JComponent> componentWithFocus = Ref.create();
     String message = ActionUtil.underModalProgress(myProject, JavaRefactoringBundle.message("changeSignature.validating.title"), () -> {
       PsiManager manager = PsiManager.getInstance(myProject);
       PsiElementFactory factory = JavaPsiFacade.getElementFactory(manager.getProject());
@@ -576,9 +577,11 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
           ((PsiTypeCodeFragment)myReturnTypeCodeFragment).getType();
         }
         catch (PsiTypeCodeFragment.TypeSyntaxException e) {
+          componentWithFocus.set(myReturnTypeField);
           return JavaRefactoringBundle.message("changeSignature.wrong.return.type", myReturnTypeCodeFragment.getText());
         }
         catch (PsiTypeCodeFragment.NoTypeException e) {
+          componentWithFocus.set(myReturnTypeField);
           return JavaRefactoringBundle.message("changeSignature.no.return.type");
         }
       }
@@ -656,11 +659,9 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
       }
       return null;
     });
-    if ((myReturnTypeCodeFragment != null &&
-         message == JavaRefactoringBundle.message("changeSignature.wrong.return.type", myReturnTypeCodeFragment.getText())) ||
-        message == JavaRefactoringBundle.message("changeSignature.no.return.type")) {
+    if (!componentWithFocus.isNull()) {
       IdeFocusManager.getGlobalInstance()
-        .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(myReturnTypeField, true));
+        .doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(componentWithFocus.get(), true));
     }
     else if (message == null) { // warnings
       try {

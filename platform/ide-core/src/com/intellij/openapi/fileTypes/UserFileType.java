@@ -5,6 +5,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -55,7 +56,8 @@ public abstract class UserFileType<T extends UserFileType<T>> implements FileTyp
   @Override
   @NotNull
   public String getDefaultExtension() {
-    return "";
+    ExtensionFileNameMatcher ext = ContainerUtil.findInstance(FileTypeManager.getInstance().getAssociations(this), ExtensionFileNameMatcher.class);
+    return ext == null ? "" : ext.getExtension();
   }
 
   @Override

@@ -10,7 +10,6 @@ import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -169,12 +168,7 @@ public class NonCodeMembersHolder implements CustomMembersHolder {
   }
 
   private static PsiType convertToPsiType(String type, PsiElement place) {
-    try {
-      return JavaPsiFacade.getElementFactory(place.getProject()).createTypeFromText(type, place);
-    } catch (IncorrectOperationException e) {
-      LOG.error(e.getMessage(), e);
-      return PsiType.NULL;
-    }
+    return JavaPsiFacade.getElementFactory(place.getProject()).createTypeFromText(type, place);
   }
 
   @Override

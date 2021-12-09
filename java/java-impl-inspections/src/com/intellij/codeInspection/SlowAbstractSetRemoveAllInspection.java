@@ -17,7 +17,6 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,10 +70,17 @@ public class SlowAbstractSetRemoveAllInspection extends AbstractBaseJavaLocalIns
     };
   }
 
+
+  /**
+   * Returns the set of possible values for the collection size
+   *
+   * @param collection a collection to get the range of possible values for its size
+   * @return the set of possible values for the collection size
+   */
   @NotNull
-  private static LongRangeSet getSizeRangeOfCollection(PsiExpression expression) {
+  public static LongRangeSet getSizeRangeOfCollection(PsiExpression collection) {
     final SpecialField lengthField = SpecialField.COLLECTION_SIZE;
-    final DfType origType = CommonDataflow.getDfType(expression);
+    final DfType origType = CommonDataflow.getDfType(collection);
     final DfType length = lengthField.getFromQualifier(origType);
     final DfIntegralType dfType = ObjectUtils.tryCast(length, DfIntegralType.class);
     if (dfType == null) return LongRangeSet.all();
