@@ -15,7 +15,7 @@ class KotlinUCallableReferenceExpression(
 ) : KotlinAbstractUExpression(givenParent), UCallableReferenceExpression, UMultiResolvable, KotlinUElementWithType {
     override val qualifierExpression: UExpression?
         get() {
-            if (qualifierType == null) return null
+            if (qualifierType != null) return null
             val receiverExpression = sourcePsi.receiverExpression ?: return null
             return baseResolveProviderService.baseKotlinConverter.convertExpression(receiverExpression, this, DEFAULT_EXPRESSION_TYPES_LIST)
         }
