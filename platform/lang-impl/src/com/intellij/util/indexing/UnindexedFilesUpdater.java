@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -231,11 +231,18 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       myIndex.clearIndicesIfNecessary();
     }
 
-    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Scanning);
     List<IndexableFilesIterator> orderedProviders;
     Map<IndexableFilesIterator, List<VirtualFile>> providerToFiles;
+    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.CreatingIterators);
     try {
       orderedProviders = Objects.requireNonNullElseGet(myPredefinedIndexableFilesIterators, () -> collectProviders(myProject, myIndex));
+    }
+    finally {
+      projectIndexingHistory.stopStage(ProjectIndexingHistoryImpl.Stage.CreatingIterators);
+    }
+
+    projectIndexingHistory.startStage(ProjectIndexingHistoryImpl.Stage.Scanning);
+    try {
       providerToFiles = collectIndexableFilesConcurrently(myProject, indicator, orderedProviders, projectIndexingHistory);
       if (isFullIndexUpdate()) {
         myProject.putUserData(CONTENT_SCANNED, true);

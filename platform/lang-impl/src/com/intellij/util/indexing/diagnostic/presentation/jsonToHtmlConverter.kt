@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("unused", "DuplicatedCode", "HardCodedStringLiteral")
 
 package com.intellij.util.indexing.diagnostic.presentation
@@ -37,7 +37,7 @@ fun createAggregateHtml(
           appendRaw("<caption style=\"caption-side: bottom; text-align: right; font-size: 14px\">Hover for details</caption>")
           thead {
             tr {
-              th("Time", colspan = "6")
+              th("Time", colspan = "7")
               th("Files", colspan = "6")
               th("IDE", rowspan = "2")
               th("Type", rowspan = "2")
@@ -45,6 +45,7 @@ fun createAggregateHtml(
             tr {
               th("Started")
               th("Total")
+              th("Creating iterators")
               th("Scanning")
               th("Indexing")
               th("Content loading")
@@ -69,6 +70,7 @@ fun createAggregateHtml(
                   text(diagnostic.indexingTimes.updatingStart.presentableLocalDateTime())
                 }
                 td(diagnostic.indexingTimes.totalUpdatingTime.presentableDuration())
+                td(diagnostic.indexingTimes.creatingIteratorsTime.presentableDuration())
                 td(diagnostic.indexingTimes.scanFilesTime.presentableDuration())
                 td(diagnostic.indexingTimes.indexingTime.presentableDuration())
                 td(diagnostic.indexingTimes.contentLoadingTime.presentableDuration())
@@ -382,6 +384,7 @@ fun JsonIndexDiagnostic.generateHtml(): String {
               tr { td("Suspended time"); td(times.totalSuspendedTime.presentableDuration()) }
               tr { td("Total time"); td(times.totalUpdatingTime.presentableDuration()) }
               tr { td("Indexing time"); td(times.indexingTime.presentableDuration()) }
+              tr { td("Iterators creation time"); td(times.creatingIteratorsTime.presentableDuration()) }
               tr { td("Scanning time"); td(times.scanFilesTime.presentableDuration()) }
               tr { td("Content loading time"); td(times.contentLoadingTime.presentableDuration()) }
               tr { td("Pushing properties time"); td(times.pushPropertiesTime.presentableDuration()) }

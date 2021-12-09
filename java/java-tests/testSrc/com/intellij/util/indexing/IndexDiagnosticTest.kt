@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -77,6 +77,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
           JsonDuration(123),
           JsonDuration(456),
           JsonDuration(789),
+          JsonDuration(110),
           JsonDuration(234),
           JsonDuration(345),
           JsonDuration(345),
