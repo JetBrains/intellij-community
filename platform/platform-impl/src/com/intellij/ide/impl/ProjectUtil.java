@@ -39,7 +39,6 @@ import com.intellij.project.ProjectKt;
 import com.intellij.projectImport.ProjectOpenProcessor;
 import com.intellij.ui.AppIcon;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import org.jetbrains.annotations.*;
 
@@ -650,10 +649,6 @@ public final class ProjectUtil extends ProjectUtilCore {
       productName = ApplicationNamesInfo.getInstance().getLowercaseProductName();
     }
     return SystemProperties.getUserHome().replace('/', File.separatorChar) + File.separator + productName + "Projects";
-  }
-
-  public static @Nullable Project tryOpenFileList(@Nullable Project project, @NotNull List<? extends File> list, String location) {
-    return tryOpenFiles(project, ContainerUtil.map(list, file -> file.toPath()), location);
   }
 
   public static @Nullable Project tryOpenFiles(@Nullable Project project, @NotNull List<? extends Path> list, String location) {
