@@ -21,6 +21,7 @@ class EnableSettingsSyncDialog(parent: JComponent, val settingsFound: Boolean) :
 
   override fun createCenterPanel(): JComponent {
     configPanel = SettingsSyncPanelFactory.createPanel(getHeader())
+    configPanel.reset()
     return configPanel
   }
 
