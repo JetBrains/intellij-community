@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
@@ -43,7 +43,7 @@ final class CrossPlatformDistributionBuilder {
 
     Map<String, String> checkerConfig = context.productProperties.versionCheckerConfig
     if (checkerConfig != null) {
-      new ClassVersionChecker(checkerConfig).checkVersions(context, targetFile)
+      ClassVersionChecker.checkVersions(checkerConfig, context, targetFile)
     }
     return targetFile
   }

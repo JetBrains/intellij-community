@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.SystemInfoRt
@@ -979,7 +979,7 @@ idea.fatal.error.notification=disabled
     layoutShared(buildContext)
     Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
     if (checkerConfig != null) {
-      new ClassVersionChecker(checkerConfig).checkVersions(buildContext, buildContext.paths.distAllDir)
+      ClassVersionChecker.checkVersions(checkerConfig, buildContext, buildContext.paths.distAllDir)
     }
   }
 
