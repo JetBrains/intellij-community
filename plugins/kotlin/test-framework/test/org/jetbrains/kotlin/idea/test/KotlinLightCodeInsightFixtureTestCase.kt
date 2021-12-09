@@ -196,7 +196,6 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
             val minJavaVersion = InTextDirectivesUtils.findStringWithPrefixes(fileText, "MIN_JAVA_VERSION:")?.toInt()
 
             if (minJavaVersion != null && !(InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME") ||
-                        InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_RUNTIME") ||
                         InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_STDLIB"))
             ) {
                 error("MIN_JAVA_VERSION so far is supported for RUNTIME/WITH_STDLIB only")
@@ -227,7 +226,6 @@ abstract class KotlinLightCodeInsightFixtureTestCase : KotlinLightCodeInsightFix
                     KotlinWithJdkAndRuntimeLightProjectDescriptor.INSTANCE_WITH_SCRIPT_RUNTIME
 
                 InTextDirectivesUtils.isDirectiveDefined(fileText, "RUNTIME") ||
-                        InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_RUNTIME") ||
                         InTextDirectivesUtils.isDirectiveDefined(fileText, "WITH_STDLIB") ->
                     if (minJavaVersion != null) {
                         object : KotlinWithJdkAndRuntimeLightProjectDescriptor(INSTANCE.libraryFiles, INSTANCE.librarySourceFiles) {
