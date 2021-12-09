@@ -21,8 +21,6 @@ internal class ActionsColumn(
     private val operationExecutor: (Deferred<List<PackageSearchOperation<*>>>) -> Unit
 ) : ColumnInfo<PackagesTableItem<*>, Any>(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.columns.actions")) {
 
-    var hoverItem: PackagesTableItem<*>? = null
-
     private var targetModules: TargetModules = TargetModules.None
     private var knownRepositoriesInTargetModules = KnownRepositories.InTargetModules.EMPTY
     private var onlyStable = false
@@ -54,8 +52,7 @@ internal class ActionsColumn(
             item.uiPackageModel.packageOperations.primaryOperations,
             operationType,
             generateMessageFor(item),
-            isSearchResult = item is PackagesTableItem.InstallablePackage,
-            isHover = item == hoverItem
+            isSearchResult = item is PackagesTableItem.InstallablePackage
         )
     }
 
@@ -66,9 +63,9 @@ internal class ActionsColumn(
 
                 val packageOperations = item.uiPackageModel.packageOperations
                 when {
-                  currentVersion is NormalizedPackageVersion.Missing -> PackageOperationType.SET
-                  packageOperations.canUpgradePackage -> PackageOperationType.UPGRADE
-                  else -> null
+                    currentVersion is NormalizedPackageVersion.Missing -> PackageOperationType.SET
+                    packageOperations.canUpgradePackage -> PackageOperationType.UPGRADE
+                    else -> null
                 }
             }
             is PackagesTableItem.InstallablePackage -> PackageOperationType.INSTALL
@@ -95,7 +92,6 @@ internal class ActionsColumn(
         val operations: Deferred<List<PackageSearchOperation<*>>>,
         val operationType: PackageOperationType?,
         @Nls val infoMessage: String?,
-        val isSearchResult: Boolean,
-        val isHover: Boolean
+        val isSearchResult: Boolean
     )
 }
