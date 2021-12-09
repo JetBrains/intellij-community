@@ -29,7 +29,7 @@ import java.io.IOException;
  */
 public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
 
-  public static final int STUB_VERSION = 51;
+  public static final int STUB_VERSION = 52;
 
   public GrStubFileElementType(Language language) {
     super(language);
@@ -105,7 +105,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
       sink.occurrence(GrScriptClassNameIndex.KEY, name);
       final String pName = GrStubUtils.getPackageName(stub);
       final String fqn = StringUtil.isEmpty(pName) ? name : pName + "." + name;
-      sink.occurrence(GrFullScriptNameIndex.KEY, fqn.hashCode());
+      sink.occurrence(GrFullScriptNameIndex.KEY, fqn);
     }
 
     for (String anno : stub.getAnnotations()) {
