@@ -115,6 +115,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   @NonNls private static final String REFORMAT_STATE = "structural.search.reformat";
   @NonNls private static final String USE_STATIC_IMPORT_STATE = "structural.search.use.static.import";
   @NonNls private static final String FILTERS_VISIBLE_STATE = "structural.search.filters.visible";
+  @NonNls private static final String PINNED_STATE = "structural.seach.pinned";
 
   public static final Key<StructuralSearchDialog> STRUCTURAL_SEARCH_DIALOG = Key.create("STRUCTURAL_SEARCH_DIALOG");
   public static final Key<String> STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID = Key.create("STRUCTURAL_SEARCH_PATTERN_CONTEXT_ID");
@@ -151,6 +152,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   // ui management
   private final Alarm myAlarm;
   private boolean myUseLastConfiguration;
+  private boolean myPinned;
   private final boolean myEditConfigOnly;
 
   // components
@@ -725,8 +727,21 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         setFilterPanelVisible(state);
       }
     };
+    @SuppressWarnings("DialogTitleCapitalization") final DumbAwareToggleAction pinAction =
+      new DumbAwareToggleAction(SSRBundle.message("pin.button"), SSRBundle.message("pin.button.description"), AllIcons.General.Pin_tab) {
+
+        @Override
+        public boolean isSelected(@NotNull AnActionEvent e) {
+          return myPinned;
+        }
+
+        @Override
+        public void setSelected(@NotNull AnActionEvent e, boolean state) {
+          myPinned = state;
+        }
+      };
     final DefaultActionGroup optionsActionGroup =
-      new DefaultActionGroup(injected, matchCase, myFileTypeChooser, filterAction, templateActionGroup);
+      new DefaultActionGroup(injected, matchCase, myFileTypeChooser, filterAction, pinAction, templateActionGroup);
     myOptionsToolbar = (ActionToolbarImpl)actionManager.createActionToolbar("StructuralSearchDialog", optionsActionGroup, true);
     myOptionsToolbar.setTargetComponent(mySearchCriteriaEdit);
     myOptionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
@@ -797,6 +812,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     }
     final PropertiesComponent properties = PropertiesComponent.getInstance();
     setFilterPanelVisible(properties.getBoolean(FILTERS_VISIBLE_STATE, true));
+    myPinned = properties.getBoolean(PINNED_STATE, false);
     super.show();
     StructuralSearchPlugin.getInstance(getProject()).setDialog(this);
   }
@@ -828,7 +844,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   @Override
   protected void doOKAction() {
-    super.doOKAction();
+    if (!getOKAction().isEnabled()) return;
+    if (!myPinned) close(OK_EXIT_CODE);
     removeMatchHighlights();
     myAlarm.cancelAllRequests();
     myConfiguration.removeUnusedVariables();
@@ -1230,7 +1247,9 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     storeDimensions();
 
     if (mySearchEditorPanel != null) {
-      PropertiesComponent.getInstance().setValue(FILTERS_VISIBLE_STATE, isFilterPanelVisible(), true);
+      final PropertiesComponent properties = PropertiesComponent.getInstance();
+      properties.setValue(FILTERS_VISIBLE_STATE, isFilterPanelVisible(), true);
+      properties.setValue(PINNED_STATE, myPinned);
     }
     StructuralSearchPlugin.getInstance(getProject()).setDialog(null);
     myAlarm.cancelAllRequests();
