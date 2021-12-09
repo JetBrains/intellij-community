@@ -2,12 +2,15 @@
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 
 @CompileStatic
 final class ProjectLibraryData {
   final String libraryName
   final String relativeOutputPath
   final PackMode packMode
+  // plugin to list of modules that uses the library
+  final Map<String, List<String>> dependentModules = new TreeMap<>()
 
   enum PackMode {
     // merged into some uber jar
@@ -20,7 +23,7 @@ final class ProjectLibraryData {
     STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
   }
 
-  ProjectLibraryData(String libraryName, String relativeOutputPath, PackMode packMode) {
+  ProjectLibraryData(@NotNull String libraryName, String relativeOutputPath, @NotNull PackMode packMode) {
     this.libraryName = libraryName
     this.relativeOutputPath = relativeOutputPath
     this.packMode = packMode

@@ -4,6 +4,8 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.containers.MultiMap
 import groovy.transform.CompileStatic
+import it.unimi.dsi.fastutil.objects.ObjectLinkedOpenHashSet
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.NotNull
 
 /**
@@ -21,7 +23,8 @@ abstract class BaseLayout {
   final List<ModuleResourceData> resourcePaths = new ArrayList<>()
   /** module name to entries which should be excluded from its output */
   final MultiMap<String, String> moduleExcludes = MultiMap.createLinked()
-  final Set<ProjectLibraryData> includedProjectLibraries = new LinkedHashSet<>()
+  @ApiStatus.Internal
+  public final ObjectLinkedOpenHashSet<ProjectLibraryData> includedProjectLibraries = new ObjectLinkedOpenHashSet<>()
   final Set<ModuleLibraryData> includedModuleLibraries = new LinkedHashSet<>()
   /** module name to name of the module library */
   final MultiMap<String, String> excludedModuleLibraries = MultiMap.createLinked()

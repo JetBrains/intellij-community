@@ -198,18 +198,18 @@ data class PluginInfo(val type: PluginType, val id: String?, val version: String
   fun isSafeToReport() = type.isSafeToReport()
 
   fun isAllowedToInjectIntoFUS(): Boolean {
-    return (isDevelopedByJetBrains() && id == tbePluginId) ||
+    return (id == tbePluginId && type.isDevelopedByJetBrains()) ||
            (PluginManagerCore.isUnitTestMode && (type == PluginType.PLATFORM || type == PluginType.FROM_SOURCES))
   }
 }
 
-val jvmCore: PluginInfo = PluginInfo(PluginType.JVM_CORE, null, null)
+private val jvmCore: PluginInfo = PluginInfo(PluginType.JVM_CORE, null, null)
 val platformPlugin: PluginInfo = PluginInfo(PluginType.PLATFORM, null, null)
 val unknownPlugin: PluginInfo = PluginInfo(PluginType.UNKNOWN, null, null)
 private val notListedPlugin = PluginInfo(PluginType.NOT_LISTED, null, null)
 
 // Mock plugin info used when we can't detect plugin by class loader because IDE is built from sources
-val builtFromSources: PluginInfo = PluginInfo(PluginType.FROM_SOURCES, null, null)
+private val builtFromSources = PluginInfo(PluginType.FROM_SOURCES, null, null)
 
 private val pluginIdsFromOfficialJbPluginRepo: Supplier<Set<PluginId>> = TimeoutCachedValue(1, TimeUnit.HOURS) {
   // before loading default repository plugins lets check it's not changed, and is really official JetBrains repository

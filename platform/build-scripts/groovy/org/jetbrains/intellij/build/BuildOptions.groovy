@@ -5,6 +5,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.ApiStatus
 
 @CompileStatic
 final class BuildOptions {
@@ -57,7 +58,7 @@ final class BuildOptions {
   public static final String BROKEN_PLUGINS_LIST_STEP = "broken_plugins_list"
   static final String PROVIDED_MODULES_LIST_STEP = "provided_modules_list"
   public static final String GENERATE_JAR_ORDER_STEP = "jar_order"
-  static final String SOURCES_ARCHIVE_STEP = "sources_archive"
+  public static final String SOURCES_ARCHIVE_STEP = "sources_archive"
   public static final String SCRAMBLING_STEP = "scramble"
   public static final String NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
   /** Build Maven artifacts for IDE modules. */
@@ -88,6 +89,7 @@ final class BuildOptions {
   static final String COMMUNITY_DIST_STEP = "community_dist"
   public static final String PREBUILD_SHARED_INDEXES = "prebuild_shared_indexes"
   public static final String SETUP_BUNDLED_MAVEN = "setup_bundled_maven"
+  public static final String VERIFY_CLASS_FILE_VERSIONS = "verify_class_file_versions"
   /**
    * Publish artifacts to TeamCity storage while the build is still running, immediately after the artifacts are built.
    * Comprises many small publication steps.
@@ -243,6 +245,9 @@ final class BuildOptions {
    */
   static final String VALIDATE_MODULES_STRUCTURE = "intellij.build.module.structure"
   boolean validateModuleStructure = System.getProperty(VALIDATE_MODULES_STRUCTURE, "false").toBoolean()
+
+  @ApiStatus.Internal
+  public boolean compressNonBundledPluginArchive = true
 
   /**
    * Max attempts of dependencies resolution on fault. "1" means no retries.

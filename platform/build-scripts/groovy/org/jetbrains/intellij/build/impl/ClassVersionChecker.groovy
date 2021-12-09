@@ -10,6 +10,7 @@ import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.utils.SeekableInMemoryByteChannel
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.BuildContext
+import org.jetbrains.intellij.build.BuildOptions
 
 import java.nio.file.DirectoryStream
 import java.nio.file.Files
@@ -17,9 +18,7 @@ import java.nio.file.Path
 import java.nio.file.StandardOpenOption
 import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.ForkJoinTask
-import java.util.function.Supplier
 import java.util.zip.ZipException
-
 /**
  * <p>
  *   Recursively checks .class files in directories and .jar/.zip files to ensure that their versions
@@ -62,11 +61,15 @@ final class ClassVersionChecker {
   }
 
   void checkVersions(BuildContext context, Path root) {
-    context.messages.block(TracerManager.spanBuilder("verify class file versions")
-                                  .setAttribute("ruleCount", myRules.size())
-                                  .setAttribute("root", root.toString()), new Supplier<Void>() {
+    if (context.options.buildStepsToSkip.contains(BuildOptions.VERIFY_CLASS_FILE_VERSIONS)) {
+      return
+    }
+
+    BuildHelper.getInstance(context).span(TracerManager.spanBuilder("verify class file versions")
+                                            .setAttribute("ruleCount", myRules.size())
+                                            .setAttribute("root", root.toString()), new Runnable() {
       @Override
-      Void get() {
+      void run() {
         checkedJarCount = 0
         checkedClassCount = 0
         errors = new ConcurrentLinkedQueue<>()
@@ -96,9 +99,8 @@ final class ClassVersionChecker {
         List<Rule> unusedRules = myRules - myUsedRules
         if (!unusedRules.isEmpty()) {
           context.messages.error("Class version check rules for the following paths don't match any files, probably entries in " +
-                                      "ProductProperties::versionCheckerConfig are out of date:\n${String.join("\n", unusedRules.collect { it.path })}")
+                                 "ProductProperties::versionCheckerConfig are out of date:\n${String.join("\n", unusedRules.collect { it.path })}")
         }
-        return null
       }
     })
   }

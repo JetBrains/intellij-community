@@ -39,6 +39,10 @@ final class PlatformLayout extends BaseLayout {
     includedProjectLibraries.add(new ProjectLibraryData(libraryName, "", packMode))
   }
 
+  void withProjectLibrary(ProjectLibraryData data) {
+    includedProjectLibraries.add(data)
+  }
+
   /**
    * Exclude project library {@code libraryName} even if it's added to dependencies of some module or plugin included into the product
    */

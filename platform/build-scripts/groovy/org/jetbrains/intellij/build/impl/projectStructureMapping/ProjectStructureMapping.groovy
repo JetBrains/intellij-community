@@ -3,10 +3,13 @@ package org.jetbrains.intellij.build.impl.projectStructureMapping
 
 import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.util.DefaultIndenter
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildPaths
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
 
 import java.nio.file.Files
 import java.nio.file.Path
@@ -59,7 +62,7 @@ final class ProjectStructureMapping {
     allEntries.sort({ DistributionFileEntry a , DistributionFileEntry b -> a.path.compareTo(b.path) })
 
     Files.newOutputStream(file).withCloseable { out ->
-      JsonGenerator writer = new JsonFactory().createGenerator(out).useDefaultPrettyPrinter()
+      JsonGenerator writer = new JsonFactory().createGenerator(out).setPrettyPrinter(new IntelliJDefaultPrettyPrinter())
       writer.writeStartArray()
       for (DistributionFileEntry entry : allEntries) {
         writer.writeStartObject()
@@ -88,8 +91,23 @@ final class ProjectStructureMapping {
     }
   }
 
+  private static final class IntelliJDefaultPrettyPrinter extends DefaultPrettyPrinter {
+    private static final DefaultIndenter INDENTER = new DefaultIndenter("  ", "\n")
+
+    IntelliJDefaultPrettyPrinter() {
+      _objectFieldValueSeparatorWithSpaces = ": "
+      _objectIndenter = INDENTER
+      _arrayIndenter = INDENTER
+    }
+
+    @Override
+    DefaultPrettyPrinter createInstance() {
+      return new IntelliJDefaultPrettyPrinter()
+    }
+  }
+
   static void buildJarContentReport(Collection<DistributionFileEntry> entries, OutputStream out, BuildPaths buildPaths) {
-    JsonGenerator writer = new JsonFactory().createGenerator(out).useDefaultPrettyPrinter()
+    JsonGenerator writer = new JsonFactory().createGenerator(out).setPrettyPrinter(new IntelliJDefaultPrettyPrinter())
     Map<Path, List<DistributionFileEntry>> fileToEntry = new TreeMap<>()
     for (DistributionFileEntry entry : entries) {
       fileToEntry.computeIfAbsent(entry.path, { new ArrayList<DistributionFileEntry>() }).add(entry)
@@ -125,7 +143,7 @@ final class ProjectStructureMapping {
           throw new IllegalStateException("Unsupported entry: $entry")
         }
 
-        writer.writeNumberField("value", fileSize)
+        writer.writeNumberField("size", fileSize)
         writer.writeEndObject()
       }
       writer.writeEndArray()
@@ -154,13 +172,33 @@ final class ProjectStructureMapping {
       for (ProjectLibraryEntry fileEntry : entry.value) {
         writer.writeStartObject()
         writer.writeStringField("name", shortenPath(fileEntry.libraryFile, buildPaths, null))
-        writer.writeNumberField("value", fileEntry.size as long)
+        writer.writeNumberField("size", fileEntry.size as long)
+
+        ProjectLibraryData data = fileEntry.data
+        if (fileEntry.reason != null) {
+          writer.writeStringField("reason", fileEntry.reason)
+        }
+        if (data != null && !data.dependentModules.isEmpty()) {
+          writeModuleDependents(writer, data)
+        }
         writer.writeEndObject()
       }
       writer.writeEndArray()
 
       writer.writeEndObject()
     }
+  }
+
+  private static void writeModuleDependents(JsonGenerator writer, ProjectLibraryData data) {
+    writer.writeObjectFieldStart("dependentModules")
+    for (Map.Entry<String, List<String>> pluginAndModules : data.dependentModules.entrySet()) {
+      writer.writeArrayFieldStart(pluginAndModules.key)
+      for (String moduleName : pluginAndModules.value) {
+        writer.writeString(moduleName)
+      }
+      writer.writeEndArray()
+    }
+    writer.writeEndObject()
   }
 
   private static String shortenPath(Path file, BuildPaths buildPaths, @Nullable Path extraRoot) {

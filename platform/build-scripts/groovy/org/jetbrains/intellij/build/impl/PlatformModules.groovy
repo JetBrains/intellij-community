@@ -7,23 +7,33 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.ProductModulesLayout
 import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.module.JpsModule
 import org.w3c.dom.Element
 import org.w3c.dom.NodeList
 
 import javax.xml.parsers.DocumentBuilderFactory
 import java.nio.file.Files
 import java.nio.file.Path
+import java.util.function.BiConsumer
+import java.util.function.Function
 
 import static org.jetbrains.intellij.build.impl.ProjectLibraryData.PackMode
 
 @CompileStatic
 final class PlatformModules {
+  public static final Function<String, List<String>> LIST_PRODUCER = new Function<String, List<String>>() {
+    @Override
+    List<String> apply(String __) {
+      return new ArrayList<String>()
+    }
+  }
+
   public static final String PRODUCT_JAR = "product.jar"
 
   /**
    * List of modules which are included into lib/openapi.jar in all IntelliJ based IDEs.
    */
-  static final List<String> PLATFORM_API_MODULES = List.of(
+  public static final List<String> PLATFORM_API_MODULES = List.of(
     "intellij.platform.analysis",
     "intellij.platform.builtInServer",
     "intellij.platform.core",
@@ -112,6 +122,13 @@ final class PlatformModules {
 
   private static final String UTIL_JAR = "util.jar"
 
+  public static final Map<String, PackMode> CUSTOM_PACK_MODE = Map.of(
+    // jna uses native lib
+    "jna", PackMode.STANDALONE_MERGED,
+    "jetbrains-annotations-java5", PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
+    "intellij-coverage", PackMode.STANDALONE_SEPARATE,
+    )
+
   static jar(String relativeJarPath,
              Collection<String> moduleNames,
              ProductModulesLayout productLayout,
@@ -137,13 +154,13 @@ final class PlatformModules {
 
   static PlatformLayout createPlatformLayout(ProductModulesLayout productLayout,
                                              boolean hasPlatformCoverage,
-                                             Set<JpsLibrary> additionalProjectLevelLibraries,
-                                             BuildContext buildContext) {
+                                             Set<ProjectLibraryData> additionalProjectLevelLibraries,
+                                             BuildContext context) {
     PlatformLayout layout = new PlatformLayout()
     // used only in modules that packed into Java
     layout.excludedProjectLibraries.add("jps-javac-extension")
     layout.excludedProjectLibraries.add("Eclipse")
-    productLayout.platformLayoutCustomizer.accept(layout, buildContext)
+    productLayout.platformLayoutCustomizer.accept(layout, context)
 
     Set<String> alreadyPackedModules = new HashSet<>()
     for (Map.Entry<String, Collection<String>> entry in productLayout.additionalPlatformJars.entrySet()) {
@@ -168,7 +185,7 @@ final class PlatformModules {
         if (isRelocated) {
           layout.withModule(module, BaseLayout.APP_JAR)
         }
-        else if (!buildContext.productProperties.useProductJar || module.startsWith("intellij.platform.commercial")) {
+        else if (!context.productProperties.useProductJar || module.startsWith("intellij.platform.commercial")) {
           layout.withModule(module, productLayout.mainJarName)
         }
         else {
@@ -256,9 +273,9 @@ final class PlatformModules {
       layout.withProjectLibraryUnpackedIntoJar(libraryName, productLayout.mainJarName)
     }
 
-    String productPluginSourceModuleName = buildContext.productProperties.applicationInfoModule
+    String productPluginSourceModuleName = context.productProperties.applicationInfoModule
     if (productPluginSourceModuleName != null) {
-      List<String> modules = getProductPluginContentModules(buildContext, productPluginSourceModuleName)
+      List<String> modules = getProductPluginContentModules(context, productPluginSourceModuleName)
       if (modules != null) {
         for (String name : modules) {
           layout.withModule(name, BaseLayout.APP_JAR)
@@ -266,32 +283,27 @@ final class PlatformModules {
       }
     }
 
-    Map<String, PackMode> customPackMode = Map.of(
-      // jna uses native lib
-      "jna", PackMode.STANDALONE_MERGED,
-      "jetbrains-annotations-java5", PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
-      "intellij-coverage", PackMode.STANDALONE_SEPARATE,
-      )
-
     layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
       "JDOM",
       "Trove4j",
     ))
 
-    for (JpsLibrary library in additionalProjectLevelLibraries) {
-      String name = library.name
+    for (ProjectLibraryData item in additionalProjectLevelLibraries) {
+      String name = item.libraryName
       if (!productLayout.projectLibrariesToUnpackIntoMainJar.contains(name) &&
           !layout.projectLibrariesToUnpack.values().contains(name) &&
           !layout.excludedProjectLibraries.contains(name)) {
-        layout.withProjectLibrary(name, customPackMode.getOrDefault(name, PackMode.MERGED))
+        layout.includedProjectLibraries.add(item)
       }
     }
-    layout.collectProjectLibrariesFromIncludedModules(buildContext) { lib, module ->
-      if (!additionalProjectLevelLibraries.contains(lib)) {
+    layout.collectProjectLibrariesFromIncludedModules(context, new BiConsumer<JpsLibrary, JpsModule>() {
+      @Override
+      void accept(JpsLibrary lib, JpsModule module) {
         String name = lib.name
-        layout.withProjectLibrary(name, customPackMode.getOrDefault(name, PackMode.MERGED))
+        layout.includedProjectLibraries.addOrGet(new ProjectLibraryData(name, "", CUSTOM_PACK_MODE.getOrDefault(name, PackMode.MERGED)))
+          .dependentModules.computeIfAbsent("core", LIST_PRODUCER).add(module.name)
       }
-    }
+    })
     return layout
   }
 

@@ -55,7 +55,9 @@ final class JarPackager {
     pack(actualModuleJars, outputDir, new BaseLayout() {}, new ModuleOutputPatcher(), false, context)
   }
 
-  private static final Map<String, Predicate<String>> EXTRA_MERGE_RULES = new LinkedHashMap<>();
+  private static final Map<String, Predicate<String>> EXTRA_MERGE_RULES = new LinkedHashMap<>()
+
+  private final Map<JpsLibrary, ProjectLibraryData> libToMetadata = new HashMap<>()
 
   static {
     // kotlinx- and kotlin-reflect libs to one kotlinx.jar
@@ -308,12 +310,13 @@ final class JarPackager {
       if (library == null) {
         context.messages.error("Project library '$libraryName' from $jarPath should be unpacked but it isn't found")
       }
+
       for (File ioFile : library.getFiles(JpsOrderRootType.COMPILED)) {
         Path file = ioFile.toPath()
         sourceList.add(createZipSource.apply(file, new IntConsumer() {
           @Override
           void accept(int size) {
-            projectStructureMapping.add(new ProjectLibraryEntry(jarFile, library.name, file, size))
+            projectStructureMapping.add(new ProjectLibraryEntry(jarFile, library.name, file, null, "explicitUnpack", size))
           }
         }))
       }
@@ -361,6 +364,8 @@ final class JarPackager {
         throw new IllegalArgumentException("Cannot find library ${libraryData.libraryName} in the project")
       }
 
+      libToMetadata.put(library, libraryData)
+
       Path libOutputDir = outputDir
       String relativePath = libraryData.relativeOutputPath
       if (relativePath != null && !relativePath.isEmpty()) {
@@ -399,7 +404,8 @@ final class JarPackager {
     }
 
     for (Map.Entry<String, List<String>> entry : jarToModuleNames.entrySet()) {
-      if (entry.key.contains("/")) {
+      String targetFilename = entry.key
+      if (targetFilename.contains("/")) {
         continue
       }
 
@@ -414,73 +420,75 @@ final class JarPackager {
             continue
           }
 
-          JpsLibraryDependency libraryDependency = (JpsLibraryDependency)element
-          JpsCompositeElement parent = libraryDependency.libraryReference?.parentReference?.resolve()
-          if (!(parent instanceof JpsModule)) {
-            continue
-          }
-
-          if (!(JpsJavaExtensionService.instance.getDependencyExtension(element)?.scope
-                  ?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false)) {
-            continue
-          }
-
-          JpsLibrary library = libraryDependency.library
-          String libraryName = LayoutBuilder.getLibraryName(library)
-          if (!excluded.contains(libraryName) &&
-              !layout.includedModuleLibraries.any { it.libraryName == libraryName }) {
-            String libName = library.name
-            List<Path> files = getLibraryFiles(library, copiedFiles, true)
-
-            if (libName == "async-profiler-windows") {
-              // custom name, removeVersionFromJar doesn't support strings like `2.1-ea-4`
-              addLibrary(library, outputDir.resolve("async-profiler-windows.jar"), files)
-              continue
-            }
-
-            boolean isJpsModule = moduleName.endsWith(".jps")
-            for (int i = files.size() - 1; i >= 0; i--) {
-              Path file = files.get(i)
-              String fileName = file.fileName.toString()
-              if (isJpsModule) {
-                files.remove(i)
-                addLibrary(library, outputDir.resolve(fileName), List.of(file))
-              }
-              else {
-                //noinspection SpellCheckingInspection
-                if (fileName.endsWith("-rt.jar") || fileName.startsWith("jps-") || fileName.contains("-agent") ||
-                    fileName == "yjp-controller-api-redist.jar") {
-                  files.remove(i)
-                  addLibrary(library, outputDir.resolve(removeVersionFromJar(fileName)), List.of(file))
-                }
-              }
-            }
-            if (!files.isEmpty()) {
-              BiFunction<Path, IntConsumer, ?> createZipSource = buildHelper.createZipSource
-              Path targetFile = outputDir.resolve(entry.key)
-
-              List sources = extraLibSources.computeIfAbsent(entry.key, new Function<String, List>() {
-                @Override
-                List apply(String s) {
-                  return new ArrayList()
-                }
-              })
-
-              for (Path file : files) {
-                sources.add(createZipSource.apply(file, new IntConsumer() {
-                  @Override
-                  void accept(int size) {
-                    projectStructureMapping.add(new ModuleLibraryFileEntry(targetFile, moduleName, file, size))
-                  }
-                }))
-              }
-            }
-          }
+          packModuleLibs(moduleName, targetFilename, (JpsLibraryDependency)element, excluded, layout, outputDir, copiedFiles,
+                         extraLibSources)
         }
       }
     }
 
     return toMerge
+  }
+
+  private void packModuleLibs(String moduleName,
+                              String targetFilename,
+                              JpsLibraryDependency libraryDependency,
+                              Collection<String> excluded,
+                              BaseLayout layout,
+                              Path outputDir,
+                              Map<Path, JpsLibrary> copiedFiles,
+                              Map<String, List> extraLibSources) {
+    JpsCompositeElement parent = libraryDependency.libraryReference?.parentReference?.resolve()
+    if (!(parent instanceof JpsModule)) {
+      return
+    }
+
+    if (!(JpsJavaExtensionService.instance.getDependencyExtension(libraryDependency)?.scope
+            ?.isIncludedIn(JpsJavaClasspathKind.PRODUCTION_RUNTIME) ?: false)) {
+      return
+    }
+
+    JpsLibrary library = libraryDependency.library
+    String libraryName = LayoutBuilder.getLibraryName(library)
+    if (!excluded.contains(libraryName) &&
+        !layout.includedModuleLibraries.any { it.libraryName == libraryName }) {
+      String libName = library.name
+      List<Path> files = getLibraryFiles(library, copiedFiles, true)
+
+      if (libName == "async-profiler-windows") {
+        // custom name, removeVersionFromJar doesn't support strings like `2.1-ea-4`
+        addLibrary(library, outputDir.resolve("async-profiler-windows.jar"), files)
+        return
+      }
+
+      for (int i = files.size() - 1; i >= 0; i--) {
+        Path file = files.get(i)
+        String fileName = file.fileName.toString()
+        //noinspection SpellCheckingInspection
+        if (fileName.endsWith("-rt.jar") || fileName.contains("-agent") || fileName == "yjp-controller-api-redist.jar") {
+          files.remove(i)
+          addLibrary(library, outputDir.resolve(removeVersionFromJar(fileName)), List.of(file))
+        }
+      }
+      if (!files.isEmpty()) {
+        BiFunction<Path, IntConsumer, ?> createZipSource = buildHelper.createZipSource
+        List sources = extraLibSources.computeIfAbsent(targetFilename, new Function<String, List>() {
+          @Override
+          List apply(String s) {
+            return new ArrayList()
+          }
+        })
+
+        Path targetFile = outputDir.resolve(targetFilename)
+        for (Path file : files) {
+          sources.add(createZipSource.apply(file, new IntConsumer() {
+            @Override
+            void accept(int size) {
+              projectStructureMapping.add(new ModuleLibraryFileEntry(targetFile, moduleName, file, size))
+            }
+          }))
+        }
+      }
+    }
   }
 
   private static String removeVersionFromJar(String fileName) {
@@ -532,12 +540,12 @@ final class JarPackager {
     }
   }
 
-  private static IntConsumer createLibSizeConsumer(Path file,
-                                                   boolean isModuleLibrary,
-                                                   Collection<DistributionFileEntry> projectStructureMapping,
-                                                   Path targetFile,
-                                                   JpsLibrary library,
-                                                   JpsModuleReference moduleReference) {
+  private IntConsumer createLibSizeConsumer(Path file,
+                                            boolean isModuleLibrary,
+                                            Collection<DistributionFileEntry> projectStructureMapping,
+                                            Path targetFile,
+                                            JpsLibrary library,
+                                            JpsModuleReference moduleReference) {
     return new IntConsumer() {
       @Override
       void accept(int size) {
@@ -545,7 +553,8 @@ final class JarPackager {
           projectStructureMapping.add(new ModuleLibraryFileEntry(targetFile, moduleReference.moduleName, file, size))
         }
         else {
-          projectStructureMapping.add(new ProjectLibraryEntry(targetFile, library.name, file, size))
+          ProjectLibraryData libMetadata = libToMetadata.get(library)
+          projectStructureMapping.add(new ProjectLibraryEntry(targetFile, library.name, file, libMetadata, null, size))
         }
       }
     }
