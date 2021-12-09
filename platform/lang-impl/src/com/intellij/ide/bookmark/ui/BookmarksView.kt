@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark.ui
 
 import com.intellij.ide.DefaultTreeExpander
@@ -201,7 +201,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
         .install()
     }
 
-    tree.emptyText.initialize()
+    tree.emptyText.initialize(tree)
     tree.addTreeSelectionListener(RestoreSelectionListener())
     tree.addTreeSelectionListener { if (tree.hasFocus()) selectionAlarm.cancelAndRequest() }
     tree.addFocusListener(object : FocusListener {
