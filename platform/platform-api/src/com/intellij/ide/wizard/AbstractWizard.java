@@ -170,7 +170,15 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
       }
       add(hGroup, vGroup, buttons, myNextButton, myCancelButton);
       if (helpAvailable) {
-        add(hGroup, vGroup, buttons, myHelpButton);
+        if (isNewWizard()) {
+          JPanel leftPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+          if (ApplicationInfo.contextHelpAvailable()) {
+            leftPanel.add(myHelpButton);
+            panel.add(leftPanel, BorderLayout.WEST);
+          }
+        } else {
+          add(hGroup, vGroup, buttons, myHelpButton);
+        }
       }
 
       layout.setHorizontalGroup(hGroup);
