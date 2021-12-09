@@ -77,10 +77,27 @@ internal abstract class GitCommitSignatureLoaderBase(private val project: Projec
     return result
   }
 
+  /**
+   * From git log man:
+   *
+   * "G" for a good (valid) signature,
+   * "B" for a bad signature,
+   * "U" for a good signature with unknown validity,
+   * "X" for a good signature that has expired,
+   * "Y" for a good signature made by an expired key,
+   * "R" for a good signature made by a revoked key,
+   * "E" if the signature cannot be checked (e.g. missing key) and
+   * "N" for no signature
+   */
   private fun createSignature(status: String, signer: String, fingerprint: String): GitCommitSignature? =
     when (status) {
-      "B", "E" -> GitCommitSignature.NotVerified
-      "G", "U", "X", "Y", "R" -> GitCommitSignature.Verified(signer, fingerprint)
+      "G" -> GitCommitSignature.Verified(signer, fingerprint)
+      "U" -> GitCommitSignature.NotVerified(GitCommitSignature.VerificationFailureReason.UNKNOWN)
+      "X" -> GitCommitSignature.NotVerified(GitCommitSignature.VerificationFailureReason.EXPIRED)
+      "Y" -> GitCommitSignature.NotVerified(GitCommitSignature.VerificationFailureReason.EXPIRED_KEY)
+      "R" -> GitCommitSignature.NotVerified(GitCommitSignature.VerificationFailureReason.REVOKED_KEY)
+      "E" -> GitCommitSignature.NotVerified(GitCommitSignature.VerificationFailureReason.CANNOT_VERIFY)
+      "B" -> GitCommitSignature.Bad
       "N" -> null
       else -> null.also { LOG.error("Unknown signature status $status") }
     }
