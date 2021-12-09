@@ -15,7 +15,7 @@ public interface DependencyNode {
   String getDisplayName();
 
   @Nullable
-  String getResolutionState();
+  ResolutionState getResolutionState();
 
   @Nullable
   String getSelectionReason();

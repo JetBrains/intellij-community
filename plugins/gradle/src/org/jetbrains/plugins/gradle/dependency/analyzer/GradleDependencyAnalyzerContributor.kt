@@ -124,9 +124,7 @@ class GradleDependencyAnalyzerContributor(private val project: Project) : Depend
 
   private fun DependencyNode.getStatus(data: Dependency.Data): List<DependencyAnalyzerContributor.Status> {
     val status = mutableListOf<DependencyAnalyzerContributor.Status>()
-    // see, org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableDependency.ResolutionState
-    val resolutionState = resolutionState
-    if (resolutionState == "FAILED" || resolutionState == "UNRESOLVED") {
+    if (resolutionState == ResolutionState.UNRESOLVED) {
       val message = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.unresolved")
       status.add(DependencyAnalyzerContributor.Status.Warning(message))
     }
