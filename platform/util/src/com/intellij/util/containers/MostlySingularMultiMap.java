@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
 import java.util.*;
+import java.util.stream.Stream;
 
 @Debug.Renderer(text = "\"size = \" + size()", hasChildren = "!isEmpty()", childrenArray = "myMap.entrySet().toArray()")
 public class MostlySingularMultiMap<K, V> implements Serializable {
@@ -71,32 +72,31 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
   }
 
   public final boolean processForKey(@NotNull K key, @NotNull Processor<? super V> p) {
-    return processValue(p, myMap.get(key));
+    return getStreamForValue(myMap.get(key)).allMatch(v -> p.process(v));
   }
 
-  private boolean processValue(@NotNull Processor<? super V> p, Object v) {
+  private @NotNull Stream<V> getStreamForValue(Object v) {
     if (v instanceof ValueList) {
       //noinspection unchecked
-      for (V o : (ValueList<V>)v) {
-        if (!p.process(o)) {
-          return false;
-        }
-      }
-      return true;
+      return ((ValueList<V>)v).stream();
+    }
+    else if (v != null) {
+      //noinspection unchecked
+      return Stream.of((V)v);
     }
     else {
-      //noinspection unchecked
-      return v == null || p.process((V)v);
+      return Stream.empty();
     }
+  }
+
+  public @NotNull Stream<V> allValuesStream() {
+    return myMap.values().stream().flatMap(v -> {
+      return getStreamForValue(v);
+    });
   }
 
   public boolean processAllValues(@NotNull Processor<? super V> p) {
-    for (Object v : myMap.values()) {
-      if (!processValue(p, v)) {
-        return false;
-      }
-    }
-    return true;
+    return allValuesStream().allMatch(v -> p.process(v));
   }
 
   public final int size() {
