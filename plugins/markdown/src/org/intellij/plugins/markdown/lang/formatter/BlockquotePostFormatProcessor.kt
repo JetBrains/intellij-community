@@ -6,7 +6,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.psi.impl.DebugUtil
 import com.intellij.psi.impl.source.codeStyle.PostFormatProcessor
 import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
@@ -56,7 +55,6 @@ internal class BlockquotePostFormatProcessor: PostFormatProcessor {
 
   private fun processParagraph(paragraph: MarkdownParagraphImpl, level: Int) {
     val firstChild = paragraph.firstChild ?: return
-    println(DebugUtil.psiToString(paragraph, true, true))
     val elements = firstChild.siblings(forward = true, withSelf = true).filter(this::shouldProcessTextElement)
     for (element in elements) {
       repeat(level) {

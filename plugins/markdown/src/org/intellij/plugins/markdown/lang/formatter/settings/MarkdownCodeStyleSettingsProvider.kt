@@ -32,6 +32,14 @@ internal class MarkdownCodeStyleSettingsProvider : LanguageCodeStyleSettingsProv
         )
         consumer.showCustomOption(
           MarkdownCustomCodeStyleSettings::class.java,
+          MarkdownCustomCodeStyleSettings::WRAP_TEXT_INSIDE_BLOCKQUOTES.name,
+          MarkdownBundle.message("markdown.style.settings.text.wrapping.inside.blockquotes"),
+          null,
+          CodeStyleSettingsCustomizable.OptionAnchor.AFTER,
+          "WRAP_ON_TYPING"
+        )
+        consumer.showCustomOption(
+          MarkdownCustomCodeStyleSettings::class.java,
           MarkdownCustomCodeStyleSettings::KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS.name,
           MarkdownBundle.message("markdown.style.settings.line.breaks.inside.text.blocks"),
           MarkdownBundle.message("markdown.style.settings.group.when.reformatting")

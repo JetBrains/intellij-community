@@ -48,5 +48,8 @@ class MarkdownCustomCodeStyleSettings(settings: CodeStyleSettings) : CustomCodeS
   var KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS = true
 
   @JvmField
+  var WRAP_TEXT_INSIDE_BLOCKQUOTES = true
+
+  @JvmField
   var INSERT_QUOTE_ARROWS_ON_WRAP = true
 }
