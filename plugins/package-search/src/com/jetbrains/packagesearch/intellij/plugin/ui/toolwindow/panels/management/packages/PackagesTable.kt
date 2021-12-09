@@ -30,6 +30,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import java.awt.event.ComponentAdapter
@@ -211,23 +212,18 @@ internal class PackagesTable(
         })
 
         onMouseMotion(
-            onMouseMoved = {
-                val point = it.point
+            onMouseMoved = { mouseEvent ->
+                val point = mouseEvent.point
                 val hoverColumn = columnAtPoint(point)
                 val hoverRow = rowAtPoint(point)
 
-                if (tableModel.items.isEmpty() || !(0 until tableModel.items.count()).contains(hoverColumn)) {
-                    actionsColumn.hoverItem = null
+                if (tableModel.items.isEmpty() || hoverRow < 0) {
+                    cursor = Cursor.getDefaultCursor()
                     return@onMouseMotion
                 }
 
-                val item = tableModel.items[hoverRow]
-                if (actionsColumn.hoverItem != item && hoverColumn == actionsColumnIndex) {
-                    actionsColumn.hoverItem = item
-                    updateAndRepaint()
-                } else {
-                    actionsColumn.hoverItem = null
-                }
+                val isHoveringActionsColumn = hoverColumn == actionsColumnIndex
+                cursor = if (isHoveringActionsColumn) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
             }
         )
     }
