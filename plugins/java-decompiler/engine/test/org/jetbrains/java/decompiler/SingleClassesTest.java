@@ -2,8 +2,8 @@
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
-import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.extern.ClassFormatException;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -149,6 +149,26 @@ public class SingleClassesTest {
   @Test public void testRecordAnno() { doTest("records/TestRecordAnno"); }
   @Test public void testInheritanceChainCycle() { doTest("pkg/TestInheritanceChainCycle"); }
   @Test public void testDynamicConstantPoolEntry() { doTest("java11/TestDynamicConstantPoolEntry"); }
+
+  @Test
+  public void testInstanceof() {
+    doTest("patterns/TestInstanceof");
+  }
+
+  @Test
+  public void testInvertedInstanceof() {
+    doTest("patterns/TestInvertedInstanceof");
+  }
+
+  @Test
+  public void testInstanceofBinaryExpr() {
+    doTest("patterns/TestInstanceofBinaryExpr");
+  }
+
+  @Test
+  public void testInstanceofVarNotSupported() {
+    doTest("patterns/TestInstanceofVarNotSupported");
+  }
 
   @Test(expected = ClassFormatException.class)
   public void testUnsupportedConstantPoolEntry() { doTest("java11/TestUnsupportedConstantPoolEntry"); }

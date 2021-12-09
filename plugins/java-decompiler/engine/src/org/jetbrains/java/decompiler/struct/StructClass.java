@@ -197,6 +197,10 @@ public class StructClass extends StructMember {
     return majorVersion >= CodeConstants.BYTECODE_JAVA_8;
   }
 
+  public boolean isVersion16() {
+    return majorVersion >= CodeConstants.BYTECODE_JAVA_16;
+  }
+
   @Override
   public String toString() {
     return qualifiedName;

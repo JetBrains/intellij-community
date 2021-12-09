@@ -1,0 +1,39 @@
+package patterns;
+
+public class TestInstanceofBinaryExpr {
+   void typePattern(Object str) {
+      if (str instanceof String s) {// 6
+         if (s.length() > 1 || s.startsWith("a")) {
+            System.out.println(s);// 7
+            return;// 11
+         }
+      }
+
+      System.out.println("no");// 9
+   }
+}
+
+class 'patterns/TestInstanceofBinaryExpr' {
+   method 'typePattern (Ljava/lang/Object;)V' {
+      3      4
+      6      4
+      f      5
+      12      5
+      13      5
+      17      5
+      19      5
+      1c      5
+      1f      6
+      23      6
+      29      11
+      2c      11
+      2e      11
+      31      7
+   }
+}
+
+Lines mapping:
+6 <-> 5
+7 <-> 7
+9 <-> 12
+11 <-> 8
