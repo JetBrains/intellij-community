@@ -25,6 +25,7 @@ fun ScanningStatistics.toJsonStatistics(): JsonScanningStatistics {
     numberOfSkippedFiles = numberOfSkippedFiles,
     numberOfFilesFullyIndexedByInfrastructureExtensions = numberOfFilesFullyIndexedByInfrastructureExtension,
     filesFullyIndexedByInfrastructureExtensions = listOfFilesFullyIndexedByInfrastructureExtension,
+    statusTime = JsonDuration(statusTime),
     scanningTime = JsonDuration(scanningTime),
     timeProcessingUpToDateFiles = JsonDuration(timeProcessingUpToDateFiles),
     timeUpdatingContentLessIndexes = JsonDuration(timeUpdatingContentLessIndexes),

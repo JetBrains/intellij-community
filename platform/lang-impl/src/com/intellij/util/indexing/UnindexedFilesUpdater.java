@@ -474,7 +474,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
         if (subTaskIndicator.isCanceled()) {
           return false;
         }
-
+        long scanningStart = System.nanoTime();
         PushedFilePropertiesUpdaterImpl.applyScannersToFile(fileOrDir, fileScannerVisitors);
         if (pushers != null && myPusher instanceof PushedFilePropertiesUpdaterImpl) {
           ((PushedFilePropertiesUpdaterImpl)myPusher).applyPushersToFile(fileOrDir, pushers, moduleValues);
@@ -494,6 +494,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
           }
           scanningStatistics.addStatus(fileOrDir, status, statusTime, project);
         }
+        scanningStatistics.addScanningTime(System.nanoTime() - scanningStart);
         return true;
       };
       return () -> {
