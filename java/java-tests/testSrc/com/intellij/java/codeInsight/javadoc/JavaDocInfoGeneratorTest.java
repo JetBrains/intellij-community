@@ -118,6 +118,7 @@ public class JavaDocInfoGeneratorTest extends JavaCodeInsightTestCase {
   public void testInlineTagSummary() { useJava10(); doTestClass(); }
   public void testLeadingSpacesInPre() { doTestClass(); }
   public void testPreInDeprecated() { doTestClass(); }
+  public void testEscapeHtmlInCode() { doTestClass(); }
 
   public void testRepeatableAnnotations() {
     useJava8();

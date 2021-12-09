@@ -1618,7 +1618,7 @@ public class JavaDocInfoGenerator {
     int pos = buffer.length();
 
     StringBuilder codeSnippetBuilder = new StringBuilder();
-    generateLiteralValue(codeSnippetBuilder, tag, false);
+    generateLiteralValue(codeSnippetBuilder, tag, true);
     String codeSnippet = codeSnippetBuilder.toString();
     if (isCodeBlock) {
       codeSnippet = StringsKt.trimIndent(codeSnippet);
@@ -2705,14 +2705,6 @@ public class JavaDocInfoGenerator {
     generateAnnotations(buffer, owner, SignaturePlace.ToolTip, true, true, false);
   }
 
-  /**
-   * @deprecated reason.
-   *
-   * <pre>
-   *     line 1
-   *     line 2
-   * </pre>
-   */
   private enum SignaturePlace {
     Javadoc, ToolTip
   }
