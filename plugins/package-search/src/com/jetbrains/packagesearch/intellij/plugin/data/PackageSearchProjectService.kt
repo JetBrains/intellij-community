@@ -142,13 +142,13 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         )
         .stateIn(this, SharingStarted.Eagerly, emptyList())
 
-    val buildFileChangesFlow = combine(
+    private val buildFileChangesFlow = combine(
         projectModulesSharedFlow,
         project.filesChangedEventFlow.map { it.mapNotNull { it.file } }
     ) { modules, changedBuildFiles -> modules.filter { it.buildFile in changedBuildFiles } }
         .shareIn(this, SharingStarted.Eagerly)
 
-    val projectModulesChangesFlow = merge(
+    private val projectModulesChangesFlow = merge(
         buildFileChangesFlow.filter { it.isNotEmpty() },
         operationExecutedChannel.consumeAsFlow()
     )
@@ -197,7 +197,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         (Runtime.getRuntime().availableProcessors() / 4).coerceAtLeast(2)
     ).asCoroutineDispatcher()
 
-    val dependenciesByModuleStateFlow = projectModulesSharedFlow
+    private val dependenciesByModuleStateFlow = projectModulesSharedFlow
         .mapLatestTimedWithLoading("installedPackagesStep1LoadingFlow", installedPackagesStep1LoadingFlow) {
             fetchProjectDependencies(it, cacheDirectory, json)
         }

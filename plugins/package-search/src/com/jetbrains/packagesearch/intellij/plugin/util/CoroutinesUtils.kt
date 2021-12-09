@@ -18,6 +18,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.collect
@@ -30,6 +31,7 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.job
@@ -178,8 +180,12 @@ internal inline fun <reified T, reified R> Flow<T>.modifiedBy(
     coroutineScope {
         val queue = Channel<Any?>()
 
-        // wait for first main element using stateIn()
-        stateIn(this).onEach { queue.send(it) }.launchIn(this)
+        val mutex = Mutex(locked = true)
+        onEach {
+            queue.send(it)
+            mutex.unlock()
+        }.launchIn(this)
+        mutex.lock()
         modifierFlow.onEach { queue.send(it) }.launchIn(this)
 
         var currentState: T = queue.receive() as T
