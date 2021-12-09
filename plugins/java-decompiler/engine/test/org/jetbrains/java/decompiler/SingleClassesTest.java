@@ -147,6 +147,24 @@ public class SingleClassesTest {
   @Test public void testRecordVararg() { doTest("records/TestRecordVararg"); }
   @Test public void testRecordGenericVararg() { doTest("records/TestRecordGenericVararg"); }
   @Test public void testRecordAnno() { doTest("records/TestRecordAnno"); }
+  @Test public void testRootWithClassInner() { doTest("sealed/RootWithClassInner"); }
+  @Test public void testRootWithInterfaceInner() { doTest("sealed/RootWithInterfaceInner"); }
+  @Test public void testRootWithClassOuter() { doTest("sealed/RootWithClassOuter",
+    "sealed/ClassExtends", "sealed/ClassNonSealed", "sealed/ClassNonSealedExtendsImplements");
+  }
+  @Test public void testRootWithInterfaceOuter() { doTest("sealed/RootWithInterfaceOuter",
+    "sealed/ClassImplements", "sealed/InterfaceNonSealed", "sealed/ClassNonSealedExtendsImplements");
+  }
+  @Test public void testClassNonSealed() { doTest("sealed/ClassNonSealed",
+    "sealed/RootWithClassOuter", "sealed/ClassExtends", "sealed/ClassNonSealedExtendsImplements");
+  }
+  @Test public void testClassNonSealedExtendsImplements() { doTest("sealed/ClassNonSealedExtendsImplements",
+    "sealed/RootWithClassOuter", "sealed/ClassExtends", "sealed/ClassNonSealed");
+  }
+  @Test public void testInterfaceNonSealed() { doTest("sealed/InterfaceNonSealed",
+    "sealed/RootWithInterfaceOuter", "sealed/ClassImplements", "sealed/ClassNonSealedExtendsImplements");
+  }
+  @Test public void testRootWithModule() { doTest("sealed/foo/RootWithModule", "sealed/bar/BarClassExtends");}
   @Test public void testInheritanceChainCycle() { doTest("pkg/TestInheritanceChainCycle"); }
   @Test public void testDynamicConstantPoolEntry() { doTest("java11/TestDynamicConstantPoolEntry"); }
 

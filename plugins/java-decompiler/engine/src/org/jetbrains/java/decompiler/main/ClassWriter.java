@@ -420,6 +420,7 @@ public class ClassWriter {
     }
 
     List<StructRecordComponent> components = cl.getRecordComponents();
+    List<String> permittedSubclassSignature = cl.getPermittedSubclasses();
 
     if (components != null) {
       // records are implicitly final
@@ -427,6 +428,13 @@ public class ClassWriter {
     }
 
     appendModifiers(buffer, flags, CLASS_ALLOWED, isInterface, CLASS_EXCLUDED);
+
+    if (permittedSubclassSignature != null) {
+      buffer.append("sealed ");
+    }
+    else if (node.isNonSealed()) {
+      buffer.append("non-sealed ");
+    }
 
     if (isEnum) {
       buffer.append("enum ");
@@ -498,7 +506,31 @@ public class ClassWriter {
       }
     }
 
+    if (permittedSubclassSignature != null) {
+      List<ClassNode> permittedOuterSubClasses = getClassNodes(permittedSubclassSignature).stream()
+        .filter(subClass -> !subClass.enclosingClasses.contains(node.classStruct.qualifiedName))
+        .collect(Collectors.toList());
+      if (!permittedOuterSubClasses.isEmpty()) { // only generate permits lists for nested classes
+        buffer.append("permits ");
+        for (int i = 0; i < permittedOuterSubClasses.size(); i++) {
+          if (i > 0) {
+            buffer.append(", ");
+          }
+          ClassNode subClass = permittedOuterSubClasses.get(i);
+          DecompilerContext.getImportCollector().getShortName(subClass.classStruct.qualifiedName); // add qualified name to potential import list
+          buffer.append(subClass.simpleName);
+        }
+        buffer.append(' ');
+      }
+    }
     buffer.append('{').appendLineSeparator();
+  }
+
+  private static List<ClassNode> getClassNodes(List<String> qualifiedClassNames) {
+    return qualifiedClassNames.stream()
+      .map(str -> DecompilerContext.getClassProcessor().getMapRootClasses().get(str))
+      .collect(Collectors.toList()
+    );
   }
 
   private static boolean isVarArgRecord(StructClass cl) {

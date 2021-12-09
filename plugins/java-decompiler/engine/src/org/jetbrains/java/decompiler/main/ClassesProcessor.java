@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -22,6 +22,7 @@ import org.jetbrains.java.decompiler.struct.attr.StructEnclosingMethodAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructInnerClassesAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
+import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
@@ -29,6 +30,7 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 public class ClassesProcessor implements CodeConstants {
   public static final int AVERAGE_CLASS_SIZE = 16 * 1024;
@@ -119,6 +121,27 @@ public class ClassesProcessor implements CodeConstants {
         ClassNode node = new ClassNode(ClassNode.CLASS_ROOT, cl);
         node.access = cl.getAccessFlags();
         mapRootClasses.put(cl.qualifiedName, node);
+      }
+    }
+
+    // set non-sealed if class extends or implements a sealed class
+    for (Entry<String, ClassNode> ent : mapRootClasses.entrySet()) {
+      ClassNode clazz = ent.getValue();
+      List<String> qualifiedSealedSuperNames = new ArrayList<>(Arrays.asList(clazz.classStruct.getInterfaceNames()));
+      PrimitiveConstant superConst = clazz.classStruct.superClass;
+      if (superConst != null) qualifiedSealedSuperNames.add(superConst.getString());
+      List<ClassNode> potentialSealedSupers = qualifiedSealedSuperNames.stream()
+        .map(mapRootClasses::get)
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+      for (ClassNode potentialSealedSuper : potentialSealedSupers) {
+        if (potentialSealedSuper.classStruct.getPermittedSubclasses() != null &&
+          potentialSealedSuper.classStruct.getPermittedSubclasses().contains(clazz.classStruct.qualifiedName) &&
+          (clazz.access & CodeConstants.ACC_FINAL) == 0 &&
+          clazz.classStruct.getPermittedSubclasses() == null
+        ) {
+          clazz.setNonSealed(true);
+        }
       }
     }
 
@@ -418,6 +441,7 @@ public class ClassesProcessor implements CodeConstants {
 
     public int type;
     public int access;
+    public boolean isNonSealed = false;
     public String simpleName;
     public final StructClass classStruct;
     private ClassWrapper wrapper;
@@ -489,6 +513,14 @@ public class ClassesProcessor implements CodeConstants {
         node = node.parent;
       }
       return node.wrapper;
+    }
+
+    public boolean isNonSealed() {
+      return isNonSealed;
+    }
+
+    public void setNonSealed(boolean nonSealed) {
+      isNonSealed = nonSealed;
     }
 
     public static class LambdaInformation {

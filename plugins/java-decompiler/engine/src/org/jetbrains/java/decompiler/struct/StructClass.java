@@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.struct;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructPermittedSubclassesAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructRecordAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
@@ -158,6 +159,12 @@ public class StructClass extends StructMember {
     StructRecordAttribute recordAttr = getAttribute(StructGeneralAttribute.ATTRIBUTE_RECORD);
     if (recordAttr == null) return null;
     return recordAttr.getComponents();
+  }
+
+  public List<String> getPermittedSubclasses() {
+    StructPermittedSubclassesAttribute permittedSubClassAttr = getAttribute(StructGeneralAttribute.ATTRIBUTE_PERMITTED_SUBCLASSES);
+    if (permittedSubClassAttr == null) return null;
+    return permittedSubClassAttr.getClasses();
   }
 
   public int[] getInterfaces() {

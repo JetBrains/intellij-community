@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.struct.attr;
 
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
@@ -36,6 +36,7 @@ public class StructGeneralAttribute {
   public static final Key<StructMethodParametersAttribute> ATTRIBUTE_METHOD_PARAMETERS = new Key<>("MethodParameters");
   public static final Key<StructModuleAttribute> ATTRIBUTE_MODULE = new Key<>("Module");
   public static final Key<StructRecordAttribute> ATTRIBUTE_RECORD = new Key<>("Record");
+  public static final Key<StructPermittedSubclassesAttribute> ATTRIBUTE_PERMITTED_SUBCLASSES = new Key<>("PermittedSubclasses");
 
   @SuppressWarnings("unused")
   public static class Key<T extends StructGeneralAttribute> {
@@ -100,6 +101,8 @@ public class StructGeneralAttribute {
     }
     else if (ATTRIBUTE_RECORD.name.equals(name)) {
       return new StructRecordAttribute();
+    } else if (ATTRIBUTE_PERMITTED_SUBCLASSES.name.equals(name)) {
+      return new StructPermittedSubclassesAttribute();
     }
     else {
       return null; // unsupported attribute
