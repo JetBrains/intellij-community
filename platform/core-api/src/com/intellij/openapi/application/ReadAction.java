@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.ThrowableComputable;
@@ -17,6 +17,7 @@ import java.util.concurrent.Callable;
  * @see WriteAction
  */
 public abstract class ReadAction<T> extends BaseActionRunnable<T> {
+
   /**
    * @deprecated use {@link #run(ThrowableRunnable)} or {@link #compute(ThrowableComputable)} instead
    */
@@ -65,7 +66,7 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * Create an {@link NonBlockingReadAction} builder to run the given Runnable in non-blocking read action on a background thread.
    */
   @NotNull
-  @Contract(pure=true)
+  @Contract(pure = true)
   public static NonBlockingReadAction<Void> nonBlocking(@NotNull Runnable task) {
     return nonBlocking(new RunnableCallable(task));
   }
@@ -74,7 +75,7 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
    * Create an {@link NonBlockingReadAction} builder to run the given Callable in a non-blocking read action on a background thread.
    */
   @NotNull
-  @Contract(pure=true)
+  @Contract(pure = true)
   public static <T> NonBlockingReadAction<T> nonBlocking(@NotNull Callable<? extends T> task) {
     return AsyncExecutionService.getService().buildNonBlockingReadAction(task);
   }
