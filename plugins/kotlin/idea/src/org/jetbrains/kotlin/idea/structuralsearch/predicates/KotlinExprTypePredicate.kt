@@ -182,7 +182,7 @@ class KotlinExprTypePredicate(
 
             // Java indexes
             when {
-                fq -> if (JavaFullClassNameIndex.getInstance()[className.hashCode(), project, scope].any {
+                fq -> if (JavaFullClassNameIndex.getInstance()[className, project, scope].any {
                         it.getKotlinFqName() == type.fqName
                     }) return true
                 else -> if (JavaShortClassNameIndex.getInstance()[className, project, scope].any {

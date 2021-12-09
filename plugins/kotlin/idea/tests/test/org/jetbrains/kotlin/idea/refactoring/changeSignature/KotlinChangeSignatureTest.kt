@@ -1290,7 +1290,7 @@ class KotlinChangeSignatureTest : KotlinLightCodeInsightFixtureTestCase() {
         newParameters.add(ParameterInfoImpl(-1, "n", PsiType.INT, "1"))
         newParameters.add(ParameterInfoImpl(-1, "s", stringPsiType, "\"abc\""))
 
-        val classA = JavaFullClassNameIndex.getInstance().get("A".hashCode(), project, project.allScope()).first { it.name == "A" }
+        val classA = JavaFullClassNameIndex.getInstance().get("A", project, project.allScope()).first { it.name == "A" }
         val methodBar = classA.methods.first { it.name == "bar" }
         parameterPropagationTargets.add(methodBar)
 

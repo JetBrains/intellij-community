@@ -23,7 +23,7 @@ class ImportMapperTest : KotlinLightCodeInsightFixtureTestCase() {
     private val kotlinTypeAliasShortNameIndex get() = KotlinTypeAliasShortNameIndex.getInstance()
 
     private fun findInIndex(fqName: FqName, scope: GlobalSearchScope): PsiElement? =
-        javaFullClassNameIndex.get(fqName.asString().hashCode(), project, scope)?.firstOrNull()
+        javaFullClassNameIndex.get(fqName.asString(), project, scope)?.firstOrNull()
             ?: kotlinFullClassNameIndex.get(fqName.asString(), project, scope).firstOrNull()
 
     fun test() {
