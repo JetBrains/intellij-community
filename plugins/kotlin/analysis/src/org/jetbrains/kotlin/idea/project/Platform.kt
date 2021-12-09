@@ -102,7 +102,8 @@ fun Module.getStableName(): Name {
 @JvmOverloads
 fun Project.getLanguageVersionSettings(
     contextModule: Module? = null,
-    javaTypeEnhancementState: JavaTypeEnhancementState? = null
+    javaTypeEnhancementState: JavaTypeEnhancementState? = null,
+    inferredLanguageFeatures: Map<LanguageFeature, LanguageFeature.State> = emptyMap()
 ): LanguageVersionSettings {
     val kotlinFacetSettings = contextModule?.let {
         KotlinFacetSettingsProvider.getInstance(this)?.getInitializedSettings(it)
@@ -121,7 +122,7 @@ fun Project.getLanguageVersionSettings(
         compilerSettings.additionalArgumentsAsList
     )
 
-    val extraLanguageFeatures = additionalArguments.configureLanguageFeatures(MessageCollector.NONE)
+    val extraLanguageFeatures = additionalArguments.configureLanguageFeatures(MessageCollector.NONE) + inferredLanguageFeatures
 
     val extraAnalysisFlags = additionalArguments.configureAnalysisFlags(MessageCollector.NONE, languageVersion).apply {
         if (javaTypeEnhancementState != null) put(JvmAnalysisFlags.javaTypeEnhancementState, javaTypeEnhancementState)
