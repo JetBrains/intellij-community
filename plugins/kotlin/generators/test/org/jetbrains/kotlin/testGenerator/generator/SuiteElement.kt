@@ -124,6 +124,7 @@ class SuiteElement private constructor(
         private fun SuiteElement.chunked(bucketSize: Int): SuiteElement {
             val size = methods.size - 1
             val newNestedClasses = if (size > bucketSize) {
+
                 methods.asSequence()
                     .filter { it.methodName != "runTest" }
                     .chunked(bucketSize)
@@ -132,7 +133,7 @@ class SuiteElement private constructor(
                             group,
                             suite,
                             model,
-                            "TestBucket${index + 1}",
+                            "TestBucket${"%03d".format(index + 1)}",
                         )
                     }
                     .toList()
