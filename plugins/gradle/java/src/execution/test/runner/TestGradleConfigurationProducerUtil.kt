@@ -107,16 +107,33 @@ fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
   }
 
   externalProjectPath = projectPath
-  taskNames = testRunConfigurations.entries.flatMap { it.key.split(" ") + it.value }
+
+  val taskNameRegex = Regex("('[\\S\\s]+?'|\\S+)") // either escaped (contains space) or not
+  taskNames = testRunConfigurations.entries.flatMap {
+    val commandLine = it.key
+    val tasks = taskNameRegex.findAll(commandLine)
+      .map { match -> match.groupValues[1] }
+      .map(::restoreEscaped)
+      .toList()
+
+    tasks + it.value
+  }
+
   scriptParameters = if (testRunConfigurations.size > 1) "--continue" else ""
 
   return true
 }
 
+//////////////////////////////////////////////
 fun String.escapeIfNeeded() = when {
   contains(' ') -> "'$this'"
   else -> this
 }
+
+fun restoreEscaped(taskName: String): String {
+  return taskName.removeSurrounding("'")
+}
+//////////////////////////////////////////////
 
 fun getSourceFile(sourceElement: PsiElement?): VirtualFile? {
   if (sourceElement == null) return null
