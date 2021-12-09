@@ -59,6 +59,7 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -573,6 +574,7 @@ public final class JarRepositoryManager {
     final List<OrderRoot> result = new ArrayList<>();
     final VirtualFileManager manager = VirtualFileManager.getInstance();
     for (Artifact each : artifacts) {
+      long ms = System.currentTimeMillis();
       try {
         File repoFile = each.getFile();
         File toFile = repoFile;
@@ -594,6 +596,11 @@ public final class JarRepositoryManager {
       }
       catch (IOException e) {
         LOG.warn(e);
+      }
+      finally {
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Artifact " + each.toString() + " refreshed in " + (System.currentTimeMillis() - ms) + "ms");
+        }
       }
     }
     return result;
@@ -630,10 +637,13 @@ public final class JarRepositoryManager {
 
     @Override
     protected Collection<Artifact> perform(ProgressIndicator progress, @NotNull ArtifactRepositoryManager manager) throws Exception {
+      long ms = System.currentTimeMillis();
       final String version = myDesc.getVersion();
       try {
-        return manager.resolveDependencyAsArtifact(myDesc.getGroupId(), myDesc.getArtifactId(), version, myKinds,
-                                                   myDesc.isIncludeTransitiveDependencies(), myDesc.getExcludedDependencies());
+        Collection<Artifact> artifacts = manager.resolveDependencyAsArtifact(myDesc.getGroupId(), myDesc.getArtifactId(), version, myKinds,
+                                                                             myDesc.isIncludeTransitiveDependencies(),
+                                                                             myDesc.getExcludedDependencies());
+        return artifacts;
       }
       catch (TransferCancelledException e) {
         throw new ProcessCanceledException(e);
@@ -652,6 +662,11 @@ public final class JarRepositoryManager {
         }
         catch (TransferCancelledException e1) {
           throw new ProcessCanceledException(e1);
+        }
+      }
+      finally {
+        if (LOG.isTraceEnabled()) {
+          LOG.trace("Artifact " + myDesc + " resolved in " + (System.currentTimeMillis() - ms) + "ms");
         }
       }
     }
