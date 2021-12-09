@@ -14,7 +14,7 @@ import kotlin.coroutines.coroutineContext
  * ```
  * val sink = new MyCoolSink()
  * // launch a coroutine to update UI with data from MyCoolSink
- * withContext(progressSinkElement(sink)) {
+ * withContext(sink.asContextElement()) {
  *   // available on CoroutineScope as a property
  *   // safe null operator allows to skip the evaluation of the resource bundle part
  *   progressSink?.text(ResourceBundle.message("starting.progress.text"))
@@ -27,25 +27,19 @@ import kotlin.coroutines.coroutineContext
  * }
  * ```
  */
-fun progressSinkElement(sink: ProgressSink): CoroutineContext.Element {
-  return ProgressSinkElement(sink)
+fun ProgressSink.asContextElement(): CoroutineContext.Element {
+  return ProgressSinkElement(this)
 }
 
 internal val CoroutineContext.progressSink: ProgressSink? get() = this[ProgressSinkKey]?.sink
 
 val CoroutineScope.progressSink: ProgressSink? get() = coroutineContext.progressSink
 
-// kotlin doesn't allow suspend on properties
+// kotlin doesn't allow 'suspend' modifier on properties
 suspend fun progressSink(): ProgressSink? = coroutineContext.progressSink
 
 private object ProgressSinkKey : CoroutineContext.Key<ProgressSinkElement>
 private class ProgressSinkElement(val sink: ProgressSink) : AbstractCoroutineContextElement(ProgressSinkKey)
-
-private object SilentProgressSink : ProgressSink {
-  override fun text(text: String): Unit = Unit
-  override fun details(details: String): Unit = Unit
-  override fun fraction(fraction: Double): Unit = Unit
-}
 
 internal class ProgressIndicatorSink(private val indicator: ProgressIndicator) : ProgressSink {
 
