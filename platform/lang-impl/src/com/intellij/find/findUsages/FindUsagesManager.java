@@ -57,8 +57,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -297,6 +301,46 @@ public final class FindUsagesManager {
       PsiElement2UsageTargetAdapter[] secondaryTargets = PsiElement2UsageTargetAdapter.convert(secondaryElements, false);
       return createUsageSearcher(primaryTargets, secondaryTargets, handler, findUsagesOptions, null);
     });
+  }
+
+  public @Nullable UsageSearcher createUsageSearcher(FindUsagesHandler handler) {
+
+    PsiElement[] primaryElements;
+    PsiElement[] secondaryElements;
+    LOG.assertTrue(handler.getPsiElement().isValid());
+
+    try {
+      final CompletableFuture<PsiElement[]> primaryElementsFuture = new CompletableFuture<>();
+      final CompletableFuture<PsiElement[]> secondaryElementsFuture = new CompletableFuture<>();
+      EventQueue.invokeAndWait(() -> {
+        // This is ugly, but some implementations of FindUsagesHandler do require a DispatcherThread for these operations.
+        // for example: com.intellij.ide.util.SuperMethodWarningUtil.getTargetMethodCandidates
+        // called from com.intellij.find.findUsages.JavaFindUsagesHandler.getPrimaryElements
+        primaryElementsFuture.complete(handler.getPrimaryElements());
+        secondaryElementsFuture.complete(handler.getSecondaryElements());
+      });
+      primaryElements = primaryElementsFuture.get();
+      secondaryElements = secondaryElementsFuture.get();
+    }
+    catch (InterruptedException e) {
+      LOG.warn("primaryElements or secondaryElements calculation got interrupted! ", e);
+      return null;
+    }
+    catch (InvocationTargetException e) {
+      LOG.warn("can not calculate primaryElements or secondaryElements", e);
+      return null;
+    }
+    catch (ExecutionException e) {
+      LOG.warn("primaryElements or secondaryElements is completed with exception", e);
+      return null;
+    }
+
+
+    LOG.assertTrue(handler.getPsiElement().isValid());
+    checkNotNull(primaryElements, handler, "getPrimaryElements()");
+    checkNotNull(secondaryElements, handler, "getSecondaryElements()");
+
+    return createUsageSearcher(handler, primaryElements, secondaryElements, handler.getFindUsagesOptions());
   }
 
   public static void startProcessUsages(@NotNull ProgressIndicator indicator,
