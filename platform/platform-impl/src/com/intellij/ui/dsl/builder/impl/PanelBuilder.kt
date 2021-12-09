@@ -203,7 +203,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         // todo visualPaddings
         val gaps = cell.customGaps ?: Gaps(left = leftGap, right = rightGap)
         val subGrid = builder.subGrid(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
-          gaps = gaps)
+                                      resizableColumn = cell.resizableColumn, gaps = gaps)
 
         val prevSpacingConfiguration = dialogPanelConfig.spacing
         cell.spacingConfiguration?.let {
