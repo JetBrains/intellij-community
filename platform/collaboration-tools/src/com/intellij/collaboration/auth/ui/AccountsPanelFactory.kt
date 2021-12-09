@@ -15,12 +15,14 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.ui.LayeredIcon
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.ToolbarDecorator
+import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.components.JBList
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.StatusText
 import com.intellij.util.ui.UIUtil
+import java.awt.event.MouseEvent
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.ListCellRenderer
@@ -51,8 +53,9 @@ object AccountsPanelFactory {
     accountsList.emptyText.apply {
       appendText(CollaborationToolsBundle.message("accounts.none.added"))
       appendSecondaryText(CollaborationToolsBundle.message("accounts.add.link"), SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES) {
-        //FIXME: proper point for a popup
-        model.addAccount(accountsList)
+        val event = it.source
+        val relativePoint = if (event is MouseEvent) RelativePoint(event) else null
+        model.addAccount(accountsList, relativePoint)
       }
       appendSecondaryText(" (${KeymapUtil.getFirstKeyboardShortcutText(CommonShortcuts.getNew())})", StatusText.DEFAULT_ATTRIBUTES, null)
     }
@@ -69,7 +72,8 @@ object AccountsPanelFactory {
       .setAddIcon(addIcon)
 
     if (model is AccountsListModel.WithDefault) {
-      toolbar.addExtraAction(object : ToolbarDecorator.ElementActionButton(CollaborationToolsBundle.message("accounts.set.default"), AllIcons.Actions.Checked) {
+      toolbar.addExtraAction(object : ToolbarDecorator.ElementActionButton(CollaborationToolsBundle.message("accounts.set.default"),
+                                                                           AllIcons.Actions.Checked) {
         override fun actionPerformed(e: AnActionEvent) {
           val selected = accountsList.selectedValue
           if (selected == model.defaultAccount) return
