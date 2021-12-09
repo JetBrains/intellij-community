@@ -486,6 +486,8 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
     starterContext.frameworkVersion = serverOptions.frameworkVersions.find { it.isDefault }
                                       ?: serverOptions.frameworkVersions.firstOrNull()
 
+    val currentPackageName = packageName // remember package name before applying group and artifact
+
     serverOptions.extractOption(SERVER_NAME_KEY) {
       if (entityName == suggestName(DEFAULT_MODULE_NAME)) {
         val newName = suggestName(it)
@@ -505,7 +507,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       }
     }
     serverOptions.extractOption(SERVER_PACKAGE_NAME_KEY) {
-      if (packageName == DEFAULT_PACKAGE_NAME && packageName != it) {
+      if (currentPackageName == DEFAULT_PACKAGE_NAME && currentPackageName != it) {
         packageNameProperty.set(it)
       }
     }
