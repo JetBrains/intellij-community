@@ -9,7 +9,6 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidat
 import com.intellij.internal.statistic.eventLog.events.EventFields.Version
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
 import java.nio.file.Files
@@ -97,8 +96,8 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
     try {
       // We need to use loadLines and not loadText here, because loadText relies on getting the file size
       // and the kernel returns size 0 for this special file.
-      val osrelease = FileUtil.loadLines("/proc/sys/kernel/osrelease")
-      osrelease.size > 0 && osrelease[0].contains("-microsoft-")
+      val osrelease = Files.readString(Path.of("/proc/sys/kernel/osrelease"))
+      osrelease.contains("-microsoft-")
     }
     catch(e: IOException) {
       false
