@@ -129,6 +129,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             11,
             55,
             33,
+            filesFullyIndexedByInfrastructureExtensions = listOf(PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java").presentablePath),
             JsonDuration(123),
             JsonDuration(456),
             JsonDuration(789),

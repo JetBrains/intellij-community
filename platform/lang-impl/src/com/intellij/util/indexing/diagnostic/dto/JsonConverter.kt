@@ -24,6 +24,7 @@ fun ScanningStatistics.toJsonStatistics(): JsonScanningStatistics {
     numberOfFilesForIndexing = numberOfFilesForIndexing,
     numberOfSkippedFiles = numberOfSkippedFiles,
     numberOfFilesFullyIndexedByInfrastructureExtensions = numberOfFilesFullyIndexedByInfrastructureExtension,
+    filesFullyIndexedByInfrastructureExtensions = listOfFilesFullyIndexedByInfrastructureExtension,
     scanningTime = JsonDuration(scanningTime),
     timeProcessingUpToDateFiles = JsonDuration(timeProcessingUpToDateFiles),
     timeUpdatingContentLessIndexes = JsonDuration(timeUpdatingContentLessIndexes),
@@ -52,6 +53,7 @@ fun IndexingJobStatistics.toJsonStatistics(): JsonFileProviderIndexStatistics {
     providerName = fileSetName,
     totalNumberOfIndexedFiles = numberOfIndexedFiles,
     totalNumberOfFilesFullyIndexedByExtensions = numberOfFilesFullyIndexedByExtensions,
+    filesFullyIndexedByExtensions = listOfFilesFullyIndexedByExtensions,
     totalIndexingTime = JsonDuration(indexingVisibleTime),
     contentLoadingTime = JsonDuration(contentLoadingVisibleTime),
     numberOfTooLargeForIndexingFiles = numberOfTooLargeForIndexingFiles,
@@ -106,9 +108,9 @@ fun ProjectIndexingHistoryImpl.toJson(): JsonProjectIndexingHistory {
 
 private fun ProjectIndexingHistoryImpl.getFileCount() = JsonProjectIndexingFileCount(
   numberOfFileProviders = scanningStatistics.size,
-  numberOfScannedFiles = scanningStatistics.sumBy { it.numberOfScannedFiles },
+  numberOfScannedFiles = scanningStatistics.sumOf { it.numberOfScannedFiles },
   numberOfFilesIndexedByInfrastructureExtensionsDuringScan = scanningStatistics.sumOf { it.numberOfFilesFullyIndexedByInfrastructureExtensions },
-  numberOfFilesScheduledForIndexingAfterScan = scanningStatistics.sumBy { it.numberOfFilesForIndexing },
+  numberOfFilesScheduledForIndexingAfterScan = scanningStatistics.sumOf { it.numberOfFilesForIndexing },
   numberOfFilesIndexedByInfrastructureExtensionsDuringIndexingStage = providerStatistics.sumOf { it.totalNumberOfFilesFullyIndexedByExtensions },
   numberOfFilesIndexedWithLoadingContent = providerStatistics.sumOf { it.totalNumberOfIndexedFiles }
 )

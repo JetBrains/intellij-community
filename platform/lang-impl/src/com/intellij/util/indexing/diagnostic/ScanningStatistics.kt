@@ -19,6 +19,7 @@ class ScanningStatistics(val fileSetName: String) {
 
   var numberOfFilesForIndexing: Int = 0
   var numberOfFilesFullyIndexedByInfrastructureExtension: Int = 0
+  var listOfFilesFullyIndexedByInfrastructureExtension = arrayListOf<String>()
 
   var scanningTime: TimeNano = 0
 
@@ -44,6 +45,7 @@ class ScanningStatistics(val fileSetName: String) {
 
     if (unindexedFileStatus.wasFullyIndexedByInfrastructureExtension) {
       numberOfFilesFullyIndexedByInfrastructureExtension++
+      listOfFilesFullyIndexedByInfrastructureExtension.add(fileOrDir.toString())
     }
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
       val portableFilePath = getIndexedFilePath(fileOrDir, project)
