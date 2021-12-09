@@ -39,7 +39,7 @@ public class MavenDomGutterAnnotator implements Annotator {
     final Set<MavenDomDependency> children = MavenDomProjectProcessorUtils.searchDependencyUsages(dependency);
     if (children.size() > 0) {
       final NavigationGutterIconBuilder<MavenDomDependency> iconBuilder =
-        NavigationGutterIconBuilder.create(AllIcons.General.OverridenMethod, DependencyConverter.INSTANCE);
+        NavigationGutterIconBuilder.create(AllIcons.Gutter.OverridenMethod, DependencyConverter.INSTANCE);
       iconBuilder.
         setTargets(children).
         setPopupTitle(MavenDomBundle.message("navigate.parent.dependency.title")).
@@ -57,7 +57,7 @@ public class MavenDomGutterAnnotator implements Annotator {
     if (managingDependency != null) {
 
       final NavigationGutterIconBuilder<MavenDomDependency> iconBuilder =
-        NavigationGutterIconBuilder.create(AllIcons.General.OverridingMethod, DependencyConverter.INSTANCE);
+        NavigationGutterIconBuilder.create(AllIcons.Gutter.OverridingMethod, DependencyConverter.INSTANCE);
       iconBuilder.
         setTargets(managingDependency).
         setTooltipText(generateTooltip(managingDependency)).
@@ -115,7 +115,7 @@ public class MavenDomGutterAnnotator implements Annotator {
 
     if (managingPlugin != null) {
       NavigationGutterIconBuilder<MavenDomPlugin> iconBuilder =
-        NavigationGutterIconBuilder.create(AllIcons.General.OverridingMethod, PluginConverter.INSTANCE);
+        NavigationGutterIconBuilder.create(AllIcons.Gutter.OverridingMethod, PluginConverter.INSTANCE);
 
       iconBuilder.
         setTargets(Collections.singletonList(managingPlugin)).
@@ -132,7 +132,7 @@ public class MavenDomGutterAnnotator implements Annotator {
 
     if (children.size() > 0) {
       NavigationGutterIconBuilder<MavenDomPlugin> iconBuilder =
-        NavigationGutterIconBuilder.create(AllIcons.General.OverridenMethod, PluginConverter.INSTANCE);
+        NavigationGutterIconBuilder.create(AllIcons.Gutter.OverridenMethod, PluginConverter.INSTANCE);
 
       iconBuilder.
         setTargets(children).
