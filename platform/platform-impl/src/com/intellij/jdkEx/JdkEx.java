@@ -5,6 +5,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.MethodInvocator;
+import com.intellij.util.lang.JavaVersion;
 import io.netty.util.internal.SystemPropertyUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -276,4 +277,14 @@ public final class JdkEx {
     }
   }
 
+  public static boolean trySetFileDialogCanChooseModes(@NotNull FileDialog fileDialog, boolean chooseDirectories, boolean chooseFiles) {
+    // TODO: need API from JBR team for direct sets all flags into $fileDialog$
+    if (SystemInfo.isJetBrainsJvm && SystemInfo.isMac && JavaVersion.current().isAtLeast(17)) {
+      //System.setProperty("apple.awt.fileDialogForDirectories", Boolean.toString(chooseDirectories));
+      //System.setProperty("apple.awt.fileDialogForFiles", Boolean.toString(chooseFiles));
+      System.setProperty("apple.awt.fileDialogForDirectories", Boolean.toString(chooseDirectories && !chooseFiles));
+      return true;
+    }
+    return false;
+  }
 }
