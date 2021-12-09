@@ -33,9 +33,12 @@ abstract class AbstractAnalyzeDependenciesAction : AnAction(), DumbAware {
     UIComponentEditorTab.show(project, tab)
   }
 
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = Registry.`is`("external.system.dependency.analyzer")
+  }
+
   init {
     templatePresentation.icon = AllIcons.Actions.DependencyAnalyzer
     templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.action.name")
-    templatePresentation.isEnabledAndVisible = Registry.`is`("external.system.dependency.analyzer")
   }
 }

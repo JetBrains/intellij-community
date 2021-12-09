@@ -17,6 +17,7 @@ import net.miginfocom.layout.LC
 import net.miginfocom.swing.MigLayout
 import org.jetbrains.plugins.github.api.data.pullrequest.GHPullRequestReviewCommentState
 import org.jetbrains.plugins.github.i18n.GithubBundle
+import org.jetbrains.plugins.github.pullrequest.comment.GHMarkdownToHtmlConverter
 import org.jetbrains.plugins.github.pullrequest.data.provider.GHPRReviewDataProvider
 import org.jetbrains.plugins.github.pullrequest.ui.GHEditableHtmlPaneHandle
 import org.jetbrains.plugins.github.pullrequest.ui.GHTextActions
@@ -59,7 +60,7 @@ object GHPRReviewCommentComponent {
     }
 
 
-    Controller(comment, titlePane, pendingLabel, resolvedLabel, textPane, showResolvedMarker)
+    Controller(project, comment, titlePane, pendingLabel, resolvedLabel, textPane, showResolvedMarker)
 
     val editablePaneHandle = GHEditableHtmlPaneHandle(project,
                                                       textPane,
@@ -94,7 +95,8 @@ object GHPRReviewCommentComponent {
 
   private fun getMaxWidth() = GHUIUtil.getPRTimelineWidth() - JBUIScale.scale(GHUIUtil.AVATAR_SIZE) + AllIcons.Actions.Close.iconWidth
 
-  private class Controller(private val model: GHPRReviewCommentModel,
+  private class Controller(private val project: Project,
+                           private val model: GHPRReviewCommentModel,
                            private val titlePane: HtmlEditorPane,
                            private val pendingLabel: JComponent,
                            private val resolvedLabel: JComponent,
@@ -108,7 +110,8 @@ object GHPRReviewCommentComponent {
     }
 
     private fun update() {
-      bodyPane.setBody(model.body)
+      val htmlBody = GHMarkdownToHtmlConverter(project).convertMarkdownToHtml(model.body, null, model.suggestionInfo)
+      bodyPane.setBody(htmlBody)
 
       val authorLink = HtmlBuilder()
         .appendLink(model.authorLinkUrl.orEmpty(), model.authorUsername ?: GithubBundle.message("user.someone"))

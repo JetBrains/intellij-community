@@ -20,7 +20,7 @@ import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.RegexpFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.OSAgnosticPathUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
@@ -42,7 +42,7 @@ public class GradleConsoleFilterProvider implements ConsoleFilterProvider {
 
         @Override
         public Result applyFilter(@NotNull String line, int entireLength) {
-          if (!FileUtil.isAbsolutePlatformIndependent(line)) return null;
+          if (!OSAgnosticPathUtil.isAbsolute(line)) return null;
           if (Boolean.FALSE.equals(myIsGradleProject.getValue())) return null;
           Result result = super.applyFilter(line, entireLength);
           if (result == null) return null;

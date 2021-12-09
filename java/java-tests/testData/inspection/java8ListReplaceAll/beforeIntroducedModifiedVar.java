@@ -1,0 +1,11 @@
+// "Replace the loop with 'List.replaceAll'" "true"
+import java.util.*;
+
+class Main {
+  void modifyStrings(List<String> strings) {
+    for (int i = 0; i < strings.size(); i++)<caret> {
+      String str = strings.get(i).toLowerCase();
+      strings.set(i, str);
+    }
+  }
+}

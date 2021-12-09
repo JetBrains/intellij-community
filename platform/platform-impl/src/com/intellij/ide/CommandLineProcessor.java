@@ -57,6 +57,8 @@ public final class CommandLineProcessor {
   private static final String OPTION_WAIT = "--wait";
 
   public static final Future<CliResult> OK_FUTURE = CompletableFuture.completedFuture(CliResult.OK);
+
+  @ApiStatus.Internal
   public static final String SCHEME_INTERNAL = "!!!internal!!!";
 
   private CommandLineProcessor() { }
@@ -149,13 +151,15 @@ public final class CommandLineProcessor {
   }
 
   @ApiStatus.Internal
-  public static @NotNull CompletableFuture<CliResult> processProtocolCommand(@NotNull @NlsSafe String uri) {
-    LOG.info("external URI request:\n" + uri);
+  public static @NotNull CompletableFuture<CliResult> processProtocolCommand(@NotNull @NlsSafe String rawUri) {
+    LOG.info("external URI request:\n" + rawUri);
 
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       throw new IllegalStateException("cannot process URI requests in headless state");
     }
 
+    boolean internal = rawUri.startsWith(SCHEME_INTERNAL);
+    String uri = internal ? rawUri.substring(SCHEME_INTERNAL.length()) : rawUri;
     int separatorStart = uri.indexOf(SCHEME_SEPARATOR);
     if (separatorStart < 0) throw new IllegalArgumentException(uri);
 
@@ -166,7 +170,7 @@ public final class CommandLineProcessor {
       public void run(@NotNull ProgressIndicator indicator) {
         indicator.setIndeterminate(true);
         indicator.setText(uri);
-        (SCHEME_INTERNAL.equals(scheme) ? processInternalProtocol(query) : ProtocolHandler.process(scheme, query, indicator))
+        (internal ? processInternalProtocol(query) : ProtocolHandler.process(scheme, query, indicator))
           .exceptionally(t -> {
             LOG.error(t);
             return new CliResult(0, IdeBundle.message("ide.protocol.exception", t.getClass().getSimpleName(), t.getMessage()));

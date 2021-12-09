@@ -53,6 +53,7 @@ abstract class AbstractConfigureKotlinTest : AbstractConfigureKotlinTestBase() {
         val project = modules.first().project
         val collector = createConfigureKotlinNotificationCollector(project)
 
+        configurator.getOrCreateKotlinLibrary(project, collector)
         for (module in modules) {
             configurator.configureModule(module, collector)
         }

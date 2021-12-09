@@ -3,7 +3,7 @@ package com.intellij.openapi.observable.properties
 
 import java.util.concurrent.atomic.AtomicReference
 
-class AtomicObservableProperty<T>(private val initialValue: T) : AbstractObservableProperty<T>(), AtomicProperty<T> {
+class AtomicObservableProperty<T>(private val initialValue: T) : AbstractObservableClearableProperty<T>(), AtomicProperty<T> {
   private val reference = AtomicReference(initialValue)
 
   override fun get(): T {

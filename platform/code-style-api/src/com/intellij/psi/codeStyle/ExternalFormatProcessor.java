@@ -43,7 +43,7 @@ public interface ExternalFormatProcessor {
                    boolean canChangeWhiteSpacesOnly,
                    boolean keepLineBreaks,
                    boolean enableBulkUpdate,
-                   @Nullable int cursorOffset);
+                   int cursorOffset);
 
   /**
    * Indents the line.

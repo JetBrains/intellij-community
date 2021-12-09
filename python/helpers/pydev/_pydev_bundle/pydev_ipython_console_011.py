@@ -123,6 +123,9 @@ class PyDevTerminalInteractiveShell(TerminalInteractiveShell):
             except:
                 sys.stderr.write("Failed to enable inline matplotlib plots\n")
                 sys.stderr.flush()
+
+    def patch_stdout_if_needed(self):
+        if INLINE_OUTPUT_SUPPORTED:
             patch_stdout()
 
     # In the PyDev Console, GUI control is done via hookable XML-RPC server

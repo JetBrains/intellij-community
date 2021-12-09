@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.inspections
 
 import com.intellij.codeInsight.CodeInsightUtil
+import com.intellij.codeInsight.intention.FileModifier.SafeFieldForPreview
 import com.intellij.codeInspection.*
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElementVisitor
@@ -78,13 +79,14 @@ class RedundantIfInspection : AbstractKotlinInspection(), CleanupLocalInspection
         }
     }
 
-    private class RemoveRedundantIf(private val redundancyType: RedundancyType, private val branchType: BranchType) : LocalQuickFix {
+    private class RemoveRedundantIf(private val redundancyType: RedundancyType,
+                                    @SafeFieldForPreview // may refer to PsiElement of original file but we are only reading from it
+                                    private val branchType: BranchType) : LocalQuickFix {
         override fun getName() = KotlinBundle.message("remove.redundant.if.text")
         override fun getFamilyName() = name
 
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val element = descriptor.psiElement as KtIfExpression
-            if (!CodeInsightUtil.preparePsiElementsForWrite(element)) return
             val condition = when (redundancyType) {
                 RedundancyType.NONE -> return
                 RedundancyType.THEN_TRUE -> element.condition!!

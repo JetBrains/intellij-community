@@ -19,6 +19,7 @@ import com.intellij.ui.JBIntSpinner
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.*
+import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
@@ -31,6 +32,7 @@ import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.VerticalGaps
 import com.intellij.ui.layout.*
 import com.intellij.ui.popup.PopupState
+import com.intellij.util.Function
 import com.intellij.util.MathUtil
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
@@ -39,13 +41,13 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.event.ActionEvent
 import java.awt.event.KeyAdapter
 import java.awt.event.KeyEvent
+import java.util.*
 import javax.swing.*
 
 @ApiStatus.Internal
 internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                        private val panelContext: PanelContext,
                        private val parent: PanelImpl,
-                       val firstCellLabel: Boolean,
                        rowLayout: RowLayout) : Row {
 
   var rowLayout = rowLayout
@@ -186,34 +188,11 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(JBCheckBox(text))
   }
 
-  override fun radioButton(text: String): Cell<JBRadioButton> {
-    val group = dialogPanelConfig.context.getButtonGroup() ?: throw UiDslException(
+  override fun radioButton(text: String, value: Any?): Cell<JBRadioButton> {
+    val buttonsGroup = dialogPanelConfig.context.getButtonsGroup() ?: throw UiDslException(
       "Button group must be defined before using radio button")
-    if (group is BindButtonGroup<*>) {
-      throw UiDslException("Parent button group provides binding but value for radioButton is not provided")
-    }
     val result = cell(JBRadioButton(text))
-    group.add(result.component)
-    return result
-  }
-
-  override fun radioButton(text: String, value: Any): Cell<JBRadioButton> {
-    val group = dialogPanelConfig.context.getButtonGroup() ?: throw UiDslException(
-      "Button group must be defined before using radio button with value")
-    if (group !is BindButtonGroup<*>) {
-      throw UiDslException("Parent button group doesn't provide binding for $value")
-    }
-    if (value::class.java != group.type) {
-      throw UiDslException("Value $value is incompatible with button group binding class ${group.type.simpleName}")
-    }
-    val binding = group.binding
-    val result = cell(JBRadioButton(text))
-    val component = result.component
-    group.add(component)
-    component.isSelected = binding.get() == value
-    result.onApply { if (component.isSelected) group.set(value) }
-    result.onReset { component.isSelected = binding.get() == value }
-    result.onIsModified { component.isSelected != (binding.get() == value) }
+    buttonsGroup.add(result, value)
     return result
   }
 
@@ -277,6 +256,10 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(createComment(comment, maxLineLength, action))
   }
 
+  override fun commentHtml(text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
+    return comment(text, MAX_LINE_LENGTH_WORD_WRAP, action)
+  }
+
   override fun link(text: String, action: (ActionEvent) -> Unit): CellImpl<ActionLink> {
     return cell(ActionLink(text, action))
   }
@@ -310,6 +293,13 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
                                          fileChooserDescriptor: FileChooserDescriptor,
                                          fileChosen: ((chosenFile: VirtualFile) -> String)?): Cell<TextFieldWithBrowseButton> {
     val result = cell(textFieldWithBrowseButton(project, browseDialogTitle, fileChooserDescriptor, fileChosen))
+    result.columns(COLUMNS_SHORT)
+    return result
+  }
+
+  override fun expandableTextField(parser: Function<in String, out MutableList<String>>,
+                                   joiner: Function<in MutableList<String>, String>): Cell<ExpandableTextField> {
+    val result = cell(ExpandableTextField(parser, joiner))
     result.columns(COLUMNS_SHORT)
     return result
   }
@@ -376,8 +366,8 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(component)
   }
 
-  override fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
-    val component = ComboBox(items)
+  override fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
+    val component = ComboBox(DefaultComboBoxModel(Vector(items)))
     component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
     return cell(component)
   }

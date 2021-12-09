@@ -2,6 +2,7 @@
 package org.zmlx.hg4idea.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,9 +118,9 @@ public final class HgVersion implements Comparable<HgVersion> {
   }
 
   @NotNull
-  public static HgVersion identifyVersion(@NotNull String executable)
+  public static HgVersion identifyVersion(@NotNull Project project, @NotNull String executable)
     throws ShellCommandException, InterruptedException, ParseException {
-    HgCommandResult versionResult = HgUtil.getVersionOutput(executable);
+    HgCommandResult versionResult = HgUtil.getVersionOutput(project, executable);
     return parseVersionAndExtensionInfo(versionResult.getRawOutput(), versionResult.getErrorLines());
   }
 

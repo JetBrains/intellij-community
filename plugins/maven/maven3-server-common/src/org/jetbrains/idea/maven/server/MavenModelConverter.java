@@ -5,6 +5,8 @@ import com.intellij.util.ReflectionUtilRt;
 import org.apache.maven.archetype.catalog.Archetype;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.handler.ArtifactHandler;
+import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.repository.ArtifactRepositoryPolicy;
 import org.apache.maven.model.*;
 import org.apache.maven.shared.dependency.tree.DependencyNode;
 import org.codehaus.plexus.util.xml.Xpp3Dom;
@@ -128,7 +130,29 @@ public class MavenModelConverter {
     return result;
   }
 
+  public static List<MavenRemoteRepository> convertRemoteRepositories(List<? extends ArtifactRepository> repositories) {
+    if (repositories == null) return new ArrayList<MavenRemoteRepository>();
+
+    List<MavenRemoteRepository> result = new ArrayList<MavenRemoteRepository>(repositories.size());
+    for (ArtifactRepository each : repositories) {
+      result.add(new MavenRemoteRepository(each.getId(),
+                                           each.getId(),
+                                           each.getUrl(),
+                                           each.getLayout() != null ? each.getLayout().getId() : "default",
+                                           convertPolicy(each.getReleases()),
+                                           convertPolicy(each.getSnapshots())));
+    }
+    return result;
+  }
+
+
   private static MavenRemoteRepository.Policy convertPolicy(RepositoryPolicy policy) {
+    return policy != null
+           ? new MavenRemoteRepository.Policy(policy.isEnabled(), policy.getUpdatePolicy(), policy.getChecksumPolicy())
+           : null;
+  }
+
+  private static MavenRemoteRepository.Policy convertPolicy(ArtifactRepositoryPolicy policy) {
     return policy != null
            ? new MavenRemoteRepository.Policy(policy.isEnabled(), policy.getUpdatePolicy(), policy.getChecksumPolicy())
            : null;

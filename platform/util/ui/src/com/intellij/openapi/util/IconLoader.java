@@ -90,6 +90,34 @@ public final class IconLoader {
 
   private IconLoader() {}
 
+  @ApiStatus.Internal
+  public static Icon loadCustomVersionOrScale(@NotNull ScalableIcon icon, float size) {
+    if (icon.getIconWidth() == size) return icon;
+
+    Icon cachedIcon = icon;
+    if (cachedIcon instanceof RetrievableIcon) {
+      cachedIcon = ((RetrievableIcon)icon).retrieveIcon();
+    }
+    if (cachedIcon instanceof CachedImageIcon) {
+      String suffix = "@" + (int)size + "x" + (int)size + ".svg";
+      ImageDataLoader resolver = ((CachedImageIcon)cachedIcon).resolver;
+      URL url = resolver == null ? null : resolver.getURL();
+      if (url != null) {
+        try {
+          URL newUrl = new URL(url.toString().replace(".svg", suffix));
+          Icon newIcon = findIcon(newUrl);
+          if (newIcon instanceof CachedImageIcon && newIcon.getIconWidth() == size) {
+            return newIcon;
+          }
+        }
+        catch (MalformedURLException e) {
+        }
+      }
+    }
+
+    return icon.scale(size / icon.getIconWidth());
+  }
+
   @TestOnly
   public static <T> T performStrictly(@NotNull Supplier<? extends T> computable) {
     STRICT_LOCAL.set(true);

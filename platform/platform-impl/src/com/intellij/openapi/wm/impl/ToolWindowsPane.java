@@ -2,17 +2,19 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.RemoteDesktopService;
+import com.intellij.ide.ui.LafManagerListener;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.util.Pair;
-import com.intellij.ui.ExperimentalUI;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.util.registry.RegistryValueListener;
@@ -22,6 +24,7 @@ import com.intellij.openapi.wm.ToolWindowType;
 import com.intellij.openapi.wm.WindowInfo;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.paint.PaintUtil;
@@ -56,6 +59,7 @@ import static com.intellij.util.ui.UIUtil.useSafely;
 public final class ToolWindowsPane extends JBLayeredPane implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance(ToolWindowsPane.class);
   @NonNls public static final String TEMPORARY_ADDED = "TEMPORARY_ADDED";
+  private boolean isLookAndFeelUpdated = false;
 
   //The size of topmost 'resize' area when toolwindow caption is used for both resize and drag
   public static int getHeaderResizeArea() {
@@ -161,6 +165,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     }
     if (Registry.is("ide.allow.split.and.reorder.in.tool.window")) {
       new ToolWindowInnerDragHelper(parentDisposable, this).start();
+    }
+    Application application = ApplicationManager.getApplication();
+    if (application != null) {
+      application.getMessageBus().connect(parentDisposable).subscribe(LafManagerListener.TOPIC,
+                                                                      source -> isLookAndFeelUpdated = true);
     }
   }
 
@@ -856,8 +865,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       InternalDecoratorImpl oldComponent = (InternalDecoratorImpl)c;
       WindowInfoImpl oldInfo = ToolWindowManagerImpl.getRegisteredMutableInfoOrLogError(oldComponent);
 
-      IJSwingUtilities.updateComponentTreeUI(oldComponent);
-      IJSwingUtilities.updateComponentTreeUI(newComponent);
+      if (isLookAndFeelUpdated) {
+        IJSwingUtilities.updateComponentTreeUI(oldComponent);
+        IJSwingUtilities.updateComponentTreeUI(newComponent);
+        isLookAndFeelUpdated = false;
+      }
 
       if (info.isSplit()) {
         splitter.setFirstComponent(oldComponent);

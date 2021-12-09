@@ -40,7 +40,7 @@ abstract class BuildTasks {
   abstract void compileModulesFromProduct()
 
   /**
-   * Compiles required modules and builds zip archives of the specified plugins in {@link BuildPaths#artifacts artifacts}/&lt;product-code&gt;-plugins
+   * Compiles required modules and builds zip archives of the specified plugins in {@link BuildPaths#artifactDir artifacts}/&lt;product-code&gt;-plugins
    * directory.
    */
   abstract void buildNonBundledPlugins(List<String> mainPluginModules)

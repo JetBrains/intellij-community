@@ -132,6 +132,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       }
 
       if (!checkOldTrustedStateAndMigrate(project, projectStoreBaseDir)) {
+        handleProjectOpenCancelOrFailure(project)
         return@run null
       }
 
@@ -140,10 +141,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
         openProject(project, indicator, isRunStartUpActivitiesEnabled(project)).join()
       }
       catch (e: ProcessCanceledException) {
-        ApplicationManager.getApplication().invokeAndWait {
-          closeProject(project, /* saveProject = */false, /* dispose = */true, /* checkCanClose = */false)
-        }
-        ApplicationManager.getApplication().messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
+        handleProjectOpenCancelOrFailure(project)
         return@run null
       }
 
@@ -171,6 +169,13 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
         }
         project
       })
+  }
+
+  private fun handleProjectOpenCancelOrFailure(project: Project) {
+    ApplicationManager.getApplication().invokeAndWait {
+      closeProject(project, /* saveProject = */false, /* dispose = */true, /* checkCanClose = */false)
+    }
+    ApplicationManager.getApplication().messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
   }
 
   /**

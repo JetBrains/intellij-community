@@ -2559,7 +2559,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean isDecimalDigit(char c) {
-    return c >= '0' && c <= '9';
+    return Strings.isDecimalDigit(c);
   }
 
   @Contract("null -> false")

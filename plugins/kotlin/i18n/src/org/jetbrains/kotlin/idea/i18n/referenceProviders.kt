@@ -15,11 +15,11 @@ import org.jetbrains.kotlin.descriptors.ClassConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.imports.importableFqName
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.roots.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
@@ -51,7 +51,7 @@ private fun KtExpression.getBundleNameByContext(): String? {
 
     (parent as? KtProperty)?.let { return it.resolveToDescriptorIfAny()?.getBundleNameByAnnotation() }
 
-    val bindingContext = expression.analyze(BodyResolveMode.PARTIAL)
+    val bindingContext = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
     val resolvedCall = if (parent is KtQualifiedExpression && expression == parent.receiverExpression) {
         parent.selectorExpression.getResolvedCall(bindingContext)
     } else {

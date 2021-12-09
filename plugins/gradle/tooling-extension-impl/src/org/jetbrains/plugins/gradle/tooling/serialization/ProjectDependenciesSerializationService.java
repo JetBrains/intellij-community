@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.tooling.serialization;
 
 import com.amazon.ion.IonReader;
@@ -263,6 +263,7 @@ public final class ProjectDependenciesSerializationService implements Serializat
     throws IOException {
     writeLong(writer, "id", node.getId());
     writeString(writer, "resolutionState", node.getResolutionState());
+    writeString(writer, "selectionReason", node.getSelectionReason());
   }
 
   private static void writeDependenciesField(IonWriter writer,
@@ -343,6 +344,7 @@ public final class ProjectDependenciesSerializationService implements Serializat
             String type = readString(reader, "_type");
             long id = readLong(reader, "id");
             String resolutionState = readString(reader, "resolutionState");
+            String selectionReason = readString(reader, "selectionReason");
             DependencyNode node;
             if (ProjectDependencyNode.class.getSimpleName().equals(type)) {
               String projectName = assertNotNull(readString(reader, "projectName"));
@@ -377,6 +379,7 @@ public final class ProjectDependenciesSerializationService implements Serializat
             }
             if (node instanceof AbstractDependencyNode) {
               ((AbstractDependencyNode)node).setResolutionState(resolutionState);
+              ((AbstractDependencyNode)node).setSelectionReason(selectionReason);
             }
             return node;
           }

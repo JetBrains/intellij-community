@@ -6,6 +6,7 @@ import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.ide.util.newProjectWizard.AbstractProjectWizard;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateSettings;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.wizard.NewProjectWizardStep;
 import com.intellij.ide.wizard.Step;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
@@ -26,6 +27,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectImportProvider;
 import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.ui.UIBundle;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -173,7 +175,9 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
         throw new RuntimeException(currentStep + " is not validated");
       }
     }
-    myWizard.doFinishAction();
+    if (!myWizard.doFinishAction()) {
+      throw new RuntimeException(myWizard.getCurrentStepObject() + " is not validated");
+    }
   }
 
   protected void createWizard(@Nullable Project project) throws IOException {
@@ -191,6 +195,44 @@ public abstract class ProjectWizardTestCase<T extends AbstractProjectWizard> ext
     myWizard.disposeIfNeeded();
     myCreatedProject = NewProjectUtil.createFromWizard(myWizard);
     return myCreatedProject;
+  }
+
+  protected Project createProjectFromTemplate(@NotNull Consumer<NewProjectWizardStep> adjuster) throws IOException {
+    return createProject(step -> {
+      var npwStep = getNewProjectWizardStep(step, UIBundle.message("label.project.wizard.project.generator.name"));
+      if (npwStep != null) {
+        adjuster.accept(npwStep);
+      }
+    });
+  }
+
+  protected Module createModule(@NotNull Project project, @NotNull Consumer<? super Step> adjuster) throws IOException {
+    createWizard(null);
+    runWizard(adjuster);
+    myWizard.disposeIfNeeded();
+    return createModuleFromWizard(project);
+  }
+
+  protected Module createModuleFromTemplate(@NotNull Project project, @NotNull Consumer<NewProjectWizardStep> adjuster) throws IOException {
+    return createModuleFromTemplate(UIBundle.message("label.project.wizard.module.generator.name"), null, project, step -> {
+      var npwStep = getNewProjectWizardStep(step, UIBundle.message("label.project.wizard.module.generator.name"));
+      if (npwStep != null) {
+        adjuster.accept(npwStep);
+      }
+    });
+  }
+
+  protected @Nullable NewProjectWizardStep getNewProjectWizardStep(@NotNull Step step, @NotNull String group) {
+    if (step instanceof ProjectTypeStep) {
+      var projectTypeStep = (ProjectTypeStep)step;
+      assertTrue(projectTypeStep.setSelectedTemplate(group, null));
+      var steps = myWizard.getSequence().getSelectedSteps();
+      assertEquals(steps.toString(), 1, steps.size());
+      var moduleWizardStep = projectTypeStep.getCustomStep();
+      assertInstanceOf(moduleWizardStep, NewProjectWizardStep.class);
+      return (NewProjectWizardStep)moduleWizardStep;
+    }
+    return null;
   }
 
   protected T createWizard(Project project, File directory) {

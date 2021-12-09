@@ -26,7 +26,7 @@ class GroovyParameterTypeHintsCollector(editor: Editor,
   FactoryInlayHintsCollector(editor) {
 
   override fun collect(element: PsiElement, editor: Editor, sink: InlayHintsSink): Boolean {
-    if (DumbService.isDumb(element.project)) {
+    if (DumbService.isDumb(element.project) || element.project.isDefault) {
       return false
     }
     if (!settings.showInferredParameterTypes) {

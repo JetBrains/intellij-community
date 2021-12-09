@@ -412,7 +412,7 @@ public final class PluginInstallOperation {
             Messages.showYesNoDialog(IdeBundle.message(messageKey, pluginNode.getName(), deps),
                                      IdeBundle.message(titleKey),
                                      IdeBundle.message("plugins.configurable.install"),
-                                     Messages.getNoButton(),
+                                     Messages.getCancelButton(),
                                      Messages.getWarningIcon());
 
           result[0] = dialogResult == Messages.YES;

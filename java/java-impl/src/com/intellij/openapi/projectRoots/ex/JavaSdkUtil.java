@@ -1,3 +1,4 @@
+
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.projectRoots.ex;
 
@@ -17,10 +18,12 @@ import com.intellij.rt.execution.CommandLineWrapper;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -42,9 +45,20 @@ public final class JavaSdkUtil {
     return PathUtil.getJarPathForClass(ReflectionUtil.forName("org.junit.Test"));
   }
 
+  /**
+   * @deprecated currently IDEA distribution includes junit3 library, but it may be removed in the future, so it's better not to rely on this;
+   * if you really need to get a path to JUnit3 you need to take it from some other place.
+   */
+  @Deprecated
   @NotNull
   public static String getJunit3JarPath() {
-    return PathUtil.getJarPathForClass(ReflectionUtil.forName("junit.runner.TestSuiteLoader")); //junit3 specific class
+    try {
+      return PathUtil.getJarPathForClass(ReflectionUtil.forName("junit.runner.TestSuiteLoader")); //junit3 specific class
+    }
+    catch (Exception e) {
+      //IDEA started from sources won't have JUnit3 library in classpath, so let's take it from Maven repository
+      return new File(SystemProperties.getUserHome(), ".m2/repository/junit/junit/3.8.1/junit-3.8.1.jar").getAbsolutePath();
+    }
   }
 
   @NotNull

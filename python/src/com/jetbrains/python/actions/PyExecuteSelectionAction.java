@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -28,6 +29,9 @@ public class PyExecuteSelectionAction extends DumbAwareAction {
   @Override
   public void actionPerformed(@NotNull AnActionEvent e) {
     Editor editor = e.getData(CommonDataKeys.EDITOR);
+    if (editor instanceof EditorImpl) {
+      PyExecuteConsoleCustomizer.Companion.getInstance().notifySciCellGutterExecuted((EditorImpl)editor, "ExecuteInPyConsoleAction");
+    }
     Project project = e.getData(CommonDataKeys.PROJECT);
     if (editor != null && project != null) {
       PythonRunConfiguration config = PyExecuteConsoleCustomizer.Companion.getInstance().getContextConfig(e.getDataContext());

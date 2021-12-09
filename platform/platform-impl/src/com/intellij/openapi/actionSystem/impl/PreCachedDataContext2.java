@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
+import com.intellij.ide.ActivityTracker;
 import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.ide.impl.DataManagerImpl;
 import com.intellij.ide.impl.DataValidators;
@@ -13,16 +13,21 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolder;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.keyFMap.KeyFMap;
+import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,6 +49,8 @@ import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
  * @author gregsh
  */
 class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActionEvent.InjectedDataContextSupplier, FreezingDataContext {
+
+  private static final Logger LOG = Logger.getInstance(PreCachedDataContext2.class);
 
   private static int ourPrevMapEventCount;
   private static final Map<Component, FList<ProviderData>> ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap();
@@ -69,7 +76,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
     }
 
     try (AccessToken ignored = ProhibitAWTEvents.start("getData")) {
-      int count = IdeEventQueue.getInstance().getEventCount();
+      int count = ActivityTracker.getInstance().getCount();
       if (ourPrevMapEventCount != count) {
         ourPrevMaps.clear();
       }
@@ -78,17 +85,18 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
       Component topParent = components.isEmpty() ? component : components.get(0).getParent();
       FList<ProviderData> initial = topParent == null ? FList.emptyList() : ourPrevMaps.get(topParent);
 
-      DataKey<?>[] keys = DataKey.allKeys();
-      myDataKeysCount = keys.length;
-      if (ourDataKeysIndices.size() < myDataKeysCount) {
-        for (DataKey<?> key : keys) {
-          ourDataKeysIndices.computeIfAbsent(key.getName(), __ -> ourDataKeysCount.getAndIncrement());
-        }
-      }
       if (components.isEmpty()) {
         myCachedData = initial;
+        myDataKeysCount = ourDataKeysIndices.size();
       }
       else {
+        DataKey<?>[] keys = DataKey.allKeys();
+        myDataKeysCount = keys.length;
+        if (ourDataKeysIndices.size() < myDataKeysCount) {
+          for (DataKey<?> key : keys) {
+            ourDataKeysIndices.computeIfAbsent(key.getName(), __ -> ourDataKeysCount.getAndIncrement());
+          }
+        }
         myCachedData = preGetAllData(components, initial, keys);
       }
       //noinspection AssignmentToStaticFieldFromInstanceMethod
@@ -144,9 +152,10 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
     if (myCachedData.isEmpty()) return null;
 
     int keyIndex = ourDataKeysIndices.getOrDefault(dataId, -1);
-    if (keyIndex == -1) return null; // // a newly created data key => no data provider => no value
+    if (keyIndex == -1) return null; // a newly created data key => no data provider => no value
 
-    boolean rulesAllowed = myMissedKeysIfFrozen == null && !CommonDataKeys.PROJECT.is(dataId) && keyIndex < myDataKeysCount;
+    boolean rulesSuppressed = EDT.isCurrentThreadEdt() && Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
+    boolean rulesAllowed = myMissedKeysIfFrozen == null && !CommonDataKeys.PROJECT.is(dataId) && keyIndex < myDataKeysCount && !rulesSuppressed;
     DataManagerImpl dataManager = null;
     GetDataRule rule = null;
     Object answer = null;
@@ -178,6 +187,16 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
     if (myMissedKeysIfFrozen != null && answer == null) {
       myMissedKeysIfFrozen.accept(dataId);
       return null;
+    }
+    if (answer == null && rulesSuppressed) {
+      Throwable throwable = new Throwable();
+      AppExecutorUtil.getAppExecutorService().execute(() -> {
+        if (ReadAction.compute(() -> getData(dataId)) != null) {
+          LOG.warn(dataId + " is not available on EDT. " +
+                   "Code that depends on data rules and slow data providers must be run in background. " +
+                   "For example, an action must be `UpdateInBackground`.", throwable);
+        }
+      });
     }
     return answer == ourExplicitNull ? null : answer;
   }

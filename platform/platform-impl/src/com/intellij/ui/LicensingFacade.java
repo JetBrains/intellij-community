@@ -108,16 +108,18 @@ public final class LicensingFacade {
     return result != null? result.get(productCode) : null;
   }
 
-  private static final Gson ourGson = new GsonBuilder().setDateFormat("yyyyMMdd").create();
+  private static @NotNull Gson createGson() {
+    return new GsonBuilder().setDateFormat("yyyyMMdd").create();
+  }
 
   public String toJson() {
-    return ourGson.toJson(this);
+    return createGson().toJson(this);
   }
 
   @Nullable
   public static LicensingFacade fromJson(String json) {
     try {
-      return ourGson.fromJson(json, LicensingFacade.class);
+      return createGson().fromJson(json, LicensingFacade.class);
     }
     catch (Throwable e) {
       return null;

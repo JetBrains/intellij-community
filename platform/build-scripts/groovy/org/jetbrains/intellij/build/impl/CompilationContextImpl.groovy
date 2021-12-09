@@ -88,7 +88,7 @@ final class CompilationContextImpl implements CompilationContext {
 
   private static String defineJavaSdk(JpsModel model, String projectHome, BuildOptions options, BuildMessages messages) {
     def sdks = []
-    def jbrDir = jbrDir(projectHome, options)
+    def jbrDir = jbrTargetDir(projectHome, options)
     def jbrVersionName = jbrVersionName(options)
     sdks << jbrVersionName
     def jbrDefaultDir = "$jbrDir/$jbrVersionName"
@@ -126,8 +126,8 @@ final class CompilationContextImpl implements CompilationContext {
     }
   }
 
-  private static String jbrDir(String projectHome, BuildOptions options) {
-    options.jdksTargetDir?.with {
+  static String jbrTargetDir(String projectHome, BuildOptions options) {
+    options.jbrTargetDir?.with {
       new File(it).exists() ? it : null
     } ?: "$projectHome/build/jdk"
   }
@@ -225,7 +225,7 @@ final class CompilationContextImpl implements CompilationContext {
       dependenciesInstalled = true
       String[] args = ['setupJdks']
       if (isKotlinCompilerRequired) args += KotlinBinaries.SET_UP_COMPILER_GRADLE_TASK
-      if (options.jdksTargetDir != null) args += "-D$BuildOptions.JDKS_TARGET_DIR_OPTION=$options.jdksTargetDir".toString()
+      if (options.jbrTargetDir != null) args += "-D$BuildOptions.JBR_TARGET_DIR_OPTION=$options.jbrTargetDir".toString()
       gradle.run('Setting up compilation dependencies', args)
     }
   }
@@ -407,14 +407,13 @@ final class CompilationContextImpl implements CompilationContext {
       return
     }
 
-    Path artifactsDir = Path.of(paths.artifacts)
     boolean isRegularFile = Files.isRegularFile(file)
     if (isRegularFile) {
       //temporary workaround until TW-54541 is fixed: if build is going to produce big artifacts and we have lack of free disk space it's better not to send 'artifactBuilt' message to avoid "No space left on device" errors
       long fileSize = Files.size(file)
       if (fileSize > 1_000_000) {
         long producedSize = totalSizeOfProducedArtifacts.addAndGet(fileSize)
-        boolean willBePublishedWhenBuildFinishes = FileUtil.isAncestor(artifactsDir.toString(), file.toString(), true)
+        boolean willBePublishedWhenBuildFinishes = FileUtil.isAncestor(paths.artifactDir.toString(), file.toString(), true)
 
         long oneGb = 1024L * 1024 * 1024
         long requiredAdditionalSpace = oneGb * 6
@@ -435,8 +434,8 @@ final class CompilationContextImpl implements CompilationContext {
     }
 
     String targetDirectoryPath = ""
-    if (file.parent.startsWith(artifactsDir)) {
-      targetDirectoryPath = FileUtilRt.toSystemIndependentName(artifactsDir.relativize(file.parent).toString())
+    if (file.parent.startsWith(paths.artifactDir)) {
+      targetDirectoryPath = FileUtilRt.toSystemIndependentName(paths.artifactDir.relativize(file.parent).toString())
     }
 
     if (!isRegularFile) {
@@ -463,10 +462,14 @@ final class CompilationContextImpl implements CompilationContext {
 @CompileStatic
 final class BuildPathsImpl extends BuildPaths {
   BuildPathsImpl(String communityHome, String projectHome, String buildOutputRoot, String jdkHome, Path logDir) {
-    super(Path.of(communityHome).toAbsolutePath().normalize(), Path.of(buildOutputRoot).toAbsolutePath().normalize(), logDir.toAbsolutePath().normalize())
+    super(Path.of(communityHome).toAbsolutePath().normalize(),
+          Path.of(buildOutputRoot).toAbsolutePath().normalize(),
+          logDir.toAbsolutePath().normalize())
+
     this.projectHome = projectHome
     this.projectHomeDir = Path.of(projectHome).toAbsolutePath().normalize()
     this.jdkHome = jdkHome
-    artifacts = "${this.buildOutputRoot}/artifacts"
+    artifactDir = buildOutputDir.resolve("artifacts")
+    artifacts = FileUtilRt.toSystemIndependentName(artifactDir.toString())
   }
 }

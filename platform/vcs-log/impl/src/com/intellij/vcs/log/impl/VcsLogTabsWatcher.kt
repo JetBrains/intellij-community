@@ -4,15 +4,16 @@ package com.intellij.vcs.log.impl
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow
 import com.intellij.vcs.log.impl.VcsLogManager.LogWindowKind
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
-import com.intellij.vcs.log.visible.VisiblePackRefresher
+import com.intellij.vcs.log.ui.VcsLogUiEx
 import java.util.function.Consumer
 
 internal class VcsLogTabsWatcher(private val project: Project, private val postponableLogRefresher: PostponableLogRefresher) : Disposable {
   private val extensions = mapOf(
-    Pair(LogWindowKind.TOOL_WINDOW, VcsLogToolWindowTabsWatcher(project, this)),
+    Pair(LogWindowKind.TOOL_WINDOW, VcsLogToolWindowTabsWatcher(project, ChangesViewContentManager.TOOLWINDOW_ID, this)),
     Pair(LogWindowKind.EDITOR, VcsLogEditorTabsWatcher(project, this))
   )
 
@@ -22,11 +23,26 @@ internal class VcsLogTabsWatcher(private val project: Project, private val postp
     })
   }
 
-  fun addTabToWatch(logId: String, refresher: VisiblePackRefresher,
-                    kind: LogWindowKind, isClosedOnDispose: Boolean): Disposable {
+  fun addTabToWatch(ui: VcsLogUiEx, kind: LogWindowKind, isClosedOnDispose: Boolean): Disposable {
     val extension = extensions[kind]
-    val window = extension?.createLogTab(logId, refresher, isClosedOnDispose) ?: VcsLogWindow(logId, refresher)
+    val window = extension?.createLogTab(ui, isClosedOnDispose) ?: VcsLogWindow(ui)
     return postponableLogRefresher.addLogWindow(window)
+  }
+
+  fun getTabs(): List<VcsLogUiEx> {
+    return postponableLogRefresher.logWindows.map { it.ui }
+  }
+
+  private fun getLogWindows(kind: LogWindowKind): List<VcsLogWindow> {
+    val watcherExtension = extensions[kind]
+    if (watcherExtension == null) {
+      return postponableLogRefresher.logWindows.filter { tab -> extensions.values.none { it.isOwnerOf(tab) } }
+    }
+    return postponableLogRefresher.logWindows.filter(watcherExtension::isOwnerOf)
+  }
+
+  fun getVisibleTabs(kind: LogWindowKind): List<VcsLogUiEx> {
+    return getLogWindows(kind).filter { it.isVisible }.map { it.ui }
   }
 
   private fun selectionChanged(tabId: String) {
@@ -55,7 +71,7 @@ internal class VcsLogTabsWatcher(private val project: Project, private val postp
 
 internal interface VcsLogTabsWatcherExtension<T : VcsLogWindow> {
   fun setTabSelectedCallback(callback: (String) -> Unit)
-  fun createLogTab(logId: String, refresher: VisiblePackRefresher, isClosedOnDispose: Boolean): T
+  fun createLogTab(ui: VcsLogUiEx, isClosedOnDispose: Boolean): T
   fun isOwnerOf(tab: VcsLogWindow): Boolean
   fun closeTabs(tabs: List<VcsLogWindow>)
 }

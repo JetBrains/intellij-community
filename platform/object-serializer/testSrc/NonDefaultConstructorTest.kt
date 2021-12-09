@@ -1,6 +1,7 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.serialization
 
+import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.assertions.Assertions.assertThatThrownBy
 import com.intellij.testFramework.rules.InMemoryFsRule
@@ -80,8 +81,12 @@ class NonDefaultConstructorTest {
 
   @Test
   fun `remove versioned file on parameter error`() {
-    val file = VersionedFile(fsRule.fs.getPath("/cache.ion"), 42, isCompressed = false)
-    file.file.write("""
+    val disposable = Disposer.newDisposable()
+    com.intellij.openapi.diagnostic.DefaultLogger.disableStderrDumping(disposable)
+    try {
+
+      val file = VersionedFile(fsRule.fs.getPath("/cache.ion"), 42, isCompressed = false)
+      file.file.write("""
       {
         version:42,
         formatVersion:3,
@@ -89,12 +94,16 @@ class NonDefaultConstructorTest {
         }
       }
     """.trimIndent())
-    assertThatThrownBy {
-      file.read(NoDefaultConstructorBean::class.java)
+      assertThatThrownBy {
+        file.read(NoDefaultConstructorBean::class.java)
+      }
+        .isInstanceOf(AssertionError::class.java)
+        .hasCauseInstanceOf(SerializationException::class.java)
+      assertThat(file.file).doesNotExist()
     }
-      .isInstanceOf(AssertionError::class.java)
-      .hasCauseInstanceOf(SerializationException::class.java)
-    assertThat(file.file).doesNotExist()
+    finally {
+      Disposer.dispose(disposable)
+    }
   }
 
   @Test

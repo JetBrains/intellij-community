@@ -5,6 +5,8 @@ import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
+import com.intellij.ide.bookmark.ui.tree.FolderNodeUpdater
+import com.intellij.ide.bookmark.ui.tree.VirtualFileVisitor
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.ui.UISettings
@@ -17,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState.stateForComponent
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl.OPEN_IN_PREVIEW_TAB
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.ui.TreeSpeedSearch
@@ -46,10 +49,11 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   private val selectionAlarm = SingleAlarm(this::selectionChanged, 50, stateForComponent(this), this)
 
   private val structure = BookmarksTreeStructure(this)
-  private val model = StructureTreeModel(structure, this)
+  val model = StructureTreeModel(structure, this)
   val tree = DnDAwareTree(AsyncTreeModel(model, this))
   private val treeExpander = DefaultTreeExpander(tree)
   private val panel = BorderLayoutPanel()
+  private val updater = FolderNodeUpdater(this)
 
   val selectedNode
     get() = TreeUtil.getAbstractTreeNode(TreeUtil.getSelectedPathIfOne(tree))
@@ -92,6 +96,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     return null
   }
 
+  fun select(file: VirtualFile) = updater.updateImmediately { select(VirtualFileVisitor(file, null), true) }
   fun select(group: BookmarkGroup) = select(GroupBookmarkVisitor(group), true)
   fun select(group: BookmarkGroup, bookmark: Bookmark) = select(GroupBookmarkVisitor(group, bookmark), false)
   private fun select(visitor: TreeVisitor, centered: Boolean) = TreeUtil.promiseMakeVisible(tree, visitor).onSuccess {
@@ -196,7 +201,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
         .install()
     }
 
-    tree.emptyText.initialize(tree)
+    tree.emptyText.initialize()
     tree.addTreeSelectionListener(RestoreSelectionListener())
     tree.addTreeSelectionListener { if (tree.hasFocus()) selectionAlarm.cancelAndRequest() }
     tree.addFocusListener(object : FocusListener {

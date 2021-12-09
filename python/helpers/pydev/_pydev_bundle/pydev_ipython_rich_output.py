@@ -51,10 +51,11 @@ def is_data_frame(html):
 
 def send_rich_output(data):
     if 'image/png' in data:
-        import base64
         png = data['image/png']
-        res = base64.b64encode(png)
-        data['image/png'] = res
+        if not isinstance(png, str):
+            import base64
+            res = base64.b64encode(png)
+            data['image/png'] = res
     from _pydev_bundle.pydev_ipython_console_011 import get_client
     client = get_client()
     if client:

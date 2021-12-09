@@ -498,7 +498,6 @@
     <pushSupport implementation="git4idea.push.GitPushSupport"/>
     <cherryPicker implementation="git4idea.cherrypick.GitCherryPicker"/>
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitToggleAnnotationOptionsActionProvider" />
-    <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitShowCommitInLogAnnotationGutterActionProvider" />
     <statistics.projectUsagesCollector implementation="git4idea.GitStatisticsCollector"/>
     <statistics.notificationIdsHolder implementation="git4idea.GitNotificationIdsHolder"/>
     <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
@@ -572,7 +571,7 @@
     <registryKey key="git.update.incoming.info.time" defaultValue="20"
                  description="Time period (in minutes) between incoming commits checks." restartRequired="true"/>
 
-    <registryKey key="git.commit.completion.fixup.squash" defaultValue="false"
+    <registryKey key="git.commit.completion.fixup.squash" defaultValue="true"
                  description="Provide completion for fixup and squash prefixes in commit message field" restartRequired="false"/>
 
     <registryKey key="git.interactive.rebase.collect.entries.using.log" defaultValue="true"
@@ -611,6 +610,8 @@
     <projectService serviceImplementation="git4idea.index.ui.GitStageUiSettingsImpl"/>
 
     <projectService serviceImplementation="git4idea.index.GitStageTracker"/>
+    <fileDocumentManagerListener implementation="git4idea.index.GitStageFileDocumentManagerListener"/>
+    <editorFactoryDocumentListener implementation="git4idea.index.GitStageDocumentListener"/>
     <openapi.vcs.impl.LocalLineStatusTrackerProvider implementation="git4idea.index.GitStageLineStatusTrackerProvider"/>
     <vcsChangesViewRefresher implementation="git4idea.index.actions.GitStageChangesViewRefresher"/>
 
@@ -684,6 +685,9 @@
               activeInHeadlessMode="false" activeInTestMode="false"/>
     <listener class="git4idea.actions.GitQuickActionsToolbarPopup$MyGitRepositoryListener"
               topic="com.intellij.dvcs.repo.VcsRepositoryMappingListener"
+              activeInHeadlessMode="false" activeInTestMode="false"/>
+    <listener class="git4idea.ui.branch.GitBranchWidget$MyExperimentalToolbarStateListener"
+              topic="com.intellij.ide.navigationToolbar.experimental.ExperimentalToolbarStateListener"
               activeInHeadlessMode="false" activeInTestMode="false"/>
   </projectListeners>
 </idea-plugin>

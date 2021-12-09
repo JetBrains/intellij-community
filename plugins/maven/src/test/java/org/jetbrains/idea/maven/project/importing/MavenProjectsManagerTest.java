@@ -55,6 +55,17 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
     assertNull(myProjectsManager.findProject(myProjectPom));
   }
 
+  @Test
+  public void testShouldReturnNotNullForProcessedFiles() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>");
+    importProject();
+
+    // shouldn't throw
+    assertNotNull(myProjectsManager.findProject(myProjectPom));
+  }
+
   @Test 
   public void testUpdatingProjectsWhenAbsentManagedProjectFileAppears() throws IOException {
     importProject("<groupId>test</groupId>" +
@@ -1203,8 +1214,13 @@ public class MavenProjectsManagerTest extends MavenMultiVersionImportingTestCase
 
   @Override
   protected void doImportProjects(List<VirtualFile> files, boolean failOnReadingError, String... profiles) {
-    super.doImportProjects(files, failOnReadingError, profiles);
-    resolveDependenciesAndImport(); // wait of full import completion
+    if(isNewImportingProcess){
+      importViaNewFlow(files, failOnReadingError, Collections.emptyList(), profiles);
+    } else {
+      super.doImportProjects(files, failOnReadingError, profiles);
+      resolveDependenciesAndImport(); // wait of full import completion
+    }
+
   }
 
   private boolean hasProjectsToBeImported() {

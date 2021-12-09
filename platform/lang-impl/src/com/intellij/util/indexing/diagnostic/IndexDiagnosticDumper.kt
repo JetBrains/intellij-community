@@ -42,7 +42,8 @@ class IndexDiagnosticDumper : Disposable {
 
     private const val fileNamePrefix = "diagnostic-"
 
-    private val projectIndexingHistoryListenerEpName = ExtensionPointName.create<ProjectIndexingHistoryListener>("com.intellij.projectIndexingHistoryListener")
+    @JvmStatic
+    val projectIndexingHistoryListenerEpName = ExtensionPointName.create<ProjectIndexingHistoryListener>("com.intellij.projectIndexingHistoryListener")
 
     @JvmStatic
     private val shouldDumpDiagnosticsForInterruptedUpdaters: Boolean

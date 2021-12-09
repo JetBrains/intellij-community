@@ -103,7 +103,6 @@ abstract class PackageUpdateInspection : LocalInspectionTool() {
             .find { fileModule.isTheSameAs(it.projectModule.nativeModule) }
 
         if (moduleModel == null) {
-            thisLogger().warn("Trying to upgrade something for an unknown module")
             return null
         }
 

@@ -11,6 +11,7 @@ import com.intellij.ide.bookmark.ui.tree.GroupNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.NodeDescriptor
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.CommonShortcuts
@@ -26,8 +27,10 @@ import com.intellij.util.OpenSourceUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Component
+import java.awt.event.MouseEvent
 import javax.swing.JComponent
 import javax.swing.JTree
+import javax.swing.SwingUtilities
 
 
 internal val AnActionEvent.bookmarksManager
@@ -63,7 +66,19 @@ internal val AnActionEvent.contextBookmark: Bookmark?
     val project = editor?.project ?: project ?: return null
     if (editor != null) {
       val provider = LineBookmarkProvider.find(project) ?: return null
-      return provider.createBookmark(editor, getData(EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR))
+      var line = getData(EditorGutterComponentEx.LOGICAL_LINE_AT_CURSOR)
+      if (line != null && place == ActionPlaces.MOUSE_SHORTCUT) {
+        // fix calculated gutter line for an action called via mouse shortcut
+        val gutter = getData(PlatformDataKeys.CONTEXT_COMPONENT) as? EditorGutterComponentEx
+        if (gutter != null && gutter.isShowing) {
+          (inputEvent as? MouseEvent)
+            ?.run { locationOnScreen }
+            ?.also { SwingUtilities.convertPointFromScreen(it, gutter) }
+            ?.let { editor.xyToLogicalPosition(it).line }
+            ?.let { if (it >= 0) line = it }
+        }
+      }
+      return provider.createBookmark(editor, line)
     }
     val manager = BookmarksManager.getInstance(project) ?: return null
     val window = getData(PlatformDataKeys.TOOL_WINDOW)

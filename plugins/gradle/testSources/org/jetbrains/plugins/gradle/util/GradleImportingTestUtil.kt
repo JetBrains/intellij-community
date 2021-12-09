@@ -7,6 +7,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.testFramework.PlatformTestUtil
 import org.jetbrains.concurrency.Promise
+import java.nio.file.Path
 import java.util.concurrent.TimeUnit
 
 /**
@@ -14,6 +15,9 @@ import java.util.concurrent.TimeUnit
  *  for example invokeLater { refreshProject(project, spec) }
  * @throws java.lang.AssertionError if import is failed or isn't started
  */
+fun <R> waitForMultipleProjectsReload(expectedProjects: List<Path>, action: ThrowableComputable<R, Throwable>): R =
+  waitForTask(getProjectDataLoadPromise(expectedProjects), action)
+
 fun <R> waitForProjectReload(action: ThrowableComputable<R, Throwable>): R =
   waitForTask(getProjectDataLoadPromise(), action)
 

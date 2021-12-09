@@ -60,6 +60,7 @@
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" scope="TEST" />
     <orderEntry type="module" module-name="intellij.copyright" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.jvm.analysis.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.jvm.analysis.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.uast.tests" scope="TEST" />
@@ -81,5 +82,7 @@
     <orderEntry type="module" module-name="intellij.platform.ide.util.io" />
     <orderEntry type="module" module-name="intellij.platform.serviceContainer" />
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.lang" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="JUnit5Suites" level="project" />
   </component>
 </module>

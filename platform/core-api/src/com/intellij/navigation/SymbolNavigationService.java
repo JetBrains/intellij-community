@@ -4,6 +4,7 @@ package com.intellij.navigation;
 import com.intellij.model.Symbol;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -32,6 +33,14 @@ public interface SymbolNavigationService {
 
   @Contract("_ -> new")
   @NotNull NavigationTarget psiFileNavigationTarget(@NotNull PsiFile file);
+
+  /**
+   * This method exists for compatibility. Use with care.
+   *
+   * @return a target instance which delegates its implementation to older PSI-based APIs
+   */
+  @Contract("_ -> new")
+  @NotNull NavigationTarget psiElementNavigationTarget(@NotNull PsiElement element);
 
   /**
    * Please use {@link TargetPresentation#builder(String)}

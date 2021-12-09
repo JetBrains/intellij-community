@@ -158,6 +158,7 @@ private class SearchScopeDropDownLink(
   }
 
   init {
+    autoHideOnDisable = false
     foreground = JBUI.CurrentTheme.Label.foreground()
     whenItemSelected { text = itemToString(selectedItem) }
     bind(property)
@@ -167,7 +168,9 @@ private class SearchScopeDropDownLink(
 internal class ScopeItem(
   val scope: Scope,
   val isSelected: Boolean
-)
+) {
+  override fun toString() = "$isSelected: $scope"
+}
 
 private sealed interface ScopeProperty {
   class Any(val property: GraphProperty<ThreeStateCheckBox.State>) : ScopeProperty

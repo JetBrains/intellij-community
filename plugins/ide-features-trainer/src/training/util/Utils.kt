@@ -5,6 +5,7 @@ import com.google.common.util.concurrent.ThreadFactoryBuilder
 import com.intellij.DynamicBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.lang.Language
@@ -36,6 +37,7 @@ import training.learn.LearnBundle
 import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
 import training.learn.lesson.LessonStateManager
+import training.ui.LearnToolWindow
 import training.ui.LearnToolWindowFactory
 import training.ui.LearningUiManager
 import java.awt.BorderLayout
@@ -91,7 +93,7 @@ val adaptToNotNativeLocalization: Boolean
 internal fun clearTrainingProgress() {
   LessonManager.instance.stopLesson()
   LessonStateManager.resetPassedStatus()
-  for (toolWindow in LearnToolWindowFactory.learnWindowPerProject.values) {
+  for (toolWindow in getAllLearnToolWindows()) {
     toolWindow.reinitViews()
     toolWindow.setModulesPanel()
   }
@@ -168,8 +170,18 @@ fun scaledRigid(width: Int, height: Int): Component {
   }
 }
 
-fun lessonOpenedInProject(project: Project?): Lesson? {
-  return if (LearnToolWindowFactory.learnWindowPerProject[project] != null) LessonManager.instance.currentLesson else null
+internal fun getLearnToolWindowForProject(project: Project): LearnToolWindow? {
+  val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW) ?: return null
+  val jComponent = toolWindow.contentManager.contents.singleOrNull()?.component
+  return jComponent as? LearnToolWindow
+}
+
+internal fun getAllLearnToolWindows(): List<LearnToolWindow> {
+  return ProjectUtilCore.getOpenProjects().mapNotNull { getLearnToolWindowForProject(it) }
+}
+
+internal fun lessonOpenedInProject(project: Project?): Lesson? {
+  return if (project != null && getLearnToolWindowForProject(project) != null) LessonManager.instance.currentLesson else null
 }
 
 fun getNextLessonForCurrent(): Lesson? {

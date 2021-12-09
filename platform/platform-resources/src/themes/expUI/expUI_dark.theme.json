@@ -257,7 +257,21 @@
       }
     },
 
-    "Tree.rowHeight": "24"
+    "MainToolbar": {
+      "icon": {
+        "borderInsets": "10,10,10,10",
+        "background": "Grey2",
+        "hoverBackground": "Blue1",
+        "pressedBackground": "Blue1"
+      },
+      "dropdown": {
+        "borderInsets": "12,6,12,6"
+      }
+    },
+
+    "Tree.rowHeight": "24",
+
+    "TitlePane.Button.preferredSize": "28,40"
   },
 
   "icons": {

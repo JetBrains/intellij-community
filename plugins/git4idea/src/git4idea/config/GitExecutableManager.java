@@ -30,6 +30,7 @@ import java.nio.file.NoSuchFileException;
 import java.text.ParseException;
 import java.util.Collections;
 
+import static com.intellij.ide.impl.TrustedProjects.isTrusted;
 import static git4idea.config.GitExecutableProblemHandlersKt.showUnsupportedVersionError;
 
 /**
@@ -93,22 +94,36 @@ public class GitExecutableManager {
 
   @NotNull
   public String getPathToGit(@Nullable Project project) {
-    String pathToGit = getPathToGit(project, true);
+    String pathToGit = getPathToGit(project, null, true);
     if (pathToGit == null) pathToGit = GitExecutableDetector.getDefaultExecutable();
     return pathToGit;
   }
 
   @Nullable
-  private String getPathToGit(@Nullable Project project, boolean detectIfNeeded) {
-    String path = project != null ? GitVcsSettings.getInstance(project).getPathToGit() : null;
+  private String getPathToGit(@Nullable Project project, @Nullable File gitDirectory, boolean detectIfNeeded) {
+    String path = null;
+    if (project != null && (project.isDefault() || isTrusted(project))) {
+      path = GitVcsSettings.getInstance(project).getPathToGit();
+    }
     if (path == null) path = GitVcsApplicationSettings.getInstance().getSavedPathToGit();
-    if (path == null) path = getDetectedExecutable(project, detectIfNeeded);
+    if (path == null) {
+      WSLDistribution distribution = gitDirectory != null
+                                     ? WslPath.getDistributionByWindowsUncPath(gitDirectory.getPath())
+                                     : getProjectWslDistribution(project);
+      path = myExecutableDetector.getExecutable(distribution, detectIfNeeded);
+    }
     return path;
   }
 
   @NotNull
   public GitExecutable getExecutable(@Nullable Project project) {
-    String path = getPathToGit(project);
+    return getExecutable(project, null);
+  }
+
+  @NotNull
+  public GitExecutable getExecutable(@Nullable Project project, @Nullable File gitDirectory) {
+    String path = getPathToGit(project, gitDirectory, true);
+    if (path == null) path = GitExecutableDetector.getDefaultExecutable();
     return getExecutable(path);
   }
 
@@ -138,12 +153,7 @@ public class GitExecutableManager {
   @Nullable
   public String getDetectedExecutable(@Nullable Project project, boolean detectIfNeeded) {
     WSLDistribution distribution = getProjectWslDistribution(project);
-    if (detectIfNeeded) {
-      return myExecutableDetector.detect(distribution);
-    }
-    else {
-      return myExecutableDetector.getExecutable(distribution);
-    }
+    return myExecutableDetector.getExecutable(distribution, detectIfNeeded);
   }
 
   @RequiresBackgroundThread
@@ -159,7 +169,7 @@ public class GitExecutableManager {
   @CalledInAny
   @NotNull
   public GitVersion getVersion(@NotNull Project project) {
-    String pathToGit = getPathToGit(project, false);
+    String pathToGit = getPathToGit(project, null, false);
     if (pathToGit == null) return GitVersion.NULL;
 
     GitExecutable executable = getExecutable(pathToGit);
@@ -210,6 +220,22 @@ public class GitExecutableManager {
     return runUnderProgressIfNeeded(project, GitBundle.message("git.executable.version.progress.title"), () -> {
       try {
         GitExecutable executable = getExecutable(project);
+        return identifyVersion(executable);
+      }
+      catch (ProcessCanceledException e) {
+        return null;
+      }
+      catch (GitVersionIdentificationException e) {
+        return null;
+      }
+    });
+  }
+
+  @CalledInAny
+  @Nullable
+  public GitVersion tryGetVersion(@Nullable Project project, @NotNull GitExecutable executable) {
+    return runUnderProgressIfNeeded(project, GitBundle.message("git.executable.version.progress.title"), () -> {
+      try {
         return identifyVersion(executable);
       }
       catch (ProcessCanceledException e) {

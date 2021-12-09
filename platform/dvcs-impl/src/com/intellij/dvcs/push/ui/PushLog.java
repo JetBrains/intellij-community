@@ -36,7 +36,6 @@ import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.vcs.log.ui.VcsLogActionIds;
 import com.intellij.vcs.log.ui.details.commit.CommitDetailsPanel;
 import com.intellij.vcs.log.ui.frame.CommitPresentationUtil;
-import kotlin.Unit;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -439,6 +438,10 @@ public final class PushLog extends JPanel implements DataProvider {
         Hash hash = commitNode.getUserObject().getId();
         return new TextRevisionNumber(hash.asString(), hash.toShortString());
       });
+    }
+    else if (VcsDataKeys.VCS_COMMIT_SUBJECTS.is(id)) {
+      List<CommitNode> commitNodes = getSelectedCommitNodes();
+      return ContainerUtil.map2Array(commitNodes, String.class, commitNode -> commitNode.getUserObject().getSubject());
     }
     return null;
   }

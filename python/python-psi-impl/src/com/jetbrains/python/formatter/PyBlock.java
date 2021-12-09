@@ -831,7 +831,7 @@ public class PyBlock implements ASTBlock {
             return getBlankLinesForOption(pySettings.BLANK_LINES_BEFORE_FIRST_METHOD);
           }
         }
-        if (childType1 == PyTokenTypes.COLON && needLineBreakInStatement()) {
+        if (childType1 == PyTokenTypes.COLON && (needLineBreakInStatement())) {
           return Spacing.createSpacing(0, 0, 1, true, settings.KEEP_BLANK_LINES_IN_CODE);
         }
       }
@@ -935,11 +935,16 @@ public class PyBlock implements ASTBlock {
   }
 
   private boolean needLineBreakInStatement() {
-    final PyStatement statement = PsiTreeUtil.getParentOfType(myNode.getPsi(), PyStatement.class);
-    if (statement != null) {
-      final Collection<PyStatementPart> parts = PsiTreeUtil.collectElementsOfType(statement, PyStatementPart.class);
-      return (parts.size() == 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON) ||
-             (parts.size() > 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON_MULTI_CLAUSE);
+    if (myNode.getPsi() instanceof PyStatementListContainer) {
+      final PyStatement statement = PsiTreeUtil.getParentOfType(myNode.getPsi(), PyStatement.class);
+      if (statement != null) {
+        final Collection<PyStatementPart> parts = PsiTreeUtil.collectElementsOfType(statement, PyStatementPart.class);
+        return (parts.size() == 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON) ||
+               (parts.size() > 1 && myContext.getPySettings().NEW_LINE_AFTER_COLON_MULTI_CLAUSE);
+      }
+      else {
+        return myContext.getPySettings().NEW_LINE_AFTER_COLON;
+      }
     }
     return false;
   }

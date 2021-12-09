@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.intentions.ConvertToScopeIntention.ScopeFunction.*
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchParameters
+import org.jetbrains.kotlin.idea.search.useScope
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -125,10 +126,8 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         firstTarget: PsiElement,
         lastTarget: PsiElement,
         referenceElement: PsiElement
-    )
-            : RefactoringTargetAndItsValueExpression? {
-
-        val property by lazy(LazyThreadSafetyMode.NONE) { expressionToApply.prevProperty() }
+    ): RefactoringTargetAndItsValueExpression? {
+        val property = expressionToApply.prevProperty()
 
         val propertyOrFirst = when (scopeFunction) {
             ALSO, APPLY -> property
@@ -144,7 +143,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         if (!isCorrectFirstOrProperty) return null
 
         val targetElementValue =
-            property?.nextSibling?.takeIf { it.parent == referenceElement.parent } ?: firstTarget
+            property?.nextSibling?.takeIf { it.parent == referenceElement.parent && it.textOffset < lastTarget.textOffset } ?: firstTarget
         return RefactoringTargetAndItsValueExpression(propertyOrFirst, targetElementValue)
     }
 
@@ -158,7 +157,7 @@ sealed class ConvertToScopeIntention(private val scopeFunction: ScopeFunction) :
         }
 
         val searchParameters = KotlinReferencesSearchParameters(
-            element, element.useScope, ignoreAccessScope = false
+            element, element.useScope(), ignoreAccessScope = false
         )
 
         val range = PsiTreeUtil.getElementsOfRange(firstTarget, lastTarget)

@@ -17,6 +17,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.spellchecker.inspections.SpellCheckingInspection;
 import com.intellij.ui.SimpleEditorCustomization;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -25,6 +26,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 
 /**
@@ -52,7 +54,7 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
     super(enabled);
   }
 
-  @SuppressWarnings({"unchecked"})
+  @SuppressWarnings("unchecked")
   private static boolean init() {
     // It's assumed that default spell checking inspection settings are just fine for processing all types of data.
     // Please perform corresponding settings tuning if that assumption is broken in the future.
@@ -122,21 +124,20 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
   }
 
   private static class MyInspectionProfileStrategy implements Function<InspectionProfile, InspectionProfileWrapper> {
-    private final Map<InspectionProfile, MyInspectionProfileWrapper> myWrappers = ContainerUtil.createWeakMap();
+    private final ConcurrentMap<InspectionProfile, MyInspectionProfileWrapper> myWrappers =
+      ContainerUtil.createConcurrentWeakKeySoftValueMap();
     private boolean myUseSpellCheck;
 
     @NotNull
     @Override
-    public InspectionProfileWrapper apply(@NotNull InspectionProfile inspectionProfile) {
+    public InspectionProfileWrapper apply(@NotNull InspectionProfile profile) {
       if (!READY) {
-        return new InspectionProfileWrapper((InspectionProfileImpl)inspectionProfile);
+        return new InspectionProfileWrapper((InspectionProfileImpl)profile);
       }
-      MyInspectionProfileWrapper wrapper = myWrappers.get(inspectionProfile);
-      if (wrapper == null) {
-        myWrappers.put(inspectionProfile, wrapper = new MyInspectionProfileWrapper((InspectionProfileImpl)inspectionProfile));
-      }
-      wrapper.setUseSpellCheck(myUseSpellCheck);
-      return wrapper;
+      MyInspectionProfileWrapper wrapper = myWrappers.get(profile);
+      return wrapper == null
+             ? ConcurrencyUtil.cacheOrGet(myWrappers, profile, new MyInspectionProfileWrapper(profile, myUseSpellCheck))
+             : wrapper;
     }
 
     public void setUseSpellCheck(boolean useSpellCheck) {
@@ -145,19 +146,16 @@ public class SpellCheckingEditorCustomization extends SimpleEditorCustomization 
   }
 
   private static class MyInspectionProfileWrapper extends InspectionProfileWrapper {
-    private boolean myUseSpellCheck;
+    private final boolean myUseSpellCheck;
 
-    MyInspectionProfileWrapper(@NotNull InspectionProfileImpl inspectionProfile) {
-      super(inspectionProfile);
+    MyInspectionProfileWrapper(@NotNull InspectionProfile inspectionProfile, boolean useSpellCheck) {
+      super((InspectionProfileImpl)inspectionProfile);
+      myUseSpellCheck = useSpellCheck;
     }
 
     @Override
     public boolean isToolEnabled(HighlightDisplayKey key, PsiElement element) {
       return SPELL_CHECK_TOOLS.containsKey(key.toString()) ? myUseSpellCheck : super.isToolEnabled(key, element);
-    }
-
-    public void setUseSpellCheck(boolean useSpellCheck) {
-      myUseSpellCheck = useSpellCheck;
     }
   }
 }

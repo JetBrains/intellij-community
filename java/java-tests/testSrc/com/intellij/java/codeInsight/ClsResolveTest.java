@@ -8,7 +8,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.junit5.EdtInterceptor;
-import com.intellij.testFramework.rules.TempDirectory;
+import com.intellij.testFramework.rules.TempDirectoryExtension;
 import net.bytebuddy.ByteBuddy;
 import net.bytebuddy.implementation.StubMethod;
 import net.bytebuddy.jar.asm.Opcodes;
@@ -29,7 +29,7 @@ import java.util.zip.ZipOutputStream;
 
 public class ClsResolveTest {
   @RegisterExtension
-  public TempDirectory tempDir = new TempDirectory();
+  public TempDirectoryExtension tempDir = new TempDirectoryExtension();
 
   private JavaCodeInsightTestFixture myFixture;
 
@@ -43,7 +43,8 @@ public class ClsResolveTest {
         PsiTestUtil.addLibrary(model, "mutant", jar.getParent().toString(), jar.getFileName().toString());
       }
     };
-    TestFixtureBuilder<IdeaProjectTestFixture> builder = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(descriptor);
+    TestFixtureBuilder<IdeaProjectTestFixture> builder = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(descriptor,
+                                                                                                                              "ClsREsolveTest");
     myFixture = JavaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(builder.getFixture(), new LightTempDirTestFixtureImpl(true));
     myFixture.setUp();
   }

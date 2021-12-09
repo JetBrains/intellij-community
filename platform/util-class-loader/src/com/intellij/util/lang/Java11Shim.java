@@ -1,13 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.ReviseWhenPortedToJDK;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-@ReviseWhenPortedToJDK("11")
 @ApiStatus.Internal
 // implementation of `copyOf` is allowed to not do copy - it can return the same map, read `copyOf` as `immutable`
 public abstract class Java11Shim {

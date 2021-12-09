@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
+import com.intellij.textMatching.PrefixMatchingUtil
 import com.intellij.util.Time
 
 abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<out SearchEverywhereContributor<*>>)
@@ -65,15 +66,24 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
     val presentation = (element as? PSIPresentationBgRendererWrapper.PsiItemWithPresentation)?.presentation
 
     cache as Cache?
-    val file = if (item is PsiFileSystemItem) item.virtualFile else item.containingFile?.virtualFile
+    val file = getContainingFile(item)
     val project = item.project
 
     val data = HashMap<String, Any>()
     if (file != null && cache != null) {
       getFileFeatures(data, file, project, cache, currentTime)
     }
-    data.putAll(getElementFeatures(item, presentation, currentTime, searchQuery, elementPriority))
+    data.putAll(getElementFeatures(item, presentation, currentTime, searchQuery, elementPriority, cache))
     return data
+  }
+
+  private fun getContainingFile(item: PsiElement) = if (item is PsiFileSystemItem) {
+    item.virtualFile
+  }
+  else {
+    ReadAction.compute<VirtualFile?, Nothing> {
+      item.containingFile?.virtualFile
+    }
   }
 
   private fun getFileFeatures(data: HashMap<String, Any>,
@@ -96,7 +106,8 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
                                             presentation: TargetPresentation?,
                                             currentTime: Long,
                                             searchQuery: String,
-                                            elementPriority: Int): Map<String, Any>
+                                            elementPriority: Int,
+                                            cache: Cache?): Map<String, Any>
 
   /**
    * Creates a deep copy of the file type stats obtained from the [FileTypeUsageLocalSummary],
@@ -231,6 +242,26 @@ abstract class SearchEverywhereClassOrFileFeaturesProvider(supportedTab: Class<o
         IS_EXCLUDED_DATA_KEY to fileIndex.isExcluded(file),
       )
     }
+  }
+
+  protected fun getNameMatchingFeatures(nameOfFoundElement: String, searchQuery: String): Map<String, Any> {
+    fun changeToCamelCase(str: String): String {
+      val words = str.split('_')
+      val firstWord = words.first()
+      if (words.size == 1) {
+        return firstWord
+      } else {
+        return firstWord.plus(
+          words.subList(1, words.size)
+            .joinToString(separator = "") { s -> s.replaceFirstChar { it.uppercaseChar() } }
+        )
+      }
+    }
+
+    val features = mutableMapOf<String, Any>()
+    PrefixMatchingUtil.calculateFeatures(nameOfFoundElement, searchQuery, features)
+    return features.mapKeys { changeToCamelCase(it.key) }  // Change snake case to camel case for consistency with other feature names.
+      .mapValues { if (it.value is Double) roundDouble(it.value as Double) else it.value }
   }
 
   protected data class Cache(val fileTypeStats: Map<String, FileTypeUsageSummary>, val openedFile: VirtualFile?)

@@ -13,7 +13,6 @@ import com.intellij.openapi.fileEditor.impl.EditorHistoryManager
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFileSystemItem
-import com.intellij.textMatching.PrefixMatchingUtil
 import com.intellij.util.PathUtil
 import com.intellij.util.Time.*
 
@@ -41,7 +40,8 @@ internal class SearchEverywhereFileFeaturesProvider
                                   presentation: TargetPresentation?,
                                   currentTime: Long,
                                   searchQuery: String,
-                                  elementPriority: Int): Map<String, Any> {
+                                  elementPriority: Int,
+                                  cache: Cache?): Map<String, Any> {
     val item = (element as? PsiFileSystemItem) ?: return emptyMap()
 
     val data = hashMapOf<String, Any>(
@@ -52,7 +52,11 @@ internal class SearchEverywhereFileFeaturesProvider
       SearchEverywhereUsageTriggerCollector.TOTAL_SYMBOLS_AMOUNT_DATA_KEY to searchQuery.length,
     )
 
-    data.putAll(getNameMatchingFeatures(item, searchQuery))
+
+    val nameOfItem = item.virtualFile.nameWithoutExtension
+    // Remove the directory and the extension if they are present
+    val fileNameFromQuery = FileUtil.getNameWithoutExtension(PathUtil.getFileName(searchQuery))
+    data.putAll(getNameMatchingFeatures(nameOfItem, fileNameFromQuery))
 
     if (item.isDirectory) {
       // Rest of the features are only applicable to files, not directories
@@ -72,29 +76,6 @@ internal class SearchEverywhereFileFeaturesProvider
   private fun isFavorite(item: PsiFileSystemItem): Boolean {
     val favoritesManager = FavoritesManager.getInstance(item.project)
     return ReadAction.compute<Boolean, Nothing> { favoritesManager.getFavoriteListName(null, item.virtualFile) != null }
-  }
-
-  private fun getNameMatchingFeatures(item: PsiFileSystemItem, searchQuery: String): Map<String, Any> {
-    fun changeToCamelCase(str: String): String {
-      val words = str.split('_')
-      val firstWord = words.first()
-      if (words.size == 1) {
-        return firstWord
-      } else {
-        return firstWord.plus(
-          words.subList(1, words.size)
-            .joinToString(separator = "") { s -> s.replaceFirstChar { it.uppercaseChar() } }
-        )
-      }
-    }
-
-    // Remove the directory and the extension if they are present
-    val filename = FileUtil.getNameWithoutExtension(PathUtil.getFileName(searchQuery))
-
-    val features = mutableMapOf<String, Any>()
-    PrefixMatchingUtil.calculateFeatures(item.virtualFile.nameWithoutExtension, filename, features)
-    return features.mapKeys { changeToCamelCase(it.key) }  // Change snake case to camel case for consistency with other feature names.
-      .mapValues { if (it.value is Double) roundDouble(it.value as Double) else it.value }
   }
 
   private fun isOpened(item: PsiFileSystemItem): Boolean {

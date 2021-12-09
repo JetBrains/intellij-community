@@ -17,14 +17,14 @@ import org.jetbrains.annotations.NotNull;
 public abstract class MethodArgumentFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance(MethodArgumentFix.class);
 
-  protected final PsiExpressionList myArgList;
+  protected final SmartPsiElementPointer<PsiExpressionList> myArgList;
   protected final int myIndex;
   protected final ArgumentFixerActionFactory myArgumentFixerActionFactory;
   @NotNull
   protected final PsiType myToType;
 
   protected MethodArgumentFix(@NotNull PsiExpressionList list, int i, @NotNull PsiType toType, @NotNull ArgumentFixerActionFactory fixerActionFactory) {
-    myArgList = list;
+    myArgList = SmartPointerManager.createPointer(list);
     myIndex = i;
     myArgumentFixerActionFactory = fixerActionFactory;
     myToType = toType instanceof PsiEllipsisType ? ((PsiEllipsisType) toType).toArrayType() : toType;
@@ -32,8 +32,9 @@ public abstract class MethodArgumentFix implements IntentionAction {
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (myToType.isValid() && myArgList.isValid() && PsiTypesUtil.allTypeParametersResolved(myArgList, myToType)) {
-      PsiExpression[] args = myArgList.getExpressions();
+    PsiExpressionList list = myArgList.getElement();
+    if (list != null && myToType.isValid() && PsiTypesUtil.allTypeParametersResolved(list, myToType)) {
+      PsiExpression[] args = list.getExpressions();
       return args.length > myIndex && args[myIndex] != null && args[myIndex].isValid();
     }
     return false;
@@ -46,7 +47,9 @@ public abstract class MethodArgumentFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    PsiExpression expression = myArgList.getExpressions()[myIndex];
+    PsiExpressionList list = myArgList.getElement();
+    if (list == null) return;
+    PsiExpression expression = list.getExpressions()[myIndex];
 
     LOG.assertTrue(expression != null && expression.isValid());
     PsiExpression modified = myArgumentFixerActionFactory.getModifiedArgument(expression, myToType);

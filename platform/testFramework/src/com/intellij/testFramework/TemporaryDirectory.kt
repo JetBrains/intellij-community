@@ -31,7 +31,7 @@ import kotlin.properties.Delegates
  * `hello.kt` will be created as `hello_1eSBtxBR5522COEjhRLR6AEz.kt`.
  * `.kt` will be created as `1eSBtxBR5522COEjhRLR6AEz.kt`.
  */
-class TemporaryDirectory : ExternalResource(), BeforeEachCallback, AfterEachCallback {
+open class TemporaryDirectory : ExternalResource() {
   private val paths = SmartList<Path>()
   private var sanitizedName: String by Delegates.notNull()
 
@@ -69,17 +69,17 @@ class TemporaryDirectory : ExternalResource(), BeforeEachCallback, AfterEachCall
     }
   }
 
-  override fun beforeEach(context: ExtensionContext) {
-    sanitizedName = testNameToFileName(context.testMethod.map { it.name }.orElse(context.displayName))
-    root = Paths.get(FileUtilRt.getTempDirectory())
-  }
-
   override fun apply(base: Statement, description: Description): Statement {
-    sanitizedName = testNameToFileName(description.methodName)
-    root = Paths.get(FileUtilRt.getTempDirectory())
+    before(description.methodName)
     return super.apply(base, description)
   }
 
+  
+  protected fun before(testName: String) {
+    sanitizedName = testNameToFileName(testName)
+    root = Paths.get(FileUtilRt.getTempDirectory())
+  }
+  
   @ApiStatus.Internal
   fun init(commonPrefix: String, root: Path) {
     if (this.root != null) {
@@ -116,10 +116,6 @@ class TemporaryDirectory : ExternalResource(), BeforeEachCallback, AfterEachCall
 
     paths.clear()
     throwIfNotEmpty(errors)
-  }
-
-  override fun afterEach(context: ExtensionContext?) {
-    after()
   }
 
   @JvmOverloads
@@ -208,4 +204,15 @@ private fun generateName(fileName: String): String {
     nameBuilder.append(fileName, extIndex, fileName.length)
   }
   return nameBuilder.toString()
+}
+
+class TemporaryDirectoryExtension : TemporaryDirectory(), BeforeEachCallback, AfterEachCallback {
+  override fun afterEach(context: ExtensionContext?) {
+    after()
+  }
+  
+  override fun beforeEach(context: ExtensionContext) {
+    before(context.testMethod.map { it.name }.orElse(context.displayName))
+  }
+
 }

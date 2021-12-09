@@ -19,6 +19,9 @@ final class DevBuildServerBootstrap {
     List<String> jarUrls = new ArrayList<>();
     Path classDir = Path.of(System.getenv("CLASSES_DIR"));
     jarUrls.add(classDir.resolve("intellij.platform.devBuildServer").toString());
+    jarUrls.add(classDir.resolve("intellij.platform.util.rt.java8").toString());
+    jarUrls.add(classDir.resolve("intellij.platform.util.zip").toString());
+    jarUrls.add(classDir.resolve("intellij.platform.util.immutableKeyValueStore").toString());
     jarUrls.add(classDir.resolve("intellij.platform.buildScripts").toString());
     jarUrls.add(classDir.resolve("intellij.platform.buildScripts.downloader").toString());
     jarUrls.add(classDir.resolve("intellij.idea.community.build").toString());

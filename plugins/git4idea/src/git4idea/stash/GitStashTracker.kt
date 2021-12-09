@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.serviceIfCreated
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.VcsException
@@ -28,6 +29,7 @@ import git4idea.ui.StashInfo
 import java.util.*
 
 class GitStashTracker(private val project: Project) : Disposable {
+  private val disposableFlag = Disposer.newCheckedDisposable()
   private val eventDispatcher = EventDispatcher.create(GitStashTrackerListener::class.java)
   private val updateQueue = MergingUpdateQueue("GitStashTracker", 300, true, null, this, null, Alarm.ThreadToUse.POOLED_THREAD)
 
@@ -51,6 +53,9 @@ class GitStashTracker(private val project: Project) : Disposable {
     connection.subscribe(GitRepository.GIT_REPO_CHANGE, GitRepositoryChangeListener {
       scheduleRefresh()
     })
+
+    Disposer.register(this, disposableFlag)
+
     if (!ApplicationManager.getApplication().isUnitTestMode) {
       scheduleRefresh()
     }
@@ -71,7 +76,7 @@ class GitStashTracker(private val project: Project) : Disposable {
         }
       }
 
-      runInEdt(this) {
+      runInEdt(disposableFlag) {
         stashes = newStashes
 
         eventDispatcher.multicaster.stashesUpdated()

@@ -25,9 +25,11 @@ import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.DialogPanel
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.ex.WindowManagerEx
 import com.intellij.openapi.wm.impl.IdeFrameDecorator
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.FontComboBox
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
@@ -64,6 +66,7 @@ private val cdRightToolWindowLayout                   get() = CheckboxDescriptor
 private val cdUseCompactTreeIndents                   get() = CheckboxDescriptor(message("checkbox.compact.tree.indents"), settings::compactTreeIndents, groupName = uiOptionGroupName)
 private val cdShowTreeIndents                         get() = CheckboxDescriptor(message("checkbox.show.tree.indent.guides"), settings::showTreeIndentGuides, groupName = uiOptionGroupName)
 private val cdDnDWithAlt                              get() = CheckboxDescriptor(message("dnd.with.alt.pressed.only"), settings::dndWithPressedAltOnly, groupName = uiOptionGroupName)
+private val cdSeparateMainMenu                        get() = CheckboxDescriptor(message("checkbox.main.menu.separate.toolbar"), settings::separateMainMenu, groupName = uiOptionGroupName)
 
 private val cdUseTransparentMode                      get() = CheckboxDescriptor(message("checkbox.use.transparent.mode.for.floating.windows"), PropertyBinding({ settings.state.enableAlphaMode }, { settings.state.enableAlphaMode = it }))
 private val cdOverrideLaFFont                         get() = CheckboxDescriptor(message("checkbox.override.default.laf.fonts"), settings::overrideLafFonts)
@@ -87,7 +90,8 @@ internal val appearanceOptionDescriptors: List<OptionDescription>
     cdUseCompactTreeIndents,
     cdShowTreeIndents,
     cdDnDWithAlt,
-    cdFullPathsInTitleBar
+    cdFullPathsInTitleBar,
+    cdSeparateMainMenu
   ).map(CheckboxDescriptor::asUiOptionDescriptor)
 
 internal class AppearanceConfigurable : BoundSearchableConfigurable(message("title.appearance"), "preferences.lookFeel") {
@@ -186,7 +190,7 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             else {
               val enableColorBlindness = checkBox(UIBundle.message("color.blindness.combobox.text"))
                 .applyToComponent { isSelected = modelBinding.get() != null }
-              comboBox(supportedValues.toTypedArray())
+              comboBox(supportedValues)
                 .enabledIf(enableColorBlindness.selected)
                 .applyToComponent { renderer = SimpleListCellRenderer.create<ColorBlindness>("") { PlatformEditorBundle.message(it.key) } }
                 .comment(UIBundle.message("color.blindness.combobox.comment"))
@@ -209,6 +213,9 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
           yield({ checkBox(cdUseCompactTreeIndents) })
           yield({ checkBox(cdEnableMenuMnemonics) })
           yield({ checkBox(cdEnableControlsMnemonics) })
+          if (SystemInfo.isWindows && ExperimentalUI.isNewToolbar()) {
+            yield({ checkBox(cdSeparateMainMenu) })
+          }
         }
         val rightColumnControls = sequence<Row.() -> Unit> {
           yield({

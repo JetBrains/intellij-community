@@ -51,14 +51,17 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
 
     protected open fun configureKotlinVersionAndProperties(text: String, properties: Map<String, String>? = null): String {
         var result = text
-        (properties ?: mapOf("kotlin_plugin_version" to LATEST_STABLE_GRADLE_PLUGIN_VERSION)).forEach { (key, value) ->
+        (properties ?: defaultProperties).forEach { (key, value) ->
             result = result.replace(Regex("""\{\s*\{\s*${key}\s*}\s*}"""), value)
         }
+
         return result
     }
 
-    protected open fun configureByFiles(properties: Map<String, String>? = null, subPath: String? = null): List<VirtualFile> {
-        val rootDir = testDataDirectory().let { if (subPath != null) it.resolve(subPath) else it }
+    protected open val defaultProperties: Map<String, String> = mapOf("kotlin_plugin_version" to LATEST_STABLE_GRADLE_PLUGIN_VERSION)
+
+    protected open fun configureByFiles(properties: Map<String, String>? = null): List<VirtualFile> {
+        val rootDir = testDataDirectory()
         assert(rootDir.exists()) { "Directory ${rootDir.path} doesn't exist" }
 
         return rootDir.walk().mapNotNull {

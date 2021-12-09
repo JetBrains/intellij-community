@@ -16,14 +16,14 @@ interface NewProjectWizardBaseData {
   val projectPath: Path
 
   companion object {
-    val KEY = Key.create<NewProjectWizardBaseData>(NewProjectWizardBaseData::class.java.name)
+    @JvmStatic val KEY = Key.create<NewProjectWizardBaseData>(NewProjectWizardBaseData::class.java.name)
 
-    val NewProjectWizardStep.baseData get() = data.getUserData(KEY)!!
+    @JvmStatic val NewProjectWizardStep.baseData get() = data.getUserData(KEY)!!
 
-    val NewProjectWizardStep.nameProperty get() = baseData.nameProperty
-    val NewProjectWizardStep.pathProperty get() = baseData.pathProperty
-    val NewProjectWizardStep.name get() = baseData.name
-    val NewProjectWizardStep.path get() = baseData.path
-    val NewProjectWizardStep.projectPath get() = baseData.projectPath
+    @JvmStatic val NewProjectWizardStep.nameProperty get() = baseData.nameProperty
+    @JvmStatic val NewProjectWizardStep.pathProperty get() = baseData.pathProperty
+    @JvmStatic var NewProjectWizardStep.name get() = baseData.name; set(it) { baseData.name = it }
+    @JvmStatic var NewProjectWizardStep.path get() = baseData.path; set(it) { baseData.path = it }
+    @JvmStatic val NewProjectWizardStep.projectPath get() = baseData.projectPath
   }
 }

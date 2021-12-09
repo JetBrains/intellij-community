@@ -28,6 +28,7 @@ import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.ui.components.LegalNoticeDialog
 import com.intellij.util.FileContentUtilCore
 import org.jetbrains.java.decompiler.main.decompiler.BaseDecompiler
+import org.jetbrains.java.decompiler.main.extern.ClassFormatException
 import org.jetbrains.java.decompiler.main.extern.IBytecodeProvider
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences
 import org.jetbrains.java.decompiler.main.extern.IResultSaver
@@ -165,7 +166,7 @@ class IdeaDecompiler : ClassFileDecompilers.Light() {
           Logger.getInstance(IdeaDecompiler::class.java).warn(file.url, e)
           return Strings.EMPTY_CHAR_SEQUENCE
         }
-        ApplicationManager.getApplication().isUnitTestMode -> throw AssertionError(file.url, e)
+        ApplicationManager.getApplication().isUnitTestMode && e !is ClassFormatException -> throw AssertionError(file.url, e)
         else -> throw CannotDecompileException(file.url, e)
       }
     }

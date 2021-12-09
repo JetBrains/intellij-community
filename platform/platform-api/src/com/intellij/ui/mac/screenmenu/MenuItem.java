@@ -3,6 +3,10 @@ package com.intellij.ui.mac.screenmenu;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Presentation;
+import com.intellij.ui.scale.ScaleContext;
+import com.intellij.util.IconUtil;
+import com.intellij.util.ui.MultiResolutionImageProvider;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -69,23 +73,33 @@ public class MenuItem implements Disposable, PropertyChangeListener {
     nativeSetLabel(nativePeer, label, keyChar, keyCode, modifiers, isInHierarchy);
   }
 
-  public void setIcon(final Icon icon) {
-    int[] bytes = null;
-    int w = 0;
-    int h = 0;
-    if (icon != null && icon.getIconWidth() > 0 && icon.getIconHeight() > 0) {
-      w = icon.getIconWidth();
-      h = icon.getIconHeight();
-      BufferedImage bimg = new BufferedImage(w, h, BufferedImage.TYPE_INT_ARGB_PRE);
-      Graphics2D g = bimg.createGraphics();
-      g.setComposite(AlphaComposite.Src);
-      icon.paintIcon(null, g, 0, 0);
-      g.dispose();
-      bytes = ((DataBufferInt)bimg.getRaster().getDataBuffer()).getData();
-    }
+  public void setIcon(Icon icon) {
+    if (icon == null) return;
 
+    // todo: the context should belong to the device the icon is displayed on
+    ScaleContext ctx = ScaleContext.create();
+    // make sure the icon is in JB format
+    icon = MultiResolutionImageProvider.convertFromMRIcon(icon, ctx);
+    int w = icon.getIconWidth();
+    int h = icon.getIconHeight();
+    if (w <= 0 || h <= 0) return;
+
+    BufferedImage image = IconUtil.toBufferedImage(icon, ctx, false);
+    if (image.getType() != BufferedImage.TYPE_INT_ARGB_PRE) {
+      BufferedImage newImage = new BufferedImage(image.getWidth(), image.getHeight(), BufferedImage.TYPE_INT_ARGB_PRE);
+      Graphics2D g = newImage.createGraphics();
+      try {
+        g.setComposite(AlphaComposite.Src);
+        UIUtil.drawImage(g, image, 0, 0, null);
+      }
+      finally {
+        g.dispose();
+      }
+      image = newImage;
+    }
+    int[] bytes = ((DataBufferInt)image.getRaster().getDataBuffer()).getData();
     ensureNativePeer();
-    nativeSetImage(nativePeer, bytes, w, h, isInHierarchy);
+    nativeSetImage(nativePeer, bytes, w, h, image.getWidth(), image.getHeight(), isInHierarchy);
   }
 
   public void setAcceleratorText(String acceleratorText) {
@@ -135,7 +149,7 @@ public class MenuItem implements Disposable, PropertyChangeListener {
 
   // If item was created but wasn't added into any parent menu then all setters can be invoked from any thread.
   private native void nativeSetLabel(long nativePeer, String label, char keyChar, int keyCode, int modifiers, boolean onAppKit);
-  private native void nativeSetImage(long nativePeer, int[] buffer, int w, int h, boolean onAppKit);
+  private native void nativeSetImage(long nativePeer, int[] buffer, int pointsWidth, int pointsHeight, int pixelsWidth, int pixelsHeight, boolean onAppKit);
   private native void nativeSetEnabled(long nativePeer, boolean isEnabled, boolean onAppKit);
   private native void nativeSetAcceleratorText(long nativePeer, String acceleratorText, boolean onAppKit);
   private native void nativeSetState(long nativePeer, boolean isToggled, boolean onAppKit);

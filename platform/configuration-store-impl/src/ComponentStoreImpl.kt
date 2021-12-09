@@ -607,7 +607,7 @@ abstract class ComponentStoreImpl : IComponentStore {
   /**
    * You must call it in batch mode (use runBatchUpdate)
    */
-  fun reinitComponents(componentNames: Set<String>,
+  open fun reinitComponents(componentNames: Set<String>,
                        changedStorages: Set<StateStorage> = emptySet(),
                        notReloadableComponents: Collection<String> = emptySet()) {
     for (componentName in componentNames) {

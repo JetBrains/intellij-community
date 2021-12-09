@@ -194,7 +194,13 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
         return property.add(ktGetter).cast<KtPropertyAccessor>().also {
             if (getter is RealGetter) {
                 getter.function.forAllUsages { usage ->
-                    usage.getStrictParentOfType<KtCallExpression>()?.replace(factory.createExpression(getter.name))
+                    val callExpression = usage.getStrictParentOfType<KtCallExpression>() ?: return@forAllUsages
+                    val qualifier = callExpression.getQualifiedExpressionForSelector()
+                    if (qualifier != null) {
+                        qualifier.replace(factory.createExpression("${qualifier.receiverExpression.text}.${getter.name}"))
+                    } else {
+                        callExpression.replace(factory.createExpression("this.${getter.name}"))
+                    }
                 }
             }
         }
@@ -254,7 +260,7 @@ private class ConvertGettersAndSettersToPropertyStatefulProcessing(
                         factory.createExpression("${qualifier.receiverExpression.text}.$propertyName = ${newValue.text}")
                     )
                 } else {
-                    callExpression.replace(factory.createExpression("$propertyName = ${newValue.text}"))
+                    callExpression.replace(factory.createExpression("this.$propertyName = ${newValue.text}"))
                 }
             }
         }

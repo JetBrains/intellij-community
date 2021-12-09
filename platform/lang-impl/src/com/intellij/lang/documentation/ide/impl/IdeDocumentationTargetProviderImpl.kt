@@ -6,6 +6,7 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.lang.documentation.DocumentationTarget
 import com.intellij.lang.documentation.ide.IdeDocumentationTargetProvider
 import com.intellij.lang.documentation.psi.PsiElementDocumentationTarget
+import com.intellij.lang.documentation.psi.psiDocumentationTarget
 import com.intellij.lang.documentation.symbol.impl.symbolDocumentationTargets
 import com.intellij.model.Pointer
 import com.intellij.model.Symbol
@@ -28,6 +29,9 @@ open class IdeDocumentationTargetProviderImpl(private val project: Project) : Id
     }
     val targetElement = DocumentationManager.getElementFromLookup(project, editor, file, lookupElement)
                         ?: return null
+    psiDocumentationTarget(targetElement)?.let {
+      return it
+    }
     val sourceElement = file.findElementAt(editor.caretModel.offset)
     return PsiElementDocumentationTarget(project, targetElement, sourceElement, anchor = null)
   }
@@ -38,7 +42,11 @@ open class IdeDocumentationTargetProviderImpl(private val project: Project) : Id
       return symbolTargets
     }
     val documentationManager = DocumentationManager.getInstance(project)
-    val (targetElement, sourceElement) = documentationManager.findTargetElementAndContext(editor, offset, file) ?: return emptyList()
+    val (targetElement, sourceElement) = documentationManager.findTargetElementAndContext(editor, offset, file)
+                                         ?: return emptyList()
+    psiDocumentationTarget(targetElement)?.let {
+      return listOf(it)
+    }
     return listOf(PsiElementDocumentationTarget(project, targetElement, sourceElement, anchor = null))
   }
 }

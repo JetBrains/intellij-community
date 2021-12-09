@@ -5,6 +5,7 @@ import com.intellij.openapi.application.ex.PathManagerEx
 import com.intellij.openapi.components.PathMacroMap
 import com.intellij.openapi.components.impl.ModulePathMacroManager
 import com.intellij.openapi.components.impl.ProjectPathMacroManager
+import com.intellij.openapi.project.ExternalStorageConfigurationManager
 import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
@@ -64,10 +65,13 @@ internal fun copyProjectFiles(originalProjectFile: File): Pair<File, File> {
   return projectDir to originalProjectDir
 }
 
-internal fun   loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager): JpsProjectSerializers {
+internal fun loadProject(configLocation: JpsProjectConfigLocation, originalBuilder: WorkspaceEntityStorageBuilder, virtualFileManager: VirtualFileUrlManager,
+                         fileInDirectorySourceNames: FileInDirectorySourceNames = FileInDirectorySourceNames.empty(),
+                         externalStorageConfigurationManager: ExternalStorageConfigurationManager? = null): JpsProjectSerializers {
   val cacheDirUrl = configLocation.baseDirectoryUrl.append("cache")
   return JpsProjectEntitiesLoader.loadProject(configLocation, originalBuilder, File(VfsUtil.urlToPath(cacheDirUrl.url)).toPath(),
-                                              TestErrorReporter, virtualFileManager)
+                                              TestErrorReporter, virtualFileManager, fileInDirectorySourceNames,
+                                              externalStorageConfigurationManager)
 }
 
 internal fun JpsProjectSerializersImpl.saveAllEntities(storage: WorkspaceEntityStorage, projectDir: File) {

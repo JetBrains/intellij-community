@@ -1,5 +1,4 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.diagnostic.PluginException
@@ -14,7 +13,6 @@ import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.extensions.Extensions
 import com.intellij.openapi.extensions.ProjectExtensionPointName
 import com.intellij.openapi.fileTypes.FileTypeManager
-import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.ex.PathUtilEx
@@ -28,7 +26,6 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.project.SdkInfo
 import org.jetbrains.kotlin.idea.caches.project.getScriptRelatedModuleInfo
-import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.core.script.configuration.CompositeScriptConfigurationManager
 import org.jetbrains.kotlin.idea.core.script.settings.KotlinScriptingSettings
 import org.jetbrains.kotlin.idea.core.util.CheckCanceledLock
@@ -60,17 +57,15 @@ import kotlin.script.experimental.jvm.util.ClasspathExtractionException
 import kotlin.script.experimental.jvm.util.scriptCompilationClasspathFromContextOrStdlib
 import kotlin.script.templates.standard.ScriptTemplateWithArgs
 
-class LoadScriptDefinitionsStartupActivity : StartupActivity.Background {
+internal class LoadScriptDefinitionsStartupActivity : StartupActivity.DumbAware {
     override fun runActivity(project: Project) {
         if (isUnitTestMode()) {
             // In tests definitions are loaded synchronously because they are needed to analyze script
             // In IDE script won't be highlighted before all definitions are loaded, then the highlighting will be restarted
             ScriptDefinitionsManager.getInstance(project).reloadScriptDefinitionsIfNeeded()
         } else {
-            BackgroundTaskUtil.runUnderDisposeAwareIndicator(KotlinPluginDisposable.getInstance(project)) {
-                ScriptDefinitionsManager.getInstance(project).reloadScriptDefinitionsIfNeeded()
-                ScriptConfigurationManager.getInstance(project).loadPlugins()
-            }
+            ScriptDefinitionsManager.getInstance(project).reloadScriptDefinitionsIfNeeded()
+            ScriptConfigurationManager.getInstance(project).loadPlugins()
         }
     }
 }

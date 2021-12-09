@@ -8,13 +8,11 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiWhiteSpace
-import com.intellij.psi.util.PsiUtil
-import com.intellij.psi.util.parentOfType
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.CallableDescriptor
+import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
-import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.idea.core.ArgumentPositionData
 import org.jetbrains.kotlin.idea.core.ExpectedInfo
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
@@ -30,7 +28,6 @@ import org.jetbrains.kotlin.resolve.calls.callUtil.getParameterForArgument
 import org.jetbrains.kotlin.resolve.calls.components.isVararg
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 object NamedArgumentCompletion {
@@ -119,20 +116,45 @@ object NamedArgumentCompletion {
  * Checks whether argument in the [resolvedCall] can be used without its name (as positional argument).
  */
 fun KtValueArgument.canBeUsedWithoutNameInCall(resolvedCall: ResolvedCall<out CallableDescriptor>): Boolean {
-    val valueArguments = resolvedCall.call.valueArguments
+    if (resolvedCall.resultingDescriptor.valueParameters.isEmpty()) return true
 
-    if (getArgumentExpression() is KtCollectionLiteralExpression && resolvedCall.getParameterForArgument(this)?.isVararg == true) {
-        val argumentIndex = valueArguments.indexOf(this)
-        if (argumentIndex == -1) return false
-        val nextArgument = valueArguments.getOrNull(argumentIndex + 1)
-        if (nextArgument != null && !nextArgument.isNamed()) return false
-    }
+    val argumentsThatCanBeUsedWithoutName = collectAllArgumentsThatCanBeUsedWithoutName(resolvedCall).map { it.argument }
+    if (argumentsThatCanBeUsedWithoutName.isEmpty() || argumentsThatCanBeUsedWithoutName.none { it == this }) return false
 
-    val argumentsBeforeThis = valueArguments.takeWhile { it != this }
+    val argumentsBeforeThis = argumentsThatCanBeUsedWithoutName.takeWhile { it != this }
     return if (languageVersionSettings.supportsFeature(LanguageFeature.MixedNamedArgumentsInTheirOwnPosition)) {
         argumentsBeforeThis.none { it.isNamed() && !it.placedOnItsOwnPositionInCall(resolvedCall) }
     } else {
         argumentsBeforeThis.none { it.isNamed() }
+    }
+}
+
+data class ArgumentThatCanBeUsedWithoutName(val argument: KtValueArgument, val parameter: ValueParameterDescriptor)
+
+fun collectAllArgumentsThatCanBeUsedWithoutName(
+    resolvedCall: ResolvedCall<out CallableDescriptor>,
+): List<ArgumentThatCanBeUsedWithoutName> {
+    val arguments = resolvedCall.call.valueArguments.filterIsInstance<KtValueArgument>()
+    val argumentAndParameters = arguments.mapNotNull { argument ->
+        val parameter = resolvedCall.getParameterForArgument(argument) ?: return@mapNotNull null
+        argument to parameter
+    }.sortedBy { (_, parameter) -> parameter.index }
+    if (arguments.size != argumentAndParameters.size) return emptyList()
+
+    val firstVarargArgumentIndex = argumentAndParameters.indexOfFirst { (_, parameter) -> parameter.isVararg }
+    val lastVarargArgumentIndex = argumentAndParameters.indexOfLast { (_, parameter) -> parameter.isVararg }
+    return argumentAndParameters.mapIndexedNotNull { argumentIndex, (argument, parameter) ->
+        val parameterIndex = parameter.index
+        val isAfterVararg = lastVarargArgumentIndex != -1 && argumentIndex > lastVarargArgumentIndex
+        val isVarargArg = argumentIndex in firstVarargArgumentIndex..lastVarargArgumentIndex
+        if (!isVarargArg && argumentIndex != parameterIndex ||
+            isAfterVararg ||
+            isVarargArg && argumentAndParameters.drop(lastVarargArgumentIndex + 1).any { (argument, _) -> !argument.isNamed() }
+        ) {
+            null
+        } else {
+            ArgumentThatCanBeUsedWithoutName(argument, parameter)
+        }
     }
 }
 

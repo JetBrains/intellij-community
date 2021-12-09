@@ -4,6 +4,7 @@ package com.intellij.ide.wizard
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.util.Key
 
+@Deprecated("Use instead LanguageNewProjectWizardData")
 interface NewProjectWizardLanguageData : NewProjectWizardBaseData {
 
   val languageProperty: GraphProperty<String>

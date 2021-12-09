@@ -10,7 +10,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenDependencyAnalyzerExtension : DependencyAnalyzerExtension {
-  override fun getContributor(project: Project, systemId: ProjectSystemId): DependencyContributor? {
+  override fun createContributor(project: Project, systemId: ProjectSystemId, parentDisposable: Disposable): DependencyContributor? {
     if (systemId == MavenUtil.SYSTEM_ID) {
       return object : DummyDependencyContributor(project) {
         override fun whenDataChanged(listener: () -> Unit, parentDisposable: Disposable) {

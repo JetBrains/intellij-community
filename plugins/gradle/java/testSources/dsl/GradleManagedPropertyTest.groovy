@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.dsl
 
 import com.intellij.testFramework.RunAll
 import groovy.transform.CompileStatic
+import org.jetbrains.plugins.gradle.codeInspection.GradleDisablerTestUtils
 import org.jetbrains.plugins.gradle.importing.highlighting.GradleHighlightingBaseTest
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection
@@ -62,6 +63,7 @@ public abstract class MyExtension {
   @TargetVersions("6.0+")
   void highlighting() {
     setupProject()
+    GradleDisablerTestUtils.enableAllDisableableInspections(testRootDisposable)
     fixture.enableInspections(GrUnresolvedAccessInspection, GroovyAssignabilityCheckInspection, GroovyAccessibilityInspection)
     updateProjectFile '''\
 myExt.integerProperty = 42

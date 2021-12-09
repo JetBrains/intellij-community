@@ -14,8 +14,12 @@ import javax.swing.JLabel
 import kotlin.reflect.KMutableProperty0
 
 interface BaseBuilder {
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun withButtonGroup(@NlsContexts.BorderTitle title: String?, buttonGroup: ButtonGroup, body: () -> Unit)
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun withButtonGroup(buttonGroup: ButtonGroup, body: () -> Unit) {
     withButtonGroup(null, buttonGroup, body)
   }
@@ -24,6 +28,8 @@ interface BaseBuilder {
     buttonGroup(null, init)
   }
 
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @Deprecated("Use Kotlin UI DSL 2.0")
   fun buttonGroup(@NlsContexts.BorderTitle title:String? = null, init: () -> Unit) {
     withButtonGroup(title, ButtonGroup(), init)
   }
@@ -102,14 +108,20 @@ interface RowBuilder : BaseBuilder {
   fun onGlobalIsModified(callback: () -> Boolean): Row
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
 inline fun <reified T : Any> InnerCell.buttonGroup(prop: KMutableProperty0<T>, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
   buttonGroup(prop.toBinding(), init)
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
 inline fun <reified T : Any> InnerCell.buttonGroup(noinline getter: () -> T, noinline setter: (T) -> Unit, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
   buttonGroup(PropertyBinding(getter, setter), init)
 }
 
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+@Deprecated("Use Kotlin UI DSL 2.0")
 inline fun <reified T : Any> InnerCell.buttonGroup(binding: PropertyBinding<T>, crossinline init: CellBuilderWithButtonGroupProperty<T>.() -> Unit) {
   withButtonGroup(ButtonGroup()) {
     CellBuilderWithButtonGroupProperty(binding).init()

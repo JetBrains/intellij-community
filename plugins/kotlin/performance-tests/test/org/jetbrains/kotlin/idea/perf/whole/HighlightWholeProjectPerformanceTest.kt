@@ -11,6 +11,9 @@ import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.KotlinFileType
+import org.jetbrains.kotlin.idea.perf.suite.DefaultProfile
+import org.jetbrains.kotlin.idea.perf.suite.EmptyProfile
+import org.jetbrains.kotlin.idea.perf.suite.suite
 import org.jetbrains.kotlin.idea.perf.util.*
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.testFramework.relativePath
@@ -111,7 +114,7 @@ class HighlightWholeProjectPerformanceTest : UsefulTestCase() {
                                     fixture(file).use {
                                         measure<List<HighlightInfo>>(it.fileName, clearCaches = clearPsiCaches) {
                                             test = {
-                                                highlight(it)
+                                                it.highlight()
                                             }
                                         }
                                     }

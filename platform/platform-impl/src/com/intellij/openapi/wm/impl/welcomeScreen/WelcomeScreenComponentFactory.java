@@ -293,17 +293,20 @@ public final class WelcomeScreenComponentFactory {
       public void actionPerformed(@NotNull AnActionEvent e) {
         BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
         if (balloonLayout instanceof WelcomeBalloonLayoutImpl) {
-          WelcomeBalloonLayoutImpl welcomeBalloonLayout = (WelcomeBalloonLayoutImpl)balloonLayout;
-          if (welcomeBalloonLayout.getLocationComponent() == null && e.getInputEvent() != null) {
-            welcomeBalloonLayout.setLocationComponent(e.getInputEvent().getComponent());
-          }
-          welcomeBalloonLayout.showPopup();
+          ((WelcomeBalloonLayoutImpl)balloonLayout).showPopup();
         }
       }
     });
     final JComponent panel = wrapActionLink(actionLink);
     panel.setVisible(false);
     Topics.subscribe(WelcomeBalloonLayoutImpl.BALLOON_NOTIFICATION_TOPIC, parentDisposable, types -> {
+      BalloonLayout balloonLayout = WelcomeFrame.getInstance().getBalloonLayout();
+      if (balloonLayout instanceof WelcomeBalloonLayoutImpl) {
+        WelcomeBalloonLayoutImpl welcomeBalloonLayout = (WelcomeBalloonLayoutImpl)balloonLayout;
+        if (welcomeBalloonLayout.getLocationComponent() == null) {
+          welcomeBalloonLayout.setLocationComponent(actionLink);
+        }
+      }
       if (!types.isEmpty()) {
         NotificationType type = Collections.max(types);
         actionLink.setIcon(type == NotificationType.IDE_UPDATE

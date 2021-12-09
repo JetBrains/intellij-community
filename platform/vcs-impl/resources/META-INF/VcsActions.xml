@@ -414,6 +414,9 @@
     <action id="Vcs.CopyRevisionNumberAction" class="com.intellij.openapi.vcs.history.actions.CopyRevisionNumberAction"
             icon="AllIcons.Actions.Copy" use-shortcut-of="CopyReference"/>
 
+    <action id="Vcs.CopyCommitSubjectAction" class="com.intellij.openapi.vcs.history.actions.CopyCommitSubjectAction"
+            icon="AllIcons.Actions.Copy"/>
+
     <group id="VcsSelectionHistoryDialog.Popup">
       <reference id="Diff.ShowDiff"/>
       <reference id="Vcs.ShowDiffWithLocal"/>

@@ -2,8 +2,10 @@
 package com.intellij.feedback.dialog
 
 import com.intellij.feedback.DEFAULT_NO_EMAIL_ZENDESK_REQUESTER
+import com.intellij.feedback.FEEDBACK_REPORT_ID_KEY
 import com.intellij.feedback.bundle.FeedbackBundle
 import com.intellij.feedback.createFeedbackAgreementComponent
+import com.intellij.feedback.state.projectCreation.ProjectCreationInfoService
 import com.intellij.feedback.statistics.ProjectCreationFeedbackCountCollector
 import com.intellij.feedback.submitGeneralFeedback
 import com.intellij.ide.feedback.RatingComponent
@@ -15,6 +17,7 @@ import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.ui.LicensingFacade
 import com.intellij.ui.PopupBorder
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.components.TextComponentEmptyText
 import com.intellij.ui.dsl.builder.*
@@ -87,6 +90,8 @@ class ProjectCreationFeedbackDialog(
 
   override fun doOKAction() {
     super.doOKAction()
+    val projectCreationInfoState = ProjectCreationInfoService.getInstance().state
+    projectCreationInfoState.feedbackSent = true
     ProjectCreationFeedbackCountCollector.logFeedbackAttemptToSend()
     val email = if (checkBoxEmailProperty.get()) textFieldEmailProperty.get() else DEFAULT_NO_EMAIL_ZENDESK_REQUESTER
     submitGeneralFeedback(project,
@@ -115,7 +120,7 @@ class ProjectCreationFeedbackDialog(
       appendLine(textAreaOverallFeedbackProperty.get())
     }
   }
-  
+
   private fun createProblemsList(): String {
     val resultProblemsList = mutableListOf<String>()
     if (checkBoxNoProblemProperty.get()) {
@@ -138,6 +143,7 @@ class ProjectCreationFeedbackDialog(
 
   private fun createCollectedDataJsonString(): String {
     val collectedData = buildJsonObject {
+      put(FEEDBACK_REPORT_ID_KEY, "new_project_creation_dialog")
       put("rating", ratingProperty.get())
       put("project_type", systemInfoData.createdProjectTypeName)
       putJsonArray("problems") {
@@ -173,7 +179,7 @@ class ProjectCreationFeedbackDialog(
   }
 
   override fun createCenterPanel(): JComponent {
-    return panel {
+    val mainPanel = panel {
       row {
         label(FeedbackBundle.message("dialog.creation.project.title")).applyToComponent {
           font = JBFont.h1()
@@ -296,9 +302,12 @@ class ProjectCreationFeedbackDialog(
         cell(createFeedbackAgreementComponent(project) {
           showProjectCreationFeedbackSystemInfoDialog(project, systemInfoData)
         })
-      }.bottomGap(BottomGap.MEDIUM).topGap(TopGap.MEDIUM)
+      }.bottomGap(BottomGap.SMALL).topGap(TopGap.MEDIUM)
     }.also { dialog ->
       dialog.border = JBEmptyBorder(JBUI.scale(15), JBUI.scale(10), JBUI.scale(0), JBUI.scale(10))
+    }
+    return JBScrollPane(mainPanel, JBScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED, JBScrollPane.HORIZONTAL_SCROLLBAR_NEVER).apply {
+      border = JBEmptyBorder(0)
     }
   }
 
@@ -338,13 +347,8 @@ private data class ProjectCreationFeedbackSystemInfoData(
 private fun showProjectCreationFeedbackSystemInfoDialog(project: Project?,
                                                         systemInfoData: ProjectCreationFeedbackSystemInfoData
 ) = showFeedbackSystemInfoDialog(project, systemInfoData.commonSystemInfo) {
-  row {
-    cell {
-      label(FeedbackBundle.message("dialog.created.project.system.info.panel.project.type"))
-    }
-    cell {
-      label(systemInfoData.createdProjectTypeName) //NON-NLS
-    }
+  row(FeedbackBundle.message("dialog.created.project.system.info.panel.project.type")) {
+    label(systemInfoData.createdProjectTypeName) //NON-NLS
   }
 }
 

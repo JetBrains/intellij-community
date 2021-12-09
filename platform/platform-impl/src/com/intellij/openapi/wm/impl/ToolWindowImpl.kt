@@ -426,7 +426,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
-  fun canCloseContents() = canCloseContent
+  override fun canCloseContents() = canCloseContent
 
   override fun getIcon(): Icon? {
     return icon

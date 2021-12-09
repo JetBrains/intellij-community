@@ -48,6 +48,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
 import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.lookAndFeelFlow
+import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectCachesService
 import com.jetbrains.packagesearch.intellij.plugin.util.packageSearchProjectService
 import com.jetbrains.packagesearch.intellij.plugin.util.packageVersionNormalizer
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelFilterNot
@@ -56,6 +57,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.parallelMap
 import com.jetbrains.packagesearch.intellij.plugin.util.parallelMapNotNull
 import com.jetbrains.packagesearch.intellij.plugin.util.timer
 import com.jetbrains.packagesearch.intellij.plugin.util.uiStateSource
+import com.jetbrains.packagesearch.intellij.plugin.util.whileLoading
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -97,20 +99,17 @@ import kotlin.time.measureTimedValue
 
 internal class PackagesListPanel(
     private val project: Project,
+    private val headerOperationsCache: CoroutineLRUCache<PackagesToUpgrade.PackageUpgradeInfo, List<PackageSearchOperation<*>>> =
+        project.packageSearchProjectCachesService.headerOperationsCache,
+    private val searchCache: CoroutineLRUCache<SearchCommandModel, ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> =
+        project.packageSearchProjectCachesService.searchCache,
+    private val searchPackageModelCache: CoroutineLRUCache<UiPackageModelCacheKey, UiPackageModel.SearchResult> =
+        project.packageSearchProjectCachesService.searchPackageModelCache,
     operationFactory: PackageSearchOperationFactory,
     operationExecutor: OperationExecutor,
     viewModelFlow: Flow<ViewModel>,
     private val dataProvider: ProjectDataProvider
 ) : PackageSearchPanelBase(PackageSearchBundle.message("packagesearch.ui.toolwindow.tab.packages.title")) {
-
-    private val headerOperationsCache: CoroutineLRUCache<PackagesToUpgrade.PackageUpgradeInfo, List<PackageSearchOperation<*>>> =
-        CoroutineLRUCache(2000)
-
-    private val searchCache: CoroutineLRUCache<SearchCommandModel, ApiPackagesResponse<ApiStandardPackage, ApiStandardPackage.ApiStandardVersion>> =
-        CoroutineLRUCache(200)
-
-    private val searchPackageModelCache: CoroutineLRUCache<UiPackageModelCacheKey, UiPackageModel.SearchResult> =
-        CoroutineLRUCache(1000)
 
     private val searchFieldFocus = Channel<Unit>()
 
@@ -236,13 +235,13 @@ internal class PackagesListPanel(
         border = BorderFactory.createMatteBorder(1.scaled(), 0, 0, 0, JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground())
     }
 
-    private data class SearchCommandModel(
+    internal data class SearchCommandModel(
         val onlyStable: Boolean,
         val onlyMultiplatform: Boolean,
         val searchQuery: String,
     )
 
-    private data class SearchResultsModel(
+    internal data class SearchResultsModel(
         val onlyStable: Boolean,
         val onlyMultiplatform: Boolean,
         val searchQuery: String,
@@ -264,28 +263,24 @@ internal class PackagesListPanel(
             }
                 .debounce(150)
                 .mapLatest { searchCommand ->
-                    val (result, time) = measureTimedValue {
-                        isSearchingStateFlow.emit(true)
+                    val (result, time) = isSearchingStateFlow.whileLoading {
                         val results = searchCache.getOrTryPutDefault(searchCommand) {
                             dataProvider.doSearch(
                                 searchCommand.searchQuery,
                                 FilterOptions(searchCommand.onlyStable, searchCommand.onlyMultiplatform)
                             )
                         }
-                        val model = SearchResultsModel(
+                        SearchResultsModel(
                             searchCommand.onlyStable,
                             searchCommand.onlyMultiplatform,
                             searchCommand.searchQuery,
                             results
                         )
-                        isSearchingStateFlow.emit(false)
-                        model
                     }
                     logTrace("PackagesListPanel main flow") { "Search took $time" }
-
                     result
                 }
-                .shareIn(project.lifecycleScope, SharingStarted.Lazily)
+                .shareIn(project.lifecycleScope, SharingStarted.Eagerly, 1)
 
         combine(
             viewModelFlow,
@@ -641,7 +636,7 @@ private suspend fun computeFilteredInstalledPackagesUiModels(
     return result
 }
 
-private data class UiPackageModelCacheKey(
+internal data class UiPackageModelCacheKey(
     val targetModules: TargetModules,
     val uiState: SearchResultUiState?,
     val onlyStable: Boolean,

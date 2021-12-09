@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.advanced
 
+import com.intellij.BundleBase
 import com.intellij.DynamicBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationBundle
@@ -52,7 +53,7 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
 
   /**
    * The default value of the setting. Also determines the type of control used to display the setting. If [enumClass] is specified,
-   * the setting is shown as a combobox. If the default value is [true] or [false], the setting is shown as a checkbox. Otherwise, the
+   * the setting is shown as a combobox. If the default value is `true` or `false`, the setting is shown as a checkbox. Otherwise, the
    * setting is shown as a text field, and if the default value is an integer, only integers will be accepted as property values.
    */
   @Attribute("default")
@@ -131,25 +132,25 @@ class AdvancedSettingBean : PluginAware, KeyedLazyInstance<AdvancedSettingBean> 
 
   @Nls
   fun title(): String {
-    return findBundle()?.getString(titleKey.ifEmpty { "advanced.setting.$id" }) ?: "!$id!"
+    return findBundle()?.let { BundleBase.message(it, titleKey.ifEmpty { "advanced.setting.$id" }) } ?: "!$id!"
   }
 
   @Nls
   fun group(): String? {
     if (groupKey.isEmpty()) return null
-    return findBundle()?.getString(groupKey)
+    return findBundle()?.let { BundleBase.message(it, groupKey) }
   }
 
   @Nls
   fun description(): String? {
     val descriptionKey = descriptionKey.ifEmpty { "advanced.setting.$id.description" }
-    return findBundle()?.takeIf { it.containsKey(descriptionKey) }?.getString(descriptionKey)
+    return findBundle()?.takeIf { it.containsKey(descriptionKey) }?.let { BundleBase.message(it, descriptionKey) }
   }
 
   @Nls
   fun trailingLabel(): String? {
     val trailingLabelKey = trailingLabelKey.ifEmpty { "advanced.setting.$id.trailingLabel" }
-    return findBundle()?.takeIf { it.containsKey(trailingLabelKey) }?.getString(trailingLabelKey)
+    return findBundle()?.takeIf { it.containsKey(trailingLabelKey) }?.let { BundleBase.message(it, trailingLabelKey) }
   }
 
   fun valueFromString(valueString: String): Any {

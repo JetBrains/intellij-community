@@ -166,7 +166,12 @@ internal class PackageDetailsHeaderPanel(
             identifierLabel.setBodyText(rawIdentifier)
             identifierLabel.isVisible = true
         } else {
-            nameLabel.setBodyText(rawIdentifier)
+            nameLabel.setBody(
+                listOf(
+                    HtmlChunk.span("font-size: ${16.scaledFontSize()};")
+                        .addRaw("<b>$rawIdentifier</b>")
+                )
+            )
             identifierLabel.text = null
             identifierLabel.isVisible = false
         }

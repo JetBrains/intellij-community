@@ -6,13 +6,13 @@ import com.intellij.openapi.externalSystem.service.ui.command.line.CommandLineIn
 import com.intellij.openapi.externalSystem.service.ui.command.line.CompletionTableInfo
 import com.intellij.openapi.externalSystem.service.ui.completion.TextCompletionInfo
 import com.intellij.openapi.externalSystem.service.ui.project.path.WorkingDirectoryField
+import com.intellij.openapi.observable.properties.AtomicLazyProperty
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.whenTextModified
 import org.apache.commons.cli.Option
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider
-import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
+import org.jetbrains.plugins.gradle.service.project.GradleTasksIndices
 import org.jetbrains.plugins.gradle.util.GradleBundle
-import org.jetbrains.plugins.gradle.util.GradleUtil
-import org.jetbrains.plugins.gradle.util.getGradleTasks
 import javax.swing.Icon
 
 class GradleCommandLineInfo(project: Project, workingDirectoryField: WorkingDirectoryField) : CommandLineInfo {
@@ -41,31 +41,23 @@ class GradleCommandLineInfo(project: Project, workingDirectoryField: WorkingDire
     override val descriptionColumnIcon: Icon? = null
     override val descriptionColumnName: String = GradleBundle.message("gradle.run.configuration.command.line.description.column")
 
-    override val completionInfo: List<TextCompletionInfo> by lazy {
-      val allTasks = getGradleTasks(project)
-      val workingDirectory = workingDirectoryField.workingDirectory
-      val moduleNode = GradleUtil.findGradleModuleData(project, workingDirectory) ?: return@lazy emptyList()
-      val gradlePath = GradleProjectResolverUtil.getGradlePath(moduleNode.data)
-        .removeSuffix(":")
-      val tasks = allTasks[workingDirectory] ?: return@lazy emptyList()
-      val wildcardTasksInfo = ArrayList<TextCompletionInfo>()
-      val tasksInfo = ArrayList<TextCompletionInfo>()
-      for ((_, tasksData) in tasks.entrySet()) {
-        for (taskData in tasksData) {
-          val taskFqn = taskData.getFqnTaskName().removePrefix(gradlePath)
-          val taskDescription = taskData.description
-          if (!taskData.isFromIncludedBuild) {
-            wildcardTasksInfo.add(TextCompletionInfo(taskFqn.removePrefix(":"), taskDescription))
-          }
-          if (!taskData.isInherited) {
-            tasksInfo.add(TextCompletionInfo(taskFqn, taskDescription))
-          }
-        }
-      }
-      wildcardTasksInfo.sortedBy { it.text } + tasksInfo.sortedBy { it.text }
+    private val completionInfoProperty = AtomicLazyProperty { calculateCompletionInfo() }
+
+    override val completionInfo by completionInfoProperty
+    override val tableCompletionInfo by completionInfoProperty
+
+    private fun calculateCompletionInfo(): List<TextCompletionInfo> {
+      val indices = GradleTasksIndices.getInstance(project)
+      return indices.getTasksCompletionVariances(workingDirectoryField.workingDirectory)
+        .map { TextCompletionInfo(it.key, it.value.first().description) }
     }
 
-    override val tableCompletionInfo: List<TextCompletionInfo> by lazy { completionInfo }
+    init {
+      workingDirectoryField.whenTextModified {
+        completionInfoProperty.reset()
+      }
+
+    }
   }
 
   private class ArgumentsCompletionTableInfo : CompletionTableInfo {

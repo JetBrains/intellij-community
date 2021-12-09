@@ -14,6 +14,7 @@ import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.formatter.java.wrap.ReservedWrapsProvider;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositeElement;
+import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -299,7 +300,10 @@ public final class JavaFormatterUtil {
         ASTNode last = prev.getLastChildNode();
         if (last != null && last.getElementType() == JavaElementType.ANNOTATION) {
           if (isTypeAnnotationOrFalseIfDumb(last) ||
-              javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isFieldModifierListWithSingleAnnotation(prev)) {
+              javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isModifierListWithSingleAnnotation(prev, JavaElementType.FIELD) ||
+              javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION_IN_PARAMETER && isModifierListWithSingleAnnotation(prev, JavaElementType.PARAMETER) ||
+              isAnnotationAfterKeyword(last)
+          ) {
             return Wrap.createWrap(WrapType.NONE, false);
           }
           else {
@@ -332,7 +336,7 @@ public final class JavaFormatterUtil {
 
       ASTNode prev = FormatterUtil.getPreviousNonWhitespaceSibling(child);
       if (prev != null && prev.getElementType() == JavaElementType.ANNOTATION) {
-        if (javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isFieldModifierListWithSingleAnnotation(parent)) {
+        if (javaSettings.DO_NOT_WRAP_AFTER_SINGLE_ANNOTATION && isModifierListWithSingleAnnotation(parent, JavaElementType.FIELD)) {
           return Wrap.createWrap(WrapType.NONE, false);
         }
         Wrap wrap = Wrap.createWrap(getWrapType(getAnnotationWrapType(parent.getTreeParent(), child, settings)), true);
@@ -406,7 +410,32 @@ public final class JavaFormatterUtil {
       }
     }
 
+    else if (nodeType == JavaElementType.SWITCH_LABELED_RULE && childType == JavaElementType.BLOCK_STATEMENT) {
+      boolean dontNeedBreak = settings.BRACE_STYLE == CommonCodeStyleSettings.END_OF_LINE;
+      return Wrap.createWrap(dontNeedBreak ? WrapType.NONE : WrapType.NORMAL, true);
+    }
+    else if (nodeType == JavaElementType.SWITCH_LABELED_RULE && ElementType.JAVA_STATEMENT_BIT_SET.contains(childType)) {
+      return Wrap.createWrap(WrapType.NORMAL, true);
+    }
+
     return suggestedWrap;
+  }
+
+  /**
+   * Check if annotation goes after a keyword (maybe even not directly).
+   *
+   * Example: {@code private @Foo @Bar void method() {} }
+   * Here both Foo and Bar are after keyword
+   */
+  private static boolean isAnnotationAfterKeyword(@NotNull ASTNode annotation) {
+    ASTNode current = annotation.getTreePrev();
+    while (current != null) {
+      if (current instanceof PsiKeyword) {
+        return true;
+      }
+      current = current.getTreePrev();
+    }
+    return false;
   }
 
 
@@ -431,9 +460,9 @@ public final class JavaFormatterUtil {
     }
   }
 
-  private static boolean isFieldModifierListWithSingleAnnotation(@NotNull ASTNode elem) {
+  private static boolean isModifierListWithSingleAnnotation(@NotNull ASTNode elem, IElementType parentElementType) {
     ASTNode parent = elem.getTreeParent();
-    if (parent != null && parent.getElementType() == JavaElementType.FIELD) {
+    if (parent != null && parent.getElementType() == parentElementType) {
       return isModifierListWithSingleAnnotation(elem);
     }
     return false;

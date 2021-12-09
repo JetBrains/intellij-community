@@ -11,6 +11,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -36,7 +37,7 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import static org.jetbrains.idea.maven.indices.MavenArtifactManager.loadUserArchetypes;
+import static org.jetbrains.idea.maven.indices.MavenArchetypeManager.loadUserArchetypes;
 
 /**
  * Main api class for work with maven indices.
@@ -129,17 +130,11 @@ public final class MavenIndicesManager implements Disposable {
       public void activated() {
         scheduleUpdateIndicesList(null);
       }
-    });
+    }, this);
 
     projectsManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
-      public void projectsUpdated(@NotNull List<Pair<MavenProject, MavenProjectChanges>> updated, @NotNull List<MavenProject> deleted) {
-        scheduleUpdateIndicesList(null);
-      }
-
-      @Override
-      public void projectResolved(@NotNull Pair<MavenProject, MavenProjectChanges> projectWithChanges,
-                                  @Nullable NativeMavenProjectHolder nativeMavenProject) {
+      public void allProjectsResolved() {
         scheduleUpdateIndicesList(null);
       }
     }, this);
@@ -151,14 +146,14 @@ public final class MavenIndicesManager implements Disposable {
   }
 
   @NotNull
-  private Path getIndicesDir() {
+  Path getIndicesDir() {
     return myTestIndicesDir == null
            ? MavenUtil.getPluginSystemDir("Indices")
            : myTestIndicesDir;
   }
 
   public void addArchetype(@NotNull MavenArchetype archetype) {
-    MavenArtifactManager.addArchetype(archetype, getUserArchetypesFile());
+    MavenArchetypeManager.addArchetype(archetype, getUserArchetypesFile());
   }
 
   public boolean hasLocalGroupId(@NotNull String groupId) {
@@ -216,9 +211,14 @@ public final class MavenIndicesManager implements Disposable {
     return myIndexUpdateManager.getUpdatingState(index);
   }
 
+  /**
+   * @deprecated use {@link MavenArchetypeManager#getArchetypes()}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   public Set<MavenArchetype> getArchetypes() {
     Set<MavenArchetype> result = new HashSet<>(myIndexerWrapper.getArchetypes());
-    result.addAll(loadUserArchetypes(getUserArchetypesFile()));
+    result.addAll(loadUserArchetypes(getIndicesDir().resolve("UserArchetypes.xml")));
     if (myMavenIndices.isNotInit()) {
       myMavenIndices.updateIndicesList(myProject);
     }

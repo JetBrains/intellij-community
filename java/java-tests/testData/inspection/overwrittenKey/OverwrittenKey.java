@@ -1,4 +1,5 @@
 import java.util.*;
+import com.google.common.collect.ImmutableSet;
 
 class OverwrittenKey {
   void fillMap(Map<String, Integer> map) {
@@ -57,6 +58,11 @@ class OverwrittenKey {
   void enumSetOf() {
     EnumSet<X> xx = EnumSet.of(<warning descr="Duplicate Set element">X.A</warning>, X.B, <warning descr="Duplicate Set element">X.A</warning>, X.C);
     System.out.println(xx);
+  }
+
+  void guavaImmutableSetOf() {
+    ImmutableSet<Double> s = ImmutableSet.of(<warning descr="Duplicate Set element">-10.</warning>, 1d, <warning descr="Duplicate Set element">-10.0</warning>);
+    System.out.println(s);
   }
 
   void testParameter(Map<Object, Object> map, String key) {

@@ -34,7 +34,9 @@ import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
-import javax.swing.text.*;
+import javax.swing.text.AbstractDocument;
+import javax.swing.text.AttributeSet;
+import javax.swing.text.StyleConstants;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.tree.TreePath;
@@ -288,7 +290,8 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
           return true;
         }
       }.setToCenter(toCenter).setCalloutShift(shift).setPositionChangeShift(posChangeX, posChangeY).setLayer(Balloon.Layer.top);
-    } else if (myCurrentTooltip == tooltip) {
+    }
+    else if (myCurrentTooltip == tooltip) {
       return;//Don't re-show the same custom tooltip on every mouse movement
     }
 
@@ -318,8 +321,9 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
    */
   @ApiStatus.Experimental
   public void updateShownTooltip(@Nullable Component tooltipOwner) {
-     if (!hasCurrent() || myCurrentComponent == null || myCurrentComponent != tooltipOwner)
-       return;
+    if (!hasCurrent() || myCurrentComponent == null || myCurrentComponent != tooltipOwner) {
+      return;
+    }
 
     try {
       MouseEvent reposition;
@@ -552,7 +556,11 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
     return hideCurrent(me, tooltipToShow, null, null, isAnimationEnabled(myBalloon));
   }
 
-  private boolean hideCurrent(@Nullable MouseEvent me, @Nullable IdeTooltip tooltipToShow, @Nullable AnAction action, @Nullable AnActionEvent event, final boolean animationEnabled) {
+  private boolean hideCurrent(@Nullable MouseEvent me,
+                              @Nullable IdeTooltip tooltipToShow,
+                              @Nullable AnAction action,
+                              @Nullable AnActionEvent event,
+                              final boolean animationEnabled) {
     if (myHelpTooltipManager != null && myHideHelpTooltip) {
       hideCurrentNow(false);
       return true;
@@ -737,37 +745,26 @@ public class IdeTooltipManager implements Disposable, AWTEventListener {
       }
     } : new JEditorPane();
 
-    HTMLEditorKit kit = new JBHtmlEditorKit() {
-      final HTMLFactory factory = new JBHtmlFactory() {
-        @Override
-        public View create(Element elem) {
-          AttributeSet attrs = elem.getAttributes();
-          Object elementName = attrs.getAttribute(AbstractDocument.ElementNameAttribute);
-          Object o = elementName != null ? null : attrs.getAttribute(StyleConstants.NameAttribute);
-          if (o instanceof HTML.Tag) {
-            HTML.Tag kind = (HTML.Tag)o;
-            if (kind == HTML.Tag.HR) {
-              View view = super.create(elem);
-              try {
-                Field field = view.getClass().getDeclaredField("size");
-                field.setAccessible(true);
-                field.set(view, JBUIScale.scale(1));
-                return view;
-              }
-              catch (Exception ignored) {
-                //ignore
-              }
-            }
+    HTMLEditorKit kit = new HTMLEditorKitBuilder().withViewFactoryExtensions((elem, view) -> {
+      AttributeSet attrs = elem.getAttributes();
+      Object elementName = attrs.getAttribute(AbstractDocument.ElementNameAttribute);
+      Object o = elementName != null ? null : attrs.getAttribute(StyleConstants.NameAttribute);
+      if (o instanceof HTML.Tag) {
+        HTML.Tag kind = (HTML.Tag)o;
+        if (kind == HTML.Tag.HR) {
+          try {
+            Field field = view.getClass().getDeclaredField("size");
+            field.setAccessible(true);
+            field.set(view, JBUIScale.scale(1));
+            return view;
           }
-          return super.create(elem);
+          catch (Exception ignored) {
+            //ignore
+          }
         }
-      };
-
-      @Override
-      public ViewFactory getViewFactory() {
-        return factory;
       }
-    };
+      return view;
+    }).build();
     String editorFontName = EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName();
     if (editorFontName != null) {
       String style = "font-family:\"" + StringUtil.escapeQuotes(editorFontName) + "\";font-size:95%;";

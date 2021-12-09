@@ -235,7 +235,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
                     splitter.getProportion() == splitter.getMinimumProportion())) ||
                   (splitter.getProportion() == splitter.getMinProportion(false) ||
                    splitter.getProportion() == splitter.getMaximumProportion())) {
-                Set<kotlin.Pair<Splitter, Boolean>> pairs = MaximizeEditorInSplitAction.Companion.getSplittersToMaximize(project, editor1);
+                Set<kotlin.Pair<Splitter, Boolean>> pairs = MaximizeEditorInSplitAction.Companion.getSplittersToMaximize(project, editor1.getComponent());
                 for (kotlin.Pair<Splitter, Boolean> pair : pairs) {
                   Splitter s = pair.getFirst();
                   s.setProportion(pair.getSecond() ? s.getMaximumProportion() : s.getMinimumProportion());

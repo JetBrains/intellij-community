@@ -105,6 +105,15 @@ public abstract class PsiAugmentProvider {
   }
 
   /**
+   * @param field field to check
+   * @return true if this field initializer can be changed due to extra-linguistic extensions
+   * (e.g., it's annotated via some annotation and annotation processor will transform the field to be non-constant)
+   */
+  protected boolean fieldInitializerMightBeChanged(@NotNull PsiField field) {
+    return false;
+  }
+
+  /**
    * Intercepts {@link PsiModifierList#hasModifierProperty(String)}, so that plugins can add imaginary modifiers or hide existing ones.
    */
   @NotNull
@@ -202,6 +211,25 @@ public abstract class PsiAugmentProvider {
         result.set(true);
       }
       return !canInfer;
+    });
+
+    return result.get();
+  }
+
+  /**
+   * @param field field to check
+   * @return true if we can trust the field initializer;
+   * false if any of providers reported that the initializer might be changed
+   */
+  public static boolean canTrustFieldInitializer(@NotNull PsiField field) {
+    AtomicBoolean result = new AtomicBoolean(true);
+
+    forEach(field.getProject(), provider -> {
+      boolean mightBeReplaced = provider.fieldInitializerMightBeChanged(field);
+      if (mightBeReplaced) {
+        result.set(false);
+      }
+      return !mightBeReplaced;
     });
 
     return result.get();

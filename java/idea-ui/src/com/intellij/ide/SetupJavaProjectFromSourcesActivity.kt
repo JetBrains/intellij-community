@@ -33,10 +33,12 @@ import com.intellij.openapi.vfs.*
 import com.intellij.platform.PlatformProjectOpenProcessor
 import com.intellij.platform.PlatformProjectOpenProcessor.Companion.isOpenedByPlatformProcessor
 import com.intellij.projectImport.ProjectOpenProcessor
+import com.intellij.util.SystemProperties
 import java.io.File
 import javax.swing.event.HyperlinkEvent
 
 private val NOTIFICATION_GROUP = NotificationGroup("Build Script Found", NotificationDisplayType.STICKY_BALLOON, true)
+private val SETUP_JAVA_PROJECT_IS_DISABLED = SystemProperties.getBooleanProperty("idea.java.project.setup.disabled", false)
 
 private const val SCAN_DEPTH_LIMIT = 5
 private const val MAX_ROOTS_IN_TRIVIAL_PROJECT_STRUCTURE = 3
@@ -44,7 +46,7 @@ private val LOG = logger<SetupJavaProjectFromSourcesActivity>()
 
 internal class SetupJavaProjectFromSourcesActivity : StartupActivity {
   override fun runActivity(project: Project) {
-    if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment || SETUP_JAVA_PROJECT_IS_DISABLED) {
       return
     }
     if (!project.isOpenedByPlatformProcessor()) {

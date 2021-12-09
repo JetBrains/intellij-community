@@ -30,11 +30,12 @@ class GitStageDiffPreview(project: Project,
                           private val isInEditor: Boolean,
                           parent: Disposable) :
   ChangeViewDiffRequestProcessor(project, "Stage") {
+  private val disposableFlag = Disposer.newCheckedDisposable()
 
   init {
     tree.addSelectionListener(Runnable {
       val modelUpdateInProgress = tree.isModelUpdateInProgress
-      runInEdtAsync(this) { updatePreview(component.isShowing, modelUpdateInProgress) }
+      runInEdtAsync(disposableFlag) { updatePreview(component.isShowing, modelUpdateInProgress) }
     }, this)
     tracker.addListener(object : GitStageTrackerListener {
       override fun update() {
@@ -42,6 +43,7 @@ class GitStageDiffPreview(project: Project,
       }
     }, this)
     Disposer.register(parent, this)
+    Disposer.register(this, disposableFlag)
   }
 
   override fun shouldAddToolbarBottomBorder(toolbarComponents: FrameDiffTool.ToolbarComponents): Boolean {

@@ -43,6 +43,9 @@ private class DefaultWebServerPathHandler : WebServerPathHandler() {
     if (pathInfo == null || !pathInfo.isValid) {
       pathInfo = pathToFileManager.doFindByRelativePath(path, defaultPathQuery)
       if (pathInfo == null) {
+        if (FavIconHttpRequestHandler.sendDefaultFavIcon(decodedRawPath, request, context)) {
+          return true
+        }
         HttpResponseStatus.NOT_FOUND.send(channel, request, extraHeaders = extraHeaders)
         return true
       }

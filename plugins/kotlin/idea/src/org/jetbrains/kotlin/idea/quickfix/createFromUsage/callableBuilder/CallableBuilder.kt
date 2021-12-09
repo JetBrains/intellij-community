@@ -1118,7 +1118,7 @@ internal fun <D : KtNamedDeclaration> placeDeclarationInContainer(
 
     fun addNextToOriginalElementContainer(addBefore: Boolean): D {
         val sibling = anchor.parentsWithSelf.first { it.parent == actualContainer }
-        return if (addBefore) {
+        return if (addBefore || PsiTreeUtil.hasErrorElements(sibling)) {
             actualContainer.addBefore(declaration, sibling)
         } else {
             actualContainer.addAfter(declaration, sibling)

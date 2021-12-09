@@ -22,4 +22,9 @@ class GradleSettingScriptBuilder(projectName: String) {
   fun withBuild(name: String) = apply {
     builder.add("includeBuild '$name'")
   }
+
+  companion object {
+    fun settingsScript(projectName: String, configure: GradleSettingScriptBuilder.() -> Unit) =
+      GradleSettingScriptBuilder(projectName).apply(configure).generate()
+  }
 }

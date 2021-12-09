@@ -123,8 +123,8 @@ class GitMergeDialog(private val project: Project,
     setOKButtonText(GitBundle.message("merge.action.name"))
     loadSettings()
     updateBranchesField()
-    updateUi()
     init()
+    updateUi()
   }
 
   override fun createCenterPanel() = panel
@@ -359,12 +359,11 @@ class GitMergeDialog(private val project: Project,
           .minHeight("${JBUI.scale(75)}px"))
   }
 
-  private fun createPopupBuilder() = GitOptionsPopupBuilder(project,
-                                                            GitBundle.message("merge.options.modify.popup.title"),
-                                                            ::getOptions,
-                                                            OptionListCellRenderer(::getOptionInfo, ::isOptionSelected, ::isOptionEnabled),
-                                                            ::optionChosen,
-                                                            ::isOptionEnabled)
+  private fun createPopupBuilder() = GitOptionsPopupBuilder(
+    project,
+    GitBundle.message("merge.options.modify.popup.title"),
+    ::getOptions, ::getOptionInfo, ::isOptionSelected, ::isOptionEnabled, ::optionChosen
+  )
 
   private fun createOptionsDropDown() = DropDownLink(GitBundle.message("merge.options.modify")) {
     popupBuilder.createPopup()
@@ -378,7 +377,7 @@ class GitMergeDialog(private val project: Project,
     OptionInfo(option, option.option, option.description)
   }
 
-  private fun getOptions() = GitMergeOption.values().toMutableList().apply {
+  private fun getOptions(): List<GitMergeOption> = GitMergeOption.values().toMutableList().apply {
     if (!isNoVerifySupported) {
       remove(GitMergeOption.NO_VERIFY)
     }

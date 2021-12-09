@@ -9,6 +9,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
+/**
+ * This extension point allows adding support for a new language in code fences.
+ * Basically, implementing this EP will allow IDE to provide most of the language features
+ * in code fences (i.e. highlighting, completion, ...) if the current language is supported by the IDE
+ * (language support is bundled with the current IDE, or there is an active plugin with such support).
+ */
 public interface CodeFenceLanguageProvider {
   ExtensionPointName<CodeFenceLanguageProvider> EP_NAME = ExtensionPointName.create("org.intellij.markdown.fenceLanguageProvider");
 

@@ -10,15 +10,12 @@ import com.intellij.ide.actions.searcheverywhere.SearchEverywhereFoundElementInf
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
-import org.jetbrains.kotlin.asJava.findFacadeClass
+import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
 /**
- * Q: Why is [KtSearchEverywhereEqualityProvider] implemented as a bunch of methods but not as a bunch of extension points?
- * A: Because we want to make sure that "native Psi vs KtLightElement" is checked first
- *
  * @see org.jetbrains.kotlin.idea.searcheverywhere.NativePsiAndKtLightElementEqualityProviderTest
  * @see org.jetbrains.kotlin.idea.searcheverywhere.KtSearchEverywhereEqualityProviderTest
  */
@@ -27,70 +24,84 @@ class KtSearchEverywhereEqualityProvider : SEResultsEqualityProvider {
         newItem: SearchEverywhereFoundElementInfo,
         alreadyFoundItems: List<SearchEverywhereFoundElementInfo>
     ): SEEqualElementsActionType {
-        return compareNativePsiAndKtLightElement(newItem, alreadyFoundItems).takeIf { it != DoNothing }
-            ?: compare(newItem, alreadyFoundItems)
+        val newPsiElement = newItem.toPsi() ?: return DoNothing
+        val result = compareElements(newPsiElement) {
+            alreadyFoundItems.asSequence().mapNotNull { it.toPsi() }
+        }
+
+        return when (result) {
+            null -> DoNothing
+            -1 -> Skip
+            else -> Replace(alreadyFoundItems[result])
+        }
     }
 
-    private fun compare(
-        newItem: SearchEverywhereFoundElementInfo,
-        alreadyFoundItems: List<SearchEverywhereFoundElementInfo>
-    ): SEEqualElementsActionType {
-        val newItemWithKind = newItem.toPsi()?.withKind() ?: return DoNothing
-        return alreadyFoundItems
-            .map { alreadyFoundItem ->
-                val alreadyFoundItemWithKind = alreadyFoundItem.toPsi()?.withKind() ?: return@map DoNothing
-                if (getGroupLeader(newItemWithKind.first)?.equals(getGroupLeader(alreadyFoundItemWithKind.first)) == true) {
-                    val winner = minOf(newItemWithKind, alreadyFoundItemWithKind, compareBy { it.second })
-                    if (winner == newItemWithKind) Replace(alreadyFoundItem) else Skip
-                } else {
-                    DoNothing
-                }
+    companion object {
+        /**
+         * @return
+         * null if a rule is not applicable,
+         * -1 if [newItem] should be skipped,
+         * the index of [alreadyFoundItems] if an existent element should be replaced
+         */
+        fun compareElements(
+            newItem: PsiElement,
+            alreadyFoundItems: () -> Sequence<PsiElement>,
+        ): Int? {
+            fun <T> reduce(
+                transformation: PsiElement.() -> T?,
+                shouldBeProcessed: (new: T, old: T) -> Boolean,
+                shouldBeReplaced: (new: T, old: T) -> Boolean,
+            ): Int? {
+                val transformedNewItem = newItem.transformation() ?: return null
+                return alreadyFoundItems().mapIndexedNotNull(fun(index: Int, alreadyFoundItem: PsiElement): Int? {
+                    val transformedOldItem = alreadyFoundItem.transformation() ?: return null
+                    if (!shouldBeProcessed(transformedNewItem, transformedOldItem)) return null
+                    return if (shouldBeReplaced(transformedNewItem, transformedOldItem)) index else -1
+                }).firstOrNull()
             }
-            .reduceOrNull { acc, actionType -> acc.combine(actionType) }
-            ?: DoNothing
-    }
 
-    private fun compareNativePsiAndKtLightElement(
-        newItem: SearchEverywhereFoundElementInfo,
-        alreadyFoundItems: List<SearchEverywhereFoundElementInfo>
-    ): SEEqualElementsActionType {
-        val newItemPsi = newItem.toPsi() ?: return DoNothing
-        return alreadyFoundItems
-            .map { alreadyFoundItem ->
-                val alreadyFoundItemPsi = alreadyFoundItem.toPsi() ?: return@map DoNothing
-                if (PsiManager.getInstance(newItemPsi.project).areElementsEquivalent(newItemPsi, alreadyFoundItemPsi)) {
-                    // Prefer to show native Kotlin psi elements
-                    if (newItemPsi is KtElement && alreadyFoundItemPsi !is KtElement) Replace(alreadyFoundItem)
-                    else Skip
-                } else DoNothing
-            }
-            .reduceOrNull { acc, actionType -> acc.combine(actionType) }
-            ?: DoNothing
-    }
-
-    private fun getGroupLeader(element: PsiElement): KtFile? {
-        if (element is KtFile) {
-            return element
+            return reduce(
+                transformation = { this },
+                shouldBeProcessed = { new, old ->
+                    // [com.intellij.ide.actions.searcheverywhere.TrivialElementsEqualityProvider] is responsible for "new == old" case
+                    (new::class != old::class || new === old) && PsiManager.getInstance(new.project).areElementsEquivalent(new, old)
+                },
+                shouldBeReplaced = { new, old -> new is KtElement && old !is KtElement },
+            ) ?: reduce(
+                transformation = { (this.unwrapped ?: this).withKind() },
+                shouldBeProcessed = { new, old ->
+                    new.second != old.second && getGroupLeader(new.first)?.equals(getGroupLeader(old.first)) == true
+                },
+                shouldBeReplaced = { new, old -> minOf(new, old, compareBy { it.second }) === new },
+            )
         }
-        if (element is KtLightClassForFacade &&
-            element.fqName.shortName().asString().removeSuffix("Kt") == element.containingFile.virtualFile.nameWithoutExtension
-        ) {
-            return element.containingFile.ktFile
-        }
-        if (element is KtClass && element.isTopLevel()) {
-            val file = element.parent
-            if (file is KtFile &&
-                element.name == file.virtualFile.nameWithoutExtension
-            ) {
-                return file
-            }
-        }
-        return null
     }
 }
 
-private fun SearchEverywhereFoundElementInfo.toPsi() =
-    PSIPresentationBgRendererWrapper.toPsi(element)
+private fun getGroupLeader(element: PsiElement): KtFile? {
+    if (element is KtFile) {
+        return element
+    }
+
+    if (element is KtLightClassForFacade &&
+        element.fqName.shortName().asString().removeSuffix("Kt") == element.containingFile.virtualFile.nameWithoutExtension
+    ) {
+        return element.containingFile.ktFile
+    }
+
+    if (element is KtClass && element.isTopLevel()) {
+        val file = element.parent
+        if (file is KtFile &&
+            element.name == file.virtualFile.nameWithoutExtension
+        ) {
+            return file
+        }
+    }
+
+    return null
+}
+
+private fun SearchEverywhereFoundElementInfo.toPsi() = PSIPresentationBgRendererWrapper.toPsi(element)
 
 private enum class Kind {
     KtClass, KtFile, KtFacade

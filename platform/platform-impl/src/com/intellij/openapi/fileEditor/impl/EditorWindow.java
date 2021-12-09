@@ -651,7 +651,7 @@ public final class EditorWindow {
     return null;
   }
 
-  private void normalizeProportionsIfNeed(JComponent comp) {
+  private void normalizeProportionsIfNeed(Container comp) {
     if (!AdvancedSettings.getBoolean("editor.normalize.splits")) return;
 
     Boolean isVertical = null;
@@ -672,7 +672,7 @@ public final class EditorWindow {
         }
         hierarchyStack.put((Splitter)parent, ((Splitter)parent).getFirstComponent() == comp);
       }
-      comp = (JComponent)parent;
+      comp = parent;
     }
     int i = 0;
     for (Map.Entry<Splitter, Boolean> entry : hierarchyStack.entrySet()) {

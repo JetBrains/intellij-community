@@ -36,21 +36,6 @@ import java.util.zip.Deflater
 
 private val random by lazy { SecureRandom() }
 
-fun main() {
-  @Suppress("SpellCheckingInspection")
-  signMac(
-    host = "localhost",
-    user = System.getProperty("ssh.user"),
-    password = System.getProperty("ssh.password"),
-    codesignString = "",
-    remoteDirPrefix = "test",
-    signScript = Path.of("/Volumes/data/Documents/idea/community/platform/build-scripts/tools/mac/scripts/signbin.sh"),
-    files = listOf(Path.of("/Applications/Idea.app/Contents/bin/fsnotifier2")),
-    artifactDir = Path.of("/tmp/signed-files"),
-    artifactBuilt = {},
-  )
-}
-
 // our zip for JARs, but here we need to support file permissions - that's why apache compress is used
 fun prepareMacZip(macZip: Path,
                   sitFile: Path,
@@ -192,41 +177,6 @@ fun signMacApp(
         artifactBuilt.accept(dmgFile)
       }
     }
-  }
-}
-
-fun signMac(
-  host: String,
-  user: String,
-  password: String,
-  codesignString: String,
-  remoteDirPrefix: String,
-  signScript: Path,
-  files: List<Path>,
-  artifactDir: Path,
-  artifactBuilt: Consumer<Path>
-) {
-  val failedToSign = mutableListOf<Path>()
-  executeTask(host, user, password, remoteDirPrefix) { ssh, sftp, remoteDir ->
-    val remoteSignScript = "$remoteDir/${signScript.fileName}"
-    sftp.put(NioFileSource(signScript, executableFileMode), remoteSignScript)
-
-    for (file in files) {
-      tracer.spanBuilder("sign").setAttribute("file", file.toString()).startSpan().useWithScope {
-        signFile(remoteDir = remoteDir,
-                 commandString = "'$remoteSignScript' '${file.fileName}' '$user' '$password' '$codesignString'",
-                 file = file,
-                 ssh = ssh,
-                 ftpClient = sftp,
-                 artifactDir = artifactDir,
-                 artifactBuilt = artifactBuilt)
-        downloadResult(remoteFile = "$remoteDir/${file.fileName}", localFile = file, ftpClient = sftp, failedToSign = failedToSign)
-      }
-    }
-  }
-
-  if (!failedToSign.isEmpty()) {
-    throw RuntimeException("Failed to sign files: ${failedToSign.joinToString { it.toString() }}")
   }
 }
 

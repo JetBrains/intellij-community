@@ -2,6 +2,7 @@
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -110,6 +111,11 @@ public abstract class MavenIndexerWrapper extends MavenRemoteObjectWrapper<Maven
     return perform(() -> getOrCreateWrappee().search(mavenIndexId, pattern, maxResult, ourToken));
   }
 
+  /**
+   * @deprecated use {@link MavenEmbedderWrapper#getArchetypes()}
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   public Collection<MavenArchetype> getArchetypes() {
     return perform(() -> getOrCreateWrappee().getArchetypes(ourToken));
   }

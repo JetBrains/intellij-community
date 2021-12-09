@@ -7,7 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditorManagerEvent
 import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.impl.PostponableLogRefresher.VcsLogWindow
-import com.intellij.vcs.log.visible.VisiblePackRefresher
+import com.intellij.vcs.log.ui.VcsLogUiEx
 import org.jetbrains.annotations.NonNls
 
 internal class VcsLogEditorTabsWatcher(private val project: Project,
@@ -23,10 +23,8 @@ internal class VcsLogEditorTabsWatcher(private val project: Project,
     tabSelectedCallback = callback
   }
 
-  override fun createLogTab(logId: String,
-                            refresher: VisiblePackRefresher,
-                            isClosedOnDispose: Boolean): VcsLogEditorTab {
-    return VcsLogEditorTab(logId, refresher, isClosedOnDispose)
+  override fun createLogTab(ui: VcsLogUiEx, isClosedOnDispose: Boolean): VcsLogEditorTab {
+    return VcsLogEditorTab(ui, isClosedOnDispose)
   }
 
   override fun isOwnerOf(tab: VcsLogWindow): Boolean {
@@ -39,7 +37,7 @@ internal class VcsLogEditorTabsWatcher(private val project: Project,
     LOG.assertTrue(closed, "Could not close tabs: $editorTabs")
   }
 
-  inner class VcsLogEditorTab(id: String, refresher: VisiblePackRefresher, val isClosedOnDispose: Boolean) : VcsLogWindow(id, refresher) {
+  inner class VcsLogEditorTab(ui: VcsLogUiEx, val isClosedOnDispose: Boolean) : VcsLogWindow(ui) {
     override fun isVisible(): Boolean {
       return getSelectedEditorTabIds(project).contains(id)
     }

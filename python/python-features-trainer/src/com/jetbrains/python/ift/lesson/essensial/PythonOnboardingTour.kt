@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageDialogBuilder
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.popup.Balloon
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.UserDataHolderBase
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
@@ -42,7 +43,7 @@ import com.intellij.ui.ScreenUtil
 import com.intellij.ui.UIBundle
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.layout.*
+import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.tree.TreeVisitor
 import com.intellij.util.Alarm
 import com.intellij.util.ui.UIUtil
@@ -179,7 +180,10 @@ class PythonOnboardingTour :
     uiSettings.showNavigationBar = showNavigationBarPreference
     uiSettings.fireUISettingsChanged()
 
-    if (!lessonEndInfo.lessonPassed) return
+    if (!lessonEndInfo.lessonPassed) {
+      showFeedbackNotification(project)
+      return
+    }
     val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
     invokeLater {
       val result = MessageDialogBuilder.yesNoCancel(PythonLessonsBundle.message("python.onboarding.finish.title"),
@@ -206,10 +210,22 @@ class PythonOnboardingTour :
         }
       }
       if (result != Messages.YES) {
-        module.primaryLanguage?.let {
-          showOnboardingFeedbackNotification(project, it.onboardingFeedbackData)
-          it.onboardingFeedbackData = null
+        showFeedbackNotification(project)
+      }
+    }
+  }
+
+  private fun showFeedbackNotification(project: Project) {
+    invokeLater {
+      if (project.isDisposed) {
+        return@invokeLater
+      }
+      module.primaryLanguage?.let { langSupport ->
+        // exit link will show notification directly and reset this field to null
+        langSupport.onboardingFeedbackData?.let {
+          showOnboardingFeedbackNotification(project, it)
         }
+        langSupport.onboardingFeedbackData = null
       }
     }
   }
@@ -233,7 +249,9 @@ class PythonOnboardingTour :
 
     val usedInterpreter = project.pythonSdk?.versionString ?: "none"
 
-    primaryLanguage.onboardingFeedbackData = object : OnboardingFeedbackData("PyCharm Onbdoarding Tour Feedback", lessonEndInfo) {
+    primaryLanguage.onboardingFeedbackData = object : OnboardingFeedbackData("PyCharm Onboarding Tour Feedback", lessonEndInfo) {
+      override val feedbackReportId = "pycharm_onboarding_tour"
+
       val interpreters: List<String>? by lazy {
         if (interpreterVersions.isDone) interpreterVersions.get() else null
       }
@@ -246,25 +264,20 @@ class PythonOnboardingTour :
         })
       }
 
-      @Suppress("HardCodedStringLiteral")
-      override val addRowsForUserAgreement: LayoutBuilder.() -> Unit = {
-        row {
-          cell {
-            label("Found interpreters:")
-          }
-          cell {
-            label(interpreters?.toString() ?: "none")
-          }
+      override val addRowsForUserAgreement: Panel.() -> Unit = {
+        row(PythonLessonsBundle.message("python.onboarding.feedback.system.found.interpreters")) {
+          @Suppress("HardCodedStringLiteral")
+          val interpreters: @NlsSafe String? = interpreters?.toString()
+          label(interpreters ?: PythonLessonsBundle.message("python.onboarding.feedback.system.no.interpreters"))
         }
-        row {
-          cell {
-            label("Used interpreter:")
-          }
-          cell {
-            label(usedInterpreter)
-          }
+        row(PythonLessonsBundle.message("python.onboarding.feedback.system.used.interpreter")) {
+          label(usedInterpreter)
         }
       }
+
+      override val possibleTechnicalIssues: Map<String, @Nls String> = mapOf(
+        "interpreter_issues" to PythonLessonsBundle.message("python.onboarding.option.interpreter.issues")
+      )
     }
   }
 

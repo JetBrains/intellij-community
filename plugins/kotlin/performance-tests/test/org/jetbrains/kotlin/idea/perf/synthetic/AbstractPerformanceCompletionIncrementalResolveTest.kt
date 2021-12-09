@@ -9,13 +9,13 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.ThrowableRunnable
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.completion.CompletionBindingContextProvider
-import org.jetbrains.kotlin.idea.perf.Stats
-import org.jetbrains.kotlin.idea.perf.Stats.Companion.WARM_UP
-import org.jetbrains.kotlin.idea.perf.TestData
-import org.jetbrains.kotlin.idea.perf.performanceTest
+import org.jetbrains.kotlin.idea.testFramework.Stats
+import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP
+import org.jetbrains.kotlin.idea.testFramework.performanceTest
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.runAll
+import org.jetbrains.kotlin.idea.testFramework.TestData
 import org.jetbrains.kotlin.idea.testFramework.commitAllDocuments
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.test.InTextDirectivesUtils

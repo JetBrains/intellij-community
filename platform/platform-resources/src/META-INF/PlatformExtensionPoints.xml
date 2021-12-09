@@ -212,23 +212,30 @@
 
     <extensionPoint name="eventLogCategory" interface="com.intellij.notification.EventLogCategory" dynamic="true"/>
 
-    <extensionPoint name="nonProjectFileWritingAccessExtension" area="IDEA_PROJECT" interface="com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension" dynamic="true"/>
+    <extensionPoint name="nonProjectFileWritingAccessExtension" area="IDEA_PROJECT"
+                    interface="com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessExtension" dynamic="true"/>
 
-    <extensionPoint name="editorNotificationProvider" area="IDEA_PROJECT" interface="com.intellij.ui.EditorNotifications$Provider" dynamic="true"/>
+    <extensionPoint name="editorNotificationProvider" area="IDEA_PROJECT" interface="com.intellij.ui.EditorNotificationProvider"
+                    dynamic="true"/>
 
     <extensionPoint name="featureStatisticsBundle" beanClass="com.intellij.featureStatistics.FeatureStatisticsBundleEP"/>
 
-    <extensionPoint name="toolWindowExtractor" interface="com.intellij.ui.viewModel.extraction.ToolWindowViewModelExtractor" dynamic="true"/>
-    <extensionPoint name="toolWindowContentExtractor" interface="com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor" dynamic="true"/>
+    <extensionPoint name="toolWindowExtractor" interface="com.intellij.ui.viewModel.extraction.ToolWindowViewModelExtractor"
+                    dynamic="true"/>
+    <extensionPoint name="toolWindowContentExtractor" interface="com.intellij.ui.viewModel.extraction.ToolWindowContentExtractor"
+                    dynamic="true"/>
     <extensionPoint name="toolWindowExtractorMode"
                     beanClass="com.intellij.ui.viewModel.extraction.ToolWindowExtractorEP"
                     dynamic="true"/>
 
     <extensionPoint name="editorNavigation" interface="com.intellij.openapi.editor.EditorNavigationDelegate" dynamic="true"/>
 
-    <extensionPoint name="statistics.applicationUsagesCollector" interface="com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector" dynamic="true"/>
-    <extensionPoint name="statistics.projectUsagesCollector" interface="com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector" dynamic="true"/>
-    <extensionPoint name="statistics.counterUsagesCollector" beanClass="com.intellij.internal.statistic.service.fus.collectors.CounterUsageCollectorEP" dynamic="true">
+    <extensionPoint name="statistics.applicationUsagesCollector"
+                    interface="com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector" dynamic="true"/>
+    <extensionPoint name="statistics.projectUsagesCollector"
+                    interface="com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector" dynamic="true"/>
+    <extensionPoint name="statistics.counterUsagesCollector"
+                    beanClass="com.intellij.internal.statistic.service.fus.collectors.CounterUsageCollectorEP" dynamic="true">
       <with attribute="implementationClass" implements="com.intellij.internal.statistic.service.fus.collectors.FeatureUsagesCollector"/>
     </extensionPoint>
     <extensionPoint name="statistics.validation.customWhiteListRule" interface="com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomWhiteListRule" dynamic="true"/>

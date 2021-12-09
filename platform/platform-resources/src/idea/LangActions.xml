@@ -165,8 +165,12 @@
       <action id="ShowTypeBookmarks" class="com.intellij.ide.bookmark.actions.ShowTypeBookmarksAction"/>
       <action id="GotoNextBookmark" icon="AllIcons.Actions.NextOccurence"
               class="com.intellij.ide.bookmark.actions.NextBookmarkAction"/>
+      <action id="GotoNextBookmarkInEditor" icon="AllIcons.Actions.NextOccurence"
+              class="com.intellij.ide.bookmark.actions.NextBookmarkInEditorAction"/>
       <action id="GotoPreviousBookmark" icon="AllIcons.Actions.PreviousOccurence"
               class="com.intellij.ide.bookmark.actions.PreviousBookmarkAction"/>
+      <action id="GotoPreviousBookmarkInEditor" icon="AllIcons.Actions.PreviousOccurence"
+              class="com.intellij.ide.bookmark.actions.PreviousBookmarkInEditorAction"/>
 
       <group id="Bookmarks.Goto" popup="true">
         <action id="GotoBookmark0" class="com.intellij.ide.bookmark.actions.GotoBookmark0Action"/>
@@ -718,7 +722,7 @@
     <action id="TinySpacer" class="com.intellij.ide.navigationToolbar.experimental.TinySpacerAction"/>
 
     <group id="NewToolbarActions">
-      <group id="LeftToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.LeftToolbarGroup">
+      <group id="LeftToolbarSideGroup">
         <reference id="Back"/>
         <reference id="Forward"/>
         <reference id="BigSpacer"/>
@@ -726,10 +730,10 @@
         <reference id="SmallSpacer"/>
         <action id="SearchEverywhereNewToolbarAction" class="com.intellij.ide.navigationToolbar.experimental.SearchEverywhereNewToolbarAction"/>
       </group>
-      <group id="CenterToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.CenterToolbarGroup">
+      <group id="CenterToolbarSideGroup">
         <group id="CustomActions"/>
       </group>
-      <group id="RightToolbarSideGroup" class="com.intellij.ide.navigationToolbar.experimental.RightToolbarGroup">
+      <group id="RightToolbarSideGroup">
         <reference id="TinySpacer"/>
         <reference id="BigSpacer"/>
         <reference id="RunToolbarWidgetAction"/>
@@ -1650,6 +1654,11 @@
         <action class="com.intellij.ide.todo.TodoPanel$MyShowPackagesAction" id="TodoViewGroupByShowPackages"/>
         <action class="com.intellij.ide.todo.TodoPanel$MyFlattenPackagesAction" id="TodoViewGroupByFlattenPackage"/>
       </group>
+    </group>
+    
+    <group id="RunToolbarWidgetCustomizableActionGroup">
+      <action class="com.intellij.execution.ui.RunWithDropDownAction" id="RunWithDropDown"/>
+      <action class="com.intellij.execution.ui.StopWithDropDownAction" id="StopWithDropDown"/>
     </group>
 
     <action id="FileChooser.LightEditGotoOpenedFile"

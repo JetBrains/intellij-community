@@ -32,7 +32,7 @@ import java.util.function.DoubleFunction;
 public final class Animation {
 
   private @NotNull final DoubleConsumer myConsumer;
-  private @NotNull Easing myEasing = Easing.LINEAR;
+  private @NotNull Easing myEasing = Easing.EASE;
   private int myDelay = 0;
   private int myDuration = 500;
   private @Nullable List<Listener> myListeners;
@@ -53,24 +53,47 @@ public final class Animation {
     myConsumer = value -> consumer.accept(function.apply(value));
   }
 
+  public static <T> Animation withContext(@NotNull AnimationContext<T> context, @NotNull DoubleFunction<? extends T> function) {
+    return new Animation(function, context);
+  }
+
+  /**
+   * @return Delay in milliseconds.
+   */
   public int getDelay() {
     return myDelay;
   }
 
+  /**
+   * @param delay in milliseconds.
+   */
   @NotNull
   public Animation setDelay(int delay) {
     myDelay = Math.max(delay, 0);
     return this;
   }
 
+  /**
+   * @return Duration in milliseconds.
+   */
   public int getDuration() {
     return myDuration;
   }
 
+  /**
+   * @param duration in milliseconds.
+   */
   @NotNull
   public Animation setDuration(int duration) {
     myDuration = Math.max(duration, 0);
     return this;
+  }
+
+  /**
+   * @return Finish time in milliseconds.
+   */
+  public int getFinish() {
+    return myDelay + myDuration;
   }
 
   void update(double timeline) {
@@ -97,19 +120,43 @@ public final class Animation {
     return this;
   }
 
+  /**
+   * Runnable is called before first {@link Animation#update(double)} is called.
+   * The time between animation is scheduled and updated can differ.
+   */
   @NotNull
   public Animation runWhenScheduled(@NotNull Runnable runnable) {
     return addListener(Phase.SCHEDULED, runnable);
   }
 
+  /**
+   * Runnable is called right after {@link Animation#update(double)} is called.
+   */
   @NotNull
   public Animation runWhenUpdated(@NotNull Runnable runnable) {
     return addListener(Phase.UPDATED, runnable);
   }
 
+  /**
+   * Runnable is called if animation is expired.
+   */
   @NotNull
   public Animation runWhenExpired(@NotNull Runnable runnable) {
     return addListener(Phase.EXPIRED, runnable);
+  }
+
+  /**
+   * Runnable is called if animation is cancelled but not expired.
+   */
+  @NotNull
+  public Animation runWhenCancelled(@NotNull Runnable runnable) {
+    return addListener(Phase.CANCELLED, runnable);
+  }
+
+  public Animation runWhenExpiredOrCancelled(@NotNull Runnable runnable) {
+    return addListener(p -> {
+      if (p == Phase.EXPIRED || p == Phase.CANCELLED) runnable.run();
+    });
   }
 
   @NotNull
@@ -129,7 +176,7 @@ public final class Animation {
         iterator.next().update(phase);
       } catch (Throwable t) {
         iterator.remove();
-        Logger.getInstance(JBAnimator.class).error("Listener caused an error and was removed from listeners", t);
+        Logger.getInstance(Animation.class).error("Listener caused an error and was removed from listeners", t);
       }
     }
   }
@@ -146,6 +193,7 @@ public final class Animation {
    *   <li>animation is scheduled for execution and goes to animation queue</li>
    *   <li>animation is updated on current animation cycle</li>
    *   <li>animation is expired and removed from the animation queue</li>
+   *   <li>animation is cancelled</li>
    * </ol>
    *
    * For any animation it is always true that 'scheduled' is called before 'updated',
@@ -154,6 +202,6 @@ public final class Animation {
    * ant the last 'updated' called with 'expired'.
    */
   public enum Phase {
-    SCHEDULED, UPDATED, EXPIRED
+    SCHEDULED, UPDATED, EXPIRED, CANCELLED
   }
 }

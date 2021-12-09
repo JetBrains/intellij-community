@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -35,8 +35,8 @@ public final class PsiUtil {
   private static final @NonNls String[] IDEA_PROJECT_MARKER_FILES = {
     "idea.iml", "community-main.iml", "intellij.idea.community.main.iml", "intellij.idea.ultimate.main.iml"
   };
-  private static final List<String> IDEA_PROJECT_MARKER_MODULE_NAMES =
-    ContainerUtil.immutableList("intellij.idea.community.main", "intellij.platform.commercial");
+  private static final List<String> IDEA_PROJECT_MARKER_MODULE_NAMES = List.of("intellij.idea.community.main",
+                                                                               "intellij.platform.commercial");
 
   private PsiUtil() { }
 
@@ -102,7 +102,9 @@ public final class PsiUtil {
   }
 
   public static boolean isIdeaProject(@Nullable Project project) {
-    if (project == null) return false;
+    if (project == null) {
+      return false;
+    }
 
     Boolean flag = project.getUserData(IDEA_PROJECT);
     if (flag == null) {
@@ -180,7 +182,9 @@ public final class PsiUtil {
         break;
       }
     }
-    if (!foundMarkerModule) return false;
+    if (!foundMarkerModule) {
+      return false;
+    }
 
     return DumbService.getInstance(project).computeWithAlternativeResolveEnabled(() -> {
       GlobalSearchScope scope = GlobalSearchScopesCore.projectProductionScope(project);

@@ -53,6 +53,7 @@ abstract class BuildPaths {
    * Path to a directory where resulting artifacts will be placed
    */
   String artifacts
+  Path artifactDir
 
   /**
    * Path to a directory containing distribution files ('bin', 'lib', 'plugins' directories) common for all operating systems

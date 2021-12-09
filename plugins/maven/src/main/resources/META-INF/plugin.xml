@@ -21,6 +21,7 @@
   <resource-bundle>messages.MavenProjectBundle</resource-bundle>
 
   <extensionPoints>
+    <extensionPoint name="import.status.listener" interface="org.jetbrains.idea.maven.project.importing.MavenImportStatusListener" dynamic="true"/>
     <extensionPoint name="importer" interface="org.jetbrains.idea.maven.importing.MavenImporter" dynamic="true"/>
     <extensionPoint name="compiler" interface="org.jetbrains.idea.maven.importing.MavenCompilerExtension" dynamic="true"/>
     <extensionPoint name="manifestImporter" interface="org.jetbrains.idea.maven.importing.ManifestImporter" dynamic="true"/>
@@ -73,6 +74,8 @@
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenWrapperMapping"/>
 
     <projectService serviceImplementation="org.jetbrains.idea.maven.server.MavenDistributionsCache"/>
+    <projectService serviceImplementation="org.jetbrains.idea.maven.project.importing.MavenImportingManager"/>
+
     <applicationService serviceImplementation="org.jetbrains.idea.maven.utils.MavenWslCache"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager" preload="true"/>
     <projectService serviceImplementation="org.jetbrains.idea.maven.project.MavenProjectsManager" preload="true"/>
@@ -255,6 +258,9 @@
     <statistics.projectUsagesCollector implementation="org.jetbrains.idea.maven.statistics.MavenSettingsCollector"/>
     <statistics.counterUsagesCollector implementationClass="org.jetbrains.idea.maven.statistics.MavenActionsUsagesCollector"/>
     <statistics.counterUsagesCollector groupId="build.maven.packagesearch" version="2"/>
+
+    <registryKey key="maven.new.import" defaultValue="false"
+                 description="new maven import"/>
 
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
@@ -455,6 +461,8 @@
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.ExternalAnnotationsImporter"/>
     <importer implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
+    <importer implementation="org.jetbrains.idea.maven.importing.RemoteRepositoriesImporter"/>
+    <import.status.listener implementation="org.jetbrains.idea.maven.project.importing.MavenToolWindowUpdateListener"/>
 
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerJavacExtension"/>
     <compiler implementation="org.jetbrains.idea.maven.importing.MavenCompilerEclipseExtension"/>

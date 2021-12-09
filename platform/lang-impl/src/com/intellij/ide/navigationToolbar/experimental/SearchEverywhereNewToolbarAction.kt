@@ -10,6 +10,7 @@ import com.intellij.ide.actions.SearchEverywhereAction
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.ui.UISettings.Companion.setupAntialiasing
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
@@ -17,6 +18,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.WindowStateService
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.IdeFocusManager
@@ -38,16 +40,23 @@ import javax.swing.plaf.basic.BasicGraphicsUtils.drawStringUnderlineCharAt
 
 class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListener, DumbAware {
   companion object {
-    private const val SHOW_HOT_KEY = "ide.newtoolbar.searcheverywhere.hotkey"
+    const val SHOW_HOT_KEY_TIP = "com.intellij.ide.navigationToolbar.experimental.showSearchEverywhereHotKeyTip"
   }
 
   private val margin = JBUI.scale(4)
   private var subscribedForDoubleShift = false
   private var firstOpened = false
   private var clearPosition = false
+  var seManager: SearchEverywhereManager? = null
 
   override fun update(event: AnActionEvent) {
-    event.presentation.isEnabledAndVisible = true
+    val project = event.project ?: return
+    if (seManager == null) {
+      seManager = SearchEverywhereManager.getInstance(project)
+      Disposer.register(project) {
+        seManager = null
+      }
+    }
     event.presentation.text = if (!showHotkey()) {
       ActionsBundle.message("action.SearchEverywhereToolbar.text")
     }
@@ -56,10 +65,8 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
     }
     event.presentation.icon = AllIcons.Actions.Search
     if (!subscribedForDoubleShift) {
-      event.project?.let {
-        ApplicationManager.getApplication().messageBus.connect(it).subscribe(AnActionListener.TOPIC, this)
-        subscribedForDoubleShift = true
-      }
+      ApplicationManager.getApplication().messageBus.connect(project).subscribe(AnActionListener.TOPIC, this)
+      subscribedForDoubleShift = true
     }
   }
 
@@ -67,8 +74,6 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
 
     return object : ActionButtonWithText(this, presentation, place,
                                          ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
-      var seManager: SearchEverywhereManager? = null
-
       init {
         FocusManager.getCurrentManager().addPropertyChangeListener { this.repaint() }
         setHorizontalTextAlignment(SwingConstants.LEFT)
@@ -80,19 +85,25 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
         val classesTabName = java.lang.String.join("/", getActionTitlePluralized())
         if (Registry.`is`("ide.helptooltip.enabled")) {
           HelpTooltip.dispose(this)
-          HelpTooltip()
-            .setTitle(myPresentation.text)
-            .setShortcut(shortcutText)
-            .setDescription(IdeBundle.message("search.everywhere.action.tooltip.description.text", classesTabName))
-            .installOn(this)
+          if (presentation.isEnabledAndVisible) {
+            HelpTooltip()
+              .setTitle(myPresentation.text)
+              .setShortcut(shortcutText)
+              .setDescription(IdeBundle.message("search.everywhere.action.tooltip.description.text", classesTabName))
+              .installOn(this)
+          }
         }
         else {
-          toolTipText = IdeBundle.message("search.everywhere.action.tooltip.text", shortcutText, classesTabName)
+          if (presentation.isEnabledAndVisible) {
+            toolTipText = IdeBundle.message("search.everywhere.action.tooltip.text", shortcutText, classesTabName)
+          }
+          else {
+            toolTipText = ""
+          }
         }
       }
 
       override fun actionPerformed(e: AnActionEvent) {
-        seManager = SearchEverywhereManager.getInstance(e.project)
         val focusManager = IdeFocusManager.findInstance()
         val focusedComponent = focusManager.focusOwner
         val ideWindow = focusManager.lastFocusedIdeWindow
@@ -118,7 +129,23 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
         return NORMAL
       }
 
+
       override fun paint(g: Graphics?) {
+        if (parent.bounds.width < parent.preferredSize.width) {
+          if (presentation.isEnabledAndVisible) {
+            presentation.isEnabledAndVisible = false
+            updateToolTipText()
+            cursor = Cursor.getPredefinedCursor(DEFAULT_CURSOR)
+          }
+          return
+        }
+        else {
+          if (!presentation.isEnabledAndVisible) {
+            presentation.isEnabledAndVisible = true
+            updateToolTipText()
+            cursor = Cursor.getPredefinedCursor(TEXT_CURSOR)
+          }
+        }
         foreground = DISABLED_TEXT_COLOR
         background = searchFieldBackground()
         super.paint(g)
@@ -148,7 +175,8 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
                                     textRect.x, textRect.y + fm.ascent)
 
           return
-        } else {
+        }
+        else {
           cursor = Cursor.getPredefinedCursor(TEXT_CURSOR)
         }
 
@@ -169,15 +197,16 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
   }
 
   private fun showHotkey(): Boolean {
-    return !AdvancedSettings.getBoolean("ide.suppress.double.click.handler")
-           && AdvancedSettings.getBoolean(SHOW_HOT_KEY)
+    return PropertiesComponent.getInstance().getBoolean(SHOW_HOT_KEY_TIP, true) && !AdvancedSettings.getBoolean(
+      "ide.suppress.double.click.handler")
+
   }
 
   override fun afterActionPerformed(action: AnAction, event: AnActionEvent, result: AnActionResult) {
     if (action is SearchEverywhereAction && showHotkey()) {
       if (event.inputEvent is KeyEvent) {
         if ((event.inputEvent as KeyEvent).keyCode == KeyEvent.VK_SHIFT) {
-          AdvancedSettings.setBoolean(SHOW_HOT_KEY, false)
+          PropertiesComponent.getInstance().setValue(SHOW_HOT_KEY_TIP, false, true)
         }
       }
     }

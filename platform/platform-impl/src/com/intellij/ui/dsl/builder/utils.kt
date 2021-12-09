@@ -11,7 +11,7 @@ import javax.swing.event.HyperlinkEvent
 @ApiStatus.Experimental
 enum class DslComponentProperty {
   /**
-   * A mark that component is a label created by [Row.label]
+   * A mark that component is a label of a row, see [Panel.row]
    */
   ROW_LABEL
 }

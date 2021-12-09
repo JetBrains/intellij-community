@@ -1,0 +1,61 @@
+{header}
+<title>{repo|escape}: {file|escape}@{node|short} (annotated)</title>
+    <link rel="alternate" type="application/atom+xml" href="{url|urlescape}atom-log" title="Atom feed for {repo|escape}"/>
+    <link rel="alternate" type="application/rss+xml" href="{url|urlescape}rss-log" title="RSS feed for {repo|escape}"/>
+</head>
+
+<body>
+<div id="container">
+    <div class="page-header">
+        <h1 class="breadcrumb"><a href="/">Mercurial</a> {pathdef%breadcrumb} / annotate</h1>
+
+        {searchform}
+
+        <ul class="page-nav">
+            <li><a href="{url|urlescape}summary{sessionvars%urlparameter}">summary</a></li>
+            <li><a href="{url|urlescape}shortlog{sessionvars%urlparameter}">shortlog</a></li>
+            <li><a href="{url|urlescape}log{sessionvars%urlparameter}">changelog</a></li>
+            <li><a href="{url|urlescape}graph/{symrev}{sessionvars%urlparameter}">graph</a></li>
+            <li><a href="{url|urlescape}tags{sessionvars%urlparameter}">tags</a></li>
+            <li><a href="{url|urlescape}bookmarks{sessionvars%urlparameter}">bookmarks</a></li>
+            <li><a href="{url|urlescape}branches{sessionvars%urlparameter}">branches</a></li>
+            <li><a href="{url|urlescape}file/{symrev}{path|urlescape}{sessionvars%urlparameter}">files</a></li>
+            <li><a href="{url|urlescape}help{sessionvars%urlparameter}">help</a></li>
+        </ul>
+    </div>
+
+    <ul class="submenu">
+        <li><a href="{url|urlescape}file/{symrev}/{file|urlescape}{sessionvars%urlparameter}">file</a></li>
+        <li><a href="{url|urlescape}file/tip/{file|urlescape}{sessionvars%urlparameter}">latest</a></li>
+        <li><a href="{url|urlescape}log/{symrev}/{file|urlescape}{sessionvars%urlparameter}">revisions</a></li>
+        <li class="current">annotate</li>
+        <li><a href="{url|urlescape}diff/{symrev}/{file|urlescape}{sessionvars%urlparameter}">diff</a></li>
+        <li><a href="{url|urlescape}comparison/{symrev}/{file|urlescape}{sessionvars%urlparameter}">comparison</a></li>
+        <li><a href="{url|urlescape}raw-file/{symrev}/{file|urlescape}">raw</a></li>
+    </ul>
+
+    <h2 class="no-link no-border">{file|escape}@{node|short} (annotated)</h2>
+    <h3 class="changeset">{file|escape}</h3>
+    <p class="changeset-age"><span class="age">{date|rfc822date}</span></p>
+
+    <dl class="overview">
+        <dt>author</dt>
+        <dd>{author|obfuscate}</dd>
+        <dt>date</dt>
+        <dd class="date age">{date|rfc822date}</dd>
+        {branch%filerevbranch}
+        <dt>changeset {rev}</dt>
+        <dd><a href="{url|urlescape}rev/{node|short}{sessionvars%urlparameter}">{node|short}</a></dd>
+        {parent%fileannotateparent}
+        {child%fileannotatechild}
+        <dt>permissions</dt>
+        <dd>{permissions|permissions}</dd>
+    </dl>
+
+    <p class="description">{desc|strip|escape|websub|addbreaks|nonempty}</p>
+
+    <table class="annotated">
+    {annotate%annotateline}
+    </table>
+
+{footer}

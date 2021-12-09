@@ -94,6 +94,7 @@ public class MavenProjectResolver {
 
       MavenUtil.restartConfigHighlightning(project, mavenProjects);
     }
+    myTree.fireAllProjectsResolved();
   }
 
 
@@ -152,7 +153,6 @@ public class MavenProjectResolver {
       }
 
       if (mavenProjectCandidate == null) continue;
-
 
       MavenProjectChanges changes = mavenProjectCandidate
         .set(result, generalSettings, false, MavenProjectReaderResult.shouldResetDependenciesAndFolders(result), false);

@@ -2,9 +2,10 @@
 
 package org.jetbrains.kotlin.idea.searcheverywhere
 
-import com.intellij.ide.actions.searcheverywhere.*
-import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.Replace
-import com.intellij.ide.actions.searcheverywhere.SEResultsEqualityProvider.SEEqualElementsActionType.Skip
+import com.intellij.ide.actions.searcheverywhere.PSIPresentationBgRendererWrapper
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.java.navigation.ChooseByNameTest
 import com.intellij.java.navigation.SearchEverywhereTest
 import com.intellij.openapi.util.Disposer
@@ -35,6 +36,25 @@ class NativePsiAndKtLightElementEqualityProviderTest : LightJavaCodeInsightFixtu
         }
     }
 
+    fun `test class conflict`() {
+        val file = myFixture.configureByText(
+            "MyKotlinClassWithStrangeName.kt",
+            "package one.two\nclass MyKotlinClassWithStrangeName\nclass MyKotlinClassWithStrangeName<T>",
+        ) as KtFile
+
+        val klass = file.declarations.first() as KtClass
+        val klass2 = file.declarations.last() as KtClass
+        val ulc = LightClassGenerationSupport.getInstance(project).createUltraLightClass(klass)!!
+        val ulc2 = LightClassGenerationSupport.getInstance(project).createUltraLightClass(klass2)!!
+        findByPattern("MyKotlinClassWithStrangeName") { results ->
+            assertTrue(klass in results)
+            assertTrue(klass2 in results)
+            assertFalse(file in results)
+            assertFalse(ulc in results)
+            assertFalse(ulc2 in results)
+        }
+    }
+
     fun `test class and file presented`() {
         val file = myFixture.configureByText(
             "MyKotlinClassWithStrangeName.kt",
@@ -45,9 +65,10 @@ class NativePsiAndKtLightElementEqualityProviderTest : LightJavaCodeInsightFixtu
         val ulc = LightClassGenerationSupport.getInstance(project).createUltraLightClass(klass)!!
         val syntheticClass = file.declarations.last().cast<KtNamedFunction>().toLightMethods().single().parent
         findByPattern("MyKotlinClassWithStrangeName") { results ->
+            assertTrue(results.toString(), results.size == 1)
             assertTrue(klass in results)
-            assertTrue(file in results)
-            assertTrue(syntheticClass in results)
+            assertFalse(file in results)
+            assertFalse(syntheticClass in results)
             assertFalse(ulc in results)
         }
     }

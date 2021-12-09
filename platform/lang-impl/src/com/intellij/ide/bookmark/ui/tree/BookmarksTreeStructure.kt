@@ -2,12 +2,14 @@
 package com.intellij.ide.bookmark.ui.tree
 
 import com.intellij.ide.bookmark.ui.BookmarksView
+import com.intellij.ide.projectView.impl.CompoundTreeStructureProvider
+import com.intellij.ide.projectView.impl.GroupByTypeComparator
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.ide.util.treeView.AbstractTreeStructure
 import com.intellij.ide.util.treeView.NodeDescriptor
-import com.intellij.util.containers.toArray
 
 class BookmarksTreeStructure(val panel: BookmarksView) : AbstractTreeStructure() {
+  private val comparator by lazy { GroupByTypeComparator(true) }
   private val root = RootNode(panel)
 
   override fun commit() = Unit
@@ -20,9 +22,8 @@ class BookmarksTreeStructure(val panel: BookmarksView) : AbstractTreeStructure()
   override fun getChildElements(element: Any): Array<Any> {
     val node = element as? AbstractTreeNode<*>
     val children = node?.children?.ifEmpty { null } ?: return emptyArray()
-    if (node !is RootNode && node !is GroupNode && node !is FileNode && node !is LineNode) {
-      //TODO:sort project view nodes
-    }
-    return children.toArray(arrayOf())
+    val parent = node.parentFolderNode ?: return children.toTypedArray()
+    val provider = CompoundTreeStructureProvider.get(panel.project) ?: return children.sortedWith(comparator).toTypedArray()
+    return provider.modify(node, children, parent.settings).sortedWith(comparator).toTypedArray()
   }
 }

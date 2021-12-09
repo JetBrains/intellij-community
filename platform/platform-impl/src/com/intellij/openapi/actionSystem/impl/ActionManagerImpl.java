@@ -826,7 +826,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
           case ACTION_ELEMENT_NAME: {
             AnAction action = processActionElement(child, module, bundle, keymapManager, classLoader);
             if (action != null) {
-              addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
+              addToGroupInner(group, action, Constraints.LAST, module, isSecondary(child));
             }
             break;
           }
@@ -836,7 +836,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
           case GROUP_ELEMENT_NAME: {
             AnAction action = processGroupElement(child, module, bundle, keymapManager, classLoader);
             if (action != null) {
-              addToGroupInner(group, action, Constraints.LAST, false);
+              addToGroupInner(group, action, Constraints.LAST, module, false);
             }
             break;
           }
@@ -846,7 +846,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
           case REFERENCE_ELEMENT_NAME: {
             AnAction action = processReferenceElement(child, module);
             if (action != null) {
-              addToGroupInner(group, action, Constraints.LAST, isSecondary(child));
+              addToGroupInner(group, action, Constraints.LAST, module, isSecondary(child));
             }
             break;
           }
@@ -908,17 +908,30 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
       reportActionError(module, actionName + ": \"relative-to-action\" cannot be null if anchor is \"after\" or \"before\"");
       return;
     }
-    addToGroupInner(parentGroup, action, new Constraints(anchor, relativeToActionId), secondary);
+    addToGroupInner(parentGroup, action, new Constraints(anchor, relativeToActionId), module, secondary);
   }
 
-  private void addToGroupInner(AnAction group, AnAction action, Constraints constraints, boolean secondary) {
-    String actionId = action instanceof ActionStub ? ((ActionStub)action).getId() : actionToId.get(action);
-    ((DefaultActionGroup)group).addAction(action, constraints, this).setAsSecondary(secondary);
-    idToGroupId.putValue(actionId, actionToId.get(group));
+  private void addToGroupInner(@NotNull AnAction group, @NotNull AnAction action, @NotNull Constraints constraints,
+                               @Nullable IdeaPluginDescriptor module, boolean secondary) {
+    try {
+      String actionId = action instanceof ActionStub ? ((ActionStub)action).getId() : actionToId.get(action);
+      DefaultActionGroup actionGroup = (DefaultActionGroup)group;
+      if (module != null && actionGroup.containsAction(action)) {
+        reportActionError(module, "Cannot add an action twice: " + actionId + " (" +
+                                  (action instanceof ActionStub ? ((ActionStub)action).getClassName() : action.getClass().getName()) + ")");
+        return;
+      }
+      actionGroup.addAction(action, constraints, this).setAsSecondary(secondary);
+      idToGroupId.putValue(actionId, actionToId.get(group));
+    }
+    catch (IllegalArgumentException e) {
+      if (module != null) reportActionError(module, e.getMessage(), e);
+      else throw e;
+    }
   }
 
   public void addToGroup(@NotNull DefaultActionGroup group, @NotNull AnAction action, @NotNull Constraints constraints) {
-    addToGroupInner(group, action, constraints, false);
+    addToGroupInner(group, action, constraints, null, false);
   }
 
   public @Nullable DefaultActionGroup getParentGroup(String groupId,

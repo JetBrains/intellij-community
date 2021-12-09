@@ -45,10 +45,7 @@ import com.intellij.util.FontUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ModalityUiUtil;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
-import com.intellij.util.ui.AbstractLayoutManager;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -451,7 +448,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
         }
       }
     };
-    HTMLEditorKit kit = new UIUtil.JBWordWrapHtmlEditorKit();
+    HTMLEditorKit kit = new HTMLEditorKitBuilder().withWordWrapViewFactory().build();
     NotificationsUtil.setLinkForeground(kit.getStyleSheet());
     text.setEditorKit(kit);
     text.setForeground(layoutData.textColor);
@@ -717,7 +714,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     notification.setBalloon(balloon);
 
     ApplicationManager.getApplication().getMessageBus().connect(balloon).subscribe(LafManagerListener.TOPIC, source -> {
-      HTMLEditorKit newKit = new UIUtil.JBWordWrapHtmlEditorKit();
+      HTMLEditorKit newKit = new HTMLEditorKitBuilder().withWordWrapViewFactory().build();
       NotificationsUtil.setLinkForeground(newKit.getStyleSheet());
       text.setEditorKit(newKit);
       text.setText(textContent);
@@ -1033,7 +1030,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     String content = word + StringUtil.repeat(lineBreak + word, lines - 1);
 
     JEditorPane text = new JEditorPane();
-    text.setEditorKit(UIUtil.getHTMLEditorKit());
+    text.setEditorKit(HTMLEditorKitBuilder.simple());
     text.setText(NotificationsUtil.buildHtml(null, null, content, null, null, null, NotificationsUtil.getFontStyle()));
     text.setEditable(false);
     text.setOpaque(false);

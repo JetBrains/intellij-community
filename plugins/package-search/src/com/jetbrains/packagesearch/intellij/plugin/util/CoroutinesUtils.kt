@@ -41,6 +41,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import org.jetbrains.annotations.Nls
 import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.coroutineContext
 import kotlin.math.max
 import kotlin.time.Duration
 import kotlin.time.TimedValue
@@ -238,18 +239,33 @@ internal inline fun <reified T> Flow<T>.batchAtIntervals(duration: Duration) = c
         if (job == null || job?.isCompleted == true) {
             job = launch {
                 delay(duration)
-                val data = mutex.withLock {
-                    val d = buffer.toTypedArray()
+                mutex.withLock {
+                    send(buffer.toTypedArray())
                     buffer.clear()
-                    d
                 }
-                send(data)
             }
         }
     }
 }
 
-internal fun CoroutineScope.showBackgroundLoadingBar(
+internal inline fun <reified T> Flow<T>.batchUntil(duration: Duration) = channelFlow {
+    val mutex = Mutex()
+    val buffer = mutableListOf<T>()
+    var job: Job? = null
+    collect {
+        job?.cancel()
+        mutex.withLock { buffer.add(it) }
+        job = launch {
+            delay(duration)
+            mutex.withLock {
+                send(buffer.toTypedArray())
+                buffer.clear()
+            }
+        }
+    }
+}
+
+internal suspend fun showBackgroundLoadingBar(
     project: Project,
     @Nls title: String,
     @Nls upperMessage: String,
@@ -268,6 +284,7 @@ internal fun CoroutineScope.showBackgroundLoadingBar(
             if (isSafe && progressManager is ProgressManagerImpl && indicator is UserDataHolder) {
                 progressManager.markProgressSafe(indicator)
             }
+            indicator.text = upperMessage // ??? why does it work?
             runBlocking {
                 upperMessageChannel.consumeAsFlow().onEach { indicator.text = it }.launchIn(this)
                 lowerMessageChannel.consumeAsFlow().onEach { indicator.text2 = it }.launchIn(this)
@@ -283,7 +300,6 @@ internal fun CoroutineScope.showBackgroundLoadingBar(
                 }
                 val internalJob = launch {
                     syncSignal.lock()
-                    logWarn { "lock released" }
                 }
                 select<Unit> {
                     internalJob.onJoin { }

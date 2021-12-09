@@ -6,8 +6,8 @@ import java.util.*
 
 open class GHIssueComment(id: String,
                           author: GHActor?,
-                          bodyHTML: String,
+                          body: String,
                           createdAt: Date,
                           val viewerCanDelete: Boolean,
                           val viewerCanUpdate: Boolean)
-  : GHComment(id, author, bodyHTML, createdAt), GHPRTimelineItem
+  : GHComment(id, author, body, createdAt), GHPRTimelineItem

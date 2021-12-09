@@ -21,129 +21,141 @@ import org.jetbrains.kotlin.test.TargetBackend;
 public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncrementalJvmJpsTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/incremental/multiModule/common")
-    public static class Common extends AbstractIncrementalJvmJpsTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+    public abstract static class Common extends AbstractIncrementalJvmJpsTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/incremental/multiModule/common")
+        public static class TestBucket001 extends AbstractIncrementalJvmJpsTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+            }
+
+            @TestMetadata("classAdded")
+            public void testClassAdded() throws Exception {
+                runTest("testData/incremental/multiModule/common/classAdded/");
+            }
+
+            @TestMetadata("classRemoved")
+            public void testClassRemoved() throws Exception {
+                runTest("testData/incremental/multiModule/common/classRemoved/");
+            }
+
+            @TestMetadata("constantValueChanged")
+            public void testConstantValueChanged() throws Exception {
+                runTest("testData/incremental/multiModule/common/constantValueChanged/");
+            }
+
+            @TestMetadata("copyFileToAnotherModule")
+            public void testCopyFileToAnotherModule() throws Exception {
+                runTest("testData/incremental/multiModule/common/copyFileToAnotherModule/");
+            }
+
+            @TestMetadata("defaultArgumentInConstructorRemoved")
+            public void testDefaultArgumentInConstructorRemoved() throws Exception {
+                runTest("testData/incremental/multiModule/common/defaultArgumentInConstructorRemoved/");
+            }
+
+            @TestMetadata("defaultParameterAdded")
+            public void testDefaultParameterAdded() throws Exception {
+                runTest("testData/incremental/multiModule/common/defaultParameterAdded/");
+            }
+
+            @TestMetadata("defaultParameterAddedForTopLevelFun")
+            public void testDefaultParameterAddedForTopLevelFun() throws Exception {
+                runTest("testData/incremental/multiModule/common/defaultParameterAddedForTopLevelFun/");
+            }
+
+            @TestMetadata("defaultParameterRemoved")
+            public void testDefaultParameterRemoved() throws Exception {
+                runTest("testData/incremental/multiModule/common/defaultParameterRemoved/");
+            }
+
+            @TestMetadata("defaultParameterRemovedForTopLevelFun")
+            public void testDefaultParameterRemovedForTopLevelFun() throws Exception {
+                runTest("testData/incremental/multiModule/common/defaultParameterRemovedForTopLevelFun/");
+            }
+
+            @TestMetadata("defaultValueInConstructorRemoved")
+            public void testDefaultValueInConstructorRemoved() throws Exception {
+                runTest("testData/incremental/multiModule/common/defaultValueInConstructorRemoved/");
+            }
+
+            @TestMetadata("duplicatedClass")
+            public void testDuplicatedClass() throws Exception {
+                runTest("testData/incremental/multiModule/common/duplicatedClass/");
+            }
+
+            @TestMetadata("exportedDependency")
+            public void testExportedDependency() throws Exception {
+                runTest("testData/incremental/multiModule/common/exportedDependency/");
+            }
+
+            @TestMetadata("functionFromDifferentPackageChanged")
+            public void testFunctionFromDifferentPackageChanged() throws Exception {
+                runTest("testData/incremental/multiModule/common/functionFromDifferentPackageChanged/");
+            }
+
+            @TestMetadata("inlineFunctionInlined")
+            public void testInlineFunctionInlined() throws Exception {
+                runTest("testData/incremental/multiModule/common/inlineFunctionInlined/");
+            }
+
+            @TestMetadata("inlineFunctionTwoPackageParts")
+            public void testInlineFunctionTwoPackageParts() throws Exception {
+                runTest("testData/incremental/multiModule/common/inlineFunctionTwoPackageParts/");
+            }
+
+            @TestMetadata("moveFileToAnotherModule")
+            public void testMoveFileToAnotherModule() throws Exception {
+                runTest("testData/incremental/multiModule/common/moveFileToAnotherModule/");
+            }
+
+            @TestMetadata("simple")
+            public void testSimple() throws Exception {
+                runTest("testData/incremental/multiModule/common/simple/");
+            }
+
+            @TestMetadata("simpleDependency")
+            public void testSimpleDependency() throws Exception {
+                runTest("testData/incremental/multiModule/common/simpleDependency/");
+            }
+
+            @TestMetadata("simpleDependencyErrorOnAccessToInternal1")
+            public void testSimpleDependencyErrorOnAccessToInternal1() throws Exception {
+                runTest("testData/incremental/multiModule/common/simpleDependencyErrorOnAccessToInternal1/");
+            }
+
+            @TestMetadata("simpleDependencyErrorOnAccessToInternal2")
+            public void testSimpleDependencyErrorOnAccessToInternal2() throws Exception {
+                runTest("testData/incremental/multiModule/common/simpleDependencyErrorOnAccessToInternal2/");
+            }
         }
 
-        @TestMetadata("classAdded")
-        public void testClassAdded() throws Exception {
-            runTest("testData/incremental/multiModule/common/classAdded/");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/incremental/multiModule/common")
+        public static class TestBucket002 extends AbstractIncrementalJvmJpsTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+            }
 
-        @TestMetadata("classRemoved")
-        public void testClassRemoved() throws Exception {
-            runTest("testData/incremental/multiModule/common/classRemoved/");
-        }
+            @TestMetadata("simpleDependencyUnchanged")
+            public void testSimpleDependencyUnchanged() throws Exception {
+                runTest("testData/incremental/multiModule/common/simpleDependencyUnchanged/");
+            }
 
-        @TestMetadata("constantValueChanged")
-        public void testConstantValueChanged() throws Exception {
-            runTest("testData/incremental/multiModule/common/constantValueChanged/");
-        }
+            @TestMetadata("transitiveDependency")
+            public void testTransitiveDependency() throws Exception {
+                runTest("testData/incremental/multiModule/common/transitiveDependency/");
+            }
 
-        @TestMetadata("copyFileToAnotherModule")
-        public void testCopyFileToAnotherModule() throws Exception {
-            runTest("testData/incremental/multiModule/common/copyFileToAnotherModule/");
-        }
+            @TestMetadata("transitiveInlining")
+            public void testTransitiveInlining() throws Exception {
+                runTest("testData/incremental/multiModule/common/transitiveInlining/");
+            }
 
-        @TestMetadata("defaultArgumentInConstructorRemoved")
-        public void testDefaultArgumentInConstructorRemoved() throws Exception {
-            runTest("testData/incremental/multiModule/common/defaultArgumentInConstructorRemoved/");
-        }
-
-        @TestMetadata("defaultParameterAdded")
-        public void testDefaultParameterAdded() throws Exception {
-            runTest("testData/incremental/multiModule/common/defaultParameterAdded/");
-        }
-
-        @TestMetadata("defaultParameterAddedForTopLevelFun")
-        public void testDefaultParameterAddedForTopLevelFun() throws Exception {
-            runTest("testData/incremental/multiModule/common/defaultParameterAddedForTopLevelFun/");
-        }
-
-        @TestMetadata("defaultParameterRemoved")
-        public void testDefaultParameterRemoved() throws Exception {
-            runTest("testData/incremental/multiModule/common/defaultParameterRemoved/");
-        }
-
-        @TestMetadata("defaultParameterRemovedForTopLevelFun")
-        public void testDefaultParameterRemovedForTopLevelFun() throws Exception {
-            runTest("testData/incremental/multiModule/common/defaultParameterRemovedForTopLevelFun/");
-        }
-
-        @TestMetadata("defaultValueInConstructorRemoved")
-        public void testDefaultValueInConstructorRemoved() throws Exception {
-            runTest("testData/incremental/multiModule/common/defaultValueInConstructorRemoved/");
-        }
-
-        @TestMetadata("duplicatedClass")
-        public void testDuplicatedClass() throws Exception {
-            runTest("testData/incremental/multiModule/common/duplicatedClass/");
-        }
-
-        @TestMetadata("exportedDependency")
-        public void testExportedDependency() throws Exception {
-            runTest("testData/incremental/multiModule/common/exportedDependency/");
-        }
-
-        @TestMetadata("functionFromDifferentPackageChanged")
-        public void testFunctionFromDifferentPackageChanged() throws Exception {
-            runTest("testData/incremental/multiModule/common/functionFromDifferentPackageChanged/");
-        }
-
-        @TestMetadata("inlineFunctionInlined")
-        public void testInlineFunctionInlined() throws Exception {
-            runTest("testData/incremental/multiModule/common/inlineFunctionInlined/");
-        }
-
-        @TestMetadata("inlineFunctionTwoPackageParts")
-        public void testInlineFunctionTwoPackageParts() throws Exception {
-            runTest("testData/incremental/multiModule/common/inlineFunctionTwoPackageParts/");
-        }
-
-        @TestMetadata("moveFileToAnotherModule")
-        public void testMoveFileToAnotherModule() throws Exception {
-            runTest("testData/incremental/multiModule/common/moveFileToAnotherModule/");
-        }
-
-        @TestMetadata("simple")
-        public void testSimple() throws Exception {
-            runTest("testData/incremental/multiModule/common/simple/");
-        }
-
-        @TestMetadata("simpleDependency")
-        public void testSimpleDependency() throws Exception {
-            runTest("testData/incremental/multiModule/common/simpleDependency/");
-        }
-
-        @TestMetadata("simpleDependencyErrorOnAccessToInternal1")
-        public void testSimpleDependencyErrorOnAccessToInternal1() throws Exception {
-            runTest("testData/incremental/multiModule/common/simpleDependencyErrorOnAccessToInternal1/");
-        }
-
-        @TestMetadata("simpleDependencyErrorOnAccessToInternal2")
-        public void testSimpleDependencyErrorOnAccessToInternal2() throws Exception {
-            runTest("testData/incremental/multiModule/common/simpleDependencyErrorOnAccessToInternal2/");
-        }
-
-        @TestMetadata("simpleDependencyUnchanged")
-        public void testSimpleDependencyUnchanged() throws Exception {
-            runTest("testData/incremental/multiModule/common/simpleDependencyUnchanged/");
-        }
-
-        @TestMetadata("transitiveDependency")
-        public void testTransitiveDependency() throws Exception {
-            runTest("testData/incremental/multiModule/common/transitiveDependency/");
-        }
-
-        @TestMetadata("transitiveInlining")
-        public void testTransitiveInlining() throws Exception {
-            runTest("testData/incremental/multiModule/common/transitiveInlining/");
-        }
-
-        @TestMetadata("twoDependants")
-        public void testTwoDependants() throws Exception {
-            runTest("testData/incremental/multiModule/common/twoDependants/");
+            @TestMetadata("twoDependants")
+            public void testTwoDependants() throws Exception {
+                runTest("testData/incremental/multiModule/common/twoDependants/");
+            }
         }
     }
 
@@ -220,639 +232,691 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/incremental/pureKotlin")
-    public static class PureKotlin extends AbstractIncrementalJvmJpsTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
-        }
-
-        @TestMetadata("accessingFunctionsViaPackagePart")
-        public void testAccessingFunctionsViaPackagePart() throws Exception {
-            runTest("testData/incremental/pureKotlin/accessingFunctionsViaPackagePart/");
-        }
-
-        @TestMetadata("accessingPropertiesViaField")
-        public void testAccessingPropertiesViaField() throws Exception {
-            runTest("testData/incremental/pureKotlin/accessingPropertiesViaField/");
-        }
-
-        @TestMetadata("addClass")
-        public void testAddClass() throws Exception {
-            runTest("testData/incremental/pureKotlin/addClass/");
-        }
-
-        @TestMetadata("addFileWithFunctionOverload")
-        public void testAddFileWithFunctionOverload() throws Exception {
-            runTest("testData/incremental/pureKotlin/addFileWithFunctionOverload/");
-        }
-
-        @TestMetadata("addMemberTypeAlias")
-        public void testAddMemberTypeAlias() throws Exception {
-            runTest("testData/incremental/pureKotlin/addMemberTypeAlias/");
-        }
-
-        @TestMetadata("addTopLevelTypeAlias")
-        public void testAddTopLevelTypeAlias() throws Exception {
-            runTest("testData/incremental/pureKotlin/addTopLevelTypeAlias/");
-        }
-
-        @TestMetadata("allConstants")
-        public void testAllConstants() throws Exception {
-            runTest("testData/incremental/pureKotlin/allConstants/");
-        }
-
-        @TestMetadata("annotations")
-        public void testAnnotations() throws Exception {
-            runTest("testData/incremental/pureKotlin/annotations/");
-        }
-
-        @TestMetadata("anonymousObjectChanged")
-        public void testAnonymousObjectChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/anonymousObjectChanged/");
-        }
-
-        @TestMetadata("changeTypeImplicitlyWithCircularDependency")
-        public void testChangeTypeImplicitlyWithCircularDependency() throws Exception {
-            runTest("testData/incremental/pureKotlin/changeTypeImplicitlyWithCircularDependency/");
-        }
-
-        @TestMetadata("changeWithRemovingUsage")
-        public void testChangeWithRemovingUsage() throws Exception {
-            runTest("testData/incremental/pureKotlin/changeWithRemovingUsage/");
-        }
-
-        @TestMetadata("classInlineFunctionChanged")
-        public void testClassInlineFunctionChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/classInlineFunctionChanged/");
-        }
-
-        @TestMetadata("classObjectConstantChanged")
-        public void testClassObjectConstantChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/classObjectConstantChanged/");
-        }
-
-        @TestMetadata("classRecreated")
-        public void testClassRecreated() throws Exception {
-            runTest("testData/incremental/pureKotlin/classRecreated/");
-        }
-
-        @TestMetadata("classRemoved")
-        public void testClassRemoved() throws Exception {
-            runTest("testData/incremental/pureKotlin/classRemoved/");
-        }
-
-        @TestMetadata("classSignatureChanged")
-        public void testClassSignatureChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/classSignatureChanged/");
-        }
-
-        @TestMetadata("classSignatureUnchanged")
-        public void testClassSignatureUnchanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/classSignatureUnchanged/");
-        }
-
-        @TestMetadata("compilationErrorThenFixedOtherPackage")
-        public void testCompilationErrorThenFixedOtherPackage() throws Exception {
-            runTest("testData/incremental/pureKotlin/compilationErrorThenFixedOtherPackage/");
-        }
-
-        @TestMetadata("compilationErrorThenFixedSamePackage")
-        public void testCompilationErrorThenFixedSamePackage() throws Exception {
-            runTest("testData/incremental/pureKotlin/compilationErrorThenFixedSamePackage/");
-        }
-
-        @TestMetadata("compilationErrorThenFixedWithPhantomPart")
-        public void testCompilationErrorThenFixedWithPhantomPart() throws Exception {
-            runTest("testData/incremental/pureKotlin/compilationErrorThenFixedWithPhantomPart/");
-        }
-
-        @TestMetadata("compilationErrorThenFixedWithPhantomPart2")
-        public void testCompilationErrorThenFixedWithPhantomPart2() throws Exception {
-            runTest("testData/incremental/pureKotlin/compilationErrorThenFixedWithPhantomPart2/");
-        }
-
-        @TestMetadata("compilationErrorThenFixedWithPhantomPart3")
-        public void testCompilationErrorThenFixedWithPhantomPart3() throws Exception {
-            runTest("testData/incremental/pureKotlin/compilationErrorThenFixedWithPhantomPart3/");
-        }
-
-        @TestMetadata("constantRemoved")
-        public void testConstantRemoved() throws Exception {
-            runTest("testData/incremental/pureKotlin/constantRemoved/");
-        }
-
-        @TestMetadata("constantValueChanged")
-        public void testConstantValueChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/constantValueChanged/");
-        }
-
-        @TestMetadata("constantsUnchanged")
-        public void testConstantsUnchanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/constantsUnchanged/");
-        }
-
-        @TestMetadata("defaultArgumentInConstructorAdded")
-        public void testDefaultArgumentInConstructorAdded() throws Exception {
-            runTest("testData/incremental/pureKotlin/defaultArgumentInConstructorAdded/");
-        }
-
-        @TestMetadata("defaultArgumentInConstructorRemoved")
-        public void testDefaultArgumentInConstructorRemoved() throws Exception {
-            runTest("testData/incremental/pureKotlin/defaultArgumentInConstructorRemoved/");
-        }
-
-        @TestMetadata("defaultValueAdded")
-        public void testDefaultValueAdded() throws Exception {
-            runTest("testData/incremental/pureKotlin/defaultValueAdded/");
-        }
-
-        @TestMetadata("defaultValueChanged")
-        public void testDefaultValueChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/defaultValueChanged/");
-        }
-
-        @TestMetadata("defaultValueInConstructorChanged")
-        public void testDefaultValueInConstructorChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/defaultValueInConstructorChanged/");
-        }
-
-        @TestMetadata("defaultValueInConstructorRemoved")
-        public void testDefaultValueInConstructorRemoved() throws Exception {
-            runTest("testData/incremental/pureKotlin/defaultValueInConstructorRemoved/");
-        }
-
-        @TestMetadata("defaultValueRemoved1")
-        public void testDefaultValueRemoved1() throws Exception {
-            runTest("testData/incremental/pureKotlin/defaultValueRemoved1/");
-        }
-
-        @TestMetadata("defaultValueRemoved2")
-        public void testDefaultValueRemoved2() throws Exception {
-            runTest("testData/incremental/pureKotlin/defaultValueRemoved2/");
-        }
-
-        @TestMetadata("delegatedPropertyInlineExtensionAccessor")
-        public void testDelegatedPropertyInlineExtensionAccessor() throws Exception {
-            runTest("testData/incremental/pureKotlin/delegatedPropertyInlineExtensionAccessor/");
-        }
-
-        @TestMetadata("delegatedPropertyInlineMethodAccessor")
-        public void testDelegatedPropertyInlineMethodAccessor() throws Exception {
-            runTest("testData/incremental/pureKotlin/delegatedPropertyInlineMethodAccessor/");
-        }
-
-        @TestMetadata("dependencyClassReferenced")
-        public void testDependencyClassReferenced() throws Exception {
-            runTest("testData/incremental/pureKotlin/dependencyClassReferenced/");
-        }
-
-        @TestMetadata("fileWithConstantRemoved")
-        public void testFileWithConstantRemoved() throws Exception {
-            runTest("testData/incremental/pureKotlin/fileWithConstantRemoved/");
-        }
-
-        @TestMetadata("fileWithInlineFunctionRemoved")
-        public void testFileWithInlineFunctionRemoved() throws Exception {
-            runTest("testData/incremental/pureKotlin/fileWithInlineFunctionRemoved/");
-        }
-
-        @TestMetadata("filesExchangePackages")
-        public void testFilesExchangePackages() throws Exception {
-            runTest("testData/incremental/pureKotlin/filesExchangePackages/");
-        }
-
-        @TestMetadata("funRedeclaration")
-        public void testFunRedeclaration() throws Exception {
-            runTest("testData/incremental/pureKotlin/funRedeclaration/");
-        }
-
-        @TestMetadata("funVsConstructorOverloadConflict")
-        public void testFunVsConstructorOverloadConflict() throws Exception {
-            runTest("testData/incremental/pureKotlin/funVsConstructorOverloadConflict/");
-        }
-
-        @TestMetadata("functionBecameInline")
-        public void testFunctionBecameInline() throws Exception {
-            runTest("testData/incremental/pureKotlin/functionBecameInline/");
-        }
-
-        @TestMetadata("functionReferencingClass")
-        public void testFunctionReferencingClass() throws Exception {
-            runTest("testData/incremental/pureKotlin/functionReferencingClass/");
-        }
-
-        @TestMetadata("independentClasses")
-        public void testIndependentClasses() throws Exception {
-            runTest("testData/incremental/pureKotlin/independentClasses/");
-        }
-
-        @TestMetadata("inlineFunctionBecomesNonInline")
-        public void testInlineFunctionBecomesNonInline() throws Exception {
-            runTest("testData/incremental/pureKotlin/inlineFunctionBecomesNonInline/");
-        }
-
-        @TestMetadata("inlineFunctionUsageAdded")
-        public void testInlineFunctionUsageAdded() throws Exception {
-            runTest("testData/incremental/pureKotlin/inlineFunctionUsageAdded/");
-        }
-
-        @TestMetadata("inlineFunctionsCircularDependency")
-        public void testInlineFunctionsCircularDependency() throws Exception {
-            runTest("testData/incremental/pureKotlin/inlineFunctionsCircularDependency/");
-        }
-
-        @TestMetadata("inlineFunctionsUnchanged")
-        public void testInlineFunctionsUnchanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/inlineFunctionsUnchanged/");
-        }
-
-        @TestMetadata("inlineLinesChanged")
-        public void testInlineLinesChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/inlineLinesChanged/");
-        }
-
-        @TestMetadata("inlineModifiedWithUsage")
-        public void testInlineModifiedWithUsage() throws Exception {
-            runTest("testData/incremental/pureKotlin/inlineModifiedWithUsage/");
-        }
-
-        @TestMetadata("inlinePrivateFunctionAdded")
-        public void testInlinePrivateFunctionAdded() throws Exception {
-            runTest("testData/incremental/pureKotlin/inlinePrivateFunctionAdded/");
-        }
-
-        @TestMetadata("inlinePropertyInClass")
-        public void testInlinePropertyInClass() throws Exception {
-            runTest("testData/incremental/pureKotlin/inlinePropertyInClass/");
-        }
-
-        @TestMetadata("inlinePropertyOnTopLevel")
-        public void testInlinePropertyOnTopLevel() throws Exception {
-            runTest("testData/incremental/pureKotlin/inlinePropertyOnTopLevel/");
-        }
-
-        @TestMetadata("inlineSuspendFunctionChanged")
-        public void testInlineSuspendFunctionChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/inlineSuspendFunctionChanged/");
-        }
-
-        @TestMetadata("inlineTwoFunctionsOneChanged")
-        public void testInlineTwoFunctionsOneChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/inlineTwoFunctionsOneChanged/");
-        }
-
-        @TestMetadata("inlineUsedWhereDeclared")
-        public void testInlineUsedWhereDeclared() throws Exception {
-            runTest("testData/incremental/pureKotlin/inlineUsedWhereDeclared/");
-        }
-
-        @TestMetadata("innerClassesFromSupertypes")
-        public void testInnerClassesFromSupertypes() throws Exception {
-            runTest("testData/incremental/pureKotlin/innerClassesFromSupertypes/");
-        }
-
-        @TestMetadata("internalClassChanged")
-        public void testInternalClassChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/internalClassChanged/");
-        }
-
-        @TestMetadata("internalMemberInClassChanged")
-        public void testInternalMemberInClassChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/internalMemberInClassChanged/");
-        }
-
-        @TestMetadata("internalTypealias")
-        public void testInternalTypealias() throws Exception {
-            runTest("testData/incremental/pureKotlin/internalTypealias/");
-        }
-
-        @TestMetadata("internalTypealiasConstructor")
-        public void testInternalTypealiasConstructor() throws Exception {
-            runTest("testData/incremental/pureKotlin/internalTypealiasConstructor/");
-        }
-
-        @TestMetadata("internalTypealiasObject")
-        public void testInternalTypealiasObject() throws Exception {
-            runTest("testData/incremental/pureKotlin/internalTypealiasObject/");
-        }
-
-        @TestMetadata("localClassChanged")
-        public void testLocalClassChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/localClassChanged/");
-        }
-
-        @TestMetadata("moveClass")
-        public void testMoveClass() throws Exception {
-            runTest("testData/incremental/pureKotlin/moveClass/");
-        }
-
-        @TestMetadata("moveFileWithChangingPackage")
-        public void testMoveFileWithChangingPackage() throws Exception {
-            runTest("testData/incremental/pureKotlin/moveFileWithChangingPackage/");
-        }
-
-        @TestMetadata("moveFileWithoutChangingPackage")
-        public void testMoveFileWithoutChangingPackage() throws Exception {
-            runTest("testData/incremental/pureKotlin/moveFileWithoutChangingPackage/");
-        }
-
-        @TestMetadata("multiplePackagesModified")
-        public void testMultiplePackagesModified() throws Exception {
-            runTest("testData/incremental/pureKotlin/multiplePackagesModified/");
-        }
-
-        @TestMetadata("objectConstantChanged")
-        public void testObjectConstantChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/objectConstantChanged/");
-        }
-
-        @TestMetadata("ourClassReferenced")
-        public void testOurClassReferenced() throws Exception {
-            runTest("testData/incremental/pureKotlin/ourClassReferenced/");
-        }
-
-        @TestMetadata("overloadInlined")
-        public void testOverloadInlined() throws Exception {
-            runTest("testData/incremental/pureKotlin/overloadInlined/");
-        }
-
-        @TestMetadata("packageConstantChanged")
-        public void testPackageConstantChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/packageConstantChanged/");
-        }
-
-        @TestMetadata("packageFileAdded")
-        public void testPackageFileAdded() throws Exception {
-            runTest("testData/incremental/pureKotlin/packageFileAdded/");
-        }
-
-        @TestMetadata("packageFileChangedPackage")
-        public void testPackageFileChangedPackage() throws Exception {
-            runTest("testData/incremental/pureKotlin/packageFileChangedPackage/");
-        }
-
-        @TestMetadata("packageFileChangedThenOtherRemoved")
-        public void testPackageFileChangedThenOtherRemoved() throws Exception {
-            runTest("testData/incremental/pureKotlin/packageFileChangedThenOtherRemoved/");
-        }
-
-        @TestMetadata("packageFileRemoved")
-        public void testPackageFileRemoved() throws Exception {
-            runTest("testData/incremental/pureKotlin/packageFileRemoved/");
-        }
-
-        @TestMetadata("packageFilesChangedInTurn")
-        public void testPackageFilesChangedInTurn() throws Exception {
-            runTest("testData/incremental/pureKotlin/packageFilesChangedInTurn/");
-        }
-
-        @TestMetadata("packageInlineFunctionAccessingField")
-        public void testPackageInlineFunctionAccessingField() throws Exception {
-            runTest("testData/incremental/pureKotlin/packageInlineFunctionAccessingField/");
-        }
-
-        @TestMetadata("packageInlineFunctionFromOurPackage")
-        public void testPackageInlineFunctionFromOurPackage() throws Exception {
-            runTest("testData/incremental/pureKotlin/packageInlineFunctionFromOurPackage/");
-        }
-
-        @TestMetadata("packagePrivateOnlyChanged")
-        public void testPackagePrivateOnlyChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/packagePrivateOnlyChanged/");
-        }
-
-        @TestMetadata("packageRecreated")
-        public void testPackageRecreated() throws Exception {
-            runTest("testData/incremental/pureKotlin/packageRecreated/");
-        }
-
-        @TestMetadata("packageRecreatedAfterRenaming")
-        public void testPackageRecreatedAfterRenaming() throws Exception {
-            runTest("testData/incremental/pureKotlin/packageRecreatedAfterRenaming/");
-        }
-
-        @TestMetadata("packageRemoved")
-        public void testPackageRemoved() throws Exception {
-            runTest("testData/incremental/pureKotlin/packageRemoved/");
-        }
-
-        @TestMetadata("parameterWithDefaultValueAdded")
-        public void testParameterWithDefaultValueAdded() throws Exception {
-            runTest("testData/incremental/pureKotlin/parameterWithDefaultValueAdded/");
-        }
-
-        @TestMetadata("parameterWithDefaultValueRemoved")
-        public void testParameterWithDefaultValueRemoved() throws Exception {
-            runTest("testData/incremental/pureKotlin/parameterWithDefaultValueRemoved/");
-        }
-
-        @TestMetadata("privateConstantsChanged")
-        public void testPrivateConstantsChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/privateConstantsChanged/");
-        }
-
-        @TestMetadata("privateMethodAdded")
-        public void testPrivateMethodAdded() throws Exception {
-            runTest("testData/incremental/pureKotlin/privateMethodAdded/");
-        }
-
-        @TestMetadata("privateMethodDeleted")
-        public void testPrivateMethodDeleted() throws Exception {
-            runTest("testData/incremental/pureKotlin/privateMethodDeleted/");
-        }
-
-        @TestMetadata("privateMethodSignatureChanged")
-        public void testPrivateMethodSignatureChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/privateMethodSignatureChanged/");
-        }
-
-        @TestMetadata("privateSecondaryConstructorAdded")
-        public void testPrivateSecondaryConstructorAdded() throws Exception {
-            runTest("testData/incremental/pureKotlin/privateSecondaryConstructorAdded/");
-        }
-
-        @TestMetadata("privateSecondaryConstructorDeleted")
-        public void testPrivateSecondaryConstructorDeleted() throws Exception {
-            runTest("testData/incremental/pureKotlin/privateSecondaryConstructorDeleted/");
-        }
-
-        @TestMetadata("privateValAccessorChanged")
-        public void testPrivateValAccessorChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/privateValAccessorChanged/");
-        }
-
-        @TestMetadata("privateValAdded")
-        public void testPrivateValAdded() throws Exception {
-            runTest("testData/incremental/pureKotlin/privateValAdded/");
-        }
-
-        @TestMetadata("privateValDeleted")
-        public void testPrivateValDeleted() throws Exception {
-            runTest("testData/incremental/pureKotlin/privateValDeleted/");
-        }
-
-        @TestMetadata("privateValSignatureChanged")
-        public void testPrivateValSignatureChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/privateValSignatureChanged/");
-        }
-
-        @TestMetadata("privateVarAdded")
-        public void testPrivateVarAdded() throws Exception {
-            runTest("testData/incremental/pureKotlin/privateVarAdded/");
-        }
-
-        @TestMetadata("privateVarDeleted")
-        public void testPrivateVarDeleted() throws Exception {
-            runTest("testData/incremental/pureKotlin/privateVarDeleted/");
-        }
-
-        @TestMetadata("privateVarSignatureChanged")
-        public void testPrivateVarSignatureChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/privateVarSignatureChanged/");
-        }
-
-        @TestMetadata("propertyRedeclaration")
-        public void testPropertyRedeclaration() throws Exception {
-            runTest("testData/incremental/pureKotlin/propertyRedeclaration/");
-        }
-
-        @TestMetadata("publicPropertyWithPrivateSetter")
-        public void testPublicPropertyWithPrivateSetter() throws Exception {
-            runTest("testData/incremental/pureKotlin/publicPropertyWithPrivateSetter/");
-        }
-
-        @TestMetadata("removeAndRestoreCompanion")
-        public void testRemoveAndRestoreCompanion() throws Exception {
-            runTest("testData/incremental/pureKotlin/removeAndRestoreCompanion/");
-        }
-
-        @TestMetadata("removeAndRestoreCompanionWithImplicitUsages")
-        public void testRemoveAndRestoreCompanionWithImplicitUsages() throws Exception {
-            runTest("testData/incremental/pureKotlin/removeAndRestoreCompanionWithImplicitUsages/");
-        }
-
-        @TestMetadata("removeClass")
-        public void testRemoveClass() throws Exception {
-            runTest("testData/incremental/pureKotlin/removeClass/");
-        }
-
-        @TestMetadata("removeClassInDefaultPackage")
-        public void testRemoveClassInDefaultPackage() throws Exception {
-            runTest("testData/incremental/pureKotlin/removeClassInDefaultPackage/");
-        }
-
-        @TestMetadata("removeFileWithFunctionOverload")
-        public void testRemoveFileWithFunctionOverload() throws Exception {
-            runTest("testData/incremental/pureKotlin/removeFileWithFunctionOverload/");
-        }
-
-        @TestMetadata("removeMemberTypeAlias")
-        public void testRemoveMemberTypeAlias() throws Exception {
-            runTest("testData/incremental/pureKotlin/removeMemberTypeAlias/");
-        }
-
-        @TestMetadata("removeTopLevelTypeAlias")
-        public void testRemoveTopLevelTypeAlias() throws Exception {
-            runTest("testData/incremental/pureKotlin/removeTopLevelTypeAlias/");
-        }
-
-        @TestMetadata("removeUnusedFile")
-        public void testRemoveUnusedFile() throws Exception {
-            runTest("testData/incremental/pureKotlin/removeUnusedFile/");
-        }
-
-        @TestMetadata("renameClass")
-        public void testRenameClass() throws Exception {
-            runTest("testData/incremental/pureKotlin/renameClass/");
-        }
-
-        @TestMetadata("renameFileWithFunctionOverload")
-        public void testRenameFileWithFunctionOverload() throws Exception {
-            runTest("testData/incremental/pureKotlin/renameFileWithFunctionOverload/");
-        }
-
-        @TestMetadata("returnTypeChanged")
-        public void testReturnTypeChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/returnTypeChanged/");
-        }
-
-        @TestMetadata("sealedClassesAddImplements")
-        public void testSealedClassesAddImplements() throws Exception {
-            runTest("testData/incremental/pureKotlin/sealedClassesAddImplements/");
-        }
-
-        @TestMetadata("sealedClassesAddInheritor")
-        public void testSealedClassesAddInheritor() throws Exception {
-            runTest("testData/incremental/pureKotlin/sealedClassesAddInheritor/");
-        }
-
-        @TestMetadata("sealedClassesRemoveImplements")
-        public void testSealedClassesRemoveImplements() throws Exception {
-            runTest("testData/incremental/pureKotlin/sealedClassesRemoveImplements/");
-        }
-
-        @TestMetadata("sealedClassesRemoveInheritor")
-        public void testSealedClassesRemoveInheritor() throws Exception {
-            runTest("testData/incremental/pureKotlin/sealedClassesRemoveInheritor/");
-        }
-
-        @TestMetadata("sealedClassesUseSwitch")
-        public void testSealedClassesUseSwitch() throws Exception {
-            runTest("testData/incremental/pureKotlin/sealedClassesUseSwitch/");
-        }
-
-        @TestMetadata("secondaryConstructorInlined")
-        public void testSecondaryConstructorInlined() throws Exception {
-            runTest("testData/incremental/pureKotlin/secondaryConstructorInlined/");
-        }
-
-        @TestMetadata("simpleClassDependency")
-        public void testSimpleClassDependency() throws Exception {
-            runTest("testData/incremental/pureKotlin/simpleClassDependency/");
-        }
-
-        @TestMetadata("soleFileChangesPackage")
-        public void testSoleFileChangesPackage() throws Exception {
-            runTest("testData/incremental/pureKotlin/soleFileChangesPackage/");
-        }
-
-        @TestMetadata("subpackage")
-        public void testSubpackage() throws Exception {
-            runTest("testData/incremental/pureKotlin/subpackage/");
-        }
-
-        @TestMetadata("suspendWithStateMachine")
-        public void testSuspendWithStateMachine() throws Exception {
-            runTest("testData/incremental/pureKotlin/suspendWithStateMachine/");
-        }
-
-        @TestMetadata("topLevelFunctionSameSignature")
-        public void testTopLevelFunctionSameSignature() throws Exception {
-            runTest("testData/incremental/pureKotlin/topLevelFunctionSameSignature/");
-        }
-
-        @TestMetadata("topLevelMembersInTwoFiles")
-        public void testTopLevelMembersInTwoFiles() throws Exception {
-            runTest("testData/incremental/pureKotlin/topLevelMembersInTwoFiles/");
-        }
-
-        @TestMetadata("topLevelPrivateValUsageAdded")
-        public void testTopLevelPrivateValUsageAdded() throws Exception {
-            runTest("testData/incremental/pureKotlin/topLevelPrivateValUsageAdded/");
-        }
-
-        @TestMetadata("traitClassObjectConstantChanged")
-        public void testTraitClassObjectConstantChanged() throws Exception {
-            runTest("testData/incremental/pureKotlin/traitClassObjectConstantChanged/");
-        }
-
-        @TestMetadata("valAddCustomAccessor")
-        public void testValAddCustomAccessor() throws Exception {
-            runTest("testData/incremental/pureKotlin/valAddCustomAccessor/");
-        }
-
-        @TestMetadata("valRemoveCustomAccessor")
-        public void testValRemoveCustomAccessor() throws Exception {
-            runTest("testData/incremental/pureKotlin/valRemoveCustomAccessor/");
+    public abstract static class PureKotlin extends AbstractIncrementalJvmJpsTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/incremental/pureKotlin")
+        public static class TestBucket001 extends AbstractIncrementalJvmJpsTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+            }
+
+            @TestMetadata("accessingFunctionsViaPackagePart")
+            public void testAccessingFunctionsViaPackagePart() throws Exception {
+                runTest("testData/incremental/pureKotlin/accessingFunctionsViaPackagePart/");
+            }
+
+            @TestMetadata("accessingPropertiesViaField")
+            public void testAccessingPropertiesViaField() throws Exception {
+                runTest("testData/incremental/pureKotlin/accessingPropertiesViaField/");
+            }
+
+            @TestMetadata("addClass")
+            public void testAddClass() throws Exception {
+                runTest("testData/incremental/pureKotlin/addClass/");
+            }
+
+            @TestMetadata("addFileWithFunctionOverload")
+            public void testAddFileWithFunctionOverload() throws Exception {
+                runTest("testData/incremental/pureKotlin/addFileWithFunctionOverload/");
+            }
+
+            @TestMetadata("addMemberTypeAlias")
+            public void testAddMemberTypeAlias() throws Exception {
+                runTest("testData/incremental/pureKotlin/addMemberTypeAlias/");
+            }
+
+            @TestMetadata("addTopLevelTypeAlias")
+            public void testAddTopLevelTypeAlias() throws Exception {
+                runTest("testData/incremental/pureKotlin/addTopLevelTypeAlias/");
+            }
+
+            @TestMetadata("allConstants")
+            public void testAllConstants() throws Exception {
+                runTest("testData/incremental/pureKotlin/allConstants/");
+            }
+
+            @TestMetadata("annotations")
+            public void testAnnotations() throws Exception {
+                runTest("testData/incremental/pureKotlin/annotations/");
+            }
+
+            @TestMetadata("anonymousObjectChanged")
+            public void testAnonymousObjectChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/anonymousObjectChanged/");
+            }
+
+            @TestMetadata("changeTypeImplicitlyWithCircularDependency")
+            public void testChangeTypeImplicitlyWithCircularDependency() throws Exception {
+                runTest("testData/incremental/pureKotlin/changeTypeImplicitlyWithCircularDependency/");
+            }
+
+            @TestMetadata("changeWithRemovingUsage")
+            public void testChangeWithRemovingUsage() throws Exception {
+                runTest("testData/incremental/pureKotlin/changeWithRemovingUsage/");
+            }
+
+            @TestMetadata("classInlineFunctionChanged")
+            public void testClassInlineFunctionChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/classInlineFunctionChanged/");
+            }
+
+            @TestMetadata("classObjectConstantChanged")
+            public void testClassObjectConstantChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/classObjectConstantChanged/");
+            }
+
+            @TestMetadata("classRecreated")
+            public void testClassRecreated() throws Exception {
+                runTest("testData/incremental/pureKotlin/classRecreated/");
+            }
+
+            @TestMetadata("classRemoved")
+            public void testClassRemoved() throws Exception {
+                runTest("testData/incremental/pureKotlin/classRemoved/");
+            }
+
+            @TestMetadata("classSignatureChanged")
+            public void testClassSignatureChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/classSignatureChanged/");
+            }
+
+            @TestMetadata("classSignatureUnchanged")
+            public void testClassSignatureUnchanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/classSignatureUnchanged/");
+            }
+
+            @TestMetadata("compilationErrorThenFixedOtherPackage")
+            public void testCompilationErrorThenFixedOtherPackage() throws Exception {
+                runTest("testData/incremental/pureKotlin/compilationErrorThenFixedOtherPackage/");
+            }
+
+            @TestMetadata("compilationErrorThenFixedSamePackage")
+            public void testCompilationErrorThenFixedSamePackage() throws Exception {
+                runTest("testData/incremental/pureKotlin/compilationErrorThenFixedSamePackage/");
+            }
+
+            @TestMetadata("compilationErrorThenFixedWithPhantomPart")
+            public void testCompilationErrorThenFixedWithPhantomPart() throws Exception {
+                runTest("testData/incremental/pureKotlin/compilationErrorThenFixedWithPhantomPart/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/incremental/pureKotlin")
+        public static class TestBucket002 extends AbstractIncrementalJvmJpsTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+            }
+
+            @TestMetadata("compilationErrorThenFixedWithPhantomPart2")
+            public void testCompilationErrorThenFixedWithPhantomPart2() throws Exception {
+                runTest("testData/incremental/pureKotlin/compilationErrorThenFixedWithPhantomPart2/");
+            }
+
+            @TestMetadata("compilationErrorThenFixedWithPhantomPart3")
+            public void testCompilationErrorThenFixedWithPhantomPart3() throws Exception {
+                runTest("testData/incremental/pureKotlin/compilationErrorThenFixedWithPhantomPart3/");
+            }
+
+            @TestMetadata("constantRemoved")
+            public void testConstantRemoved() throws Exception {
+                runTest("testData/incremental/pureKotlin/constantRemoved/");
+            }
+
+            @TestMetadata("constantValueChanged")
+            public void testConstantValueChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/constantValueChanged/");
+            }
+
+            @TestMetadata("constantsUnchanged")
+            public void testConstantsUnchanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/constantsUnchanged/");
+            }
+
+            @TestMetadata("defaultArgumentInConstructorAdded")
+            public void testDefaultArgumentInConstructorAdded() throws Exception {
+                runTest("testData/incremental/pureKotlin/defaultArgumentInConstructorAdded/");
+            }
+
+            @TestMetadata("defaultArgumentInConstructorRemoved")
+            public void testDefaultArgumentInConstructorRemoved() throws Exception {
+                runTest("testData/incremental/pureKotlin/defaultArgumentInConstructorRemoved/");
+            }
+
+            @TestMetadata("defaultValueAdded")
+            public void testDefaultValueAdded() throws Exception {
+                runTest("testData/incremental/pureKotlin/defaultValueAdded/");
+            }
+
+            @TestMetadata("defaultValueChanged")
+            public void testDefaultValueChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/defaultValueChanged/");
+            }
+
+            @TestMetadata("defaultValueInConstructorChanged")
+            public void testDefaultValueInConstructorChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/defaultValueInConstructorChanged/");
+            }
+
+            @TestMetadata("defaultValueInConstructorRemoved")
+            public void testDefaultValueInConstructorRemoved() throws Exception {
+                runTest("testData/incremental/pureKotlin/defaultValueInConstructorRemoved/");
+            }
+
+            @TestMetadata("defaultValueRemoved1")
+            public void testDefaultValueRemoved1() throws Exception {
+                runTest("testData/incremental/pureKotlin/defaultValueRemoved1/");
+            }
+
+            @TestMetadata("defaultValueRemoved2")
+            public void testDefaultValueRemoved2() throws Exception {
+                runTest("testData/incremental/pureKotlin/defaultValueRemoved2/");
+            }
+
+            @TestMetadata("delegatedPropertyInlineExtensionAccessor")
+            public void testDelegatedPropertyInlineExtensionAccessor() throws Exception {
+                runTest("testData/incremental/pureKotlin/delegatedPropertyInlineExtensionAccessor/");
+            }
+
+            @TestMetadata("delegatedPropertyInlineMethodAccessor")
+            public void testDelegatedPropertyInlineMethodAccessor() throws Exception {
+                runTest("testData/incremental/pureKotlin/delegatedPropertyInlineMethodAccessor/");
+            }
+
+            @TestMetadata("dependencyClassReferenced")
+            public void testDependencyClassReferenced() throws Exception {
+                runTest("testData/incremental/pureKotlin/dependencyClassReferenced/");
+            }
+
+            @TestMetadata("fileWithConstantRemoved")
+            public void testFileWithConstantRemoved() throws Exception {
+                runTest("testData/incremental/pureKotlin/fileWithConstantRemoved/");
+            }
+
+            @TestMetadata("fileWithInlineFunctionRemoved")
+            public void testFileWithInlineFunctionRemoved() throws Exception {
+                runTest("testData/incremental/pureKotlin/fileWithInlineFunctionRemoved/");
+            }
+
+            @TestMetadata("filesExchangePackages")
+            public void testFilesExchangePackages() throws Exception {
+                runTest("testData/incremental/pureKotlin/filesExchangePackages/");
+            }
+
+            @TestMetadata("funRedeclaration")
+            public void testFunRedeclaration() throws Exception {
+                runTest("testData/incremental/pureKotlin/funRedeclaration/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/incremental/pureKotlin")
+        public static class TestBucket003 extends AbstractIncrementalJvmJpsTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+            }
+
+            @TestMetadata("funVsConstructorOverloadConflict")
+            public void testFunVsConstructorOverloadConflict() throws Exception {
+                runTest("testData/incremental/pureKotlin/funVsConstructorOverloadConflict/");
+            }
+
+            @TestMetadata("functionBecameInline")
+            public void testFunctionBecameInline() throws Exception {
+                runTest("testData/incremental/pureKotlin/functionBecameInline/");
+            }
+
+            @TestMetadata("functionReferencingClass")
+            public void testFunctionReferencingClass() throws Exception {
+                runTest("testData/incremental/pureKotlin/functionReferencingClass/");
+            }
+
+            @TestMetadata("independentClasses")
+            public void testIndependentClasses() throws Exception {
+                runTest("testData/incremental/pureKotlin/independentClasses/");
+            }
+
+            @TestMetadata("inlineFunctionBecomesNonInline")
+            public void testInlineFunctionBecomesNonInline() throws Exception {
+                runTest("testData/incremental/pureKotlin/inlineFunctionBecomesNonInline/");
+            }
+
+            @TestMetadata("inlineFunctionUsageAdded")
+            public void testInlineFunctionUsageAdded() throws Exception {
+                runTest("testData/incremental/pureKotlin/inlineFunctionUsageAdded/");
+            }
+
+            @TestMetadata("inlineFunctionsCircularDependency")
+            public void testInlineFunctionsCircularDependency() throws Exception {
+                runTest("testData/incremental/pureKotlin/inlineFunctionsCircularDependency/");
+            }
+
+            @TestMetadata("inlineFunctionsUnchanged")
+            public void testInlineFunctionsUnchanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/inlineFunctionsUnchanged/");
+            }
+
+            @TestMetadata("inlineLinesChanged")
+            public void testInlineLinesChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/inlineLinesChanged/");
+            }
+
+            @TestMetadata("inlineModifiedWithUsage")
+            public void testInlineModifiedWithUsage() throws Exception {
+                runTest("testData/incremental/pureKotlin/inlineModifiedWithUsage/");
+            }
+
+            @TestMetadata("inlinePrivateFunctionAdded")
+            public void testInlinePrivateFunctionAdded() throws Exception {
+                runTest("testData/incremental/pureKotlin/inlinePrivateFunctionAdded/");
+            }
+
+            @TestMetadata("inlinePropertyInClass")
+            public void testInlinePropertyInClass() throws Exception {
+                runTest("testData/incremental/pureKotlin/inlinePropertyInClass/");
+            }
+
+            @TestMetadata("inlinePropertyOnTopLevel")
+            public void testInlinePropertyOnTopLevel() throws Exception {
+                runTest("testData/incremental/pureKotlin/inlinePropertyOnTopLevel/");
+            }
+
+            @TestMetadata("inlineSuspendFunctionChanged")
+            public void testInlineSuspendFunctionChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/inlineSuspendFunctionChanged/");
+            }
+
+            @TestMetadata("inlineTwoFunctionsOneChanged")
+            public void testInlineTwoFunctionsOneChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/inlineTwoFunctionsOneChanged/");
+            }
+
+            @TestMetadata("inlineUsedWhereDeclared")
+            public void testInlineUsedWhereDeclared() throws Exception {
+                runTest("testData/incremental/pureKotlin/inlineUsedWhereDeclared/");
+            }
+
+            @TestMetadata("innerClassesFromSupertypes")
+            public void testInnerClassesFromSupertypes() throws Exception {
+                runTest("testData/incremental/pureKotlin/innerClassesFromSupertypes/");
+            }
+
+            @TestMetadata("internalClassChanged")
+            public void testInternalClassChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/internalClassChanged/");
+            }
+
+            @TestMetadata("internalMemberInClassChanged")
+            public void testInternalMemberInClassChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/internalMemberInClassChanged/");
+            }
+
+            @TestMetadata("internalTypealias")
+            public void testInternalTypealias() throws Exception {
+                runTest("testData/incremental/pureKotlin/internalTypealias/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/incremental/pureKotlin")
+        public static class TestBucket004 extends AbstractIncrementalJvmJpsTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+            }
+
+            @TestMetadata("internalTypealiasConstructor")
+            public void testInternalTypealiasConstructor() throws Exception {
+                runTest("testData/incremental/pureKotlin/internalTypealiasConstructor/");
+            }
+
+            @TestMetadata("internalTypealiasObject")
+            public void testInternalTypealiasObject() throws Exception {
+                runTest("testData/incremental/pureKotlin/internalTypealiasObject/");
+            }
+
+            @TestMetadata("localClassChanged")
+            public void testLocalClassChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/localClassChanged/");
+            }
+
+            @TestMetadata("moveClass")
+            public void testMoveClass() throws Exception {
+                runTest("testData/incremental/pureKotlin/moveClass/");
+            }
+
+            @TestMetadata("moveFileWithChangingPackage")
+            public void testMoveFileWithChangingPackage() throws Exception {
+                runTest("testData/incremental/pureKotlin/moveFileWithChangingPackage/");
+            }
+
+            @TestMetadata("moveFileWithoutChangingPackage")
+            public void testMoveFileWithoutChangingPackage() throws Exception {
+                runTest("testData/incremental/pureKotlin/moveFileWithoutChangingPackage/");
+            }
+
+            @TestMetadata("multiplePackagesModified")
+            public void testMultiplePackagesModified() throws Exception {
+                runTest("testData/incremental/pureKotlin/multiplePackagesModified/");
+            }
+
+            @TestMetadata("objectConstantChanged")
+            public void testObjectConstantChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/objectConstantChanged/");
+            }
+
+            @TestMetadata("ourClassReferenced")
+            public void testOurClassReferenced() throws Exception {
+                runTest("testData/incremental/pureKotlin/ourClassReferenced/");
+            }
+
+            @TestMetadata("overloadInlined")
+            public void testOverloadInlined() throws Exception {
+                runTest("testData/incremental/pureKotlin/overloadInlined/");
+            }
+
+            @TestMetadata("packageConstantChanged")
+            public void testPackageConstantChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/packageConstantChanged/");
+            }
+
+            @TestMetadata("packageFileAdded")
+            public void testPackageFileAdded() throws Exception {
+                runTest("testData/incremental/pureKotlin/packageFileAdded/");
+            }
+
+            @TestMetadata("packageFileChangedPackage")
+            public void testPackageFileChangedPackage() throws Exception {
+                runTest("testData/incremental/pureKotlin/packageFileChangedPackage/");
+            }
+
+            @TestMetadata("packageFileChangedThenOtherRemoved")
+            public void testPackageFileChangedThenOtherRemoved() throws Exception {
+                runTest("testData/incremental/pureKotlin/packageFileChangedThenOtherRemoved/");
+            }
+
+            @TestMetadata("packageFileRemoved")
+            public void testPackageFileRemoved() throws Exception {
+                runTest("testData/incremental/pureKotlin/packageFileRemoved/");
+            }
+
+            @TestMetadata("packageFilesChangedInTurn")
+            public void testPackageFilesChangedInTurn() throws Exception {
+                runTest("testData/incremental/pureKotlin/packageFilesChangedInTurn/");
+            }
+
+            @TestMetadata("packageInlineFunctionAccessingField")
+            public void testPackageInlineFunctionAccessingField() throws Exception {
+                runTest("testData/incremental/pureKotlin/packageInlineFunctionAccessingField/");
+            }
+
+            @TestMetadata("packageInlineFunctionFromOurPackage")
+            public void testPackageInlineFunctionFromOurPackage() throws Exception {
+                runTest("testData/incremental/pureKotlin/packageInlineFunctionFromOurPackage/");
+            }
+
+            @TestMetadata("packagePrivateOnlyChanged")
+            public void testPackagePrivateOnlyChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/packagePrivateOnlyChanged/");
+            }
+
+            @TestMetadata("packageRecreated")
+            public void testPackageRecreated() throws Exception {
+                runTest("testData/incremental/pureKotlin/packageRecreated/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/incremental/pureKotlin")
+        public static class TestBucket005 extends AbstractIncrementalJvmJpsTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+            }
+
+            @TestMetadata("packageRecreatedAfterRenaming")
+            public void testPackageRecreatedAfterRenaming() throws Exception {
+                runTest("testData/incremental/pureKotlin/packageRecreatedAfterRenaming/");
+            }
+
+            @TestMetadata("packageRemoved")
+            public void testPackageRemoved() throws Exception {
+                runTest("testData/incremental/pureKotlin/packageRemoved/");
+            }
+
+            @TestMetadata("parameterWithDefaultValueAdded")
+            public void testParameterWithDefaultValueAdded() throws Exception {
+                runTest("testData/incremental/pureKotlin/parameterWithDefaultValueAdded/");
+            }
+
+            @TestMetadata("parameterWithDefaultValueRemoved")
+            public void testParameterWithDefaultValueRemoved() throws Exception {
+                runTest("testData/incremental/pureKotlin/parameterWithDefaultValueRemoved/");
+            }
+
+            @TestMetadata("privateConstantsChanged")
+            public void testPrivateConstantsChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/privateConstantsChanged/");
+            }
+
+            @TestMetadata("privateMethodAdded")
+            public void testPrivateMethodAdded() throws Exception {
+                runTest("testData/incremental/pureKotlin/privateMethodAdded/");
+            }
+
+            @TestMetadata("privateMethodDeleted")
+            public void testPrivateMethodDeleted() throws Exception {
+                runTest("testData/incremental/pureKotlin/privateMethodDeleted/");
+            }
+
+            @TestMetadata("privateMethodSignatureChanged")
+            public void testPrivateMethodSignatureChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/privateMethodSignatureChanged/");
+            }
+
+            @TestMetadata("privateSecondaryConstructorAdded")
+            public void testPrivateSecondaryConstructorAdded() throws Exception {
+                runTest("testData/incremental/pureKotlin/privateSecondaryConstructorAdded/");
+            }
+
+            @TestMetadata("privateSecondaryConstructorDeleted")
+            public void testPrivateSecondaryConstructorDeleted() throws Exception {
+                runTest("testData/incremental/pureKotlin/privateSecondaryConstructorDeleted/");
+            }
+
+            @TestMetadata("privateValAccessorChanged")
+            public void testPrivateValAccessorChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/privateValAccessorChanged/");
+            }
+
+            @TestMetadata("privateValAdded")
+            public void testPrivateValAdded() throws Exception {
+                runTest("testData/incremental/pureKotlin/privateValAdded/");
+            }
+
+            @TestMetadata("privateValDeleted")
+            public void testPrivateValDeleted() throws Exception {
+                runTest("testData/incremental/pureKotlin/privateValDeleted/");
+            }
+
+            @TestMetadata("privateValSignatureChanged")
+            public void testPrivateValSignatureChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/privateValSignatureChanged/");
+            }
+
+            @TestMetadata("privateVarAdded")
+            public void testPrivateVarAdded() throws Exception {
+                runTest("testData/incremental/pureKotlin/privateVarAdded/");
+            }
+
+            @TestMetadata("privateVarDeleted")
+            public void testPrivateVarDeleted() throws Exception {
+                runTest("testData/incremental/pureKotlin/privateVarDeleted/");
+            }
+
+            @TestMetadata("privateVarSignatureChanged")
+            public void testPrivateVarSignatureChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/privateVarSignatureChanged/");
+            }
+
+            @TestMetadata("propertyRedeclaration")
+            public void testPropertyRedeclaration() throws Exception {
+                runTest("testData/incremental/pureKotlin/propertyRedeclaration/");
+            }
+
+            @TestMetadata("publicPropertyWithPrivateSetter")
+            public void testPublicPropertyWithPrivateSetter() throws Exception {
+                runTest("testData/incremental/pureKotlin/publicPropertyWithPrivateSetter/");
+            }
+
+            @TestMetadata("removeAndRestoreCompanion")
+            public void testRemoveAndRestoreCompanion() throws Exception {
+                runTest("testData/incremental/pureKotlin/removeAndRestoreCompanion/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/incremental/pureKotlin")
+        public static class TestBucket006 extends AbstractIncrementalJvmJpsTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+            }
+
+            @TestMetadata("removeAndRestoreCompanionWithImplicitUsages")
+            public void testRemoveAndRestoreCompanionWithImplicitUsages() throws Exception {
+                runTest("testData/incremental/pureKotlin/removeAndRestoreCompanionWithImplicitUsages/");
+            }
+
+            @TestMetadata("removeClass")
+            public void testRemoveClass() throws Exception {
+                runTest("testData/incremental/pureKotlin/removeClass/");
+            }
+
+            @TestMetadata("removeClassInDefaultPackage")
+            public void testRemoveClassInDefaultPackage() throws Exception {
+                runTest("testData/incremental/pureKotlin/removeClassInDefaultPackage/");
+            }
+
+            @TestMetadata("removeFileWithFunctionOverload")
+            public void testRemoveFileWithFunctionOverload() throws Exception {
+                runTest("testData/incremental/pureKotlin/removeFileWithFunctionOverload/");
+            }
+
+            @TestMetadata("removeMemberTypeAlias")
+            public void testRemoveMemberTypeAlias() throws Exception {
+                runTest("testData/incremental/pureKotlin/removeMemberTypeAlias/");
+            }
+
+            @TestMetadata("removeTopLevelTypeAlias")
+            public void testRemoveTopLevelTypeAlias() throws Exception {
+                runTest("testData/incremental/pureKotlin/removeTopLevelTypeAlias/");
+            }
+
+            @TestMetadata("removeUnusedFile")
+            public void testRemoveUnusedFile() throws Exception {
+                runTest("testData/incremental/pureKotlin/removeUnusedFile/");
+            }
+
+            @TestMetadata("renameClass")
+            public void testRenameClass() throws Exception {
+                runTest("testData/incremental/pureKotlin/renameClass/");
+            }
+
+            @TestMetadata("renameFileWithFunctionOverload")
+            public void testRenameFileWithFunctionOverload() throws Exception {
+                runTest("testData/incremental/pureKotlin/renameFileWithFunctionOverload/");
+            }
+
+            @TestMetadata("returnTypeChanged")
+            public void testReturnTypeChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/returnTypeChanged/");
+            }
+
+            @TestMetadata("sealedClassesAddImplements")
+            public void testSealedClassesAddImplements() throws Exception {
+                runTest("testData/incremental/pureKotlin/sealedClassesAddImplements/");
+            }
+
+            @TestMetadata("sealedClassesAddInheritor")
+            public void testSealedClassesAddInheritor() throws Exception {
+                runTest("testData/incremental/pureKotlin/sealedClassesAddInheritor/");
+            }
+
+            @TestMetadata("sealedClassesRemoveImplements")
+            public void testSealedClassesRemoveImplements() throws Exception {
+                runTest("testData/incremental/pureKotlin/sealedClassesRemoveImplements/");
+            }
+
+            @TestMetadata("sealedClassesRemoveInheritor")
+            public void testSealedClassesRemoveInheritor() throws Exception {
+                runTest("testData/incremental/pureKotlin/sealedClassesRemoveInheritor/");
+            }
+
+            @TestMetadata("sealedClassesUseSwitch")
+            public void testSealedClassesUseSwitch() throws Exception {
+                runTest("testData/incremental/pureKotlin/sealedClassesUseSwitch/");
+            }
+
+            @TestMetadata("secondaryConstructorInlined")
+            public void testSecondaryConstructorInlined() throws Exception {
+                runTest("testData/incremental/pureKotlin/secondaryConstructorInlined/");
+            }
+
+            @TestMetadata("simpleClassDependency")
+            public void testSimpleClassDependency() throws Exception {
+                runTest("testData/incremental/pureKotlin/simpleClassDependency/");
+            }
+
+            @TestMetadata("soleFileChangesPackage")
+            public void testSoleFileChangesPackage() throws Exception {
+                runTest("testData/incremental/pureKotlin/soleFileChangesPackage/");
+            }
+
+            @TestMetadata("subpackage")
+            public void testSubpackage() throws Exception {
+                runTest("testData/incremental/pureKotlin/subpackage/");
+            }
+
+            @TestMetadata("suspendWithStateMachine")
+            public void testSuspendWithStateMachine() throws Exception {
+                runTest("testData/incremental/pureKotlin/suspendWithStateMachine/");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/incremental/pureKotlin")
+        public static class TestBucket007 extends AbstractIncrementalJvmJpsTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+            }
+
+            @TestMetadata("topLevelFunctionSameSignature")
+            public void testTopLevelFunctionSameSignature() throws Exception {
+                runTest("testData/incremental/pureKotlin/topLevelFunctionSameSignature/");
+            }
+
+            @TestMetadata("topLevelMembersInTwoFiles")
+            public void testTopLevelMembersInTwoFiles() throws Exception {
+                runTest("testData/incremental/pureKotlin/topLevelMembersInTwoFiles/");
+            }
+
+            @TestMetadata("topLevelPrivateValUsageAdded")
+            public void testTopLevelPrivateValUsageAdded() throws Exception {
+                runTest("testData/incremental/pureKotlin/topLevelPrivateValUsageAdded/");
+            }
+
+            @TestMetadata("traitClassObjectConstantChanged")
+            public void testTraitClassObjectConstantChanged() throws Exception {
+                runTest("testData/incremental/pureKotlin/traitClassObjectConstantChanged/");
+            }
+
+            @TestMetadata("valAddCustomAccessor")
+            public void testValAddCustomAccessor() throws Exception {
+                runTest("testData/incremental/pureKotlin/valAddCustomAccessor/");
+            }
+
+            @TestMetadata("valRemoveCustomAccessor")
+            public void testValRemoveCustomAccessor() throws Exception {
+                runTest("testData/incremental/pureKotlin/valRemoveCustomAccessor/");
+            }
         }
     }
 
@@ -889,106 +953,7 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/incremental/withJava/javaUsedInKotlin")
-        public static class JavaUsedInKotlin extends AbstractIncrementalJvmJpsTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
-            }
-
-            @TestMetadata("changeFieldType")
-            public void testChangeFieldType() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/changeFieldType/");
-            }
-
-            @TestMetadata("changeNotUsedSignature")
-            public void testChangeNotUsedSignature() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/changeNotUsedSignature/");
-            }
-
-            @TestMetadata("changePropertyOverrideType")
-            public void testChangePropertyOverrideType() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/changePropertyOverrideType/");
-            }
-
-            @TestMetadata("changeSignature")
-            public void testChangeSignature() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignature/");
-            }
-
-            @TestMetadata("changeSignaturePackagePrivate")
-            public void testChangeSignaturePackagePrivate() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignaturePackagePrivate/");
-            }
-
-            @TestMetadata("changeSignaturePackagePrivateNonRoot")
-            public void testChangeSignaturePackagePrivateNonRoot() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignaturePackagePrivateNonRoot/");
-            }
-
-            @TestMetadata("changeSignatureStatic")
-            public void testChangeSignatureStatic() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignatureStatic/");
-            }
-
-            @TestMetadata("constantChanged")
-            public void testConstantChanged() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/constantChanged/");
-            }
-
-            @TestMetadata("constantUnchanged")
-            public void testConstantUnchanged() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/constantUnchanged/");
-            }
-
-            @TestMetadata("enumEntryAdded")
-            public void testEnumEntryAdded() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/enumEntryAdded/");
-            }
-
-            @TestMetadata("enumEntryRemoved")
-            public void testEnumEntryRemoved() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/enumEntryRemoved/");
-            }
-
-            @TestMetadata("javaAndKotlinChangedSimultaneously")
-            public void testJavaAndKotlinChangedSimultaneously() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/javaAndKotlinChangedSimultaneously/");
-            }
-
-            @TestMetadata("javaFieldNullabilityChanged")
-            public void testJavaFieldNullabilityChanged() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/javaFieldNullabilityChanged/");
-            }
-
-            @TestMetadata("javaMethodParamNullabilityChanged")
-            public void testJavaMethodParamNullabilityChanged() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/javaMethodParamNullabilityChanged/");
-            }
-
-            @TestMetadata("javaMethodReturnTypeNullabilityChanged")
-            public void testJavaMethodReturnTypeNullabilityChanged() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/javaMethodReturnTypeNullabilityChanged/");
-            }
-
-            @TestMetadata("methodAddedInSuper")
-            public void testMethodAddedInSuper() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/methodAddedInSuper/");
-            }
-
-            @TestMetadata("methodRenamed")
-            public void testMethodRenamed() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/methodRenamed/");
-            }
-
-            @TestMetadata("mixedInheritance")
-            public void testMixedInheritance() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/mixedInheritance/");
-            }
-
-            @TestMetadata("notChangeSignature")
-            public void testNotChangeSignature() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/notChangeSignature/");
-            }
-
+        public abstract static class JavaUsedInKotlin extends AbstractIncrementalJvmJpsTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/incremental/withJava/javaUsedInKotlin/samConversions")
             public static class SamConversions extends AbstractIncrementalJvmJpsTest {
@@ -1014,6 +979,109 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
                 @TestMetadata("methodSignatureChangedSamAdapter")
                 public void testMethodSignatureChangedSamAdapter() throws Exception {
                     runTest("testData/incremental/withJava/javaUsedInKotlin/samConversions/methodSignatureChangedSamAdapter/");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/incremental/withJava/javaUsedInKotlin")
+            public static class Uncategorized extends AbstractIncrementalJvmJpsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
+
+                @TestMetadata("changeFieldType")
+                public void testChangeFieldType() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/changeFieldType/");
+                }
+
+                @TestMetadata("changeNotUsedSignature")
+                public void testChangeNotUsedSignature() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/changeNotUsedSignature/");
+                }
+
+                @TestMetadata("changePropertyOverrideType")
+                public void testChangePropertyOverrideType() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/changePropertyOverrideType/");
+                }
+
+                @TestMetadata("changeSignature")
+                public void testChangeSignature() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignature/");
+                }
+
+                @TestMetadata("changeSignaturePackagePrivate")
+                public void testChangeSignaturePackagePrivate() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignaturePackagePrivate/");
+                }
+
+                @TestMetadata("changeSignaturePackagePrivateNonRoot")
+                public void testChangeSignaturePackagePrivateNonRoot() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignaturePackagePrivateNonRoot/");
+                }
+
+                @TestMetadata("changeSignatureStatic")
+                public void testChangeSignatureStatic() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/changeSignatureStatic/");
+                }
+
+                @TestMetadata("constantChanged")
+                public void testConstantChanged() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/constantChanged/");
+                }
+
+                @TestMetadata("constantUnchanged")
+                public void testConstantUnchanged() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/constantUnchanged/");
+                }
+
+                @TestMetadata("enumEntryAdded")
+                public void testEnumEntryAdded() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/enumEntryAdded/");
+                }
+
+                @TestMetadata("enumEntryRemoved")
+                public void testEnumEntryRemoved() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/enumEntryRemoved/");
+                }
+
+                @TestMetadata("javaAndKotlinChangedSimultaneously")
+                public void testJavaAndKotlinChangedSimultaneously() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/javaAndKotlinChangedSimultaneously/");
+                }
+
+                @TestMetadata("javaFieldNullabilityChanged")
+                public void testJavaFieldNullabilityChanged() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/javaFieldNullabilityChanged/");
+                }
+
+                @TestMetadata("javaMethodParamNullabilityChanged")
+                public void testJavaMethodParamNullabilityChanged() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/javaMethodParamNullabilityChanged/");
+                }
+
+                @TestMetadata("javaMethodReturnTypeNullabilityChanged")
+                public void testJavaMethodReturnTypeNullabilityChanged() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/javaMethodReturnTypeNullabilityChanged/");
+                }
+
+                @TestMetadata("methodAddedInSuper")
+                public void testMethodAddedInSuper() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/methodAddedInSuper/");
+                }
+
+                @TestMetadata("methodRenamed")
+                public void testMethodRenamed() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/methodRenamed/");
+                }
+
+                @TestMetadata("mixedInheritance")
+                public void testMixedInheritance() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/mixedInheritance/");
+                }
+
+                @TestMetadata("notChangeSignature")
+                public void testNotChangeSignature() throws Exception {
+                    runTest("testData/incremental/withJava/javaUsedInKotlin/notChangeSignature/");
                 }
             }
         }
@@ -1098,164 +1166,176 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/incremental/withJava/other")
-        public static class Other extends AbstractIncrementalJvmJpsTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+        public abstract static class Other extends AbstractIncrementalJvmJpsTest {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/incremental/withJava/other")
+            public static class TestBucket001 extends AbstractIncrementalJvmJpsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
+
+                @TestMetadata("accessingFunctionsViaRenamedFileClass")
+                public void testAccessingFunctionsViaRenamedFileClass() throws Exception {
+                    runTest("testData/incremental/withJava/other/accessingFunctionsViaRenamedFileClass/");
+                }
+
+                @TestMetadata("allKotlinFilesRemovedThenNewAdded")
+                public void testAllKotlinFilesRemovedThenNewAdded() throws Exception {
+                    runTest("testData/incremental/withJava/other/allKotlinFilesRemovedThenNewAdded/");
+                }
+
+                @TestMetadata("classRedeclaration")
+                public void testClassRedeclaration() throws Exception {
+                    runTest("testData/incremental/withJava/other/classRedeclaration/");
+                }
+
+                @TestMetadata("classToPackageFacade")
+                public void testClassToPackageFacade() throws Exception {
+                    runTest("testData/incremental/withJava/other/classToPackageFacade/");
+                }
+
+                @TestMetadata("conflictingPlatformDeclarations")
+                public void testConflictingPlatformDeclarations() throws Exception {
+                    runTest("testData/incremental/withJava/other/conflictingPlatformDeclarations/");
+                }
+
+                @TestMetadata("defaultValueInConstructorAdded")
+                public void testDefaultValueInConstructorAdded() throws Exception {
+                    runTest("testData/incremental/withJava/other/defaultValueInConstructorAdded/");
+                }
+
+                @TestMetadata("inlineFunctionWithJvmNameInClass")
+                public void testInlineFunctionWithJvmNameInClass() throws Exception {
+                    runTest("testData/incremental/withJava/other/inlineFunctionWithJvmNameInClass/");
+                }
+
+                @TestMetadata("inlineTopLevelFunctionWithJvmName")
+                public void testInlineTopLevelFunctionWithJvmName() throws Exception {
+                    runTest("testData/incremental/withJava/other/inlineTopLevelFunctionWithJvmName/");
+                }
+
+                @TestMetadata("inlineTopLevelValPropertyWithJvmName")
+                public void testInlineTopLevelValPropertyWithJvmName() throws Exception {
+                    runTest("testData/incremental/withJava/other/inlineTopLevelValPropertyWithJvmName/");
+                }
+
+                @TestMetadata("innerClassNotGeneratedWhenRebuilding")
+                public void testInnerClassNotGeneratedWhenRebuilding() throws Exception {
+                    runTest("testData/incremental/withJava/other/innerClassNotGeneratedWhenRebuilding/");
+                }
+
+                @TestMetadata("jvmNameChanged")
+                public void testJvmNameChanged() throws Exception {
+                    runTest("testData/incremental/withJava/other/jvmNameChanged/");
+                }
+
+                @TestMetadata("mainRedeclaration")
+                public void testMainRedeclaration() throws Exception {
+                    runTest("testData/incremental/withJava/other/mainRedeclaration/");
+                }
+
+                @TestMetadata("multifileClassAddTopLevelFunWithDefault")
+                public void testMultifileClassAddTopLevelFunWithDefault() throws Exception {
+                    runTest("testData/incremental/withJava/other/multifileClassAddTopLevelFunWithDefault/");
+                }
+
+                @TestMetadata("multifileClassFileAdded")
+                public void testMultifileClassFileAdded() throws Exception {
+                    runTest("testData/incremental/withJava/other/multifileClassFileAdded/");
+                }
+
+                @TestMetadata("multifileClassFileChanged")
+                public void testMultifileClassFileChanged() throws Exception {
+                    runTest("testData/incremental/withJava/other/multifileClassFileChanged/");
+                }
+
+                @TestMetadata("multifileClassFileMovedToAnotherMultifileClass")
+                public void testMultifileClassFileMovedToAnotherMultifileClass() throws Exception {
+                    runTest("testData/incremental/withJava/other/multifileClassFileMovedToAnotherMultifileClass/");
+                }
+
+                @TestMetadata("multifileClassInlineFunction")
+                public void testMultifileClassInlineFunction() throws Exception {
+                    runTest("testData/incremental/withJava/other/multifileClassInlineFunction/");
+                }
+
+                @TestMetadata("multifileClassInlineFunctionAccessingField")
+                public void testMultifileClassInlineFunctionAccessingField() throws Exception {
+                    runTest("testData/incremental/withJava/other/multifileClassInlineFunctionAccessingField/");
+                }
+
+                @TestMetadata("multifileClassRecreated")
+                public void testMultifileClassRecreated() throws Exception {
+                    runTest("testData/incremental/withJava/other/multifileClassRecreated/");
+                }
+
+                @TestMetadata("multifileClassRecreatedAfterRenaming")
+                public void testMultifileClassRecreatedAfterRenaming() throws Exception {
+                    runTest("testData/incremental/withJava/other/multifileClassRecreatedAfterRenaming/");
+                }
             }
 
-            @TestMetadata("accessingFunctionsViaRenamedFileClass")
-            public void testAccessingFunctionsViaRenamedFileClass() throws Exception {
-                runTest("testData/incremental/withJava/other/accessingFunctionsViaRenamedFileClass/");
-            }
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/incremental/withJava/other")
+            public static class TestBucket002 extends AbstractIncrementalJvmJpsTest {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+                }
 
-            @TestMetadata("allKotlinFilesRemovedThenNewAdded")
-            public void testAllKotlinFilesRemovedThenNewAdded() throws Exception {
-                runTest("testData/incremental/withJava/other/allKotlinFilesRemovedThenNewAdded/");
-            }
+                @TestMetadata("multifileClassRemoved")
+                public void testMultifileClassRemoved() throws Exception {
+                    runTest("testData/incremental/withJava/other/multifileClassRemoved/");
+                }
 
-            @TestMetadata("classRedeclaration")
-            public void testClassRedeclaration() throws Exception {
-                runTest("testData/incremental/withJava/other/classRedeclaration/");
-            }
+                @TestMetadata("multifileDependantUsage")
+                public void testMultifileDependantUsage() throws Exception {
+                    runTest("testData/incremental/withJava/other/multifileDependantUsage/");
+                }
 
-            @TestMetadata("classToPackageFacade")
-            public void testClassToPackageFacade() throws Exception {
-                runTest("testData/incremental/withJava/other/classToPackageFacade/");
-            }
+                @TestMetadata("multifilePackagePartMethodAdded")
+                public void testMultifilePackagePartMethodAdded() throws Exception {
+                    runTest("testData/incremental/withJava/other/multifilePackagePartMethodAdded/");
+                }
 
-            @TestMetadata("conflictingPlatformDeclarations")
-            public void testConflictingPlatformDeclarations() throws Exception {
-                runTest("testData/incremental/withJava/other/conflictingPlatformDeclarations/");
-            }
+                @TestMetadata("multifilePartsWithProperties")
+                public void testMultifilePartsWithProperties() throws Exception {
+                    runTest("testData/incremental/withJava/other/multifilePartsWithProperties/");
+                }
 
-            @TestMetadata("defaultValueInConstructorAdded")
-            public void testDefaultValueInConstructorAdded() throws Exception {
-                runTest("testData/incremental/withJava/other/defaultValueInConstructorAdded/");
-            }
+                @TestMetadata("optionalParameter")
+                public void testOptionalParameter() throws Exception {
+                    runTest("testData/incremental/withJava/other/optionalParameter/");
+                }
 
-            @TestMetadata("inlineFunctionWithJvmNameInClass")
-            public void testInlineFunctionWithJvmNameInClass() throws Exception {
-                runTest("testData/incremental/withJava/other/inlineFunctionWithJvmNameInClass/");
-            }
+                @TestMetadata("packageFacadeToClass")
+                public void testPackageFacadeToClass() throws Exception {
+                    runTest("testData/incremental/withJava/other/packageFacadeToClass/");
+                }
 
-            @TestMetadata("inlineTopLevelFunctionWithJvmName")
-            public void testInlineTopLevelFunctionWithJvmName() throws Exception {
-                runTest("testData/incremental/withJava/other/inlineTopLevelFunctionWithJvmName/");
-            }
+                @TestMetadata("packageMultifileClassOneFileWithPublicChanges")
+                public void testPackageMultifileClassOneFileWithPublicChanges() throws Exception {
+                    runTest("testData/incremental/withJava/other/packageMultifileClassOneFileWithPublicChanges/");
+                }
 
-            @TestMetadata("inlineTopLevelValPropertyWithJvmName")
-            public void testInlineTopLevelValPropertyWithJvmName() throws Exception {
-                runTest("testData/incremental/withJava/other/inlineTopLevelValPropertyWithJvmName/");
-            }
+                @TestMetadata("packageMultifileClassPrivateOnlyChanged")
+                public void testPackageMultifileClassPrivateOnlyChanged() throws Exception {
+                    runTest("testData/incremental/withJava/other/packageMultifileClassPrivateOnlyChanged/");
+                }
 
-            @TestMetadata("innerClassNotGeneratedWhenRebuilding")
-            public void testInnerClassNotGeneratedWhenRebuilding() throws Exception {
-                runTest("testData/incremental/withJava/other/innerClassNotGeneratedWhenRebuilding/");
-            }
+                @TestMetadata("publicPropertyWithPrivateSetterMultiFileFacade")
+                public void testPublicPropertyWithPrivateSetterMultiFileFacade() throws Exception {
+                    runTest("testData/incremental/withJava/other/publicPropertyWithPrivateSetterMultiFileFacade/");
+                }
 
-            @TestMetadata("jvmNameChanged")
-            public void testJvmNameChanged() throws Exception {
-                runTest("testData/incremental/withJava/other/jvmNameChanged/");
-            }
+                @TestMetadata("topLevelFunctionWithJvmName")
+                public void testTopLevelFunctionWithJvmName() throws Exception {
+                    runTest("testData/incremental/withJava/other/topLevelFunctionWithJvmName/");
+                }
 
-            @TestMetadata("mainRedeclaration")
-            public void testMainRedeclaration() throws Exception {
-                runTest("testData/incremental/withJava/other/mainRedeclaration/");
-            }
-
-            @TestMetadata("multifileClassAddTopLevelFunWithDefault")
-            public void testMultifileClassAddTopLevelFunWithDefault() throws Exception {
-                runTest("testData/incremental/withJava/other/multifileClassAddTopLevelFunWithDefault/");
-            }
-
-            @TestMetadata("multifileClassFileAdded")
-            public void testMultifileClassFileAdded() throws Exception {
-                runTest("testData/incremental/withJava/other/multifileClassFileAdded/");
-            }
-
-            @TestMetadata("multifileClassFileChanged")
-            public void testMultifileClassFileChanged() throws Exception {
-                runTest("testData/incremental/withJava/other/multifileClassFileChanged/");
-            }
-
-            @TestMetadata("multifileClassFileMovedToAnotherMultifileClass")
-            public void testMultifileClassFileMovedToAnotherMultifileClass() throws Exception {
-                runTest("testData/incremental/withJava/other/multifileClassFileMovedToAnotherMultifileClass/");
-            }
-
-            @TestMetadata("multifileClassInlineFunction")
-            public void testMultifileClassInlineFunction() throws Exception {
-                runTest("testData/incremental/withJava/other/multifileClassInlineFunction/");
-            }
-
-            @TestMetadata("multifileClassInlineFunctionAccessingField")
-            public void testMultifileClassInlineFunctionAccessingField() throws Exception {
-                runTest("testData/incremental/withJava/other/multifileClassInlineFunctionAccessingField/");
-            }
-
-            @TestMetadata("multifileClassRecreated")
-            public void testMultifileClassRecreated() throws Exception {
-                runTest("testData/incremental/withJava/other/multifileClassRecreated/");
-            }
-
-            @TestMetadata("multifileClassRecreatedAfterRenaming")
-            public void testMultifileClassRecreatedAfterRenaming() throws Exception {
-                runTest("testData/incremental/withJava/other/multifileClassRecreatedAfterRenaming/");
-            }
-
-            @TestMetadata("multifileClassRemoved")
-            public void testMultifileClassRemoved() throws Exception {
-                runTest("testData/incremental/withJava/other/multifileClassRemoved/");
-            }
-
-            @TestMetadata("multifileDependantUsage")
-            public void testMultifileDependantUsage() throws Exception {
-                runTest("testData/incremental/withJava/other/multifileDependantUsage/");
-            }
-
-            @TestMetadata("multifilePackagePartMethodAdded")
-            public void testMultifilePackagePartMethodAdded() throws Exception {
-                runTest("testData/incremental/withJava/other/multifilePackagePartMethodAdded/");
-            }
-
-            @TestMetadata("multifilePartsWithProperties")
-            public void testMultifilePartsWithProperties() throws Exception {
-                runTest("testData/incremental/withJava/other/multifilePartsWithProperties/");
-            }
-
-            @TestMetadata("optionalParameter")
-            public void testOptionalParameter() throws Exception {
-                runTest("testData/incremental/withJava/other/optionalParameter/");
-            }
-
-            @TestMetadata("packageFacadeToClass")
-            public void testPackageFacadeToClass() throws Exception {
-                runTest("testData/incremental/withJava/other/packageFacadeToClass/");
-            }
-
-            @TestMetadata("packageMultifileClassOneFileWithPublicChanges")
-            public void testPackageMultifileClassOneFileWithPublicChanges() throws Exception {
-                runTest("testData/incremental/withJava/other/packageMultifileClassOneFileWithPublicChanges/");
-            }
-
-            @TestMetadata("packageMultifileClassPrivateOnlyChanged")
-            public void testPackageMultifileClassPrivateOnlyChanged() throws Exception {
-                runTest("testData/incremental/withJava/other/packageMultifileClassPrivateOnlyChanged/");
-            }
-
-            @TestMetadata("publicPropertyWithPrivateSetterMultiFileFacade")
-            public void testPublicPropertyWithPrivateSetterMultiFileFacade() throws Exception {
-                runTest("testData/incremental/withJava/other/publicPropertyWithPrivateSetterMultiFileFacade/");
-            }
-
-            @TestMetadata("topLevelFunctionWithJvmName")
-            public void testTopLevelFunctionWithJvmName() throws Exception {
-                runTest("testData/incremental/withJava/other/topLevelFunctionWithJvmName/");
-            }
-
-            @TestMetadata("topLevelPropertyWithJvmName")
-            public void testTopLevelPropertyWithJvmName() throws Exception {
-                runTest("testData/incremental/withJava/other/topLevelPropertyWithJvmName/");
+                @TestMetadata("topLevelPropertyWithJvmName")
+                public void testTopLevelPropertyWithJvmName() throws Exception {
+                    runTest("testData/incremental/withJava/other/topLevelPropertyWithJvmName/");
+                }
             }
         }
     }
@@ -1340,209 +1420,221 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/incremental/classHierarchyAffected")
-    public static class ClassHierarchyAffected extends AbstractIncrementalJvmJpsTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+    public abstract static class ClassHierarchyAffected extends AbstractIncrementalJvmJpsTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/incremental/classHierarchyAffected")
+        public static class TestBucket001 extends AbstractIncrementalJvmJpsTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+            }
+
+            @TestMetadata("annotationFlagRemoved")
+            public void testAnnotationFlagRemoved() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/annotationFlagRemoved/");
+            }
+
+            @TestMetadata("annotationListChanged")
+            public void testAnnotationListChanged() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/annotationListChanged/");
+            }
+
+            @TestMetadata("bridgeGenerated")
+            public void testBridgeGenerated() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/bridgeGenerated/");
+            }
+
+            @TestMetadata("classBecameFinal")
+            public void testClassBecameFinal() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/classBecameFinal/");
+            }
+
+            @TestMetadata("classBecameInterface")
+            public void testClassBecameInterface() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/classBecameInterface/");
+            }
+
+            @TestMetadata("classBecamePrivate")
+            public void testClassBecamePrivate() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/classBecamePrivate/");
+            }
+
+            @TestMetadata("classMovedIntoOtherClass")
+            public void testClassMovedIntoOtherClass() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/classMovedIntoOtherClass/");
+            }
+
+            @TestMetadata("classRemoved")
+            public void testClassRemoved() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/classRemoved/");
+            }
+
+            @TestMetadata("classRemovedAndRestored")
+            public void testClassRemovedAndRestored() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/classRemovedAndRestored/");
+            }
+
+            @TestMetadata("companionObjectInheritedMemberChanged")
+            public void testCompanionObjectInheritedMemberChanged() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/companionObjectInheritedMemberChanged/");
+            }
+
+            @TestMetadata("companionObjectMemberChanged")
+            public void testCompanionObjectMemberChanged() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/companionObjectMemberChanged/");
+            }
+
+            @TestMetadata("companionObjectNameChanged")
+            public void testCompanionObjectNameChanged() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/companionObjectNameChanged/");
+            }
+
+            @TestMetadata("companionObjectToSimpleObject")
+            public void testCompanionObjectToSimpleObject() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/companionObjectToSimpleObject/");
+            }
+
+            @TestMetadata("constructorVisibilityChanged")
+            public void testConstructorVisibilityChanged() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/constructorVisibilityChanged/");
+            }
+
+            @TestMetadata("enumEntryAdded")
+            public void testEnumEntryAdded() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/enumEntryAdded/");
+            }
+
+            @TestMetadata("enumEntryRemoved")
+            public void testEnumEntryRemoved() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/enumEntryRemoved/");
+            }
+
+            @TestMetadata("enumMemberChanged")
+            public void testEnumMemberChanged() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/enumMemberChanged/");
+            }
+
+            @TestMetadata("flagsAndMemberInDifferentClassesChanged")
+            public void testFlagsAndMemberInDifferentClassesChanged() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/flagsAndMemberInDifferentClassesChanged/");
+            }
+
+            @TestMetadata("flagsAndMemberInSameClassChanged")
+            public void testFlagsAndMemberInSameClassChanged() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/flagsAndMemberInSameClassChanged/");
+            }
+
+            @TestMetadata("implcitUpcast")
+            public void testImplcitUpcast() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/implcitUpcast/");
+            }
         }
 
-        @TestMetadata("annotationFlagRemoved")
-        public void testAnnotationFlagRemoved() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/annotationFlagRemoved/");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/incremental/classHierarchyAffected")
+        public static class TestBucket002 extends AbstractIncrementalJvmJpsTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, TargetBackend.JVM_IR, testDataFilePath);
+            }
 
-        @TestMetadata("annotationListChanged")
-        public void testAnnotationListChanged() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/annotationListChanged/");
-        }
+            @TestMetadata("inferredTypeArgumentChanged")
+            public void testInferredTypeArgumentChanged() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/inferredTypeArgumentChanged/");
+            }
 
-        @TestMetadata("bridgeGenerated")
-        public void testBridgeGenerated() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/bridgeGenerated/");
-        }
+            @TestMetadata("inferredTypeChanged")
+            public void testInferredTypeChanged() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/inferredTypeChanged/");
+            }
 
-        @TestMetadata("classBecameFinal")
-        public void testClassBecameFinal() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/classBecameFinal/");
-        }
+            @TestMetadata("interfaceAnyMethods")
+            public void testInterfaceAnyMethods() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/interfaceAnyMethods/");
+            }
 
-        @TestMetadata("classBecameInterface")
-        public void testClassBecameInterface() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/classBecameInterface/");
-        }
+            @TestMetadata("lambdaParameterAffected")
+            public void testLambdaParameterAffected() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/lambdaParameterAffected/");
+            }
 
-        @TestMetadata("classBecamePrivate")
-        public void testClassBecamePrivate() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/classBecamePrivate/");
-        }
+            @TestMetadata("methodAdded")
+            public void testMethodAdded() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/methodAdded/");
+            }
 
-        @TestMetadata("classMovedIntoOtherClass")
-        public void testClassMovedIntoOtherClass() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/classMovedIntoOtherClass/");
-        }
+            @TestMetadata("methodAnnotationAdded")
+            public void testMethodAnnotationAdded() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/methodAnnotationAdded/");
+            }
 
-        @TestMetadata("classRemoved")
-        public void testClassRemoved() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/classRemoved/");
-        }
+            @TestMetadata("methodNullabilityChanged")
+            public void testMethodNullabilityChanged() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/methodNullabilityChanged/");
+            }
 
-        @TestMetadata("classRemovedAndRestored")
-        public void testClassRemovedAndRestored() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/classRemovedAndRestored/");
-        }
+            @TestMetadata("methodParameterWithDefaultValueAdded")
+            public void testMethodParameterWithDefaultValueAdded() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/methodParameterWithDefaultValueAdded/");
+            }
 
-        @TestMetadata("companionObjectInheritedMemberChanged")
-        public void testCompanionObjectInheritedMemberChanged() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/companionObjectInheritedMemberChanged/");
-        }
+            @TestMetadata("methodRemoved")
+            public void testMethodRemoved() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/methodRemoved/");
+            }
 
-        @TestMetadata("companionObjectMemberChanged")
-        public void testCompanionObjectMemberChanged() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/companionObjectMemberChanged/");
-        }
+            @TestMetadata("overrideExplicit")
+            public void testOverrideExplicit() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/overrideExplicit/");
+            }
 
-        @TestMetadata("companionObjectNameChanged")
-        public void testCompanionObjectNameChanged() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/companionObjectNameChanged/");
-        }
+            @TestMetadata("overrideImplicit")
+            public void testOverrideImplicit() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/overrideImplicit/");
+            }
 
-        @TestMetadata("companionObjectToSimpleObject")
-        public void testCompanionObjectToSimpleObject() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/companionObjectToSimpleObject/");
-        }
+            @TestMetadata("propertyNullabilityChanged")
+            public void testPropertyNullabilityChanged() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/propertyNullabilityChanged/");
+            }
 
-        @TestMetadata("constructorVisibilityChanged")
-        public void testConstructorVisibilityChanged() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/constructorVisibilityChanged/");
-        }
+            @TestMetadata("sealedClassImplAdded")
+            public void testSealedClassImplAdded() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/sealedClassImplAdded/");
+            }
 
-        @TestMetadata("enumEntryAdded")
-        public void testEnumEntryAdded() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/enumEntryAdded/");
-        }
+            @TestMetadata("sealedClassIndirectImplAdded")
+            public void testSealedClassIndirectImplAdded() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/sealedClassIndirectImplAdded/");
+            }
 
-        @TestMetadata("enumEntryRemoved")
-        public void testEnumEntryRemoved() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/enumEntryRemoved/");
-        }
+            @TestMetadata("sealedClassNestedImplAdded")
+            public void testSealedClassNestedImplAdded() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/sealedClassNestedImplAdded/");
+            }
 
-        @TestMetadata("enumMemberChanged")
-        public void testEnumMemberChanged() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/enumMemberChanged/");
-        }
+            @TestMetadata("secondaryConstructorAdded")
+            public void testSecondaryConstructorAdded() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/secondaryConstructorAdded/");
+            }
 
-        @TestMetadata("flagsAndMemberInDifferentClassesChanged")
-        public void testFlagsAndMemberInDifferentClassesChanged() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/flagsAndMemberInDifferentClassesChanged/");
-        }
+            @TestMetadata("starProjectionUpperBoundChanged")
+            public void testStarProjectionUpperBoundChanged() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/starProjectionUpperBoundChanged/");
+            }
 
-        @TestMetadata("flagsAndMemberInSameClassChanged")
-        public void testFlagsAndMemberInSameClassChanged() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/flagsAndMemberInSameClassChanged/");
-        }
+            @TestMetadata("supertypesListChanged")
+            public void testSupertypesListChanged() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/supertypesListChanged/");
+            }
 
-        @TestMetadata("implcitUpcast")
-        public void testImplcitUpcast() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/implcitUpcast/");
-        }
+            @TestMetadata("typeParameterListChanged")
+            public void testTypeParameterListChanged() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/typeParameterListChanged/");
+            }
 
-        @TestMetadata("inferredTypeArgumentChanged")
-        public void testInferredTypeArgumentChanged() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/inferredTypeArgumentChanged/");
-        }
-
-        @TestMetadata("inferredTypeChanged")
-        public void testInferredTypeChanged() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/inferredTypeChanged/");
-        }
-
-        @TestMetadata("interfaceAnyMethods")
-        public void testInterfaceAnyMethods() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/interfaceAnyMethods/");
-        }
-
-        @TestMetadata("lambdaParameterAffected")
-        public void testLambdaParameterAffected() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/lambdaParameterAffected/");
-        }
-
-        @TestMetadata("methodAdded")
-        public void testMethodAdded() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/methodAdded/");
-        }
-
-        @TestMetadata("methodAnnotationAdded")
-        public void testMethodAnnotationAdded() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/methodAnnotationAdded/");
-        }
-
-        @TestMetadata("methodNullabilityChanged")
-        public void testMethodNullabilityChanged() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/methodNullabilityChanged/");
-        }
-
-        @TestMetadata("methodParameterWithDefaultValueAdded")
-        public void testMethodParameterWithDefaultValueAdded() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/methodParameterWithDefaultValueAdded/");
-        }
-
-        @TestMetadata("methodRemoved")
-        public void testMethodRemoved() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/methodRemoved/");
-        }
-
-        @TestMetadata("overrideExplicit")
-        public void testOverrideExplicit() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/overrideExplicit/");
-        }
-
-        @TestMetadata("overrideImplicit")
-        public void testOverrideImplicit() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/overrideImplicit/");
-        }
-
-        @TestMetadata("propertyNullabilityChanged")
-        public void testPropertyNullabilityChanged() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/propertyNullabilityChanged/");
-        }
-
-        @TestMetadata("sealedClassImplAdded")
-        public void testSealedClassImplAdded() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/sealedClassImplAdded/");
-        }
-
-        @TestMetadata("sealedClassIndirectImplAdded")
-        public void testSealedClassIndirectImplAdded() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/sealedClassIndirectImplAdded/");
-        }
-
-        @TestMetadata("sealedClassNestedImplAdded")
-        public void testSealedClassNestedImplAdded() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/sealedClassNestedImplAdded/");
-        }
-
-        @TestMetadata("secondaryConstructorAdded")
-        public void testSecondaryConstructorAdded() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/secondaryConstructorAdded/");
-        }
-
-        @TestMetadata("starProjectionUpperBoundChanged")
-        public void testStarProjectionUpperBoundChanged() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/starProjectionUpperBoundChanged/");
-        }
-
-        @TestMetadata("supertypesListChanged")
-        public void testSupertypesListChanged() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/supertypesListChanged/");
-        }
-
-        @TestMetadata("typeParameterListChanged")
-        public void testTypeParameterListChanged() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/typeParameterListChanged/");
-        }
-
-        @TestMetadata("varianceChanged")
-        public void testVarianceChanged() throws Exception {
-            runTest("testData/incremental/classHierarchyAffected/varianceChanged/");
+            @TestMetadata("varianceChanged")
+            public void testVarianceChanged() throws Exception {
+                runTest("testData/incremental/classHierarchyAffected/varianceChanged/");
+            }
         }
     }
 }

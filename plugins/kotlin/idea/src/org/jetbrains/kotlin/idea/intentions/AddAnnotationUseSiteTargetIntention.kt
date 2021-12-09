@@ -46,19 +46,19 @@ class AddAnnotationUseSiteTargetIntention : SelfTargetingIntention<KtAnnotationE
 
     override fun applyTo(element: KtAnnotationEntry, editor: Editor?) {
         val useSiteTargets = element.applicableUseSiteTargets()
-        if (!element.isPhysical) {
-            // For preview
-            if (useSiteTargets.isNotEmpty()) {
-                element.doAddUseSiteTarget(useSiteTargets.first())
-            }
-            return
-        }
         element.addUseSiteTarget(useSiteTargets, editor)
     }
 }
 
 fun KtAnnotationEntry.addUseSiteTarget(useSiteTargets: List<AnnotationUseSiteTarget>, editor: Editor?) {
     val project = this.project
+    if (!isPhysical) {
+        // For preview
+        if (useSiteTargets.isNotEmpty()) {
+            doAddUseSiteTarget(useSiteTargets.first())
+        }
+        return
+    }
     CommandProcessor.getInstance().runUndoTransparentAction {
         if (useSiteTargets.size == 1 || editor == null)
             addUseSiteTarget(useSiteTargets.first(), project)

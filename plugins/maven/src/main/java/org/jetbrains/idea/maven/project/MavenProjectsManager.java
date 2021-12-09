@@ -29,6 +29,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.util.CachedValueProvider;
@@ -54,6 +55,8 @@ import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
 import org.jetbrains.idea.maven.project.MavenArtifactDownloader.DownloadResult;
+import org.jetbrains.idea.maven.project.importing.FilesList;
+import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.server.MavenDistributionsCache;
 import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
 import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
@@ -252,12 +255,15 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       registerSyncConsoleListener();
       updateTabTitles();
 
+
       MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
           fireActivated();
           listenForExternalChanges();
         }
-        scheduleUpdateAllProjects(isNew);
+        if (!Registry.is("maven.new.import")) {
+          scheduleUpdateAllProjects(isNew);
+        }
       });
     }
     finally {
@@ -841,6 +847,11 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
+    if (Registry.is("maven.new.import")) {
+      MavenImportingManager.getInstance(myProject)
+        .openProjectAndImport(new FilesList(collectAllAvailablePomFiles()), getImportingSettings(), getGeneralSettings());
+      return;
+    }
     if (!isMavenizedProject()) {
       addManagedFiles(collectAllAvailablePomFiles());
     }

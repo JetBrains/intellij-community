@@ -16,7 +16,6 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.content.Content
-import com.intellij.vcs.log.runInEdt
 import git4idea.i18n.GitBundle
 import git4idea.stash.*
 import org.jetbrains.annotations.Nls
@@ -83,27 +82,27 @@ internal class GitStashStartupActivity : StartupActivity.DumbAware {
   }
 
   override fun runActivity(project: Project) {
-    runInEdt(project) {
-      val gitStashTracker = project.service<GitStashTracker>()
-      val stashTrackerIsNotEmpty = gitStashTracker.isNotEmpty()
-      gitStashTracker.addListener(object : GitStashTrackerListener {
-        private var hasStashes = stashTrackerIsNotEmpty
-        override fun stashesUpdated() {
-          if (hasStashes != gitStashTracker.isNotEmpty()) {
-            hasStashes = gitStashTracker.isNotEmpty()
+    ApplicationManager.getApplication().invokeLater({
+        val gitStashTracker = project.service<GitStashTracker>()
+        val stashTrackerIsNotEmpty = gitStashTracker.isNotEmpty()
+        gitStashTracker.addListener(object : GitStashTrackerListener {
+          private var hasStashes = stashTrackerIsNotEmpty
+          override fun stashesUpdated() {
+            if (hasStashes != gitStashTracker.isNotEmpty()) {
+              hasStashes = gitStashTracker.isNotEmpty()
+              project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
+            }
+          }
+        }, gitStashTracker)
+        stashToolWindowRegistryOption().addListener(object : RegistryValueListener {
+          override fun afterValueChanged(value: RegistryValue) {
+            gitStashTracker.scheduleRefresh()
             project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
           }
-        }
-      }, gitStashTracker)
-      stashToolWindowRegistryOption().addListener(object : RegistryValueListener {
-        override fun afterValueChanged(value: RegistryValue) {
-          gitStashTracker.scheduleRefresh()
+        }, gitStashTracker)
+        if (stashTrackerIsNotEmpty) {
           project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
         }
-      }, gitStashTracker)
-      if (stashTrackerIsNotEmpty) {
-        project.messageBus.syncPublisher(ChangesViewContentManagerListener.TOPIC).toolWindowMappingChanged()
-      }
-    }
+      }) { project.isDisposed }
   }
 }

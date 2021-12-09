@@ -1,41 +1,26 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-package decompiler;
+package pkg;
 
-// compile with java 8: javap -parameters TestMethodParametersAttr.java
+// compile with `javac -parameters ...`
 public class TestMethodParametersAttr {
-  TestMethodParametersAttr(int p01) { }
-  void m1(int p02) { }
-  static void m2(int p03) { }
+  TestMethodParametersAttr(int p01) { System.out.print(p01); }
+  void m1(int p02) { System.out.print(p02); }
+  static void m2(int p03) { System.out.print(p03); }
 
   class C1 {
-    C1(int p11) { }
-    void m(int p12) { }
+    C1(int p11) { System.out.print(p11); }
+    void m(int p12) { System.out.print(p12); }
   }
 
   static class C2 {
-    C2(int p21) { }
-    void m1(int p22) { }
-    static void m2(int p23) { }
+    C2(int p21) { System.out.print(p21); }
+    void m1(int p22) { System.out.print(p22); }
+    static void m2(int p23) { System.out.print(p23); }
   }
 
   void local() {
     class Local {
-      Local(int p31) { }
-      void m(int p32) { }
+      Local(int p31) { System.out.print(p31); }
+      void m(int p32) { System.out.print(p32); }
     }
   }
 
@@ -50,7 +35,12 @@ public class TestMethodParametersAttr {
   }
 
   static abstract class C4 {
-    abstract void m1(int p51);
-    abstract void m2(final int p52);
+    abstract void m1(int p61);
+    abstract void m2(final int p62);
+  }
+
+  enum E1 {
+    ;
+    E1(int p71) { System.out.print(p71); }
   }
 }

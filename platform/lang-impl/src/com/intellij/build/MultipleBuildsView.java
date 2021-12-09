@@ -180,8 +180,6 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
         });
         view.onEvent(buildId, event);
 
-        myContent.setPreferredFocusedComponent(view::getPreferredFocusableComponent);
-
         myBuildContentManager.setSelectedContent(myContent,
                                                  buildInfo.isAutoFocusContent(),
                                                  buildInfo.isAutoFocusContent(),
@@ -190,6 +188,7 @@ public class MultipleBuildsView implements BuildProgressListener, Disposable {
         buildInfo.content = myContent;
 
         if (myThreeComponentsSplitter.getSecondComponent() == null) {
+          myContent.setPreferredFocusedComponent(view::getPreferredFocusableComponent);
           myThreeComponentsSplitter.setSecondComponent(view);
           myViewManager.configureToolbar(myToolbarActions, this, view);
         }

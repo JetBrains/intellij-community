@@ -2,15 +2,16 @@
 package com.intellij.ui.jcef;
 
 import com.intellij.testFramework.ApplicationRule;
-import com.intellij.testFramework.NonHeadlessRule;
 import com.intellij.ui.scale.TestScaleHelper;
 import junit.framework.TestCase;
 import org.cef.browser.CefBrowser;
 import org.cef.browser.CefFrame;
 import org.cef.handler.CefLoadHandlerAdapter;
 import org.jetbrains.annotations.NotNull;
-import org.junit.*;
-import org.junit.rules.TestRule;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.ClassRule;
+import org.junit.Test;
 
 import javax.swing.*;
 import java.util.concurrent.CountDownLatch;
@@ -32,12 +33,20 @@ public class JBCefProxyTest {
 
   private volatile boolean passed;
 
-  @Rule public TestRule nonHeadless = new NonHeadlessRule();
+  static {
+    TestScaleHelper.setSystemProperty("java.awt.headless", "false");
+  }
+
   @ClassRule public static final ApplicationRule appRule = new ApplicationRule();
 
   @Before
   public void before() {
     TestScaleHelper.assumeStandalone();
+  }
+
+  @After
+  public void after() {
+    TestScaleHelper.restoreSystemProperties();
   }
 
   @Test

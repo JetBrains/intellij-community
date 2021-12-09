@@ -77,6 +77,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
                              private val activate: () -> Unit) :
   JPanel(BorderLayout()), DataProvider, Disposable {
   private val project = tracker.project
+  private val disposableFlag = Disposer.newCheckedDisposable()
 
   private val _tree: MyChangesTree
   val tree: ChangesTree get() = _tree
@@ -168,8 +169,9 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     updateChangesStatusPanel()
 
     Disposer.register(disposableParent, this)
+    Disposer.register(this, disposableFlag)
 
-    runInEdtAsync(this) { update() }
+    runInEdtAsync(disposableFlag) { update() }
   }
 
   private fun isRefreshInProgress(): Boolean {
@@ -408,13 +410,13 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   private inner class MyGitChangeProviderListener : GitRefreshListener {
     override fun progressStarted() {
-      runInEdt(this@GitStagePanel) {
+      runInEdt(disposableFlag) {
         updateProgressState()
       }
     }
 
     override fun progressStopped() {
-      runInEdt(this@GitStagePanel) {
+      runInEdt(disposableFlag) {
         updateProgressState()
       }
     }
@@ -433,7 +435,7 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
 
   private inner class MyChangeListListener : ChangeListListener {
     override fun changeListUpdateDone() {
-      runInEdt(this@GitStagePanel) {
+      runInEdt(disposableFlag) {
         updateChangesStatusPanel()
       }
     }

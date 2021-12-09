@@ -1,10 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.ui.welcomeScreen
 
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.StartPagePromoter
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.components.panels.NonOpaquePanel
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBUI
@@ -18,6 +21,7 @@ import training.learn.CourseManager
 import training.learn.LearnBundle
 import training.learn.OpenLessonActivities
 import training.ui.UISettings
+import training.ui.showOnboardingFeedbackNotification
 import training.util.resetPrimaryLanguage
 import training.util.rigid
 import java.awt.Component
@@ -29,10 +33,11 @@ import javax.swing.*
 import javax.swing.border.MatteBorder
 
 @ApiStatus.Internal
-open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : StartPagePromoter {
+open class OnboardingLessonPromoter(@NonNls private val lessonId: String, @NonNls private val languageName: String) : StartPagePromoter {
   open fun promoImage(): Icon = FeaturesTrainerIcons.Img.PluginIcon
 
   override fun getPromotionForInitialState(): JPanel? {
+    scheduleOnboardingFeedback()
     val rPanel: JPanel = NonOpaquePanel()
     rPanel.layout = BoxLayout(rPanel, BoxLayout.PAGE_AXIS)
     rPanel.border = JBUI.Borders.empty(JBUI.scale(10), JBUI.scale(32))
@@ -45,7 +50,7 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
     header.font = UIUtil.getLabelFont().deriveFont(Font.BOLD).deriveFont(UIUtil.getLabelFont().size2D + JBUI.scale(4))
     vPanel.add(header)
     vPanel.add(rigid(0, 4))
-    val description = JLabel("<html>${LearnBundle.message("welcome.promo.description", LessonUtil.productName)}</html>").also {
+    val description = JLabel("<html>${LearnBundle.message("welcome.promo.description", LessonUtil.productName, languageName)}</html>").also {
       it.font = JBUI.Fonts.label().deriveFont(JBUI.Fonts.label().size2D + (when {
         SystemInfo.isLinux -> JBUIScale.scale(-2)
         SystemInfo.isMac -> JBUIScale.scale(-1)
@@ -112,5 +117,18 @@ open class OnboardingLessonPromoter(@NonNls private val lessonId: String) : Star
     button.bounds = Rectangle(-button.insets.left, -button.insets.top, button.preferredSize.width, button.preferredSize.height)
 
     return buttonPlace
+  }
+
+  // A bit hacky way to schedule the onboarding feedback informer after the lesson was closed
+  private fun scheduleOnboardingFeedback() {
+    val langSupport = LangManager.getInstance().getLangSupport() ?: return
+
+    val onboardingFeedbackData = langSupport.onboardingFeedbackData ?: return
+
+    invokeLater {
+      langSupport.onboardingFeedbackData = null
+      showOnboardingFeedbackNotification(null, onboardingFeedbackData)
+      (WelcomeFrame.getInstance()?.balloonLayout as? WelcomeBalloonLayoutImpl)?.showPopup()
+    }
   }
 }

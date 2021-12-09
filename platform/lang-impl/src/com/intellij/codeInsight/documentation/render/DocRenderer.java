@@ -31,7 +31,6 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiDocCommentBase;
@@ -42,9 +41,9 @@ import com.intellij.ui.Graphics2DDelegate;
 import com.intellij.ui.popup.PopupFactoryImpl;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.ui.JBHtmlEditorKit;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.StartupUiUtil;
+import com.intellij.util.ui.StyleSheetUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -66,6 +65,7 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled;
 import static com.intellij.lang.documentation.ide.impl.DocumentationManager.instance;
 
 class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRenderer {
@@ -420,7 +420,7 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     if (location == null) return;
 
     String url = event.getDescription();
-    if (Registry.is("documentation.v2")) {
+    if (isDocumentationV2Enabled()) {
       activateLinkV2(url, location);
       return;
     }
@@ -535,7 +535,11 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
   }
 
   private static EditorKit createEditorKit(@NotNull Editor editor) {
-    HTMLEditorKit editorKit = new MyEditorKit(editor);
+    HTMLEditorKit editorKit =
+      new HTMLEditorKitBuilder()
+        .withViewFactoryExtensions((element, view) -> view instanceof ImageView ? new MyScalingImageView(element) : null)
+        .withFontResolver(EditorCssFontResolver.getInstance(editor))
+        .build();
     editorKit.getStyleSheet().addStyleSheet(getStyleSheet(editor));
     return editorKit;
   }
@@ -547,7 +551,7 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     String linkColorHex = ColorUtil.toHex(linkColor);
     if (!Objects.equals(linkColorHex, ourCachedStyleSheetLinkColor)) {
       String editorFontNamePlaceHolder = EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER;
-      ourCachedStyleSheet = StartupUiUtil.createStyleSheet(
+      ourCachedStyleSheet = StyleSheetUtil.createStyleSheet(
         "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
         "code {font-family: \"" + editorFontNamePlaceHolder + "\"}" +
         "pre {font-family: \"" + editorFontNamePlaceHolder + "\";" +
@@ -742,27 +746,6 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     void dispose() {
       MEMORY_MANAGER.unregister(DocRenderer.this);
       myImages.forEach(image -> IMAGE_MANAGER.dispose(image));
-    }
-  }
-
-  private static class MyEditorKit extends JBHtmlEditorKit {
-    private MyEditorKit(Editor editor) {
-      setFontResolver(EditorCssFontResolver.getInstance(editor));
-    }
-
-    @Override
-    public ViewFactory getViewFactory() {
-      return MyViewFactory.INSTANCE;
-    }
-  }
-
-  private static class MyViewFactory extends JBHtmlEditorKit.JBHtmlFactory {
-    private static final MyViewFactory INSTANCE = new MyViewFactory();
-
-    @Override
-    public View create(Element elem) {
-      View view = super.create(elem);
-      return view instanceof ImageView ? new MyScalingImageView(elem) : view;
     }
   }
 

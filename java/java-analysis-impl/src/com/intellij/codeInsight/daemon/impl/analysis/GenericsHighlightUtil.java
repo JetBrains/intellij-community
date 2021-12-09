@@ -109,11 +109,16 @@ public final class GenericsHighlightUtil {
           if (!(inferenceResult.failedToInfer() && expectedType instanceof PsiClassType && ((PsiClassType)expectedType).isRaw())) {
             HighlightInfo highlightInfo = HighlightInfo
               .newHighlightInfo(HighlightInfoType.ERROR).range(referenceParameterList).descriptionAndTooltip(errorMessage).create();
-            if (inferenceResult == PsiDiamondType.DiamondInferenceResult.ANONYMOUS_INNER_RESULT &&
-                !PsiUtil.isLanguageLevel9OrHigher(referenceParameterList)) {
-              QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(LanguageLevel.JDK_1_9));
+            if (inferenceResult == PsiDiamondType.DiamondInferenceResult.ANONYMOUS_INNER_RESULT) {
+              if (!PsiUtil.isLanguageLevel9OrHigher(referenceParameterList)) {
+                QuickFixAction.registerQuickFixAction(highlightInfo,
+                                                      QUICK_FIX_FACTORY.createIncreaseLanguageLevelFix(LanguageLevel.JDK_1_9));
+              }
+              return highlightInfo;
             }
-            return highlightInfo;
+            if (inferenceResult == PsiDiamondType.DiamondInferenceResult.EXPLICIT_CONSTRUCTOR_TYPE_ARGS) {
+              return highlightInfo;
+            }
           }
         }
 
@@ -1166,7 +1171,7 @@ public final class GenericsHighlightUtil {
     }
     PsiClassType type = JavaPsiFacade.getElementFactory(holder.getProject()).createType(containingClass);
 
-    HighlightMethodUtil.checkConstructorCall(type.resolveGenerics(), enumConstant, type, null, holder, javaSdkVersion);
+    HighlightMethodUtil.checkConstructorCall(type.resolveGenerics(), enumConstant, type, null, holder, javaSdkVersion, enumConstant.getArgumentList());
   }
 
   static HighlightInfo checkEnumSuperConstructorCall(@NotNull PsiMethodCallExpression expr) {

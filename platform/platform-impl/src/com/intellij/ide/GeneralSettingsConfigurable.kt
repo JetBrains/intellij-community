@@ -61,19 +61,19 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
         checkBox(myConfirmExit)
       }
 
-      buttonGroup(model::getProcessCloseConfirmation, model::setProcessCloseConfirmation) {
-      row(IdeBundle.message("group.settings.process.tab.close")) {
+      buttonsGroup {
+        row(IdeBundle.message("group.settings.process.tab.close")) {
           radioButton(IdeBundle.message("radio.process.close.terminate"), GeneralSettings.ProcessCloseConfirmation.TERMINATE)
           radioButton(IdeBundle.message("radio.process.close.disconnect"), GeneralSettings.ProcessCloseConfirmation.DISCONNECT)
           radioButton(IdeBundle.message("radio.process.close.ask"), GeneralSettings.ProcessCloseConfirmation.ASK)
         }
-      }
+      }.bind(model::getProcessCloseConfirmation, model::setProcessCloseConfirmation)
 
       group(IdeUICustomization.getInstance().projectMessage("tab.title.project")) {
         row {
           checkBox(myChkReopenLastProject)
         }
-        buttonGroup(model::getConfirmOpenNewProject, model::setConfirmOpenNewProject) {
+        buttonsGroup {
           row(IdeUICustomization.getInstance().projectMessage("label.open.project.in")) {
             radioButton(IdeUICustomization.getInstance().projectMessage("radio.button.open.project.in.the.new.window"),
                         GeneralSettings.OPEN_PROJECT_NEW_WINDOW)
@@ -86,7 +86,7 @@ class GeneralSettingsConfigurable: BoundCompositeSearchableConfigurable<Searchab
                           GeneralSettings.OPEN_PROJECT_SAME_WINDOW_ATTACH)
             }
           }.layout(RowLayout.INDEPENDENT)
-        }
+        }.bind(model::getConfirmOpenNewProject, model::setConfirmOpenNewProject)
 
         if (PlatformUtils.isDataSpell()) {
           row {

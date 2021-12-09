@@ -46,7 +46,12 @@ suspend fun resolveLink(targetPointer: Pointer<out DocumentationTarget>, url: St
 private fun doResolveLink(targetPointer: Pointer<out DocumentationTarget>, url: String): InternalLinkResult {
   val target = targetPointer.dereference() ?: return InternalLinkResult.InvalidTarget
   val result = resolveLink(target, url) ?: return InternalLinkResult.CannotResolve
-  return InternalLinkResult.OK(result.target.documentationRequest())
+  @Suppress("REDUNDANT_ELSE_IN_WHEN")
+  return when (result) {
+    is ResolvedTarget -> InternalLinkResult.Request(result.target.documentationRequest())
+    is UpdateContent -> InternalLinkResult.Updater(result.updater)
+    else -> error("Unexpected result: $result") // this fixes Kotlin incremental compilation
+  }
 }
 
 internal fun resolveLink(target: DocumentationTarget, url: String): LinkResult? {

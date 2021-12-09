@@ -89,7 +89,7 @@ class PreviewStaticServer : HttpRequestHandler() {
 
     @JvmStatic
     fun createCSP(scripts: List<String>, styles: List<String>): String {
-      // We need to remove any query parameters to stop annoying errors in browser console
+      // We need to remove any query parameters to stop annoying errors in the browser console
       fun stripQueryParameters(url: String) = url.replace("?${URL(url).query}", "")
       return """
         default-src 'none';
@@ -100,6 +100,10 @@ class PreviewStaticServer : HttpRequestHandler() {
       """
     }
 
+    /**
+     * Expected to return same URL on each call for same [resourceProvider] and [staticPath],
+     * if [resourceProvider] was not unregistered between those calls.
+     */
     @JvmStatic
     fun getStaticUrl(resourceProvider: ResourceProvider, staticPath: String): String {
       val providerHash = resourceProvider.hashCode()
@@ -117,7 +121,7 @@ class PreviewStaticServer : HttpRequestHandler() {
     }
 
     /**
-     * The types for which ";charset=utf-8" will be appended (only if guessed by [guessContentType]).
+     * The types for which `";charset=utf-8"` will be appended (only if guessed by [guessContentType]).
      */
     private val typesForExplicitUtfCharset = arrayOf(
       "application/javascript",

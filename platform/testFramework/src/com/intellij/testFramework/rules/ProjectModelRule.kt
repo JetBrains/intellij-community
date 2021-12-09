@@ -40,15 +40,17 @@ import org.junit.runner.Description
 import org.junit.runners.model.Statement
 import java.nio.file.Path
 
-class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) : TestRule, BeforeEachCallback, AfterEachCallback {
+open class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) : TestRule {
   val baseProjectDir = TempDirectory()
-  private val disposableRule = DisposableRule()
+  val disposableRule = DisposableRule()
 
   lateinit var project: Project
   lateinit var projectRootDir: Path
   lateinit var filePointerTracker: VirtualFilePointerTracker
 
-  private val projectResource = object : ExternalResource() {
+  val projectResource = ProjectResource()
+
+  inner class ProjectResource : ExternalResource() {
     public override fun before() {
       projectRootDir = baseProjectDir.root.toPath()
       if (forceEnableWorkspaceModel) {
@@ -74,17 +76,6 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
     return ruleChain.apply(base, description)
   }
 
-  override fun beforeEach(context: ExtensionContext) {
-    baseProjectDir.beforeEach(context)
-    projectResource.before()
-  }
-
-  override fun afterEach(context: ExtensionContext) {
-    baseProjectDir.after()
-    projectResource.after()
-    disposableRule.after()
-  }
-  
   fun createModule(name: String = "module"): Module {
     val imlFile = generateImlPath(name)
     val manager = moduleManager
@@ -191,7 +182,7 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
     runWriteActionAndWait { moduleManager.disposeModule(module) }
   }
 
-  fun <F: Facet<C>, C: FacetConfiguration> addFacet(module: Module, type: FacetType<F, C>, configuration: C): F {
+  fun <F: Facet<C>, C: FacetConfiguration> addFacet(module: Module, type: FacetType<F, C>, configuration: C = type.createDefaultConfiguration()): F {
     val facetManager = FacetManager.getInstance(module)
     val model = facetManager.createModifiableModel()
     val facet = facetManager.createFacet(type, type.defaultFacetName, configuration, null)
@@ -215,4 +206,17 @@ class ProjectModelRule(private val forceEnableWorkspaceModel: Boolean = false) :
 
   val projectLibraryTable: LibraryTable
     get() = LibraryTablesRegistrar.getInstance().getLibraryTable(project)
+}
+
+class ProjectModelExtension(forceEnableWorkspaceModel: Boolean = false) : ProjectModelRule(forceEnableWorkspaceModel), BeforeEachCallback, AfterEachCallback {
+  override fun beforeEach(context: ExtensionContext) {
+    baseProjectDir.before(context.displayName)
+    projectResource.before()
+  }
+
+  override fun afterEach(context: ExtensionContext) {
+    baseProjectDir.after()
+    projectResource.after()
+    disposableRule.after()
+  }
 }

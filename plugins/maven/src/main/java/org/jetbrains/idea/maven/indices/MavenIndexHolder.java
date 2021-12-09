@@ -38,6 +38,7 @@ public class MavenIndexHolder {
 
   public boolean isEquals(@NotNull Set<String> remoteUrls, @Nullable String localPath) {
     if (!FileUtilRt.pathsEqual(myLocalIndex != null ? myLocalIndex.getRepositoryPathOrUrl() : null, localPath)) return false;
+    if (remoteUrls.size() != myRemoteIndices.size()) return false;
     for (MavenSearchIndex index : myRemoteIndices) {
       if (!remoteUrls.contains(index.getRepositoryPathOrUrl())) return false;
     }

@@ -416,6 +416,11 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     // left stripe
     list.add(info(id = "Project", weight = 0.25f, contentUiType = ToolWindowContentUiType.COMBO))
 
+    // right stripe
+    anchor = ToolWindowAnchor.RIGHT
+    order = 0
+    list.add(info(id = "Notifications", weight = 0.25f))
+
     // bottom stripe
     anchor = ToolWindowAnchor.BOTTOM
     order = 0

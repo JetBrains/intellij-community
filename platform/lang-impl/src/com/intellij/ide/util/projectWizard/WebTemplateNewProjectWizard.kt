@@ -11,8 +11,7 @@ abstract class WebTemplateNewProjectWizardBase : GeneratorNewProjectWizard {
   override val groupName: String = WebModuleBuilder.GROUP_NAME
 
   override fun createStep(context: WizardContext): NewProjectWizardStep =
-    NewProjectWizardBaseStep(context)
-      .chain { createTemplateStep(it) }
+    RootNewProjectWizardStep(context).chain(::NewProjectWizardBaseStep, ::createTemplateStep)
 
   abstract fun createTemplateStep(parent: NewProjectWizardBaseStep): NewProjectWizardStep
 }

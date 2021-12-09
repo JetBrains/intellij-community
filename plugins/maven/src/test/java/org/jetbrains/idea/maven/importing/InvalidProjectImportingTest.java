@@ -299,7 +299,7 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
                            "<version>1"); //  invalid tag
 
     importProjectWithErrors();
-    resolvePlugins();
+    //resolvePlugins();
     assertModules("project", "foo");
 
     MavenProject root = getRootProjects().get(0);
@@ -542,7 +542,6 @@ public class InvalidProjectImportingTest extends MavenMultiVersionImportingTestC
 
   @Test
   public void testCircularDependencies() {
-    if (ignore()) return;
 
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +

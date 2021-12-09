@@ -89,7 +89,7 @@ public final class BreadcrumbsInitializingActivity implements StartupActivity.Du
         TextEditor textEditor = (TextEditor)fileEditor;
         Editor editor = textEditor.getEditor();
         BreadcrumbsXmlWrapper wrapper = BreadcrumbsXmlWrapper.getBreadcrumbsWrapper(editor);
-        if (isSuitable(textEditor, file)) {
+        if (isSuitable(fileEditorManager.getProject(), textEditor, file)) {
           if (wrapper != null) {
             if (wrapper.breadcrumbs.above != above) {
               remove(fileEditorManager, fileEditor, wrapper);
@@ -113,12 +113,14 @@ public final class BreadcrumbsInitializingActivity implements StartupActivity.Du
     }
   }
 
-  private static boolean isSuitable(@NotNull TextEditor editor, @NotNull VirtualFile file) {
+  private static boolean isSuitable(@NotNull Project project,
+                                    @NotNull TextEditor editor,
+                                    @NotNull VirtualFile file) {
     if (file instanceof HttpVirtualFile || !editor.isValid()) {
       return false;
     }
 
-    for (FileBreadcrumbsCollector collector : FileBreadcrumbsCollector.EP_NAME.getExtensions(editor.getEditor().getProject())) {
+    for (FileBreadcrumbsCollector collector : FileBreadcrumbsCollector.EP_NAME.getExtensions(project)) {
       if (collector.handlesFile(file) && collector.isShownForFile(editor.getEditor(), file)) {
         return true;
       }

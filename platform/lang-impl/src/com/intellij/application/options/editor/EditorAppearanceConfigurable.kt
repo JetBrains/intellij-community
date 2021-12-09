@@ -81,18 +81,16 @@ class EditorAppearanceConfigurable : BoundCompositeSearchableConfigurable<Unname
       }
 
       indent {
-        rowsRange {
-          row {
-            checkBox(myLeadingWhitespacesCheckBox)
-          }
-          row {
-            checkBox(myInnerWhitespacesCheckBox)
-          }
-          row {
-            checkBox(myTrailingWhitespacesCheckBox)
-          }
-        }.enabledIf(cbWhitespace.selected)
-      }
+        row {
+          checkBox(myLeadingWhitespacesCheckBox)
+        }
+        row {
+          checkBox(myInnerWhitespacesCheckBox)
+        }
+        row {
+          checkBox(myTrailingWhitespacesCheckBox)
+        }
+      }.enabledIf(cbWhitespace.selected)
 
       row {
         checkBox(myShowVerticalIndentGuidesCheckBox)

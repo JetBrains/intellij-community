@@ -77,9 +77,7 @@ public abstract class NamedObjectProviderBinding implements ProviderBinding {
                                    @NotNull PsiReferenceService.Hints hints) {
     SharedProcessingContext sharedProcessingContext = new SharedProcessingContext();
 
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0; i < providerList.size(); i++) {
-      ProviderInfo<ElementPattern<?>> info = providerList.get(i);
+    for (ProviderInfo<ElementPattern<?>> info : providerList) {
       if (hints != PsiReferenceService.Hints.NO_HINTS && !info.provider.acceptsHints(position, hints)) {
         continue;
       }

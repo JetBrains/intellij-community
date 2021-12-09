@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -151,8 +151,10 @@ public class InvocationExprent extends Exprent {
     invokeDynamicClassSuffix = expr.getInvokeDynamicClassSuffix();
     stringDescriptor = expr.getStringDescriptor();
     descriptor = expr.getDescriptor();
-    lstParameters = new ArrayList<>(expr.getLstParameters());
-    ExprProcessor.copyEntries(lstParameters);
+
+    List<Exprent> parameters = expr.getLstParameters();
+    this.lstParameters = new ArrayList<>(parameters.size());
+    for (Exprent parameter : parameters) lstParameters.add(parameter.copy());
 
     addBytecodeOffsets(expr.bytecode);
     bootstrapArguments = expr.getBootstrapArguments();
@@ -444,19 +446,16 @@ public class InvocationExprent extends Exprent {
     return null;
   }
 
-  private static final Map<String, String> UNBOXING_METHODS;
-
-  static {
-    UNBOXING_METHODS = new HashMap<>();
-    UNBOXING_METHODS.put("booleanValue", "java/lang/Boolean");
-    UNBOXING_METHODS.put("byteValue", "java/lang/Byte");
-    UNBOXING_METHODS.put("shortValue", "java/lang/Short");
-    UNBOXING_METHODS.put("intValue", "java/lang/Integer");
-    UNBOXING_METHODS.put("longValue", "java/lang/Long");
-    UNBOXING_METHODS.put("floatValue", "java/lang/Float");
-    UNBOXING_METHODS.put("doubleValue", "java/lang/Double");
-    UNBOXING_METHODS.put("charValue", "java/lang/Character");
-  }
+  private static final Map<String, String> UNBOXING_METHODS = Map.of(
+    "booleanValue", "java/lang/Boolean",
+    "byteValue", "java/lang/Byte",
+    "shortValue", "java/lang/Short",
+    "intValue", "java/lang/Integer",
+    "longValue", "java/lang/Long",
+    "floatValue", "java/lang/Float",
+    "doubleValue", "java/lang/Double",
+    "charValue", "java/lang/Character"
+  );
 
   private boolean isUnboxingCall() {
     return !isStatic && lstParameters.size() == 0 && classname.equals(UNBOXING_METHODS.get(name));

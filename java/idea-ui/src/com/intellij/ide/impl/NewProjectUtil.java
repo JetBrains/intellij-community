@@ -1,9 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
-import com.intellij.feedback.state.createdProject.NewProjectInfoEntry;
-import com.intellij.feedback.state.createdProject.NewProjectInfoState;
-import com.intellij.feedback.state.createdProject.NewProjectStatisticService;
+import com.intellij.feedback.state.projectCreation.ProjectCreationInfoService;
+import com.intellij.feedback.state.projectCreation.ProjectCreationInfoState;
 import com.intellij.ide.JavaUiBundle;
 import com.intellij.ide.SaveAndSyncHandler;
 import com.intellij.ide.projectWizard.NewProjectWizardCollector;
@@ -109,16 +108,18 @@ public final class NewProjectUtil {
 
   private static void recordProjectCreatedFromWizard(@NotNull AbstractProjectWizard wizard) {
     if (Registry.is("platform.feedback", false)) {
-      final NewProjectStatisticService newProjectStatisticService = NewProjectStatisticService.getInstance();
       final ProjectBuilder projectBuilder = wizard.getWizardContext().getProjectBuilder();
       if (projectBuilder instanceof AbstractModuleBuilder) {
         final PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(projectBuilder.getClass());
+        final ProjectCreationInfoState projectCreationInfoState = ProjectCreationInfoService.getInstance().getState();
         if (pluginInfo.isSafeToReport()) {
           final String builderId = ((AbstractModuleBuilder)projectBuilder).getBuilderId();
           if (builderId != null) {
-            final NewProjectInfoState newProjectInfoState = newProjectStatisticService.getState();
-            newProjectInfoState.getCreatedProjectInfo().add(NewProjectInfoEntry.createNewProjectInfoEntry(builderId));
+            projectCreationInfoState.setLastCreatedProjectBuilderId(builderId);
           }
+        }
+        else {
+          projectCreationInfoState.setLastCreatedProjectBuilderId("THIRD_PARTY");
         }
       }
     }

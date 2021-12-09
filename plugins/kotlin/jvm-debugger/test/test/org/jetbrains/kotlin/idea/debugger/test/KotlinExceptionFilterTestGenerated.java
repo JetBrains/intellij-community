@@ -18,123 +18,135 @@ import org.junit.runner.RunWith;
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
 @TestMetadata("testData/exceptionFilter")
-public class KotlinExceptionFilterTestGenerated extends AbstractKotlinExceptionFilterTest {
-    private void runTest(String testDataFilePath) throws Exception {
-        KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+public abstract class KotlinExceptionFilterTestGenerated extends AbstractKotlinExceptionFilterTest {
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/exceptionFilter")
+    public static class TestBucket001 extends AbstractKotlinExceptionFilterTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
+
+        @TestMetadata("breakpointReachedAt")
+        public void testBreakpointReachedAt() throws Exception {
+            runTest("testData/exceptionFilter/breakpointReachedAt/");
+        }
+
+        @TestMetadata("inlineFunCallInLibrary")
+        public void testInlineFunCallInLibrary() throws Exception {
+            runTest("testData/exceptionFilter/inlineFunCallInLibrary/");
+        }
+
+        @TestMetadata("inlineFunCallSite")
+        public void testInlineFunCallSite() throws Exception {
+            runTest("testData/exceptionFilter/inlineFunCallSite/");
+        }
+
+        @TestMetadata("inlineFunCallSiteInInlineLambda")
+        public void testInlineFunCallSiteInInlineLambda() throws Exception {
+            runTest("testData/exceptionFilter/inlineFunCallSiteInInlineLambda/");
+        }
+
+        @TestMetadata("inlineFunCallSiteInLambdaInlinedIntoObject")
+        public void testInlineFunCallSiteInLambdaInlinedIntoObject() throws Exception {
+            runTest("testData/exceptionFilter/inlineFunCallSiteInLambdaInlinedIntoObject/");
+        }
+
+        @TestMetadata("inlineFunCallSiteInRegeneratedObject")
+        public void testInlineFunCallSiteInRegeneratedObject() throws Exception {
+            runTest("testData/exceptionFilter/inlineFunCallSiteInRegeneratedObject/");
+        }
+
+        @TestMetadata("inlineFunCallSiteNewSmapSyntax")
+        public void testInlineFunCallSiteNewSmapSyntax() throws Exception {
+            runTest("testData/exceptionFilter/inlineFunCallSiteNewSmapSyntax/");
+        }
+
+        @TestMetadata("inlineFunFromLibrary")
+        public void testInlineFunFromLibrary() throws Exception {
+            runTest("testData/exceptionFilter/inlineFunFromLibrary/");
+        }
+
+        @TestMetadata("inlineFunInnerClassFromLibrary")
+        public void testInlineFunInnerClassFromLibrary() throws Exception {
+            runTest("testData/exceptionFilter/inlineFunInnerClassFromLibrary/");
+        }
+
+        @TestMetadata("inlineFunctionAnotherFile")
+        public void testInlineFunctionAnotherFile() throws Exception {
+            runTest("testData/exceptionFilter/inlineFunctionAnotherFile/");
+        }
+
+        @TestMetadata("inlineFunctionAnotherFileWithSmapApplied")
+        public void testInlineFunctionAnotherFileWithSmapApplied() throws Exception {
+            runTest("testData/exceptionFilter/inlineFunctionAnotherFileWithSmapApplied/");
+        }
+
+        @TestMetadata("inlineFunctionInnerClass")
+        public void testInlineFunctionInnerClass() throws Exception {
+            runTest("testData/exceptionFilter/inlineFunctionInnerClass/");
+        }
+
+        @TestMetadata("inlineFunctionObjectLiteral")
+        public void testInlineFunctionObjectLiteral() throws Exception {
+            runTest("testData/exceptionFilter/inlineFunctionObjectLiteral/");
+        }
+
+        @TestMetadata("inlineFunctionSameFile")
+        public void testInlineFunctionSameFile() throws Exception {
+            runTest("testData/exceptionFilter/inlineFunctionSameFile/");
+        }
+
+        @TestMetadata("kotlinClass")
+        public void testKotlinClass() throws Exception {
+            runTest("testData/exceptionFilter/kotlinClass/");
+        }
+
+        @TestMetadata("kt2489")
+        public void testKt2489() throws Exception {
+            runTest("testData/exceptionFilter/kt2489/");
+        }
+
+        @TestMetadata("kt2489_2")
+        public void testKt2489_2() throws Exception {
+            runTest("testData/exceptionFilter/kt2489_2/");
+        }
+
+        @TestMetadata("librarySources1")
+        public void testLibrarySources1() throws Exception {
+            runTest("testData/exceptionFilter/librarySources1/");
+        }
+
+        @TestMetadata("librarySources2")
+        public void testLibrarySources2() throws Exception {
+            runTest("testData/exceptionFilter/librarySources2/");
+        }
+
+        @TestMetadata("librarySources3")
+        public void testLibrarySources3() throws Exception {
+            runTest("testData/exceptionFilter/librarySources3/");
+        }
     }
 
-    @TestMetadata("breakpointReachedAt")
-    public void testBreakpointReachedAt() throws Exception {
-        runTest("testData/exceptionFilter/breakpointReachedAt/");
-    }
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/exceptionFilter")
+    public static class TestBucket002 extends AbstractKotlinExceptionFilterTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
-    @TestMetadata("inlineFunCallInLibrary")
-    public void testInlineFunCallInLibrary() throws Exception {
-        runTest("testData/exceptionFilter/inlineFunCallInLibrary/");
-    }
+        @TestMetadata("librarySources4")
+        public void testLibrarySources4() throws Exception {
+            runTest("testData/exceptionFilter/librarySources4/");
+        }
 
-    @TestMetadata("inlineFunCallSite")
-    public void testInlineFunCallSite() throws Exception {
-        runTest("testData/exceptionFilter/inlineFunCallSite/");
-    }
+        @TestMetadata("multiSamePackage")
+        public void testMultiSamePackage() throws Exception {
+            runTest("testData/exceptionFilter/multiSamePackage/");
+        }
 
-    @TestMetadata("inlineFunCallSiteInInlineLambda")
-    public void testInlineFunCallSiteInInlineLambda() throws Exception {
-        runTest("testData/exceptionFilter/inlineFunCallSiteInInlineLambda/");
-    }
-
-    @TestMetadata("inlineFunCallSiteInLambdaInlinedIntoObject")
-    public void testInlineFunCallSiteInLambdaInlinedIntoObject() throws Exception {
-        runTest("testData/exceptionFilter/inlineFunCallSiteInLambdaInlinedIntoObject/");
-    }
-
-    @TestMetadata("inlineFunCallSiteInRegeneratedObject")
-    public void testInlineFunCallSiteInRegeneratedObject() throws Exception {
-        runTest("testData/exceptionFilter/inlineFunCallSiteInRegeneratedObject/");
-    }
-
-    @TestMetadata("inlineFunCallSiteNewSmapSyntax")
-    public void testInlineFunCallSiteNewSmapSyntax() throws Exception {
-        runTest("testData/exceptionFilter/inlineFunCallSiteNewSmapSyntax/");
-    }
-
-    @TestMetadata("inlineFunFromLibrary")
-    public void testInlineFunFromLibrary() throws Exception {
-        runTest("testData/exceptionFilter/inlineFunFromLibrary/");
-    }
-
-    @TestMetadata("inlineFunInnerClassFromLibrary")
-    public void testInlineFunInnerClassFromLibrary() throws Exception {
-        runTest("testData/exceptionFilter/inlineFunInnerClassFromLibrary/");
-    }
-
-    @TestMetadata("inlineFunctionAnotherFile")
-    public void testInlineFunctionAnotherFile() throws Exception {
-        runTest("testData/exceptionFilter/inlineFunctionAnotherFile/");
-    }
-
-    @TestMetadata("inlineFunctionAnotherFileWithSmapApplied")
-    public void testInlineFunctionAnotherFileWithSmapApplied() throws Exception {
-        runTest("testData/exceptionFilter/inlineFunctionAnotherFileWithSmapApplied/");
-    }
-
-    @TestMetadata("inlineFunctionInnerClass")
-    public void testInlineFunctionInnerClass() throws Exception {
-        runTest("testData/exceptionFilter/inlineFunctionInnerClass/");
-    }
-
-    @TestMetadata("inlineFunctionObjectLiteral")
-    public void testInlineFunctionObjectLiteral() throws Exception {
-        runTest("testData/exceptionFilter/inlineFunctionObjectLiteral/");
-    }
-
-    @TestMetadata("inlineFunctionSameFile")
-    public void testInlineFunctionSameFile() throws Exception {
-        runTest("testData/exceptionFilter/inlineFunctionSameFile/");
-    }
-
-    @TestMetadata("kotlinClass")
-    public void testKotlinClass() throws Exception {
-        runTest("testData/exceptionFilter/kotlinClass/");
-    }
-
-    @TestMetadata("kt2489")
-    public void testKt2489() throws Exception {
-        runTest("testData/exceptionFilter/kt2489/");
-    }
-
-    @TestMetadata("kt2489_2")
-    public void testKt2489_2() throws Exception {
-        runTest("testData/exceptionFilter/kt2489_2/");
-    }
-
-    @TestMetadata("librarySources1")
-    public void testLibrarySources1() throws Exception {
-        runTest("testData/exceptionFilter/librarySources1/");
-    }
-
-    @TestMetadata("librarySources2")
-    public void testLibrarySources2() throws Exception {
-        runTest("testData/exceptionFilter/librarySources2/");
-    }
-
-    @TestMetadata("librarySources3")
-    public void testLibrarySources3() throws Exception {
-        runTest("testData/exceptionFilter/librarySources3/");
-    }
-
-    @TestMetadata("librarySources4")
-    public void testLibrarySources4() throws Exception {
-        runTest("testData/exceptionFilter/librarySources4/");
-    }
-
-    @TestMetadata("multiSamePackage")
-    public void testMultiSamePackage() throws Exception {
-        runTest("testData/exceptionFilter/multiSamePackage/");
-    }
-
-    @TestMetadata("simple")
-    public void testSimple() throws Exception {
-        runTest("testData/exceptionFilter/simple/");
+        @TestMetadata("simple")
+        public void testSimple() throws Exception {
+            runTest("testData/exceptionFilter/simple/");
+        }
     }
 }

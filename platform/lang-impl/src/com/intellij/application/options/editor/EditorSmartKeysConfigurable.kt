@@ -18,6 +18,8 @@ import com.intellij.openapi.options.UnnamedConfigurable
 import com.intellij.openapi.options.ex.ConfigurableWrapper
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.EnumComboBoxModel
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
 import org.jetbrains.annotations.NonNls
 import java.awt.event.KeyEvent
@@ -108,7 +110,7 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
       row {
         checkBox(myCbTabExistsBracketsAndQuotes)
       }
-      titledRow(ApplicationBundle.message("group.enter.title")) {
+      group(ApplicationBundle.message("group.enter.title")) {
         row {
           checkBox(myCbSmartIndentOnEnter)
         }
@@ -124,7 +126,6 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
       row(ApplicationBundle.message("combobox.smart.backspace")) {
         comboBox(
           EnumComboBoxModel(SmartBackspaceMode::class.java),
-          PropertyBinding(codeInsightSettings::getBackspaceMode, codeInsightSettings::setBackspaceMode).toNullable(),
           renderer = listCellRenderer { value, _, _ ->
             setText(when(value) {
               SmartBackspaceMode.OFF -> ApplicationBundle.message("combobox.smart.backspace.off")
@@ -133,11 +134,11 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
               else -> ""
             })
           })
+          .bindItem(PropertyBinding(codeInsightSettings::getBackspaceMode, codeInsightSettings::setBackspaceMode).toNullable())
       }
       row(ApplicationBundle.message("combobox.paste.reformat")) {
         comboBox(
           DefaultComboBoxModel(arrayOf(NO_REFORMAT, INDENT_BLOCK, INDENT_EACH_LINE, REFORMAT_BLOCK)),
-          codeInsightSettings::REFORMAT_ON_PASTE,
           renderer = listCellRenderer { value, _, _ ->
             setText(when(value) {
               NO_REFORMAT -> ApplicationBundle.message("combobox.paste.reformat.none")
@@ -147,10 +148,10 @@ class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompos
               else -> ""
             })
           }
-        )
+        ).bindItem(codeInsightSettings::REFORMAT_ON_PASTE)
       }
       for (configurable in configurables) {
-        appendDslConfigurableRow(configurable)
+        appendDslConfigurable(configurable)
       }
     }
   }

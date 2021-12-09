@@ -7,7 +7,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.testFramework.UsefulTestCase
 import org.jetbrains.kotlin.idea.perf.util.ExternalProject
 import org.jetbrains.kotlin.idea.perf.util.lastPathSegment
-import org.jetbrains.kotlin.idea.perf.util.suite
+import org.jetbrains.kotlin.idea.perf.suite.suite
 import org.jetbrains.kotlin.test.JUnit3RunnerWithInners
 import org.junit.runner.RunWith
 

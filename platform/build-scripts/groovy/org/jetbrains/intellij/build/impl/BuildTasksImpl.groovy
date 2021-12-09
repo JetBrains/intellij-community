@@ -56,7 +56,7 @@ final class BuildTasksImpl extends BuildTasks {
 
   @Override
   void zipProjectSources() {
-    Path targetFile = Path.of("$buildContext.paths.artifacts/sources.zip")
+    Path targetFile = buildContext.paths.artifactDir.resolve("sources.zip")
     buildContext.executeStep(spanBuilder("build sources zip archive")
                                .setAttribute("path", buildContext.paths.buildOutputDir.relativize(targetFile).toString()),
                              BuildOptions.SOURCES_ARCHIVE_STEP, new Runnable() {
@@ -65,7 +65,6 @@ final class BuildTasksImpl extends BuildTasks {
         Files.createDirectories(Path.of(buildContext.paths.artifacts))
         Files.deleteIfExists(targetFile)
         doZipProjectSources(targetFile, buildContext)
-        buildContext.notifyArtifactBuilt(targetFile)
       }
     })
     logFreeDiskSpace("after building sources archive")
@@ -362,7 +361,7 @@ idea.fatal.error.notification=disabled
       DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish))
 
     if (buildContext.shouldBuildDistributions()) {
-      Path providedModulesFile = Path.of(buildContext.paths.artifacts, "${buildContext.applicationInfo.productCode}-builtinModules.json")
+      Path providedModulesFile = buildContext.paths.artifactDir.resolve("${buildContext.applicationInfo.productCode}-builtinModules.json")
       buildProvidedModuleList(buildContext, providedModulesFile, moduleNames)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
@@ -572,7 +571,7 @@ idea.fatal.error.notification=disabled
           logFreeDiskSpace("before downloading runtime")
           String[] args = [
             "setupJbre", "-Dintellij.build.target.os=$buildContext.options.targetOS",
-            "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledJreVersion"
+            "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledRuntimeVersion"
           ]
           if (targetArch != null) {
             args += "-Dintellij.build.target.arch=" + targetArch
@@ -581,8 +580,8 @@ idea.fatal.error.notification=disabled
           if (prefix != null) {
             args += "-Dintellij.build.bundled.jre.prefix=" + prefix
           }
-          if (buildContext.options.bundledJreBuild != null) {
-            args += "-Dintellij.build.bundled.jre.build=" + buildContext.options.bundledJreBuild
+          if (buildContext.options.bundledRuntimeBuild != null) {
+            args += "-Dintellij.build.bundled.jre.build=" + buildContext.options.bundledRuntimeBuild
           }
           buildContext.gradle.run(message, args)
           logFreeDiskSpace("after downloading runtime")
@@ -592,7 +591,7 @@ idea.fatal.error.notification=disabled
   }
 
   private void setupBundledMaven() {
-    buildContext.executeStep("set-up bundled maven", BuildOptions.SETUP_BUNDLED_MAVE, new Runnable() {
+    buildContext.executeStep("set-up bundled maven", BuildOptions.SETUP_BUNDLED_MAVEN, new Runnable() {
       @Override
       void run() {
         logFreeDiskSpace("before downloading Maven")
@@ -644,7 +643,7 @@ idea.fatal.error.notification=disabled
   }
 
   private static void copyDependenciesFile(BuildContext context) {
-    Path outputFile = Path.of(context.paths.artifacts, "dependencies.txt")
+    Path outputFile = context.paths.artifactDir.resolve("dependencies.txt")
     Files.createDirectories(outputFile.parent)
     Files.copy(context.dependenciesProperties.file, outputFile, StandardCopyOption.REPLACE_EXISTING)
     context.notifyArtifactWasBuilt(outputFile)

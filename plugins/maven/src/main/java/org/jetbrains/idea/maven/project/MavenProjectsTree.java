@@ -1302,6 +1302,12 @@ public final class MavenProjectsTree {
     }
   }
 
+  void fireAllProjectsResolved() {
+    for (Listener each : myListeners) {
+      each.allProjectsResolved();
+    }
+  }
+
   void firePluginsResolved(@NotNull MavenProject project) {
     for (Listener each : myListeners) {
       each.pluginsResolved(project);
@@ -1501,6 +1507,8 @@ public final class MavenProjectsTree {
 
     default void artifactsDownloaded(@NotNull MavenProject project) {
     }
+
+    default void allProjectsResolved() {}
   }
 
   @ApiStatus.Internal

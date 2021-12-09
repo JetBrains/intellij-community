@@ -84,7 +84,6 @@ public final class FileBasedIndexProjectHandler {
     private @NotNull final Project myProject;
 
     private ProjectChangedFilesIndexingTask(@NotNull Project project) {
-      super(project);
       myProject = project;
     }
 
@@ -153,6 +152,15 @@ public final class FileBasedIndexProjectHandler {
         projectIndexingHistory.setScanFilesDuration(Duration.ofNanos(refreshedFilesCalcDuration));
         ((FileBasedIndexImpl)FileBasedIndex.getInstance()).fireUpdateFinished(project);
       }
+    }
+
+    @Override
+    public @Nullable DumbModeTask tryMergeWith(@NotNull DumbModeTask taskFromQueue) {
+      if (taskFromQueue instanceof ProjectChangedFilesIndexingTask &&
+          ((ProjectChangedFilesIndexingTask)taskFromQueue).myProject.equals(myProject)) {
+        return this;
+      }
+      return null;
     }
 
     @Override

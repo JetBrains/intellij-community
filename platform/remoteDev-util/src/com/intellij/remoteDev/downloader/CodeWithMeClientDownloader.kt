@@ -7,7 +7,9 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.Key
@@ -136,6 +138,7 @@ object CodeWithMeClientDownloader {
       override val compatibleJreUrl = jreDownloadUrl
       override val hostFeaturesToEnable: Set<String>? = null
       override val stunTurnServers: List<StunTurnServerInfo>? = null
+      override val turnAllocationServerInfo: StunTurnServerInfo? = null
       override val downloadPgpPublicKeyUrl: String? = null
     }
 
@@ -324,7 +327,7 @@ object CodeWithMeClientDownloader {
           }
           catch (ex: IOException) {
             future.complete(false)
-            LOG.error(ex)
+            LOG.warn(ex)
             return@execute
           }
 
@@ -356,7 +359,7 @@ object CodeWithMeClientDownloader {
         }
         catch (e: Throwable) {
           future.complete(false)
-          LOG.error(e)
+          LOG.warn(e)
         }
         finally {
           synchronized(currentlyDownloading) {
@@ -381,8 +384,12 @@ object CodeWithMeClientDownloader {
         return null
       }
     }
+    catch(e: ProcessCanceledException) {
+      LOG.info("Download was canceled")
+      return null
+    }
     catch (e: Throwable) {
-      LOG.error(e)
+      LOG.warn(e)
       return null
     }
   }

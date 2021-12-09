@@ -1,0 +1,37 @@
+{header}
+<title>{repo|escape}: {file|escape} diff</title>
+</head>
+<body>
+
+<div class="buttons">
+<a href="{url|urlescape}log/{symrev}{sessionvars%urlparameter}">changelog</a>
+<a href="{url|urlescape}shortlog/{symrev}{sessionvars%urlparameter}">shortlog</a>
+<a href="{url|urlescape}graph/{symrev}{sessionvars%urlparameter}">graph</a>
+<a href="{url|urlescape}tags{sessionvars%urlparameter}">tags</a>
+<a href="{url|urlescape}branches{sessionvars%urlparameter}">branches</a>
+<a href="{url|urlescape}rev/{symrev}{sessionvars%urlparameter}">changeset</a>
+<a href="{url|urlescape}file/{symrev}/{file|urlescape}{sessionvars%urlparameter}">file</a>
+<a href="{url|urlescape}log/{symrev}/{file|urlescape}{sessionvars%urlparameter}">revisions</a>
+<a href="{url|urlescape}annotate/{symrev}/{file|urlescape}{sessionvars%urlparameter}">annotate</a>
+<a href="{url|urlescape}raw-diff/{symrev}/{file|urlescape}">raw</a>
+<a href="{url|urlescape}help{sessionvars%urlparameter}">help</a>
+</div>
+
+<h2><a href="/">Mercurial</a> {pathdef%breadcrumb} / {file|escape}</h2>
+
+<table id="filediffEntry">
+<tr>
+ <th class="revision">revision {rev}:</th>
+ <td class="revision"><a href="{url|urlescape}rev/{node|short}{sessionvars%urlparameter}">{node|short}</a></td>
+</tr>
+{parent%filediffparent}
+{child%filediffchild}
+</table>
+
+<div id="fileDiff">
+{diff}
+</div>
+
+{footer}
+
+

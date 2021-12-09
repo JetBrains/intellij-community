@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.util;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
@@ -22,12 +23,16 @@ import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.CompressedRefs;
 import com.intellij.vcs.log.data.RefsModel;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.data.VcsLogStorage;
+import com.intellij.vcs.log.graph.VisibleGraph;
+import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
 import com.intellij.vcs.log.impl.VcsLogManager;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
+import com.intellij.vcs.log.visible.VisiblePack;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -42,6 +47,8 @@ import java.util.stream.Stream;
 
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static com.intellij.vcs.log.impl.VcsLogManager.findLogProviders;
+import static com.intellij.vcs.log.ui.VcsLogUiEx.COMMIT_DOES_NOT_MATCH;
+import static com.intellij.vcs.log.ui.VcsLogUiEx.COMMIT_NOT_FOUND;
 import static java.util.Collections.singletonList;
 
 public final class VcsLogUtil {
@@ -390,5 +397,35 @@ public final class VcsLogUtil {
       if (visiblePack.getVisibleGraph().getVisibleCommitCount() <= r) return -1;
       return r;
     }, SettableFuture.create(), silently, true);
+  }
+
+  public static int getCommitRow(@NotNull VcsLogStorage storage, @NotNull VisiblePack visiblePack,
+                                 @NotNull Hash hash, @NotNull VirtualFile root) {
+    int commitIndex = storage.getCommitIndex(hash, root);
+    VisibleGraph<Integer> visibleGraph = visiblePack.getVisibleGraph();
+    if (visibleGraph instanceof VisibleGraphImpl) {
+      int nodeId = ((VisibleGraphImpl<Integer>)visibleGraph).getPermanentGraph().getPermanentCommitsInfo().getNodeId(commitIndex);
+      if (nodeId == COMMIT_NOT_FOUND) return COMMIT_NOT_FOUND;
+      if (nodeId < 0) return COMMIT_DOES_NOT_MATCH;
+      Integer rowIndex = ((VisibleGraphImpl<Integer>)visibleGraph).getLinearGraph().getNodeIndex(nodeId);
+      return rowIndex == null ? COMMIT_DOES_NOT_MATCH : rowIndex;
+    }
+    Integer rowIndex = visibleGraph.getVisibleRowIndex(commitIndex);
+    return rowIndex == null ? COMMIT_DOES_NOT_MATCH : rowIndex;
+  }
+
+  @NotNull
+  public static ListenableFuture<VcsLogUiEx.JumpResult> jumpToCommit(@NotNull VcsLogUiEx vcsLogUi,
+                                                                     @NotNull Hash commitHash,
+                                                                     @NotNull VirtualFile root,
+                                                                     boolean silently,
+                                                                     boolean focus) {
+    SettableFuture<VcsLogUiEx.JumpResult> future = SettableFuture.create();
+    vcsLogUi.jumpTo(commitHash, (visiblePack, hash) -> {
+      VcsLogStorage storage = vcsLogUi.getLogData().getStorage();
+      if (!storage.containsCommit(new CommitId(hash, root))) return COMMIT_NOT_FOUND;
+      return getCommitRow(storage, visiblePack, hash, root);
+    }, future, silently, focus);
+    return future;
   }
 }

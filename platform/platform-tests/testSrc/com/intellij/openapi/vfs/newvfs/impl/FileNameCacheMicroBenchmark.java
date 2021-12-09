@@ -25,7 +25,8 @@ public class FileNameCacheMicroBenchmark {
   public static void main(String[] args) throws Exception {
     SwingUtilities.invokeAndWait(() -> {
       try {
-        IdeaTestFixture fixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR).getFixture();
+        IdeaTestFixture fixture = IdeaTestFixtureFactory.getFixtureFactory().createLightFixtureBuilder(LightProjectDescriptor.EMPTY_PROJECT_DESCRIPTOR,
+                                                                                                       "FileNameCacheMicroBenchmark").getFixture();
         fixture.setUp();
         long start = System.currentTimeMillis();
         runTest(200, "All names in cache");

@@ -2,12 +2,15 @@ package com.jetbrains.packagesearch.intellij.plugin.fus
 
 import com.intellij.buildsystem.model.unified.UnifiedDependencyRepository
 import com.intellij.internal.statistic.eventLog.EventLogGroup
+import com.intellij.internal.statistic.eventLog.events.BaseEventId
 import com.intellij.internal.statistic.eventLog.events.EventFields
 import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments
+import com.intellij.openapi.diagnostic.thisLogger
+import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
-import com.jetbrains.packagesearch.intellij.plugin.tryDoing
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageIdentifier
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.PackageVersion
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.TargetModules
@@ -15,7 +18,6 @@ import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 
 private const val FUS_ENABLED = true
 
-// See the documentation at https://confluence.jetbrains.com/display/FUS/IntelliJ+Reporting+API
 internal class PackageSearchEventsLogger : CounterUsagesCollector() {
 
     override fun getGroup() = GROUP
@@ -24,7 +26,7 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
 
     companion object {
 
-        private const val VERSION = 8
+        private const val VERSION = 9
         private val GROUP = EventLogGroup(FUSGroupIds.GROUP_ID, VERSION)
 
         // FIELDS
@@ -64,7 +66,7 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
         )
         private val packageUpdatedEvent = GROUP.registerVarargEvent(
             eventId = FUSGroupIds.PACKAGE_UPDATED,
-            fields = arrayOf(packageIdField, packageFromVersionField, packageVersionField, buildSystemField)
+            packageIdField, packageFromVersionField, packageVersionField, buildSystemField
         )
         private val repositoryAddedEvent = GROUP.registerEvent(
             eventId = FUSGroupIds.REPOSITORY_ADDED,
@@ -77,7 +79,14 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
             eventField2 = repositoryUrlField,
             eventField3 = repositoryUsesCustomUrlField
         )
-        private val preferencesChangedEvent = GROUP.registerVarargEvent(FUSGroupIds.PREFERENCES_CHANGED)
+        private val preferencesChangedEvent = GROUP.registerVarargEvent(
+            eventId = FUSGroupIds.PREFERENCES_CHANGED,
+            preferencesGradleScopeCountField,
+            preferencesUpdateScopesOnUsageField,
+            preferencesDefaultGradleScopeChangedField,
+            preferencesDefaultMavenScopeChangedField
+
+        )
         private val preferencesRestoreDefaultsEvent = GROUP.registerEvent(FUSGroupIds.PREFERENCES_RESTORE_DEFAULTS)
         private val packageSelectedEvent = GROUP.registerEvent(eventId = FUSGroupIds.PACKAGE_SELECTED, packageIsInstalledField)
         private val targetModulesSelectedEvent = GROUP.registerEvent(
@@ -106,10 +115,10 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
             packageVersion: PackageVersion,
             targetModule: ProjectModule
         ) =
-            ifLoggingEnabled {
+            runSafelyIfEnabled(packageInstalledEvent) {
                 val moduleOperationProvider = ProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
                 if (moduleOperationProvider != null) {
-                    packageInstalledEvent.log(packageIdentifier.rawValue, packageVersion.versionName, moduleOperationProvider::class.java)
+                    log(packageIdentifier.rawValue, packageVersion.versionName, moduleOperationProvider::class.java)
                 } else {
                     logDebug { "Unable to log package installation for target module '${targetModule.name}': no operation provider available" }
                 }
@@ -119,10 +128,10 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
             packageIdentifier: PackageIdentifier,
             packageVersion: PackageVersion,
             targetModule: ProjectModule
-        ) = ifLoggingEnabled {
+        ) = runSafelyIfEnabled(packageRemovedEvent) {
             val moduleOperationProvider = ProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
             if (moduleOperationProvider != null) {
-                packageRemovedEvent.log(packageIdentifier.rawValue, packageVersion.versionName, moduleOperationProvider::class.java)
+                log(packageIdentifier.rawValue, packageVersion.versionName, moduleOperationProvider::class.java)
             } else {
                 logDebug { "Unable to log package removal for target module '${targetModule.name}': no operation provider available" }
             }
@@ -133,10 +142,10 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
             packageFromVersion: PackageVersion,
             packageVersion: PackageVersion,
             targetModule: ProjectModule
-        ) = ifLoggingEnabled {
+        ) = runSafelyIfEnabled(packageUpdatedEvent) {
             val moduleOperationProvider = ProjectModuleOperationProvider.forProjectModuleType(targetModule.moduleType)
             if (moduleOperationProvider != null) {
-                packageUpdatedEvent.log(
+                log(
                     packageIdField.with(packageIdentifier.rawValue),
                     packageFromVersionField.with(packageFromVersion.versionName),
                     packageVersionField.with(packageVersion.versionName),
@@ -147,57 +156,69 @@ internal class PackageSearchEventsLogger : CounterUsagesCollector() {
             }
         }
 
-        fun logRepositoryAdded(model: UnifiedDependencyRepository) = ifLoggingEnabled {
-            repositoryAddedEvent.log(FUSGroupIds.IndexedRepositories.forId(model.id), FUSGroupIds.IndexedRepositories.validateUrl(model.url))
+        fun logRepositoryAdded(model: UnifiedDependencyRepository) = runSafelyIfEnabled(repositoryAddedEvent) {
+            log(FUSGroupIds.IndexedRepositories.forId(model.id), FUSGroupIds.IndexedRepositories.validateUrl(model.url))
         }
 
-        fun logRepositoryRemoved(model: UnifiedDependencyRepository) = ifLoggingEnabled {
+        fun logRepositoryRemoved(model: UnifiedDependencyRepository) = runSafelyIfEnabled(repositoryRemovedEvent) {
             val repository = FUSGroupIds.IndexedRepositories.forId(model.id)
             val validatedUrl = FUSGroupIds.IndexedRepositories.validateUrl(model.url)
             val usesCustomUrl = repository != FUSGroupIds.IndexedRepositories.NONE &&
                 repository != FUSGroupIds.IndexedRepositories.OTHER &&
                 validatedUrl == null
-            repositoryRemovedEvent.log(repository, validatedUrl, usesCustomUrl)
+            log(repository, validatedUrl, usesCustomUrl)
         }
 
-        fun logPreferencesChanged(vararg preferences: EventPair<*>) = ifLoggingEnabled {
-            preferencesChangedEvent.log(*preferences)
+        fun logPreferencesChanged(vararg preferences: EventPair<*>) = runSafelyIfEnabled(preferencesChangedEvent) {
+            log(*preferences)
         }
 
-        fun logPreferencesRestoreDefaults() = ifLoggingEnabled {
-            preferencesRestoreDefaultsEvent.log()
+        fun logPreferencesRestoreDefaults() = runSafelyIfEnabled(preferencesRestoreDefaultsEvent) {
+            log()
         }
 
-        fun logTargetModuleSelected(targetModules: TargetModules) = ifLoggingEnabled {
-            targetModulesSelectedEvent.log(FUSGroupIds.TargetModulesType.from(targetModules), targetModules.isMixedBuildSystems)
+        fun logTargetModuleSelected(targetModules: TargetModules) = runSafelyIfEnabled(targetModulesSelectedEvent) {
+            log(FUSGroupIds.TargetModulesType.from(targetModules), targetModules.isMixedBuildSystems)
         }
 
-        fun logPackageSelected(isInstalled: Boolean) = ifLoggingEnabled {
-            packageSelectedEvent.log(isInstalled)
+        fun logPackageSelected(isInstalled: Boolean) = runSafelyIfEnabled(packageSelectedEvent) {
+            log(isInstalled)
         }
 
-        fun logDetailsLinkClick(type: FUSGroupIds.DetailsLinkTypes) = ifLoggingEnabled {
-            detailsLinkClickEvent.log(type)
+        fun logDetailsLinkClick(type: FUSGroupIds.DetailsLinkTypes) = runSafelyIfEnabled(detailsLinkClickEvent) {
+            log(type)
         }
 
-        fun logToggle(type: FUSGroupIds.ToggleTypes, state: Boolean) = ifLoggingEnabled {
-            toggleDetailsEvent.log(type, state)
+        fun logToggle(type: FUSGroupIds.ToggleTypes, state: Boolean) = runSafelyIfEnabled(toggleDetailsEvent) {
+            log(type, state)
         }
 
-        fun logSearchRequest(query: String) = ifLoggingEnabled {
-            searchRequestEvent.log(query.length)
+        fun logSearchRequest(query: String) = runSafelyIfEnabled(searchRequestEvent) {
+            log(query.length)
         }
 
-        fun logSearchQueryClear() = ifLoggingEnabled {
-            searchQueryClearEvent.log()
+        fun logSearchQueryClear() = runSafelyIfEnabled(searchQueryClearEvent) {
+            log()
         }
 
-        fun logUpgradeAll() = ifLoggingEnabled {
-            upgradeAllEvent.log()
+        fun logUpgradeAll() = runSafelyIfEnabled(upgradeAllEvent) {
+            log()
         }
 
-        private fun ifLoggingEnabled(action: () -> Unit) {
-            if (FUS_ENABLED) tryDoing { action() }
+        private fun <T : BaseEventId> runSafelyIfEnabled(event: T, action: T.() -> Unit) {
+            if (FUS_ENABLED) {
+                try {
+                    event.action()
+                } catch (e: RuntimeException) {
+                    thisLogger().error(
+                        PackageSearchBundle.message("packagesearch.logging.error", event.eventId),
+                        RuntimeExceptionWithAttachments(
+                            "Non-critical error while logging analytics event. This doesn't impact plugin functionality.",
+                            e
+                        )
+                    )
+                }
+            }
         }
     }
 }

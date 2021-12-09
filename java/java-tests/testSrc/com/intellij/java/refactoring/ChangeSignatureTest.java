@@ -216,12 +216,26 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
     }, false);
   }
 
+  public void testParamJavadoc4() {
+    doTest(null, new ParameterInfoImpl[]{
+      ParameterInfoImpl.createNew().withName("a").withType(PsiType.BOOLEAN),
+    }, false);
+  }
+
   public void testParamJavadocRenamedReordered() {
     doTest(null, new ParameterInfoImpl[]{
       ParameterInfoImpl.create(0).withName("a").withType(PsiType.BOOLEAN),
       ParameterInfoImpl.createNew().withName("c").withType(PsiType.BOOLEAN),
       ParameterInfoImpl.create(1).withName("b1").withType(PsiType.BOOLEAN),
     }, false);
+  }
+  
+  public void testReturnJavadocAdded() {
+    doTest("int", new ParameterInfoImpl[0], false);
+  }
+  
+  public void testReturnJavadocUnchanged() {
+    doTest("int", new ParameterInfoImpl[0], false);
   }
 
   public void testJavadocNoNewLineInserted() {

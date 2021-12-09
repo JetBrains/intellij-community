@@ -564,6 +564,9 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
 
   VirtualFile findFileInTempDir(@NotNull String filePath);
 
+  /**
+   * @return {@code null} if the only item was auto-completed
+   */
   @Nullable
   List<String> getLookupElementStrings();
 

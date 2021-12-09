@@ -28,6 +28,7 @@ import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -432,14 +433,37 @@ public final class ServiceViewManagerImpl implements ServiceViewManager, Persist
 
   @NotNull
   Promise<Void> select(@NotNull VirtualFile virtualFile) {
+    List<ServiceViewItem> selectedItems = new SmartList<>();
+    for (ServiceViewContentHolder contentHolder : myContentHolders) {
+      Content content = contentHolder.contentManager.getSelectedContent();
+      if (content == null) continue;
+
+      ServiceView serviceView = getServiceView(content);
+      if (serviceView == null) continue;
+
+      List<ServiceViewItem> items = serviceView.getSelectedItems();
+      ContainerUtil.addIfNotNull(selectedItems, ContainerUtil.getOnlyItem(items));
+    }
+
     AsyncPromise<Void> result = new AsyncPromise<>();
     myModel.getInvoker().invoke(() -> {
+      Condition<? super ServiceViewItem> fileCondition = item -> {
+        ServiceViewDescriptor descriptor = item.getViewDescriptor();
+        return descriptor instanceof ServiceViewLocatableDescriptor &&
+               virtualFile.equals(((ServiceViewLocatableDescriptor)descriptor).getVirtualFile());
+      };
+
+      // Multiple services may target to one virtual file.
+      // Do nothing if service, targeting to the given virtual file, is selected,
+      // otherwise it may lead to jumping selection,
+      // if editor have just been selected due to some service selection.
+      if (ContainerUtil.find(selectedItems, fileCondition) != null) {
+        result.setResult(null);
+        return;
+      }
+
       ServiceViewItem fileItem = myModel.findItem(
-        item -> {
-          ServiceViewDescriptor descriptor = item.getViewDescriptor();
-          return descriptor instanceof ServiceViewLocatableDescriptor &&
-                 virtualFile.equals(((ServiceViewLocatableDescriptor)descriptor).getVirtualFile());
-        },
+        fileCondition,
         item -> !(item instanceof ServiceModel.ServiceNode) ||
                 item.getViewDescriptor() instanceof ServiceViewLocatableDescriptor
       );

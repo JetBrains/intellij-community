@@ -27,7 +27,6 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
         private const val DEFAULT_GROUP_ID = "me.user"
 
         fun generateProject(
-            presetBuilder: NewProjectWizardModuleBuilder? = null,
             project: Project,
             projectPath: String,
             projectName: String,
@@ -37,24 +36,23 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
             artifactId: String? = projectName,
             version: String? = "1.0-SNAPSHOT"
         ) {
-            val builder = presetBuilder ?: NewProjectWizardModuleBuilder()
-            builder.apply {
-                wizard.apply(emptyList(), setOf(GenerationPhase.PREPARE))
+            NewProjectWizardModuleBuilder()
+                .apply {
+                    wizard.apply(emptyList(), setOf(GenerationPhase.PREPARE))
+                    wizard.jdk = sdk
+                    wizard.context.writeSettings {
+                        StructurePlugin.name.reference.setValue(projectName)
+                        StructurePlugin.projectPath.reference.setValue(projectPath.asPath())
 
-                wizard.jdk = sdk
-                wizard.context.writeSettings {
-                    StructurePlugin.name.reference.setValue(projectName)
-                    StructurePlugin.projectPath.reference.setValue(projectPath.asPath())
+                        projectGroupId?.let { StructurePlugin.groupId.reference.setValue(it) }
+                        artifactId?.let { StructurePlugin.artifactId.reference.setValue(it) }
+                        version?.let { StructurePlugin.version.reference.setValue(it) }
 
-                    projectGroupId?.let { StructurePlugin.groupId.reference.setValue(it) }
-                    artifactId?.let { StructurePlugin.artifactId.reference.setValue(it) }
-                    version?.let { StructurePlugin.version.reference.setValue(it) }
+                        BuildSystemPlugin.type.reference.setValue(buildSystemType)
 
-                    BuildSystemPlugin.type.reference.setValue(buildSystemType)
-
-                    applyProjectTemplate(ConsoleApplicationProjectTemplate)
-                }
-            }.commit(project, null, null)
+                        applyProjectTemplate(ConsoleApplicationProjectTemplate)
+                    }
+                }.commit(project, null, null)
         }
 
         private fun suggestGroupId(): String {
@@ -73,7 +71,7 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
 
     class CommentStep(parent: NewProjectWizardLanguageStep) :
         AbstractNewProjectWizardStep(parent),
-        NewProjectWizardLanguageData by parent {
+        LanguageNewProjectWizardData by parent {
 
         override fun setupUI(builder: Panel) {
             with(builder) {
@@ -90,16 +88,16 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
 
     class Step(parent: CommentStep) :
         AbstractNewProjectWizardMultiStep<Step>(parent, BuildSystemKotlinNewProjectWizard.EP_NAME),
-        NewProjectWizardLanguageData by parent,
-        NewProjectWizardBuildSystemData {
+        LanguageNewProjectWizardData by parent,
+        BuildSystemKotlinNewProjectWizardData {
 
         override val self = this
         override val label = JavaUiBundle.message("label.project.wizard.new.project.build.system")
         override val buildSystemProperty by ::stepProperty
-        override val buildSystem by ::step
+        override var buildSystem by ::step
 
         init {
-            data.putUserData(NewProjectWizardBuildSystemData.KEY, this)
+            data.putUserData(BuildSystemKotlinNewProjectWizardData.KEY, this)
         }
     }
 }

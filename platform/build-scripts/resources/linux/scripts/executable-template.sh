@@ -134,10 +134,6 @@ else
 fi
 
 __class_path__
-# shellcheck disable=SC2154
-if [ -n "$__product_uc___CLASSPATH" ]; then
-  CLASSPATH="$CLASSPATH:$__product_uc___CLASSPATH"
-fi
 
 # ---------------------------------------------------------------------
 # Run the IDE.
@@ -145,7 +141,7 @@ fi
 IFS="$(printf '\n\t')"
 # shellcheck disable=SC2086
 "$JAVA_BIN" \
-  -classpath "$CLASSPATH" \
+  -classpath "$CLASS_PATH" \
   ${VM_OPTIONS} \
   "-XX:ErrorFile=$HOME/java_error_in___vm_options___%p.log" \
   "-XX:HeapDumpPath=$HOME/java_error_in___vm_options___.hprof" \
