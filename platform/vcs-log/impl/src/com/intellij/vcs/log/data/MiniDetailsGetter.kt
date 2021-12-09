@@ -13,6 +13,7 @@ import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Consumer
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
@@ -48,7 +49,6 @@ class MiniDetailsGetter internal constructor(project: Project,
 
   fun getCommitData(commit: Int, neighbourHashes: Iterable<Int>): VcsCommitMetadata {
     if (!EventQueue.isDispatchThread()) {
-      LOG.warn("Accessing MiniDetailsGetter from background thread")
       return cache.getIfPresent(commit)
              ?: return createPlaceholderCommit(commit, 0 /*not used as this commit is not cached*/)
     }
@@ -64,7 +64,9 @@ class MiniDetailsGetter internal constructor(project: Project,
   }
 
   override fun getCommitDataIfAvailable(commit: Int): VcsCommitMetadata? {
-    LOG.assertTrue(EventQueue.isDispatchThread())
+    if (!EventQueue.isDispatchThread()) {
+      return cache.getIfPresent(commit) ?: topCommitsDetailsCache[commit]
+    }
     val details = cache.getIfPresent(commit)
     if (details != null) {
       if (details is LoadingDetailsImpl) {
@@ -93,6 +95,7 @@ class MiniDetailsGetter internal constructor(project: Project,
   override fun saveInCache(commit: Int, details: VcsCommitMetadata) = cache.put(commit, details)
   private fun saveInCache(details: VcsCommitMetadata) = saveInCache(storage.getCommitIndex(details.id, details.root), details)
 
+  @RequiresEdt
   private fun cacheCommit(commitId: Int, taskNumber: Long) {
     // fill the cache with temporary "Loading" values to avoid producing queries for each commit that has not been cached yet,
     // even if it will be loaded within a previous query
@@ -101,6 +104,7 @@ class MiniDetailsGetter internal constructor(project: Project,
     }
   }
 
+  @RequiresEdt
   override fun cacheCommits(commits: IntOpenHashSet) {
     val taskNumber = currentTaskIndex++
     commits.forEach(IntConsumer { commit -> cacheCommit(commit, taskNumber) })
