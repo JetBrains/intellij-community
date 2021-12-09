@@ -22,8 +22,8 @@ public final class RunnableManager {
         tasks.add(runnable)
     }
     public final fun runAll() : void {
-        for (t : UastEmptyExpression) {
-            <anonymous class>(t).<anonymous class>()
+        for (t : tasks) {
+            <init>(t).start()
         }
     }
     private fun RunnableManager() = UastEmptyExpression
