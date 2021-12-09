@@ -3,6 +3,8 @@
 package com.intellij.openapi.observable.operations
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.observable.properties.AbstractObservableProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 
 /**
  * Subscribes listener on operation start event that will be unsubscribed immediately before execution.
@@ -18,3 +20,32 @@ fun ObservableOperationTrace.onceBeforeOperation(listener: () -> Unit, parentDis
  */
 fun ObservableOperationTrace.onceAfterOperation(listener: () -> Unit, parentDisposable: Disposable) =
   afterOperation(ttl = 1, listener, parentDisposable)
+
+/**
+ * Returns observable property that changed before and after operation.
+ * And result of [ObservableProperty.get] is equal to [ObservableOperationTrace.isOperationCompleted].
+ */
+fun ObservableOperationTrace.asProperty(): ObservableProperty<Boolean> {
+  return object : AbstractObservableProperty<Boolean>() {
+    override fun get() = isOperationCompleted()
+
+    init {
+      beforeOperation { fireChangeEvent(false) }
+      afterOperation { fireChangeEvent(true) }
+    }
+  }
+}
+
+/**
+ * Creates compound operation from several parallel operations.
+ * When tasks of new operation are children [operations].
+ * @see CompoundParallelOperationTrace
+ */
+fun compound(vararg operations: ObservableOperationTrace, debugName: String? = null): ObservableOperationTrace {
+  val compound = CompoundParallelOperationTrace<ObservableOperationTrace>(debugName)
+  for (operation in operations) {
+    operation.beforeOperation { compound.startTask(operation) }
+    operation.afterOperation { compound.finishTask(operation) }
+  }
+  return compound
+}

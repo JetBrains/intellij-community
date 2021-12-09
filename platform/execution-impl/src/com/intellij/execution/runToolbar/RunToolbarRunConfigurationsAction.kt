@@ -3,15 +3,30 @@ package com.intellij.execution.runToolbar
 
 import com.intellij.execution.*
 import com.intellij.execution.actions.RunConfigurationsComboBoxAction
+import com.intellij.execution.impl.EditConfigurationsDialog
+import com.intellij.execution.runToolbar.components.ComboBoxArrowComponent
+import com.intellij.execution.runToolbar.components.MouseListenerHelper
+import com.intellij.execution.runToolbar.components.TrimmedMiddleLabel
+import com.intellij.ide.DataManager
+import com.intellij.ide.HelpTooltip
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.ActionUtil
+import com.intellij.openapi.actionSystem.impl.segmentedActionBar.SegmentedCustomPanel
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.ui.scale.JBUIScale
+import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.IdeFocusManager
+import com.intellij.ui.Gray
+import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import net.miginfocom.swing.MigLayout
 import java.awt.Dimension
-import java.awt.Insets
+import java.awt.Font
+import java.beans.PropertyChangeEvent
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
 
@@ -72,29 +87,76 @@ open class RunToolbarRunConfigurationsAction : RunConfigurationsComboBoxAction()
   }
 
   override fun createCustomComponent(presentation: Presentation, place: String): JComponent {
-    return object : RunConfigurationsComboBoxButton(presentation) {
+    return object : SegmentedCustomPanel(presentation) {
+      private val setting = object : TrimmedMiddleLabel() {
+        override fun getFont(): Font {
+          return UIUtil.getToolbarFont()
+        }
+      }
 
+      private val arrow = ComboBoxArrowComponent().getView()
 
-      override fun getPreferredSize(): Dimension? {
+      init {
+        MouseListenerHelper.addListener(this, { doClick() }, { doShiftClick() }, { doRightClick() })
+        fill()
+
+        background = JBColor.namedColor("ComboBoxButton.background", Gray.xDF)
+      }
+
+      override fun presentationChanged(event: PropertyChangeEvent) {
+        setting.icon = presentation.icon
+        setting.text = presentation.text
+
+        isEnabled = presentation.isEnabled
+        setting.isEnabled = isEnabled
+        arrow.isVisible = isEnabled
+
+        toolTipText = presentation.description
+      }
+
+      private fun fill() {
+        layout = MigLayout("ins 0 0 0 3, novisualpadding, gap 0, fill, hidemode 3", "4[][min!]")
+
+        add(setting, "ay center, growx, wmin 10")
+        add(arrow)
+
+        setting.border = JBUI.Borders.empty()
+      }
+
+      private fun doRightClick() {
+        RunToolbarRunConfigurationsAction.doRightClick(ActionToolbar.getDataContextFor(this))
+      }
+
+      private fun doClick() {
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown { showPopup() }
+      }
+
+      fun showPopup() {
+        val popup: JBPopup = createPopup() {}
+
+        if (Registry.`is`("ide.helptooltip.enabled")) {
+          HelpTooltip.setMasterPopup(this, popup)
+        }
+        popup.showUnderneathOf(this)
+      }
+
+      private fun createPopup(onDispose: Runnable): JBPopup {
+        return createActionPopup(ActionToolbar.getDataContextFor(this), this, onDispose)
+      }
+
+      private fun doShiftClick() {
+        val context = DataManager.getInstance().getDataContext(this)
+        val project = CommonDataKeys.PROJECT.getData(context)
+        if (project != null && !ActionUtil.isDumbMode(project)) {
+          EditConfigurationsDialog(project).show()
+          return
+        }
+      }
+
+      override fun getPreferredSize(): Dimension {
         val d = super.getPreferredSize()
         d.width = FixWidthSegmentedActionToolbarComponent.RUN_CONFIG_WIDTH
         return d
-      }
-
-      override fun getArrowGap(): Int {
-        return JBUIScale.scale(5)
-      }
-
-      override fun getMargin(): Insets {
-        return JBUI.insets(0, 8, 0, 8)
-      }
-
-      override fun doRightClick() {
-        doRightClick(dataContext)
-      }
-
-      override fun doShiftClick() {
-        dataContext.editConfiguration()
       }
     }
   }

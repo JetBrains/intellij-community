@@ -23,6 +23,11 @@ public class BreakpointApplicabilityTestGenerated extends AbstractBreakpointAppl
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("abstractMethods.kt")
+    public void testAbstractMethods() throws Exception {
+        runTest("testData/breakpointApplicability/abstractMethods.kt");
+    }
+
     @TestMetadata("constructors.kt")
     public void testConstructors() throws Exception {
         runTest("testData/breakpointApplicability/constructors.kt");

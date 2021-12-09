@@ -97,7 +97,7 @@ private fun prepareConsentsHtml(consent: Consent, bundle: ResourceBundle): HtmlC
   val title = HtmlChunk.text(bundle.getString("dataSharing.consents.title")).wrapWith("h1")
   return HtmlBuilder()
     .append(title)
-    .append(HtmlChunk.p().addText(consent.text))
+    .append(HtmlChunk.p().addRaw(consent.text))
     .append(allProductChunk)
     .append(preferencesChunk)
     .wrapWithHtmlBody()

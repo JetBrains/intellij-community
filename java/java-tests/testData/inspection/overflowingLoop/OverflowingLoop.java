@@ -67,4 +67,10 @@ public class OverflowingLoop {
       System.out.println("asdsakdj");
     }
   }
+
+  void byteUsage() {
+    for (byte i = 0; i >= 0; i++) {
+      System.out.println(i);
+    }
+  }
 }

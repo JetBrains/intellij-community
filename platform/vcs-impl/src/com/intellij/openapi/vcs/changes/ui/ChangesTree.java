@@ -34,6 +34,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.vcs.commit.CommitSessionCollector;
 import com.intellij.vcsUtil.VcsUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.*;
@@ -63,6 +64,8 @@ import static com.intellij.util.ui.ThreeStateCheckBox.State;
 import static java.util.stream.Collectors.toList;
 
 public abstract class ChangesTree extends Tree implements DataProvider {
+  @ApiStatus.Internal @NonNls public static final String LOG_COMMIT_SESSION_EVENTS = "LogCommitSessionEvents";
+
   @NotNull protected final Project myProject;
   private boolean myShowCheckboxes;
   @Nullable private ClickListener myCheckBoxClickHandler;
@@ -92,6 +95,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull private TreeExpander myTreeExpander = new MyTreeExpander();
 
   private boolean myModelUpdateInProgress;
+  private AWTEvent myEventProcessingInProgress;
 
   public ChangesTree(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
     this(project, showCheckboxes, highlightProblems, false);
@@ -124,13 +128,15 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     setEmptyText(DiffBundle.message("diff.count.differences.status.text", 0));
 
     myTreeCopyProvider = new ChangesBrowserNodeCopyProvider(this);
+
+    installCommitSessionEventsListeners();
   }
 
   /**
    * There is special logic for {@link DnDAware} components in
    * {@link IdeGlassPaneImpl#dispatch(AWTEvent)} that doesn't call
    * {@link Component#processMouseEvent(MouseEvent)} in case of mouse clicks over selection.
-   *
+   * <p>
    * So we add "checkbox mouse clicks" handling as a listener.
    */
   private ClickListener installCheckBoxClickHandler() {
@@ -140,7 +146,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         TreePath path = getPathIfCheckBoxClicked(event.getPoint());
         if (path != null) {
           setSelectionPath(path);
-          toggleChanges(getIncludableUserObjects(selected(ChangesTree.this)));
+          List<Object> selected = getIncludableUserObjects(selected(ChangesTree.this));
+          boolean exclude = toggleChanges(selected);
+          logInclusionToggleEvents(exclude, event);
         }
         return false;
       }
@@ -510,7 +518,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     getInclusionModel().removeInclusion(changes);
   }
 
-  protected void toggleChanges(@NotNull Collection<?> changes) {
+  protected boolean toggleChanges(@NotNull Collection<?> changes) {
     boolean hasExcluded = false;
     for (Object item : changes) {
       if (getInclusionModel().getInclusionState(item) != State.SELECTED) {
@@ -521,9 +529,11 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
     if (hasExcluded) {
       includeChanges(changes);
+      return false;
     }
     else {
       excludeChanges(changes);
+      return true;
     }
   }
 
@@ -541,6 +551,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   public void expandDefaults() {
+    // expanding lots of nodes is a slow operation (and result is not very useful)
+    if (TreeUtil.hasManyNodes(this, 30000)) {
+      return;
+    }
     TreeUtil.promiseExpand(this, path -> {
       Object node = path.getLastPathComponent();
       if (node instanceof ChangesBrowserNode && !((ChangesBrowserNode<?>)node).shouldExpandByDefault()) {
@@ -674,7 +688,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
       List<Object> changes = getIncludableUserObjects(!isSelectionEmpty() ? selected(ChangesTree.this) : all(ChangesTree.this));
-      if (!changes.isEmpty()) toggleChanges(changes);
+      if (changes.isEmpty()) return;
+      boolean exclude = toggleChanges(changes);
+      logInclusionToggleEvents(exclude, e);
     }
   }
 
@@ -740,5 +756,42 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @Override
   public int getToggleClickCount() {
     return -1;
+  }
+
+  @Override
+  protected void processEvent(AWTEvent e) {
+    myEventProcessingInProgress = e;
+    try {
+      super.processEvent(e);
+    }
+    finally {
+      myEventProcessingInProgress = null;
+    }
+  }
+
+  private void installCommitSessionEventsListeners() {
+    addSelectionListener(() -> {
+      if (myEventProcessingInProgress instanceof MouseEvent && shouldLogCommitSessionEvents()) {
+        CommitSessionCollector.getInstance(myProject).logFileSelected((MouseEvent)myEventProcessingInProgress);
+      }
+    });
+  }
+
+  @ApiStatus.Internal
+  public void logInclusionToggleEvents(boolean exclude, @NonNls MouseEvent event) {
+    if (shouldLogCommitSessionEvents()) {
+      CommitSessionCollector.getInstance(myProject).logInclusionToggle(exclude, event);
+    }
+  }
+
+  @ApiStatus.Internal
+  public void logInclusionToggleEvents(boolean exclude, @NotNull AnActionEvent event) {
+    if (shouldLogCommitSessionEvents()) {
+      CommitSessionCollector.getInstance(myProject).logInclusionToggle(exclude, event);
+    }
+  }
+
+  private boolean shouldLogCommitSessionEvents() {
+    return Boolean.TRUE.equals(getClientProperty(LOG_COMMIT_SESSION_EVENTS));
   }
 }

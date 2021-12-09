@@ -4,6 +4,7 @@ package training.learn.lesson.general.navigation
 import com.intellij.CommonBundle
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.actions.Switcher
+import com.intellij.ide.actions.ui.JBListWithOpenInRightSplit
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -11,7 +12,6 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.ui.Messages
-import com.intellij.openapi.wm.IdeFrame
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.SimpleColoredComponent
 import com.intellij.ui.components.JBList
@@ -111,14 +111,14 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
     var initialRecentFilesCount = -1
     var curRecentFilesCount: Int
     task {
-      text(
-        LessonsBundle.message("recent.files.delete", strong(countOfFilesToDelete.toString()), LessonUtil.rawKeyStroke(KeyEvent.VK_DELETE)))
-      stateCheck {
-        val focusOwner = focusOwner as? JBList<*> ?: return@stateCheck false
+      text(LessonsBundle.message("recent.files.delete", strong(countOfFilesToDelete.toString()),
+                                 LessonUtil.rawKeyStroke(KeyEvent.VK_DELETE)))
+      triggerByUiComponentAndHighlight(false, false) l@{ list: JBListWithOpenInRightSplit<*> ->
+        if (list != focusOwner) return@l false
         if (initialRecentFilesCount == -1) {
-          initialRecentFilesCount = focusOwner.itemsCount
+          initialRecentFilesCount = list.itemsCount
         }
-        curRecentFilesCount = focusOwner.itemsCount
+        curRecentFilesCount = list.itemsCount
         initialRecentFilesCount - curRecentFilesCount >= countOfFilesToDelete
       }
       restoreByUi()
@@ -131,7 +131,7 @@ abstract class RecentFilesLesson : KLesson("Recent Files and Locations", Lessons
 
     task {
       text(LessonsBundle.message("recent.files.close.popup", LessonUtil.rawKeyStroke(KeyEvent.VK_ESCAPE)))
-      stateCheck { focusOwner is IdeFrame }
+      stateCheck { previous.ui?.isShowing != true }
       test { invokeActionViaShortcut("ESCAPE") }
     }
 

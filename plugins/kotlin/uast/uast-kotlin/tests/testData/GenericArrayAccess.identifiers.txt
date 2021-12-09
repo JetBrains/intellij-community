@@ -1,7 +1,0 @@
-test -> UMethod (name = test)
-a -> UParameter (name = a)
-List -> USimpleNameReferenceExpression (identifier = List)
-String -> USimpleNameReferenceExpression (identifier = String)
-    x -> ULocalVariable (name = x)
-    a -> USimpleNameReferenceExpression (identifier = a)
-    String -> USimpleNameReferenceExpression (identifier = String)

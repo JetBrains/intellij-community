@@ -12,22 +12,26 @@ import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
-class NativeRunConfigurationTest : MultiplePluginVersionGradleImportingTestCase() {
+abstract class NativeRunConfigurationTest : MultiplePluginVersionGradleImportingTestCase() {
     override fun testDataDirName(): String = "nativeRunConfiguration"
 
-    @Test
-    @TargetVersions("6.0+")
-    fun multiplatformNativeRunGutter() {
-        doTest()
+    class MultiplatformNativeRunGutter : NativeRunConfigurationTest() {
+        @Test
+        @TargetVersions("6.0+")
+        fun multiplatformNativeRunGutter() {
+            doTest()
+        }
     }
 
-    @Test
-    @TargetVersions("6.0+")
-    fun customEntryPointWithoutRunGutter() {
-        doTest()
+    class CustomEntryPointWithoutRunGutter : NativeRunConfigurationTest() {
+        @Test
+        @TargetVersions("6.0+")
+        fun customEntryPointWithoutRunGutter() {
+            doTest()
+        }
     }
 
-    private fun doTest() {
+    protected fun doTest() {
         val files = importProjectFromTestData()
         val project = myTestFixture.project
 

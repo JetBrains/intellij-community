@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -149,6 +149,7 @@ public final class ConcatenationHelper {
         List<Exprent> res = new ArrayList<>();
         StringBuilder acc = new StringBuilder();
         int parameterId = 0;
+        int bootstrapArgumentId = 1;
         for (int i = 0; i < recipe.length(); i++) {
           char c = recipe.charAt(i);
 
@@ -159,11 +160,29 @@ public final class ConcatenationHelper {
               res.add(new ConstExprent(VarType.VARTYPE_STRING, acc.toString(), expr.bytecode));
               acc.setLength(0);
             }
+
             if (c == TAG_CONST) {
-              // skip for now
+              PooledConstant pooledConstant = bootstrapArguments.get(bootstrapArgumentId++);
+
+              if (pooledConstant.type == CodeConstants.CONSTANT_String) {
+                res.add(new ConstExprent(VarType.VARTYPE_STRING, ((PrimitiveConstant) pooledConstant).getString(), expr.bytecode));
+              }
             }
+
             if (c == TAG_ARG) {
-              res.add(parameters.get(parameterId++));
+              Exprent exprent = parameters.get(parameterId++);
+
+              if ((exprent instanceof VarExprent) && res.isEmpty()) {
+                VarExprent varExprent = (VarExprent) exprent;
+
+                if (!VarType.VARTYPE_STRING.equals(varExprent.getVarType())) {
+                  // First item of concatenation is a variable and variable's type is not a String.
+                  // Prepend it with empty string literal to force resulting expression type to be String.
+                  res.add(new ConstExprent(VarType.VARTYPE_STRING, "", expr.bytecode));
+                }
+              }
+
+              res.add(exprent);
             }
           }
           else {
@@ -176,6 +195,19 @@ public final class ConcatenationHelper {
         // Flush the remaining characters as constant:
         if (acc.length() > 0) {
           res.add(new ConstExprent(VarType.VARTYPE_STRING, acc.toString(), expr.bytecode));
+        }
+
+        if (res.size() == 1) {
+          //
+          // Only one element in result list.
+          // The most probable cause is an empty prefix/suffix.
+          // Something like this:
+          //
+          //   return "" + value;
+          //
+          // NOTE: Empty suffix is indistinguishable from empty prefix. We always assume latter.
+          //
+          res.add(0, new ConstExprent(VarType.VARTYPE_STRING, "", expr.bytecode));
         }
 
         return res;

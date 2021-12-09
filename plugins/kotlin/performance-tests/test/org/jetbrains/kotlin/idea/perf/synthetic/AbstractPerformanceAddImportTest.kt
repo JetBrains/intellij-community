@@ -5,7 +5,7 @@ package org.jetbrains.kotlin.idea.perf.synthetic
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
-import org.jetbrains.kotlin.idea.perf.Stats
+import org.jetbrains.kotlin.idea.testFramework.Stats
 import org.jetbrains.kotlin.idea.util.ImportDescriptorResult
 import org.jetbrains.kotlin.idea.util.ImportInsertHelper
 import org.jetbrains.kotlin.name.FqName

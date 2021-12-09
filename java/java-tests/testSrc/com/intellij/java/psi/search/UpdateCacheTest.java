@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
@@ -188,12 +188,14 @@ public class UpdateCacheTest extends JavaPsiTestCase {
     checkTodos(new String[]{"2.java"});
 
     TodoConfiguration.getInstance().setTodoPatterns(new TodoPattern[]{pattern});
+    PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
 
     try{
       checkTodos(new String[]{"1.java"});
     }
     finally{
       TodoConfiguration.getInstance().setTodoPatterns(oldPatterns);
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       checkTodos(new String[]{"2.java"});
     }
   }

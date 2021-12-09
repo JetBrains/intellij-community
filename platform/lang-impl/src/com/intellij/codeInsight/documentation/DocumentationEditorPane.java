@@ -6,13 +6,12 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
+import com.intellij.openapi.editor.impl.EditorCssFontResolver;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.scale.JBUIScale;
-import com.intellij.util.ui.GraphicsUtil;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Nls;
@@ -23,14 +22,18 @@ import javax.swing.*;
 import javax.swing.text.*;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.util.Map;
+import java.util.function.Function;
+
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.prepareCSS;
 
 @Internal
-public class DocumentationEditorPane extends JEditorPane {
+public abstract class DocumentationEditorPane extends JEditorPane {
 
   private static final Color BACKGROUND_COLOR = new JBColor(() -> {
     ColorKey colorKey = DocumentationComponent.COLOR_KEY;
@@ -51,9 +54,10 @@ public class DocumentationEditorPane extends JEditorPane {
   private final @NotNull DocumentationImageResolver myImageResolver;
   private @Nls String myText = ""; // getText() surprisingly crashes…, let's cache the text
 
-  public DocumentationEditorPane(
+  protected DocumentationEditorPane(
     @NotNull Map<KeyStroke, ActionListener> keyboardActions,
-    @NotNull DocumentationImageResolver imageResolver
+    @NotNull DocumentationImageResolver imageResolver,
+    @NotNull Function<@NotNull String, @Nullable Icon> iconResolver
   ) {
     myKeyboardActions = keyboardActions;
     myImageResolver = imageResolver;
@@ -68,7 +72,14 @@ public class DocumentationEditorPane extends JEditorPane {
       UIUtil.doNotScrollToCaret(this);
     }
     setBackground(BACKGROUND_COLOR);
-    setEditorKit(new DocumentationHtmlEditorKit(this));
+    HTMLEditorKit editorKit = new HTMLEditorKitBuilder()
+      .withViewFactoryExtensions(DocumentationHtmlUtil.getHiDPIImagesExtension(this),
+                                 ExtendableHTMLViewFactory.Extensions.icons(iconResolver::apply),
+                                 DocumentationHtmlUtil.getModuleIconsExtension())
+      .withFontResolver(EditorCssFontResolver.getGlobalInstance()).build();
+    prepareCSS(editorKit);
+
+    setEditorKit(editorKit);
     setBorder(JBUI.Borders.empty());
   }
 

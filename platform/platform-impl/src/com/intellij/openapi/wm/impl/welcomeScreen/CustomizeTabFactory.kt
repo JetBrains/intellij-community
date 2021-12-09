@@ -31,14 +31,12 @@ import com.intellij.openapi.wm.WelcomeTabFactory
 import com.intellij.openapi.wm.impl.welcomeScreen.TabbedWelcomeScreen.DefaultWelcomeScreenTab
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.UIBundle
-import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.AnActionLink
 import com.intellij.ui.components.JBLabel
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
 import com.intellij.ui.layout.*
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBFont
@@ -204,10 +202,10 @@ class CustomizeTab(parentDisposable: Disposable) : DefaultWelcomeScreenTab(IdeBu
         cell(AnActionLink("WelcomeScreen.Configure.Import", ActionPlaces.WELCOME_SCREEN))
       }.topGap(TopGap.MEDIUM)
       row {
-        cell(ActionLink(IdeBundle.message("welcome.screen.all.settings.link")) {
+        link(IdeBundle.message("welcome.screen.all.settings.link")) {
           ShowSettingsUtil.getInstance().showSettingsDialog(defaultProject,
                                                             *ShowSettingsUtilImpl.getConfigurableGroups(defaultProject, true))
-        })
+        }
       }
     }.withBorder(JBUI.Borders.empty(23, 30, 20, 20))
       .withBackground(WelcomeScreenUIManager.getMainAssociatedComponentBackground())

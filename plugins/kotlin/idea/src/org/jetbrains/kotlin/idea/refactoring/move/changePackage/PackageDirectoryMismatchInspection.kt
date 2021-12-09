@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.refactoring.move.changePackage
 
 import com.intellij.CommonBundle
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemsHolder
@@ -16,6 +17,7 @@ import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackages
 import com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesUtil
 import com.intellij.refactoring.util.RefactoringMessageUtil
 import org.jetbrains.kotlin.idea.KotlinBundle
+import org.jetbrains.kotlin.idea.core.findExistingNonGeneratedKotlinSourceRootFiles
 import org.jetbrains.kotlin.idea.core.getFqNameByDirectory
 import org.jetbrains.kotlin.idea.core.getFqNameWithImplicitPrefix
 import org.jetbrains.kotlin.idea.core.packageMatchesDirectoryOrImplicit
@@ -24,6 +26,7 @@ import org.jetbrains.kotlin.idea.refactoring.hasIdentifiersOnly
 import org.jetbrains.kotlin.idea.refactoring.isInjectedFragment
 import org.jetbrains.kotlin.idea.roots.getSuitableDestinationSourceRoots
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPackageDirective
@@ -77,13 +80,14 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
             val file = descriptor.psiElement as? KtFile ?: return
             val directive = file.packageDirective ?: return
 
-            val sourceRoots = getSuitableDestinationSourceRoots(project)
+            val sourceRoots = file.module?.findExistingNonGeneratedKotlinSourceRootFiles() ?: getSuitableDestinationSourceRoots(project)
             val packageWrapper = PackageWrapper(PsiManager.getInstance(project), directive.qualifiedName)
             val fileToMove = directive.containingFile
             val chosenRoot =
                 sourceRoots.singleOrNull()
                     ?: MoveClassesOrPackagesUtil.chooseSourceRoot(packageWrapper, sourceRoots, fileToMove.containingDirectory)
                     ?: return
+
             val targetDirFactory = AutocreatingSingleSourceRootMoveDestination(packageWrapper, chosenRoot)
             targetDirFactory.verify(fileToMove)?.let {
                 Messages.showMessageDialog(project, it, CommonBundle.getErrorTitle(), Messages.getErrorIcon())
@@ -112,6 +116,13 @@ class PackageDirectoryMismatchInspection : AbstractKotlinInspection() {
         override fun applyFix(project: Project, descriptor: ProblemDescriptor) {
             val file = descriptor.psiElement as? KtFile ?: return
             KotlinChangePackageRefactoring(file).run(packageFqName)
+        }
+
+        override fun generatePreview(project: Project, previewDescriptor: ProblemDescriptor): IntentionPreviewInfo {
+            val file = previewDescriptor.psiElement as? KtFile ?: return IntentionPreviewInfo.EMPTY
+            val packageDirective = file.packageDirective ?: return IntentionPreviewInfo.EMPTY
+            packageDirective.fqName = packageFqName
+            return IntentionPreviewInfo.DIFF
         }
     }
 }

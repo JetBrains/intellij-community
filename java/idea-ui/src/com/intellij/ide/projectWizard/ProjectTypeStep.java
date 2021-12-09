@@ -10,10 +10,7 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.ide.util.projectWizard.*;
-import com.intellij.ide.wizard.CommitStepException;
-import com.intellij.ide.wizard.NewEmptyProjectBuilder;
-import com.intellij.ide.wizard.NewModuleBuilder;
-import com.intellij.ide.wizard.NewProjectBuilder;
+import com.intellij.ide.wizard.*;
 import com.intellij.internal.statistic.eventLog.FeatureUsageData;
 import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
@@ -57,7 +54,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.FactoryMap;
 import com.intellij.util.containers.MultiMap;
-import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -375,14 +371,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
     if (isNewWizard()) {
       if (context.isCreatingNewProject()) {
-        EmptyModuleBuilder emptyModuleBuilder = new EmptyModuleBuilder(){
-          @Override
-          public Icon getNodeIcon() {
-            return EmptyIcon.ICON_0;
-          }
-        };
         groups.add(0, new TemplatesGroup(new NewEmptyProjectBuilder()));
-        groups.add(0, new TemplatesGroup(emptyModuleBuilder));
+        groups.add(0, new TemplatesGroup(new NewMultiModuleProjectBuilder()));
         groups.add(0, new TemplatesGroup(new NewProjectBuilder()));
         groups.addAll(getUserTemplatesMap(context));
       }

@@ -102,7 +102,7 @@ public class ModuleDescriptorNameConverter extends ResolvingConverter<IdeaPlugin
   }
 
   @Override
-  public @Nullable LookupElement createLookupElement(IdeaPlugin plugin) {
+  public @NotNull LookupElement createLookupElement(IdeaPlugin plugin) {
     final String displayName = getDisplayName(plugin);
     LookupElementBuilder builder = LookupElementBuilder.create(Objects.requireNonNull(getPsiElement(plugin)), displayName)
       .withIcon(ElementPresentationManager.getIconForClass(ContentDescriptor.ModuleDescriptor.class))

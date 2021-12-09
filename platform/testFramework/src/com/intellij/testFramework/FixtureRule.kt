@@ -290,31 +290,6 @@ class EdtRule : TestRule {
   }
 }
 
-/**
- * Allows to execute the test in non-headless mode (i.e., System.getProperty("java.awt.headless") == false in this test) and restores the headless property afterwards.
- */
-class NonHeadlessRule : TestRule {
-  override fun apply(base: Statement, description: Description): Statement {
-    return object : Statement() {
-      override fun evaluate() {
-        UITestUtil.runWithHeadlessProperty<RuntimeException>(false) { base.evaluate() }
-      }
-    }
-  }
-}
-/**
- * Allows to execute the test in headless mode (i.e., System.getProperty("java.awt.headless") == true in this test) and restores the headless property afterwards.
- */
-class HeadlessRule : TestRule {
-  override fun apply(base: Statement, description: Description): Statement {
-    return object : Statement() {
-      override fun evaluate() {
-        UITestUtil.runWithHeadlessProperty<RuntimeException>(true) { base.evaluate() }
-      }
-    }
-  }
-}
-
 class InitInspectionRule : TestRule {
   override fun apply(base: Statement, description: Description): Statement = statement { runInInitMode { base.evaluate() } }
 }
@@ -532,7 +507,7 @@ fun loadProjectAndCheckResults(projectPaths: List<Path>, tempDirectory: Temporar
   }
 }
 
-class DisposableRule : ExternalResource(), AfterEachCallback {
+open class DisposableRule : ExternalResource() {
   private var _disposable = lazy { Disposer.newDisposable() }
 
   val disposable: Disposable
@@ -551,9 +526,12 @@ class DisposableRule : ExternalResource(), AfterEachCallback {
   public override fun after() {
     if (_disposable.isInitialized()) {
       Disposer.dispose(_disposable.value)
+      _disposable = lazy { Disposer.newDisposable() }
     }
   }
-  
+}
+
+class DisposableExtension : DisposableRule(), AfterEachCallback {
   override fun afterEach(context: ExtensionContext?) {
     after()
   }

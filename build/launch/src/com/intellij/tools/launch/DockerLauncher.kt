@@ -117,6 +117,9 @@ class DockerLauncher(private val paths: PathsProvider, private val options: Dock
     // quiche
     dockerCmd.addReadonly(paths.sourcesRootFolder.resolve(".idea"))
 
+    // kotlin
+    dockerCmd.addReadonly(paths.sourcesRootFolder.resolve("out").resolve("kotlinc-dist"))
+
     // user-provided volumes
     paths.dockerVolumesToWritable.forEach { (volume, isWriteable) -> dockerCmd.addVolume(volume, isWriteable) }
 

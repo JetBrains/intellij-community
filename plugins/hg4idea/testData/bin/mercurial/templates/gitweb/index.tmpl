@@ -1,0 +1,26 @@
+{header}
+<title>Mercurial repositories index</title>
+</head>
+<body>
+
+<div class="page_header">
+    <a href="{logourl}" title="Mercurial" style="float: right;">Mercurial</a>
+    <a href="/">Mercurial</a> {pathdef%breadcrumb}
+</div>
+
+<table cellspacing="0">
+    <tr>
+        <td><a href="?sort={sort_name}">Name</a></td>
+        <td><a href="?sort={sort_description}">Description</a></td>
+        <td><a href="?sort={sort_contact}">Contact</a></td>
+        <td><a href="?sort={sort_lastchange}">Last modified</a></td>
+        <td>&nbsp;</td>
+        <td>&nbsp;</td>
+    </tr>
+    {entries%indexentry}
+</table>
+<div class="page_footer">
+{motd}
+</div>
+</body>
+</html>

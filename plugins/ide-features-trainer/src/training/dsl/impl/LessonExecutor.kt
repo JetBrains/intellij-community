@@ -24,8 +24,8 @@ import training.learn.course.KLesson
 import training.learn.exceptons.NoTextEditor
 import training.learn.lesson.LessonManager
 import training.statistic.StatisticBase
-import training.ui.LearnToolWindowFactory
 import training.util.WeakReferenceDelegator
+import training.util.getLearnToolWindowForProject
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
 import kotlin.math.max
@@ -87,7 +87,7 @@ internal class LessonExecutor(val lesson: KLesson,
     private set
   private var currentVisualIndex = 1
 
-  private val parentDisposable: Disposable = LearnToolWindowFactory.learnWindowPerProject[project]?.parentDisposable ?: project
+  private val parentDisposable: Disposable = getLearnToolWindowForProject(project)?.parentDisposable ?: project
 
   internal val visualIndexNumber: Int get() = taskActions[currentTaskIndex].taskVisualIndex ?: 0
 

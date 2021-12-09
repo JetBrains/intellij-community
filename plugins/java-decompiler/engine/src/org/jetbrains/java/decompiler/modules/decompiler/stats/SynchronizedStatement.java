@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -82,7 +82,7 @@ public class SynchronizedStatement extends Statement {
   private void mapMonitorExitInstr(BytecodeMappingTracer tracer) {
     BasicBlock block = body.getBasichead().getBlock();
     if (!block.getSeq().isEmpty() && block.getLastInstruction().opcode == CodeConstants.opc_monitorexit) {
-      Integer offset = block.getOldOffset(block.size() - 1);
+      Integer offset = block.getOriginalOffset(block.size() - 1);
       if (offset > -1) tracer.addMapping(offset);
     }
   }

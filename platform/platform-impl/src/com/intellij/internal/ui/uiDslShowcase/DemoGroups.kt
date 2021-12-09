@@ -2,7 +2,7 @@
 package com.intellij.internal.ui.uiDslShowcase
 
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.ui.dsl.builder.buttonGroup
+import com.intellij.ui.dsl.builder.bind
 import com.intellij.ui.dsl.builder.panel
 
 @Suppress("DialogTitleCapitalization")
@@ -46,7 +46,7 @@ fun demoGroups(): DialogPanel {
     }
 
     var value = true
-    buttonGroup({ value }, { value = it }, "Panel.buttonGroup:") {
+    buttonsGroup("Panel.buttonGroup:") {
       row {
         radioButton("true", true)
       }
@@ -54,7 +54,7 @@ fun demoGroups(): DialogPanel {
         radioButton("false", false)
       }.rowComment("Panel.buttonGroup unions Row.radioButton in one group. Must be also used for Row.checkBox if they are grouped " +
                    "with some title")
-    }
+    }.bind({ value }, { value = it })
 
     separator()
       .rowComment("Use separator() for horizontal separator")

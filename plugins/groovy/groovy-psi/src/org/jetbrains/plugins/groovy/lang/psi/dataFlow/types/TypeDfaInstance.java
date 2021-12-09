@@ -90,7 +90,9 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         state, instruction, descriptor,
         () -> {
           PsiType initializerType = TypeInferenceHelper.getInitializerType(element);
-          if (initializerType == null && descriptor instanceof ResolvedVariableDescriptor) {
+          if (initializerType == null &&
+              descriptor instanceof ResolvedVariableDescriptor &&
+              TypeInferenceHelper.isSimpleEnoughForAugmenting(myFlow)) {
             GrVariable variable = ((ResolvedVariableDescriptor)descriptor).getVariable();
             PsiType augmentedType = TypeAugmenter.Companion.inferAugmentedType(variable);
             return DFAType.create(augmentedType);

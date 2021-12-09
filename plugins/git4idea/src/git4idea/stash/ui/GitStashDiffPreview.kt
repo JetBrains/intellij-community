@@ -26,6 +26,7 @@ abstract class GitStashDiffPreview(project: Project,
                                    private val isInEditor: Boolean,
                                    parentDisposable: Disposable)
   : ChangeViewDiffRequestProcessor(project, GIT_STASH_UI_PLACE) {
+  private val disposableFlag = Disposer.newCheckedDisposable()
 
   val toolbarWrapper get() = myToolbarWrapper
 
@@ -38,6 +39,7 @@ abstract class GitStashDiffPreview(project: Project,
     })
 
     Disposer.register(parentDisposable, this)
+    Disposer.register(this, disposableFlag)
 
     updatePreviewLater(false)
   }
@@ -47,7 +49,7 @@ abstract class GitStashDiffPreview(project: Project,
   }
 
   private fun updatePreviewLater(modelUpdateInProgress: Boolean) {
-    runInEdtAsync(this) { updatePreview(component.isShowing, modelUpdateInProgress) }
+    runInEdtAsync(disposableFlag) { updatePreview(component.isShowing, modelUpdateInProgress) }
   }
 
   override fun getSelectedChanges(): Stream<Wrapper> {

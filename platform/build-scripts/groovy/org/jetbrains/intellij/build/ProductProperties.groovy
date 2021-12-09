@@ -137,7 +137,7 @@ abstract class ProductProperties {
   ProductModulesLayout productLayout = new ProductModulesLayout()
 
   /**
-   * If {@code true} cross-platform ZIP archive containing binaries for all OS will be built. The archive will be generated in {@link BuildPaths#artifacts}
+   * If {@code true} cross-platform ZIP archive containing binaries for all OS will be built. The archive will be generated in {@link BuildPaths#artifactDir}
    * directory and have ".portable" suffix by default, override {@link #getCrossPlatformZipFileName} to change the file name.
    */
   boolean buildCrossPlatformDistribution = false

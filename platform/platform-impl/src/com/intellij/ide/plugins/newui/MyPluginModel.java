@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.marketplace.MarketplaceRequests;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.options.Configurable;
@@ -778,6 +779,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
     return myInstalledPanel
       .getGroups()
       .stream()
+      .filter(group -> !group.excluded)
       .flatMap(group -> group.plugins.stream())
       .map(ListPluginComponent::getPluginDescriptor)
       .collect(Collectors.toList());
@@ -981,7 +983,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
           LOG.error(e);
         }
       }
-      ApplicationManager.getApplication().exit(true, false, true);
+      ApplicationManagerEx.getApplicationEx().restart(true);
     }
   }
 
@@ -1143,7 +1145,7 @@ public class MyPluginModel extends InstalledPluginsTableModel implements PluginE
           continue;
         }
 
-        IdeaPluginDescriptorImpl descriptor = pluginIdMap.get(pluginId);
+        IdeaPluginDescriptorImpl descriptor = pluginIdMap.get(dependencyPluginId);
         if (descriptor != null && !isHidden(descriptor)) {
           descriptors.add(descriptor);
         }

@@ -4,7 +4,7 @@ package com.intellij.openapi.observable.properties
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.atomic.AtomicReference
 
-open class AtomicLazyProperty<T>(private val initial: () -> T) : AbstractObservableProperty<T>(), AtomicProperty<T> {
+open class AtomicLazyProperty<T>(private val initial: () -> T) : AbstractObservableClearableProperty<T>(), AtomicProperty<T> {
 
   private val value = AtomicReference<Any?>(UNINITIALIZED_VALUE)
 

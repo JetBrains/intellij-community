@@ -54,7 +54,7 @@ import static com.intellij.patterns.StandardPatterns.string;
 
 public class JavaDocCompletionContributor extends CompletionContributor implements DumbAware {
   private static final Set<String> INLINE_TAGS_WITH_PARAMETER =
-    Set.of("link", "linkplain", "code", "return", "literal", "value");
+    Set.of("link", "linkplain", "code", "return", "literal", "value", "index", "summary");
 
   private static final Logger LOG = Logger.getInstance(JavaDocCompletionContributor.class);
   private static final @NonNls String VALUE_TAG = "value";
@@ -479,8 +479,10 @@ public class JavaDocCompletionContributor extends CompletionContributor implemen
         if (lookupString.endsWith("}")) {
           offset--;
         }
-        context.getDocument().insertString(offset, " ");
-        caretModel.moveToOffset(offset + 1);
+        if (context.getCompletionChar() != ' ') {
+          context.getDocument().insertString(offset, " ");
+          caretModel.moveToOffset(offset + 1);
+        }
       }
       if (context.getCompletionChar() == Lookup.REPLACE_SELECT_CHAR) {
         final Project project = context.getProject();

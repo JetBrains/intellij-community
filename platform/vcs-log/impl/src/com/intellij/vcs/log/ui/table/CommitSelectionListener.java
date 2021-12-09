@@ -54,6 +54,7 @@ public abstract class CommitSelectionListener<T extends VcsCommitMetadata> imple
     myLastRequest = null;
 
     ApplicationManager.getApplication().invokeLater(this::processEvent, o -> myLastEvent != event);
+    onLoadingScheduled();
   }
 
   public void processEvent() {
@@ -86,6 +87,10 @@ public abstract class CommitSelectionListener<T extends VcsCommitMetadata> imple
         }
       }, indicator);
     }
+  }
+
+  @RequiresEdt
+  protected void onLoadingScheduled() {
   }
 
   @RequiresEdt

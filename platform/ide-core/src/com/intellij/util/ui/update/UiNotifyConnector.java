@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -66,7 +67,6 @@ public class UiNotifyConnector implements Disposable, HierarchyListener {
         app.invokeLater(runnable, ModalityState.current());
       }
       else {
-        //noinspection SSBasedInspection
         SwingUtilities.invokeLater(runnable);
       }
     }
@@ -140,25 +140,32 @@ public class UiNotifyConnector implements Disposable, HierarchyListener {
   }
 
   public static void doWhenFirstShown(@NotNull JComponent c, @NotNull Runnable runnable) {
-    doWhenFirstShown((Component)c, runnable);
+    doWhenFirstShown(c, runnable, null);
   }
 
   public static void doWhenFirstShown(@NotNull Component c, @NotNull Runnable runnable) {
+    doWhenFirstShown(c, runnable, null);
+  }
+
+  public static void doWhenFirstShown(@NotNull Component c, @NotNull Runnable runnable, @Nullable Disposable parent) {
     doWhenFirstShown(c, new Activatable() {
       @Override
       public void showNotify() {
         runnable.run();
       }
-    });
+    }, parent);
   }
 
-  public static void doWhenFirstShown(@NotNull Component c, @NotNull Activatable activatable) {
-    new UiNotifyConnector(c, activatable) {
+  private static void doWhenFirstShown(@NotNull Component c, @NotNull Activatable activatable, @Nullable Disposable parent) {
+    UiNotifyConnector connector = new UiNotifyConnector(c, activatable) {
       @Override
       protected void showNotify() {
         super.showNotify();
         Disposer.dispose(this);
       }
     };
+    if (parent != null) {
+      Disposer.register(parent, connector);
+    }
   }
 }

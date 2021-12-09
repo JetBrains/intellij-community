@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion.ml
 
 import org.jetbrains.annotations.ApiStatus
@@ -56,6 +56,9 @@ sealed class MLFeatureValue {
 
     @JvmStatic
     fun <T : Class<*>> className(value: T, useSimpleName: Boolean = true): MLFeatureValue = ClassNameValue(value, useSimpleName)
+
+    @JvmStatic
+    fun version(value: String): MLFeatureValue = VersionValue(value)
   }
 
   abstract val value: Any
@@ -64,4 +67,5 @@ sealed class MLFeatureValue {
   data class FloatValue internal constructor(override val value: Double) : MLFeatureValue()
   data class CategoricalValue internal constructor(override val value: String) : MLFeatureValue()
   data class ClassNameValue internal constructor(override val value: Class<*>, val useSimpleName: Boolean) : MLFeatureValue()
+  data class VersionValue internal constructor(override val value: String) : MLFeatureValue()
 }

@@ -62,7 +62,7 @@
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.core.script.configuration.utils.ScriptClassRootsStorage"/>
 
     <trafficLightRendererContributor implementation="org.jetbrains.kotlin.idea.core.script.ScriptTrafficLightRendererContributor"/>
-    <postStartupActivity implementation="org.jetbrains.kotlin.idea.core.script.LoadScriptDefinitionsStartupActivity"/>
+    <postStartupActivity implementation="org.jetbrains.kotlin.idea.core.script.LoadScriptDefinitionsStartupActivity" order="last"/>
 
     <editorNotificationProvider implementation="org.jetbrains.kotlin.idea.script.configuration.MultipleScriptDefinitionsChecker"/>
 

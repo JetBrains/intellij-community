@@ -39,8 +39,16 @@ class PersistentRangeMarker extends RangeMarkerImpl {
   }
 
   // constructor which creates marker without document and saves it in the virtual file directly. Can be cheaper than loading document.
-  PersistentRangeMarker(@NotNull VirtualFile virtualFile, int startOffset, int endOffset, int startLine, int startCol, int endLine, int endCol, boolean register) {
-    super(virtualFile, startOffset, endOffset, register);
+  PersistentRangeMarker(@NotNull VirtualFile virtualFile,
+                        int startOffset,
+                        int endOffset,
+                        int startLine,
+                        int startCol,
+                        int endLine,
+                        int endCol,
+                        int estimatedDocumentLength,
+                        boolean register) {
+    super(virtualFile, startOffset, endOffset, estimatedDocumentLength, register);
     myLinesCols = new LinesCols(startLine, startCol, endLine, endCol);
     documentLoaded = FileDocumentManager.getInstance().getCachedDocument(virtualFile) != null;
   }

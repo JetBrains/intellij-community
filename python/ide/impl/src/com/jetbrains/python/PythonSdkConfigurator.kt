@@ -73,7 +73,9 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
   }
 
   private fun findExtension(module: Module): PyProjectSdkConfigurationExtension? {
-    return if (ApplicationManager.getApplication().let { it.isHeadlessEnvironment || it.isUnitTestMode }) null
+    return if (!module.project.isTrusted() || ApplicationManager.getApplication().let { it.isHeadlessEnvironment || it.isUnitTestMode }) {
+      null
+    }
     else PyProjectSdkConfigurationExtension.EP_NAME.findFirstSafe { it.getIntention(module) != null }
   }
 
@@ -86,6 +88,23 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
     indicator.isIndeterminate = true
 
     val context = UserDataHolderBase()
+
+    if (indicator.isCanceled) return
+
+    indicator.text = PyBundle.message("looking.for.inner.venvs")
+    LOGGER.debug("Looking for inner virtual environments")
+    guardIndicator(indicator) {
+      detectAssociatedEnvironments(module, emptyList(), context).filter { it.isLocatedInsideModule(module) }.takeIf { it.isNotEmpty() }
+    }?.let {
+      runInEdt { it.forEach { module.excludeInnerVirtualEnv(it) } }
+    }
+
+    if (!project.isTrusted()) {
+      // com.jetbrains.python.inspections.PyInterpreterInspection will ask for confirmation
+      LOGGER.info("Python interpreter has not been configured since project is not trusted")
+      return
+    }
+
     val existingSdks = ProjectSdksModel().apply { reset(project) }.sdks.filter { it.sdkType is PythonSdkType }
 
     if (indicator.isCanceled) return
@@ -102,45 +121,18 @@ internal class PythonSdkConfigurator : DirectoryProjectConfigurator {
 
     indicator.text = PyBundle.message("looking.for.related.venv")
     LOGGER.debug("Looking for a virtual environment related to the project")
-    guardIndicator(indicator) {
-      val detectedAssociatedEnvironments = detectAssociatedEnvironments(module, existingSdks, context)
+    guardIndicator(indicator) { detectAssociatedEnvironments(module, existingSdks, context).firstOrNull() }?.let {
+      LOGGER.debug { "Detected virtual environment related to the project: $it" }
+      val newSdk = it.setupAssociated(existingSdks, module.basePath) ?: return
+      LOGGER.debug { "Created virtual environment related to the project: $newSdk" }
 
-      val envToSuggest = if (project.isTrusted()) {
-        detectedAssociatedEnvironments.firstOrNull()
-      }
-      else {
-        detectedAssociatedEnvironments.firstOrNull { !it.isLocatedInsideModule(module) }
-      }
-
-      envToSuggest to detectedAssociatedEnvironments.filter { it.isLocatedInsideModule(module) }
-    }.let {
-      val innerEnvs = it.second
-      if (innerEnvs.isNotEmpty()) {
-        runInEdt { innerEnvs.forEach { module.excludeInnerVirtualEnv(it) } }
+      runInEdt {
+        SdkConfigurationUtil.addSdk(newSdk)
+        newSdk.associateWithModule(module, null)
+        setReadyToUseSdk(project, module, newSdk)
       }
 
-      val detectedAssociatedEnv = it.first
-
-      if (detectedAssociatedEnv == null) {
-        if (innerEnvs.isNotEmpty()) {
-          // com.jetbrains.python.inspections.PyInterpreterInspection will ask for confirmation
-          LOGGER.info("Inner virtual environment has not been configured since project is not trusted")
-          return
-        }
-      }
-      else {
-        LOGGER.debug { "Detected virtual environment related to the project: $detectedAssociatedEnv" }
-        val newSdk = detectedAssociatedEnv.setupAssociated(existingSdks, module.basePath) ?: return
-        LOGGER.debug { "Created virtual environment related to the project: $newSdk" }
-
-        runInEdt {
-          SdkConfigurationUtil.addSdk(newSdk)
-          newSdk.associateWithModule(module, null)
-          setReadyToUseSdk(project, module, newSdk)
-        }
-
-        return
-      }
+      return
     }
 
     if (indicator.isCanceled) return

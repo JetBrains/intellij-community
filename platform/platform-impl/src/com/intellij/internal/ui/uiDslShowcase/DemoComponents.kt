@@ -24,12 +24,12 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
     }
 
     var radioButtonValue = 2
-    buttonGroup({ radioButtonValue }, { radioButtonValue = it }) {
+    buttonsGroup {
       row("radioButton") {
         radioButton("Value 1", 1)
         radioButton("Value 2", 2)
       }
-    }
+    }.bind({ radioButtonValue }, { radioButtonValue = it })
 
     row {
       button("button") {}
@@ -95,6 +95,10 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
       textFieldWithBrowseButton()
     }
 
+    row("expandableTextField:") {
+      expandableTextField()
+    }
+
     row("intTextField(0..100):") {
       intTextField(0..100)
     }
@@ -117,7 +121,7 @@ fun demoComponents(parentDisposable: Disposable): DialogPanel {
     }.layout(RowLayout.PARENT_GRID)
 
     row("comboBox:") {
-      comboBox(arrayOf("Item 1", "Item 2"))
+      comboBox(listOf("Item 1", "Item 2"))
     }
   }
 

@@ -1,24 +1,22 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.extensions.common.highlighter
 
+import com.intellij.collaboration.lang.HtmlSyntaxHighlighter
 import com.intellij.lang.Language
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.ColorUtil
 import org.intellij.markdown.MarkdownTokenTypes
 import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.HtmlGenerator
-import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
+import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
 import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
-import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceGeneratingProvider
+import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import java.lang.ref.SoftReference
 import java.util.concurrent.ConcurrentHashMap
 
-internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGeneratingProvider {
+internal class MarkdownCodeFencePreviewHighlighter : CodeFenceGeneratingProvider {
   companion object {
     private const val expiration = 5 * 60 * 1000
   }
@@ -43,6 +41,7 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
   override fun isApplicable(language: String): Boolean {
     return LanguageGuesser.guessLanguageForInjection(language) != null
   }
+
   fun generateHtmlForFile(language: String, raw: String, node: ASTNode, file: VirtualFile): String {
     currentFile.set(file)
     val result = generateHtml(language, raw, node)
@@ -51,7 +50,7 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
   }
 
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
-    val lang = LanguageGuesser.guessLanguageForInjection(language) ?: return MarkdownCodeFenceGeneratingProvider.escape(raw)
+    val lang = LanguageGuesser.guessLanguageForInjection(language) ?: return DefaultCodeFenceGeneratingProvider.escape(raw)
 
     val md5 = MarkdownUtil.md5(raw, language)
 
@@ -85,9 +84,17 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
   }
 
   private fun render(lang: Language, text: String, node: ASTNode): String {
-    val highlightTokens = collectHighlightTokens(lang, text)
+    val highlightTokens = mutableMapOf<IntRange, String>()
+    HtmlSyntaxHighlighter.parseContent(null, lang, text) { content, intRange, color ->
+      if (color != null) {
+        highlightTokens[intRange] = "<span style=\"color:${ColorUtil.toHtmlColor(color)}\">${
+          DefaultCodeFenceGeneratingProvider.escape(content)
+        }</span>"
+      }
+    }
+
     // Mannually walk over each line and recalculate line offsets
-    val baseOffset = MarkdownCodeFenceGeneratingProvider.calcCodeFenceContentBaseOffset(node)
+    val baseOffset = DefaultCodeFenceGeneratingProvider.calcCodeFenceContentBaseOffset(node)
     val lines = ArrayList<String>()
     var left = 0
     for (line in text.lines()) {
@@ -115,41 +122,18 @@ internal class MarkdownCodeFencePreviewHighlighter : MarkdownCodeFencePluginGene
     )
   }
 
-  private fun collectHighlightTokens(lang: Language, text: String): Map<IntRange, String> {
-    val file = LightVirtualFile("markdown_temp", text)
-    val highlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(lang, null, file)
-    val lexer = highlighter.highlightingLexer
-    lexer.start(text)
-    val colorScheme = EditorColorsManager.getInstance().globalScheme
-    // Collect all tokens that needs to be highlighted
-    val highlightTokens = hashMapOf<IntRange, String>()
-    while (lexer.tokenType != null) {
-      val type = lexer.tokenType
-      val highlights = highlighter.getTokenHighlights(type).lastOrNull()
-      val color = highlights?.let {
-        colorScheme.getAttributes(it)?.foregroundColor
-      } ?: highlights?.defaultAttributes?.foregroundColor
-      if (color != null) {
-        highlightTokens[lexer.tokenStart..lexer.tokenEnd] =
-          "<span style=\"color:${ColorUtil.toHtmlColor(color)}\">${MarkdownCodeFenceGeneratingProvider.escape(lexer.tokenText)}</span>"
-      }
-      lexer.advance()
-    }
-    return highlightTokens
-  }
-
   private fun IntRange.shift(value: Int): IntRange = (first + value)..(last + value)
 
   private fun appendWithReplacements(line: String, targets: List<Pair<IntRange, String>>, builder: StringBuilder) {
     var actualLine = line
     var left = 0
     for ((range, replacement) in targets.sortedBy { it.first.first }) {
-      builder.append(MarkdownCodeFenceGeneratingProvider.escape(actualLine.substring(0, range.first - left)))
+      builder.append(DefaultCodeFenceGeneratingProvider.escape(actualLine.substring(0, range.first - left)))
       builder.append(replacement)
       actualLine = actualLine.substring(range.last - left)
       left = range.last
     }
-    builder.append(MarkdownCodeFenceGeneratingProvider.escape(actualLine))
+    builder.append(DefaultCodeFenceGeneratingProvider.escape(actualLine))
   }
 
   private fun processCodeLine(rawCodeLine: String): String = currentFile.get()?.let { file ->

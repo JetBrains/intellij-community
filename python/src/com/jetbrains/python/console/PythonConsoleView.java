@@ -163,7 +163,9 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
           .addListener(communication, new CommandQueueListener() {
           @Override
           public void removeCommand(ConsoleCommunication.@NotNull ConsoleCodeFragment command) {
-            myCommandQueuePanel.removeCommand(command);
+            ApplicationManager.getApplication().invokeLater(() -> {
+              myCommandQueuePanel.removeCommand(command);
+            });
           }
 
           @Override

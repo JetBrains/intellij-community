@@ -6,13 +6,16 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.newui.HorizontalLayout
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
+import com.intellij.openapi.observable.operations.ObservableOperationTrace
 import com.intellij.openapi.observable.properties.ObservableClearableProperty
+import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.project.DumbAware
-import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.ui.CardLayoutPanel
 import com.intellij.ui.OnePixelSplitter
+import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -27,6 +30,7 @@ import javax.swing.border.Border
 internal const val BORDER = 6
 internal const val INDENT = 16
 internal const val ICON_TEXT_GAP = 4
+internal const val ACTION_BORDER = 2
 
 internal fun emptyListBorder(): Border {
   return JBUI.Borders.empty()
@@ -78,25 +82,31 @@ internal fun horizontalSplitPanel(proportionKey: @NonNls String, proportion: Flo
   OnePixelSplitter(false, proportionKey, proportion)
     .apply { configure() }
 
-internal fun <T> cardPanel(property: ObservableClearableProperty<T>, createPanel: (T) -> JComponent) =
+internal fun <T> cardPanel(createPanel: (T) -> JComponent) =
   object : CardLayoutPanel<T, T, JComponent>() {
     override fun prepare(key: T) = key
     override fun create(ui: T) = createPanel(ui)
-
-    init {
-      select(property.get(), true)
-      property.afterChange { select(it, true) }
-    }
   }
 
-internal fun JComponent.actionToolbarPanel(vararg actions: AnAction): JComponent {
-  val actionManager = ActionManager.getInstance()
-  val actionGroup = DefaultActionGroup(*actions)
-  val toolbar = actionManager.createActionToolbar(ActionPlaces.TOOLBAR, actionGroup, true)
-  toolbar.targetComponent = this
-  toolbar.component.isOpaque = false
-  toolbar.layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-  return toolbar.component
+internal fun <T, C : CardLayoutPanel<T, *, *>> C.bind(property: ObservableProperty<T>): C = apply {
+  select(property.get(), true)
+  property.afterChange { select(it, true) }
+}
+
+internal fun <C : JBLoadingPanel> C.bind(operation: ObservableOperationTrace): C = apply {
+  if (operation.isOperationCompleted()) {
+    stopLoading()
+  }
+  else {
+    startLoading()
+  }
+  operation.beforeOperation { startLoading() }
+  operation.afterOperation { stopLoading() }
+}
+
+internal fun <C : JBLoadingPanel> C.bindLoadingText(property: ObservableProperty<@Nls String>): C = apply {
+  setLoadingText(property.get())
+  property.afterChange { setLoadingText(it) }
 }
 
 internal fun toggleAction(property: ObservableClearableProperty<Boolean>): ToggleAction =
@@ -105,18 +115,23 @@ internal fun toggleAction(property: ObservableClearableProperty<Boolean>): Toggl
     override fun setSelected(e: AnActionEvent, state: Boolean) = property.set(state)
   }
 
-internal fun action(action: (AnActionEvent) -> Unit) =
-  SimpleConfigurableAction().whenActionPreformed(action)
+internal fun action(action: (AnActionEvent) -> Unit): AnAction =
+  object : AnAction(), DumbAware {
+    override fun actionPerformed(e: AnActionEvent) = action(e)
+  }
 
 internal fun popupActionGroup(vararg actions: AnAction) =
   DefaultActionGroup(*actions)
     .apply { isPopup = true }
 
-internal fun actionSeparator() = Separator()
+internal fun AnAction.asActionButton() =
+  ActionButton(this, templatePresentation.clone(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+    .apply { border = JBUI.Borders.empty(ACTION_BORDER) }
 
-internal fun labelSeparator() =
+internal fun separator() =
   JLabel(AllIcons.General.Divider)
-    .apply { border = JBUI.Borders.empty() }
+    .apply { border = JBUI.Borders.empty(ACTION_BORDER) }
+    .apply { font = JBUI.Fonts.toolbarSmallComboBoxFont() }
 
 internal fun expandTreeAction(tree: JTree) =
   action { TreeUtil.expandAll(tree) }
@@ -127,14 +142,3 @@ internal fun collapseTreeAction(tree: JTree) =
   action { TreeUtil.collapseAll(tree, 0) }
     .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.tree.collapse") }
     .apply { templatePresentation.icon = AllIcons.Actions.Collapseall }
-
-internal class SimpleConfigurableAction : DumbAwareAction() {
-  private val actions = ArrayList<(AnActionEvent) -> Unit>()
-  private val updaters = ArrayList<(AnActionEvent) -> Unit>()
-
-  override fun actionPerformed(e: AnActionEvent) = actions.forEach { it(e) }
-  override fun update(e: AnActionEvent) = updaters.forEach { it(e) }
-
-  fun whenActionPreformed(action: (AnActionEvent) -> Unit) = apply { actions.add(action) }
-  fun whenActionUpdated(update: (AnActionEvent) -> Unit) = apply { updaters.add(update) }
-}

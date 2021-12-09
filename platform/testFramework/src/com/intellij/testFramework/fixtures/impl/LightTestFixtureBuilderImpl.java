@@ -7,9 +7,10 @@ import com.intellij.testFramework.fixtures.TestFixtureBuilder;
 import org.jetbrains.annotations.NotNull;
 
 final class LightTestFixtureBuilderImpl<F extends IdeaProjectTestFixture> implements TestFixtureBuilder<F> {
+  @NotNull
   private final F myFixture;
 
-  LightTestFixtureBuilderImpl(F fixture) {
+  LightTestFixtureBuilderImpl(@NotNull F fixture) {
     myFixture = fixture;
   }
 

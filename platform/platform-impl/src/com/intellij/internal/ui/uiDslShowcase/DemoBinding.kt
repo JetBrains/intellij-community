@@ -12,6 +12,7 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 import javax.swing.SwingUtilities
 
+@Suppress("DialogTitleCapitalization")
 @Demo(title = "Binding",
       description = "It is possible to bind component values to properties. Such properties are applied only when DialogPanel.apply is invoked. " +
                     "Methods DialogPanel.isModified and DialogPanel.reset are also supported automatically for bound properties",
@@ -48,7 +49,7 @@ fun demoBinding(parentDisposable: Disposable): DialogPanel {
         .bindIntText(model::intTextField)
     }
     row("comboBox:") {
-      comboBox(Color.values())
+      comboBox(Color.values().toList())
         .bindItem(model::comboBoxColor)
     }
     row("slider:") {
@@ -59,13 +60,13 @@ fun demoBinding(parentDisposable: Disposable): DialogPanel {
       spinner(0..100)
         .bindIntValue(model::spinner)
     }
-    buttonGroup(model::radioButtonColor, title = "radioButton:") {
+    buttonsGroup(title = "radioButton:") {
       for (value in Color.values()) {
         row {
           radioButton(value.name, value)
         }
       }
-    }
+    }.bind(model::radioButtonColor)
 
     group("DialogPanel Control") {
       row {

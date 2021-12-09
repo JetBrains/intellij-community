@@ -16,6 +16,7 @@ import com.intellij.testFramework.LightVirtualFile
 import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
 import java.util.prefs.Preferences
@@ -35,7 +36,7 @@ class JEditorPaneDemoAction : DumbAwareAction("HTML Rendering Playground") {
         isResizable = true
         myView.contentType = "text/html"
         myView.isEditable = false
-        myView.editorKit = UIUtil.getHTMLEditorKit()
+        myView.editorKit = HTMLEditorKitBuilder.simple()
         myView.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
         UIUtil.doNotScrollToCaret(myView)
 

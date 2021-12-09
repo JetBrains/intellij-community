@@ -5,8 +5,7 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.util.Disposer
-import org.intellij.plugins.markdown.extensions.MarkdownCodeFencePluginGeneratingProvider
+import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 import java.io.File
 import java.io.OutputStream
 import java.lang.reflect.Method
@@ -29,6 +28,7 @@ internal class PlantUMLJarManager: Disposable {
 
   private val lock = ReentrantLock()
   private var loadedClassAndMethod: Holder? = null
+  private var isDisposed = false
 
   private fun loadClass(path: File): Class<*>? {
     val classLoader = URLClassLoader(arrayOf(path.toURI().toURL()), this::class.java.classLoader)
@@ -58,7 +58,8 @@ internal class PlantUMLJarManager: Disposable {
   }
 
   private fun findPath(): File? {
-    val extension = MarkdownCodeFencePluginGeneratingProvider.all
+    val extension = CodeFenceGeneratingProvider.all
+      .asSequence()
       .filterIsInstance<PlantUMLCodeGeneratingProvider>()
       .firstOrNull()
     return extension?.fullPath
@@ -66,7 +67,7 @@ internal class PlantUMLJarManager: Disposable {
 
   private fun obtainCurrentHolder(): Holder? {
     synchronized(lock) {
-      if (Disposer.isDisposed(this)) {
+      if (isDisposed) {
         return null
       }
       if (loadedClassAndMethod == null) {
@@ -90,21 +91,28 @@ internal class PlantUMLJarManager: Disposable {
     }
   }
 
+  private fun actuallyDropCache() {
+    loadedClassAndMethod?.let {
+      try {
+        (it.loadedClass.classLoader as? URLClassLoader)?.close()
+      } catch (exception: Throwable) {
+        logger.warn("Failed to close class loader.", exception)
+      }
+    }
+    loadedClassAndMethod = null
+  }
+
   fun dropCache() {
     synchronized(lock) {
-      loadedClassAndMethod?.let {
-        try {
-          (it.loadedClass.classLoader as? URLClassLoader)?.close()
-        } catch (exception: Throwable) {
-          logger.warn("Failed to close class loader.", exception)
-        }
-      }
-      loadedClassAndMethod = null
+      actuallyDropCache()
     }
   }
 
   override fun dispose() {
-    dropCache()
+    synchronized(lock) {
+      actuallyDropCache()
+      isDisposed = true
+    }
   }
 
   companion object {

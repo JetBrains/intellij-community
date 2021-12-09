@@ -6,6 +6,7 @@ import com.intellij.execution.lineMarker.RunLineMarkerContributor
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.psi.PsiElement
@@ -64,21 +65,20 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
 
   private fun processBlock(lang: String, element: PsiElement): Info? {
     val language = LanguageGuesser.guessLanguageForInjection(lang)
-    MarkdownRunner.EP_NAME.extensionList.firstOrNull { runner ->
-      runner.isApplicable(language)
-    }?.let { runner ->
-      val text = getContent(element.parent as MarkdownCodeFenceImpl, false)
-        ?.fold(StringBuilder()) { acc, psiElement -> acc.append(psiElement.text) }
-        .toString()
-      val dir = element.containingFile.virtualFile.parent?.path ?: return null
-      val runAction = object : AnAction({ runner.title() }, AllIcons.RunConfigurations.TestState.Run_run) {
-        override fun actionPerformed(e: AnActionEvent) {
-          runner.run(text, e.project!!, dir, DefaultRunExecutor.getRunExecutorInstance())
+    val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(language) } ?: return null
+    val text = getContent(element.parent as MarkdownCodeFenceImpl, false)
+      ?.fold(StringBuilder()) { acc, psiElement -> acc.append(psiElement.text) }
+      .toString()
+    val dir = element.containingFile.virtualFile.parent?.path ?: return null
+    val runAction = object : AnAction({ runner.title() }, AllIcons.RunConfigurations.TestState.Run_run) {
+      override fun actionPerformed(event: AnActionEvent) {
+        val project = event.getRequiredData(CommonDataKeys.PROJECT)
+        TrustedProjectUtil.executeIfTrusted(project) {
+          runner.run(text, project, dir, DefaultRunExecutor.getRunExecutorInstance())
         }
       }
-      return Info(AllIcons.RunConfigurations.TestState.Run_run, { runner.title() }, runAction)
     }
-    return null
+    return Info(AllIcons.RunConfigurations.TestState.Run_run, { runner.title() }, runAction)
   }
 
   private fun getText(element: PsiElement): @NlsSafe String {

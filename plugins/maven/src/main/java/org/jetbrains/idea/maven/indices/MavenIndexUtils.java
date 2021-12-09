@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.indices;
 
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
@@ -10,6 +9,7 @@ import org.jetbrains.annotations.VisibleForTesting;
 import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
+import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -108,26 +108,26 @@ public class MavenIndexUtils {
   @NotNull
   public static Map<String, Set<String>> getRemoteRepositoryIdsByUrl(Project project) {
     if (project.isDisposed()) return Collections.emptyMap();
-    return ReadAction.compute(() -> project.isDisposed() ? Collections.emptyMap() : getRemoteRepositoriesMap(project));
+    return getRemoteRepositoriesMap(project);
   }
 
   @Nullable
   public static RepositoryInfo getLocalRepository(Project project) {
     if (project.isDisposed()) return null;
-    File repository = ReadAction
-      .compute(() -> project.isDisposed() ? null : MavenProjectsManager.getInstance(project).getLocalRepository());
+    File repository = MavenProjectsManager.getInstance(project).getLocalRepository();
     return repository == null ? null : new RepositoryInfo(LOCAL_REPOSITORY_ID, repository.getPath());
   }
 
   private static Map<String, Set<String>> getRemoteRepositoriesMap(Project project) {
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(projectsManager.getRemoteRepositories());
+    if (project.isDisposed()) return Collections.emptyMap();
+    Set<MavenRemoteRepository> remoteRepositories = new HashSet<>(MavenUtil.getRemoteResolvedRepositories(project));
     for (MavenRepositoryProvider repositoryProvider : MavenRepositoryProvider.EP_NAME.getExtensions()) {
       remoteRepositories.addAll(repositoryProvider.getRemoteRepositories(project));
     }
 
     return groupRemoteRepositoriesByUrl(remoteRepositories);
   }
+
 
   @VisibleForTesting
   static Map<String, Set<String>> groupRemoteRepositoriesByUrl(Collection<MavenRemoteRepository> remoteRepositories) {

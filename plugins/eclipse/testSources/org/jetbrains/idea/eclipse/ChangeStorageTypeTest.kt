@@ -7,7 +7,7 @@ import com.intellij.openapi.roots.ModuleRootManager
 import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage
 import com.intellij.testFramework.ApplicationExtension
-import com.intellij.testFramework.rules.TempDirectory
+import com.intellij.testFramework.rules.TempDirectoryExtension
 import com.intellij.testFramework.rules.TestNameExtension
 import com.intellij.util.io.copy
 import org.jetbrains.jps.eclipse.model.JpsEclipseClasspathSerializer
@@ -20,7 +20,7 @@ import kotlin.io.path.div
 class ChangeStorageTypeTest {
   @JvmField
   @RegisterExtension
-  val tempDirectory = TempDirectory()
+  val tempDirectory = TempDirectoryExtension()
 
   @JvmField
   @RegisterExtension

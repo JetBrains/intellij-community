@@ -1384,7 +1384,10 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
 
   @Override
   public void visitSwitchLabeledRuleStatement(PsiSwitchLabeledRuleStatement statement) {
-    if (myType1 == JavaTokenType.CASE_KEYWORD || myType1 == JavaTokenType.ARROW || myType2 == JavaTokenType.ARROW) {
+    if (myType1 == JavaTokenType.ARROW && myType2 == JavaElementType.BLOCK_STATEMENT) {
+      myResult = getSpaceBeforeLBrace(myChild2, true, null);
+    }
+    else if (myType1 == JavaTokenType.CASE_KEYWORD || myType1 == JavaTokenType.ARROW || myType2 == JavaTokenType.ARROW) {
       createSpaceProperty(true, false, 0);
     }
   }

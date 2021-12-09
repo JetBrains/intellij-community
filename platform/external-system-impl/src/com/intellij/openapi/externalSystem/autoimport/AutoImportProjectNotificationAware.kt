@@ -2,53 +2,47 @@
 package com.intellij.openapi.externalSystem.autoimport
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.project.Project
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
-import java.util.concurrent.atomic.AtomicBoolean
 
-@ApiStatus.Experimental
 class AutoImportProjectNotificationAware(private val project: Project) : ExternalSystemProjectNotificationAware, Disposable {
-  private val isHidden = AtomicBoolean(false)
   private val projectsWithNotification = ContainerUtil.newConcurrentSet<ExternalSystemProjectId>()
 
   override fun notificationNotify(projectAware: ExternalSystemProjectAware) {
     val projectId = projectAware.projectId
     LOG.debug("${projectId.debugName}: Notify notification")
     projectsWithNotification.add(projectId)
-    revealNotification()
+    fireNotificationUpdated()
   }
 
   override fun notificationExpire(projectId: ExternalSystemProjectId) {
     LOG.debug("${projectId.debugName}: Expire notification")
     projectsWithNotification.remove(projectId)
-    revealNotification()
+    fireNotificationUpdated()
   }
 
   override fun notificationExpire() {
     LOG.debug("Expire notification")
     projectsWithNotification.clear()
-    revealNotification()
+    fireNotificationUpdated()
   }
 
   override fun dispose() {
     notificationExpire()
   }
 
-  private fun setHideStatus(isHidden: Boolean) {
-    this.isHidden.set(isHidden)
-    ProjectRefreshFloatingProvider.updateToolbarComponents(project, this)
+  private fun fireNotificationUpdated() {
+    ApplicationManager.getApplication().messageBus
+      .syncPublisher(ExternalSystemProjectNotificationAware.TOPIC)
+      .onNotificationChanged(project)
   }
 
-  private fun revealNotification() = setHideStatus(false)
-
-  override fun hideNotification() = setHideStatus(true)
-
   override fun isNotificationVisible(): Boolean {
-    return !isHidden.get() && projectsWithNotification.isNotEmpty()
+    return projectsWithNotification.isNotEmpty()
   }
 
   override fun getSystemIds(): Set<ProjectSystemId> {

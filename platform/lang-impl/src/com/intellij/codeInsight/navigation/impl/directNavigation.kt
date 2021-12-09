@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.navigation.impl
 
 import com.intellij.codeInsight.navigation.BaseCtrlMouseInfo
@@ -32,8 +32,8 @@ private class DirectNavigationData(
     override fun isValid(): Boolean = true
   }
 
-  override fun result(): GTDActionResult {
-    val navigatable = psiNavigatable(targetElement)
-    return GTDActionResult.SingleTarget(navigatable, navigationProvider)
+  override fun result(): NavigationActionResult? {
+    val request = targetElement.psiNavigatable()?.navigationRequest() ?: return null
+    return NavigationActionResult.SingleTarget(request, navigationProvider)
   }
 }

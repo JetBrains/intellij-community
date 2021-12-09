@@ -13,6 +13,7 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -51,8 +52,8 @@ public class CertificateWarningDialog extends DialogWrapper {
     super((Project)null, false);
 
     myRootPanel.setPreferredSize(new JBDimension(550, 650));
-    myNoticePane.setEditorKit(UIUtil.getHTMLEditorKit());
-    myMessagePane.setEditorKit(UIUtil.getHTMLEditorKit());
+    myNoticePane.setEditorKit(HTMLEditorKitBuilder.simple());
+    myMessagePane.setEditorKit(HTMLEditorKitBuilder.simple());
 
     myCertificate = certificate;
 

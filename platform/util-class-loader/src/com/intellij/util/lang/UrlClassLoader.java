@@ -1,14 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.lang;
 
-import com.intellij.ReviseWhenPortedToJDK;
-import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.util.UrlUtilRt;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.invoke.MethodHandles;
@@ -32,6 +29,8 @@ import java.util.function.Predicate;
  * Should be constructed using {@link #build()} method.
  */
 public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataConsumer {
+  private static final boolean mimicJarUrlConnection = Boolean.parseBoolean(System.getProperty("idea.mimic.jar.url.connection", "false"));
+
   private static final boolean isParallelCapable = registerAsParallelCapable();
   private static final ClassLoader appClassLoader = UrlClassLoader.class.getClassLoader();
 
@@ -41,6 +40,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   protected final ClassPath classPath;
   private final ClassLoadingLocks<String> classLoadingLocks;
   private final boolean isBootstrapResourcesAllowed;
+  private final boolean isSystemClassLoader;
 
   protected final @NotNull ClassPath.ClassDataConsumer classDataConsumer =
     ClassPath.recordLoadingTime ? new ClassPath.MeasuringClassDataConsumer(this) : this;
@@ -89,7 +89,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   /** @deprecated use {@link #build()} (left for compatibility with `java.system.class.loader` setting) */
   @Deprecated
-  @ReviseWhenPortedToJDK("9")
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(createDefaultBuilderForJdk(parent), null, isParallelCapable);
 
@@ -120,16 +119,15 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       String[] parts = System.getProperty("java.class.path").split(System.getProperty("path.separator"));
       configuration.files = new ArrayList<>(parts.length);
       for (String s : parts) {
-        configuration.files.add(new File(s).toPath());
+        configuration.files.add(Paths.get(s));
       }
     }
 
+    configuration.isSystemClassLoader = true;
     configuration.parent = parent.getParent();
-    configuration.lockJars = true;
     configuration.useCache = true;
     configuration.isClassPathIndexEnabled = true;
     configuration.isBootstrapResourcesAllowed = Boolean.parseBoolean(System.getProperty("idea.allow.bootstrap.resources", "true"));
-    configuration.autoAssignUrlsWithProtectionDomain();
     return configuration;
   }
 
@@ -137,35 +135,15 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     this(builder, null, isParallelCapable);
   }
 
-  /**
-   * @deprecated Do not extend UrlClassLoader. If you cannot avoid it, use {@link #UrlClassLoader(Builder, boolean)}.
-   */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated
-  protected UrlClassLoader(@NotNull UrlClassLoader.Builder builder) {
-    this(builder, null, false);
-  }
-
   protected UrlClassLoader(@NotNull UrlClassLoader.Builder builder,
                            @Nullable Function<Path, ResourceFile> resourceFileFactory,
                            boolean isParallelCapable) {
-    this(builder, resourceFileFactory, isParallelCapable, false);
-  }
-
-  protected UrlClassLoader(@NotNull UrlClassLoader.Builder builder,
-                           @Nullable Function<Path, ResourceFile> resourceFileFactory,
-                           boolean isParallelCapable,
-                           boolean isMimicJarUrlConnectionNeeded) {
     super(builder.parent);
 
+    isSystemClassLoader = builder.isSystemClassLoader;
     files = builder.files;
 
-    Set<Path> urlsWithProtectionDomain = builder.pathsWithProtectionDomain;
-    if (urlsWithProtectionDomain == null) {
-      urlsWithProtectionDomain = Collections.emptySet();
-    }
-
-    classPath = new ClassPath(files, urlsWithProtectionDomain, builder, resourceFileFactory, isMimicJarUrlConnectionNeeded);
+    classPath = new ClassPath(files, builder, resourceFileFactory, mimicJarUrlConnection);
 
     isBootstrapResourcesAllowed = builder.isBootstrapResourcesAllowed;
     classLoadingLocks = isParallelCapable ? new ClassLoadingLocks<>() : null;
@@ -177,6 +155,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     this.files = files;
     this.classPath = classPath;
     isBootstrapResourcesAllowed = false;
+    isSystemClassLoader = false;
     classLoadingLocks = new ClassLoadingLocks<>();
   }
 
@@ -214,13 +193,20 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
   @Override
   protected Class<?> findClass(@NotNull String name) throws ClassNotFoundException {
-    if (name.startsWith("com.intellij.util.lang.")) {
+    String fileNameWithoutExtension = name.replace('.', '/');
+    String fileName = fileNameWithoutExtension + ClasspathCache.CLASS_EXTENSION;
+    long packageNameHash = ClasspathCache.getPackageNameHash(fileNameWithoutExtension, fileNameWithoutExtension.lastIndexOf('/'));
+
+    // com.intellij.util.lang, org.jetbrains.xxh3, org.jetbrains.ikv
+    // see XxHash3Test.packages
+    if (isSystemClassLoader &&
+        (packageNameHash == -9217824570049207139L || packageNameHash == -1976620678582843062L || packageNameHash == 4571982292824530778L)) {
       return appClassLoader.loadClass(name);
     }
 
     Class<?> clazz;
     try {
-      clazz = classPath.findClass(name, classDataConsumer);
+      clazz = classPath.findClass(name, fileName, packageNameHash, classDataConsumer);
     }
     catch (IOException e) {
       throw new ClassNotFoundException(name, e);
@@ -231,7 +217,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return clazz;
   }
 
-  private void definePackageIfNeeded(String name, Loader loader) throws IOException {
+  private void definePackageIfNeeded(String name) {
     int lastDotIndex = name.lastIndexOf('.');
     if (lastDotIndex == -1) {
       return;
@@ -244,20 +230,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     }
 
     try {
-      Map<Loader.Attribute, String> attributes = loader.getAttributes();
-      if (attributes == null || attributes.isEmpty()) {
-        definePackage(packageName, null, null, null, null, null, null, null);
-      }
-      else {
-        definePackage(packageName,
-                      attributes.get(Loader.Attribute.SPEC_TITLE),
-                      attributes.get(Loader.Attribute.SPEC_VERSION),
-                      attributes.get(Loader.Attribute.SPEC_VENDOR),
-                      attributes.get(Loader.Attribute.IMPL_TITLE),
-                      attributes.get(Loader.Attribute.IMPL_VERSION),
-                      attributes.get(Loader.Attribute.IMPL_VENDOR),
-                      null);
-      }
+      definePackage(packageName, null, null, null, null, null, null, null);
     }
     catch (IllegalArgumentException ignore) {
       // do nothing, the package is already defined by another thread
@@ -274,20 +247,20 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   @Override
-  public boolean isByteBufferSupported(@NotNull String name, @Nullable ProtectionDomain protectionDomain) {
+  public boolean isByteBufferSupported(@NotNull String name) {
     return true;
   }
 
   @Override
-  public Class<?> consumeClassData(@NotNull String name, byte[] data, Loader loader, @Nullable ProtectionDomain protectionDomain) throws IOException {
-    definePackageIfNeeded(name, loader);
-    return super.defineClass(name, data, 0, data.length, protectionDomain == null ? getProtectionDomain() : protectionDomain);
+  public Class<?> consumeClassData(@NotNull String name, byte[] data, Loader loader) throws IOException {
+    definePackageIfNeeded(name);
+    return super.defineClass(name, data, 0, data.length, null);
   }
 
   @Override
-  public Class<?> consumeClassData(@NotNull String name, ByteBuffer data, Loader loader, @Nullable ProtectionDomain protectionDomain) throws IOException {
-    definePackageIfNeeded(name, loader);
-    return super.defineClass(name, data, protectionDomain == null ? getProtectionDomain() : protectionDomain);
+  public Class<?> consumeClassData(@NotNull String name, ByteBuffer data, Loader loader) throws IOException {
+    definePackageIfNeeded(name);
+    return super.defineClass(name, data, null);
   }
 
   @Override
@@ -348,7 +321,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   }
 
   public final void processResources(@NotNull String dir,
-                                     @NotNull Predicate<? super String> fileNameFilter,
+                                     @NotNull Predicate<String> fileNameFilter,
                                      @NotNull BiConsumer<? super String, ? super InputStream> consumer) throws IOException {
     classPath.processResources(dir, fileNameFilter, consumer);
   }
@@ -366,7 +339,10 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   @ApiStatus.Internal
   public @Nullable BiPredicate<String, Boolean> resolveScopeManager;
 
-  public @Nullable Class<?> loadClassInsideSelf(@NotNull String name, boolean forceLoadFromSubPluginClassloader) throws IOException {
+  public @Nullable Class<?> loadClassInsideSelf(String name,
+                                                String fileName,
+                                                long packageNameHash,
+                                                boolean forceLoadFromSubPluginClassloader) throws IOException {
     synchronized (getClassLoadingLock(name)) {
       Class<?> c = findLoadedClass(name);
       if (c != null) {
@@ -387,7 +363,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
           return c;
         }
       }
-      return classPath.findClass(name, classDataConsumer);
+      return classPath.findClass(name, fileName, packageNameHash, classDataConsumer);
     }
   }
 
@@ -479,12 +455,34 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return result.toString();
   }
 
+  @SuppressWarnings("SameParameterValue")
+  private static boolean endsWith(@NotNull CharSequence text, @NotNull CharSequence suffix) {
+    int l1 = text.length();
+    int l2 = suffix.length();
+    if (l1 < l2) return false;
+
+    for (int i = l1 - 1; i >= l1 - l2; i--) {
+      if (text.charAt(i) != suffix.charAt(i + l2 - l1)) return false;
+    }
+
+    return true;
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private static int lastIndexOf(@NotNull CharSequence s, char c, int start, int end) {
+    start = Math.max(start, 0);
+    for (int i = Math.min(end, s.length()) - 1; i >= start; i--) {
+      if (s.charAt(i) == c) return i;
+    }
+    return -1;
+  }
+
   @SuppressWarnings("DuplicatedCode")
   private static void processDots(StringBuilder result, int dots, int start) {
     if (dots == 2) {
       int pos = -1;
-      if (!StringUtilRt.endsWith(result, "/../") && !"../".contentEquals(result)) {
-        pos = StringUtilRt.lastIndexOf(result, '/', start, result.length() - 1);
+      if (!endsWith(result, "/../") && !"../".contentEquals(result)) {
+        pos = lastIndexOf(result, '/', start, result.length() - 1);
         if (pos >= 0) {
           ++pos;  // separator found, trim to next char
         }
@@ -528,7 +526,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
   @SuppressWarnings({"UseOfSystemOutOrSystemErr", "SameParameterValue"})
   private void logError(String message, Throwable t) {
     try {
-      Class<?> logger = Class.forName("com.intellij.openapi.diagnostic.Logger", false, this);
+      Class<?> logger = loadClass("com.intellij.openapi.diagnostic.Logger");
       MethodHandles.Lookup lookup = MethodHandles.lookup();
       Object instance = lookup.findStatic(logger, "getInstance", MethodType.methodType(logger, Class.class)).invoke(getClass());
       lookup.findVirtual(logger, "error", MethodType.methodType(void.class, String.class, Throwable.class))
@@ -560,13 +558,12 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     private static final boolean isClassPathIndexEnabledGlobalValue = Boolean.parseBoolean(System.getProperty("idea.classpath.index.enabled", "true"));
 
     List<Path> files = Collections.emptyList();
-    @Nullable Set<Path> pathsWithProtectionDomain;
     ClassLoader parent;
     boolean lockJars = true;
     boolean useCache;
+    boolean isSystemClassLoader;
     boolean isClassPathIndexEnabled;
     boolean isBootstrapResourcesAllowed;
-    boolean errorOnMissingJar = true;
     @Nullable CachePoolImpl cachePool;
     Predicate<? super Path> cachingCondition;
 
@@ -588,14 +585,6 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
 
     public @NotNull UrlClassLoader.Builder files(@NotNull List<Path> paths) {
       this.files = paths;
-      return this;
-    }
-
-    /**
-     * Marks URLs that are signed by Sun/Oracle and whose signatures must be verified.
-     */
-    @NotNull UrlClassLoader.Builder urlsWithProtectionDomain(@NotNull Set<Path> value) {
-      pathsWithProtectionDomain = value;
       return this;
     }
 
@@ -669,40 +658,8 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
       return this;
     }
 
-    public @NotNull UrlClassLoader.Builder setLogErrorOnMissingJar(boolean log) {
-      errorOnMissingJar = log;
-      return this;
-    }
-
-    public @NotNull UrlClassLoader.Builder autoAssignUrlsWithProtectionDomain() {
-      Set<Path> result = null;
-      for (Path path : files) {
-        if (isUrlNeedsProtectionDomain(path)) {
-          if (result == null) {
-            result = new HashSet<>();
-          }
-          result.add(path);
-        }
-      }
-      pathsWithProtectionDomain = result;
-      return this;
-    }
-
     public @NotNull UrlClassLoader get() {
       return new UrlClassLoader(this, null, isParallelCapable);
-    }
-
-    private static boolean isUrlNeedsProtectionDomain(@NotNull Path file) {
-      String path = file.toString();
-      // BouncyCastle needs a protection domain
-      if (path.endsWith(".jar")) {
-        int offset = path.lastIndexOf(file.getFileSystem().getSeparator().charAt(0)) + 1;
-        //noinspection SpellCheckingInspection
-        if (path.startsWith("bcprov-", offset) || path.startsWith("bcpkix-", offset)) {
-          return true;
-        }
-      }
-      return false;
     }
   }
 }

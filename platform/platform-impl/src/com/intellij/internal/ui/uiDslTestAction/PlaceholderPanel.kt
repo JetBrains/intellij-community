@@ -71,7 +71,7 @@ internal class PlaceholderPanel(parentDisposable: Disposable) {
           .bindSelected(model::simpleCheckbox)
       }
       row("Select Placeholder:") {
-        comboBox(PlaceholderComponent.values())
+        comboBox(PlaceholderComponent.values().toList())
           .applyToComponent {
             addItemListener {
               if (it.stateChange == ItemEvent.SELECTED) {

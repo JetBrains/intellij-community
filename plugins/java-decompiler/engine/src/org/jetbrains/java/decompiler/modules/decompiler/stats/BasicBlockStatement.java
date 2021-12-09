@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -12,27 +12,16 @@ import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 public class BasicBlockStatement extends Statement {
-
-  // *****************************************************************************
-  // private fields
-  // *****************************************************************************
-
   private final BasicBlock block;
 
-  // *****************************************************************************
-  // constructors
-  // *****************************************************************************
-
   public BasicBlockStatement(BasicBlock block) {
-
     type = Statement.TYPE_BASICBLOCK;
-
+    id = block.id;
     this.block = block;
 
-    id = block.id;
-    CounterContainer coun = DecompilerContext.getCounterContainer();
-    if (id >= coun.getCounter(CounterContainer.STATEMENT_COUNTER)) {
-      coun.setCounter(CounterContainer.STATEMENT_COUNTER, id + 1);
+    CounterContainer container = DecompilerContext.getCounterContainer();
+    if (id >= container.getCounter(CounterContainer.STATEMENT_COUNTER)) {
+      container.setCounter(CounterContainer.STATEMENT_COUNTER, id + 1);
     }
 
     Instruction instr = block.getLastInstruction();
@@ -45,13 +34,8 @@ public class BasicBlockStatement extends Statement {
       }
     }
 
-    // monitorenter and monitorexits
     buildMonitorFlags();
   }
-
-  // *****************************************************************************
-  // public methods
-  // *****************************************************************************
 
   @Override
   public TextBuffer toJava(int indent, BytecodeMappingTracer tracer) {
@@ -62,24 +46,15 @@ public class BasicBlockStatement extends Statement {
 
   @Override
   public Statement getSimpleCopy() {
-
-    BasicBlock newblock = new BasicBlock(
-      DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER));
+    int id = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER);
 
     SimpleInstructionSequence seq = new SimpleInstructionSequence();
     for (int i = 0; i < block.getSeq().length(); i++) {
       seq.addInstruction(block.getSeq().getInstr(i).clone(), -1);
     }
 
-    newblock.setSeq(seq);
-
-    return new BasicBlockStatement(newblock);
+    return new BasicBlockStatement(new BasicBlock(id, seq));
   }
-
-
-  // *****************************************************************************
-  // getter and setter methods
-  // *****************************************************************************
 
   public BasicBlock getBlock() {
     return block;

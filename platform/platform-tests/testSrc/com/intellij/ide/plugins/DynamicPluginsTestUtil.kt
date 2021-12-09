@@ -15,29 +15,43 @@ import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.Supplier
 
-internal fun loadDescriptorInTest(dir: Path,
-                                  disabledPlugins: Set<PluginId> = emptySet(),
-                                  isBundled: Boolean = false): IdeaPluginDescriptorImpl {
+@JvmOverloads
+internal fun loadDescriptorInTest(
+  dir: Path,
+  isBundled: Boolean = false,
+  disabledPlugins: Set<PluginId> = emptySet(),
+): IdeaPluginDescriptorImpl {
   assertThat(dir).exists()
   PluginManagerCore.getAndClearPluginLoadingErrors()
-  val buildNumber = BuildNumber.fromString("2042.42")!!
-  val parentContext = DescriptorListLoadingContext(disabledPlugins = disabledPlugins,
-                                                   result = PluginLoadingResult(emptyMap(), Supplier { buildNumber }))
-  val result = loadDescriptorFromFileOrDir(file = dir,
-                                           context = parentContext,
-                                           pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
-                                           isBundled = isBundled,
-                                           isEssential = true,
-                                           isDirectory = Files.isDirectory(dir),
-                                           useCoreClassLoader = false)
+
+  val result = loadDescriptorFromFileOrDir(
+    file = dir,
+    context = DescriptorListLoadingContext(disabledPlugins, createPluginLoadingResult()),
+    pathResolver = PluginXmlPathResolver.DEFAULT_PATH_RESOLVER,
+    isBundled = isBundled,
+    isEssential = true,
+    isDirectory = Files.isDirectory(dir),
+    useCoreClassLoader = false,
+    isUnitTestMode = true,
+  )
+
   if (result == null) {
     @Suppress("USELESS_CAST")
     assertThat(PluginManagerCore.getAndClearPluginLoadingErrors()).isNotEmpty()
     throw AssertionError("Cannot load plugin from $dir")
   }
 
-  result.jarFiles = emptyList()
   return result
+}
+
+@JvmOverloads
+internal fun createPluginLoadingResult(checkModuleDependencies: Boolean = false): PluginLoadingResult {
+  val buildNumber = BuildNumber.fromString("2042.42")!!
+  return PluginLoadingResult(
+    brokenPluginVersions = emptyMap(),
+    productBuildNumber = Supplier { buildNumber },
+    checkModuleDependencies = checkModuleDependencies,
+  )
 }
 
 @JvmOverloads

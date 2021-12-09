@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
@@ -21,6 +21,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.testFramework.InspectionsKt;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.SmartList;
+import com.siyeh.ig.junit.TestClassNamingConvention;
 import com.siyeh.ig.naming.ClassNamingConvention;
 import com.siyeh.ig.naming.FieldNamingConventionInspection;
 import com.siyeh.ig.naming.NewClassNamingConventionInspection;
@@ -630,13 +631,32 @@ public class InspectionProfileTest extends LightIdeaTestCase {
     assertThat(importedProfile.writeScheme()).isEqualTo(mergedElement);
   }
 
+  public void testDisabledNamingConvention() throws Exception {
+    InspectionProfileImpl profile = createEmptyProfile();
+    @Language("XML") String customSettingsText = "<profile version=\"1.0\">\n" +
+                                                 "  <option name=\"myName\" value=\"Project Default\" />\n" +
+                                                 "  <inspection_tool class=\"NewClassNamingConvention\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\">\n" +
+                                                 "    <extension name=\"JUnitTestClassNamingConvention\" enabled=\"false\" />\n" +
+                                                 "  </inspection_tool>\n" +
+                                                 "</profile>";
+
+    readFromXml(profile, customSettingsText);
+    assertEquals(customSettingsText, serialize(profile));
+
+    InspectionToolWrapper<?, ?> wrapper = profile.getInspectionTool("NewClassNamingConvention", getProject());
+    assertNotNull(wrapper);
+    NewClassNamingConventionInspection tool = (NewClassNamingConventionInspection)wrapper.getTool();
+    assertTrue(new TestClassNamingConvention().isEnabledByDefault());
+    assertFalse(tool.isConventionEnabled("JUnitTestClassNamingConvention"));
+  }
+
   public void testStoredMemberVisibility() throws Exception {
     InspectionProfileImpl profile = createProfile(new InspectionProfileImpl("foo"));
     profile.readExternal(JDOMUtil.load("<profile version=\"1.0\">\n" +
-                                               "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" checkParameterExcludingHierarchy=\"false\">\n" +
-                                               "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
-                                               "    <option name=\"FIELD\" value=\"true\" />\n" +
-                                               "    <option name=\"METHOD\" value=\"true\" />\n" +
+                                       "  <inspection_tool class=\"unused\" enabled=\"true\" level=\"WARNING\" enabled_by_default=\"true\" checkParameterExcludingHierarchy=\"false\">\n" +
+                                       "    <option name=\"LOCAL_VARIABLE\" value=\"true\" />\n" +
+                                       "    <option name=\"FIELD\" value=\"true\" />\n" +
+                                       "    <option name=\"METHOD\" value=\"true\" />\n" +
                                                "    <option name=\"CLASS\" value=\"true\" />\n" +
                                                "    <option name=\"PARAMETER\" value=\"true\" />\n" +
                                                "    <option name=\"REPORT_PARAMETER_FOR_PUBLIC_METHODS\" value=\"true\" />\n" +
@@ -939,7 +959,7 @@ public class InspectionProfileTest extends LightIdeaTestCase {
   }
 
   public void testDoNotInstantiateOnSave() {
-    InspectionProfileImpl profile = new InspectionProfileImpl("profile", InspectionToolRegistrar.getInstance(), InspectionProfileKt.getBASE_PROFILE());
+    InspectionProfileImpl profile = new InspectionProfileImpl("profile", InspectionToolRegistrar.getInstance(), (InspectionProfileImpl)null);
     assertEquals(0, countInitializedTools(profile));
     List<InspectionToolWrapper<?, ?>> toolWrappers = profile.getInspectionTools(null);
     assertTrue(toolWrappers.size() > 0);

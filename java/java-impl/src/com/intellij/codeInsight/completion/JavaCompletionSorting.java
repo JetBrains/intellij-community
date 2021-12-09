@@ -64,6 +64,11 @@ public final class JavaCompletionSorting {
       sorter = ((CompletionSorterImpl)sorter).withClassifier("liftShorterClasses", true, new LiftShorterClasses(position));
     }
 
+    PsiClassType serviceType = getServiceType(position);
+    if (serviceType != null) {
+      sorter = sorter.weighBefore("liftShorter", new PreferImplementor(serviceType));
+    }
+
     PsiElement parent = position.getParent();
     if (parent instanceof PsiReferenceExpression && !(parent instanceof PsiMethodReferenceExpression) &&
         !ExpressionUtils.isVoidContext((PsiReferenceExpression)parent)) {
@@ -104,6 +109,19 @@ public final class JavaCompletionSorting {
     sorter = sorter.weighAfter("stats", afterStats.toArray(new LookupElementWeigher[0]));
     sorter = sorter.weighAfter("proximity", afterProximity.toArray(new LookupElementWeigher[0]));
     return result.withRelevanceSorter(sorter);
+  }
+
+  private static @Nullable PsiClassType getServiceType(PsiElement position) {
+    if (position.getParent() instanceof PsiJavaCodeReferenceElement) {
+      PsiElement refList = position.getParent().getParent();
+      if (refList instanceof PsiReferenceList) {
+        PsiElement parent = refList.getParent();
+        if (parent instanceof PsiProvidesStatement) {
+          return ((PsiProvidesStatement)parent).getInterfaceType();
+        }
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -554,6 +572,24 @@ public final class JavaCompletionSorting {
         return lookupItem.getBracketsCount() * 10 + (lookupItem.isAddArrayInitializer() ? 1 : 0);
       }
       return 0;
+    }
+  }
+
+  private static class PreferImplementor extends LookupElementWeigher {
+    private final @NotNull PsiType myOrigType;
+
+    private PreferImplementor(@NotNull PsiType type) {
+      super("implementor");
+      myOrigType = type;
+    }
+
+    @Override
+    public @Nullable Boolean weigh(@NotNull LookupElement element) {
+      PsiClass psiClass = ObjectUtils.tryCast(element.getObject(), PsiClass.class);
+      if (psiClass == null) return true;
+      PsiClassType type = JavaPsiFacade.getElementFactory(psiClass.getProject()).createType(psiClass);
+      return psiClass.isInterface() || psiClass.hasModifierProperty(PsiModifier.ABSTRACT) ||
+             !myOrigType.isAssignableFrom(type);
     }
   }
 

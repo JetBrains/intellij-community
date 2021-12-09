@@ -23,6 +23,11 @@ public final class Strings {
   }
 
   @Contract(pure = true)
+  public static boolean isDecimalDigit(char c) {
+    return c >= '0' && c <= '9';
+  }
+
+  @Contract(pure = true)
   public static int compare(char c1, char c2, boolean ignoreCase) {
     // duplicating String.equalsIgnoreCase logic
     int d = c1 - c2;

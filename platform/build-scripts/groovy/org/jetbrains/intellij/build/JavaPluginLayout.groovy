@@ -88,7 +88,7 @@ final class JavaPluginLayout {
       withModuleLibrary("jshell-frontend", "intellij.java.execution.impl", "jshell-frontend.jar")
       withModuleLibrary("sa-jdwp", "intellij.java.debugger.impl", "sa-jdwp.jar")
 
-      withResourceArchive("../jdkAnnotations", "lib/jdkAnnotations.jar")
+      withResourceArchive("../jdkAnnotations", "lib/resources/jdkAnnotations.jar")
 
       addition.delegate = delegate
       addition()

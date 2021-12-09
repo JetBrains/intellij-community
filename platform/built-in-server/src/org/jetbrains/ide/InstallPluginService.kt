@@ -15,7 +15,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.AppIcon
 import com.intellij.util.PlatformUtils
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresNoReadLock
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.io.getHostName
 import com.intellij.util.io.origin
 import com.intellij.util.net.NetUtils
@@ -61,7 +61,7 @@ internal class InstallPluginService : RestService() {
   }
 
   @RequiresBackgroundThread
-  @RequiresNoReadLock
+  @RequiresReadLockAbsence
   private fun checkCompatibility(
     request: FullHttpRequest,
     context: ChannelHandlerContext,

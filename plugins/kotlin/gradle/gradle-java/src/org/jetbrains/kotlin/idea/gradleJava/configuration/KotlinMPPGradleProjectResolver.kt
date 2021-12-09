@@ -114,7 +114,8 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 nativeDebugAdvertised = true
                 suggestNativeDebug(resolverCtx.projectPath)
             }
-            if (mppModel.targets.any { it.platform == KotlinPlatform.JS }) {
+            if (!kotlinJsInspectionPackAdvertised && mppModel.targets.any { it.platform == KotlinPlatform.JS }) {
+                kotlinJsInspectionPackAdvertised = true
                 suggestKotlinJsInspectionPackPlugin(resolverCtx.projectPath)
             }
             if (!resolverCtx.isResolveModulePerSourceSet && !PlatformVersion.isAndroidStudio() && !PlatformUtils.isMobileIde() &&
@@ -221,6 +222,7 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
                 by NotNullableCopyableDataNodeUserDataProperty(Key.create<Boolean>("IS_MPP_DATA_INITIALIZED"), false)
 
         private var nativeDebugAdvertised = false
+        private var kotlinJsInspectionPackAdvertised = false
 
         private fun ExternalDependency.getDependencyArtifacts(): Collection<File> =
             when (this) {

@@ -9,7 +9,7 @@ import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -54,9 +54,8 @@ public class GeneralModuleType extends ModuleType<ModuleBuilder>{
         public void update(@NotNull Module module, @NotNull ModifiableRootModel rootModel) {
           String basePath = module.getProject().getBasePath();
           LOG.assertTrue(basePath != null);
-          VirtualFile file = LocalFileSystem.getInstance().findFileByPath(basePath);
-          LOG.assertTrue(file != null);
-          rootModel.addContentEntry(file);
+          String url = VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, basePath);
+          rootModel.addContentEntry(url);
         }
       });
     }

@@ -101,7 +101,7 @@ final class ActionUpdater {
     myToolbarAction = isToolbarAction;
     myEventTransform = eventTransform;
     myLaterInvocator = laterInvocator;
-    myPreCacheSlowDataKeys = Utils.isAsyncDataContext(dataContext);
+    myPreCacheSlowDataKeys = Utils.isAsyncDataContext(dataContext) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
     myForceAsync = Registry.is("actionSystem.update.actions.async.unsafe");
     Op updateOp = myEventTransform == null || Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once") ?
                   Op.update : Op.beforeActionPerformedUpdate;

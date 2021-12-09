@@ -33,9 +33,6 @@ public class JCEFHtmlPanel extends JBCefBrowser {
   public JCEFHtmlPanel(boolean isOffScreenRendering, @Nullable JBCefClient client, @Nullable String url) {
     super(JBCefBrowser.createBuilder().setOffScreenRendering(isOffScreenRendering).setClient(client).setUrl(url));
     myUrl = getCefBrowser().getURL();
-    if (client != null && client != ourCefClient) {
-      Disposer.register(this, client);
-    }
   }
 
   @Override

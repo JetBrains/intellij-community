@@ -44,6 +44,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 
 import static org.jetbrains.annotations.Nls.Capitalization.Sentence;
 
@@ -250,11 +251,11 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                    @NotNull TooManyUsagesStatus tooManyUsagesStatus,
                                                    @NotNull ProgressIndicator indicator,
                                                    @Nullable UsageViewEx usageView,
+                                                   @NotNull Supplier<String> messageSupplier,
                                                    @Nullable Consumer<UsageLimitUtil.Result> onUserClicked) {
     UIUtil.invokeLaterIfNeeded(() -> {
       if (usageView != null && usageView.searchHasBeenCancelled() || indicator.isCanceled()) return;
-      String message = UsageViewBundle.message("find.excessive.usage.count.prompt");
-      UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(project, message);
+      UsageLimitUtil.Result ret = UsageLimitUtil.showTooManyUsagesWarning(project, messageSupplier.get());
       if (ret == UsageLimitUtil.Result.ABORT) {
         if (usageView != null) {
           usageView.cancelCurrentSearch();

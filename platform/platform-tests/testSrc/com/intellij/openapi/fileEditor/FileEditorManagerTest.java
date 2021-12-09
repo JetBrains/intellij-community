@@ -25,6 +25,7 @@ import com.intellij.testFramework.HeavyPlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -34,6 +35,7 @@ import java.util.List;
 import java.util.Objects;
 
 public class FileEditorManagerTest extends FileEditorManagerTestCase {
+
   public void testTabOrder() throws Exception {
     openFiles(STRING.replace("pinned=\"true\"", "pinned=\"false\""));
     assertOpenFiles("1.txt", "foo.xml", "2.txt", "3.txt");
@@ -136,7 +138,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
               "  </component>\n");
     FileEditor[] selectedEditors = myManager.getSelectedEditors();
     assertEquals(1, selectedEditors.length);
-    assertEquals("mockEditor", selectedEditors[0].getName());
+    assertEquals(MyFileEditorProvider.NAME, selectedEditors[0].getName());
   }
 
   public void testTrackSelectedEditor() {
@@ -147,11 +149,11 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals(2, editors.length);
     assertEquals("Text", myManager.getSelectedEditor(file).getName());
     myManager.setSelectedEditor(file, "mock");
-    assertEquals("mockEditor", myManager.getSelectedEditor(file).getName());
+    assertEquals(MyFileEditorProvider.NAME, myManager.getSelectedEditor(file).getName());
 
     VirtualFile file1 = getFile("/src/2.txt");
     myManager.openFile(file1, true);
-    assertEquals("mockEditor", myManager.getSelectedEditor(file).getName());
+    assertEquals(MyFileEditorProvider.NAME, myManager.getSelectedEditor(file).getName());
   }
 
   public void testWindowClosingRetainsOtherWindows() {
@@ -303,6 +305,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals(2, secondaryWindow.getTabCount());
   }
 
+  @Language("XML")
   private static final String STRING = "<component name=\"FileEditorManager\">\n" +
                                        "    <leaf>\n" +
                                        "      <file pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
@@ -351,6 +354,8 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
   }
 
   static class MyFileEditorProvider implements FileEditorProvider {
+    static final String NAME = "MockEditor";
+
     @NotNull
     @Override
     public String getEditorTypeId() {
@@ -366,11 +371,6 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     @Override
     public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
       return new Mock.MyFileEditor() {
-        @Override
-        public boolean isValid() {
-          return true;
-        }
-
         @NotNull
         @Override
         public JComponent getComponent() {
@@ -380,7 +380,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
         @NotNull
         @Override
         public String getName() {
-          return "mockEditor";
+          return NAME;
         }
 
         @Override
@@ -510,4 +510,3 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertFalse(FileEditorManager.getInstance(getProject()).isFileOpen(file)); // must close
   }
 }
-

@@ -1,9 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui;
 
-import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.StartUpMeasurer;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JreHiDpiUtil;
@@ -20,8 +17,6 @@ import javax.swing.*;
 import javax.swing.plaf.FontUIResource;
 import javax.swing.text.DefaultEditorKit;
 import javax.swing.text.StyleContext;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
@@ -29,17 +24,11 @@ import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
 import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.StringReader;
-import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 
 public final class StartupUiUtil {
-  private static volatile StyleSheet ourDefaultHtmlKitCss;
 
   @ApiStatus.Internal
   @NonNls public static final String[] ourPatchableFontResources = {"Button.font", "ToggleButton.font", "RadioButton.font",
@@ -50,35 +39,6 @@ public final class StartupUiUtil {
     "TitledBorder.font", "ToolBar.font", "ToolTip.font", "Tree.font"};
 
   public static final String ARIAL_FONT_NAME = "Arial";
-
-  public static void configureHtmlKitStylesheet() {
-    if (ourDefaultHtmlKitCss != null) {
-      return;
-    }
-
-    Activity activity = StartUpMeasurer.startActivity("html kit configuration");
-
-    // save the default JRE CSS and ..
-    HTMLEditorKit kit = new HTMLEditorKit();
-    ourDefaultHtmlKitCss = kit.getStyleSheet();
-    // .. erase global ref to this CSS so no one can alter it
-    kit.setStyleSheet(null);
-
-    // Applied to all JLabel instances, including subclasses. Supported in JBR only.
-    UIManager.getDefaults().put("javax.swing.JLabel.userStyleSheet", JBHtmlEditorKit.createStyleSheet());
-    activity.end();
-  }
-
-  public static @NotNull StyleSheet createStyleSheet(@NotNull String css) {
-    StyleSheet styleSheet = new StyleSheet();
-    try {
-      styleSheet.loadRules(new StringReader(css), null);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e); // shouldn't happen
-    }
-    return styleSheet;
-  }
 
   public static boolean isUnderDarcula() {
     return UIManager.getLookAndFeel().getName().contains("Darcula");
@@ -110,10 +70,6 @@ public final class StartupUiUtil {
 
   static int normalizeLcdContrastValue(int lcdContrastValue) {
     return (lcdContrastValue < 100 || lcdContrastValue > 250) ? 140 : lcdContrastValue;
-  }
-
-  static StyleSheet getDefaultHtmlKitCss() {
-    return ourDefaultHtmlKitCss;
   }
 
   /**
@@ -303,22 +259,6 @@ public final class StartupUiUtil {
 
   public static boolean isDialogFont(@NotNull Font font) {
     return Font.DIALOG.equals(font.getFamily(Locale.US));
-  }
-
-  public static @Nullable StyleSheet loadStyleSheet(@Nullable URL url) {
-    if (url == null) {
-      return null;
-    }
-
-    try {
-      StyleSheet styleSheet = new StyleSheet();
-      styleSheet.loadRules(new InputStreamReader(url.openStream(), StandardCharsets.UTF_8), url);
-      return styleSheet;
-    }
-    catch (IOException e) {
-      Logger.getInstance(StartupUiUtil.class).warn(url + " loading failed", e);
-      return null;
-    }
   }
 
   public static void initInputMapDefaults(UIDefaults defaults) {

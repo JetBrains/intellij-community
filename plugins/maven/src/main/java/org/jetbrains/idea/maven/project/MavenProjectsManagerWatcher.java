@@ -20,8 +20,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.project.importing.MavenImportingManager;
 import org.jetbrains.idea.maven.utils.MavenLog;
 
 import java.util.ArrayList;
@@ -103,6 +105,10 @@ public class MavenProjectsManagerWatcher {
    * if project is closed)
    */
   public Promise<Void> scheduleUpdateAll(boolean force, final boolean forceImportAndResolve) {
+    if(Registry.is("maven.new.import")) {
+      return Promises.resolvedPromise();
+    }
+
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     // display all import activities using the same build progress
     MavenSyncConsole.startTransaction(myProject);
@@ -120,6 +126,10 @@ public class MavenProjectsManagerWatcher {
                                       List<VirtualFile> filesToDelete,
                                       boolean force,
                                       final boolean forceImportAndResolve) {
+
+    if(Registry.is("maven.new.import")) {
+      return Promises.resolvedPromise();
+    }
     final AsyncPromise<Void> promise = new AsyncPromise<>();
     // display all import activities using the same build progress
     MavenSyncConsole.startTransaction(myProject);

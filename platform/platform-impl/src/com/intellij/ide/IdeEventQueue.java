@@ -715,10 +715,7 @@ public final class IdeEventQueue extends EventQueue {
     }
 
     if (e instanceof WindowEvent || e instanceof FocusEvent || e instanceof InputEvent) {
-      ActivityTracker.getInstance().inc();
-      if (e instanceof InputEvent) {
-        processIdleActivityListeners(e);
-      }
+      processIdleActivityListeners(e);
     }
 
     if (myPopupManager.isPopupActive() && myPopupManager.dispatch(e)) {
@@ -776,6 +773,14 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private void processIdleActivityListeners(@NotNull AWTEvent e) {
+    boolean isActivityInputEvent = KeyEvent.KEY_PRESSED == e.getID() ||
+                                   KeyEvent.KEY_TYPED == e.getID() ||
+                                   MouseEvent.MOUSE_PRESSED == e.getID() ||
+                                   MouseEvent.MOUSE_RELEASED == e.getID() ||
+                                   MouseEvent.MOUSE_CLICKED == e.getID();
+    if (isActivityInputEvent || !(e instanceof InputEvent)) {
+      ActivityTracker.getInstance().inc();
+    }
     synchronized (myLock) {
       myIdleRequestsAlarm.cancelAllRequests();
       for (Runnable idleListener : myIdleListeners) {
@@ -787,11 +792,7 @@ public final class IdeEventQueue extends EventQueue {
           myIdleRequestsAlarm.addRequest(request, request.getTimeout(), ModalityState.NON_MODAL);
         }
       }
-      if (KeyEvent.KEY_PRESSED == e.getID() ||
-          KeyEvent.KEY_TYPED == e.getID() ||
-          MouseEvent.MOUSE_PRESSED == e.getID() ||
-          MouseEvent.MOUSE_RELEASED == e.getID() ||
-          MouseEvent.MOUSE_CLICKED == e.getID()) {
+      if (isActivityInputEvent) {
         myLastActiveTime = System.nanoTime();
         for (Runnable activityListener : myActivityListeners) {
           activityListener.run();

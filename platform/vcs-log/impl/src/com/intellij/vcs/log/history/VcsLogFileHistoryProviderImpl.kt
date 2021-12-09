@@ -15,7 +15,6 @@ import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogUiEx
-import com.intellij.vcs.log.ui.table.GraphTableModel
 import com.intellij.vcs.log.util.VcsLogUtil
 import com.intellij.vcs.log.util.VcsLogUtil.jumpToRow
 import com.intellij.vcs.log.visible.VisiblePack
@@ -160,14 +159,14 @@ private fun selectRowWhenOpen(logManager: VcsLogManager, hash: Hash?, root: Virt
 
 private fun VcsLogUiEx.jumpToNearestCommit(storage: VcsLogStorage, hash: Hash, root: VirtualFile, silently: Boolean) {
   jumpTo(hash, { visiblePack: VisiblePack, h: Hash? ->
-    if (!storage.containsCommit(CommitId(h!!, root))) return@jumpTo GraphTableModel.COMMIT_NOT_FOUND
+    if (!storage.containsCommit(CommitId(h!!, root))) return@jumpTo VcsLogUiEx.COMMIT_NOT_FOUND
 
     val commitIndex: Int = storage.getCommitIndex(h, root)
     var rowIndex = visiblePack.visibleGraph.getVisibleRowIndex(commitIndex)
     if (rowIndex == null) {
       rowIndex = findVisibleAncestorRow(commitIndex, visiblePack)
     }
-    rowIndex ?: GraphTableModel.COMMIT_DOES_NOT_MATCH
+    rowIndex ?: VcsLogUiEx.COMMIT_DOES_NOT_MATCH
   }, SettableFuture.create(), silently, true)
 }
 

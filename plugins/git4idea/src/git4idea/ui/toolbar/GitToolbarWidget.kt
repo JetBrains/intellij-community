@@ -27,6 +27,7 @@ import java.util.concurrent.Executor
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
+import javax.swing.UIManager
 
 internal data class Changes(val incoming: Boolean, val outgoing: Boolean)
 
@@ -34,6 +35,9 @@ class GitToolbarWidgetFactory : MainToolbarWidgetFactory, Disposable {
 
   override fun createWidget(): JComponent {
     val widget = GitToolbarWidget()
+    UIManager.getColor("MainToolbar.dropdown.foreground")?.let { widget.foreground = it }
+    UIManager.getColor("MainToolbar.dropdown.background")?.let { widget.background = it }
+    UIManager.getColor("MainToolbar.dropdown.hoverBackground")?.let { widget.hoverBackground = it }
     GitWidgetUpdater(getCurrentProject(), widget).subscribe()
     return widget
   }
@@ -101,7 +105,8 @@ private class GitWidgetUpdater(project: Project?, val widget: GitToolbarWidget) 
   private fun updateWidget() {
     widget.project = currentProject
     widget.repository = repository
-    widget.text = repository?.currentBranchName ?: GitBundle.message("git.toolbar.widget.no.repo")
+    widget.text = repository?.currentBranchName?.let { cutText(it) } ?: GitBundle.message("git.toolbar.widget.no.repo")
+    widget.toolTipText = repository?.currentBranchName?.let { GitBundle.message("git.toolbar.widget.tooltip", it) }
     updateIcons()
   }
 
@@ -121,6 +126,18 @@ private class GitWidgetUpdater(project: Project?, val widget: GitToolbarWidget) 
     val settings = GitVcsSettings.getInstance(project)
     return DvcsUtil.guessCurrentRepositoryQuick(project, GitUtil.getRepositoryManager(project), settings.recentRootPath)
   }
+}
+
+private const val MAX_TEXT_LENGTH = 24
+private const val SHORTENED_BEGIN_PART = 16
+private const val SHORTENED_END_PART = 8
+
+private fun cutText(value: String?): String? {
+  if (value == null || value.length <= MAX_TEXT_LENGTH) return value
+
+  val beginRange = IntRange(0, SHORTENED_BEGIN_PART)
+  val endRange = IntRange(value.length - SHORTENED_END_PART, value.length)
+  return value.substring(beginRange) + "..." + value.substring(endRange)
 }
 
 private class GitToolbarWidget : ToolbarComboWidget(), Disposable {

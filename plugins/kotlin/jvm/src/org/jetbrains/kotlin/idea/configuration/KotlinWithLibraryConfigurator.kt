@@ -99,7 +99,9 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
             modulesToConfigure = dialog.modulesToConfigure
         }
 
+
         val collector = createConfigureKotlinNotificationCollector(project)
+        getOrCreateKotlinLibrary(project, collector)
         val writeActions = mutableListOf<() -> Unit>()
         underModalProgress(
             project,
@@ -125,9 +127,17 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         collector.showNotification()
     }
 
+    fun getOrCreateKotlinLibrary(
+        project: Project,
+        collector: NotificationMessageCollector
+    ) {
+        getKotlinLibrary(project) ?: createNewLibrary(project, collector)
+    }
+
     @Suppress("unused") // Please do not delete this function (used in ProcessingKt plugin)
     fun configureSilently(project: Project) {
         val collector = createConfigureKotlinNotificationCollector(project)
+        getOrCreateKotlinLibrary(project, collector)
         for (module in ModuleManager.getInstance(project).modules) {
             configureModule(module, collector)
         }
@@ -143,7 +153,7 @@ abstract class KotlinWithLibraryConfigurator<P : LibraryProperties<*>> protected
         val library = (findAndFixBrokenKotlinLibrary(module, collector)
             ?: getKotlinLibrary(module)
             ?: getKotlinLibrary(project)
-            ?: createNewLibrary(project, collector)) as LibraryEx
+            ?: error("Kotlin Library has to be created in advance")) as LibraryEx
 
         val sdk = module.sdk
         library.modifiableModel.let { libraryModel ->

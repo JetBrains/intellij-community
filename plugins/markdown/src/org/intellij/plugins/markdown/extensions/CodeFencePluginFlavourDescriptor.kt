@@ -7,18 +7,18 @@ import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes.CODE_FENCE
 import org.intellij.markdown.flavours.commonmark.CommonMarkFlavourDescriptor
 import org.intellij.markdown.html.GeneratingProvider
-import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFenceGeneratingProvider
+import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCacheCollector
 
 class CodeFencePluginFlavourDescriptor : CommonMarkFlavourDescriptor() {
 
   fun createHtmlGeneratingProviders(collector: MarkdownCodeFencePluginCacheCollector, project: Project? = null, file: VirtualFile? = null): Map<IElementType, GeneratingProvider> {
     return mapOf(
-      CODE_FENCE to MarkdownCodeFenceGeneratingProvider(
-        MarkdownCodeFencePluginGeneratingProvider.all
+      CODE_FENCE to DefaultCodeFenceGeneratingProvider(
+        CodeFenceGeneratingProvider.all
           .also { all -> all.forEach { if (it is MarkdownCodeFenceCacheableProvider) it.collector = collector } }
           .toTypedArray()
-      , project, file)
+        , project, file)
     )
   }
 }

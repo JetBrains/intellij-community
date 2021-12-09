@@ -40,6 +40,7 @@ envs {
   String python37version = "3.7.9"
   String python38version = "3.8.10"
   String python39version = "3.9.5"
+  String python310version = "3.10.0"
 
   bootstrapDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHONS", new File(buildDir, 'pythons').path))
   envsDirectory = new File(System.getenv().getOrDefault("PYCHARM_PYTHON_VIRTUAL_ENVS", new File(buildDir, 'envs').path))
@@ -126,6 +127,12 @@ envs {
                python39version,
                ["pytest", "pytest-xdist"],
                "python3.9\npython3\npytest\nxdist\npackaging",
+               true)
+
+  createPython("python3.10",
+               python310version,
+               [],
+               "python3.10",
                true)
 
   // For tox

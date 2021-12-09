@@ -1435,7 +1435,7 @@ public class UiInspectorAction extends DumbAwareAction implements LightEditCompa
     }
 
     @Nullable
-    private static Color getBorderColor(@NotNull Border value) {
+    private static Color getBorderColor(@Nullable Border value) {
       if (value instanceof LineBorder) {
         return ((LineBorder)value).getLineColor();
       }

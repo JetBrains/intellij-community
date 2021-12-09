@@ -1,9 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.vars;
 
+import org.jetbrains.java.decompiler.code.CodeConstants;
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.collectors.VarNamesCollector;
+import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
+import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
@@ -20,10 +24,17 @@ public class VarProcessor {
   private VarVersionsProcessor varVersions;
   private final Map<VarVersionPair, String> thisVars = new HashMap<>();
   private final Set<VarVersionPair> externalVars = new HashSet<>();
+  private final BitSet finalParameters = new BitSet();
+  private final int firstParameterVarIndex;
+  private final int firstParameterPosition;
 
-  public VarProcessor(StructMethod mt, MethodDescriptor md) {
+  public VarProcessor(StructClass cl, StructMethod mt, MethodDescriptor md) {
     method = mt;
     methodDescriptor = md;
+    boolean isEnum = cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
+    boolean isEnumInit = isEnum && CodeConstants.INIT_NAME.equals(mt.getName());
+    firstParameterVarIndex = isEnumInit ? 3 : !mt.hasModifier(CodeConstants.ACC_STATIC) ? 1 : 0;
+    firstParameterPosition = isEnumInit ? 2 : 0;
   }
 
   public void setVarVersions(RootStatement root) {
@@ -120,5 +131,21 @@ public class VarProcessor {
 
   public Set<VarVersionPair> getExternalVars() {
     return externalVars;
+  }
+
+  public boolean isParameterFinal(VarVersionPair pair) {
+    return finalParameters.get(pair.var);
+  }
+
+  public void setParameterFinal(VarVersionPair pair) {
+    finalParameters.set(pair.var);
+  }
+
+  public int getFirstParameterVarIndex() {
+    return firstParameterVarIndex;
+  }
+
+  public int getFirstParameterPosition() {
+    return firstParameterPosition;
   }
 }

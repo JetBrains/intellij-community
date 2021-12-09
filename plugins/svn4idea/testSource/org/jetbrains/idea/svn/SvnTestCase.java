@@ -242,7 +242,10 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase {
     runInEdtAndWait(() -> {
       final TestDialog oldTestDialog = TestDialogManager.setTestDialog(TestDialog.OK);
       try {
-        UndoManager.getInstance(myProject).undo(null);
+        UndoManager undoManager = UndoManager.getInstance(myProject);
+
+        assertTrue("undo is not available", undoManager.isUndoAvailable(null));
+        undoManager.undo(null);
       }
       finally {
         TestDialogManager.setTestDialog(oldTestDialog);

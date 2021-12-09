@@ -20,130 +20,286 @@ import org.junit.runner.RunWith;
 public abstract class ProjectTemplateNewWizardProjectImportTestGenerated extends AbstractProjectTemplateNewWizardProjectImportTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
-    public static class GradleKts extends AbstractProjectTemplateNewWizardProjectImportTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
+    public abstract static class GradleKts extends AbstractProjectTemplateNewWizardProjectImportTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestComposeDesktopApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
+            }
+
+            @TestMetadata("composeDesktopApplication")
+            public void testComposeDesktopApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/composeDesktopApplication/");
+            }
         }
 
-        @TestMetadata("composeDesktopApplication")
-        public void testComposeDesktopApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/composeDesktopApplication/");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestComposeMultiplatformApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
+            }
+
+            @TestMetadata("composeMultiplatformApplication")
+            public void testComposeMultiplatformApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/composeMultiplatformApplication/");
+            }
         }
 
-        @TestMetadata("composeMultiplatformApplication")
-        public void testComposeMultiplatformApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/composeMultiplatformApplication/");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestConsoleApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
+            }
+
+            @TestMetadata("consoleApplication")
+            public void testConsoleApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/consoleApplication/");
+            }
         }
 
-        @TestMetadata("consoleApplication")
-        public void testConsoleApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/consoleApplication/");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestFrontendApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
+            }
+
+            @TestMetadata("frontendApplication")
+            public void testFrontendApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/frontendApplication/");
+            }
         }
 
-        @TestMetadata("frontendApplication")
-        public void testFrontendApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/frontendApplication/");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestFullStackWebApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
+            }
+
+            @TestMetadata("fullStackWebApplication")
+            public void testFullStackWebApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/fullStackWebApplication/");
+            }
         }
 
-        @TestMetadata("fullStackWebApplication")
-        public void testFullStackWebApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/fullStackWebApplication/");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestMultiplatformLibrary extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
+            }
+
+            @TestMetadata("multiplatformLibrary")
+            public void testMultiplatformLibrary() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformLibrary/");
+            }
         }
 
-        @TestMetadata("multiplatformLibrary")
-        public void testMultiplatformLibrary() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformLibrary/");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestNativeApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestGradleKts, this, testDataFilePath);
+            }
 
-        @TestMetadata("nativeApplication")
-        public void testNativeApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/nativeApplication/");
+            @TestMetadata("nativeApplication")
+            public void testNativeApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/nativeApplication/");
+            }
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
-    public static class GradleGroovy extends AbstractProjectTemplateNewWizardProjectImportTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
+    public abstract static class GradleGroovy extends AbstractProjectTemplateNewWizardProjectImportTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestComposeDesktopApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
+            }
+
+            @TestMetadata("composeDesktopApplication")
+            public void testComposeDesktopApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/composeDesktopApplication/");
+            }
         }
 
-        @TestMetadata("composeDesktopApplication")
-        public void testComposeDesktopApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/composeDesktopApplication/");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestComposeMultiplatformApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
+            }
+
+            @TestMetadata("composeMultiplatformApplication")
+            public void testComposeMultiplatformApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/composeMultiplatformApplication/");
+            }
         }
 
-        @TestMetadata("composeMultiplatformApplication")
-        public void testComposeMultiplatformApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/composeMultiplatformApplication/");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestConsoleApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
+            }
+
+            @TestMetadata("consoleApplication")
+            public void testConsoleApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/consoleApplication/");
+            }
         }
 
-        @TestMetadata("consoleApplication")
-        public void testConsoleApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/consoleApplication/");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestFrontendApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
+            }
+
+            @TestMetadata("frontendApplication")
+            public void testFrontendApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/frontendApplication/");
+            }
         }
 
-        @TestMetadata("frontendApplication")
-        public void testFrontendApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/frontendApplication/");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestFullStackWebApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
+            }
+
+            @TestMetadata("fullStackWebApplication")
+            public void testFullStackWebApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/fullStackWebApplication/");
+            }
         }
 
-        @TestMetadata("fullStackWebApplication")
-        public void testFullStackWebApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/fullStackWebApplication/");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestMultiplatformLibrary extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
+            }
+
+            @TestMetadata("multiplatformLibrary")
+            public void testMultiplatformLibrary() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformLibrary/");
+            }
         }
 
-        @TestMetadata("multiplatformLibrary")
-        public void testMultiplatformLibrary() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformLibrary/");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestNativeApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestGradleGroovy, this, testDataFilePath);
+            }
 
-        @TestMetadata("nativeApplication")
-        public void testNativeApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/nativeApplication/");
+            @TestMetadata("nativeApplication")
+            public void testNativeApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/nativeApplication/");
+            }
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
-    public static class Maven extends AbstractProjectTemplateNewWizardProjectImportTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
+    public abstract static class Maven extends AbstractProjectTemplateNewWizardProjectImportTest {
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestComposeDesktopApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
+            }
+
+            @TestMetadata("composeDesktopApplication")
+            public void testComposeDesktopApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/composeDesktopApplication/");
+            }
         }
 
-        @TestMetadata("composeDesktopApplication")
-        public void testComposeDesktopApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/composeDesktopApplication/");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestComposeMultiplatformApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
+            }
+
+            @TestMetadata("composeMultiplatformApplication")
+            public void testComposeMultiplatformApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/composeMultiplatformApplication/");
+            }
         }
 
-        @TestMetadata("composeMultiplatformApplication")
-        public void testComposeMultiplatformApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/composeMultiplatformApplication/");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestConsoleApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
+            }
+
+            @TestMetadata("consoleApplication")
+            public void testConsoleApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/consoleApplication/");
+            }
         }
 
-        @TestMetadata("consoleApplication")
-        public void testConsoleApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/consoleApplication/");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestFrontendApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
+            }
+
+            @TestMetadata("frontendApplication")
+            public void testFrontendApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/frontendApplication/");
+            }
         }
 
-        @TestMetadata("frontendApplication")
-        public void testFrontendApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/frontendApplication/");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestFullStackWebApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
+            }
+
+            @TestMetadata("fullStackWebApplication")
+            public void testFullStackWebApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/fullStackWebApplication/");
+            }
         }
 
-        @TestMetadata("fullStackWebApplication")
-        public void testFullStackWebApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/fullStackWebApplication/");
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestMultiplatformLibrary extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
+            }
+
+            @TestMetadata("multiplatformLibrary")
+            public void testMultiplatformLibrary() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformLibrary/");
+            }
         }
 
-        @TestMetadata("multiplatformLibrary")
-        public void testMultiplatformLibrary() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/multiplatformLibrary/");
-        }
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../cli/testData/projectTemplatesBuildFileGeneration")
+        public static class TestNativeApplication extends AbstractProjectTemplateNewWizardProjectImportTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTestMaven, this, testDataFilePath);
+            }
 
-        @TestMetadata("nativeApplication")
-        public void testNativeApplication() throws Exception {
-            runTest("../cli/testData/projectTemplatesBuildFileGeneration/nativeApplication/");
+            @TestMetadata("nativeApplication")
+            public void testNativeApplication() throws Exception {
+                runTest("../cli/testData/projectTemplatesBuildFileGeneration/nativeApplication/");
+            }
         }
     }
 }

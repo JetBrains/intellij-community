@@ -1,7 +1,7 @@
 fragment pullRequestInfo on PullRequest {
   ...pullRequestInfoShort
 
-  bodyHTML
+  body
 
   author {
     ...actorInfo

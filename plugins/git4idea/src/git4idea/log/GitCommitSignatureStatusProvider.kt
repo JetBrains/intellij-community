@@ -5,10 +5,10 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfo
-import com.intellij.vcs.log.data.util.VcsCommitsDataLoader
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.util.ui.EmptyIcon
+import com.intellij.vcs.log.data.util.VcsCommitsDataLoader
 import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusPresentation
 import com.intellij.vcs.log.ui.frame.VcsCommitExternalStatusProvider
 import com.intellij.vcs.log.ui.table.column.util.VcsLogExternalStatusColumnService
@@ -52,17 +52,19 @@ internal class GitCommitSignatureStatusProvider : VcsCommitExternalStatusProvide
 
       override val text: String
         get() = when (signature) {
-          is GitCommitSignature.Verified ->
-            HtmlBuilder()
-              .append(GitBundle.message("tooltip.commit.signature.verify.success"))
-              .append(HtmlChunk.br())
-              .append(signature.user)
-              .append(HtmlChunk.br())
-              .append(signature.fingerprint)
-              .toFragment().toString()
+          is GitCommitSignature.Verified -> GitBundle.message("tooltip.commit.signature.verify.success")
           GitCommitSignature.NotVerified -> GitBundle.message("tooltip.commit.signature.verify.failure")
           GitCommitSignature.NoSignature -> GitBundle.message("tooltip.no.commit.signature")
         }
+
+      override val description: HtmlChunk?
+        get() = if (signature is GitCommitSignature.Verified)
+          HtmlBuilder()
+            .append(signature.user)
+            .append(HtmlChunk.br())
+            .append(signature.fingerprint)
+            .toFragment()
+        else null
     }
   }
 }

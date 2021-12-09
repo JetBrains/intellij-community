@@ -4,29 +4,50 @@ package com.intellij.openapi.externalSystem.dependency.analyzer
 import com.intellij.openapi.Disposable
 import org.jetbrains.annotations.Nls
 
+/**
+ * Contributor dependencies data for dependency analyzer.
+ *
+ * All functions, which give access for external system dependencies data,
+ * are called from non-modal background thread to free UI thread when data is being loaded.
+ * @see DependencyAnalyzerExtension.createContributor
+ */
 interface DependencyContributor {
 
+  /**
+   * @param listener should be called when dependencies data changed.
+   */
   fun whenDataChanged(listener: () -> Unit, parentDisposable: Disposable)
 
+  /**
+   * Gets external system projects for external system.
+   */
   fun getExternalProjects(): List<ExternalProject>
 
+  /**
+   * Gets scopes/configurations (e.g. compile, runtime, test, etc.) for specified external project.
+   */
   fun getDependencyScopes(externalProjectPath: String): List<Scope>
 
-  fun getDependencyGroups(externalProjectPath: String): List<DependencyGroup>
+  /**
+   * Gets dependencies for specified external project.
+   */
+  fun getDependencies(externalProjectPath: String): List<Dependency>
 
-  fun getInspectionResult(externalProjectPath: String, dependency: Dependency): List<InspectionResult>
-
-  data class ExternalProject(val path: String, val title: @Nls String) {
+  class ExternalProject(val path: String, val title: @Nls String) {
+    override fun equals(other: Any?) = other is ExternalProject && path == other.path
+    override fun hashCode() = path.hashCode()
     override fun toString() = title
   }
 
-  data class Scope(val id: String, val name: @Nls String, val title: @Nls String) {
-    override fun toString() = id
+  class Scope(val id: String, val name: @Nls String, val title: @Nls(capitalization = Nls.Capitalization.Title) String) {
+    override fun equals(other: Any?) = other is Scope && id == other.id
+    override fun hashCode() = id.hashCode()
+    override fun toString() = title
   }
 
-  data class Dependency(val data: Data, val scope: Scope, val usage: Dependency?) {
+  data class Dependency(val data: Data, val scope: Scope, val usage: Dependency?, val status: List<Status>) {
 
-    override fun toString() = "$data -> $usage"
+    override fun toString() = "($scope) $data -> $usage"
 
     sealed interface Data {
 
@@ -40,22 +61,10 @@ interface DependencyContributor {
     }
   }
 
-  data class DependencyGroup(val data: Dependency.Data, val variances: List<Dependency>) {
-    override fun toString() = data.toString()
-  }
+  sealed interface Status {
 
-  interface InspectionResult {
+    object Omitted : Status
 
-    interface Info: InspectionResult {
-
-      object Omitted : Info
-
-      object Duplicate : Info
-    }
-
-    interface Warning : InspectionResult {
-
-      class VersionConflict(val conflicted: Dependency.Data.Artifact) : Warning
-    }
+    class Warning(val message: @Nls String) : Status
   }
 }

@@ -14,8 +14,8 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream
 import com.intellij.util.io.origin
 import com.intellij.util.net.NetUtils
 import com.intellij.util.text.nullize
-import com.jetbrains.packagesearch.intellij.plugin.PACKAGE_SEARCH_NOTIFICATION_GROUP_ID
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.PluginEnvironment
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.PackageSearchToolWindowFactory
 import io.netty.channel.ChannelHandlerContext
 import io.netty.handler.codec.http.FullHttpRequest
@@ -118,7 +118,7 @@ internal class PackageSearchRestService : RestService() {
     @Suppress("DialogTitleCapitalization") // It's the Package Search plugin name...
     private fun notify(project: Project, @Nls pkg: String) =
         NotificationGroupManagerImpl()
-            .getNotificationGroup(PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)
+            .getNotificationGroup(PluginEnvironment.PACKAGE_SEARCH_NOTIFICATION_GROUP_ID)
             .createNotification(
                 PackageSearchBundle.message("packagesearch.title"),
                 PackageSearchBundle.message("packagesearch.restService.readyForInstallation"),

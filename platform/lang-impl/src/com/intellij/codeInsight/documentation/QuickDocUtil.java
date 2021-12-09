@@ -13,6 +13,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -25,10 +26,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SingleAlarm;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import java.util.Objects;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -141,5 +139,17 @@ public final class QuickDocUtil {
         }
       }
     });
+  }
+
+  private static volatile boolean useDocumentationV1 = false;
+
+  @ApiStatus.Internal
+  public static void forceEnableDocumentationV1() {
+    useDocumentationV1 = true;
+  }
+
+  @ApiStatus.Internal
+  public static boolean isDocumentationV2Enabled() {
+    return !useDocumentationV1 && Registry.is("documentation.v2");
   }
 }

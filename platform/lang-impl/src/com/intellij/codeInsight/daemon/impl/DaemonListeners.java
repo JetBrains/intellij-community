@@ -32,7 +32,10 @@ import com.intellij.openapi.command.CommandEvent;
 import com.intellij.openapi.command.CommandListener;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.actionSystem.DocCommandGroupId;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
@@ -598,6 +601,13 @@ public final class DaemonListeners implements Disposable {
         return;
       }
       stopDaemon(true, "Editor typing");
+    }
+
+    @Override
+    public void beforeShortcutTriggered(@NotNull Shortcut shortcut,
+                                        @NotNull List<AnAction> actions,
+                                        @NotNull DataContext dataContext) {
+      stopDaemon(true, "Shortcut triggered");
     }
   }
 

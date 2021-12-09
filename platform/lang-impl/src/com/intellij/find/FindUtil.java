@@ -200,7 +200,7 @@ public final class FindUtil {
     model.setForward(direction == SearchResults.Direction.DOWN);
     model.setStringToFind(s);
     model.setCaseSensitive(true);
-    model.setWholeWordsOnly(!editor.getSelectionModel().hasSelection());
+    model.setWholeWordsOnly(false);
 
     EditorSearchSession searchSession = EditorSearchSession.get(editor);
     if (searchSession != null) {

@@ -16,11 +16,11 @@ import javax.swing.Icon
 @ApiStatus.Internal
 object MarkdownExtensionsUtil {
   fun collectConfigurableExtensions(enabledOnly: Boolean = false): Set<MarkdownConfigurableExtension> {
-    val baseExtensions = MarkdownExtension.all.filterIsInstance<MarkdownConfigurableExtension>().toMutableSet()
-    baseExtensions.addAll(MarkdownBrowserPreviewExtension.Provider.all.filterIsInstance<MarkdownConfigurableExtension>())
+    val extensions = CodeFenceGeneratingProvider.all.filterIsInstance<MarkdownConfigurableExtension>().toMutableSet()
+    extensions.addAll(MarkdownBrowserPreviewExtension.Provider.all.filterIsInstance<MarkdownConfigurableExtension>())
     return when {
-      enabledOnly -> baseExtensions.filter { it.isEnabled }.toSet()
-      else -> baseExtensions
+      enabledOnly -> extensions.filter { it.isEnabled }.toSet()
+      else -> extensions
     }
   }
 

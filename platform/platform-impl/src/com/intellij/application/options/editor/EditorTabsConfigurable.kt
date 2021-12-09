@@ -101,12 +101,12 @@ class EditorTabsConfigurable : BoundSearchableConfigurable(
             .columns(4)
             .bindIntText(ui::editorTabLimit)
         }
-        buttonGroup(ui::closeNonModifiedFilesFirst, message("label.when.number.of.opened.editors.exceeds.tab.limit")) {
+        buttonsGroup(message("label.when.number.of.opened.editors.exceeds.tab.limit")) {
           row { radioButton(message("radio.close.non.modified.files.first"), value = true) }
           row { radioButton(message("radio.close.less.frequently.used.files"), value = false) }
             .bottomGap(BottomGap.SMALL)
-        }
-        buttonGroup(message("label.when.closing.active.editor")) {
+        }.bind(ui::closeNonModifiedFilesFirst)
+        buttonsGroup(message("label.when.closing.active.editor")) {
           row {
             radioButton(message("radio.activate.left.neighbouring.tab")).apply {
               onReset { component.isSelected = !ui.activeRightEditorOnClose && !ui.activeMruEditorOnClose }

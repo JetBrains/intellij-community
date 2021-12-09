@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.code;
 
 @SuppressWarnings({"unused", "SpellCheckingInspection"})
@@ -113,6 +113,7 @@ public interface CodeConstants {
   int CONSTANT_NameAndType = 12;
   int CONSTANT_MethodHandle = 15;
   int CONSTANT_MethodType = 16;
+  int CONSTANT_Dynamic = 17;
   int CONSTANT_InvokeDynamic = 18;
   int CONSTANT_Module = 19;
   int CONSTANT_Package = 20;

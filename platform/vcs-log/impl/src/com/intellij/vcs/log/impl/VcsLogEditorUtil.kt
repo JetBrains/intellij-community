@@ -18,10 +18,6 @@ internal fun findSelectedLogIds(project: Project): Set<String> {
   return FileEditorManager.getInstance(project).selectedEditors.flatMapTo(mutableSetOf(), ::getLogIds)
 }
 
-internal fun getExistingLogIds(project: Project): Set<String> {
-  return FileEditorManager.getInstance(project).allEditors.flatMapTo(mutableSetOf(), ::getLogIds)
-}
-
 internal fun <T : VcsLogUiEx> findVcsLogUi(editors: Array<FileEditor>, clazz: Class<T>): T? {
   return editors.asSequence().flatMap { VcsLogPanel.getLogUis(it.component) }.filterIsInstance(clazz).firstOrNull()
 }

@@ -755,6 +755,7 @@
     "TitlePane": {
       "background": "panel",
       "Button.hoverBackground": "#00000019",
+      "Button.preferredSize": "47,28",
       "inactiveBackground": "panel",
       "inactiveInfoForeground": "grey04",
       "infoForeground": "grey01"
@@ -900,9 +901,30 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.ToolbarComboWidgetUI"
     },
 
+    "MainToolbar": {
+      "icon.borderInsets": "10,10,10,10",
+      "dropdown.borderInsets": "12,6,12,6"
+    },
+
     "Tag": {
       "background": "#dfdfdf"
     },
-    "textInactiveText" : "#808080"
+    "textInactiveText" : "#808080",
+
+    "Lesson": {
+      "shortcutBackground": "#E6EEF7",
+      "stepNumberForeground": "#808080",
+      "Badge.newLessonBackground": "#62B543",
+      "Badge.newLessonForeground": "#FFFFFF"
+    },
+
+    "Tooltip.Learning": {
+      "background": "#1071E8",
+      "borderColor": "#1071E8",
+      "spanBackground": "#0D5CBD",
+      "spanForeground": "#F5F5F5",
+      "foreground": "#F5F5F5",
+      "stepNumberForeground": "#6CA6ED"
+    }
   }
 }

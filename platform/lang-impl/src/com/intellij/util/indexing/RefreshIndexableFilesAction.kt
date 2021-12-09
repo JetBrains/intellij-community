@@ -15,9 +15,11 @@ import com.intellij.openapi.vfs.newvfs.ManagingFS
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 
-internal class RefreshIndexableFilesAction : RecoveryAction {
+@ApiStatus.Internal
+class RefreshIndexableFilesAction : RecoveryAction {
   override val performanceRate: Int
     get() = 9999
   override val presentableName: @Nls(capitalization = Nls.Capitalization.Title) String

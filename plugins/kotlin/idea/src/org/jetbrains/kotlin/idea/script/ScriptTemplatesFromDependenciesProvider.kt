@@ -3,19 +3,23 @@
 package org.jetbrains.kotlin.idea.script
 
 import com.intellij.ProjectTopics
-import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.progress.impl.BackgroundableProcessIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.*
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.search.FileTypeIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.concurrency.AppExecutorUtil
-import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionSourceAsContributor
 import org.jetbrains.kotlin.idea.core.script.ScriptDefinitionsManager
 import org.jetbrains.kotlin.idea.core.script.loadDefinitionsFromTemplatesByPaths
+import org.jetbrains.kotlin.idea.util.runReadActionInSmartMode
+import org.jetbrains.kotlin.idea.util.runWhenSmart
 import org.jetbrains.kotlin.scripting.definitions.SCRIPT_DEFINITION_MARKERS_EXTENSION_WITH_DOT
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.definitions.getEnvironment
@@ -26,7 +30,6 @@ import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
-
 
 class ScriptTemplatesFromDependenciesProvider(private val project: Project) : ScriptDefinitionSourceAsContributor {
     private val logger = Logger.getInstance(ScriptTemplatesFromDependenciesProvider::class.java)
@@ -96,26 +99,25 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
             logger.debug("async script definitions update started")
         }
 
-        ReadAction
-            .nonBlocking<TemplatesWithCp?> {
-                val files = FileTypeIndex.getFiles(ScriptDefinitionMarkerFileType, GlobalSearchScope.allScope(project))
-
-                val (templates, classpath) = getTemplateClassPath(files)
-
-                if (!inProgress.get() || templates.isEmpty()) return@nonBlocking null
-
-                val newTemplates = TemplatesWithCp(templates.toList(), classpath.toList())
-                if (newTemplates == oldTemplates) {
-                    return@nonBlocking null
+        val task = object : Task.Backgroundable(
+            project, KotlinBundle.message("kotlin.script.lookup.definitions"), false
+        ) {
+            override fun run(indicator: ProgressIndicator) {
+                indicator.isIndeterminate = true
+                val (templates, classpath) = project.runReadActionInSmartMode {
+                    val files = mutableSetOf<VirtualFile>()
+                    FileTypeIndex.processFiles(ScriptDefinitionMarkerFileType, {
+                        indicator.checkCanceled()
+                        files.add(it)
+                        true
+                    }, GlobalSearchScope.allScope(project))
+                    getTemplateClassPath(files)
                 }
-                newTemplates
-            }
-            .inSmartMode(project)
-            .expireWith(KotlinPluginDisposable.getInstance(project))
-            .submit(AppExecutorUtil.getAppExecutorService())
-            .onSuccess { newTemplates ->
                 try {
-                    if (!inProgress.get() || newTemplates == null) return@onSuccess onEarlyEnd()
+                    if (!inProgress.get() || templates.isEmpty()) return onEarlyEnd()
+
+                    val newTemplates = TemplatesWithCp(templates.toList(), classpath.toList())
+                    if (!inProgress.get() || newTemplates == oldTemplates) return onEarlyEnd()
 
                     if (logger.isDebugEnabled) {
                         logger.debug("script templates found: $newTemplates")
@@ -155,7 +157,16 @@ class ScriptTemplatesFromDependenciesProvider(private val project: Project) : Sc
                 } finally {
                     inProgress.set(false)
                 }
+
             }
+        }
+
+        project.runWhenSmart {
+            ProgressManager.getInstance().runProcessWithProgressAsynchronously(
+                task,
+                BackgroundableProcessIndicator(task)
+            )
+        }
     }
 
     private fun onEarlyEnd() {

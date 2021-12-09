@@ -1458,10 +1458,11 @@ public final class RunnerContentUi implements ContentUI, Disposable, CellTransfo
     myAttractions.put(Pair.create(null, condition), policy);
   }
 
-  private static LayoutAttractionPolicy getOrCreatePolicyFor(@Nullable String contentId, @Nullable String condition,
-                                                             @NotNull Map<Pair<String, String>, LayoutAttractionPolicy> map,
-                                                             LayoutAttractionPolicy defaultPolicy) {
-    return map.computeIfAbsent(Pair.create(contentId, condition), __ -> defaultPolicy);
+  private static @NotNull LayoutAttractionPolicy getOrCreatePolicyFor(@Nullable String contentId, @Nullable String condition,
+                                                                      @NotNull Map<Pair<String, String>, LayoutAttractionPolicy> map,
+                                                                      LayoutAttractionPolicy defaultPolicy) {
+    LayoutAttractionPolicy policy = map.putIfAbsent(Pair.create(contentId, condition), defaultPolicy);
+    return policy != null ? policy : defaultPolicy;
   }
 
   public @Nullable Content findContent(@NotNull String key) {

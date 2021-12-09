@@ -1,0 +1,42 @@
+<idea-plugin>
+  <name>Settings Sync</name>
+  <id>com.jetbrains.settingsSync</id>
+  <category>IDE Settings</category>
+  <description><![CDATA[
+  <p>Supports sharing settings between installations of IntelliJ Platform based products used by the same developer (or team) on different computers.</p>
+  ]]></description>
+  <vendor>JetBrains</vendor>
+  <resource-bundle>messages.SettingsSyncBundle</resource-bundle>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <!--suppress PluginXmlDynamicPlugin -->
+    <ApplicationLoadListener implementation="com.intellij.settingsSync.SettingsSyncMain"/>
+
+    <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncSettings"/>
+    <applicationConfigurable id="settings.sync"
+                             key="title.settings.sync"
+                             bundle="messages.SettingsSyncBundle"
+                             provider="com.intellij.settingsSync.config.SettingsSyncConfigurableProvider"
+                             groupId="root"
+                             groupWeight="5"/>
+    <applicationService serviceImplementation="com.intellij.settingsSync.auth.SettingsSyncAuthService"/>
+    <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncFacade"/>
+    <notificationGroup displayType="STICKY_BALLOON" id="settingsSync.errors"
+                       bundle="messages.SettingsSyncBundle" key="settingsSync.errors.notificationGroup"/>
+  </extensions>
+
+  <actions>
+    <group id="SettingsSync">
+      <action class="com.intellij.settingsSync.ManualUpdateAction" id="settingsSync.manualUpdate" icon="AllIcons.Chooser.Bottom"/>
+      <action class="com.intellij.settingsSync.ManualPushAction" id="settingsSync.manualPush" icon="AllIcons.Chooser.Top" />
+
+      <add-to-group group-id="NavBarToolBar" anchor="last"/>
+      <add-to-group group-id="MainToolBar" anchor="last"/>
+    </group>
+
+    <action id="SettingsSyncStatusAction" class="com.intellij.settingsSync.config.SettingsSyncStatusAction">
+      <add-to-group group-id="SettingsEntryPointGroup" anchor="after" relative-to-action="WelcomeScreen.Plugins"/>
+    </action>
+  </actions>
+
+</idea-plugin>

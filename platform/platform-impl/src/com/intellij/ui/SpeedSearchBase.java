@@ -274,63 +274,85 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     myComparator = comparator;
   }
 
-  @Nullable
-  protected Object findNextElement(String s) {
-    final int selectedIndex = getSelectedIndex();
-    final ListIterator<?> it = getElementIterator(selectedIndex + 1);
-    final Object current;
-    if (it.hasPrevious()) {
-      current = it.previous();
-      it.next();
-    }
-    else {
-      current = null;
-    }
-    final String _s = s.trim();
-    while (it.hasNext()) {
-      final Object element = it.next();
-      if (isMatchingElement(element, _s)) return element;
-    }
+  protected @Nullable Object findPreviousElement(String s) {
+    final int index = getSelectedIndex();
 
-    if (UISettings.getInstance().getCycleScrolling()) {
-      final ListIterator<Object> i = getElementIterator(0);
-      while (i.hasNext()) {
-        final Object element = i.next();
-        if (isMatchingElement(element, _s)) return element;
-      }
-    }
+    final ListIterator<Object> iterator = getElementIterator(index);
 
-    return current != null && isMatchingElement(current, _s) ? current : null;
+    final Object currentElement = getCurrentElement(iterator);
+    final Object element = doFindPreviousElement(iterator, s.trim(), UISettings.getInstance().getCycleScrolling());
+
+    if (element != null) return element;
+
+    return currentElement != null && isMatchingElement(currentElement, s) ? currentElement : null;
   }
 
-  @Nullable
-  protected Object findPreviousElement(@NotNull String s) {
-    final int selectedIndex = getSelectedIndex();
-    if (selectedIndex < 0) return null;
-    final ListIterator<?> it = getElementIterator(selectedIndex);
+  private @Nullable Object doFindPreviousElement(@NotNull ListIterator<Object> iterator,
+                                                 @NotNull String pattern,
+                                                 boolean cycleScrolling) {
+    while (iterator.hasPrevious()) {
+      final Object previous = iterator.previous();
+      if (isMatchingElement(previous, pattern)) {
+        return previous;
+      }
+    }
+
+    if (cycleScrolling) {
+      while (iterator.hasNext()) {
+        iterator.next();
+      }
+      return doFindPreviousElement(iterator, pattern, false);
+    }
+
+    return null;
+  }
+
+  protected @Nullable Object findNextElement(String s) {
+    final int index = getSelectedIndex();
+    final ListIterator<Object> iterator = getElementIterator(index + 1);
+
+    final Object currentElement = getCurrentElement(iterator);
+
+    final Object element = doFindNextElement(iterator, s.trim(), UISettings.getInstance().getCycleScrolling());
+    if (element != null) return element;
+
+    return currentElement != null && isMatchingElement(currentElement, s) ? currentElement : null;
+  }
+
+  private @Nullable Object doFindNextElement(@NotNull ListIterator<Object> iterator,
+                                             @NotNull String pattern,
+                                             boolean cycleScrolling) {
+
+    while (iterator.hasNext()) {
+      final Object next = iterator.next();
+      if (isMatchingElement(next, pattern)) {
+        return next;
+      }
+    }
+    if (cycleScrolling) {
+      while (iterator.hasPrevious()) {
+        iterator.previous();
+      }
+      return doFindNextElement(iterator, pattern, false);
+    }
+
+    return null;
+  }
+
+  private static @Nullable Object getCurrentElement(ListIterator<Object> iterator) {
     final Object current;
-    if (it.hasNext()) {
-      current = it.next();
-      it.previous();
+    if (iterator.hasPrevious()) {
+      current = iterator.previous();
+      iterator.next();
+    }
+    else if (iterator.hasNext()) {
+      current = iterator.next();
+      iterator.previous();
     }
     else {
       current = null;
     }
-    final String _s = s.trim();
-    while (it.hasPrevious()) {
-      final Object element = it.previous();
-      if (isMatchingElement(element, _s)) return element;
-    }
-
-    if (UISettings.getInstance().getCycleScrolling()) {
-      final ListIterator<Object> i = getElementIterator(getElementCount());
-      while (i.hasPrevious()) {
-        final Object element = i.previous();
-        if (isMatchingElement(element, _s)) return element;
-      }
-    }
-
-    return isMatchingElement(current, _s) ? current : null;
+    return current;
   }
 
   @Nullable
@@ -339,17 +361,21 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     if (selectedIndex < 0) {
       selectedIndex = 0;
     }
-    final ListIterator<Object> it = getElementIterator(selectedIndex);
+    final ListIterator<Object> iterator = getElementIterator(selectedIndex);
     final String _s = s.trim();
-    while (it.hasNext()) {
-      final Object element = it.next();
-      if (isMatchingElement(element, _s)) return element;
+    while (iterator.hasNext()) {
+      final Object element = iterator.next();
+      if (isMatchingElement(element, _s)) {
+        return element;
+      }
     }
     if (selectedIndex > 0) {
-      while (it.hasPrevious()) it.previous();
-      while (it.hasNext() && it.nextIndex() != selectedIndex) {
-        final Object element = it.next();
-        if (isMatchingElement(element, _s)) return element;
+      while (iterator.hasPrevious()) iterator.previous();
+      while (iterator.hasNext() && iterator.nextIndex() != selectedIndex) {
+        final Object element = iterator.next();
+        if (isMatchingElement(element, _s)) {
+          return element;
+        }
       }
     }
     return null;
@@ -357,20 +383,22 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   @Nullable
   private Object findFirstElement(String s) {
-    final String _s = s.trim();
-    for (ListIterator<?> it = getElementIterator(0); it.hasNext();) {
-      final Object element = it.next();
-      if (isMatchingElement(element, _s)) return element;
+    final String pattern = s.trim();
+    final ListIterator<Object> iterator = getElementIterator(0);
+    while (iterator.hasNext()) {
+      final Object element = iterator.next();
+      if (isMatchingElement(element, pattern)) return element;
     }
     return null;
   }
 
   @Nullable
   private Object findLastElement(String s) {
-    final String _s = s.trim();
-    for (ListIterator<?> it = getElementIterator(getElementCount()); it.hasPrevious();) {
-      final Object element = it.previous();
-      if (isMatchingElement(element, _s)) return element;
+    final String pattern = s.trim();
+    final ListIterator<Object> iterator = getElementIterator(getElementCount() - 1);
+    while (iterator.hasPrevious()) {
+      final Object element = iterator.previous();
+      if (isMatchingElement(element, pattern)) return element;
     }
     return null;
   }
@@ -379,7 +407,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     manageSearchPopup(createPopup(searchText));
     if (mySearchPopup != null && myComponent.isDisplayable()) {
       myProcessKeyEventAlarm.cancelAllRequests();
-      myProcessKeyEventAlarm.addRequest(mySearchPopup::refreshSelection, 100L);
+      myProcessKeyEventAlarm.addRequest(this::refreshSelection, 300L);
     }
   }
 
@@ -474,7 +502,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
   protected class SearchPopup extends JPanel implements Disposable {
     protected final SearchField mySearchField;
-    private final Alarm myInsertStringAlarm;
     private String myLastPattern = "";
 
     protected SearchPopup(String initialString) {
@@ -482,8 +509,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
       mySearchField.setBorder(null);
       mySearchField.setBackground(BACKGROUND_COLOR);
       mySearchField.setForeground(FOREGROUND_COLOR);
-
-      myInsertStringAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
 
       mySearchField.setDocument(new PlainDocument() {
         @Override
@@ -498,9 +523,7 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
 
           String newText = oldText.substring(0, offs) + str + oldText.substring(offs);
           super.insertString(offs, str, a);
-          if (myInsertStringAlarm.isDisposed()) return;
-          myInsertStringAlarm.cancelAllRequests();
-          myInsertStringAlarm.addRequest(() -> handleInsert(newText), 100L);
+          handleInsert(newText);
         }
       });
 
@@ -522,12 +545,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
 
     protected void handleInsert(String newText) {
-      if (findElement(newText) == null) {
-        mySearchField.setForeground(ERROR_FOREGROUND_COLOR);
-      }
-      else {
-        mySearchField.setForeground(FOREGROUND_COLOR);
-      }
     }
 
     @Override
@@ -556,12 +573,16 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
         if (myProcessKeyEventAlarm == null || myProcessKeyEventAlarm.isDisposed()) return;
 
         myProcessKeyEventAlarm.cancelAllRequests();
-        myProcessKeyEventAlarm.addRequest(() -> updateSelection(findElement(s)), 300L);
+        myProcessKeyEventAlarm.addRequest(this::updateSelection, 300L);
       }
     }
 
     void refreshSelection() {
       findAndSelectElement(mySearchField.getText());
+    }
+
+    private void updateSelection() {
+      updateSelection(findElement(mySearchField.getText()));
     }
 
     private void updateSelection(Object element) {
@@ -718,8 +739,10 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     if (project != null) {
       myListenerDisposable = Disposer.newDisposable();
       project.getMessageBus().connect(myListenerDisposable).subscribe(ToolWindowManagerListener.TOPIC, myWindowManagerListener);
-      initAlarm(myListenerDisposable);
     }
+
+    myProcessKeyEventAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, mySearchPopup);
+
     JRootPane rootPane = myComponent.getRootPane();
     myPopupLayeredPane = rootPane == null ? null : rootPane.getLayeredPane();
     if (myPopupLayeredPane == null) {
@@ -728,11 +751,6 @@ public abstract class SpeedSearchBase<Comp extends JComponent> extends SpeedSear
     }
     myPopupLayeredPane.add(mySearchPopup, JLayeredPane.POPUP_LAYER);
     moveSearchPopup();
-  }
-
-  private void initAlarm(Disposable disposable) {
-    if (myProcessKeyEventAlarm != null) myProcessKeyEventAlarm.cancelAllRequests();
-    myProcessKeyEventAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, disposable);
   }
 
   private void moveSearchPopup() {

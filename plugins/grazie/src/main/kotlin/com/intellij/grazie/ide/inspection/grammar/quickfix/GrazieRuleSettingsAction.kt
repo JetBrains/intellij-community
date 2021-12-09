@@ -1,5 +1,6 @@
 package com.intellij.grazie.ide.inspection.grammar.quickfix
 
+import com.intellij.codeInsight.intention.CustomizableIntentionAction
 import com.intellij.codeInspection.IntentionAndQuickFixAction
 import com.intellij.grazie.GrazieConfig
 import com.intellij.grazie.ide.fus.GrazieFUSCounter
@@ -14,7 +15,14 @@ import com.intellij.openapi.util.Iconable
 import com.intellij.psi.PsiFile
 import javax.swing.Icon
 
-internal class GrazieRuleSettingsAction(private val ruleName: String, private val rule: Rule) : IntentionAndQuickFixAction(), Iconable {
+internal class GrazieRuleSettingsAction(private val ruleName: String, private val rule: Rule)
+  : IntentionAndQuickFixAction(), Iconable, CustomizableIntentionAction
+{
+  override fun isShowSubmenu(): Boolean = false
+
+  override fun isSelectable(): Boolean = true
+
+  override fun isShowIcon(): Boolean = true
 
   override fun getIcon(flags: Int): Icon = AllIcons.Actions.Edit
 

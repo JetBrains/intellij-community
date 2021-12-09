@@ -8,6 +8,7 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.projectWizard.ProjectTemplateParameterFactory;
 import com.intellij.mock.MockProgressIndicator;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.components.StorageScheme;
 import com.intellij.openapi.module.BasePackageParameterFactory;
 import com.intellij.openapi.module.Module;
@@ -107,7 +108,12 @@ public class SaveProjectAsTemplateTest extends NewProjectWizardTestCase {
     assertThat(zipFile.getFileName().toString()).isEqualTo("foo.zip");
     assertThat(Files.size(zipFile)).isGreaterThan(0);
 
-    Project fromTemplate = createProjectFromTemplate(ProjectTemplatesFactory.CUSTOM_GROUP, "foo", null);
+    Project fromTemplate = Experiments.getInstance().isFeatureEnabled("new.project.wizard") ? createProject(step -> {
+      if (step instanceof ProjectTypeStep) {
+        assertTrue(((ProjectTypeStep)step).setSelectedTemplate("foo", null));
+      }
+    }) : createProjectFromTemplate(ProjectTemplatesFactory.CUSTOM_GROUP, "foo", null);
+
     VirtualFile descriptionFile = SaveProjectAsTemplateAction.getDescriptionFile(fromTemplate, LocalArchivedTemplate.DESCRIPTION_PATH);
     assertNotNull(descriptionFile);
     assertEquals("bar", VfsUtilCore.loadText(descriptionFile));

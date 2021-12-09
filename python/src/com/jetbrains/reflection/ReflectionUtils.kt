@@ -3,13 +3,11 @@ package com.jetbrains.reflection
 
 import java.beans.Introspector
 import java.beans.PropertyDescriptor
-import java.lang.ref.SoftReference
-import java.util.*
 import kotlin.reflect.KClass
 import kotlin.reflect.KMutableProperty
 import kotlin.reflect.KProperty
-import kotlin.reflect.jvm.javaType
 import kotlin.reflect.full.memberProperties
+import kotlin.reflect.jvm.javaType
 
 /**
  * Tools to fetch properties both from Java and Kotlin code and to copy them from one object to another.
@@ -84,20 +82,12 @@ private fun KProperty<*>.isAnnotated(annotation: KClass<*>): Boolean {
   return this.annotations.find { annotation.java.isAssignableFrom(it.javaClass) } != null
 }
 
-
-private val membersCache: MutableMap<KClass<*>, SoftReference<Collection<KProperty<*>>>> = com.intellij.util.containers.ContainerUtil.createSoftMap()
-
-private fun KClass<*>.memberPropertiesCached(): Collection<KProperty<*>> {
-  synchronized(membersCache) {
-    val cache = membersCache[this]?.get()
-    if (cache != null) {
-      return cache
-    }
-    val memberProperties = this.memberProperties
-    membersCache.put(this, SoftReference(memberProperties))
-    return memberProperties
-  }
+private val membersCache = object : ClassValue<Collection<KProperty<*>>>() {
+  override fun computeValue(type: Class<*>): Collection<KProperty<*>> = type.kotlin.memberProperties
 }
+
+private fun KClass<*>.memberPropertiesCached(): Collection<KProperty<*>> = membersCache.get(this.java)
+
 
 /**
  * @param instance object with properties (see module doc)
@@ -117,7 +107,7 @@ fun getProperties(instance: Any, annotationToFilterByClass: Class<*>? = null, us
   else {
     // Kotlin props
     val klass = instance.javaClass.kotlin
-    val allKotlinProperties = LinkedHashSet(klass.memberPropertiesCached().filterIsInstance(KProperty::class.java))
+    val allKotlinProperties = LinkedHashSet(klass.memberPropertiesCached())
 
     val delegatedProperties = ArrayList<Property>() // See DelegationProperty doc
     allKotlinProperties.filter { it.isAnnotated(DelegationProperty::class) }.forEach {

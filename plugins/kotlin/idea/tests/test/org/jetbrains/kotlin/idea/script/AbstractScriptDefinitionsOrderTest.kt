@@ -14,13 +14,9 @@ abstract class AbstractScriptDefinitionsOrderTest : AbstractScriptConfigurationT
     fun doTest(unused: String) {
         configureScriptFile(testDataFile())
 
-        assertException(object : AbstractExceptionCase<ComparisonFailure>() {
-            override fun getExpectedExceptionClass(): Class<ComparisonFailure> = ComparisonFailure::class.java
-
-            override fun tryClosure() {
-                checkHighlighting(editor, false, false)
-            }
-        })
+        assertThrows(ComparisonFailure::class.java) {
+            checkHighlighting(editor, false, false)
+        }
 
         val definitions = InTextDirectivesUtils.findStringWithPrefixes(myFile.text, "// SCRIPT DEFINITIONS: ")
             ?.split(";")

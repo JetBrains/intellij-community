@@ -1,0 +1,56 @@
+{header}
+<title>{repo|escape}: {node|short} {path|escape}</title>
+</head>
+<body>
+
+<div class="container">
+<div class="menu">
+<div class="logo">
+<a href="{logourl}">
+<img src="{staticurl|urlescape}{logoimg}" alt="mercurial" /></a>
+</div>
+<ul>
+<li><a href="{url|urlescape}shortlog/{symrev}{sessionvars%urlparameter}">log</a></li>
+<li><a href="{url|urlescape}graph/{symrev}{sessionvars%urlparameter}">graph</a></li>
+<li><a href="{url|urlescape}tags{sessionvars%urlparameter}">tags</a></li>
+<li><a href="{url|urlescape}bookmarks{sessionvars%urlparameter}">bookmarks</a></li>
+<li><a href="{url|urlescape}branches{sessionvars%urlparameter}">branches</a></li>
+</ul>
+<ul>
+<li><a href="{url|urlescape}rev/{symrev}{sessionvars%urlparameter}">changeset</a></li>
+<li class="active">browse</li>
+</ul>
+<ul>
+{archives%archiveentry}
+</ul>
+<ul>
+ <li><a href="{url|urlescape}help{sessionvars%urlparameter}">help</a></li>
+</ul>
+</div>
+
+<div class="main">
+<h2 class="breadcrumb"><a href="/">Mercurial</a> {pathdef%breadcrumb}</h2>
+<h3>
+ directory {path|escape} @ {rev}:<a href="{url|urlescape}rev/{node|short}{sessionvars%urlparameter}">{node|short}</a>
+ {alltags}
+</h3>
+
+{searchform}
+
+<table class="bigtable">
+<thead>
+<tr>
+  <th class="name">name</th>
+  <th class="size">size</th>
+  <th class="permissions">permissions</th>
+</tr>
+</thead>
+<tbody class="stripes2">
+{ifeq(path, up, '', updirentry)}
+{dentries%direntry}
+{fentries%fileentry}
+</tbody>
+</table>
+</div>
+</div>
+{footer}

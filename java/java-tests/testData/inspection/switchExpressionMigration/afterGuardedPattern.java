@@ -5,10 +5,10 @@ class X {
     private static void test(@NotNull Object object) {
         switch (object) {
             case Integer i ->
-                    // line contains no height
+                // line contains no height
                     System.out.println(i + 1);
             case String s && !s.isEmpty() ->
-                    // line contains no code
+                // line contains no code
                     System.out.println("Goodbye.");
             case null -> System.out.println("c");
             default -> System.out.println("default");

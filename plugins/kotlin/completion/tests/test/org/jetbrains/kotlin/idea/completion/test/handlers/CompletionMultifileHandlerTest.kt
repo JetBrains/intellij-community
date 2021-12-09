@@ -16,38 +16,47 @@ import org.junit.internal.runners.JUnit38ClassRunner
 import org.junit.runner.RunWith
 import java.io.File
 
-@RunWith(JUnit38ClassRunner::class)
-@TestRoot("idea/tests")
-@TestDataPath("\$CONTENT_ROOT")
-@TestMetadata("testData/handlers/multifile")
-class CompletionMultiFileHandlerTest : KotlinFixtureCompletionBaseTestCase() {
-    fun testExtensionFunctionImport() = doTest()
-    fun testExtensionPropertyImport() = doTest()
-    fun testImportAlreadyImportedObject() = doTest()
-    fun testJetClassCompletionImport() = doTest()
-    fun testStaticMethodFromGrandParent() = doTest('\n', "StaticMethodFromGrandParent-1.java", "StaticMethodFromGrandParent-2.java")
-    fun testTopLevelFunctionImport() = doTest()
-    fun testTopLevelFunctionInQualifiedExpr() = doTest()
-    fun testTopLevelPropertyImport() = doTest()
-    fun testTopLevelValImportInStringTemplate() = doTest()
-    fun testNoParenthesisInImports() = doTest()
-    fun testKeywordExtensionFunctionName() = doTest()
-    fun testInfixExtensionCallImport() = doTest()
-    fun testClassWithClassObject() = doTest()
-    fun testGlobalFunctionImportInLambda() = doTest()
-    fun testObjectInStringTemplate() = doTest()
-    fun testPropertyFunctionConflict() = doTest()
-    fun testPropertyFunctionConflict2() = doTest(tailText = " { Int, Int -> ... } (i: (Int, Int) -> Unit) (a.b)")
-    fun testExclCharInsertImport() = doTest('!')
-    fun testPropertyKeysWithPrefixEnter() = doTest('\n', "TestBundle.properties")
-    fun testPropertyKeysWithPrefixTab() = doTest('\t', "TestBundle.properties")
-    fun testFileRefInStringLiteralEnter() = doTest('\n', "foo.txt", "bar.txt")
-    fun testFileRefInStringLiteralTab() = doTest('\t', "foo.txt", "bar.txt")
-    fun testNotImportedExtension() = doTest()
-    fun testNotImportedTypeAlias() = doTest()
-    fun testKT12077() = doTest()
+abstract class CompletionMultiFileHandlerTest : KotlinFixtureCompletionBaseTestCase() {
+    @RunWith(JUnit38ClassRunner::class)
+    @TestRoot("idea/tests")
+    @TestDataPath("\$CONTENT_ROOT")
+    @TestMetadata("testData/handlers/multifile")
+    class TestBucket1 : CompletionMultiFileHandlerTest() {
+        fun testExtensionFunctionImport() = doTest()
+        fun testExtensionPropertyImport() = doTest()
+        fun testImportAlreadyImportedObject() = doTest()
+        fun testJetClassCompletionImport() = doTest()
+        fun testStaticMethodFromGrandParent() = doTest('\n', "StaticMethodFromGrandParent-1.java", "StaticMethodFromGrandParent-2.java")
+        fun testTopLevelFunctionImport() = doTest()
+        fun testTopLevelFunctionInQualifiedExpr() = doTest()
+        fun testTopLevelPropertyImport() = doTest()
+        fun testTopLevelValImportInStringTemplate() = doTest()
+        fun testNoParenthesisInImports() = doTest()
+        fun testKeywordExtensionFunctionName() = doTest()
+        fun testInfixExtensionCallImport() = doTest()
+    }
 
-    fun doTest(completionChar: Char = '\n', vararg extraFileNames: String, tailText: String? = null) {
+    @RunWith(JUnit38ClassRunner::class)
+    @TestRoot("idea/tests")
+    @TestDataPath("\$CONTENT_ROOT")
+    @TestMetadata("testData/handlers/multifile")
+    class TestBucket2 : CompletionMultiFileHandlerTest() {
+        fun testClassWithClassObject() = doTest()
+        fun testGlobalFunctionImportInLambda() = doTest()
+        fun testObjectInStringTemplate() = doTest()
+        fun testPropertyFunctionConflict() = doTest()
+        fun testPropertyFunctionConflict2() = doTest(tailText = " { Int, Int -> ... } (i: (Int, Int) -> Unit) (a.b)")
+        fun testExclCharInsertImport() = doTest('!')
+        fun testPropertyKeysWithPrefixEnter() = doTest('\n', "TestBundle.properties")
+        fun testPropertyKeysWithPrefixTab() = doTest('\t', "TestBundle.properties")
+        fun testFileRefInStringLiteralEnter() = doTest('\n', "foo.txt", "bar.txt")
+        fun testFileRefInStringLiteralTab() = doTest('\t', "foo.txt", "bar.txt")
+        fun testNotImportedExtension() = doTest()
+        fun testNotImportedTypeAlias() = doTest()
+        fun testKT12077() = doTest()
+    }
+
+    protected fun doTest(completionChar: Char = '\n', vararg extraFileNames: String, tailText: String? = null) {
         val fileNameBase = getTestName(false)
         val defaultFiles = listOf("$fileNameBase-1.kt", "$fileNameBase-2.kt")
         val filteredFiles = defaultFiles.filter { File(testDataDirectory, it).exists() }

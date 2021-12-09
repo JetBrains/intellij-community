@@ -96,6 +96,10 @@ public class TextExtractionTest extends BasePlatformTestCase {
     assertEquals("line1\nline2", unknownOffsets(extractText("a.properties", "# line1\n! line2", 4)));
   }
 
+  public void test_multiline_value_in_properties_does_not_include_leading_space() {
+    assertEquals("line1line2", unknownOffsets(extractText("a.properties", "a=line1\\\n \t line2", 4)));
+  }
+
   public void testJavadoc() {
     String docText = "/**\n" +
                      "* Hello {@link #foo},\n" +

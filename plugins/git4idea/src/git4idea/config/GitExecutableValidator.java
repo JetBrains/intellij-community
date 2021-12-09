@@ -32,7 +32,10 @@ import org.jetbrains.annotations.NotNull;
 @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
 public class GitExecutableValidator extends ExecutableValidator {
   public GitExecutableValidator(@NotNull Project project) {
-    super(project, GitBundle.message("git.executable.notification.title"), GitBundle.message("git.executable.notification.description"));
+    super(project,
+          GitBundle.message("git.executable.notification.title"),
+          GitBundle.message("git.executable.notification.description"),
+          GitBundle.message("git.executable.notification.cant.run.in.safe.mode"));
   }
 
   @Override

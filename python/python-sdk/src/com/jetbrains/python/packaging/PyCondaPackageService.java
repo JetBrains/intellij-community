@@ -85,11 +85,23 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   }
 
   @Nullable
-  public static String getSystemCondaExecutable() {
+  private static String getSystemCondaExecutable() {
     final String condaName = SystemInfo.isWindows ? "conda.exe" : "conda";
+
     final File condaInPath = PathEnvironmentVariableUtil.findInPath(condaName);
-    if (condaInPath != null) return condaInPath.getPath();
-    return getCondaExecutableByName(condaName);
+    if (condaInPath != null) {
+      LOG.info("Using " + condaInPath + " as a conda executable (found in PATH)");
+      return condaInPath.getPath();
+    }
+
+    final String condaInRoots = getCondaExecutableByName(condaName);
+    if (condaInRoots != null) {
+      LOG.info("Using " + condaInRoots + " as a conda executable (found by visiting possible conda roots)");
+      return condaInRoots;
+    }
+
+    LOG.info("System conda executable is not found");
+    return null;
   }
 
   @Nullable
@@ -97,11 +109,17 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   public static String getCondaExecutable(@Nullable String sdkPath) {
     if (sdkPath != null) {
       String condaPath = findCondaExecutableRelativeToEnv(sdkPath);
-      if (condaPath != null) return condaPath;
+      if (condaPath != null) {
+        LOG.info("Using " + condaPath + " as a conda executable for " + sdkPath + " (found as a relative to the env)");
+        return condaPath;
+      }
     }
 
-    if (StringUtil.isNotEmpty(getInstance().PREFERRED_CONDA_PATH)) {
-      return getInstance().PREFERRED_CONDA_PATH;
+    final String preferredCondaPath = getInstance().PREFERRED_CONDA_PATH;
+    if (StringUtil.isNotEmpty(preferredCondaPath)) {
+      final String forSdkPath = sdkPath == null ? "" : " for " + sdkPath;
+      LOG.info("Using " + preferredCondaPath + " as a conda executable" + forSdkPath + " (specified as a preferred conda path)");
+      return preferredCondaPath;
     }
 
     return getSystemCondaExecutable();

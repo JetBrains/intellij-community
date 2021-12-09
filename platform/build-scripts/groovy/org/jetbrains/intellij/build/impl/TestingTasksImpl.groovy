@@ -33,6 +33,7 @@ import java.lang.reflect.Modifier
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.Paths
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 import java.util.function.Predicate
@@ -364,10 +365,8 @@ class TestingTasksImpl extends TestingTasks {
     else {
       context.messages.info("Starting ${(testGroups == null ? "all tests" : "test from groups '${testGroups}'")} from classpath of module '$mainModule'")
     }
-    if (options.customJrePath != null) {
-      context.messages.info("JVM: $options.customJrePath")
-    }
-    context.messages.info("JVM options: $allJvmArgs")
+    context.messages.info("Runtime: ${runtimeExecutablePath()}")
+    context.messages.info("Runtime options: $allJvmArgs")
     context.messages.info("System properties: $allSystemProperties")
     context.messages.info("Bootstrap classpath: $bootstrapClasspath")
     context.messages.info("Tests classpath: $testsClasspath")
@@ -383,6 +382,25 @@ class TestingTasksImpl extends TestingTasks {
       runJUnit5Engine(mainModule, allSystemProperties, allJvmArgs, envVariables, bootstrapClasspath, testsClasspath)
     }
     notifySnapshotBuilt(allJvmArgs)
+  }
+
+  private String runtimeExecutablePath() {
+    String path = options.customJrePath
+    if (path == null) {
+      Path runtime = Paths
+        .get(CompilationContextImpl.jbrTargetDir(context.paths.projectHome, context.options))
+        .resolve(context.options.bundledRuntimeVersion.toString())
+      if (SystemInfoRt.isMac) {
+        runtime = runtime.resolve("Contents/Home")
+      }
+      if (Files.exists(runtime.resolve("bin/java"))) {
+        path = runtime.toString()
+      }
+    }
+    if (path == null) {
+      path = System.getProperty("java.home")
+    }
+    return "$path/bin/java"
   }
 
   private void notifySnapshotBuilt(List<String> jvmArgs) {
@@ -486,6 +504,10 @@ class TestingTasksImpl extends TestingTasks {
       def causalProfilingOptions = CausalProfilingOptions.IMPL
       systemProperties["intellij.build.test.patterns"] = causalProfilingOptions.testClass.replace(".", "\\.")
       jvmArgs.addAll(buildCausalProfilingAgentJvmArg(causalProfilingOptions))
+    }
+
+    if (context.options.bundledRuntimeVersion >= 17) {
+      jvmArgs.addAll(OpenedPackages.INSTANCE)
     }
 
     if (suspendDebugProcess) {
@@ -600,9 +622,9 @@ class TestingTasksImpl extends TestingTasks {
       args.add(methodName)
     }
     File argFile = CommandLineWrapperUtil.createArgumentFile(args, Charset.defaultCharset())
-    String javaPath = (options.customJrePath == null ? System.getProperty("java.home") : options.customJrePath) + "/bin/java"
-    context.messages.info("Starting tests on java from " + javaPath)
-    def builder = new ProcessBuilder(javaPath, '@' + argFile.getAbsolutePath())
+    String runtime = runtimeExecutablePath()
+    context.messages.info("Starting tests on runtime " + runtime)
+    def builder = new ProcessBuilder(runtime, '@' + argFile.getAbsolutePath())
     builder.environment().putAll(envVariables)
     final Process exec = builder.start()
 
@@ -660,9 +682,8 @@ class TestingTasksImpl extends TestingTasks {
 
     List<String> teamCityFormatterClasspath = createTeamCityFormatterClasspath()
 
-    String jvmExecutablePath = options.customJrePath != null ? "$options.customJrePath/bin/java" : ""
     context.ant.junit(fork: true, showoutput: isShowAntJunitOutput(), logfailedtests: false,
-                      tempdir: junitTemp, jvm: jvmExecutablePath,
+                      tempdir: junitTemp, jvm: runtimeExecutablePath(),
                       printsummary: (underTeamCity ? "off" : "on"),
                       haltOnFailure: (options.failFast ? "yes" : "no")) {
       jvmArgs.each { jvmarg(value: it) }

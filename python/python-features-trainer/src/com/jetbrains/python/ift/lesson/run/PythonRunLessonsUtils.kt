@@ -12,7 +12,7 @@ object PythonRunLessonsUtils {
         result = 0
         for s in value:
             <caret>result += <select id=1>validate_number(extract_number(remove_quotes(s)))</select>
-        <caret id=3/>return result
+        <caret id=3/>return <select id=4>result / len(value)</select>
     
     
     def prepare_values():

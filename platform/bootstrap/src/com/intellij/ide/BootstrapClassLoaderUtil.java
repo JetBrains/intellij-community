@@ -19,7 +19,6 @@ import java.net.ConnectException;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.file.*;
-import java.security.ProtectionDomain;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.stream.Stream;
@@ -55,7 +54,7 @@ public final class BootstrapClassLoaderUtil {
     if (isDevServer()) {
       ClassLoader classLoader = BootstrapClassLoaderUtil.class.getClassLoader();
       if (!(classLoader instanceof PathClassLoader)) {
-        //noinspection SpellCheckingInspection,UseOfSystemOutOrSystemErr
+        //noinspection UseOfSystemOutOrSystemErr
         System.err.println("Please run with VM option -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader");
         System.exit(1);
       }
@@ -128,8 +127,8 @@ public final class BootstrapClassLoaderUtil {
     }
     else {
       if (useUnifiedClassloader) {
-        //noinspection UseOfSystemOutOrSystemErr,SpellCheckingInspection
-        System.err.println("You should run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader");
+        //noinspection UseOfSystemOutOrSystemErr
+        System.err.println("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader");
       }
       newClassLoader = new PathClassLoader(createNonUnifiedClassloaderBuilder(classpath));
     }
@@ -163,7 +162,6 @@ public final class BootstrapClassLoaderUtil {
     return UrlClassLoader.build()
       .files(filterClassPath(classpath))
       .usePersistentClasspathIndexForLocalClassDirectories()
-      .autoAssignUrlsWithProtectionDomain()
       .parent(ClassLoader.getPlatformClassLoader())
       .useCache()
       .allowBootstrapResources(Boolean.parseBoolean(System.getProperty(PROPERTY_ALLOW_BOOTSTRAP_RESOURCES, "true")));
@@ -378,17 +376,13 @@ public final class BootstrapClassLoaderUtil {
     }
 
     @Override
-    public boolean isApplicable(String className,
-                                ClassLoader loader,
-                                @Nullable ProtectionDomain protectionDomain) {
-      return impl.isApplicable(className, loader, protectionDomain);
+    public boolean isApplicable(String className, ClassLoader loader) {
+      return impl.isApplicable(className, loader, null);
     }
 
     @Override
-    public byte[] transform(ClassLoader loader,
-                            String className,
-                            @Nullable ProtectionDomain protectionDomain, byte[] classBytes) {
-      return impl.transform(loader, className, protectionDomain, classBytes);
+    public byte[] transform(ClassLoader loader, String className, byte[] classBytes) {
+      return impl.transform(loader, className, null, classBytes);
     }
   }
 }

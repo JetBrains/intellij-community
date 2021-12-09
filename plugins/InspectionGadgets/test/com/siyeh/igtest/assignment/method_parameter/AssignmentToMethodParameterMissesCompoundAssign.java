@@ -42,3 +42,8 @@ class AssignmentToMethodParameterMissesCompoundAssign {
     }
 
 }
+record Test(String s){
+  Test{
+    s = s + s;
+  }
+}

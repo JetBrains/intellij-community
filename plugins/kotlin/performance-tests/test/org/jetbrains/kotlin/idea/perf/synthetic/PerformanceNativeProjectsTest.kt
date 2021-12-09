@@ -16,8 +16,8 @@ import org.jetbrains.kotlin.idea.facet.KotlinFacet
 import org.jetbrains.kotlin.idea.framework.detectLibraryKind
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.parseIDELibraryName
 import org.jetbrains.kotlin.idea.gradle.configuration.readGradleProperty
-import org.jetbrains.kotlin.idea.perf.Stats
-import org.jetbrains.kotlin.idea.perf.Stats.Companion.WARM_UP
+import org.jetbrains.kotlin.idea.testFramework.Stats
+import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP
 import org.jetbrains.kotlin.idea.perf.live.AbstractPerformanceProjectsTest
 import org.jetbrains.kotlin.idea.perf.synthetic.PerformanceNativeProjectsTest.TestProject.*
 import org.jetbrains.kotlin.idea.perf.synthetic.PerformanceNativeProjectsTest.TestTarget.*

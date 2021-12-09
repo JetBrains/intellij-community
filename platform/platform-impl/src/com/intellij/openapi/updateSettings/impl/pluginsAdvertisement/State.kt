@@ -21,7 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtilRt
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import com.intellij.util.concurrency.annotations.RequiresNoReadLock
+import com.intellij.util.concurrency.annotations.RequiresReadLockAbsence
 import com.intellij.util.containers.mapSmartSet
 import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XMap
@@ -33,7 +33,7 @@ import java.util.concurrent.TimeUnit
 data class PluginAdvertiserExtensionsData(
   // Either extension or file name. Depends on which of the two properties has more priority for advertising plugins for this specific file.
   val extensionOrFileName: String,
-  val plugins: Set<PluginData>,
+  val plugins: Set<PluginData> = emptySet(),
 )
 
 @State(
@@ -79,7 +79,7 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
       FileUtilRt.getExtension(fileName)).takeIf { it.isNotEmpty() }?.let { "*.$it" }
 
     @RequiresBackgroundThread
-    @RequiresNoReadLock
+    @RequiresReadLockAbsence
     private fun requestCompatiblePlugins(
       extensionOrFileName: String,
       dataSet: Set<PluginData>,
@@ -142,7 +142,7 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
   }
 
   @RequiresBackgroundThread
-  @RequiresNoReadLock
+  @RequiresReadLockAbsence
   fun updateCache(extensionOrFileName: String): Boolean {
     if (cache.getIfPresent(extensionOrFileName) != null) {
       return false
@@ -221,7 +221,8 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
         return pluginsForExactFileName
       }
       if (knownExtensions[fileName].isNotEmpty()) {
-        // there is a plugin that can support the exact file name but we don't know a compatible version, return null to force request to update cache
+        // there is a plugin that can support the exact file name, but we don't know a compatible version,
+        // return null to force request to update cache
         return null
       }
 
@@ -232,7 +233,15 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
       }
 
       if (fileType is PlainTextLikeFileType || fileType is DetectedByContentFileType) {
-        return fullExtension?.let { cache.getIfPresent(it) } ?: PluginAdvertiserExtensionsData(fileName, emptySet())
+        return fullExtension?.let { cache.getIfPresent(it) }
+               ?: if (fullExtension?.let { knownExtensions[it] }?.isNotEmpty() == true) {
+                 // there is a plugin that can support the file type, but we don't know a compatible version,
+                 // return null to force request to update cache
+                 null
+               }
+               else {
+                 PluginAdvertiserExtensionsData(fileName)
+               }
       }
       return null
     }

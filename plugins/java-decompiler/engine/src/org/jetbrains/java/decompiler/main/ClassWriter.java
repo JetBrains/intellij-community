@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -587,7 +587,7 @@ public class ClassWriter {
     }
 
     if (!isEnum) {
-      buffer.append(";").appendLineSeparator();
+      buffer.append(';').appendLineSeparator();
       tracer.incrementCurrentSourceLine();
     }
   }
@@ -776,7 +776,7 @@ public class ClassWriter {
 
       appendModifiers(buffer, flags, METHOD_ALLOWED, isInterface, METHOD_EXCLUDED);
 
-      if (isInterface && !mt.hasModifier(CodeConstants.ACC_STATIC) && mt.containsCode()) {
+      if (isInterface && !mt.hasModifier(CodeConstants.ACC_STATIC) && !mt.hasModifier(CodeConstants.ACC_PRIVATE) && mt.containsCode()) {
         // 'default' modifier (Java 8)
         buffer.append("default ");
       }
@@ -824,8 +824,6 @@ public class ClassWriter {
       int paramCount = 0;
 
       if (!clInit && !dInit) {
-        boolean thisVar = !mt.hasModifier(CodeConstants.ACC_STATIC);
-
         if (descriptor != null && !descriptor.typeParameters.isEmpty()) {
           appendTypeParameters(buffer, descriptor.typeParameters, descriptor.typeParameterBounds);
           buffer.append(' ');
@@ -853,17 +851,8 @@ public class ClassWriter {
           }
         }
 
-        List<StructMethodParametersAttribute.Entry> methodParameters = null;
-        if (DecompilerContext.getOption(IFernflowerPreferences.USE_METHOD_PARAMETERS)) {
-          StructMethodParametersAttribute attr = mt.getAttribute(StructGeneralAttribute.ATTRIBUTE_METHOD_PARAMETERS);
-          if (attr != null) {
-            methodParameters = attr.getEntries();
-          }
-        }
-
-        int index = isEnum && init ? 3 : thisVar ? 1 : 0;
-        int start = isEnum && init ? 2 : 0;
-        for (int i = start; i < md.params.length; i++) {
+        int index = methodWrapper.varproc.getFirstParameterVarIndex();
+        for (int i = methodWrapper.varproc.getFirstParameterPosition(); i < md.params.length; i++) {
           if (mask == null || mask.get(i) == null) {
             if (paramCount > 0) {
               buffer.append(", ");
@@ -871,10 +860,9 @@ public class ClassWriter {
 
             appendParameterAnnotations(buffer, mt, paramCount);
 
-            if (methodParameters != null && i < methodParameters.size()) {
-              appendModifiers(buffer, methodParameters.get(i).myAccessFlags, CodeConstants.ACC_FINAL, isInterface, 0);
-            }
-            else if (methodWrapper.varproc.getVarFinal(new VarVersionPair(index, 0)) == VarTypeProcessor.VAR_EXPLICIT_FINAL) {
+            VarVersionPair pair = new VarVersionPair(index, 0);
+            if (methodWrapper.varproc.isParameterFinal(pair) ||
+                methodWrapper.varproc.getVarFinal(pair) == VarTypeProcessor.VAR_EXPLICIT_FINAL) {
               buffer.append("final ");
             }
 
@@ -909,13 +897,7 @@ public class ClassWriter {
 
             buffer.append(' ');
 
-            String parameterName;
-            if (methodParameters != null && i < methodParameters.size()) {
-              parameterName = methodParameters.get(i).myName;
-            }
-            else {
-              parameterName = methodWrapper.varproc.getVarName(new VarVersionPair(index, 0));
-            }
+            String parameterName = methodWrapper.varproc.getVarName(pair);
             buffer.append(parameterName == null ? "param" + index : parameterName); // null iff decompiled with errors
 
             paramCount++;
@@ -1023,23 +1005,20 @@ public class ClassWriter {
       return false;
     }
 
-    ClassWrapper wrapper = node.getWrapper();
-	  StructClass cl = wrapper.getClassStruct();
+    StructClass cl = node.getWrapper().getClassStruct();
 
 	  int classAccessFlags = node.type == ClassNode.CLASS_ROOT ? cl.getAccessFlags() : node.access;
     boolean isEnum = cl.hasModifier(CodeConstants.ACC_ENUM) && DecompilerContext.getOption(IFernflowerPreferences.DECOMPILE_ENUM);
 
     // default constructor requires same accessibility flags. Exception: enum constructor which is always private
-  	if(!isEnum && ((classAccessFlags & ACCESSIBILITY_FLAGS) != (methodAccessFlags & ACCESSIBILITY_FLAGS))) {
+    if (!isEnum && ((classAccessFlags & ACCESSIBILITY_FLAGS) != (methodAccessFlags & ACCESSIBILITY_FLAGS))) {
   	  return false;
   	}
 
     int count = 0;
     for (StructMethod mt : cl.getMethods()) {
-      if (CodeConstants.INIT_NAME.equals(mt.getName())) {
-        if (++count > 1) {
-          return false;
-        }
+      if (CodeConstants.INIT_NAME.equals(mt.getName()) && ++count > 1) {
+        return false;
       }
     }
 

@@ -10,15 +10,15 @@ class Bar {
   }
 
   void m() {
-    while (T == "a") {
-      <error descr="Unreachable statement">f();</error>
-    }
+    while (T == "a") <error descr="Unreachable statement">{
+      f();
+    }</error>
   }
 
   void m01() {
-    while (T != "") {
-      <error descr="Unreachable statement">f();</error>
-    }
+    while (T != "") <error descr="Unreachable statement">{
+      f();
+    }</error>
   }
 
   void m1() {
@@ -29,9 +29,9 @@ class Bar {
   }
 
   void m2() {
-    while (T != T) {
-      <error descr="Unreachable statement">f();</error>
-    }
+    while (T != T) <error descr="Unreachable statement">{
+      f();
+    }</error>
   }
 
   void m3() {

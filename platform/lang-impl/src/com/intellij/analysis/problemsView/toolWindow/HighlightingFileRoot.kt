@@ -79,10 +79,15 @@ internal class HighlightingFileRoot(panel: ProblemsViewPanel, val file: VirtualF
     }
   }
 
-  override fun getChildren(node: FileNode) = when {
+  override fun getChildren(node: FileNode): Collection<Node> = when {
     !panel.state.groupByToolId -> super.getChildren(node)
-    else -> getFileProblems(node.file).groupBy { it.group }.flatMap { entry ->
-      entry.key?.let { listOf(GroupNode(node, it, entry.value)) } ?: entry.value.map { ProblemNode(node, node.file, it) }
+    else -> getFileProblems(node.file)
+      .groupBy { it.group }
+      .flatMap { entry ->
+        entry.key?.let {
+          listOf(GroupNode(node, it, entry.value))
+        }
+        ?: getNodesForProblems(entry.value.map { Pair(node, it) })
     }
   }
 }

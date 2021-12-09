@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.ex.TooltipAction;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.NlsContexts.Tooltip;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
@@ -23,7 +24,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.Objects;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.editor.EditorMouseHoverPopupManager.LOG;
@@ -34,11 +34,11 @@ final class HighlightHoverInfo {
   private static final Key<Boolean> DISABLE_BINDING = Key.create("EditorMouseHoverPopupManager.disable.binding");
   private static final TooltipGroup EDITOR_INFO_GROUP = new TooltipGroup("EDITOR_INFO_GROUP", 0);
 
-  private final @NotNull HighlightInfo highlightInfo;
+  private final @Tooltip @NotNull String tooltip;
   private final @Nullable TooltipAction tooltipAction;
 
-  private HighlightHoverInfo(@NotNull HighlightInfo highlightInfo, @Nullable TooltipAction tooltipAction) {
-    this.highlightInfo = highlightInfo;
+  private HighlightHoverInfo(@Tooltip @NotNull String tooltip, @Nullable TooltipAction tooltipAction) {
+    this.tooltip = tooltip;
     this.tooltipAction = tooltipAction;
   }
 
@@ -49,7 +49,7 @@ final class HighlightHoverInfo {
     boolean requestFocus
   ) {
     ErrorStripTooltipRendererProvider provider = ((EditorMarkupModel)editor.getMarkupModel()).getErrorStripTooltipRendererProvider();
-    TooltipRenderer tooltipRenderer = provider.calcTooltipRenderer(Objects.requireNonNull(highlightInfo.getToolTip()), tooltipAction, -1);
+    TooltipRenderer tooltipRenderer = provider.calcTooltipRenderer(tooltip, tooltipAction, -1);
     if (!(tooltipRenderer instanceof LineTooltipRenderer)) return null;
     return createHighlightInfoComponent(editor, (LineTooltipRenderer)tooltipRenderer, highlightActions, popupBridge, requestFocus);
   }
@@ -122,18 +122,22 @@ final class HighlightHoverInfo {
   }
 
   @NotNull HighlightHoverInfo override(@NotNull TooltipAction tooltipAction) {
-    return new HighlightHoverInfo(this.highlightInfo, tooltipAction);
+    return new HighlightHoverInfo(tooltip, tooltipAction);
   }
 
   static @Nullable HighlightHoverInfo highlightHoverInfo(@NotNull Editor editor, @Nullable HighlightInfo info) {
-    if (info == null || info.getToolTip() == null) {
+    if (info == null) {
+      return null;
+    }
+    String tooltip = info.getToolTip();
+    if (tooltip == null) {
       return null;
     }
     try {
       TooltipAction tooltipAction = ReadAction
         .nonBlocking(() -> TooltipActionProvider.calcTooltipAction(info, editor))
         .executeSynchronously();
-      return new HighlightHoverInfo(info, tooltipAction);
+      return new HighlightHoverInfo(tooltip, tooltipAction);
     }
     catch (IndexNotReadyException ignored) {
     }
@@ -143,6 +147,6 @@ final class HighlightHoverInfo {
     catch (Exception e) {
       LOG.warn(e);
     }
-    return new HighlightHoverInfo(info, null);
+    return new HighlightHoverInfo(tooltip, null);
   }
 }

@@ -1146,8 +1146,10 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     if (!myEditConfigOnly) {
       final SearchScope scope = matchOptions.getScope();
       myScopePanel.setScopesFromContext(scope);
+      if (myUseLastConfiguration) {
+        myScopePanel.setScope(scope);
+      }
     }
-
 
     myFileTypeChooser.setSelectedItem(matchOptions.getFileType(), matchOptions.getDialect(), matchOptions.getPatternContext());
     final Editor searchEditor = mySearchCriteriaEdit.getEditor();

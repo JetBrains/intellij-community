@@ -45,6 +45,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.Url;
@@ -771,6 +772,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   private String getMethodCandidateInfo(PsiMethodCallExpression expr) {
     final PsiResolveHelper rh = JavaPsiFacade.getInstance(expr.getProject()).getResolveHelper();
     final CandidateInfo[] candidates = rh.getReferencedMethodCandidates(expr, true);
+
     final String text = expr.getText();
     if (candidates.length > 0) {
       if (candidates.length == 1) {
@@ -778,8 +780,10 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
         if (element instanceof PsiMethod) return generateDoc(element, null);
       }
       final StringBuilder sb = new StringBuilder();
+      @NotNull List<? extends CandidateInfo> conflicts = new ArrayList<>(Arrays.asList(candidates));
+      JavaMethodsConflictResolver.filterSupers(conflicts, expr.getContainingFile(), null);
 
-      for (final CandidateInfo candidate : candidates) {
+      for (final CandidateInfo candidate : conflicts) {
         final PsiElement element = candidate.getElement();
 
         if (!(element instanceof PsiMethod)) {

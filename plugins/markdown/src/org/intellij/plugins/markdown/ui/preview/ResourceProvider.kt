@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.intellij.plugins.markdown.ui.preview
 
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
 import kotlin.reflect.KClass
 
@@ -105,6 +106,20 @@ interface ResourceProvider {
       }
       val content = file.inputStream().use { it.readBytes() }
       return Resource(content, contentType)
+    }
+
+    @ApiStatus.Experimental
+    @JvmStatic
+    fun createResourceProviderChain(vararg providers: ResourceProvider): ResourceProvider {
+      return object: ResourceProvider {
+        override fun canProvide(resourceName: String): Boolean {
+          return providers.any { it.canProvide(resourceName) }
+        }
+
+        override fun loadResource(resourceName: String): Resource? {
+          return providers.firstNotNullOfOrNull { it.loadResource(resourceName) }
+        }
+      }
     }
   }
 }

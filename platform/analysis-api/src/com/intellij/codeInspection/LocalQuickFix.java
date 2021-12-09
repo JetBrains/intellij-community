@@ -89,7 +89,7 @@ public interface LocalQuickFix extends QuickFix<ProblemDescriptor>, FileModifier
    *
    * @param project current project
    * @param previewDescriptor problem descriptor which refers to the non-physical file copy where the fix should be applied
-   * @return true if the fix was successfully applied to the copy; false otherwise
+   * @return an object that describes the action preview to display
    */
   default @NotNull IntentionPreviewInfo generatePreview(@NotNull Project project, @NotNull ProblemDescriptor previewDescriptor) {
     if (!startInWriteAction()) return IntentionPreviewInfo.EMPTY;

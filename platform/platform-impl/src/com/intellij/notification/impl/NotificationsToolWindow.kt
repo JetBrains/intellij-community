@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.notification.impl
 
+import com.intellij.UtilBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
@@ -24,8 +25,10 @@ import com.intellij.openapi.ui.ex.MultiLineLabel
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
+import com.intellij.openapi.util.Clock
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
@@ -46,19 +49,18 @@ import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
 import com.intellij.util.ModalityUiUtil
 import com.intellij.util.text.DateFormatUtil
-import com.intellij.util.ui.GraphicsUtil
-import com.intellij.util.ui.JBFont
-import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import java.awt.BorderLayout
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
 import java.awt.event.*
+import java.util.*
 import java.util.function.Consumer
 import javax.accessibility.AccessibleContext
 import javax.swing.*
+import javax.swing.text.JTextComponent
 
 /**
  * @author Alexander Lobas
@@ -130,15 +132,17 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     splitter.secondComponent = timeline
     panel.add(splitter)
 
+    val singleSelectionHandler = SingleTextSelectionHandler()
+
     val myNotifications = ArrayList<Notification>()
 
     val content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false)
     val addConsumer = Consumer<Notification> { notification ->
       if (notification.isSuggestionType) {
-        suggestions.add(notification)
+        suggestions.add(notification, singleSelectionHandler)
       }
       else {
-        timeline.add(notification)
+        timeline.add(notification, singleSelectionHandler)
       }
       myNotifications.add(notification)
       updateIcon(toolWindow, myNotifications)
@@ -199,11 +203,16 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
             val ideFrame = WindowManager.getInstance().getIdeFrame(project)
             val balloonLayout = ideFrame!!.balloonLayout as BalloonLayoutImpl
             balloonLayout.closeAll()
+
+            suggestions.updateComponents()
+            timeline.updateComponents()
           }
-        }
-        if (!visible) {
-          suggestions.clearNewState()
-          timeline.clearNewState()
+          else {
+            suggestions.clearNewState()
+            timeline.clearNewState()
+            myNotifications.clear()
+            updateIcon(toolWindow, myNotifications)
+          }
         }
       }
     })
@@ -219,15 +228,35 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 }
 
+private fun JComponent.mediumFontFunction() {
+  font = JBFont.medium()
+  val f: (JComponent) -> Unit = {
+    it.font = JBFont.medium()
+  }
+  putClientProperty(NotificationGroupComponent.FONT_KEY, f)
+}
+
+private fun JComponent.smallFontFunction() {
+  font = JBFont.small()
+  val f: (JComponent) -> Unit = {
+    it.font = JBFont.small()
+  }
+  putClientProperty(NotificationGroupComponent.FONT_KEY, f)
+}
+
 private class NotificationGroupComponent(private val myMainPanel: JPanel,
                                          private val mySuggestionType: Boolean,
                                          private val myProject: Project) :
   JPanel(BorderLayout()), NullableComponent {
 
+  companion object {
+    const val FONT_KEY = "FontFunction"
+  }
+
   private val myTitle = JBLabel(
     IdeBundle.message(if (mySuggestionType) "notifications.toolwindow.suggestions" else "notifications.toolwindow.timeline"))
 
-  private val myList = JPanel(VerticalLayout(JBUI.scale(18)))
+  private val myList = JPanel(VerticalLayout(JBUI.scale(10)))
   private val myScrollPane = object : JBScrollPane(myList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
                                                    ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER) {
     override fun setupCorners() {
@@ -264,7 +293,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     mainPanel.border = JBUI.Borders.empty(8, 8, 0, 0)
     add(mainPanel)
 
-    myTitle.font = JBFont.medium()
+    myTitle.mediumFontFunction()
     myTitle.foreground = NotificationComponent.INFO_COLOR
 
     if (mySuggestionType) {
@@ -274,7 +303,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
       add(mySuggestionGotItPanel, BorderLayout.NORTH)
 
       val gotItTitle = MultiLineLabel(IdeBundle.message("notifications.toolwindow.suggestion.gotit.title"))
-      gotItTitle.font = JBFont.medium()
+      gotItTitle.mediumFontFunction()
       gotItTitle.border = JBUI.Borders.empty(7, 12, 7, 0)
       mySuggestionGotItPanel.add(gotItTitle, BorderLayout.WEST)
 
@@ -303,7 +332,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
       val clearAll = LinkLabel(IdeBundle.message("notifications.toolwindow.timeline.clear.all"), null) { _: LinkLabel<Unit>, _: Unit? ->
         clearAll()
       }
-      clearAll.font = JBFont.medium()
+      clearAll.mediumFontFunction()
       clearAll.border = JBUI.Borders.emptyRight(20)
       clearAll.isVisible = false
       panel.add(clearAll, BorderLayout.EAST)
@@ -349,11 +378,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
   }
 
   fun updateLaf() {
-    val count = myList.componentCount
-    for (i in 0 until count) {
-      val component = myList.getComponent(i) as NotificationComponent
-      component.updateLaf()
-    }
+    iterateComponents { it.updateLaf() }
   }
 
   override fun paintComponent(g: Graphics) {
@@ -365,8 +390,8 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     }
   }
 
-  fun add(notification: Notification) {
-    val component = NotificationComponent(notification, myTimeComponents)
+  fun add(notification: Notification, singleSelectionHandler: SingleTextSelectionHandler) {
+    val component = NotificationComponent(notification, myTimeComponents, singleSelectionHandler)
     component.setNew(true)
 
     myList.add(component, 0)
@@ -394,9 +419,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
 
   private fun updateLayout() {
     val layout = myList.layout
-    val count = myList.componentCount
-    for (i in 0 until count) {
-      val component = myList.getComponent(i)
+    iterateComponents { component ->
       layout.removeLayoutComponent(component)
       layout.addLayoutComponent(null, component)
     }
@@ -411,6 +434,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     for (i in 0 until count) {
       val component = myList.getComponent(i) as NotificationComponent
       if (component.notification === notification) {
+        component.removeFromParent()
         myList.remove(i)
         break
       }
@@ -428,25 +452,35 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     balloonLayout.closeAll()
 
     val notifications = ArrayList<Notification>()
-    val count = myList.componentCount
-    for (i in 0 until count) {
-      val component = myList.getComponent(i) as NotificationComponent
-      notifications.add(component.notification)
-    }
+    iterateComponents { notifications.add(it.notification) }
     clear()
     myClearCallback.invoke(notifications)
   }
 
   fun clear() {
+    iterateComponents { it.removeFromParent() }
     myList.removeAll()
     updateContent()
   }
 
   fun clearNewState() {
+    iterateComponents { it.setNew(false) }
+  }
+
+  fun updateComponents() {
+    UIUtil.uiTraverser(this).filter(JComponent::class.java).forEach {
+      val value = it.getClientProperty(FONT_KEY)
+      if (value != null) {
+        (value as (JComponent) -> Unit).invoke(it)
+      }
+    }
+    fullRepaint()
+  }
+
+  private inline fun iterateComponents(f: (NotificationComponent) -> Unit) {
     val count = myList.componentCount
     for (i in 0 until count) {
-      val component = myList.getComponent(i) as NotificationComponent
-      component.setNew(false)
+      f.invoke(myList.getComponent(i) as NotificationComponent)
     }
   }
 
@@ -459,8 +493,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
       object : Runnable {
         override fun run() {
           for (timeComponent in myTimeComponents) {
-            timeComponent.text = DateFormatUtil.formatPrettyDateTime(
-              timeComponent.getClientProperty(NotificationComponent.TIME_KEY) as Long)
+            timeComponent.text = formatPrettyDateTime(timeComponent.getClientProperty(NotificationComponent.TIME_KEY) as Long)
           }
 
           if (myTimeComponents.isNotEmpty()) {
@@ -471,6 +504,31 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     }
 
     fullRepaint()
+  }
+
+  private fun formatPrettyDateTime(time: Long): @NlsSafe String {
+    val c = Calendar.getInstance()
+
+    c.timeInMillis = Clock.getTime()
+    val currentYear = c[Calendar.YEAR]
+    val currentDayOfYear = c[Calendar.DAY_OF_YEAR]
+
+    c.timeInMillis = time
+    val year = c[Calendar.YEAR]
+    val dayOfYear = c[Calendar.DAY_OF_YEAR]
+
+    if (currentYear == year && currentDayOfYear == dayOfYear) {
+      return DateFormatUtil.formatTime(time)
+    }
+
+    val isYesterdayOnPreviousYear = currentYear == year + 1 && currentDayOfYear == 1 && dayOfYear == c.getActualMaximum(
+      Calendar.DAY_OF_YEAR)
+    val isYesterday = isYesterdayOnPreviousYear || currentYear == year && currentDayOfYear == dayOfYear + 1
+    if (isYesterday) {
+      return UtilBundle.message("date.format.yesterday")
+    }
+
+    return DateFormatUtil.formatDate(time)
   }
 
   private fun fullRepaint() {
@@ -486,8 +544,9 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
   override fun isNull(): Boolean = !isVisible
 }
 
-private class NotificationComponent(val notification: Notification, timeComponents: ArrayList<JLabel>) :
-  JPanel(BorderLayout(JBUI.scale(7), 0)) {
+private class NotificationComponent(val notification: Notification,
+                                    timeComponents: ArrayList<JLabel>,
+                                    val singleSelectionHandler: SingleTextSelectionHandler) : JPanel(BorderLayout(JBUI.scale(7), 0)) {
 
   companion object {
     val BG_COLOR = UIUtil.getListBackground()
@@ -525,7 +584,26 @@ private class NotificationComponent(val notification: Notification, timeComponen
 
     if (notification.hasTitle()) {
       val titleContent = NotificationsUtil.buildHtml(notification, null, false, null, null)
-      val title = JBLabel(titleContent).setCopyable(true)
+      val title = object : JBLabel(titleContent) {
+        override fun updateUI() {
+          val oldEditor = UIUtil.findComponentOfType(this, JEditorPane::class.java)
+          if (oldEditor != null) {
+            singleSelectionHandler.remove(oldEditor)
+          }
+
+          super.updateUI()
+
+          val newEditor = UIUtil.findComponentOfType(this, JEditorPane::class.java)
+          if (newEditor != null) {
+            singleSelectionHandler.add(newEditor, true)
+          }
+        }
+      }.setCopyable(true)
+
+      val editor = UIUtil.findComponentOfType(title, JEditorPane::class.java)
+      if (editor != null) {
+        singleSelectionHandler.add(editor, true)
+      }
 
       if (notification.isSuggestionType) {
         centerPanel.add(title)
@@ -541,6 +619,8 @@ private class NotificationComponent(val notification: Notification, timeComponen
     if (notification.hasContent()) {
       val textContent = NotificationsUtil.buildHtml(notification, null, true, null, NotificationsUtil.getFontStyle())
       val text = createTextComponent(textContent)
+
+      singleSelectionHandler.add(text, true)
 
       if (!notification.hasTitle() && !notification.isSuggestionType) {
         titlePanel = JPanel(BorderLayout())
@@ -652,7 +732,7 @@ private class NotificationComponent(val notification: Notification, timeComponen
       timeComponent.verticalTextPosition = SwingConstants.TOP
       timeComponent.toolTipText = DateFormatUtil.formatDateTime(notification.timestamp)
       timeComponent.border = JBUI.Borders.emptyRight(10)
-      timeComponent.font = JBFont.small()
+      timeComponent.smallFontFunction()
       timeComponent.foreground = INFO_COLOR
 
       timeComponents.add(timeComponent)
@@ -676,14 +756,21 @@ private class NotificationComponent(val notification: Notification, timeComponen
     Notification.fire(notification, action, DataManager.getInstance().getDataContext(component as Component))
   }
 
-  private fun createTextComponent(text: @Nls String): JTextPane {
-    val component = JTextPane()
+  fun removeFromParent() {
+    for (component in UIUtil.findComponentsOfType(this, JTextComponent::class.java)) {
+      singleSelectionHandler.remove(component)
+    }
+  }
+
+  private fun createTextComponent(text: @Nls String): JEditorPane {
+    val component = JEditorPane()
+    component.isEditable = false
     component.putClientProperty(JEditorPane.HONOR_DISPLAY_PROPERTIES, java.lang.Boolean.TRUE)
     component.contentType = "text/html"
     component.isOpaque = false
     component.border = null
 
-    val kit = UIUtil.JBWordWrapHtmlEditorKit()
+    val kit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
     NotificationsUtil.setLinkForeground(kit.styleSheet)
     component.editorKit = kit
 
@@ -702,7 +789,7 @@ private class NotificationComponent(val notification: Notification, timeComponen
     }
 
     myLafUpdater = Runnable {
-      val newKit = UIUtil.JBWordWrapHtmlEditorKit()
+      val newKit = HTMLEditorKitBuilder().withWordWrapViewFactory().build()
       NotificationsUtil.setLinkForeground(newKit.styleSheet)
       component.editorKit = newKit
       component.text = text

@@ -16,10 +16,8 @@ import java.util.function.BiConsumer
  */
 @CompileStatic
 abstract class BaseIdeaProperties extends JetBrainsProductProperties {
-  public static final List<String> JAVA_IDE_API_MODULES = List.of(
+  private static final List<String> JAVA_IDE_API_MODULES = List.of(
     "intellij.xml.dom",
-    "intellij.java.testFramework",
-    "intellij.platform.testFramework.core",
     "intellij.platform.uast.tests",
     "intellij.jsp.base"
   )
@@ -40,6 +38,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.textmate",
     "intellij.editorconfig",
     "intellij.settingsRepository",
+    "intellij.settingsSync",
     "intellij.configurationScript",
     "intellij.yaml",
     "intellij.tasks.core",
@@ -136,37 +135,37 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     productLayout.platformLayoutCustomizer = new BiConsumer<PlatformLayout, BuildContext>() {
       @Override
       void accept(PlatformLayout layout, BuildContext context) {
-        layout.customize {
-          for (String name : JAVA_IDE_API_MODULES) {
-            if (!productLayout.productApiModules.contains(name)) {
-              withModule(name)
-            }
+        for (String name : JAVA_IDE_API_MODULES) {
+          if (!productLayout.productApiModules.contains(name)) {
+            layout.withModule(name)
           }
-          for (String name : JAVA_IDE_IMPLEMENTATION_MODULES) {
-            if (!productLayout.productImplementationModules.contains(name)) {
-              withModule(name)
-            }
-          }
-
-          //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
-          withModule("intellij.java.rt", "idea_rt.jar")
-
-          // for compatibility with users' projects which take these libraries from IDEA installation
-          withProjectLibrary("jetbrains-annotations", ProjectLibraryData.PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
-          // for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
-          withProjectLibrary("JUnit3", ProjectLibraryData.PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
-          withProjectLibrary("commons-net")
-
-          withoutProjectLibrary("Ant")
-
-          // there is a patched version of the org.gradle.api.JavaVersion class placed into the Gradle plugin classpath as "rt" jar
-          // to avoid class linkage conflicts "Gradle" library is placed into the 'lib' directory of the Gradle plugin layout so we need to exclude it from the platform layout explicitly
-          // TODO should be used as regular project library when the issue will be fixed at the Gradle tooling api side https://github.com/gradle/gradle/issues/8431 and the patched class will be removed
-          withoutProjectLibrary("Gradle")
-
-          //this library is placed into subdirectory of 'lib' directory in Android plugin layout so we need to exclude it from the platform layout explicitly
-          withoutProjectLibrary("layoutlib")
         }
+        for (String moduleName : List.<String>of("intellij.java.testFramework", "intellij.platform.testFramework.core")) {
+          if (!productLayout.productApiModules.contains(moduleName)) {
+            layout.withModule(moduleName, "testFramework.jar")
+          }
+        }
+        for (String name : JAVA_IDE_IMPLEMENTATION_MODULES) {
+          if (!productLayout.productImplementationModules.contains(name)) {
+            layout.withModule(name)
+          }
+        }
+        //todo currently intellij.platform.testFramework included into idea.jar depends on this jar so it cannot be moved to java plugin
+        layout.withModule("intellij.java.rt", "idea_rt.jar")
+        // for compatibility with users' projects which take these libraries from IDEA installation
+        layout.withProjectLibrary("jetbrains-annotations", ProjectLibraryData.PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
+        // for compatibility with users projects which refer to IDEA_HOME/lib/junit.jar
+        layout.withProjectLibrary("JUnit3", ProjectLibraryData.PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME)
+        layout.withProjectLibrary("commons-net")
+
+        layout.withoutProjectLibrary("Ant")
+        // there is a patched version of the org.gradle.api.JavaVersion class placed into the Gradle plugin classpath as "rt" jar
+        // to avoid class linkage conflicts "Gradle" library is placed into the 'lib' directory of the Gradle plugin layout so we need to exclude it from the platform layout explicitly
+        // TODO should be used as regular project library when the issue will be fixed at the Gradle tooling api side https://github.com/gradle/gradle/issues/8431 and the patched class will be removed
+        layout.withoutProjectLibrary("Gradle")
+
+        //this library is placed into subdirectory of 'lib' directory in Android plugin layout so we need to exclude it from the platform layout explicitly
+        layout.withoutProjectLibrary("layoutlib")
       }
     }
 
@@ -181,13 +180,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
 
   @Override
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
-    BuildHelper buildHelper = BuildHelper.getInstance(context)
-    if (isAntRequired) {
-      buildHelper.copyDir(Path.of("$context.paths.communityHome/lib/ant"), Path.of("$targetDirectory/lib/ant")) {
-        !it.endsWith("src")
-      }
-    }
-
     Path targetDir = Path.of(targetDirectory)
     Path java8AnnotationsJar = targetDir.resolve("lib/annotations.jar")
     BuildHelper.moveFile(java8AnnotationsJar, targetDir.resolve("redist/annotations-java8.jar"))

@@ -4,7 +4,10 @@ package com.intellij.navigation.impl
 import com.intellij.navigation.NavigationRequest
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.Navigatable
+import org.jetbrains.annotations.ApiStatus.Internal
 
-internal class SourceNavigationRequest(val file: VirtualFile, val offset: Int) : NavigationRequest
+@Internal
+class SourceNavigationRequest internal constructor(val file: VirtualFile, val offset: Int) : NavigationRequest
 
-internal class RawNavigationRequest(val navigatable: Navigatable) : NavigationRequest
+@Internal
+class RawNavigationRequest internal constructor(val navigatable: Navigatable) : NavigationRequest

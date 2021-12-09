@@ -420,9 +420,6 @@ public class GroovyBlockGenerator {
         i--;
       }
       else {
-        if ("foo".equals(childNode.getText())) {
-          int x = 1;
-        }
         subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
       }
     }

@@ -9,6 +9,7 @@ import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.Gray;
 import com.intellij.ui.scale.JBUIScale;
+import com.intellij.util.ui.HTMLEditorKitBuilder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
@@ -86,7 +87,7 @@ public final class LegalNoticeDialog extends DialogWrapper {
     iconPanel.add(new JBLabel(AllIcons.General.WarningDialog), BorderLayout.NORTH);
 
     JEditorPane messageArea = new JEditorPane();
-    messageArea.setEditorKit(UIUtil.getHTMLEditorKit());
+    messageArea.setEditorKit(HTMLEditorKitBuilder.simple());
     messageArea.setEditable(false);
     messageArea.setPreferredSize(JBUI.size(500, 100));
     messageArea.setBorder(new CompoundBorder(BorderFactory.createLineBorder(Gray._200), JBUI.Borders.empty(3)));

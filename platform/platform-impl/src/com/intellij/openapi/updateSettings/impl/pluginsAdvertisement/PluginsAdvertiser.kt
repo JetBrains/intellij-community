@@ -56,14 +56,22 @@ fun installAndEnablePlugins(
 fun installAndEnable(
   pluginIds: Set<PluginId>,
   onSuccess: Runnable,
-) = installAndEnable(null, pluginIds, true, onSuccess)
+) = installAndEnable(null, pluginIds, true, false, onSuccess)
 
 fun installAndEnable(
   project: Project?,
   pluginIds: Set<PluginId>,
   showDialog: Boolean = false,
   onSuccess: Runnable,
-) = ProgressManager.getInstance().run(InstallAndEnableTask(project, pluginIds, showDialog, onSuccess))
+) = installAndEnable(project, pluginIds, showDialog, false, onSuccess)
+
+fun installAndEnable(
+  project: Project?,
+  pluginIds: Set<PluginId>,
+  showDialog: Boolean = false,
+  selectAlInDialog: Boolean,
+  onSuccess: Runnable,
+) = ProgressManager.getInstance().run(InstallAndEnableTask(project, pluginIds, showDialog, selectAlInDialog, onSuccess))
 
 internal fun getBundledPluginToInstall(plugins: Collection<PluginData>): List<String> {
   return if (isIdeaUltimate()) {

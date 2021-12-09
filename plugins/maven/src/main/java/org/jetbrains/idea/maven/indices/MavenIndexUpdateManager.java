@@ -22,7 +22,6 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenProcessCanceledException;
 import org.jetbrains.idea.maven.utils.MavenProgressIndicator;
 import org.jetbrains.idea.maven.utils.MavenRehighlighter;
-import org.jetbrains.idea.reposearch.DependencySearchService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +56,7 @@ public class MavenIndexUpdateManager implements Disposable {
     myUpdateQueueList.queue(Update.create(this, () -> {
       MavenIndicesManager indicesManager = MavenIndicesManager.getInstance(project);
       indicesManager.updateIndicesListSync();
-      DependencySearchService.getInstance(project).updateProviders();
+      if (project.isDisposed()) return;
 
       MavenIndexHolder indexHolder = indicesManager.getIndex();
       MavenIndex localIndex = indexHolder.getLocalIndex();

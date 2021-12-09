@@ -15,8 +15,6 @@ internal object ServerURLs {
     const val base = "https://package-search.services.jetbrains.com/api"
 }
 
-private val pluginEnvironment = PluginEnvironment()
-
 @Suppress("unused") // Used in SearchClient but the lazy throws off the IDE code analysis
 private val contentType by lazy {
     @Suppress("MayBeConst") // False positive
@@ -34,8 +32,8 @@ internal class PackageSearchApiClient(
     private val baseUrl: String,
     private val timeoutInSeconds: Int = 10,
     private val headers: List<Pair<String, String>> = listOf(
-        Pair("JB-Plugin-Version", pluginEnvironment.pluginVersion),
-        Pair("JB-IDE-Version", pluginEnvironment.ideVersion)
+        Pair("JB-Plugin-Version", PluginEnvironment.pluginVersion),
+        Pair("JB-IDE-Version", PluginEnvironment.ideVersion)
     )
 ) {
 

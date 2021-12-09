@@ -86,20 +86,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Override
   @NotNull
   public <K, V> List<V> getValues(@NotNull final ID<K, V> indexId, @NotNull K dataKey, @NotNull final GlobalSearchScope filter) {
-    VirtualFile restrictToFile = null;
-
-    if (filter instanceof Iterable) {
-      // optimisation: in case of one-file-scope we can do better.
-      // check if the scope knows how to extract some files off itself
-      //noinspection unchecked
-      Iterator<VirtualFile> virtualFileIterator = ((Iterable<VirtualFile>)filter).iterator();
-      if (virtualFileIterator.hasNext()) {
-        VirtualFile restrictToFileCandidate = virtualFileIterator.next();
-        if (!virtualFileIterator.hasNext()) {
-          restrictToFile = restrictToFileCandidate;
-        }
-      }
-    }
+    VirtualFile restrictToFile = getTheOnlyFileInScope(filter);
 
     final List<V> values = new SmartList<>();
     ValueProcessor<V> processor = (file, value) -> {
@@ -113,6 +100,19 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       processValuesInScope(indexId, dataKey, true, filter, null, processor);
     }
     return values;
+  }
+
+  private static @Nullable VirtualFile getTheOnlyFileInScope(@NotNull GlobalSearchScope filter) {
+    VirtualFileEnumeration files = VirtualFileEnumeration.extract(filter);
+    if (files == null) return null;
+    Iterator<VirtualFile> iterator = files.asIterable().iterator();
+    if (iterator.hasNext()) {
+      VirtualFile first = iterator.next();
+      if (!iterator.hasNext()) {
+        return first;
+      }
+    }
+    return null;
   }
 
   @Override
@@ -140,11 +140,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       if (!ensureUpToDate(indexId, scope.getProject(), scope, null)) {
         return true;
       }
-      if (idFilter == null) {
-        idFilter = extractIdFilter(scope, scope.getProject());
-      }
-      @Nullable IdFilter finalIdFilter = idFilter;
-      return myAccessValidator.validate(indexId, () -> index.processAllKeys(processor, scope, finalIdFilter));
+      IdFilter idFilterAdjusted = idFilter == null ? extractIdFilter(scope, scope.getProject()) : idFilter;
+      return myAccessValidator.validate(indexId, () -> index.processAllKeys(processor, scope, idFilterAdjusted));
     }
     catch (StorageException e) {
       scheduleRebuild(indexId, e);
@@ -202,6 +199,11 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                                            @NotNull K dataKey,
                                                            @NotNull GlobalSearchScope filter) {
     if (LightEdit.owns(filter.getProject())) return Collections.emptyList();
+    VirtualFile restrictToFile = getTheOnlyFileInScope(filter);
+    if (restrictToFile != null) {
+      return !processValuesInOneFile(indexId, dataKey, restrictToFile, filter, (f, v) -> false) ?
+             Collections.singleton(restrictToFile) : Collections.emptyList();
+    }
     Set<VirtualFile> files = new HashSet<>();
     processValuesInScope(indexId, dataKey, false, filter, null, (file, value) -> {
       files.add(file);
@@ -269,11 +271,11 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return null;
   }
 
-  private <K, V> boolean processValuesInOneFile(@NotNull ID<K, V> indexId,
-                                                @NotNull K dataKey,
-                                                @NotNull VirtualFile restrictToFile,
-                                                @NotNull GlobalSearchScope scope,
-                                                @NotNull ValueProcessor<? super V> processor) {
+  protected <K, V> boolean processValuesInOneFile(@NotNull ID<K, V> indexId,
+                                                  @NotNull K dataKey,
+                                                  @NotNull VirtualFile restrictToFile,
+                                                  @NotNull GlobalSearchScope scope,
+                                                  @NotNull ValueProcessor<? super V> processor) {
     Project project = scope.getProject();
     if (!(restrictToFile instanceof VirtualFileWithId)) {
       return project == null ||
@@ -306,12 +308,12 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return !data.containsKey(dataKey) || processor.process(file, data.get(dataKey));
   }
 
-  private <K, V> boolean processValuesInScope(@NotNull ID<K, V> indexId,
-                                              @NotNull K dataKey,
-                                              boolean ensureValueProcessedOnce,
-                                              @NotNull GlobalSearchScope scope,
-                                              @Nullable IdFilter idFilter,
-                                              @NotNull ValueProcessor<? super V> processor) {
+  protected <K, V> boolean processValuesInScope(@NotNull ID<K, V> indexId,
+                                                @NotNull K dataKey,
+                                                boolean ensureValueProcessedOnce,
+                                                @NotNull GlobalSearchScope scope,
+                                                @Nullable IdFilter idFilter,
+                                                @NotNull ValueProcessor<? super V> processor) {
     Project project = scope.getProject();
     if (project != null &&
         !ModelBranchImpl.processModifiedFilesInScope(scope, file -> processInMemoryFileData(indexId, dataKey, project, file, processor))) {

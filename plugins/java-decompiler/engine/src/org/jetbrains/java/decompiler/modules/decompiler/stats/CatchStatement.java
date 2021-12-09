@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.stats;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -152,7 +152,7 @@ public final class CatchStatement extends Statement {
       // map first instruction storing the exception to the catch statement
       BasicBlock block = stat.getBasichead().getBlock();
       if (!block.getSeq().isEmpty() && block.getInstruction(0).opcode == CodeConstants.opc_astore) {
-        Integer offset = block.getOldOffset(0);
+        Integer offset = block.getOriginalOffset(0);
         if (offset > -1) tracer.addMapping(offset);
       }
 

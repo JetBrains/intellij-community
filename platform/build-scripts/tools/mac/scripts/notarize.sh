@@ -31,6 +31,18 @@ function publish-log() {
   curl -T "$file" "$ARTIFACTORY_URL/$id" || true
 }
 
+function check-itmstransporter() {
+  transporter="$(find /Applications -name 'iTMSTransporter' -print -quit)"
+  if [[ -z "$transporter" ]]; then
+    echo "iTMSTransporter not found"
+    exit 1
+  fi
+  if ! "$transporter" -v eXtreme; then
+    echo "iTMSTransporter failed to start"
+    exit 1
+  fi
+}
+
 function altool-upload() {
   # Since altool uses same file for upload token we have to trick it into using different folders for token file location
   # Also it copies zip into TMPDIR so we override it too, to simplify cleanup
@@ -45,6 +57,7 @@ function altool-upload() {
   if [[ -f "$shared_itmstransporter" ]]; then
     cp -r "$shared_itmstransporter" "$HOME/.itmstransporter"
   fi
+  check-itmstransporter
   # For some reason altool prints everything to stderr, not stdout
   set +e
   xcrun altool --notarize-app \

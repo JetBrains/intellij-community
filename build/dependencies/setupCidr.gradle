@@ -36,22 +36,22 @@ task setupCidr
   lldb: [
     platforms: [
       win: [
-        version: "6f6d0a12e1260e0fd79fbcd1f5df2ebb48002db8",
+        version: "b1eef8043e0d1cbc5dc25f4f32bf0bf21b64f99e",
         archs: ["x64", "x86"]
       ],
       linux: [
-        version: "26e38627b2203e151539e9c1259927b981ea0ffd",
+        version: "f9f6ec73b9475d2681a8b6bd11dd8605778a144f",
         archs: ["x64"]
       ],
       mac: [
-        version: "26e38627b2203e151539e9c1259927b981ea0ffd",
+        version: "f9f6ec73b9475d2681a8b6bd11dd8605778a144f",
         archs: ["x64"]
       ]
     ],
     path: "CIDR/cidr-debugger/bin/lldb"
   ],
   lldbfrontend: [
-    version: "420e4957430a022113c0489b51a6549c001137be",
+    version: "beb610145de1e0187f5887c47357c70c54af6242",
     platforms: [
       win: [archs: ["x64", "x86"]],
       linux: [archs: ["x64"]],

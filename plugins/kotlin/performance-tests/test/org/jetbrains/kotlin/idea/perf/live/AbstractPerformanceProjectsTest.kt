@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea.perf.live
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory
-import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInspection.InspectionProfileEntry
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.EditorFactory
@@ -24,13 +23,10 @@ import com.intellij.util.ThrowableRunnable
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
-import org.jetbrains.kotlin.idea.perf.ProjectBuilder
-import org.jetbrains.kotlin.idea.perf.Stats
-import org.jetbrains.kotlin.idea.perf.Stats.Companion.WARM_UP
-import org.jetbrains.kotlin.idea.perf.Stats.Companion.runAndMeasure
-import org.jetbrains.kotlin.idea.perf.performanceTest
-import org.jetbrains.kotlin.idea.perf.util.PerformanceSuite.ApplicationScope.Companion.initApp
-import org.jetbrains.kotlin.idea.perf.util.PerformanceSuite.ApplicationScope.Companion.initSdk
+import org.jetbrains.kotlin.idea.testFramework.Stats
+import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP
+import org.jetbrains.kotlin.idea.perf.suite.PerformanceSuite.ApplicationScope.Companion.initApp
+import org.jetbrains.kotlin.idea.perf.suite.PerformanceSuite.ApplicationScope.Companion.initSdk
 import org.jetbrains.kotlin.idea.perf.util.ProfileTools.Companion.initDefaultProfile
 import org.jetbrains.kotlin.idea.perf.util.logMessage
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
@@ -39,7 +35,7 @@ import org.jetbrains.kotlin.idea.testFramework.*
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.cleanupCaches
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.close
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.isAKotlinScriptFile
-import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.openFileInEditor
+import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.openInEditor
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.openFixture
 import org.jetbrains.kotlin.test.KotlinRoot
 import java.io.File
@@ -50,10 +46,6 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
     protected var myProject: Project? = null
     private lateinit var jdk18: Sdk
     private lateinit var myApplication: TestApplicationManager
-
-    override fun isStressTest(): Boolean = true
-
-    override fun isPerformanceTest(): Boolean = false
 
     override fun setUp() {
         super.setUp()
@@ -137,26 +129,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
             }
         }
 
-        // indexing
-        lastProject?.let { project ->
-            invalidateLibraryCache(project)
-
-            CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project)
-
-            dispatchAllInvocationEvents()
-
-            logMessage { "project $name is ${if (project.isInitialized) "initialized" else "not initialized"}" }
-
-            with(DumbService.getInstance(project)) {
-                queueTask(UnindexedFilesUpdater(project))
-                completeJustSubmittedTasks()
-            }
-            dispatchAllInvocationEvents()
-
-            Fixture.enableAnnotatorsAndLoadDefinitions(project)
-
-            myApplication.setDataProvider(TestDataProvider(project))
-        }
+        lastProject?.let { doProjectIndexing(it, name) }
 
         return lastProject ?: error("unable to open project $name")
     }
@@ -212,81 +185,49 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
             }
         }
 
-        // indexing
-        lastProject?.let { project ->
-            invalidateLibraryCache(project)
-
-            CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project)
-
-            dispatchAllInvocationEvents()
-
-            logMessage { "project $name is ${if (project.isInitialized) "initialized" else "not initialized"}" }
-
-            with(DumbService.getInstance(project)) {
-                queueTask(UnindexedFilesUpdater(project))
-                completeJustSubmittedTasks()
-            }
-            dispatchAllInvocationEvents()
-
-            Fixture.enableAnnotatorsAndLoadDefinitions(project)
-
-            myApplication.setDataProvider(TestDataProvider(project))
-        }
+        lastProject?.let { doProjectIndexing(it, name) }
 
         return lastProject ?: error("unable to open project $name at $projectPath")
     }
 
-    fun perfTypeAndAutocomplete(
-        stats: Stats,
-        fileName: String,
-        marker: String,
-        insertString: String,
-        surroundItems: String = "\n",
-        lookupElements: List<String>,
-        typeAfterMarker: Boolean = true,
-        revertChangesAtTheEnd: Boolean = true,
-        note: String = ""
-    ) = perfTypeAndAutocomplete(
-        project(), stats, fileName, marker, insertString, surroundItems,
-        lookupElements = lookupElements, typeAfterMarker = typeAfterMarker,
-        revertChangesAtTheEnd = revertChangesAtTheEnd, note = note
-    )
+    protected fun openProjectNormal(name: String, path: String, openAction: ProjectOpenAction): Project {
+        val projectPath = (if (File(path).exists()) File(path) else KotlinRoot.REPO.resolve(path)).absolutePath
 
-    fun perfTypeAndAutocomplete(
-        project: Project,
-        stats: Stats,
-        fileName: String,
-        marker: String,
-        insertString: String,
-        surroundItems: String = "\n",
-        lookupElements: List<String>,
-        typeAfterMarker: Boolean = true,
-        revertChangesAtTheEnd: Boolean = true,
-        note: String = ""
-    ) {
-        assertTrue("lookupElements has to be not empty", lookupElements.isNotEmpty())
-        perfTypeAndDo(
-            project,
-            fileName,
-            "typeAndAutocomplete",
-            note,
-            stats,
-            marker,
-            typeAfterMarker,
-            surroundItems,
-            insertString,
-            setupBlock = {},
-            testBlock = { fixture: Fixture ->
-                fixture.complete()
-            },
-            tearDownCheck = { fixture, value: Array<LookupElement>? ->
-                val items = value?.map { e -> e.lookupString }?.toList() ?: emptyList()
-                for (lookupElement in lookupElements) {
-                    assertTrue("'$lookupElement' has to be present in items $items", items.contains(lookupElement))
-                }
-            },
-            revertChangesAtTheEnd = revertChangesAtTheEnd
+        assertTrue("path $projectPath does not exist, check README.md", File(projectPath).exists())
+
+        val openProject = OpenProject(
+            projectPath = projectPath,
+            projectName = name,
+            jdk = jdk18,
+            projectOpenAction = openAction
         )
+
+        val project = ProjectOpenAction.openProject(openProject).also {
+            openAction.postOpenProject(openProject = openProject, project = it)
+            it.initDefaultProfile()
+        }
+
+        return project
+    }
+
+    private fun doProjectIndexing(project: Project, name: String) {
+        invalidateLibraryCache(project)
+
+        CodeInsightTestFixtureImpl.ensureIndexesUpToDate(project)
+
+        dispatchAllInvocationEvents()
+
+        logMessage { "project $name is ${if (project.isInitialized) "initialized" else "not initialized"}" }
+
+        with(DumbService.getInstance(project)) {
+            queueTask(UnindexedFilesUpdater(project))
+            completeJustSubmittedTasks()
+        }
+        dispatchAllInvocationEvents()
+
+        Fixture.enableAnnotatorsAndLoadDefinitions(project)
+
+        myApplication.setDataProvider(TestDataProvider(project))
     }
 
     fun perfTypeAndUndo(
@@ -345,7 +286,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
             val editor = fixture.editor
 
             val initialText = editor.document.text
-            updateScriptDependenciesIfNeeded(fileName, fixture)
+            fixture.updateScriptDependenciesIfNeeded()
 
             performanceTest<Unit, V> {
                 name("$typeTestPrefix ${notePrefix(note)}$fileName")
@@ -430,7 +371,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
                 val editor = fixture.editor
 
                 val initialText = editor.document.text
-                updateScriptDependenciesIfNeeded(fileName, fixture)
+                fixture.updateScriptDependenciesIfNeeded()
 
                 val tasksIdx = editor.document.text.indexOf(marker)
                 assertTrue("marker '$marker' not found in $fileName", tasksIdx > 0)
@@ -474,94 +415,6 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
         }
     }
 
-    fun perfCopyAndPaste(
-        stats: Stats,
-        sourceFileName: String,
-        sourceInitialMarker: String? = null,
-        sourceFinalMarker: String? = null,
-        targetFileName: String,
-        targetInitialMarker: String? = null,
-        targetFinalMarker: String? = null,
-        note: String = ""
-    ) = perfCopyAndPaste(
-        project(), stats,
-        sourceFileName, sourceInitialMarker, sourceFinalMarker,
-        targetFileName, targetInitialMarker, targetFinalMarker,
-        note
-    )
-
-    fun perfCopyAndPaste(
-        project: Project,
-        stats: Stats,
-        sourceFileName: String,
-        sourceInitialMarker: String? = null,
-        sourceFinalMarker: String? = null,
-        targetFileName: String,
-        targetInitialMarker: String? = null,
-        targetFinalMarker: String? = null,
-        note: String = ""
-    ) {
-        performanceTest<Pair<Array<Fixture>, String>, Boolean> {
-            name("${notePrefix(note)}$sourceFileName")
-            stats(stats)
-            warmUpIterations(8)
-            iterations(15)
-            setUp {
-                val fixture1 = openFixture(project, sourceFileName)
-                val fixture2 = openFixture(project, targetFileName)
-
-                val initialText2 = fixture2.document.text
-
-                updateScriptDependenciesIfNeeded(sourceFileName, fixture1)
-                updateScriptDependenciesIfNeeded(sourceFileName, fixture2)
-
-                fixture1.selectMarkers(sourceInitialMarker, sourceFinalMarker)
-                fixture2.selectMarkers(targetInitialMarker, targetFinalMarker)
-
-                it.setUpValue = Pair(arrayOf(fixture1, fixture2), initialText2)
-            }
-            test {
-                it.setUpValue?.let { setUpValue ->
-                    val fixture1 = setUpValue.first[0]
-                    val fixture2 = setUpValue.first[1]
-                    it.value = fixture1.performEditorAction(IdeActions.ACTION_COPY) &&
-                            fixture2.performEditorAction(IdeActions.ACTION_PASTE)
-
-                    dispatchAllInvocationEvents()
-                }
-            }
-            tearDown {
-                try {
-                    commitAllDocuments()
-                    it.value?.let { performed ->
-                        assertTrue("copy-n-paste has not performed well", performed)
-                        // files could be different due to spaces
-                        //assertEquals(it.setUpValue!!.first.document.text, it.setUpValue!!.second.document.text)
-                    }
-                } finally {
-                    it.setUpValue?.let { setUpValue ->
-                        // pair.second.performEditorAction(IdeActions.ACTION_UNDO)
-                        val fixture2 = setUpValue.first[1]
-                        fixture2.applyText(setUpValue.second)
-                    }
-                    commitAllDocuments()
-                }
-            }
-            profilerConfig.enabled = true
-        }
-    }
-
-    private fun updateScriptDependenciesIfNeeded(
-        fileName: String,
-        fixture: Fixture
-    ) {
-        if (isAKotlinScriptFile(fileName)) {
-            runAndMeasure("update script dependencies for $fileName") {
-                ScriptConfigurationManager.updateScriptDependenciesSynchronously(fixture.psiFile)
-            }
-        }
-    }
-
     protected fun perfHighlightFile(
         name: String,
         stats: Stats,
@@ -599,7 +452,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
                     iterations(if (isWarmUp) 2 else iterations)
                     checkStability(checkStability)
                     setUp {
-                        it.setUpValue = openFileInEditor(project, fileName)
+                        it.setUpValue = openInEditor(project, fileName)
                     }
                     test {
                         val file = it.setUpValue
@@ -655,7 +508,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
             stats(stats)
             warmUpIterations(20)
             iterations(50)
-            setUp { it.setUpValue = openFileInEditor(project, fileName) }
+            setUp { it.setUpValue = openInEditor(project, fileName) }
             test {
                 ScriptConfigurationManager.updateScriptDependenciesSynchronously(it.setUpValue!!.psiFile)
                 it.value = it.setUpValue

@@ -6,8 +6,8 @@ import com.intellij.codeInsight.navigation.MultipleTargetElementsInfo
 import com.intellij.codeInsight.navigation.SymbolTypeProvider
 import com.intellij.codeInsight.navigation.actions.TypeDeclarationPlaceAwareProvider
 import com.intellij.codeInsight.navigation.actions.TypeDeclarationProvider
-import com.intellij.codeInsight.navigation.impl.GTTDActionResult.MultipleTargets
-import com.intellij.codeInsight.navigation.impl.GTTDActionResult.SingleTarget
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult.MultipleTargets
+import com.intellij.codeInsight.navigation.impl.NavigationActionResult.SingleTarget
 import com.intellij.model.Symbol
 import com.intellij.model.psi.PsiSymbolDeclaration
 import com.intellij.model.psi.PsiSymbolReference
@@ -18,10 +18,8 @@ import com.intellij.model.psi.impl.declaredReferencedData
 import com.intellij.model.psi.impl.mockEditor
 import com.intellij.navigation.NavigationTarget
 import com.intellij.navigation.SymbolNavigationService
-import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.pom.Navigatable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.util.SmartList
@@ -29,22 +27,6 @@ import com.intellij.util.SmartList
 internal fun gotoTypeDeclaration(file: PsiFile, offset: Int): GTTDActionData? {
   return processInjectionThenHost(file, offset, ::gotoTypeDeclarationInner)
 }
-
-/**
- * "Go To Type Declaration" action result
- */
-internal sealed class GTTDActionResult {
-
-  class SingleTarget(val navigatable: () -> Navigatable) : GTTDActionResult()
-
-  class MultipleTargets(val targets: List<SingleTargetWithPresentation>) : GTTDActionResult() {
-    init {
-      require(targets.isNotEmpty())
-    }
-  }
-}
-
-internal data class SingleTargetWithPresentation(val navigatable: () -> Navigatable, val presentation: TargetPresentation)
 
 private fun gotoTypeDeclarationInner(file: PsiFile, offset: Int): GTTDActionData? {
   val (declaredData, referencedData) = declaredReferencedData(file, offset) ?: return null
@@ -74,7 +56,7 @@ internal class GTTDActionData(
     }
   }
 
-  fun result(): GTTDActionResult? {
+  fun result(): NavigationActionResult? {
     return result(typeSymbols().navigationTargets(project).toCollection(SmartList()))
   }
 }
@@ -152,12 +134,14 @@ private fun Sequence<Symbol>.navigationTargets(project: Project): Sequence<Navig
   }
 }
 
-internal fun result(navigationTargets: Collection<NavigationTarget>): GTTDActionResult? {
+internal fun result(navigationTargets: Collection<NavigationTarget>): NavigationActionResult? {
   return when (navigationTargets.size) {
     0 -> null
-    1 -> SingleTarget(navigationTargets.single()::getNavigatable)
+    1 -> navigationTargets.single().navigationRequest()?.let { request ->
+      SingleTarget(request, null)
+    }
     else -> MultipleTargets(navigationTargets.map { navigationTarget ->
-      SingleTargetWithPresentation(navigationTarget::getNavigatable, navigationTarget.targetPresentation)
+      LazyTargetWithPresentation(navigationTarget::navigationRequest, navigationTarget.targetPresentation, null)
     })
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing
 
 import com.intellij.ide.impl.ProjectUtil
@@ -18,7 +18,6 @@ import com.intellij.psi.stubs.StubIndexExtension
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.indexing.IndexingFlag.cleanupProcessedFlag
 import org.jetbrains.annotations.NonNls
-import org.jetbrains.annotations.NotNull
 import java.util.*
 
 class FileBasedIndexTumbler(private val reason: @NonNls String) {
@@ -43,16 +42,7 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
             for (project in ProjectUtil.getOpenProjects()) {
               val dumbService = DumbService.getInstance(project)
               dumbService.cancelAllTasksAndWait()
-              object : DumbModeTask(dumbModeSemaphore) {
-                override fun performInDumbMode(indicator: ProgressIndicator) {
-                  indicator.text = IndexingBundle.message("indexes.reloading")
-                  dumbModeSemaphore.waitFor()
-                }
-
-                override fun toString(): String {
-                  return "Plugin loading/unloading"
-                }
-              }.queue(project)
+              MyDumbModeTask(dumbModeSemaphore).queue(project)
             }
           }
         }
@@ -119,6 +109,20 @@ class FileBasedIndexTumbler(private val reason: @NonNls String) {
 
   companion object {
     private val LOG = logger<FileBasedIndexTumbler>()
+
+    private class MyDumbModeTask(val semaphore: Semaphore) : DumbModeTask() {
+      override fun performInDumbMode(indicator: ProgressIndicator) {
+        indicator.text = IndexingBundle.message("indexes.reloading")
+        semaphore.waitFor()
+      }
+
+      override fun toString(): String {
+        return "Plugin loading/unloading"
+      }
+
+      override fun tryMergeWith(taskFromQueue: DumbModeTask): DumbModeTask? =
+        if (taskFromQueue is MyDumbModeTask && taskFromQueue.semaphore === semaphore) this else null
+    }
   }
 }
 

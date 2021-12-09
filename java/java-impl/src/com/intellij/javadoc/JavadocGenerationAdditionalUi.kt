@@ -57,7 +57,7 @@ class JavadocGenerationAdditionalUi {
       }
         .layout(RowLayout.INDEPENDENT)
       row(JavaBundle.message("javadoc.generate.scope.row")) {
-        myScopeCombo = comboBox(arrayOf(PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PACKAGE, PsiKeyword.PRIVATE))
+        myScopeCombo = comboBox(listOf(PsiKeyword.PUBLIC, PsiKeyword.PROTECTED, PsiKeyword.PACKAGE, PsiKeyword.PRIVATE))
           .component
       }
         .layout(RowLayout.INDEPENDENT)

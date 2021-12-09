@@ -53,6 +53,7 @@ import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.LineNumberConverterAdapter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -1101,6 +1102,12 @@ public final class DiffUtil {
         isEmpty &= lineCount == 0;
       }
     }.execute();
+  }
+
+  public static void clearLineModificationFlags(@NotNull Document document, int startLine, int endLine) {
+    if (document.getTextLength() == 0) return;  // empty document has no lines
+    if (startLine == endLine) return;
+    ((DocumentImpl)document).clearLineModificationFlags(startLine, endLine);
   }
 
   @NotNull

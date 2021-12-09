@@ -250,7 +250,12 @@ public final class MVStore implements AutoCloseable {
     private final MVMap<?, ?>[] metaMaps;
     private final ConcurrentHashMap<Integer, MVMap<?, ?>> maps = new ConcurrentHashMap<>();
 
-    public static final class StoreHeader {
+  @Override
+  public String toString() {
+    return fileStore.toString();
+  }
+
+  public static final class StoreHeader {
         short format = FORMAT_WRITE;
         short formatRead = FORMAT_READ;
 

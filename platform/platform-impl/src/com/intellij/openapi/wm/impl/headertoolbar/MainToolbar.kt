@@ -3,36 +3,101 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
-import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.actionSystem.ex.ActionManagerEx
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.components.panels.HorizontalLayout
+import java.awt.event.ComponentAdapter
+import java.awt.event.ComponentEvent
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.UIManager
 
 class MainToolbar: JPanel(HorizontalLayout(10)) {
 
-  val layoutMap = mapOf(
+  private val layoutMap = mapOf(
     Position.Left to HorizontalLayout.LEFT,
     Position.Right to HorizontalLayout.RIGHT,
     Position.Center to HorizontalLayout.CENTER
   )
+  private val visibleComponentsPool = VisibleComponentsPool()
 
   init {
+    background = UIManager.getColor("MainToolbar.background")
+    isOpaque = true
     for (factory in MainToolbarWidgetFactory.EP_NAME.extensionList) {
-      val widget = factory.createWidget()
-      add(layoutMap[factory.getPosition()], widget)
+      addWidget(factory.createWidget(), factory.getPosition())
     }
 
-    add(HorizontalLayout.RIGHT, createActionsBar())
+    createActionsBar()?.let { addWidget(it, Position.Right) }
+    addComponentListener(ResizeListener())
   }
 
-  private fun createActionsBar(): JComponent {
-    val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS) as ActionGroup?
-    val toolBar = ActionManagerEx.getInstanceEx()
-      .createActionToolbar(ActionPlaces.MAIN_TOOLBAR, group!!, true)
+  private fun addWidget(widget: JComponent,
+                        position: Position) {
+    add(layoutMap[position], widget)
+    visibleComponentsPool.addElement(widget, position)
+  }
 
-    return toolBar.component
+  private fun createActionsBar(): JComponent? {
+    val group = CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EXPERIMENTAL_TOOLBAR_ACTIONS) as ActionGroup?
+    return group?.let { ActionToolbar(it.getChildren(null).asList()) }
+  }
+
+  private inner class ResizeListener : ComponentAdapter() {
+    override fun componentResized(e: ComponentEvent?) {
+      val visibleElementsWidth = components.filter { it.isVisible }.sumOf { it.preferredSize.width }
+      val componentWidth = size.width
+      if (visibleElementsWidth > componentWidth) {
+        decreaseVisibleSizeBy(visibleElementsWidth - componentWidth)
+      }
+      else {
+        increaseVisibleSizeBy(componentWidth - visibleElementsWidth)
+      }
+    }
+
+    private fun increaseVisibleSizeBy(delta: Int) {
+      var restDelta = delta
+      var comp = visibleComponentsPool.nextToShow()
+      while (comp != null && restDelta > 0) {
+        val width = comp.preferredSize.width
+        if (width > restDelta) return
+        comp.isVisible = true
+        restDelta -= width
+        comp = visibleComponentsPool.nextToShow()
+      }
+    }
+
+    private fun decreaseVisibleSizeBy(delta: Int) {
+      var restDelta = delta
+      var comp = visibleComponentsPool.nextToHide()
+      while (comp != null && restDelta > 0) {
+        comp.isVisible = false
+        restDelta -= comp.preferredSize.width
+        comp = visibleComponentsPool.nextToShow()
+      }
+    }
+  }
+}
+
+private class VisibleComponentsPool {
+
+  val elements = mapOf<Position, MutableList<JComponent>>(
+    Pair(Position.Left, mutableListOf()),
+    Pair(Position.Right, mutableListOf()),
+    Pair(Position.Center, mutableListOf())
+  )
+
+  fun addElement(comp: JComponent, position: Position) = elements[position]!!.add(comp)
+
+  fun nextToShow(): JComponent? {
+    return elements[Position.Center]!!.firstOrNull { !it.isVisible }
+           ?: elements[Position.Right]!!.firstOrNull { !it.isVisible }
+           ?: elements[Position.Left]!!.firstOrNull { !it.isVisible }
+  }
+
+  fun nextToHide(): JComponent? {
+    return elements[Position.Left]!!.lastOrNull() { it.isVisible }
+           ?: elements[Position.Right]!!.lastOrNull() { it.isVisible }
+           ?: elements[Position.Center]!!.lastOrNull() { it.isVisible }
   }
 }

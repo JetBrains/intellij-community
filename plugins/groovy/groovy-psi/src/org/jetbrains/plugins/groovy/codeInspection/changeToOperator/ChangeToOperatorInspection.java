@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.codeInspection.changeToOperator;
 
 import com.intellij.codeInspection.LocalQuickFix;
@@ -102,7 +102,7 @@ public class ChangeToOperatorInspection extends BaseInspection {
 
 
   @Override
-  public JComponent createOptionsPanel() {
+  public JComponent createGroovyOptionsPanel() {
     MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(GroovyBundle.message("replace.with.operator.double.negation.option"), "useDoubleNegation");
     optionsPanel.addCheckbox(GroovyBundle.message("replace.with.operator.compareTo.equality.option"), "shouldChangeCompareToEqualityToEquals");

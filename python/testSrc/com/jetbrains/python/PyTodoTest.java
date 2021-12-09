@@ -1,10 +1,11 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
 import com.intellij.editor.TodoItemsTestCase;
 import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.psi.search.TodoAttributesUtil;
 import com.intellij.psi.search.TodoPattern;
+import com.intellij.testFramework.PlatformTestUtil;
 
 public class PyTodoTest extends TodoItemsTestCase {
 
@@ -17,6 +18,7 @@ public class PyTodoTest extends TodoItemsTestCase {
     final TodoPattern[] oldPatterns = todo.getTodoPatterns();
     try {
       todo.setTodoPatterns(new TodoPattern[]{new TodoPattern("\\bDas\\b.*", TodoAttributesUtil.createDefault(), false)});
+      PlatformTestUtil.dispatchAllEventsInIdeEventQueue();
       testTodos("# [Das Rindfleischetikettierungsueberwachungsaufgabenuebertragungsgesetz]\n");
     }
     finally {

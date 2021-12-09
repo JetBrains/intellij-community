@@ -2,12 +2,11 @@
 package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.io.Decompressor
-import com.intellij.util.lang.ImmutableZipEntry
-import com.intellij.util.lang.ImmutableZipFile
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildContext
 import org.jetbrains.intellij.build.BuildTasks
 import org.jetbrains.intellij.build.ProductProperties
+import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.ModuleOutputPatcher
 import org.jetbrains.intellij.build.impl.PluginLayout
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
@@ -15,7 +14,6 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 
-import java.nio.ByteBuffer
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
@@ -100,6 +98,7 @@ final class KotlinPluginBuilder {
     "kotlin.uast.uast-kotlin-idea",
     "kotlin.i18n",
     "kotlin.project-model",
+    "kotlin.features-trainer",
     )
 
   private static List<String> LIBRARIES = List.of(
@@ -221,22 +220,13 @@ final class KotlinPluginBuilder {
             throw new IllegalStateException("$kotlincKotlinCompiler is expected to have only one jar")
           }
 
-          String prefixWithEndingSlash = "META-INF/extensions/"
-          ImmutableZipFile.load(jars[0].toPath()).withCloseable { zip ->
-            for (ImmutableZipEntry entry : zip.entries) {
-              if (entry.name.startsWith(prefixWithEndingSlash)) {
-                ByteBuffer buffer = entry.getByteBuffer(zip)
-                try {
-                  byte[] bytes = new byte[buffer.remaining()]
-                  buffer.get(bytes)
-                  patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, entry.name, bytes)
-                }
-                finally {
-                  entry.releaseBuffer(buffer)
-                }
+          BuildHelper.getInstance(context).consumeDataByPrefix
+            .invokeWithArguments(jars[0].toPath(), "META-INF/extensions/", new BiConsumer<String, byte[]>() {
+              @Override
+              void accept(String name, byte[] data) {
+                patcher.patchModuleOutput(MAIN_KOTLIN_PLUGIN_MODULE, name, data)
               }
-            }
-          }
+            })
         }
       })
 

@@ -18,11 +18,21 @@ import java.awt.Dimension
 import java.awt.GridLayout
 import javax.swing.JPanel
 
+/** Should be used inside JSON top-level keys to distinguish reports without any external information */
+const val FEEDBACK_REPORT_ID_KEY: String = "feedback_id"
+
 const val DEFAULT_NO_EMAIL_ZENDESK_REQUESTER: String = "no_mail@jetbrains.com"
 
-private const val PATH_TO_FEEDBACK_FORM_XML = "forms/ProjectCreationFeedbackForm.xml"
+private const val PATH_TO_TEST_FEEDBACK_REQUEST_FORM_XML = "forms/SimpleTestFeedbackForm.xml"
+private const val PATH_TO_PRODUCTION_FEEDBACK_REQUEST_FORM_XML = "forms/SimpleProductionFeedbackForm.xml"
 private const val PRIVACY_POLICY_URL: String = "https://www.jetbrains.com/legal/docs/privacy/privacy.html"
 private const val PRIVACY_POLICY_THIRD_PARTIES_URL = "https://www.jetbrains.com/legal/docs/privacy/third-parties.html"
+
+enum class FeedbackRequestType {
+  NO_REQUEST, // can be used during feedback UI/statistics development and debug
+  TEST_REQUEST,
+  PRODUCTION_REQUEST
+}
 
 fun submitGeneralFeedback(project: Project?,
                           title: String,
@@ -30,11 +40,19 @@ fun submitGeneralFeedback(project: Project?,
                           feedbackType: String,
                           collectedData: String,
                           email: String = DEFAULT_NO_EMAIL_ZENDESK_REQUESTER,
-                          onDone: () -> Unit = {}, onError: () -> Unit = {}) {
+                          onDone: () -> Unit = {},
+                          onError: () -> Unit = {},
+                          feedbackRequestType: FeedbackRequestType = FeedbackRequestType.TEST_REQUEST
+) {
   ApplicationManager.getApplication().executeOnPooledThread {
     // Any class from this module will fit
-    val stream = ThanksForFeedbackNotification::class.java.classLoader.getResourceAsStream(PATH_TO_FEEDBACK_FORM_XML)
-                 ?: throw RuntimeException("Resource not found: $PATH_TO_FEEDBACK_FORM_XML")
+    val pathToFeedbackFormXml = when(feedbackRequestType) {
+      FeedbackRequestType.NO_REQUEST -> return@executeOnPooledThread
+      FeedbackRequestType.TEST_REQUEST -> PATH_TO_TEST_FEEDBACK_REQUEST_FORM_XML
+      FeedbackRequestType.PRODUCTION_REQUEST -> PATH_TO_PRODUCTION_FEEDBACK_REQUEST_FORM_XML
+    }
+    val stream = FeedbackRequestType::class.java.classLoader.getResourceAsStream(pathToFeedbackFormXml)
+                 ?: throw RuntimeException("Resource not found: $pathToFeedbackFormXml")
     val xmlElement = readXmlAsModel(stream)
     val form = ZenDeskForm.parse(xmlElement)
     ZenDeskRequests().submit(
@@ -56,26 +74,30 @@ fun submitGeneralFeedback(project: Project?,
 
 fun createFeedbackAgreementComponent(project: Project?, systemInfo: () -> Unit) =
   JPanel().apply {
-    layout = GridLayout(3, 1, 0, 0)
+    layout = GridLayout(4, 1, 0, 0)
 
     add(createLineOfConsent(FeedbackBundle.message("dialog.created.project.consent.1.1"),
                             FeedbackBundle.message("dialog.created.project.consent.1.2"),
                             FeedbackBundle.message("dialog.created.project.consent.1.3"), systemInfo))
 
-    add(createLineOfConsent(FeedbackBundle.message("dialog.created.project.consent.2.1"),
-                            FeedbackBundle.message("dialog.created.project.consent.2.2"),
-                            FeedbackBundle.message("dialog.created.project.consent.2.3")) {
+    add(createLineOfConsent(FeedbackBundle.message("dialog.created.project.consent.2")))
+
+    add(createLineOfConsent(FeedbackBundle.message("dialog.created.project.consent.3.1"),
+                            FeedbackBundle.message("dialog.created.project.consent.3.2"),
+                            FeedbackBundle.message("dialog.created.project.consent.3.3")) {
       BrowserUtil.browse(PRIVACY_POLICY_THIRD_PARTIES_URL, project)
     })
 
-    add(createLineOfConsent("",
-                            FeedbackBundle.message("dialog.created.project.consent.3.2"),
-                            FeedbackBundle.message("dialog.created.project.consent.3.3")) {
+    add(createLineOfConsent(linkText = FeedbackBundle.message("dialog.created.project.consent.4.2"),
+                            postfix = FeedbackBundle.message("dialog.created.project.consent.4.3")) {
       BrowserUtil.browse(PRIVACY_POLICY_URL, project)
     })
   }
 
-private fun createLineOfConsent(prefixTest: String, linkText: String, postfix: String, action: () -> Unit): HyperlinkLabel {
+private fun createLineOfConsent(prefixTest: String = "",
+                                linkText: String = "",
+                                postfix: String = "",
+                                action: () -> Unit = {}): HyperlinkLabel {
   val text = HtmlBuilder()
     .append(prefixTest) //NON-NLS
     .append(HtmlChunk.tag("hyperlink")

@@ -2,7 +2,9 @@
 package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.checkNonNegative
+import com.intellij.util.ui.JBEmptyBorder
 import org.jetbrains.annotations.ApiStatus
+import javax.swing.border.EmptyBorder
 
 @ApiStatus.Experimental
 data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val right: Int = 0) {
@@ -24,4 +26,8 @@ data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val ri
 
   val height: Int
     get() = top + bottom
+}
+
+fun Gaps.toEmptyBorder(): EmptyBorder {
+  return JBEmptyBorder(top, left, bottom, right)
 }

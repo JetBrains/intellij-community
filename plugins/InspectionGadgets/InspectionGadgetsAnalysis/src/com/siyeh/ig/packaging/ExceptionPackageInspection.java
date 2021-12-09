@@ -41,10 +41,8 @@ public class ExceptionPackageInspection extends PackageGlobalInspection {
         return false;
       }
       for (PsiClass aClass : classes) {
-        if (TestFrameworks.getInstance().isTestClass(aClass)) {
-          continue;
-        }
-        if (!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_THROWABLE)) {
+        if (!InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_LANG_THROWABLE) &&
+            !TestFrameworks.getInstance().isTestClass(aClass)) {
           return false;
         }
       }

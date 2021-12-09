@@ -190,7 +190,7 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
   }
 
   private fun Panel.extensionsListRow() {
-    buttonGroup(MarkdownBundle.message("markdown.settings.preview.extensions.name")) {
+    buttonsGroup(MarkdownBundle.message("markdown.settings.preview.extensions.name")) {
       val extensions = MarkdownExtensionsUtil.collectConfigurableExtensions()
       for (extension in extensions) {
         createExtensionEntry(extension)

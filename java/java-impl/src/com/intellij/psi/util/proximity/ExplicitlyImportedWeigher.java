@@ -81,20 +81,30 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
     }
 
     if (element instanceof PsiClass) {
-      final String qname = ((PsiClass) element).getQualifiedName();
+      PsiClass psiClass = (PsiClass)element;
+      final String qname = psiClass.getQualifiedName();
       if (qname != null) {
+        boolean topLevel = psiClass.getContainingClass() == null;
         List<String> importedNames = PLACE_IMPORTED_NAMES.getValue(location);
-        if (importedNames.contains(qname) || "java.lang".equals(StringUtil.getPackageName(qname))) {
-          return 100;
-        }
+        if (importedNames.contains(qname)) return 100;
+        String packageName = StringUtil.getPackageName(qname);
+        if ("java.lang".equals(packageName)) return 100;
+
+        // The whole package is imported on demand
+        if (importedNames.contains(packageName)) return topLevel ? 80 : 60;
 
         // check if anything from the same package is already imported in the file:
         //    people are likely to refer to the same subsystem as they're already working
-        if (containsImport(importedNames, StringUtil.getPackageName(qname))) {
-          return 50;
+        if (containsImport(importedNames, packageName)) return 50;
+        final PsiPackage placePackage = PLACE_PACKAGE.getValue(location);
+        if (placePackage != null) {
+          Module elementModule = ModuleUtilCore.findModuleForPsiElement(element);
+          if (location.getPositionModule() == elementModule && placePackage.equals(getContextPackage(element))) {
+            return topLevel ? 200 : 50;
+          }
         }
       }
-
+      return 0;
     }
     if (element instanceof PsiMember) {
       String qname = PsiUtil.getMemberQualifiedName((PsiMember)element);

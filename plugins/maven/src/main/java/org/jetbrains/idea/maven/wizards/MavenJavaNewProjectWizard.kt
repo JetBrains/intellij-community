@@ -6,13 +6,17 @@ import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
+import com.intellij.ui.dsl.builder.Panel
+import com.intellij.ui.dsl.builder.bindItem
+import com.intellij.ui.dsl.builder.columns
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.idea.maven.indices.MavenIndicesManager
 import org.jetbrains.idea.maven.model.MavenArchetype
@@ -21,7 +25,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 import javax.swing.JList
 
 class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
-  override val name = MavenUtil.SYSTEM_ID.readableName
+  override val name = MAVEN
 
   override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent)
 
@@ -38,7 +42,10 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
             .applyToComponent { setSwingPopup(false) }
             .bindItem(archetypeProperty)
             .columns(COLUMNS_MEDIUM)
-          loadArchetypes(archetypes)
+          archetypes.add(null)
+          parentStep.whenStepSelected(MAVEN) {
+            loadArchetypes(archetypes)
+          }
           button(MavenWizardBundle.message("maven.new.project.wizard.add.archetype.button")) {
             addArchetype(comboBox.component, archetypes)
           }
@@ -47,9 +54,8 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
 
     private fun loadArchetypes(archetypes: CollectionComboBoxModel<MavenArchetype?>) {
-      archetypes.add(null)
       val indicesManager = getIndicesManager()
-      ApplicationManager.getApplication().executeOnPooledThread {
+      BackgroundTaskUtil.executeOnPooledThread(context.disposable) {
         archetypes.add(indicesManager.archetypes.sortedBy { it.groupId })
       }
     }
@@ -110,7 +116,7 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
   }
 
-  private class ArchetypeRenderer() : ColoredListCellRenderer<MavenArchetype?>() {
+  private class ArchetypeRenderer : ColoredListCellRenderer<MavenArchetype?>() {
     override fun customizeCellRenderer(
       list: JList<out MavenArchetype?>,
       value: MavenArchetype?,
@@ -129,5 +135,9 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
         append(value.artifactId + ":" + value.version)
       }
     }
+  }
+
+  companion object {
+    private val MAVEN = MavenUtil.SYSTEM_ID.readableName
   }
 }

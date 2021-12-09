@@ -612,7 +612,22 @@ public final class PlatformTestUtil {
   // to warn about not calling .assertTiming() in the end
   @Contract(pure = true)
   public static @NotNull PerformanceTestInfo startPerformanceTest(@NonNls @NotNull String what, int expectedMs, @NotNull ThrowableRunnable<?> test) {
-    return new PerformanceTestInfo(test, expectedMs, what);
+    return startPerformanceTestWithVariableInputSize(what, expectedMs, 1, () -> {
+      test.run();
+      return 1;
+    });
+  }
+
+  /**
+   * Starts a performance test which input (and therefore expected time to execute) may change, e.g. it depends on number of files in the project.
+   * <p>
+   * {@code expectedInputSize} parameter specifies size of the input for which the test is expected to finish in {@code expectedMs} milliseconds,
+   * {@code test} returns actual size of the input. It is supposed that the execution time is lineally proportionally dependent on the input size.
+   * </p>
+   */
+  @Contract(pure = true)
+  public static @NotNull PerformanceTestInfo startPerformanceTestWithVariableInputSize(@NonNls @NotNull String what, int expectedMs, int expectedInputSize, @NotNull ThrowableComputable<Integer, ?> test) {
+    return new PerformanceTestInfo(test, expectedMs, expectedInputSize, what);
   }
 
   public static void assertPathsEqual(@Nullable String expected, @Nullable String actual) {

@@ -27,7 +27,7 @@ import java.util.concurrent.atomic.AtomicInteger
  * An improved variant of [org.junit.rules.TemporaryFolder] with lazy init, no symlinks in a temporary directory path, better directory name,
  * and more convenient [newFile], [newDirectory] methods.
  */
-class TempDirectory : ExternalResource(), BeforeEachCallback, AfterEachCallback {
+open class TempDirectory : ExternalResource() {
   private var myName: String? = null
   private val myNextDirNameSuffix = AtomicInteger()
   private var myRoot: File? = null
@@ -56,14 +56,14 @@ class TempDirectory : ExternalResource(), BeforeEachCallback, AfterEachCallback 
     }
 
   override fun apply(base: Statement, description: Description): Statement {
-    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(description.methodName.take(30), true), true)
+    before(description.methodName)
     return super.apply(base, description)
   }
 
-  override fun beforeEach(context: ExtensionContext) {
-    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(context.displayName.take(30), true), true)
+  fun before(methodName: String) {
+    myName = PlatformTestUtil.lowercaseFirstLetter(FileUtil.sanitizeFileName(methodName.take(30), true), true)
   }
-  
+
   public override fun after() {
     val path = myRoot?.toPath()
     val vfsDir = myVirtualFileRoot
@@ -77,10 +77,6 @@ class TempDirectory : ExternalResource(), BeforeEachCallback, AfterEachCallback 
       { if (vfsDir != null) VfsTestUtil.deleteFile(vfsDir) },
       { if (path != null) FileUtil.delete(path) }
     ).run()
-  }
-
-  override fun afterEach(context: ExtensionContext) {
-    after()
   }
 
   /**
@@ -171,5 +167,15 @@ class TempDirectory : ExternalResource(), BeforeEachCallback, AfterEachCallback 
       makeDirectories(path.parent)
       Files.createDirectory(path)
     }
+  }
+}
+
+class TempDirectoryExtension : TempDirectory(), BeforeEachCallback, AfterEachCallback {
+  override fun beforeEach(context: ExtensionContext) {
+    before(context.displayName)
+  }
+
+  override fun afterEach(context: ExtensionContext) {
+    after()
   }
 }

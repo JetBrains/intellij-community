@@ -20,6 +20,10 @@ public class JBTerminalSystemSettingsProvider extends JBTerminalSystemSettingsPr
     return TerminalOptionsProvider.getInstance().closeSessionOnLogout();
   }
 
+  /**
+   * @deprecated use {@link #getTabName(JBTerminalWidget)} instead
+   */
+  @Deprecated
   @Override
   public String tabName(TtyConnector ttyConnector, String sessionName) { //for local terminal use name from settings
     if (ttyConnector instanceof PtyProcessTtyConnector) {

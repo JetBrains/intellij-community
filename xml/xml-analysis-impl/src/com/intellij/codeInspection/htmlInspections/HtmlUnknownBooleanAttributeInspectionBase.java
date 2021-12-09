@@ -42,7 +42,7 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
   public HtmlUnknownBooleanAttributeInspectionBase() {
     this("");
   }
-  
+
   public HtmlUnknownBooleanAttributeInspectionBase(String defaultValues) {
     super(defaultValues);
   }
@@ -99,9 +99,9 @@ public class HtmlUnknownBooleanAttributeInspectionBase extends HtmlUnknownElemen
 
             String error = null;
             if (html5) {
-              if (attributeDescriptor instanceof XmlEnumerationDescriptor &&
-                  ((XmlEnumerationDescriptor<?>)attributeDescriptor).getValueDeclaration(attribute, "") == null) {
-                error = XmlPsiBundle.message("xml.inspections.wrong.value", "attribute");
+              if (attributeDescriptor instanceof XmlEnumerationDescriptor
+                  && ((XmlEnumerationDescriptor<?>)attributeDescriptor).getValueDeclaration(attribute, "") == null) {
+                error = XmlPsiBundle.message("xml.inspections.attribute.requires.value", attribute.getName());
               }
             } else {
               error = XmlAnalysisBundle.message("html.inspections.attribute.is.not.boolean", attribute.getName());

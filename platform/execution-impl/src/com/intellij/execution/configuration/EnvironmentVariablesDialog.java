@@ -94,9 +94,11 @@ public class EnvironmentVariablesDialog extends DialogWrapper {
         Optional<EnvironmentVariable> optional =
           systemList.stream().filter(systemVariable -> systemVariable.getName().equals(userVariable.getName())).findAny();
         optional.ifPresent(variable -> {
-          variable.setValue(userVariable.getValue());
-          iterator.remove();
-          dirty[0] = true;
+          if (!Objects.equals(variable.getValue(), userVariable.getValue())) {
+            variable.setValue(userVariable.getValue());
+            iterator.remove();
+            dirty[0] = true;
+          }
         });
       }
     } else {

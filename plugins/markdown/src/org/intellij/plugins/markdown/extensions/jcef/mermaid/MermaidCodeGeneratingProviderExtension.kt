@@ -11,7 +11,6 @@ import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceCacheableProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownCodeFencePluginCacheCollector
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
-import org.intellij.plugins.markdown.ui.preview.html.links.IntelliJImageGeneratingProvider
 
 internal class MermaidCodeGeneratingProviderExtension(collector: MarkdownCodeFencePluginCacheCollector? = null): MarkdownCodeFenceCacheableProvider(collector) {
   override fun isApplicable(language: String): Boolean {
@@ -22,7 +21,7 @@ internal class MermaidCodeGeneratingProviderExtension(collector: MarkdownCodeFen
     val hash = MarkdownUtil.md5(raw, "") + determineTheme()
     val key = getUniqueFile("mermaid", hash, "svg").toFile()
     return when {
-      key.exists() -> "<img ${IntelliJImageGeneratingProvider.ignorePathProcessingAttributeName}=\"true\" src=\"${key.toURI()}\"/>"
+      key.exists() -> "<img src=\"${key.toURI()}\"/>"
       else -> createRawContentElement(hash, raw)
     }
   }

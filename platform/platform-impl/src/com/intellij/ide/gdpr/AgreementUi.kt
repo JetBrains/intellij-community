@@ -14,7 +14,7 @@ import com.intellij.ui.BrowserHyperlinkListener
 import com.intellij.ui.JBColor
 import com.intellij.ui.border.CustomLineBorder
 import com.intellij.ui.components.JBScrollPane
-import com.intellij.util.ui.JBHtmlEditorKit
+import com.intellij.util.ui.HTMLEditorKitBuilder
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.SwingHelper
 import java.awt.BorderLayout
@@ -134,7 +134,7 @@ class AgreementUi private constructor(@NlsSafe val htmlText: String, val exitOnC
     return JTextPane().apply {
       contentType = "text/html"
       addHyperlinkListener(BrowserHyperlinkListener.INSTANCE)
-      editorKit = JBHtmlEditorKit(false)
+      editorKit = HTMLEditorKitBuilder().withGapsBetweenParagraphs().build()
       text = htmlText
 
       val styleSheet = (document as HTMLDocument).styleSheet

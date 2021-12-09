@@ -70,7 +70,7 @@ class PluginLogoIcon implements PluginLogoIconProvider {
 
   @NotNull
   protected Icon getScaled2xIcon(@NotNull Icon icon) {
-    return IconUtil.scale(icon, null, 2f);
+    return IconUtil.scale(icon, null, 2.0f);
   }
 
   @NotNull

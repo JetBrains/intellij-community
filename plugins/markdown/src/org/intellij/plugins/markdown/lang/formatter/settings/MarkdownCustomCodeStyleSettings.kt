@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.lang.formatter.settings
 
 import com.intellij.psi.codeStyle.CodeStyleSettings
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 
@@ -47,4 +46,7 @@ class MarkdownCustomCodeStyleSettings(settings: CodeStyleSettings) : CustomCodeS
 
   @JvmField
   var KEEP_LINE_BREAKS_INSIDE_TEXT_BLOCKS = true
+
+  @JvmField
+  var INSERT_QUOTE_ARROWS_ON_WRAP = true
 }

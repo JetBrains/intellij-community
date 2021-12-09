@@ -335,7 +335,7 @@ public class CFGBuilder {
    * @param relation relation to use for comparison
    * @return this builder
    */
-  CFGBuilder compare(RelationType relation) {
+  public CFGBuilder compare(RelationType relation) {
     return add(new BooleanBinaryInstruction(relation, false, null));
   }
 
@@ -644,21 +644,6 @@ public class CFGBuilder {
    */
   public CFGBuilder mathOp(@NotNull LongRangeBinOp binOp, @Nullable PsiExpression expression) {
     myAnalyzer.addInstruction(new NumericBinaryInstruction(binOp, expression == null ? null : new JavaExpressionAnchor(expression)));
-    return this;
-  }
-
-  /**
-   * Generate instructions to perform relation operation on stack operands
-   * <p>
-   * Stack before: ... operand1 operand2
-   * <p>
-   * Stack after: ... result
-   *
-   * @param relationType relation to use
-   * @return this builder
-   */
-  public CFGBuilder relation(@NotNull RelationType relationType) {
-    myAnalyzer.addInstruction(new BooleanBinaryInstruction(relationType, false, null));
     return this;
   }
 
