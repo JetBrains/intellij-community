@@ -240,17 +240,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     try {
-      if (runInWriteAction()) {
-        try {
-          WriteAction.runAndWait(() -> super.runTestRunnable(testRunnable));
-        }
-        catch (Throwable throwable) {
-          ExceptionUtil.rethrowAllAsUnchecked(throwable);
-        }
-      }
-      else {
-        super.runTestRunnable(testRunnable);
-      }
+      super.runTestRunnable(testRunnable);
     }
     catch (Exception throwable) {
       Throwable each = throwable;
@@ -263,10 +253,6 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
       while ((each = each.getCause()) != null);
       throw throwable;
     }
-  }
-
-  protected boolean runInWriteAction() {
-    return false;
   }
 
   protected static String getRoot() {

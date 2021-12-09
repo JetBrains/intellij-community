@@ -27,8 +27,6 @@ import kotlin.test.assertTrue
 
 @RunWith(JUnit38ClassRunner::class)
 class InplaceRenameTest : LightPlatformCodeInsightTestCase() {
-    override fun isRunInWriteAction(): Boolean = false
-
     override fun getTestDataPath() = IDEA_TEST_DATA_DIR.resolve("refactoring/rename/inplace").slashedPath
 
     fun testLocalVal() {

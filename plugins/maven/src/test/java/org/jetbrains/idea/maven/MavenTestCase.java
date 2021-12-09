@@ -285,12 +285,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   @Override
   protected void runTestRunnable(@NotNull ThrowableRunnable<Throwable> testRunnable) throws Throwable {
     try {
-      if (runInWriteAction()) {
-        WriteAction.runAndWait(() -> super.runTestRunnable(testRunnable));
-      }
-      else {
-        super.runTestRunnable(testRunnable);
-      }
+      super.runTestRunnable(testRunnable);
     }
     catch (Throwable throwable) {
       if (ExceptionUtil.causedBy(throwable, HeadlessException.class)) {
@@ -298,10 +293,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
       }
       throw throwable;
     }
-  }
-
-  protected boolean runInWriteAction() {
-    return false;
   }
 
   protected static String getRoot() {
