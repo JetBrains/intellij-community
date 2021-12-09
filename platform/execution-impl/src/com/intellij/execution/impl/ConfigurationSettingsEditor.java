@@ -215,7 +215,7 @@ public class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerA
     RunnerAndConfigurationSettings settings = getFactory().create();
     settings.setName(myConfiguration.getName());
     if (myConfigurationEditor instanceof CheckableRunConfigurationEditor) {
-      ((CheckableRunConfigurationEditor)myConfigurationEditor).checkEditorData(settings.getConfiguration());
+      throw new ConfigurationException("Snapshots not supported"); //NON-NLS
     }
     else {
       applyTo(settings);
