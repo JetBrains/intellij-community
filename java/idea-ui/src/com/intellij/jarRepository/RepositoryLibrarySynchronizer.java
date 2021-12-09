@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.libraries.LibraryEx;
 import com.intellij.openapi.roots.impl.libraries.LibraryTableImplUtil;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.util.containers.ContainerUtil;
@@ -139,7 +140,9 @@ public class RepositoryLibrarySynchronizer implements StartupActivity.DumbAware 
     LibrarySynchronizationQueue synchronizationQueue = new LibrarySynchronizationQueue(project);
     ChangedRepositoryLibrarySynchronizer synchronizer = new ChangedRepositoryLibrarySynchronizer(project, synchronizationQueue);
     GlobalChangedRepositoryLibrarySynchronizer globalLibSynchronizer = new GlobalChangedRepositoryLibrarySynchronizer(synchronizationQueue, disposable);
-    LibraryTablesRegistrar.getInstance().getLibraryTable().addListener(globalLibSynchronizer, disposable);
+    for (LibraryTable libraryTable : GlobalChangedRepositoryLibrarySynchronizer.getGlobalAndCustomLibraryTables()) {
+      libraryTable.addListener(globalLibSynchronizer, disposable);
+    }
     globalLibSynchronizer.installOnExistingLibraries();
     WorkspaceModelTopics.getInstance(project).subscribeAfterModuleLoading(project.getMessageBus().connect(disposable), synchronizer);
     synchronizationQueue.synchronizeAllLibraries();

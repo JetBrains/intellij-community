@@ -14,6 +14,7 @@ import com.intellij.workspaceModel.storage.EntityChange
 import com.intellij.workspaceModel.storage.VersionedStorageChange
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
 import com.intellij.workspaceModel.storage.bridgeEntities.*
+import java.util.function.Consumer
 
 internal class GlobalChangedRepositoryLibrarySynchronizer(private val queue: LibrarySynchronizationQueue,
                                                           private val disposable: Disposable)
@@ -43,9 +44,17 @@ internal class GlobalChangedRepositoryLibrarySynchronizer(private val queue: Lib
     }
   }
 
-  fun installOnExistingLibraries() = LibraryTablesRegistrar.getInstance().libraryTable.libraries
+  fun installOnExistingLibraries() = getGlobalAndCustomLibraryTables()
+    .flatMap { it.libraries.asIterable() }
     .filterIsInstance<LibraryEx>()
     .forEach { it.rootProvider.addRootSetChangedListener(this, disposable) }
+
+  companion object {
+    @JvmStatic
+    fun getGlobalAndCustomLibraryTables(): List<LibraryTable> {
+      return LibraryTablesRegistrar.getInstance().customLibraryTables + LibraryTablesRegistrar.getInstance().libraryTable
+    }
+  }
 }
 
 internal class ChangedRepositoryLibrarySynchronizer(private val project: Project,
