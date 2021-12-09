@@ -7,7 +7,6 @@ import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.layout.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import javax.swing.JComponent
 import javax.swing.JLabel
@@ -20,7 +19,6 @@ enum class LabelPosition {
   TOP
 }
 
-@ApiStatus.Experimental
 interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): Cell<T>

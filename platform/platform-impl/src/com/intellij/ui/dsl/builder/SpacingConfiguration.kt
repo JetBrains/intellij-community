@@ -3,9 +3,7 @@ package com.intellij.ui.dsl.builder
 
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.util.ui.JBUI
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 interface SpacingConfiguration {
 
   companion object {
@@ -24,7 +22,6 @@ interface SpacingConfiguration {
       override val dialogGap = Gaps.EMPTY
     }
 
-    @ApiStatus.Experimental
     fun createIntelliJSpacingConfiguration(): SpacingConfiguration {
       return object : SpacingConfiguration {
 

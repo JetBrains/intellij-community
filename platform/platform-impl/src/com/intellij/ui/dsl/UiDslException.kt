@@ -6,7 +6,7 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.Component
 import javax.swing.JComponent
 
-@ApiStatus.Experimental
+@ApiStatus.Internal
 class UiDslException(message: String = "Internal error", cause: Throwable? = null) : RuntimeException(message, cause)
 
 fun checkTrue(value: Boolean) {

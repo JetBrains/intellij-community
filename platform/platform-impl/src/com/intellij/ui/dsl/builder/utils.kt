@@ -2,13 +2,11 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.ide.BrowserUtil
-import org.jetbrains.annotations.ApiStatus
 import javax.swing.event.HyperlinkEvent
 
 /**
  * Component properties for UI DSL
  */
-@ApiStatus.Experimental
 enum class DslComponentProperty {
   /**
    * A mark that component is a label of a row, see [Panel.row]
@@ -31,7 +29,6 @@ const val MAX_LINE_LENGTH_WORD_WRAP = -1
  */
 const val MAX_LINE_LENGTH_NO_WRAP = Int.MAX_VALUE
 
-@ApiStatus.Experimental
 fun interface HyperlinkEventAction {
 
   companion object {
