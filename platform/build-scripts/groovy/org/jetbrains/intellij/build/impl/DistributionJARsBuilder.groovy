@@ -407,18 +407,18 @@ final class DistributionJARsBuilder {
     }
   }
 
-  @SuppressWarnings("GrUnresolvedAccess")
-  @CompileStatic(TypeCheckingMode.SKIP)
   private static void packInternalUtilities(BuildContext context) {
-    context.ant.zip(destfile: "$context.paths.artifacts/internalUtilities.zip") {
-      fileset(file: "$context.paths.buildOutputRoot/internal/internalUtilities.jar")
-      context.project.libraryCollection.findLibrary("JUnit4").getFiles(JpsOrderRootType.COMPILED).each {
-        fileset(file: it.absolutePath)
-      }
-      zipfileset(src: "$context.paths.buildOutputRoot/internal/internalUtilities.jar") {
-        include(name: "*.xml")
-      }
+    List<Path> sources = new ArrayList<Path>()
+    for (File file in context.project.libraryCollection.findLibrary("JUnit4").getFiles(JpsOrderRootType.COMPILED)) {
+      sources.add(file.toPath())
     }
+
+    sources.add(context.paths.buildOutputDir.resolve("internal/internalUtilities.jar"))
+
+    BuildHelper.getInstance(context).packInternalUtilities.accept(
+      context.paths.artifactDir.resolve("internalUtilities.zip"),
+      sources
+    )
   }
 
   @Nullable
