@@ -148,7 +148,9 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
   @Override
   public Element getState() {
     Element element = new Element("state");
-    for (Map.Entry<VirtualFile, FileHighlightingSetting[]> entry : myHighlightSettings.entrySet()) {
+    List<Map.Entry<VirtualFile, FileHighlightingSetting[]>> entries = new ArrayList<>(myHighlightSettings.entrySet());
+    entries.sort(Comparator.comparing(entry -> entry.getKey().getPath()));
+    for (Map.Entry<VirtualFile, FileHighlightingSetting[]> entry : entries) {
       Element child = new Element(SETTING_TAG);
 
       VirtualFile vFile = entry.getKey();
