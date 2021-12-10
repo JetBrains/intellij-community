@@ -40,6 +40,8 @@ public abstract class AtomicNullableLazyValue<T> extends NullableLazyValue<T> {
     return myComputed;
   }
 
+  /** @deprecated please use {@link NullableLazyValue#atomicLazyNullable} instead */
+  @Deprecated
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @NotNull
   public static <T> AtomicNullableLazyValue<T> createValue(@NotNull final Factory<? extends T> value) {
