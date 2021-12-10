@@ -97,8 +97,10 @@ internal class SearchEverywhereMLStatisticsCollector {
       data.putAll(context.features)
 
       val elementData = getElementsData(selectedElements, elements, elementIdProvider, selectedItems, project, state)
-                        ?: return@execute // project got disposed - don't report.
-      data.putAll(elementData)
+      data[IS_PROJECT_DISPOSED_KEY] = elementData == null
+      if (elementData != null) {
+        data.putAll(elementData)
+      }
       loggerProvider.logger.logAsync(GROUP, eventId, data, false)
     }
   }
@@ -222,7 +224,7 @@ internal class SearchEverywhereMLStatisticsCollector {
   }
 
   companion object {
-    private val GROUP = EventLogGroup("mlse.log", 13)
+    private val GROUP = EventLogGroup("mlse.log", 14)
     private val EMPTY_ARRAY = IntArray(0)
     private const val REPORTED_ITEMS_LIMIT = 100
 
@@ -238,6 +240,7 @@ internal class SearchEverywhereMLStatisticsCollector {
 
     // context fields
     private const val PROJECT_OPENED_KEY = "projectOpened"
+    private const val IS_PROJECT_DISPOSED_KEY = "projectDisposed"
     private const val SE_TAB_ID_KEY = "seTabId"
     private const val CLOSE_POPUP_KEY = "closePopup"
     private const val SEARCH_START_TIME_KEY = "startTime"
