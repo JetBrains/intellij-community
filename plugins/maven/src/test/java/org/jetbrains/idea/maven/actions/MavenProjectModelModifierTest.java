@@ -26,23 +26,6 @@ public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
   private static final ExternalLibraryDescriptor COMMONS_IO_LIBRARY_DESCRIPTOR_2_4 =
     new ExternalLibraryDescriptor("commons-io", "commons-io", "2.4", "2.4");
 
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      if (isNewImportingProcess) {
-        MavenImportingManager.getInstance(myProject).forceStopImport();
-        PlatformTestUtil.waitForPromise(MavenImportingManager.getInstance(myProject).getImportFinishPromise());
-      }
-    }
-    catch (Throwable e) {
-      addSuppressedException(e);
-    }
-    finally {
-      super.tearDown();
-    }
-  }
-
   @Test
   public void testAddExternalLibraryDependency() {
     importProject("<groupId>test</groupId>" +

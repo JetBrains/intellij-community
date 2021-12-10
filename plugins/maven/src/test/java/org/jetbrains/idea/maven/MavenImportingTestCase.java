@@ -87,6 +87,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   @Override
   protected void tearDown() throws Exception {
     RunAll.runAll(
+      () -> stopMavenImportManager(),
       () -> WriteAction.runAndWait(() -> JavaAwareProjectJdkTableImpl.removeInternalJdkInTests()),
       () -> TestDialogManager.setTestDialog(TestDialog.DEFAULT),
       () -> removeFromLocalRepository("test"),
@@ -103,6 +104,13 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
         }
       }
     );
+  }
+
+  private void stopMavenImportManager() {
+    if (isNewImportingProcess) {
+      MavenImportingManager.getInstance(myProject).forceStopImport();
+      PlatformTestUtil.waitForPromise(MavenImportingManager.getInstance(myProject).getImportFinishPromise());
+    }
   }
 
   @Override
