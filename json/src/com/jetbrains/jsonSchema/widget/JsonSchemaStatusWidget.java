@@ -137,44 +137,50 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
     if (getUpdateAlarm().isDisposed()) return;
     VirtualFile file = getSelectedFile();
-    ReadAction.nonBlocking(() -> {
-        WidgetState state = getWidgetState(file);
-        getUpdateAlarm().cancelAllRequests();
-        getUpdateAlarm().addRequest(() -> {
-          if (state == WidgetState.NO_CHANGE) {
-            return;
-          }
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      scheduleComponentUpdate(file, finishUpdate);
+    }
+    else {
+      ReadAction.nonBlocking(() -> scheduleComponentUpdate(file, finishUpdate))
+        .expireWith(getUpdateAlarm())
+        .withDocumentsCommitted(myProject)
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
+  }
 
-          if (state == WidgetState.NO_CHANGE_MAKE_VISIBLE) {
-            getComponent().setVisible(true);
-            return;
-          }
+  private void scheduleComponentUpdate(VirtualFile file, @Nullable Runnable finishUpdate) {
+    WidgetState state = getWidgetState(file);
+    getUpdateAlarm().cancelAllRequests();
+    getUpdateAlarm().addRequest(() -> {
+      if (state == WidgetState.NO_CHANGE) {
+        return;
+      }
 
-          if (state == WidgetState.HIDDEN) {
-            getComponent().setVisible(false);
-            return;
-          }
-          if (isDisposed()) return;
+      if (state == WidgetState.NO_CHANGE_MAKE_VISIBLE) {
+        getComponent().setVisible(true);
+        return;
+      }
 
-          getComponent().setVisible(true);
-          boolean actionEnabled = state.isActionEnabled() && isEnabledForFile(file);
-          getComponent().setEnabled(actionEnabled);
-          updateComponent(state);
+      if (state == WidgetState.HIDDEN) {
+        getComponent().setVisible(false);
+        return;
+      }
+      if (isDisposed()) return;
 
-          if (myStatusBar != null && !getComponent().isValid()) {
-            myStatusBar.updateWidget(ID());
-          }
+      getComponent().setVisible(true);
+      boolean actionEnabled = state.isActionEnabled() && isEnabledForFile(file);
+      getComponent().setEnabled(actionEnabled);
+      updateComponent(state);
 
-          if (finishUpdate != null) {
-            finishUpdate.run();
-          }
-          afterVisibleUpdate(state);
-        }, 200, ModalityState.any());
-        return state;
-      })
-      .expireWith(getUpdateAlarm())
-      .withDocumentsCommitted(myProject)
-      .submit(AppExecutorUtil.getAppExecutorService());
+      if (myStatusBar != null && !getComponent().isValid()) {
+        myStatusBar.updateWidget(ID());
+      }
+
+      if (finishUpdate != null) {
+        finishUpdate.run();
+      }
+      afterVisibleUpdate(state);
+    }, 200, ModalityState.any());
   }
 
   private static WidgetStatus getWidgetStatus(@NotNull Project project, @NotNull VirtualFile file) {
