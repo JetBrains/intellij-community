@@ -7,9 +7,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operatio
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.operations.PackageSearchOperationFailure
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.flow.asFlow
-import kotlinx.coroutines.flow.mapNotNull
-import kotlinx.coroutines.flow.toList
 import kotlinx.coroutines.launch
 
 internal open class PackageManagementOperationExecutor(
@@ -21,11 +18,9 @@ internal open class PackageManagementOperationExecutor(
     private val operationExecutor = ModuleOperationExecutor()
 
     private suspend fun execute(operations: List<PackageSearchOperation<*>>) {
-        val failures = operations.distinct().asFlow()
-            .mapNotNull { operationExecutor.doOperation(it) }
-            .toList()
+        val failures = operations.distinct().mapNotNull { operationExecutor.doOperation(it) }
 
-        val successes = operations.map { it.projectModule } - failures.map { it.operation.projectModule }
+        val successes = operations.map { it.projectModule } - failures.map { it.operation.projectModule }.toSet()
 
         if (failures.size == operations.size) {
             onOperationsSuccessful(successes)
