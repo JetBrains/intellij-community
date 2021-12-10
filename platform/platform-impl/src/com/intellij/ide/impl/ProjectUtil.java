@@ -130,17 +130,26 @@ public final class ProjectUtil {
   }
 
   public static @Nullable Project openOrImport(@NotNull Path file, @NotNull OpenProjectTask options) {
+    OpenResult openResult = tryOpenOrImport(file, options);
+    if (openResult instanceof OpenResult.Success) {
+      return ((OpenResult.Success)openResult).getProject();
+    }
+    return null;
+  }
+
+  @ApiStatus.Experimental
+  public static @NotNull OpenResult tryOpenOrImport(@NotNull Path file, @NotNull OpenProjectTask options) {
     if (!options.getForceOpenInNewFrame()) {
       Project existing = findAndFocusExistingProjectForPath(file);
       if (existing != null) {
-        return existing;
+        return new OpenResult.Success(existing);
       }
     }
 
     NullableLazyValue<VirtualFile> lazyVirtualFile = NullableLazyValue.createValue(() -> getFileAndRefresh(file));
 
     if (!TrustedProjects.confirmOpeningAndSetProjectTrustedStateIfNeeded(file)) {
-      return null;
+      return OpenResult.canceled();
     }
 
     for (ProjectOpenProcessor provider : ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()) {
@@ -151,17 +160,19 @@ public final class ProjectUtil {
       // PlatformProjectOpenProcessor is not a strong project info holder, so, no need implement optimized case for PlatformProjectOpenProcessor  (VFS not required)
       VirtualFile virtualFile = lazyVirtualFile.getValue();
       if (virtualFile == null) {
-        return null;
+        return OpenResult.couldntOpen();
       }
 
       if (provider.canOpenProject(virtualFile)) {
-        return chooseProcessorAndOpen(Collections.singletonList(provider), virtualFile, options);
+        Project project = chooseProcessorAndOpen(Collections.singletonList(provider), virtualFile, options);
+        return openResult(project, OpenResult.canceled());
       }
     }
 
     if (isValidProjectPath(file)) {
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
-      return ProjectManagerEx.getInstanceEx().openProject(file, options.withRunConfigurators());
+      Project project = ProjectManagerEx.getInstanceEx().openProject(file, options.withRunConfigurators());
+      return openResult(project, OpenResult.couldntOpen());
     }
 
     if (options.checkDirectoryForFileBasedProjects && Files.isDirectory(file)) {
@@ -169,7 +180,8 @@ public final class ProjectUtil {
         for (Path child : directoryStream) {
           String childPath = child.toString();
           if (childPath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
-            return openProject(Paths.get(childPath), options);
+            Project project = openProject(Paths.get(childPath), options);
+            return openResult(project, OpenResult.couldntOpen());
           }
         }
       }
@@ -179,7 +191,7 @@ public final class ProjectUtil {
 
     List<ProjectOpenProcessor> processors = computeProcessors(file, lazyVirtualFile);
     if (processors.isEmpty()) {
-      return null;
+      return OpenResult.couldntOpen();
     }
 
     Project project;
@@ -192,13 +204,21 @@ public final class ProjectUtil {
     else {
       VirtualFile virtualFile = lazyVirtualFile.getValue();
       if (virtualFile == null) {
-        return null;
+        return OpenResult.couldntOpen();
       }
 
       project = chooseProcessorAndOpen(processors, virtualFile, options);
     }
 
-    return postProcess(project);
+    if (project == null) {
+      return OpenResult.couldntOpen();
+    }
+
+    return new OpenResult.Success(postProcess(project));
+  }
+
+  private static @NotNull OpenResult openResult(@Nullable Project project, @NotNull OpenResult alternative) {
+    return project != null ? new OpenResult.Success(project) : alternative;
   }
 
   public static @NotNull CompletableFuture<@Nullable Project> openOrImportAsync(@NotNull Path file, @NotNull OpenProjectTask options) {
@@ -674,15 +694,17 @@ public final class ProjectUtil {
   }
 
   public static @Nullable Project tryOpenFiles(@Nullable Project project, @NotNull List<? extends Path> list, String location) {
-    Project result = null;
-
     try
     {
       for (Path file : list) {
-        result = openOrImport(file.toAbsolutePath(), OpenProjectTask.withProjectToClose(project, true));
-        if (result != null) {
+        OpenResult openResult = tryOpenOrImport(file.toAbsolutePath(), OpenProjectTask.withProjectToClose(project, true));
+        if (openResult instanceof OpenResult.Success) {
           LOG.debug(location + ": load project from ", file);
-          return result;
+          return ((OpenResult.Success)openResult).getProject();
+        }
+        else if (openResult instanceof OpenResult.Canceled) {
+          LOG.debug(location + ": canceled project opening");
+          return null;
         }
       }
     }
@@ -691,6 +713,7 @@ public final class ProjectUtil {
       return null;
     }
 
+    Project result = null;
     for (Path file : list) {
       if (!Files.exists(file)) {
         continue;

@@ -1,7 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.ide.impl.OpenProjectTask;
+import com.intellij.ide.impl.OpenResult;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil;
@@ -55,7 +56,13 @@ public final class CommandLineProcessor {
     openProjectOptions.checkDirectoryForFileBasedProjects = false;
     Project project = null;
     if (!LightEditUtil.isForceOpenInLightEditMode()) {
-      project = ProjectUtil.openOrImport(file, openProjectOptions);
+      OpenResult openResult = ProjectUtil.tryOpenOrImport(file, openProjectOptions);
+      if (openResult instanceof OpenResult.Success) {
+        project = ((OpenResult.Success)openResult).getProject();
+      }
+      else if (openResult instanceof OpenResult.Canceled) {
+        return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.open.cancelled"));
+      }
     }
     if (project == null) {
       return doOpenFile(file, -1, -1, false, shouldWait);
