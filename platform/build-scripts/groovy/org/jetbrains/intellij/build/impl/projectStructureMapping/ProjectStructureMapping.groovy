@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.projectStructureMapping
 
 import com.fasterxml.jackson.core.JsonFactory
@@ -120,38 +120,65 @@ final class ProjectStructureMapping {
       writer.writeStartObject()
       writer.writeStringField("name", shortenPath(file, buildPaths, null))
 
-      writer.writeArrayFieldStart("children")
       writeProjectLibs(fileEntries, writer, buildPaths)
-      for (DistributionFileEntry entry : fileEntries) {
-        if (entry instanceof ProjectLibraryEntry) {
-          continue
-        }
-
-        writer.writeStartObject()
-
-        long fileSize
-        if (entry instanceof ModuleOutputEntry) {
-          writer.writeStringField("name", entry.moduleName)
-          fileSize = entry.size
-        }
-        else if (entry instanceof ModuleLibraryFileEntry) {
-          writer.writeStringField("name", shortenPath(entry.libraryFile, buildPaths, null))
-          writer.writeStringField("module", entry.moduleName)
-          fileSize = Files.size(entry.libraryFile)
-        }
-        else {
-          throw new IllegalStateException("Unsupported entry: $entry")
-        }
-
-        writer.writeNumberField("size", fileSize)
-        writer.writeEndObject()
-      }
-      writer.writeEndArray()
+      writeModules(writer, fileEntries, buildPaths)
 
       writer.writeEndObject()
     }
     writer.writeEndArray()
     writer.close()
+  }
+
+  private static void writeModules(JsonGenerator writer, List<DistributionFileEntry> fileEntries, BuildPaths buildPaths) {
+    writer.writeArrayFieldStart("modules")
+    for (DistributionFileEntry o : fileEntries) {
+      if (!(o instanceof ModuleOutputEntry)) {
+        continue
+      }
+
+      ModuleOutputEntry entry = (ModuleOutputEntry)o
+
+      writer.writeStartObject()
+      String moduleName = entry.moduleName
+      writer.writeStringField("name", moduleName)
+      writer.writeNumberField("size", entry.size)
+
+      writeModuleLibraries(fileEntries, moduleName, writer, buildPaths)
+
+      writer.writeEndObject()
+    }
+    writer.writeEndArray()
+  }
+
+  private static void writeModuleLibraries(List<DistributionFileEntry> fileEntries,
+                                           String moduleName,
+                                           JsonGenerator writer,
+                                           BuildPaths buildPaths) {
+    boolean opened = false
+    for (DistributionFileEntry o : fileEntries) {
+      if (!(o instanceof ModuleLibraryFileEntry)) {
+        continue
+      }
+
+      ModuleLibraryFileEntry entry = (ModuleLibraryFileEntry)o
+      if (entry.moduleName != moduleName) {
+        continue
+      }
+
+      if (!opened) {
+        writer.writeArrayFieldStart("libraries")
+        opened = true
+      }
+
+      writer.writeStartObject()
+      writer.writeStringField("name", shortenPath(entry.libraryFile, buildPaths, null))
+      writer.writeNumberField("size", entry.size)
+      writer.writeEndObject()
+    }
+
+    if (opened) {
+      writer.writeEndArray()
+    }
   }
 
   private static void writeProjectLibs(@NotNull List<DistributionFileEntry> entries, JsonGenerator writer, BuildPaths buildPaths) {
@@ -163,12 +190,17 @@ final class ProjectStructureMapping {
       }
     }
 
+    if (map.isEmpty()) {
+      return
+    }
+
+    writer.writeArrayFieldStart("projectLibraries")
     for (Map.Entry<String, List<ProjectLibraryEntry>> entry : map.entrySet()) {
       writer.writeStartObject()
 
       writer.writeStringField("name", entry.key)
 
-      writer.writeArrayFieldStart("children")
+      writer.writeArrayFieldStart("files")
       for (ProjectLibraryEntry fileEntry : entry.value) {
         writer.writeStartObject()
         writer.writeStringField("name", shortenPath(fileEntry.libraryFile, buildPaths, null))
@@ -187,6 +219,7 @@ final class ProjectStructureMapping {
 
       writer.writeEndObject()
     }
+    writer.writeEndArray()
   }
 
   private static void writeModuleDependents(JsonGenerator writer, ProjectLibraryData data) {
