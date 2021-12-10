@@ -1,0 +1,25 @@
+UTypeReferenceExpression (name = kotlin.annotation.Target) -> USimpleNameReferenceExpression (identifier = Target) -> PsiClass:Target: Target
+UNamedExpression (name = allowedTargets) -> UQualifiedReferenceExpression -> PsiField:TYPE: TYPE
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = AnnotationTarget) -> PsiClass:AnnotationTarget: AnnotationTarget
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = TYPE) -> PsiField:TYPE: TYPE
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = kotlin.annotation.AnnotationTarget) -> USimpleNameReferenceExpression (identifier = AnnotationTarget) -> PsiClass:AnnotationTarget: AnnotationTarget
+UTypeReferenceExpression (name = java.util.List<? extends java.lang.String>) -> USimpleNameReferenceExpression (identifier = List) -> PsiClass:List: List
+UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> Kotlin_Light_Class:@Target(AnnotationTarget.TYPE)
+annotation class MyAnnotation(val a: Int, val b: String, val c: AnnotationTarget): MyAnnotation
+UNamedExpression (name = c) -> UQualifiedReferenceExpression -> PsiField:TYPE: TYPE
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = AnnotationTarget) -> PsiClass:AnnotationTarget: AnnotationTarget
+UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = TYPE) -> PsiField:TYPE: TYPE
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    UArrayAccessExpression -> USimpleNameReferenceExpression (identifier = list) -> Kotlin_Light_Value_Parameter: list
+    UTypeReferenceExpression (name = MyAnnotation) -> USimpleNameReferenceExpression (identifier = MyAnnotation) -> Kotlin_Light_Class:@Target(AnnotationTarget.TYPE)
+annotation class MyAnnotation(val a: Int, val b: String, val c: AnnotationTarget): MyAnnotation
+    UNamedExpression (name = c) -> UQualifiedReferenceExpression -> PsiField:FILE: FILE
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = AnnotationTarget) -> PsiClass:AnnotationTarget: AnnotationTarget
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = FILE) -> PsiField:FILE: FILE
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+    ULocalVariable (name = c) -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Variable: b
+    UTypeReferenceExpression (name = <ErrorType>) -> USimpleNameReferenceExpression (identifier = UndefinedAnnotation) -> null: null
+    null -> USimpleNameReferenceExpression (identifier = unresolvedVar) -> null: null
+    UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
