@@ -13,6 +13,7 @@ import com.intellij.patterns.PsiJavaPatterns.psiClass
 import com.intellij.patterns.StandardPatterns.string
 import com.intellij.psi.*
 import com.intellij.util.ProcessingContext
+import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.uast.*
@@ -114,15 +115,9 @@ private fun isPropertyAssignCall(argument: UElement, methodPattern: ElementPatte
   val uBinaryExpression = (argument.uastParent as? UBinaryExpression) ?: return false
   if (uBinaryExpression.operator != UastBinaryOperator.ASSIGN) return false
 
-  val uastReference = when (val leftOperand = uBinaryExpression.leftOperand) {
-    is UQualifiedReferenceExpression -> leftOperand.selector
-    is UReferenceExpression -> leftOperand
-    else -> return false
-  }
-  val references = RecursionManager.doPreventingRecursion(argument, false) {
-    uastReference.sourcePsi?.references // via `sourcePsi` because of KT-27385
-  } ?: return false
-  return references.any { methodPattern.accepts(it.resolve(), context) }
+  val uastReference = uBinaryExpression.leftOperand.castSafelyTo<UReferenceExpression>() ?: return false
+  val resolved = uastReference.resolve()
+  return methodPattern.accepts(resolved, context)
 }
 
 class UCallExpressionPattern : UElementPattern<UCallExpression, UCallExpressionPattern>(UCallExpression::class.java) {
