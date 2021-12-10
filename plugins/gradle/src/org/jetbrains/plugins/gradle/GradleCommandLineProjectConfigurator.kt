@@ -139,7 +139,7 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
       LOG.info("Gradle resolving external annotations started ${id.projectId}")
     }
 
-    override fun onCancelResolve(id: ExternalAnnotationsTaskId) {
+    override fun onFinishResolve(id: ExternalAnnotationsTaskId) {
       val feature = externalAnnotationsState[id] ?: return
       feature.complete(id)
       LOG.info("Gradle resolving external annotations completed ${id.projectId}")
