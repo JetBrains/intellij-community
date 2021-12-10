@@ -18,10 +18,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
-import com.intellij.execution.target.TargetEnvironment;
-import com.intellij.execution.target.TargetEnvironmentRequest;
-import com.intellij.execution.target.TargetProgressIndicator;
-import com.intellij.execution.target.TargetedCommandLine;
+import com.intellij.execution.target.*;
 import com.intellij.execution.target.value.TargetEnvironmentFunctions;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.facet.Facet;
@@ -61,8 +58,8 @@ import com.jetbrains.python.facet.LibraryContributingFacet;
 import com.jetbrains.python.facet.PythonPathContributingFacet;
 import com.jetbrains.python.library.PythonLibraryType;
 import com.jetbrains.python.remote.PyRemotePathMapper;
-import com.jetbrains.python.run.target.PySdkTargetPaths;
 import com.jetbrains.python.run.target.HelpersAwareTargetEnvironmentRequest;
+import com.jetbrains.python.run.target.PySdkTargetPaths;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkAdditionalData;
@@ -300,8 +297,8 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     Sdk sdk = getSdk();
     if (sdk != null) {
-      PythonRunConfigurationTargetEnvironmentAdjuster adjuster =
-        PythonRunConfigurationTargetEnvironmentAdjuster.findTargetEnvironmentRequestAdjuster(sdk);
+      RunConfigurationTargetEnvironmentAdjuster adjuster =
+        RunConfigurationTargetEnvironmentAdjuster.findTargetEnvironmentRequestAdjuster(sdk);
       if (adjuster != null) {
         adjuster.adjust(helpersAwareTargetRequest.getTargetEnvironmentRequest(), myConfig);
       }
