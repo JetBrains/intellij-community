@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler;
 
+import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
 import org.jetbrains.java.decompiler.main.extern.ClassFormatException;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
@@ -59,7 +60,11 @@ public class SingleClassesTest {
   @Test public void testMethodParameters() { doTest("pkg/TestMethodParameters"); }
   @Test public void testMethodParametersAttr() { doTest("pkg/TestMethodParametersAttr"); }
   @Test public void testCodeConstructs() { doTest("pkg/TestCodeConstructs"); }
-  @Test public void testConstants() { doTest("pkg/TestConstants"); }
+  @Test public void testConstantsAsIs() { doTest("pkg/TestConstantsAsIs"); }
+  @Test public void testConstants() {
+    DecompilerContext.setProperty(IFernflowerPreferences.LITERALS_AS_IS, "0");
+    doTest("pkg/TestConstants");
+  }
   @Test public void testEnum() { doTest("pkg/TestEnum"); }
   @Test public void testDebugSymbols() { doTest("pkg/TestDebugSymbols"); }
   @Test public void testInvalidMethodSignature() { doTest("InvalidMethodSignature"); }

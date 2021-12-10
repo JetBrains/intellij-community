@@ -127,8 +127,28 @@ public class ConstExprent extends Exprent {
         return new TextBuffer(ret).enclose("'", "'");
 
       case CodeConstants.TYPE_BYTE:
+        int byteVal = (Integer)value;
+        if (!literal) {
+          if (byteVal == Byte.MAX_VALUE) {
+            return new FieldExprent("MAX_VALUE", "java/lang/Byte", true, null, FieldDescriptor.BYTE_DESCRIPTOR, bytecode).toJava(0, tracer);
+          }
+          else if (byteVal == Byte.MIN_VALUE) {
+            return new FieldExprent("MIN_VALUE", "java/lang/Byte", true, null, FieldDescriptor.BYTE_DESCRIPTOR, bytecode).toJava(0, tracer);
+          }
+        }
+        return new TextBuffer(value.toString());
       case CodeConstants.TYPE_BYTECHAR:
       case CodeConstants.TYPE_SHORT:
+        int shortVal = (Integer)value;
+        if (!literal) {
+          if (shortVal == Short.MAX_VALUE) {
+            return new FieldExprent("MAX_VALUE", "java/lang/Short", true, null, FieldDescriptor.SHORT_DESCRIPTOR, bytecode).toJava(0, tracer);
+          }
+          else if (shortVal == Short.MIN_VALUE) {
+            return new FieldExprent("MIN_VALUE", "java/lang/Short", true, null, FieldDescriptor.SHORT_DESCRIPTOR, bytecode).toJava(0, tracer);
+          }
+        }
+        return new TextBuffer(value.toString());
       case CodeConstants.TYPE_SHORTCHAR:
       case CodeConstants.TYPE_INT:
         int intVal = (Integer)value;
@@ -172,6 +192,9 @@ public class ConstExprent extends Exprent {
           else if (floatVal == Float.MIN_VALUE) {
             return new FieldExprent("MIN_VALUE", "java/lang/Float", true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
+          else if (floatVal == Float.MIN_NORMAL) {
+            return new FieldExprent("MIN_NORMAL", "java/lang/Float", true, null, FieldDescriptor.FLOAT_DESCRIPTOR, bytecode).toJava(0, tracer);
+          }
         }
         else if (Float.isNaN(floatVal)) {
           return new TextBuffer("0.0F / 0.0");
@@ -201,6 +224,15 @@ public class ConstExprent extends Exprent {
           }
           else if (doubleVal == Double.MIN_VALUE) {
             return new FieldExprent("MIN_VALUE", "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+          }
+          else if (doubleVal == Double.MIN_NORMAL) {
+            return new FieldExprent("MIN_NORMAL", "java/lang/Double", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+          }
+          else if (doubleVal == Math.E) {
+            return new FieldExprent("E", "java/lang/Math", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
+          }
+          else if (doubleVal == Math.PI) {
+            return new FieldExprent("PI", "java/lang/Math", true, null, FieldDescriptor.DOUBLE_DESCRIPTOR, bytecode).toJava(0, tracer);
           }
         }
         else if (Double.isNaN(doubleVal)) {
