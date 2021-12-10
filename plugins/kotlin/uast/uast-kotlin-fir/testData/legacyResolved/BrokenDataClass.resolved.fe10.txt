@@ -1,0 +1,5 @@
+UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> PsiClass:Long: Long
+UTypeReferenceExpression (name = long) -> USimpleNameReferenceExpression (identifier = Long) -> PsiClass:Long: Long
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3))(resolves to null) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3))(resolves to null) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3))(resolves to null) -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
