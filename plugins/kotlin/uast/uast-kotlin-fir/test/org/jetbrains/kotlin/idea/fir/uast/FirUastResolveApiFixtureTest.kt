@@ -114,4 +114,8 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     fun testAssigningArrayElementType() {
         doCheck("AssigningArrayElementType", ::checkAssigningArrayElementType)
     }
+
+    fun testDivByZero() {
+        doCheck("DivByZero", ::checkDivByZero)
+    }
 }

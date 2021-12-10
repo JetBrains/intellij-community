@@ -349,6 +349,6 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
         val compileTimeConst = ktElement.analyze()[BindingContext.COMPILE_TIME_VALUE, ktElement]
         if (compileTimeConst is UnsignedErrorValueTypeConstant) return null
         val ktType = ktElement.analyze()[BindingContext.EXPRESSION_TYPE_INFO, ktElement]?.type ?: TypeUtils.NO_EXPECTED_TYPE
-        return compileTimeConst?.getValue(ktType)
+        return compileTimeConst?.takeUnless { it.isError }?.getValue(ktType)
     }
 }
