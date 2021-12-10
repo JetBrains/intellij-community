@@ -49,7 +49,7 @@ public enum MarkdownPsiFactory {
       return new MarkdownLinkLabel(node);
     }
     if (elementType == MarkdownElementTypes.CODE_BLOCK) {
-      return new MarkdownCodeBlockImpl(node);
+      return new MarkdownCodeBlock(node);
     }
     if (elementType == MarkdownElementTypes.TABLE) {
       return new MarkdownTable(node);

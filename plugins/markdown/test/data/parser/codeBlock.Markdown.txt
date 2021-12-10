@@ -5,7 +5,7 @@ Markdown file
       PsiElement(Markdown:Markdown::)(':')
     PsiWhiteSpace('\n')
     PsiWhiteSpace('\n')
-    MarkdownCodeBlockImpl(Markdown:Markdown:CODE_BLOCK)
+    MarkdownCodeBlock(Markdown:Markdown:CODE_BLOCK)
       PsiElement(Markdown:Markdown:CODE_LINE)('    /**')
       PsiWhiteSpace('\n')
       PsiElement(Markdown:Markdown:CODE_LINE)('     * Load a {@link String} from the {@link #BUNDLE} {@link ResourceBundle}.')
