@@ -20,6 +20,7 @@ import com.intellij.ui.JBSplitter;
 import com.intellij.util.ui.JBEmptyBorder;
 import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.settings.MarkdownApplicationSettings;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +35,7 @@ import java.util.Map;
  * @deprecated Use {@link TextEditorWithPreview}
  */
 @Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 public abstract class SplitFileEditor<E1 extends FileEditor, E2 extends FileEditor> extends UserDataHolderBase implements FileEditor {
   public static final Key<SplitFileEditor> PARENT_SPLIT_KEY = Key.create("parentSplit");
 
