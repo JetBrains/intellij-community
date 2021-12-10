@@ -208,8 +208,12 @@ class NonBlocking : SuspendingReadWriteTest() {
     application.runWriteAction {
       dumbService.isDumb = false
     }
-    UIUtil.dispatchAllInvocationEvents() // retry with satisfied constraint, attempt 1
-    job.waitTimeout()
+    // retry with unsatisfied constraint
+    withTimeout(1000) {
+      while (job.isActive && isActive) {
+        UIUtil.dispatchAllInvocationEvents()
+      }
+    }
   }
 
   private fun twoAttemptJob(cs: CoroutineScope, constraints: List<ReadConstraint>): Job {
