@@ -193,6 +193,7 @@ public final class ActionMenu extends JBMenu {
         else {
           setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
         }
+        if (myScreenMenuPeer != null) myScreenMenuPeer.setIcon(icon);
       }
     }
   }
