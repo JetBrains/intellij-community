@@ -7,8 +7,8 @@ import com.intellij.model.psi.PsiExternalReferenceHost;
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class MarkdownShortReferenceLinkImpl extends ASTWrapperPsiElement implements MarkdownPsiElement, PsiExternalReferenceHost {
-  public MarkdownShortReferenceLinkImpl(@NotNull ASTNode node) {
+public class MarkdownShortReferenceLink extends ASTWrapperPsiElement implements MarkdownPsiElement, PsiExternalReferenceHost {
+  public MarkdownShortReferenceLink(@NotNull ASTNode node) {
     super(node);
   }
 }
