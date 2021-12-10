@@ -176,18 +176,16 @@ final class DistributionJARsBuilder {
       return plugins
     }
 
-    Set<PluginLayout> result = plugins
-    for (PluginLayout plugin : plugins) {
+    Set<PluginLayout> result = new LinkedHashSet<>(plugins)
+    for (Iterator<PluginLayout> iterator = result.iterator(); iterator.hasNext();) {
+      PluginLayout plugin = iterator.next()
       // Kotlin Multiplatform Mobile plugin is excluded since:
       // * is compatible with Android Studio only;
       // * has release cycle of its
       // * shadows IntelliJ utility modules included via Kotlin Compiler;
       // * breaks searchable options index and jar order generation steps.
       if (plugin.mainModule == "kotlin-ultimate.kmm-plugin") {
-        if (result.is(plugins)) {
-          result = new LinkedHashSet<>(plugins)
-        }
-        result.remove(plugin)
+        iterator.remove()
       }
     }
     if (result.isEmpty()) {
@@ -203,14 +201,10 @@ final class DistributionJARsBuilder {
       return Collections.emptySet()
     }
 
-    Iterator<PluginLayout> iterator = result.iterator()
-    while (iterator.hasNext()) {
+    for (Iterator<PluginLayout> iterator = result.iterator(); iterator.hasNext();) {
       PluginLayout plugin = iterator.next()
       if (!toInclude.contains(plugin.directoryName)) {
-        if (result.is(plugins)) {
-          result = new LinkedHashSet<>(plugins)
-        }
-        result.remove(plugin)
+        iterator.remove()
       }
     }
     return result
