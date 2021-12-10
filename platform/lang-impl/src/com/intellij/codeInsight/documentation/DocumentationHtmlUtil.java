@@ -44,7 +44,7 @@ public final class DocumentationHtmlUtil {
   public static ExtendableHTMLViewFactory.Extension getModuleIconsExtension() {
     return ExtendableHTMLViewFactory.Extensions.icons(key -> {
       ModuleType<?> moduleType = ModuleTypeManager.getInstance().findByID(key);
-      return moduleType == null || moduleType instanceof UnknownModuleType
+      return moduleType instanceof UnknownModuleType
              ? null
              : moduleType.getIcon();
     });
