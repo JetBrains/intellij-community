@@ -121,7 +121,8 @@ final class KotlinPluginBuilder {
     "kotlinc.kotlin-scripting-common",
     "kotlinc.kotlin-scripting-jvm",
     "kotlinc.kotlin-gradle-statistics",
-    )
+    "kotlinc.lombok-compiler-plugin"
+  )
 
   KotlinPluginBuilder(String communityHome, String home, ProductProperties properties) {
     this.communityHome = communityHome
