@@ -9,8 +9,8 @@ import training.featuresSuggester.getParentByPredicate
 import training.featuresSuggester.getParentOfType
 
 class JavaLanguageSupport : LanguageSupport {
-  override fun isSourceFile(file: PsiFile): Boolean {
-    return file is PsiJavaFileImpl
+  override fun isLoadedSourceFile(file: PsiFile): Boolean {
+    return file is PsiJavaFileImpl && file.isContentsLoaded
   }
 
   override fun isIfStatement(element: PsiElement): Boolean {

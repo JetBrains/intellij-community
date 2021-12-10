@@ -31,7 +31,7 @@ interface LanguageSupport {
     }
   }
 
-  fun isSourceFile(file: PsiFile): Boolean
+  fun isLoadedSourceFile(file: PsiFile): Boolean
 
   fun isIfStatement(element: PsiElement): Boolean
 

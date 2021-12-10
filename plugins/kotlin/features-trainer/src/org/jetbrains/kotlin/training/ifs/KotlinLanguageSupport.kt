@@ -12,8 +12,8 @@ import training.featuresSuggester.getParentByPredicate
 import training.featuresSuggester.getParentOfType
 
 class KotlinLanguageSupport : LanguageSupport {
-    override fun isSourceFile(file: PsiFile): Boolean {
-        return file is KtFile && !file.isCompiled
+    override fun isLoadedSourceFile(file: PsiFile): Boolean {
+        return file is KtFile && !file.isCompiled && file.isContentsLoaded
     }
 
     override fun isIfStatement(element: PsiElement): Boolean {

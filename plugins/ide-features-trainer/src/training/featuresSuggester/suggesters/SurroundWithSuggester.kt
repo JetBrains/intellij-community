@@ -66,7 +66,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
   override fun getSuggestion(action: Action): Suggestion {
     val language = action.language ?: return NoSuggestion
     val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
-    if (State.surroundingStatement?.isValid == false && action is PsiAction) {
+    if (action is PsiAction && State.run { surroundingStatementStartOffset != -1 && surroundingStatement?.isValid == false }) {
       State.tryToUpdateSurroundingStatement(langSupport, action)
     }
     when (action) {
@@ -107,7 +107,7 @@ class SurroundWithSuggester : AbstractFeatureSuggester() {
               State.saveFirstStatementInBlock(langSupport)
             }
           }
-          else if (text == "}") {
+          else {
             if (State.isLeftBraceAdded &&
                 State.isBraceAddedToStatement(langSupport, psiFile, textInsertedAction.caretOffset)
             ) {

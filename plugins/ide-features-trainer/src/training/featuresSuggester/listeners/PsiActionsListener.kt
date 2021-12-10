@@ -10,7 +10,7 @@ import training.featuresSuggester.handleAction
 
 class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() {
   override fun beforePropertyChange(event: PsiTreeChangeEvent) {
-    if (event.parent == null || !isSourceFile(event.file)) return
+    if (event.parent == null || !isLoadedSourceFile(event.file)) return
     handleAction(
       project,
       BeforePropertyChangedAction(
@@ -22,7 +22,7 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
   }
 
   override fun beforeChildAddition(event: PsiTreeChangeEvent) {
-    if (event.parent == null || event.child == null || !isSourceFile(event.file)) return
+    if (event.parent == null || event.child == null || !isLoadedSourceFile(event.file)) return
     handleAction(
       project,
       BeforeChildAddedAction(
@@ -35,7 +35,7 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
   }
 
   override fun beforeChildReplacement(event: PsiTreeChangeEvent) {
-    if (event.parent == null || event.newChild == null || event.oldChild == null || !isSourceFile(event.file)) return
+    if (event.parent == null || event.newChild == null || event.oldChild == null || !isLoadedSourceFile(event.file)) return
     handleAction(
       project,
       BeforeChildReplacedAction(
@@ -49,7 +49,7 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
   }
 
   override fun beforeChildrenChange(event: PsiTreeChangeEvent) {
-    if (event.parent == null || !isSourceFile(event.file)) return
+    if (event.parent == null || !isLoadedSourceFile(event.file)) return
     handleAction(
       project,
       BeforeChildrenChangedAction(
@@ -61,7 +61,7 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
   }
 
   override fun beforeChildMovement(event: PsiTreeChangeEvent) {
-    if (event.parent == null || event.child == null || event.oldParent == null || !isSourceFile(event.file)) return
+    if (event.parent == null || event.child == null || event.oldParent == null || !isLoadedSourceFile(event.file)) return
     handleAction(
       project,
       BeforeChildMovedAction(
@@ -75,7 +75,7 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
   }
 
   override fun beforeChildRemoval(event: PsiTreeChangeEvent) {
-    if (event.parent == null || event.child == null || !isSourceFile(event.file)) return
+    if (event.parent == null || event.child == null || !isLoadedSourceFile(event.file)) return
     handleAction(
       project,
       BeforeChildRemovedAction(
@@ -88,12 +88,12 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
   }
 
   override fun propertyChanged(event: PsiTreeChangeEvent) {
-    if (event.parent == null || !isSourceFile(event.file)) return
+    if (event.parent == null || !isLoadedSourceFile(event.file)) return
     handleAction(project, PropertyChangedAction(psiFile = event.file!!, parent = event.parent, timeMillis = System.currentTimeMillis()))
   }
 
   override fun childRemoved(event: PsiTreeChangeEvent) {
-    if (event.parent == null || event.child == null || !isSourceFile(event.file)) return
+    if (event.parent == null || event.child == null || !isLoadedSourceFile(event.file)) return
     handleAction(
       project,
       ChildRemovedAction(
@@ -106,7 +106,7 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
   }
 
   override fun childReplaced(event: PsiTreeChangeEvent) {
-    if (event.parent == null || event.newChild == null || event.oldChild == null || !isSourceFile(event.file)) return
+    if (event.parent == null || event.newChild == null || event.oldChild == null || !isLoadedSourceFile(event.file)) return
     handleAction(
       project,
       ChildReplacedAction(
@@ -120,7 +120,7 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
   }
 
   override fun childAdded(event: PsiTreeChangeEvent) {
-    if (event.parent == null || event.child == null || !isSourceFile(event.file)) return
+    if (event.parent == null || event.child == null || !isLoadedSourceFile(event.file)) return
     handleAction(
       project,
       ChildAddedAction(
@@ -133,12 +133,12 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
   }
 
   override fun childrenChanged(event: PsiTreeChangeEvent) {
-    if (event.parent == null || !isSourceFile(event.file)) return
+    if (event.parent == null || !isLoadedSourceFile(event.file)) return
     handleAction(project, ChildrenChangedAction(psiFile = event.file!!, parent = event.parent, timeMillis = System.currentTimeMillis()))
   }
 
   override fun childMoved(event: PsiTreeChangeEvent) {
-    if (event.parent == null || event.child == null || event.oldParent == null || !isSourceFile(event.file)) return
+    if (event.parent == null || event.child == null || event.oldParent == null || !isLoadedSourceFile(event.file)) return
     handleAction(
       project,
       ChildMovedAction(
@@ -151,8 +151,8 @@ class PsiActionsListener(private val project: Project) : PsiTreeChangeAdapter() 
     )
   }
 
-  private fun isSourceFile(psiFile: PsiFile?): Boolean {
+  private fun isLoadedSourceFile(psiFile: PsiFile?): Boolean {
     val language = psiFile?.language ?: return false
-    return LanguageSupport.getForLanguage(language)?.isSourceFile(psiFile) == true
+    return LanguageSupport.getForLanguage(language)?.isLoadedSourceFile(psiFile) == true
   }
 }

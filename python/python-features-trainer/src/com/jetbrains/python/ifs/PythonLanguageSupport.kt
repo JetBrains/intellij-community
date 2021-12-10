@@ -11,8 +11,8 @@ import training.featuresSuggester.getParentByPredicate
 import training.featuresSuggester.getParentOfType
 
 class PythonLanguageSupport : LanguageSupport {
-  override fun isSourceFile(file: PsiFile): Boolean {
-    return file is PyFileImpl
+  override fun isLoadedSourceFile(file: PsiFile): Boolean {
+    return file is PyFileImpl && file.isContentsLoaded
   }
 
   override fun isIfStatement(element: PsiElement): Boolean {
