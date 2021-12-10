@@ -9,6 +9,7 @@ import com.intellij.ide.bookmark.ui.tree.FolderNodeUpdater
 import com.intellij.ide.bookmark.ui.tree.VirtualFileVisitor
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.aware.DnDAwareTree
+import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.openapi.Disposable
@@ -80,6 +81,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
     PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
     PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
+    PlatformDataKeys.VIRTUAL_FILE.`is`(dataId) -> selectedNode?.let { (it as? ProjectViewNode<*>)?.virtualFile }
     else -> null
   }
 
