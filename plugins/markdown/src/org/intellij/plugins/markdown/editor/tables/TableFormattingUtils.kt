@@ -14,7 +14,7 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnCells
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import java.lang.Integer.max
 
@@ -123,7 +123,7 @@ internal object TableFormattingUtils {
     }
   }
 
-  fun MarkdownTableImpl.reformatColumnOnChange(
+  fun MarkdownTable.reformatColumnOnChange(
     document: Document,
     carets: Iterable<Caret>,
     columnIndex: Int,
@@ -149,7 +149,7 @@ internal object TableFormattingUtils {
     processCell(document, cells.last(), cellsStates.last(), maxCellWidth, alignment, preventExpand)
   }
 
-  fun reformatAllColumns(table: MarkdownTableImpl, document: Document, trimToMaxContent: Boolean = true, preventExpand: Boolean = false) {
+  fun reformatAllColumns(table: MarkdownTable, document: Document, trimToMaxContent: Boolean = true, preventExpand: Boolean = false) {
     val columnsIndices = table.columnsIndices
     val tableOffset = table.startOffset
     for (columnIndex in columnsIndices) {
@@ -162,7 +162,7 @@ internal object TableFormattingUtils {
     }
   }
 
-  fun MarkdownTableImpl.isSoftWrapping(editor: Editor): Boolean {
+  fun MarkdownTable.isSoftWrapping(editor: Editor): Boolean {
     val range = textRange
     return editor.softWrapModel.getSoftWrapsForRange(range.startOffset, range.endOffset).isNotEmpty()
   }

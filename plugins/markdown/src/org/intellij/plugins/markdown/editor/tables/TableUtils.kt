@@ -13,7 +13,7 @@ import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.util.hasType
@@ -37,13 +37,13 @@ object TableUtils {
   }
 
   @JvmStatic
-  fun findTable(file: PsiFile, offset: Int): MarkdownTableImpl? {
+  fun findTable(file: PsiFile, offset: Int): MarkdownTable? {
     val element = PsiUtilCore.getElementAtOffset(file, offset)
     return findTable(element)
   }
 
   @JvmStatic
-  fun findTable(element: PsiElement): MarkdownTableImpl? {
+  fun findTable(element: PsiElement): MarkdownTable? {
     return element.parentOfType(withSelf = true)
   }
 
@@ -100,11 +100,11 @@ object TableUtils {
     }
   }
 
-  fun MarkdownTableImpl.getColumnCells(index: Int, withHeader: Boolean = true): List<MarkdownTableCell> {
+  fun MarkdownTable.getColumnCells(index: Int, withHeader: Boolean = true): List<MarkdownTableCell> {
     return getRows(withHeader).mapNotNull { it.getCell(index) }
   }
 
-  fun MarkdownTableImpl.getColumnTextRanges(index: Int): List<TextRange> {
+  fun MarkdownTable.getColumnTextRanges(index: Int): List<TextRange> {
     val cells = getColumnCells(index, withHeader = true).map { it.textRange }
     val result = ArrayList<TextRange>(cells.size + 1)
     result.addAll(cells)
@@ -112,7 +112,7 @@ object TableUtils {
     return result
   }
 
-  val MarkdownTableImpl.separatorRow: MarkdownTableSeparatorRow?
+  val MarkdownTable.separatorRow: MarkdownTableSeparatorRow?
     get() = firstChild.siblings(forward = true, withSelf = true).filterIsInstance<MarkdownTableSeparatorRow>().firstOrNull()
 
   val MarkdownTableRowImpl.isHeaderRow
@@ -124,16 +124,16 @@ object TableUtils {
   val MarkdownTableRowImpl.columnsCount
     get() = firstChild?.siblings(forward = true, withSelf = true)?.count { it is MarkdownTableCell } ?: 0
 
-  val MarkdownTableImpl.columnsCount
+  val MarkdownTable.columnsCount
     get() = headerRow?.columnsCount ?: 0
 
-  val MarkdownTableImpl.columnsIndices
+  val MarkdownTable.columnsIndices
     get() = 0 until columnsCount
 
   val MarkdownTableRowImpl.columnsIndices
     get() = 0 until columnsCount
 
-  fun MarkdownTableImpl.getColumnAlignment(columnIndex: Int): MarkdownTableSeparatorRow.CellAlignment {
+  fun MarkdownTable.getColumnAlignment(columnIndex: Int): MarkdownTableSeparatorRow.CellAlignment {
     return separatorRow?.getCellAlignment(columnIndex)!!
   }
 

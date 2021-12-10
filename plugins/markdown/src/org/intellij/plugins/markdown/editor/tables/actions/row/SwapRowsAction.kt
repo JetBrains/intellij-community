@@ -9,11 +9,11 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
 
 internal abstract class SwapRowsAction(private val swapWithAbove: Boolean): RowBasedTableAction(considerSeparatorRow = false) {
-  override fun performAction(editor: Editor, table: MarkdownTableImpl, rowElement: PsiElement) {
+  override fun performAction(editor: Editor, table: MarkdownTable, rowElement: PsiElement) {
     rowElement as MarkdownTableRowImpl
     val otherRow = findOtherRow(rowElement)
     requireNotNull(otherRow)
@@ -26,7 +26,7 @@ internal abstract class SwapRowsAction(private val swapWithAbove: Boolean): RowB
     }
   }
 
-  override fun update(event: AnActionEvent, table: MarkdownTableImpl?, rowElement: PsiElement?) {
+  override fun update(event: AnActionEvent, table: MarkdownTable?, rowElement: PsiElement?) {
     super.update(event, table, rowElement)
     event.presentation.isEnabled = (rowElement as? MarkdownTableRowImpl)?.let(::findOtherRow) != null
   }

@@ -5,10 +5,10 @@ import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.executeCommand
 import com.intellij.openapi.editor.Editor
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.removeColumn
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 
 internal class RemoveCurrentColumnAction: ColumnBasedTableAction() {
-  override fun performAction(editor: Editor, table: MarkdownTableImpl, columnIndex: Int) {
+  override fun performAction(editor: Editor, table: MarkdownTable, columnIndex: Int) {
     runWriteAction {
       executeCommand(table.project) {
         table.removeColumn(columnIndex)

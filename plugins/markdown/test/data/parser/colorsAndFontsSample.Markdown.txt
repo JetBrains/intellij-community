@@ -551,7 +551,7 @@ Markdown file
       PsiElement(Markdown:Markdown::)(':')
     PsiWhiteSpace('\n')
     PsiWhiteSpace('\n')
-    MarkdownTableImpl(Markdown:Markdown:TABLE)
+    MarkdownTable(Markdown:Markdown:TABLE)
       MarkdownTableRowImpl(Markdown:Markdown:HEADER)
         PsiElement(Markdown:Markdown:TABLE_SEPARATOR)('|')
         MarkdownTableCell(Markdown:CELL)

@@ -8,12 +8,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 
 internal abstract class InsertRowAction(private val insertAbove: Boolean): RowBasedTableAction(considerSeparatorRow = true) {
-  override fun performAction(editor: Editor, table: MarkdownTableImpl, rowElement: PsiElement) {
+  override fun performAction(editor: Editor, table: MarkdownTable, rowElement: PsiElement) {
     runWriteAction {
       val widths = obtainCellsWidths(rowElement)
       val newRow = MarkdownPsiElementFactory.createTableEmptyRow(table.project, widths)

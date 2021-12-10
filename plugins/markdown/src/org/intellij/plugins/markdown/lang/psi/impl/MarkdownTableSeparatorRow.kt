@@ -50,8 +50,8 @@ class MarkdownTableSeparatorRow(text: CharSequence): LeafPsiElement(MarkdownToke
     return ranges
   }
 
-  val parentTable: MarkdownTableImpl?
-    get() = parents(withSelf = true).find { it.hasType(MarkdownElementTypes.TABLE) } as? MarkdownTableImpl
+  val parentTable: MarkdownTable?
+    get() = parents(withSelf = true).find { it.hasType(MarkdownElementTypes.TABLE) } as? MarkdownTable
 
   val cellsRanges: List<TextRange>
     get() = cachedCellsRanges

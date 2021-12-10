@@ -46,7 +46,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
         super.visitParagraph(paragraph)
       }
 
-      override fun visitTable(table: MarkdownTableImpl) {
+      override fun visitTable(table: MarkdownTable) {
         addDescriptors(table)
         super.visitTable(table)
       }

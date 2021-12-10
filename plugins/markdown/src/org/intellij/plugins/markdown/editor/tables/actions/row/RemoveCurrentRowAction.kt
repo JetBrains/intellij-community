@@ -7,11 +7,11 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
 
 internal class RemoveCurrentRowAction: RowBasedTableAction(considerSeparatorRow = false) {
-  override fun performAction(editor: Editor, table: MarkdownTableImpl, rowElement: PsiElement) {
+  override fun performAction(editor: Editor, table: MarkdownTable, rowElement: PsiElement) {
     runWriteAction {
       executeCommand(rowElement.project) {
         rowElement.delete()

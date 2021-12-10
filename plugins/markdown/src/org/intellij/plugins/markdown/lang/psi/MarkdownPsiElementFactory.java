@@ -170,8 +170,8 @@ public final class MarkdownPsiElementFactory {
   }
 
   @NotNull
-  private static MarkdownTableImpl findTable(@NotNull PsiElement element) {
-    return Objects.requireNonNull(PsiTreeUtil.getParentOfType(element, MarkdownTableImpl.class));
+  private static MarkdownTable findTable(@NotNull PsiElement element) {
+    return Objects.requireNonNull(PsiTreeUtil.getParentOfType(element, MarkdownTable.class));
   }
 
   @ApiStatus.Experimental

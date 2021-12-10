@@ -15,7 +15,7 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnCells
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.util.hasType
@@ -27,7 +27,7 @@ internal object TableModificationUtils {
    * Modifies column with [columnIndex], calling [transformCell] on each cell and
    * [transformSeparator] on corresponding separator cell.
    */
-  fun MarkdownTableImpl.modifyColumn(
+  fun MarkdownTable.modifyColumn(
     columnIndex: Int,
     transformSeparator: (TextRange) -> Unit,
     transformCell: (MarkdownTableCell) -> Unit
@@ -65,7 +65,7 @@ internal object TableModificationUtils {
   }
 
   @Suppress("MemberVisibilityCanBePrivate")
-  fun MarkdownTableImpl.isColumnCorrectlyFormatted(columnIndex: Int, checkAlignment: Boolean = true): Boolean {
+  fun MarkdownTable.isColumnCorrectlyFormatted(columnIndex: Int, checkAlignment: Boolean = true): Boolean {
     val cells = getColumnCells(columnIndex, withHeader = true)
     if (cells.isEmpty()) {
       return true
@@ -84,7 +84,7 @@ internal object TableModificationUtils {
     }
   }
 
-  fun MarkdownTableImpl.isCorrectlyFormatted(checkAlignment: Boolean = true): Boolean {
+  fun MarkdownTable.isCorrectlyFormatted(checkAlignment: Boolean = true): Boolean {
     return (0 until columnsCount).all { isColumnCorrectlyFormatted(it, checkAlignment) }
   }
 
@@ -123,7 +123,7 @@ internal object TableModificationUtils {
     }
   }
 
-  fun MarkdownTableImpl.validateColumnAlignment(columnIndex: Int): Boolean {
+  fun MarkdownTable.validateColumnAlignment(columnIndex: Int): Boolean {
     val expected = separatorRow!!.getCellAlignment(columnIndex)
     if (expected == MarkdownTableSeparatorRow.CellAlignment.NONE) {
       return true
@@ -192,7 +192,7 @@ internal object TableModificationUtils {
     document.replaceString(cellRange.startOffset, cellRange.endOffset, replacement)
   }
 
-  fun MarkdownTableImpl.updateColumnAlignment(document: Document, columnIndex: Int, alignment: MarkdownTableSeparatorRow.CellAlignment) {
+  fun MarkdownTable.updateColumnAlignment(document: Document, columnIndex: Int, alignment: MarkdownTableSeparatorRow.CellAlignment) {
     modifyColumn(
       columnIndex,
       transformSeparator = { separatorRow?.updateAlignment(document, columnIndex, alignment) },
@@ -200,12 +200,12 @@ internal object TableModificationUtils {
     )
   }
 
-  fun MarkdownTableImpl.updateColumnAlignment(document: Document, columnIndex: Int) {
+  fun MarkdownTable.updateColumnAlignment(document: Document, columnIndex: Int) {
     val alignment = separatorRow?.getCellAlignment(columnIndex) ?: return
     updateColumnAlignment(document, columnIndex, alignment)
   }
 
-  fun MarkdownTableImpl.buildEmptyRow(builder: StringBuilder = StringBuilder()): StringBuilder {
+  fun MarkdownTable.buildEmptyRow(builder: StringBuilder = StringBuilder()): StringBuilder {
     val header = checkNotNull(headerRow)
     builder.append(TableProps.SEPARATOR_CHAR)
     for (cell in header.cells) {
@@ -217,7 +217,7 @@ internal object TableModificationUtils {
     return builder
   }
 
-  fun MarkdownTableImpl.selectColumn(
+  fun MarkdownTable.selectColumn(
     editor: Editor,
     columnIndex: Int,
     withHeader: Boolean = false,
@@ -269,7 +269,7 @@ internal object TableModificationUtils {
     setSelection(textRange.startOffset, textRange.endOffset)
   }
 
-  fun MarkdownTableImpl.insertColumn(
+  fun MarkdownTable.insertColumn(
     document: Document,
     columnIndex: Int,
     after: Boolean = true,
@@ -335,7 +335,7 @@ internal object TableModificationUtils {
     return text.let { it.startsWith(TableProps.SEPARATOR_CHAR) && it.endsWith(TableProps.SEPARATOR_CHAR) }
   }
 
-  fun MarkdownTableImpl.hasCorrectBorders(): Boolean {
+  fun MarkdownTable.hasCorrectBorders(): Boolean {
     val rows = getRows(true)
     return rows.all { it.hasCorrectBorders() } && separatorRow?.hasCorrectBorders() == true
   }
@@ -373,7 +373,7 @@ internal object TableModificationUtils {
   /**
    * Removes column based on PSI.
    */
-  fun MarkdownTableImpl.removeColumn(columnIndex: Int) {
+  fun MarkdownTable.removeColumn(columnIndex: Int) {
     val cells = getColumnCells(columnIndex, withHeader = true)
     for (cell in cells.asReversed()) {
       val parent = cell.parent

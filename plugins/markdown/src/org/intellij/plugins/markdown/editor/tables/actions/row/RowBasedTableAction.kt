@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 
@@ -45,11 +45,11 @@ internal abstract class RowBasedTableAction(private val considerSeparatorRow: Bo
     }
   }
 
-  protected abstract fun performAction(editor: Editor, table: MarkdownTableImpl, rowElement: PsiElement)
+  protected abstract fun performAction(editor: Editor, table: MarkdownTable, rowElement: PsiElement)
 
-  protected open fun update(event: AnActionEvent, table: MarkdownTableImpl?, rowElement: PsiElement?) = Unit
+  protected open fun update(event: AnActionEvent, table: MarkdownTable?, rowElement: PsiElement?) = Unit
 
-  private fun findTableAndRow(event: AnActionEvent, file: PsiFile, editor: Editor): Pair<MarkdownTableImpl, PsiElement>? {
+  private fun findTableAndRow(event: AnActionEvent, file: PsiFile, editor: Editor): Pair<MarkdownTable, PsiElement>? {
     return when {
       considerSeparatorRow -> findTableAndRow(event, file, editor, ::findRowOrSeparator)
       else -> findTableAndRow(event, file, editor, ::findRow)
@@ -70,7 +70,7 @@ internal abstract class RowBasedTableAction(private val considerSeparatorRow: Bo
       file: PsiFile,
       editor: Editor,
       rowGetter: (PsiFile, Editor) -> PsiElement?
-    ): Pair<MarkdownTableImpl, PsiElement>? {
+    ): Pair<MarkdownTable, PsiElement>? {
       val elementFromEvent = event.getData(TableActionKeys.ELEMENT)?.get()
       if (elementFromEvent != null) {
         val table = obtainParentTable(elementFromEvent)
@@ -86,7 +86,7 @@ internal abstract class RowBasedTableAction(private val considerSeparatorRow: Bo
       }
     }
 
-    private fun obtainParentTable(element: PsiElement): MarkdownTableImpl? {
+    private fun obtainParentTable(element: PsiElement): MarkdownTable? {
       return when (element) {
         is MarkdownTableRowImpl -> element.parentTable
         is MarkdownTableSeparatorRow -> element.parentTable
@@ -94,7 +94,7 @@ internal abstract class RowBasedTableAction(private val considerSeparatorRow: Bo
       }
     }
 
-    fun findTableAndRow(event: AnActionEvent, file: PsiFile, editor: Editor): Pair<MarkdownTableImpl, PsiElement>? {
+    fun findTableAndRow(event: AnActionEvent, file: PsiFile, editor: Editor): Pair<MarkdownTable, PsiElement>? {
       return findTableAndRow(event, file, editor) { fileToSearch, editorToSearch ->
         TableUtils.findRowOrSeparator(fileToSearch, editorToSearch.caretModel.currentCaret.offset)
       }

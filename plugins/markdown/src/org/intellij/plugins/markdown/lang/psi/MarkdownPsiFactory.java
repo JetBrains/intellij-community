@@ -52,7 +52,7 @@ public enum MarkdownPsiFactory {
       return new MarkdownCodeBlockImpl(node);
     }
     if (elementType == MarkdownElementTypes.TABLE) {
-      return new MarkdownTableImpl(node);
+      return new MarkdownTable(node);
     }
     if (elementType == MarkdownElementTypes.TABLE_ROW || elementType == MarkdownElementTypes.TABLE_HEADER) {
       return new MarkdownTableRowImpl(node);

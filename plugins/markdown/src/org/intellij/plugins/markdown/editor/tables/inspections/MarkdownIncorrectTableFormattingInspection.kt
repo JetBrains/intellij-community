@@ -13,7 +13,7 @@ import org.intellij.plugins.markdown.editor.tables.intentions.FixCellAlignmentIn
 import org.intellij.plugins.markdown.editor.tables.intentions.ReformatTableIntention
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 internal class MarkdownIncorrectTableFormattingInspection: LocalInspectionTool() {
@@ -22,7 +22,7 @@ internal class MarkdownIncorrectTableFormattingInspection: LocalInspectionTool()
       return PsiElementVisitor.EMPTY_VISITOR
     }
     return object: MarkdownElementVisitor() {
-      override fun visitTable(table: MarkdownTableImpl) {
+      override fun visitTable(table: MarkdownTable) {
         super.visitTable(table)
         if (!table.isCorrectlyFormatted(checkAlignment = false)) {
           holder.registerProblem(

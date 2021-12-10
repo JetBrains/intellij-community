@@ -40,7 +40,7 @@ public class MarkdownTableRowImpl extends MarkdownCompositePsiElementBase {
     return cells.get(nth);
   }
 
-  public @Nullable MarkdownTableImpl getParentTable() {
-    return PsiTreeUtil.getParentOfType(this, MarkdownTableImpl.class);
+  public @Nullable MarkdownTable getParentTable() {
+    return PsiTreeUtil.getParentOfType(this, MarkdownTable.class);
   }
 }

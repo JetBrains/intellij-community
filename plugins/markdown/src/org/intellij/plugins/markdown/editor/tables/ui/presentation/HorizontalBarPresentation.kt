@@ -29,7 +29,7 @@ import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.select
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.clearOvalOverEditor
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
 import org.intellij.plugins.markdown.util.hasType
 import java.awt.*
@@ -37,7 +37,7 @@ import java.awt.event.MouseEvent
 import java.lang.ref.WeakReference
 import javax.swing.SwingUtilities
 
-internal class HorizontalBarPresentation(private val editor: Editor, private val table: MarkdownTableImpl): BasePresentation() {
+internal class HorizontalBarPresentation(private val editor: Editor, private val table: MarkdownTable): BasePresentation() {
   private data class BoundsState(
     val width: Int,
     val height: Int,
@@ -265,7 +265,7 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
       )
     }
 
-    fun create(factory: PresentationFactory, editor: Editor, table: MarkdownTableImpl): InlayPresentation {
+    fun create(factory: PresentationFactory, editor: Editor, table: MarkdownTable): InlayPresentation {
       return wrapPresentation(factory, editor, HorizontalBarPresentation(editor, table))
     }
 
@@ -279,7 +279,7 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
       return file?.let { PsiDocumentManager.getInstance(element.project).getLastCommittedDocument(it) }
     }
 
-    private fun createDataProvider(table: MarkdownTableImpl, columnIndex: Int): DataProvider {
+    private fun createDataProvider(table: MarkdownTable, columnIndex: Int): DataProvider {
       val tableReference = WeakReference(table)
       return DataProvider {
         when {
