@@ -17,7 +17,7 @@ import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils.getContent
 import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.util.hasType
 
@@ -66,7 +66,7 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
   private fun processBlock(lang: String, element: PsiElement): Info? {
     val language = LanguageGuesser.guessLanguageForInjection(lang)
     val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(language) } ?: return null
-    val text = getContent(element.parent as MarkdownCodeFenceImpl, false)
+    val text = getContent(element.parent as MarkdownCodeFence, false)
       ?.fold(StringBuilder()) { acc, psiElement -> acc.append(psiElement.text) }
       .toString()
     val dir = element.containingFile.virtualFile.parent?.path ?: return null

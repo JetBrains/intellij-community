@@ -13,7 +13,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.settings.MarkdownSettingsUtil
 import org.jetbrains.annotations.ApiStatus
 
@@ -40,7 +40,7 @@ abstract class MarkdownCodeFenceDownloadLineMarkerProvider : LineMarkerProviderD
       return
     }
     for (element in elements) {
-      if (element !is MarkdownCodeFenceImpl || !shouldProcessElement(element)) {
+      if (element !is MarkdownCodeFence || !shouldProcessElement(element)) {
         continue
       }
       val fenceLanguage = element.findPsiChildByType(MarkdownTokenTypes.FENCE_LANG) ?: continue

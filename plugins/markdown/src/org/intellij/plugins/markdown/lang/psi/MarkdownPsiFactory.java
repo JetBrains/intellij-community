@@ -22,7 +22,7 @@ public enum MarkdownPsiFactory {
       return new MarkdownHeader(node);
     }
     if (elementType == MarkdownElementTypes.CODE_FENCE) {
-      return ((MarkdownCodeFenceImpl)node);
+      return ((MarkdownCodeFence)node);
     }
     if (elementType == MarkdownElementTypes.IMAGE) {
       return new MarkdownImage(node);

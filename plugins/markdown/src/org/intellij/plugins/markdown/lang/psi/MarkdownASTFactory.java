@@ -6,8 +6,8 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceContent;
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,7 +17,7 @@ public class MarkdownASTFactory extends ASTFactory {
   @Override
   public CompositeElement createComposite(@NotNull IElementType type) {
     if (type == MarkdownElementTypes.CODE_FENCE) {
-      return new MarkdownCodeFenceImpl(type);
+      return new MarkdownCodeFence(type);
     }
 
     return super.createComposite(type);

@@ -41,21 +41,21 @@ public final class MarkdownPsiElementFactory {
 
 
   @NotNull
-  public static MarkdownCodeFenceImpl createCodeFence(@NotNull Project project, @Nullable String language, @NotNull String text) {
+  public static MarkdownCodeFence createCodeFence(@NotNull Project project, @Nullable String language, @NotNull String text) {
     return createCodeFence(project, language, text, null);
   }
 
 
   @NotNull
-  public static MarkdownCodeFenceImpl createCodeFence(@NotNull Project project,
-                                                      @Nullable String language,
-                                                      @NotNull String text,
-                                                      @Nullable String indent) {
+  public static MarkdownCodeFence createCodeFence(@NotNull Project project,
+                                                  @Nullable String language,
+                                                  @NotNull String text,
+                                                  @Nullable String indent) {
     text = StringUtil.isEmpty(text) ? "" : "\n" + text;
     String content = "```" + StringUtil.notNullize(language) + text + "\n" + StringUtil.notNullize(indent) + "```";
     final MarkdownFile file = createFile(project, content);
 
-    return (MarkdownCodeFenceImpl)file.getFirstChild().getFirstChild();
+    return (MarkdownCodeFence)file.getFirstChild().getFirstChild();
   }
 
   @NotNull

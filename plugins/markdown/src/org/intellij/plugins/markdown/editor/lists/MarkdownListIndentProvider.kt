@@ -13,7 +13,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLineSaf
 import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
@@ -59,7 +59,7 @@ internal class MarkdownListIndentProvider : FormatterBasedLineIndentProvider() {
     if (beforeWhitespaceOffset == -1) return false
 
     return file.findElementAt(beforeWhitespaceOffset)
-      ?.parentOfTypes(MarkdownBlockQuote::class, MarkdownCodeFenceImpl::class) != null
+      ?.parentOfTypes(MarkdownBlockQuote::class, MarkdownCodeFence::class) != null
   }
 
   override fun isSuitableFor(language: Language?) = language is MarkdownLanguage

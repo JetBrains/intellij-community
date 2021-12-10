@@ -10,7 +10,7 @@ import org.intellij.plugins.markdown.editor.MarkdownEnterHandler
 import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownFormattingBlock
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.util.hasType
 
@@ -30,13 +30,13 @@ import org.intellij.plugins.markdown.util.hasType
  */
 internal open class CodeFenceInjector : MultiHostInjector {
   companion object {
-    private val toInject = listOf(MarkdownCodeFenceImpl::class.java)
+    private val toInject = listOf(MarkdownCodeFence::class.java)
   }
 
   override fun elementsToInjectIn(): List<Class<out PsiElement>?> = toInject
 
   override fun getLanguagesToInject(registrar: MultiHostRegistrar, host: PsiElement) {
-    if (host !is MarkdownCodeFenceImpl || !host.isValidHost || host.children.all { !it.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT) }) {
+    if (host !is MarkdownCodeFence || !host.isValidHost || host.children.all { !it.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT) }) {
       return
     }
 
@@ -48,7 +48,7 @@ internal open class CodeFenceInjector : MultiHostInjector {
   }
 
 
-  protected open fun findLangForInjection(element: MarkdownCodeFenceImpl): Language? {
+  protected open fun findLangForInjection(element: MarkdownCodeFence): Language? {
     val name = element.fenceLanguage ?: return null
     return LanguageGuesser.guessLanguageForInjection(name).takeIf {
       MarkdownSettings.getInstance(element.project).areInjectionsEnabled
@@ -61,7 +61,7 @@ internal open class CodeFenceInjector : MultiHostInjector {
    * But, the problem is that not all formatters are ready to work in
    * injected context, so we should do it with great care.
    */
-  private fun injectAsOnePlace(host: MarkdownCodeFenceImpl, registrar: MultiHostRegistrar) {
+  private fun injectAsOnePlace(host: MarkdownCodeFence, registrar: MultiHostRegistrar) {
     val elements = MarkdownCodeFenceUtils.getContent(host, withWhitespaces = true) ?: return
 
     val first = elements.first()

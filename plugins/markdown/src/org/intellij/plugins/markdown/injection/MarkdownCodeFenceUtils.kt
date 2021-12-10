@@ -11,7 +11,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 import org.intellij.plugins.markdown.util.hasType
 import org.intellij.plugins.markdown.util.parents
@@ -35,7 +35,7 @@ object MarkdownCodeFenceUtils {
    * @return non-empty list of elements or null
    */
   @JvmStatic
-  fun getContent(host: MarkdownCodeFenceImpl, withWhitespaces: Boolean): List<PsiElement>? {
+  fun getContent(host: MarkdownCodeFence, withWhitespaces: Boolean): List<PsiElement>? {
     var elements: List<PsiElement> = host.children.filter {
       (it !is OuterLanguageElement
        && (it.node.elementType == MarkdownTokenTypes.CODE_FENCE_CONTENT
@@ -65,7 +65,7 @@ object MarkdownCodeFenceUtils {
    * one line (even empty) of text.
    */
   @JvmStatic
-  fun isAbleToAcceptInjections(host: MarkdownCodeFenceImpl): Boolean {
+  fun isAbleToAcceptInjections(host: MarkdownCodeFence): Boolean {
     if (host.children.all { !it.hasType(MarkdownTokenTypes.CODE_FENCE_END) }
         || host.children.all { !it.hasType(MarkdownTokenTypes.CODE_FENCE_START) }) {
       return false
@@ -83,7 +83,7 @@ object MarkdownCodeFenceUtils {
    * returns null
    */
   @JvmStatic
-  fun getEmptyRange(host: MarkdownCodeFenceImpl): TextRange {
+  fun getEmptyRange(host: MarkdownCodeFence): TextRange {
     val start = host.children.find { it.hasType(MarkdownTokenTypes.FENCE_LANG) }
                 ?: host.children.find { it.hasType(MarkdownTokenTypes.CODE_FENCE_START) }
 
@@ -95,9 +95,9 @@ object MarkdownCodeFenceUtils {
    *
    * Would also work for injected elements.
    */
-  fun getCodeFence(element: PsiElement): MarkdownCodeFenceImpl? {
-    return InjectedLanguageManager.getInstance(element.project).getInjectionHost(element) as? MarkdownCodeFenceImpl?
-           ?: PsiTreeUtil.getParentOfType(element, MarkdownCodeFenceImpl::class.java)
+  fun getCodeFence(element: PsiElement): MarkdownCodeFence? {
+    return InjectedLanguageManager.getInstance(element.project).getInjectionHost(element) as? MarkdownCodeFence?
+           ?: PsiTreeUtil.getParentOfType(element, MarkdownCodeFence::class.java)
   }
 
   /**
@@ -108,7 +108,7 @@ object MarkdownCodeFenceUtils {
    * top-level fences should use indentation from formatter.
    */
   @JvmStatic
-  fun getIndent(element: MarkdownCodeFenceImpl): String? {
+  fun getIndent(element: MarkdownCodeFence): String? {
     val document = PsiDocumentManager.getInstance(element.project).getDocument(element.containingFile) ?: return null
     val offset = element.textOffset
     val lineStartOffset = document.getLineStartOffset(document.getLineNumber(offset))

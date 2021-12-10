@@ -56,7 +56,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
         super.visitBlockQuote(blockQuote)
       }
 
-      override fun visitCodeFence(codeFence: MarkdownCodeFenceImpl) {
+      override fun visitCodeFence(codeFence: MarkdownCodeFence) {
         addDescriptors(codeFence)
         super.visitCodeFence(codeFence)
       }
