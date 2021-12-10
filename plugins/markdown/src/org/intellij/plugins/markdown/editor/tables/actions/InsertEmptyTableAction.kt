@@ -25,7 +25,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.lang.MarkdownFileType
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCellImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionPlaces
 import java.awt.Component
 import java.awt.Dimension
@@ -100,7 +100,7 @@ internal class InsertEmptyTableAction: DumbAwareAction() {
         EditorModificationUtil.insertStringAtCaret(editor, content)
         PsiDocumentManager.getInstance(project).commitDocument(document)
         val table = TableUtils.findTable(file, caretOffset)
-        val offsetToMove = table?.let { PsiTreeUtil.findChildOfType(it, MarkdownTableCellImpl::class.java) }?.startOffset
+        val offsetToMove = table?.let { PsiTreeUtil.findChildOfType(it, MarkdownTableCell::class.java) }?.startOffset
         if (offsetToMove != null) {
           caret.moveToOffset(offsetToMove)
         }

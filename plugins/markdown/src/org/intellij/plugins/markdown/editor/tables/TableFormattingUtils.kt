@@ -13,7 +13,7 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnCells
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCellImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import java.lang.Integer.max
@@ -46,12 +46,12 @@ internal object TableFormattingUtils {
     return CellContentState(contentWithReplacements, caretsInside)
   }
 
-  private fun MarkdownTableCellImpl.buildCellState(document: Document, carets: Iterable<Caret>): CellContentState {
+  private fun MarkdownTableCell.buildCellState(document: Document, carets: Iterable<Caret>): CellContentState {
     return buildCellState(textRange, document, carets)
   }
 
   private fun calculateContentsMaxWidth(
-    cells: Collection<MarkdownTableCellImpl>,
+    cells: Collection<MarkdownTableCell>,
     cellsContentsWithCarets: Iterable<CellContentState>,
     separatorCellRange: TextRange?,
     trimToMaxContent: Boolean
@@ -77,7 +77,7 @@ internal object TableFormattingUtils {
 
   private fun processCell(
     document: Document,
-    cell: MarkdownTableCellImpl,
+    cell: MarkdownTableCell,
     state: CellContentState,
     maxCellWidth: Int,
     alignment: MarkdownTableSeparatorRow.CellAlignment,

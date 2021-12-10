@@ -12,7 +12,7 @@ import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.isCorr
 import org.intellij.plugins.markdown.editor.tables.intentions.FixCellAlignmentIntention
 import org.intellij.plugins.markdown.editor.tables.intentions.ReformatTableIntention
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCellImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
@@ -35,7 +35,7 @@ internal class MarkdownIncorrectTableFormattingInspection: LocalInspectionTool()
 
       override fun visitElement(element: PsiElement) {
         super.visitElement(element)
-        if ((element as? MarkdownTableCellImpl)?.hasValidAlignment() == false) {
+        if ((element as? MarkdownTableCell)?.hasValidAlignment() == false) {
           holder.registerProblem(
             element,
             MarkdownBundle.message("markdown.incorrect.table.formatting.inspection.local.cell.description"),

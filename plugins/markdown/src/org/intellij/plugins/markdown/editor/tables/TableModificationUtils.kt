@@ -14,7 +14,7 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnAlignment
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnCells
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCellImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
@@ -30,7 +30,7 @@ internal object TableModificationUtils {
   fun MarkdownTableImpl.modifyColumn(
     columnIndex: Int,
     transformSeparator: (TextRange) -> Unit,
-    transformCell: (MarkdownTableCellImpl) -> Unit
+    transformCell: (MarkdownTableCell) -> Unit
   ): Boolean {
     val separatorRange = separatorRow?.getCellRange(columnIndex) ?: return false
     val headerCell = headerRow?.getCell(columnIndex) ?: return false
@@ -59,7 +59,7 @@ internal object TableModificationUtils {
     return cellText.all { it =='-' || it == ':' }
   }
 
-  fun MarkdownTableCellImpl.hasCorrectPadding(): Boolean {
+  fun MarkdownTableCell.hasCorrectPadding(): Boolean {
     val cellText = text
     return text.length >= TableProps.MIN_CELL_WIDTH && cellText.startsWith(" ") && cellText.endsWith(" ")
   }
@@ -88,13 +88,13 @@ internal object TableModificationUtils {
     return (0 until columnsCount).all { isColumnCorrectlyFormatted(it, checkAlignment) }
   }
 
-  fun MarkdownTableCellImpl.hasValidAlignment(): Boolean {
+  fun MarkdownTableCell.hasValidAlignment(): Boolean {
     val table = parentTable ?: return true
     val columnAlignment = table.getColumnAlignment(columnIndex)
     return hasValidAlignment(columnAlignment)
   }
 
-  fun MarkdownTableCellImpl.hasValidAlignment(expected: MarkdownTableSeparatorRow.CellAlignment): Boolean {
+  fun MarkdownTableCell.hasValidAlignment(expected: MarkdownTableSeparatorRow.CellAlignment): Boolean {
     val content = text
     if (content.length < TableProps.MIN_CELL_WIDTH) {
       return false
@@ -166,7 +166,7 @@ internal object TableModificationUtils {
     }
   }
 
-  fun MarkdownTableCellImpl.getContentWithoutWhitespaces(document: Document): String {
+  fun MarkdownTableCell.getContentWithoutWhitespaces(document: Document): String {
     val range = textRange
     val content = document.charsSequence.substring(range.startOffset, range.endOffset)
     return content.trim(' ')
@@ -180,7 +180,7 @@ internal object TableModificationUtils {
     document.replaceString(cellRange.startOffset, cellRange.endOffset, replacement)
   }
 
-  fun MarkdownTableCellImpl.updateAlignment(document: Document, alignment: MarkdownTableSeparatorRow.CellAlignment) {
+  fun MarkdownTableCell.updateAlignment(document: Document, alignment: MarkdownTableSeparatorRow.CellAlignment) {
     if (alignment == MarkdownTableSeparatorRow.CellAlignment.NONE) {
       return
     }
@@ -249,16 +249,16 @@ internal object TableModificationUtils {
     }
   }
 
-  private fun obtainCellSelectionRange(cell: MarkdownTableCellImpl, withBorders: Boolean): TextRange {
+  private fun obtainCellSelectionRange(cell: MarkdownTableCell, withBorders: Boolean): TextRange {
     val range = cell.textRange
     if (!withBorders) {
       return range
     }
     val leftPipe = cell.siblings(forward = false, withSelf = false)
-      .takeWhile { it !is MarkdownTableCellImpl }
+      .takeWhile { it !is MarkdownTableCell }
       .find { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) }
     val rightPipe = cell.siblings(forward = true, withSelf = false)
-      .takeWhile { it !is MarkdownTableCellImpl }
+      .takeWhile { it !is MarkdownTableCell }
       .find { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) }
     val left = leftPipe?.startOffset ?: range.startOffset
     val right = rightPipe?.endOffset ?: range.endOffset

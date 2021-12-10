@@ -2,13 +2,11 @@ package org.intellij.plugins.markdown.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
-import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MarkdownTableCellImpl extends MarkdownCompositePsiElementBase {
-  public MarkdownTableCellImpl(@NotNull ASTNode node) {
+public class MarkdownTableCell extends MarkdownCompositePsiElementBase {
+  public MarkdownTableCell(@NotNull ASTNode node) {
     super(node);
   }
 
@@ -22,7 +20,7 @@ public class MarkdownTableCellImpl extends MarkdownCompositePsiElementBase {
     var index = 0;
     while (sibling != null) {
       sibling = sibling.getPrevSibling();
-      if (sibling instanceof MarkdownTableCellImpl) {
+      if (sibling instanceof MarkdownTableCell) {
         index += 1;
       }
     }

@@ -58,7 +58,7 @@ public enum MarkdownPsiFactory {
       return new MarkdownTableRowImpl(node);
     }
     if (elementType == MarkdownElementTypes.TABLE_CELL) {
-      return new MarkdownTableCellImpl(node);
+      return new MarkdownTableCell(node);
     }
 
     return new ASTWrapperPsiElement(node);

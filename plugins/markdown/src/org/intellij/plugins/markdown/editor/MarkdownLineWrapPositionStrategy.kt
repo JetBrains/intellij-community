@@ -48,7 +48,7 @@ class MarkdownLineWrapPositionStrategy : GenericLineWrapPositionStrategy() {
 
   companion object {
     private val stopSet = setOf(
-      MarkdownHeaderImpl::class.java, MarkdownLinkDestinationImpl::class.java, MarkdownTableCellImpl::class.java,
+      MarkdownHeaderImpl::class.java, MarkdownLinkDestinationImpl::class.java, MarkdownTableCell::class.java,
       MarkdownTableRowImpl::class.java, MarkdownTableImpl::class.java
     )
   }

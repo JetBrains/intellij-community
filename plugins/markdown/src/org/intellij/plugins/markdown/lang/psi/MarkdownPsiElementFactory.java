@@ -160,11 +160,11 @@ public final class MarkdownPsiElementFactory {
 
   @ApiStatus.Experimental
   @NotNull
-  public static Pair<MarkdownTableCellImpl, PsiElement> createTableCell(@NotNull Project project, @NotNull String text) {
+  public static Pair<MarkdownTableCell, PsiElement> createTableCell(@NotNull Project project, @NotNull String text) {
     final var content = "|" + text + "|\n|----|";
     final var file = createFile(project, content);
     final var contentElement = file.findElementAt(1);
-    final var cell = Objects.requireNonNull(PsiTreeUtil.getParentOfType(contentElement, MarkdownTableCellImpl.class));
+    final var cell = Objects.requireNonNull(PsiTreeUtil.getParentOfType(contentElement, MarkdownTableCell.class));
     final var separator = cell.getNextSibling();
     return new Pair<>(cell, separator);
   }

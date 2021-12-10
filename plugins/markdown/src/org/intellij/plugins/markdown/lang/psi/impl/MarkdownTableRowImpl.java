@@ -24,15 +24,15 @@ public class MarkdownTableRowImpl extends MarkdownCompositePsiElementBase {
     }
   }
 
-  public @NotNull List<@NotNull MarkdownTableCellImpl> getCells() {
-    final var cells = PsiTreeUtil.getChildrenOfType(this, MarkdownTableCellImpl.class);
+  public @NotNull List<@NotNull MarkdownTableCell> getCells() {
+    final var cells = PsiTreeUtil.getChildrenOfType(this, MarkdownTableCell.class);
     if (cells == null) {
       return ContainerUtil.emptyList();
     }
     return ContainerUtil.immutableList(cells);
   }
 
-  public @Nullable MarkdownTableCellImpl getCell(int nth) {
+  public @Nullable MarkdownTableCell getCell(int nth) {
     final var cells = getCells();
     if (cells.size() <= nth) {
       return null;

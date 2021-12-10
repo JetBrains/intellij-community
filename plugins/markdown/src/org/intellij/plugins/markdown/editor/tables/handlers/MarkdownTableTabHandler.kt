@@ -14,7 +14,7 @@ import com.intellij.refactoring.suggested.endOffset
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.firstNonWhitespaceOffset
 import org.intellij.plugins.markdown.editor.tables.TableUtils.lastNonWhitespaceOffset
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCellImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
@@ -58,7 +58,7 @@ internal abstract class MarkdownTableTabHandler(private val baseHandler: EditorA
     return false
   }
 
-  private fun findNextCell(currentCell: MarkdownTableCellImpl, forward: Boolean): MarkdownTableCellImpl? {
+  private fun findNextCell(currentCell: MarkdownTableCell, forward: Boolean): MarkdownTableCell? {
     val nextCellInCurrentRow = findSiblingCell(currentCell, forward, withSelf = false)
     if (nextCellInCurrentRow != null) {
       return nextCellInCurrentRow
@@ -71,8 +71,8 @@ internal abstract class MarkdownTableTabHandler(private val baseHandler: EditorA
     return startElement?.let { findSiblingCell(it, forward, withSelf = true) }
   }
 
-  private fun findSiblingCell(element: PsiElement, forward: Boolean, withSelf: Boolean): MarkdownTableCellImpl? {
-    return element.siblings(forward, withSelf).filterIsInstance<MarkdownTableCellImpl>().firstOrNull()
+  private fun findSiblingCell(element: PsiElement, forward: Boolean, withSelf: Boolean): MarkdownTableCell? {
+    return element.siblings(forward, withSelf).filterIsInstance<MarkdownTableCell>().firstOrNull()
   }
 
   class Tab(baseHandler: EditorActionHandler?): MarkdownTableTabHandler(baseHandler, forward = true)

@@ -12,7 +12,7 @@ import com.intellij.psi.util.siblings
 import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCellImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
@@ -22,17 +22,17 @@ import org.jetbrains.annotations.ApiStatus
 @ApiStatus.Experimental
 object TableUtils {
   @JvmStatic
-  fun findCell(file: PsiFile, offset: Int): MarkdownTableCellImpl? {
+  fun findCell(file: PsiFile, offset: Int): MarkdownTableCell? {
     val element = PsiUtilCore.getElementAtOffset(file, offset)
     if (element.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) && element !is MarkdownTableSeparatorRow &&
         element.text == TableProps.SEPARATOR_CHAR.toString()) {
-      return element.prevSibling as? MarkdownTableCellImpl
+      return element.prevSibling as? MarkdownTableCell
     }
     return findCell(element)
   }
 
   @JvmStatic
-  fun findCell(element: PsiElement): MarkdownTableCellImpl? {
+  fun findCell(element: PsiElement): MarkdownTableCell? {
     return element.parentOfType(withSelf = true)
   }
 
@@ -88,19 +88,19 @@ object TableUtils {
     val element = PsiUtilCore.getElementAtOffset(file, offset)
     if (element.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) && element !is MarkdownTableSeparatorRow &&
         element.text == TableProps.SEPARATOR_CHAR.toString()) {
-      return (element.prevSibling as? MarkdownTableCellImpl)?.columnIndex
+      return (element.prevSibling as? MarkdownTableCell)?.columnIndex
     }
     val parent = element.parents(withSelf = true).find {
       it.hasType(MarkdownElementTypes.TABLE_CELL) || it is MarkdownTableSeparatorRow
     }
     return when (parent) {
       is MarkdownTableSeparatorRow -> parent.getColumnIndexFromOffset(offset)
-      is MarkdownTableCellImpl -> parent.columnIndex
+      is MarkdownTableCell -> parent.columnIndex
       else -> null
     }
   }
 
-  fun MarkdownTableImpl.getColumnCells(index: Int, withHeader: Boolean = true): List<MarkdownTableCellImpl> {
+  fun MarkdownTableImpl.getColumnCells(index: Int, withHeader: Boolean = true): List<MarkdownTableCell> {
     return getRows(withHeader).mapNotNull { it.getCell(index) }
   }
 
@@ -122,7 +122,7 @@ object TableUtils {
     get() = siblings(forward = true, withSelf = false).find { it is MarkdownTableRowImpl } == null
 
   val MarkdownTableRowImpl.columnsCount
-    get() = firstChild?.siblings(forward = true, withSelf = true)?.count { it is MarkdownTableCellImpl } ?: 0
+    get() = firstChild?.siblings(forward = true, withSelf = true)?.count { it is MarkdownTableCell } ?: 0
 
   val MarkdownTableImpl.columnsCount
     get() = headerRow?.columnsCount ?: 0
@@ -137,10 +137,10 @@ object TableUtils {
     return separatorRow?.getCellAlignment(columnIndex)!!
   }
 
-  val MarkdownTableCellImpl.firstNonWhitespaceOffset
+  val MarkdownTableCell.firstNonWhitespaceOffset
     get() = startOffset + text.indexOfFirst { it != ' ' }.coerceAtLeast(0)
 
-  val MarkdownTableCellImpl.lastNonWhitespaceOffset
+  val MarkdownTableCell.lastNonWhitespaceOffset
     get() = startOffset + text.indexOfLast { it != ' ' }.coerceAtLeast(0)
 
   @JvmStatic
