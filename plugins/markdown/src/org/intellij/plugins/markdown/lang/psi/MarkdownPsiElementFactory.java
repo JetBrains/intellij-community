@@ -134,7 +134,7 @@ public final class MarkdownPsiElementFactory {
     assert ref instanceof MarkdownParagraphImpl;
 
     PsiElement declaration = linkReferenceElement.getLastChild();
-    assert declaration instanceof MarkdownParagraphImpl || declaration instanceof MarkdownLinkDefinitionImpl;
+    assert declaration instanceof MarkdownParagraphImpl || declaration instanceof MarkdownLinkDefinition;
 
     return Pair.create(ref, declaration);
   }

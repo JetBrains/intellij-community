@@ -113,7 +113,7 @@ Markdown file
       PsiElement(Markdown:Markdown:TEXT)('.')
     PsiWhiteSpace('\n')
     PsiWhiteSpace('\n')
-    MarkdownLinkDefinitionImpl(Markdown:Markdown:LINK_DEFINITION)
+    MarkdownLinkDefinition(Markdown:Markdown:LINK_DEFINITION)
       MarkdownLinkLabelImpl(Markdown:Markdown:LINK_LABEL)
         PsiElement(Markdown:Markdown:LINK_LABEL)('[1]')
       PsiWhiteSpace(': ')

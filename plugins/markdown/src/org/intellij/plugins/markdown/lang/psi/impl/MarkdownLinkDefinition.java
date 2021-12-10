@@ -10,8 +10,8 @@ import org.intellij.plugins.markdown.structureView.MarkdownBasePresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MarkdownLinkDefinitionImpl extends ASTWrapperPsiElement implements MarkdownPsiElement {
-  public MarkdownLinkDefinitionImpl(@NotNull ASTNode node) {
+public class MarkdownLinkDefinition extends ASTWrapperPsiElement implements MarkdownPsiElement {
+  public MarkdownLinkDefinition(@NotNull ASTNode node) {
     super(node);
   }
 

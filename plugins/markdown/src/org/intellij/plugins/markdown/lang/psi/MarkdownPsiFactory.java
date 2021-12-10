@@ -40,7 +40,7 @@ public enum MarkdownPsiFactory {
       return new MarkdownShortReferenceLinkImpl(node);
     }
     if (elementType == MarkdownElementTypes.LINK_DEFINITION) {
-      return new MarkdownLinkDefinitionImpl(node);
+      return new MarkdownLinkDefinition(node);
     }
     if (elementType == MarkdownElementTypes.LINK_DESTINATION) {
       return new MarkdownLinkDestinationImpl(node);
