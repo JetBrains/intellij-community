@@ -46,7 +46,7 @@ public enum MarkdownPsiFactory {
       return new MarkdownLinkDestinationImpl(node);
     }
     if (elementType == MarkdownElementTypes.LINK_LABEL) {
-      return new MarkdownLinkLabelImpl(node);
+      return new MarkdownLinkLabel(node);
     }
     if (elementType == MarkdownElementTypes.CODE_BLOCK) {
       return new MarkdownCodeBlockImpl(node);

@@ -7,8 +7,8 @@ import com.intellij.model.psi.PsiExternalReferenceHost;
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement;
 import org.jetbrains.annotations.NotNull;
 
-public class MarkdownLinkLabelImpl extends ASTWrapperPsiElement implements MarkdownPsiElement, PsiExternalReferenceHost {
-  public MarkdownLinkLabelImpl(@NotNull ASTNode node) {
+public class MarkdownLinkLabel extends ASTWrapperPsiElement implements MarkdownPsiElement, PsiExternalReferenceHost {
+  public MarkdownLinkLabel(@NotNull ASTNode node) {
     super(node);
   }
 }
