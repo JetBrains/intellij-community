@@ -16,7 +16,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLine
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLineSafely
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /**
@@ -26,7 +26,7 @@ import org.intellij.plugins.markdown.settings.MarkdownSettings
  */
 internal class MarkdownListIndentBackspaceHandlerDelegate : BackspaceHandlerDelegate() {
   private var deletedRange: TextRange? = null
-  private var listItem: MarkdownListItemImpl? = null
+  private var listItem: MarkdownListItem? = null
   private var moveCaret = false
 
   override fun beforeCharDeleted(c: Char, file: PsiFile, editor: Editor) {
@@ -72,8 +72,8 @@ internal class MarkdownListIndentBackspaceHandlerDelegate : BackspaceHandlerDele
   }
 
   // a sequence of indent sizes for the caret to iterate over, from greatest to smallest
-  private fun indentLevels(aboveItem: MarkdownListItemImpl, document: Document) =
-    aboveItem.parentsOfType<MarkdownListItemImpl>(withSelf = true)
+  private fun indentLevels(aboveItem: MarkdownListItem, document: Document) =
+    aboveItem.parentsOfType<MarkdownListItem>(withSelf = true)
       .map { ListItemInfo(it, document).indentInfo.indent }
 
 

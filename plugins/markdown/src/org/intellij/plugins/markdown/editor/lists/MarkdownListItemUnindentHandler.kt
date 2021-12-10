@@ -11,7 +11,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.list
 import org.intellij.plugins.markdown.editor.lists.ListUtils.sublists
 import org.intellij.plugins.markdown.editor.lists.Replacement.Companion.replaceSafelyIn
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 
 /**
  * This handler decreases nesting of the current/selected list item(s), if it is nested at all.
@@ -19,8 +19,8 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
  */
 internal class MarkdownListItemUnindentHandler(baseHandler: EditorActionHandler?) : ListItemIndentUnindentHandlerBase(baseHandler) {
 
-  override fun doIndentUnindent(item: MarkdownListItemImpl, file: MarkdownFile, document: Document): Boolean {
-    val outerItem = item.parentOfType<MarkdownListItemImpl>()
+  override fun doIndentUnindent(item: MarkdownListItem, file: MarkdownFile, document: Document): Boolean {
+    val outerItem = item.parentOfType<MarkdownListItem>()
 
     if (outerItem == null) {
       return removeLeadingSpaces(item, document)
@@ -30,7 +30,7 @@ internal class MarkdownListItemUnindentHandler(baseHandler: EditorActionHandler?
     return true
   }
 
-  private fun removeLeadingSpaces(item: MarkdownListItemImpl, document: Document): Boolean {
+  private fun removeLeadingSpaces(item: MarkdownListItem, document: Document): Boolean {
     val itemInfo = ListItemInfo(item, document)
     val indentRange = document.getLineIndentRange(itemInfo.lines.first)
 
@@ -41,7 +41,7 @@ internal class MarkdownListItemUnindentHandler(baseHandler: EditorActionHandler?
     return !indentRange.isEmpty
   }
 
-  private fun decreaseNestingLevel(item: MarkdownListItemImpl, outerItem: MarkdownListItemImpl, file: MarkdownFile, document: Document) {
+  private fun decreaseNestingLevel(item: MarkdownListItem, outerItem: MarkdownListItem, file: MarkdownFile, document: Document) {
     val itemInfo = ListItemInfo(item, document)
     val outerInfo = ListItemInfo(outerItem, document)
 
@@ -53,7 +53,7 @@ internal class MarkdownListItemUnindentHandler(baseHandler: EditorActionHandler?
     itemInfo.changeIndent(outerInfo.indentInfo.indent).replaceSafelyIn(document)
   }
 
-  override fun updateNumbering(item: MarkdownListItemImpl, file: MarkdownFile, document: Document) {
+  override fun updateNumbering(item: MarkdownListItem, file: MarkdownFile, document: Document) {
     item.list.renumberInBulk(document, recursive = false, restart = false)
 
     PsiDocumentManager.getInstance(file.project).commitDocument(document)

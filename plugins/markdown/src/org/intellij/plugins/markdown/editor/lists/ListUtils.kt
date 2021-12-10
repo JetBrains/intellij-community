@@ -13,7 +13,7 @@ import com.intellij.psi.util.parentOfType
 import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 
 internal object ListUtils {
   /** [offset] may be located inside the indent of the returned item, but not on a blank line */
@@ -21,7 +21,7 @@ internal object ListUtils {
     getListItemAtLine(document.getLineNumber(offset), document)
 
   /** [lineNumber] should belong to a list item and not represent a blank line, otherwise returns `null` */
-  fun MarkdownFile.getListItemAtLine(lineNumber: Int, document: Document): MarkdownListItemImpl? {
+  fun MarkdownFile.getListItemAtLine(lineNumber: Int, document: Document): MarkdownListItem? {
     val lineStart = document.getLineStartOffset(lineNumber)
     val lineEnd = document.getLineEndOffset(lineNumber)
     val searchingOffset = CharArrayUtil.shiftBackward(document.charsSequence, lineStart, lineEnd - 1, " \t\n")
@@ -65,14 +65,14 @@ internal object ListUtils {
     return indentStr.replace("\t", " ".repeat(tabSize))
   }
 
-  val MarkdownList.items get() = children.filterIsInstance<MarkdownListItemImpl>()
+  val MarkdownList.items get() = children.filterIsInstance<MarkdownListItem>()
 
-  val MarkdownListItemImpl.sublists get() = children.filterIsInstance<MarkdownList>()
-  val MarkdownListItemImpl.list get() = parent as MarkdownList
+  val MarkdownListItem.sublists get() = children.filterIsInstance<MarkdownList>()
+  val MarkdownListItem.list get() = parent as MarkdownList
 
   /**
    * Returns a marker of the item with leading whitespaces trimmed, and with a single space in the end.
    */
-  val MarkdownListItemImpl.normalizedMarker: String
+  val MarkdownListItem.normalizedMarker: String
     get() = this.markerElement!!.text.trim().let { "$it " }
 }

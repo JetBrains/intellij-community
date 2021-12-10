@@ -22,7 +22,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.list
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /**
@@ -30,7 +30,7 @@ import org.intellij.plugins.markdown.settings.MarkdownSettings
  */
 internal class MarkdownListMarkerBackspaceHandlerDelegate : BackspaceHandlerDelegate() {
 
-  private var item: MarkdownListItemImpl? = null
+  private var item: MarkdownListItem? = null
 
   override fun beforeCharDeleted(c: Char, file: PsiFile, editor: Editor) {
     item = null
@@ -58,7 +58,7 @@ internal class MarkdownListMarkerBackspaceHandlerDelegate : BackspaceHandlerDele
 
     val createsNewList = listWillBeSplitToTwoLists(item, document)
 
-    val nextItemFirstLine = item.list.descendantsOfType<MarkdownListItemImpl>()
+    val nextItemFirstLine = item.list.descendantsOfType<MarkdownListItem>()
       .dropWhile { it != item }
       .drop(1) // always contains item itself
       .firstOrNull()
@@ -93,7 +93,7 @@ internal class MarkdownListMarkerBackspaceHandlerDelegate : BackspaceHandlerDele
   becomes a separate list, recognized as a flat list with no nesting. Applying a renumbering
   to it will increase the indent of the "second" item. Such behaviour is unwanted.
   */
-  private fun listWillBeSplitToTwoLists(item: MarkdownListItemImpl, document: Document): Boolean {
+  private fun listWillBeSplitToTwoLists(item: MarkdownListItem, document: Document): Boolean {
     val itemFirstLine = document.getLineNumber(item.startOffset)
     val itemLastLine = document.getLineNumber(minOf(item.endOffset - 1, document.textLength))
 

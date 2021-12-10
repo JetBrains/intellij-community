@@ -16,7 +16,7 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 
 internal object MarkdownPsiUtil {
   /** Check if node is on a top-level -- meaning its parent is root of file   */
@@ -107,7 +107,7 @@ internal object MarkdownPsiUtil {
     when {
       myElement is MarkdownHeaderImpl -> processHeader(structureContainer, myElement, myElement, consumer, nextHeaderConsumer)
       myElement is MarkdownList && isListsVisible -> processList(myElement, consumer)
-      myElement is MarkdownListItemImpl && isListsVisible -> {
+      myElement is MarkdownListItem && isListsVisible -> {
         if (!myElement.hasTrivialChildren()) {
           processListItem(myElement, consumer)
         }
@@ -174,7 +174,7 @@ internal object MarkdownPsiUtil {
       when {
         isContainerIsFirst -> resultConsumer.consume(itemChildren[0])
         isSimpleNestedList(itemChildren) -> resultConsumer.consume(itemChildren[1])
-        listItem is MarkdownListItemImpl -> resultConsumer.consume(listItem)
+        listItem is MarkdownListItem -> resultConsumer.consume(listItem)
       }
 
       listItem = listItem.nextSibling
@@ -206,7 +206,7 @@ internal object MarkdownPsiUtil {
   private fun PsiElement.isTransparentInFull() =
     Registry.`is`("markdown.structure.view.list.visibility") &&
     TRANSPARENT_CONTAINERS.contains(PsiUtilCore.getElementType(this)) &&
-    this !is MarkdownListItemImpl
+    this !is MarkdownListItem
 
   /**
    * Returns true if the key of the lists representation in the structure is false (this means that only headers are shown in the structure view)

@@ -11,7 +11,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.items
 import org.intellij.plugins.markdown.editor.lists.Replacement.Companion.replaceSafelyIn
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 
 /**
  * This handler increases nesting of the current/selected list item(s), if possible.
@@ -21,7 +21,7 @@ import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
  */
 internal class MarkdownListItemTabHandler(baseHandler: EditorActionHandler?) : ListItemIndentUnindentHandlerBase(baseHandler) {
 
-  override fun doIndentUnindent(item: MarkdownListItemImpl, file: MarkdownFile, document: Document): Boolean {
+  override fun doIndentUnindent(item: MarkdownListItem, file: MarkdownFile, document: Document): Boolean {
     val itemInfo = ListItemInfo(item, document)
 
     val list = item.parent as MarkdownList
@@ -39,7 +39,7 @@ internal class MarkdownListItemTabHandler(baseHandler: EditorActionHandler?) : L
     return true
   }
 
-  override fun updateNumbering(item: MarkdownListItemImpl, file: MarkdownFile, document: Document) {
+  override fun updateNumbering(item: MarkdownListItem, file: MarkdownFile, document: Document) {
     val list = item.parent as MarkdownList
     list.renumberInBulk(document, recursive = false, restart = list.items.first() == item)
 

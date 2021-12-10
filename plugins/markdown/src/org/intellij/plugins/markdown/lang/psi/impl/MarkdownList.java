@@ -45,7 +45,7 @@ public class MarkdownList extends MarkdownCompositePsiElementBase {
       public String getPresentableText() {
         PsiElement[] parentChildren = getParent().getChildren();
         if (MarkdownPsiUtil.isSimpleNestedList(parentChildren)) {
-          ItemPresentation parentPresentation = getParent().getNode().getPsi(MarkdownListItemImpl.class).getPresentation();
+          ItemPresentation parentPresentation = getParent().getNode().getPsi(MarkdownListItem.class).getPresentation();
           if (parentPresentation != null) {
             return parentPresentation.getPresentableText();
           }
@@ -60,7 +60,7 @@ public class MarkdownList extends MarkdownCompositePsiElementBase {
       public String getLocationString() {
         PsiElement[] parentChildren = getParent().getChildren();
         if (MarkdownPsiUtil.isSimpleNestedList(parentChildren)) {
-          ItemPresentation parentPresentation = getParent().getNode().getPsi(MarkdownListItemImpl.class).getPresentation();
+          ItemPresentation parentPresentation = getParent().getNode().getPsi(MarkdownListItem.class).getPresentation();
           if (parentPresentation != null) {
             return parentPresentation.getLocationString();
           }

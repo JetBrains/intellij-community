@@ -25,7 +25,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.normalizedMarker
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /**
@@ -102,11 +102,11 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
       ?.parentOfTypes(MarkdownBlockQuote::class, MarkdownCodeFenceImpl::class) != null
   }
 
-  private fun handleEmptyItem(item: MarkdownListItemImpl, editor: Editor, file: PsiFile, originalHandler: EditorActionHandler?, dataContext: DataContext) {
+  private fun handleEmptyItem(item: MarkdownListItem, editor: Editor, file: PsiFile, originalHandler: EditorActionHandler?, dataContext: DataContext) {
     val markerElement = item.markerElement!!
     val document = editor.document
 
-    if (item.parentOfType<MarkdownListItemImpl>(false) == null) {
+    if (item.parentOfType<MarkdownListItem>(false) == null) {
       val backspaceHandler = MarkdownListMarkerBackspaceHandlerDelegate()
       val markerEnd = markerElement.endOffset
       editor.caretModel.moveToOffset(markerEnd)

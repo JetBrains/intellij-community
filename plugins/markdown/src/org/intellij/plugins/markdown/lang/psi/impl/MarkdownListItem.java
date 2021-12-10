@@ -16,8 +16,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class MarkdownListItemImpl extends MarkdownCompositePsiElementBase {
-  public MarkdownListItemImpl(@NotNull ASTNode node) {
+public class MarkdownListItem extends MarkdownCompositePsiElementBase {
+  public MarkdownListItem(@NotNull ASTNode node) {
     super(node);
   }
 
