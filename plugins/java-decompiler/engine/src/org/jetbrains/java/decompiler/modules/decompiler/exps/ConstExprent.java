@@ -197,13 +197,13 @@ public class ConstExprent extends Exprent {
           }
         }
         else if (Float.isNaN(floatVal)) {
-          return new TextBuffer("0.0F / 0.0");
+          return new TextBuffer("0.0F / 0.0F");
         }
         else if (floatVal == Float.POSITIVE_INFINITY) {
-          return new TextBuffer("1.0F / 0.0");
+          return new TextBuffer("1.0F / 0.0F");
         }
         else if (floatVal == Float.NEGATIVE_INFINITY) {
-          return new TextBuffer("-1.0F / 0.0");
+          return new TextBuffer("-1.0F / 0.0F");
         }
         return new TextBuffer(value.toString()).append('F');
 
@@ -236,13 +236,13 @@ public class ConstExprent extends Exprent {
           }
         }
         else if (Double.isNaN(doubleVal)) {
-          return new TextBuffer("0.0D / 0.0");
+          return new TextBuffer("0.0D / 0.0D");
         }
         else if (doubleVal == Double.POSITIVE_INFINITY) {
-          return new TextBuffer("1.0D / 0.0");
+          return new TextBuffer("1.0D / 0.0D");
         }
         else if (doubleVal == Double.NEGATIVE_INFINITY) {
-          return new TextBuffer("-1.0D / 0.0");
+          return new TextBuffer("-1.0D / 0.0D");
         }
         return new TextBuffer(value.toString()).append('D');
 
