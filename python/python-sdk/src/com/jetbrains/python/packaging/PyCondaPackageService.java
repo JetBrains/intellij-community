@@ -35,8 +35,8 @@ import java.util.*;
 public class PyCondaPackageService implements PersistentStateComponent<PyCondaPackageService> {
   private static final Logger LOG = Logger.getInstance(PyCondaPackageService.class);
 
-  private final static String[] CONDA_DEFAULT_ROOTS = new String[]{"anaconda", "anaconda2", "anaconda3", "miniconda", "miniconda2",
-    "miniconda3", "Anaconda", "Anaconda2", "Anaconda3", "Miniconda", "Miniconda2", "Miniconda3"};
+  private final static String[] CONDA_DEFAULT_ROOTS =
+    new String[]{"anaconda", "anaconda3", "miniconda", "miniconda3", "Anaconda", "Anaconda3", "Miniconda", "Miniconda3"};
 
   private static final String CONDA_ENVS_DIR = "envs";
 
