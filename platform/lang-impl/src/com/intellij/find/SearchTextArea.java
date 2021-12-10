@@ -5,6 +5,7 @@ import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.editorHeaderActions.Utils;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.openapi.actionSystem.ex.TooltipDescriptionProvider;
@@ -14,6 +15,7 @@ import com.intellij.openapi.editor.EditorCopyPasteHelper;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.LightEditActionFactory;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -109,9 +111,9 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
 
     myTextArea.addPropertyChangeListener("background", this);
     myTextArea.addPropertyChangeListener("font", this);
-    DumbAwareAction.create(event -> myTextArea.transferFocus())
+    LightEditActionFactory.create(event -> myTextArea.transferFocus())
       .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, 0)), myTextArea);
-    DumbAwareAction.create(event -> myTextArea.transferFocusBackward())
+    LightEditActionFactory.create(event -> myTextArea.transferFocusBackward())
       .registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, SHIFT_DOWN_MASK)), myTextArea);
     KeymapUtil.reassignAction(myTextArea, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), NEW_LINE_KEYSTROKE, WHEN_FOCUSED);
     myTextArea.setDocument(new PlainDocument() {
@@ -337,7 +339,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
    */
   public void setInfoText(String info) {}
 
-  private class ShowHistoryAction extends DumbAwareAction {
+  private class ShowHistoryAction extends DumbAwareAction implements LightEditCompatible {
     private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
 
     ShowHistoryAction() {
@@ -359,7 +361,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     }
   }
 
-  private class ClearAction extends DumbAwareAction {
+  private class ClearAction extends DumbAwareAction implements LightEditCompatible {
     ClearAction() {
       super(AllIcons.Actions.Close);
       getTemplatePresentation().setHoveredIcon(AllIcons.Actions.CloseHovered);
@@ -372,7 +374,7 @@ public class SearchTextArea extends JPanel implements PropertyChangeListener {
     }
   }
 
-  private class NewLineAction extends DumbAwareAction {
+  private class NewLineAction extends DumbAwareAction implements LightEditCompatible {
     NewLineAction() {
       super(FindBundle.message("find.new.line"), null, AllIcons.Actions.SearchNewLine);
       setShortcutSet(new CustomShortcutSet(NEW_LINE_KEYSTROKE));
