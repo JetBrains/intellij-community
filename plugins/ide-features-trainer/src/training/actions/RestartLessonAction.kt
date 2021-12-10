@@ -15,6 +15,8 @@ private class RestartLessonAction : AnAction(FeaturesTrainerIcons.Img.ResetLesso
     val activeToolWindow = LearningUiManager.activeToolWindow ?: return
     val lesson = LessonManager.instance.currentLesson ?: return
     StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.RESTART)
+    LessonManager.instance.stopLesson()
+    lesson.module.primaryLanguage?.let { it.onboardingFeedbackData = null }
     CourseManager.instance.openLesson(activeToolWindow.project, lesson, LessonStartingWay.RESTART_BUTTON)
   }
 
