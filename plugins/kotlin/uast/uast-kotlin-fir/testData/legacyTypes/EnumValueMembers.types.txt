@@ -11,7 +11,7 @@ UFile (package = ) [public enum Style {...]
                     UBlockExpression [{...}]
                         UReturnExpression [return "bar"]
                             ULiteralExpression (value = "bar") ["bar"] : PsiType:String
-                UMethod (name = SHEET) [private fun SHEET() = UastEmptyExpression]
+                UMethod (name = SHEET) [fun SHEET() = UastEmptyExpression]
         UMethod (name = getExitAnimation) [public abstract fun getExitAnimation() : java.lang.String = UastEmptyExpression]
         UMethod (name = getValue) [public final fun getValue() : java.lang.String = UastEmptyExpression]
         UMethod (name = Style) [private fun Style(@org.jetbrains.annotations.NotNull value: java.lang.String) = UastEmptyExpression]
