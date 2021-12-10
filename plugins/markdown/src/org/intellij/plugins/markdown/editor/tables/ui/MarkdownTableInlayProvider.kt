@@ -17,7 +17,7 @@ import org.intellij.plugins.markdown.editor.tables.ui.presentation.HorizontalBar
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.VerticalBarPresentation
 import org.intellij.plugins.markdown.lang.MarkdownFileType
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import javax.swing.JPanel
@@ -38,7 +38,7 @@ internal class MarkdownTableInlayProvider: InlayHintsProvider<NoSettings> {
       if (editor.getUserData(DISABLE_TABLE_INLAYS) == true) {
         return true
       }
-      if (element is MarkdownTableRowImpl || element is MarkdownTableSeparatorRow) {
+      if (element is MarkdownTableRow || element is MarkdownTableSeparatorRow) {
         if (DocumentUtil.isAtLineStart(element.startOffset, editor.document) && TableUtils.findTable(element)?.hasCorrectBorders() == true) {
           val presentation = VerticalBarPresentation.create(factory, editor, element)
           sink.addInlineElement(element.startOffset, false, presentation, false)

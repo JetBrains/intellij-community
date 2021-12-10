@@ -10,7 +10,7 @@ import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 
 /**
@@ -88,7 +88,7 @@ internal abstract class RowBasedTableAction(private val considerSeparatorRow: Bo
 
     private fun obtainParentTable(element: PsiElement): MarkdownTable? {
       return when (element) {
-        is MarkdownTableRowImpl -> element.parentTable
+        is MarkdownTableRow -> element.parentTable
         is MarkdownTableSeparatorRow -> element.parentTable
         else -> null
       }

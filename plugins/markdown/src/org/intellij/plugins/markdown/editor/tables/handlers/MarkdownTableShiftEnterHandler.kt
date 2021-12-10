@@ -18,7 +18,7 @@ import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.buildEmptyRow
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
@@ -81,7 +81,7 @@ internal class MarkdownTableShiftEnterHandler(private val baseHandler: EditorAct
 
   private fun actuallyFindRow(file: PsiFile, caretOffset: Int): PsiElement? {
     val element = PsiUtilCore.getElementAtOffset(file, caretOffset)
-    val primary = findElement<MarkdownTableRowImpl>(element)?.takeUnless { it.isHeaderRow }
+    val primary = findElement<MarkdownTableRow>(element)?.takeUnless { it.isHeaderRow }
     return primary ?: findElement<MarkdownTableSeparatorRow>(element)
   }
 

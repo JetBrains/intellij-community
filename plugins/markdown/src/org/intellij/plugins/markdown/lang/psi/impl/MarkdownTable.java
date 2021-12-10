@@ -32,13 +32,13 @@ public class MarkdownTable extends MarkdownCompositePsiElementBase {
     return "table";
   }
 
-  public @Nullable MarkdownTableRowImpl getHeaderRow() {
+  public @Nullable MarkdownTableRow getHeaderRow() {
     // FIXME: Explicitly check for first element
-    return PsiTreeUtil.getChildOfType(this, MarkdownTableRowImpl.class);
+    return PsiTreeUtil.getChildOfType(this, MarkdownTableRow.class);
   }
 
-  public @NotNull List<@NotNull MarkdownTableRowImpl> getRows(boolean includeHeader) {
-    final var rows = PsiTreeUtil.getChildrenOfType(this, MarkdownTableRowImpl.class);
+  public @NotNull List<@NotNull MarkdownTableRow> getRows(boolean includeHeader) {
+    final var rows = PsiTreeUtil.getChildrenOfType(this, MarkdownTableRow.class);
     if (rows == null) {
       return ContainerUtil.emptyList();
     }

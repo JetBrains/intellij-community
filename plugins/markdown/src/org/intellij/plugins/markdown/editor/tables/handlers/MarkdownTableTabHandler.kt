@@ -15,7 +15,7 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.TableUtils.firstNonWhitespaceOffset
 import org.intellij.plugins.markdown.editor.tables.TableUtils.lastNonWhitespaceOffset
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 internal abstract class MarkdownTableTabHandler(private val baseHandler: EditorActionHandler?, private val forward: Boolean = true): EditorWriteActionHandler() {
@@ -63,7 +63,7 @@ internal abstract class MarkdownTableTabHandler(private val baseHandler: EditorA
     if (nextCellInCurrentRow != null) {
       return nextCellInCurrentRow
     }
-    val nextRow = currentCell.parentRow?.siblings(forward, withSelf = false)?.filterIsInstance<MarkdownTableRowImpl>()?.firstOrNull()
+    val nextRow = currentCell.parentRow?.siblings(forward, withSelf = false)?.filterIsInstance<MarkdownTableRow>()?.firstOrNull()
     val startElement = when {
       forward -> nextRow?.firstChild
       else -> nextRow?.lastChild

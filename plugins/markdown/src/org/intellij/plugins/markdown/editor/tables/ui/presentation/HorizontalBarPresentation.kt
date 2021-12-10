@@ -30,7 +30,7 @@ import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.clearOvalOverEditor
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.util.hasType
 import java.awt.*
 import java.awt.event.MouseEvent
@@ -132,7 +132,7 @@ internal class HorizontalBarPresentation(private val editor: Editor, private val
     return sectors.map { (offset, width) -> Rectangle(offset - barHeight / 2, 0, width + barHeight, barHeight) }
   }
 
-  private fun calculatePositions(header: MarkdownTableRowImpl, document: Document, fontMetrics: FontMetrics): List<Int> {
+  private fun calculatePositions(header: MarkdownTableRow, document: Document, fontMetrics: FontMetrics): List<Int> {
     require(barHeight % 2 == 0) { "barHeight value should be even" }
     val separators = header.firstChild.siblings(forward = true, withSelf = true)
       .filter { it.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) }

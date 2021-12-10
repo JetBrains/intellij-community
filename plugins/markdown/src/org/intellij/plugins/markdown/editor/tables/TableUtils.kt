@@ -14,7 +14,7 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.util.hasType
 import org.jetbrains.annotations.ApiStatus
@@ -59,13 +59,13 @@ object TableUtils {
   }
 
   @JvmStatic
-  fun findRow(file: PsiFile, offset: Int): MarkdownTableRowImpl? {
+  fun findRow(file: PsiFile, offset: Int): MarkdownTableRow? {
     val element = PsiUtilCore.getElementAtOffset(file, offset)
     return findRow(element)
   }
 
   @JvmStatic
-  fun findRow(element: PsiElement): MarkdownTableRowImpl? {
+  fun findRow(element: PsiElement): MarkdownTableRow? {
     return element.parentOfType(withSelf = true)
   }
 
@@ -115,13 +115,13 @@ object TableUtils {
   val MarkdownTable.separatorRow: MarkdownTableSeparatorRow?
     get() = firstChild.siblings(forward = true, withSelf = true).filterIsInstance<MarkdownTableSeparatorRow>().firstOrNull()
 
-  val MarkdownTableRowImpl.isHeaderRow
-    get() = siblings(forward = false, withSelf = false).find { it is MarkdownTableRowImpl } == null
+  val MarkdownTableRow.isHeaderRow
+    get() = siblings(forward = false, withSelf = false).find { it is MarkdownTableRow } == null
 
-  val MarkdownTableRowImpl.isLast
-    get() = siblings(forward = true, withSelf = false).find { it is MarkdownTableRowImpl } == null
+  val MarkdownTableRow.isLast
+    get() = siblings(forward = true, withSelf = false).find { it is MarkdownTableRow } == null
 
-  val MarkdownTableRowImpl.columnsCount
+  val MarkdownTableRow.columnsCount
     get() = firstChild?.siblings(forward = true, withSelf = true)?.count { it is MarkdownTableCell } ?: 0
 
   val MarkdownTable.columnsCount
@@ -130,7 +130,7 @@ object TableUtils {
   val MarkdownTable.columnsIndices
     get() = 0 until columnsCount
 
-  val MarkdownTableRowImpl.columnsIndices
+  val MarkdownTableRow.columnsIndices
     get() = 0 until columnsCount
 
   fun MarkdownTable.getColumnAlignment(columnIndex: Int): MarkdownTableSeparatorRow.CellAlignment {

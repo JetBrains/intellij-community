@@ -9,8 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-public class MarkdownTableRowImpl extends MarkdownCompositePsiElementBase {
-  public MarkdownTableRowImpl(@NotNull ASTNode node) {
+public class MarkdownTableRow extends MarkdownCompositePsiElementBase {
+  public MarkdownTableRow(@NotNull ASTNode node) {
     super(node);
   }
 

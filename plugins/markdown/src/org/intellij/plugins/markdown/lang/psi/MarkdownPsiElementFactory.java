@@ -184,7 +184,7 @@ public final class MarkdownPsiElementFactory {
 
   @ApiStatus.Experimental
   @NotNull
-  public static MarkdownTableRowImpl createTableRow(@NotNull Project project, @NotNull Collection<String> contents) {
+  public static MarkdownTableRow createTableRow(@NotNull Project project, @NotNull Collection<String> contents) {
     final var builder = new StringBuilder();
     builder.append('|');
     //noinspection StringRepeatCanBeUsed
@@ -213,8 +213,8 @@ public final class MarkdownPsiElementFactory {
     final var file = createFile(project, builder.toString());
     final var element = Objects.requireNonNull(file.findElementAt(0));
     final var row = Objects.requireNonNull(findTable(element).getLastChild().getPrevSibling().getPrevSibling());
-    if (row instanceof MarkdownTableRowImpl) {
-      return (MarkdownTableRowImpl)row;
+    if (row instanceof MarkdownTableRow) {
+      return (MarkdownTableRow)row;
     } else {
       throw new IllegalStateException("Failed to find row element");
     }
@@ -222,7 +222,7 @@ public final class MarkdownPsiElementFactory {
 
   @ApiStatus.Experimental
   @NotNull
-  public static MarkdownTableRowImpl createTableEmptyRow(@NotNull Project project, @NotNull Collection<Integer> widths) {
+  public static MarkdownTableRow createTableEmptyRow(@NotNull Project project, @NotNull Collection<Integer> widths) {
     final var contents = ContainerUtil.map(widths, width -> " ".repeat(width));
     return createTableRow(project, contents);
   }

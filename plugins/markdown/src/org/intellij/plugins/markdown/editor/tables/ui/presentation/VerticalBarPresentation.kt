@@ -27,7 +27,7 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.isLast
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.clearHalfOvalOverEditor
 import org.intellij.plugins.markdown.editor.tables.ui.presentation.GraphicsUtils.fillHalfOval
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import java.awt.Dimension
 import java.awt.Graphics2D
@@ -84,14 +84,14 @@ internal class VerticalBarPresentation(
 
   private val rowLocation
     get() = when {
-      (row as? MarkdownTableRowImpl)?.isHeaderRow == true -> RowLocation.FIRST
-      (row as? MarkdownTableRowImpl)?.isLast == true -> RowLocation.LAST
+      (row as? MarkdownTableRow)?.isHeaderRow == true -> RowLocation.FIRST
+      (row as? MarkdownTableRow)?.isLast == true -> RowLocation.LAST
       row is MarkdownTableSeparatorRow && !hasRowAfter(row) -> RowLocation.LAST
       else -> RowLocation.OTHER
     }
 
   private fun hasRowAfter(element: PsiElement): Boolean {
-    return element.siblings(forward = true).find { it is MarkdownTableRowImpl } != null
+    return element.siblings(forward = true).find { it is MarkdownTableRow } != null
   }
 
   override fun paint(graphics: Graphics2D, attributes: TextAttributes) {

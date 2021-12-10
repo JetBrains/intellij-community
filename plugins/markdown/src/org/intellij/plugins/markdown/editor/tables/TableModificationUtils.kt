@@ -16,7 +16,7 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableCell
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.util.hasType
 import org.jetbrains.annotations.ApiStatus
@@ -326,7 +326,7 @@ internal object TableModificationUtils {
     return builder.toString()
   }
 
-  fun MarkdownTableRowImpl.hasCorrectBorders(): Boolean {
+  fun MarkdownTableRow.hasCorrectBorders(): Boolean {
     return firstChild?.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) == true &&
            lastChild?.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) == true
   }
