@@ -12,9 +12,9 @@ import com.intellij.psi.util.elementType
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
+import org.intellij.plugins.markdown.lang.psi.MarkdownAstUtils.parents
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 import org.intellij.plugins.markdown.util.hasType
-import org.intellij.plugins.markdown.util.parents
 
 /**
  * Utility functions used to work with Markdown Code Fences
@@ -24,7 +24,7 @@ object MarkdownCodeFenceUtils {
   fun isCodeFence(node: ASTNode) = node.hasType(MarkdownTokenTypeSets.CODE_FENCE)
 
   /** Check if [node] inside CODE_FENCE */
-  fun inCodeFence(node: ASTNode) = node.parents().any { it.hasType(MarkdownTokenTypeSets.CODE_FENCE) }
+  fun inCodeFence(node: ASTNode) = node.parents(withSelf = false).any { it.hasType(MarkdownTokenTypeSets.CODE_FENCE) }
 
   /**
    * Get content of code fence as list of [PsiElement]

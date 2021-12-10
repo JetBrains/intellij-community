@@ -11,8 +11,8 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.blocks.special.MarkdownRangedFormattingBlock
 import org.intellij.plugins.markdown.lang.formatter.blocks.special.MarkdownWrappingFormattingBlock
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
+import org.intellij.plugins.markdown.lang.psi.MarkdownAstUtils.parents
 import org.intellij.plugins.markdown.util.hasType
-import org.intellij.plugins.markdown.util.parents
 
 internal object MarkdownBlocks {
   /**
@@ -50,7 +50,7 @@ internal object MarkdownBlocks {
   }
 
   private fun isInsideBlockquote(node: ASTNode): Boolean {
-    return node.parents().any { it.hasType(MarkdownTokenTypeSets.BLOCK_QUOTE) }
+    return node.parents(withSelf = false).any { it.hasType(MarkdownTokenTypeSets.BLOCK_QUOTE) }
   }
 
   private fun shouldWrapInsideBlockquote(settings: CodeStyleSettings): Boolean {

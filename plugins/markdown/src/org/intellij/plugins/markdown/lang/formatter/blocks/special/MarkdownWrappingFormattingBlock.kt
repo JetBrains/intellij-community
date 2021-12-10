@@ -7,8 +7,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownBlocks
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownFormattingBlock
+import org.intellij.plugins.markdown.lang.psi.MarkdownAstUtils.children
 import org.intellij.plugins.markdown.util.MarkdownTextUtil
-import org.intellij.plugins.markdown.util.children
 
 /**
  * Markdown special formatting block that puts all it [MarkdownTokenTypes.TEXT] children inside wrap.
