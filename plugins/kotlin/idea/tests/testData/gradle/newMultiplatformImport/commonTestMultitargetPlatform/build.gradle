@@ -26,6 +26,8 @@ kotlin {
         }
     }
 
+    linuxX64 { }
+
     sourceSets {
         commonMain {
             dependencies {
