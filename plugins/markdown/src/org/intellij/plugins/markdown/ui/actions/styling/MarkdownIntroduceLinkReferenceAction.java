@@ -33,7 +33,7 @@ import org.intellij.plugins.markdown.MarkdownBundle;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes;
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory;
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestinationImpl;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownLinkDestination;
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,7 +108,7 @@ public class MarkdownIntroduceLinkReferenceAction extends AnAction implements Du
           PsiElement declaration = file.addAfter(referencePair.getSecond(), file.getLastChild());
           PsiElement reference = link.replace(referencePair.getFirst());
 
-          String url = Objects.requireNonNull(PsiTreeUtil.getChildOfType(declaration, MarkdownLinkDestinationImpl.class)).getText();
+          String url = Objects.requireNonNull(PsiTreeUtil.getChildOfType(declaration, MarkdownLinkDestination.class)).getText();
 
           PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(editor.getDocument());
 

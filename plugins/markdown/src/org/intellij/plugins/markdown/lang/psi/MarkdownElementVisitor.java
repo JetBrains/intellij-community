@@ -9,7 +9,7 @@ public class MarkdownElementVisitor extends PsiElementVisitor {
     visitFile(file);
   }
 
-  public void visitLinkDestination(@NotNull MarkdownLinkDestinationImpl linkDestination) {
+  public void visitLinkDestination(@NotNull MarkdownLinkDestination linkDestination) {
     visitElement(linkDestination);
   }
 

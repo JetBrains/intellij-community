@@ -25,8 +25,8 @@ class MarkdownImage(node: ASTNode): ASTWrapperPsiElement(node), MarkdownPsiEleme
   val wholeLinkTitle: PsiElement?
     get() = wholeLink?.children?.find { it.hasType(MarkdownElementTypes.LINK_TITLE) }
 
-  val linkDestination: MarkdownLinkDestinationImpl?
-    get() = wholeLink?.children?.find { it.hasType(MarkdownElementTypes.LINK_DESTINATION) } as? MarkdownLinkDestinationImpl
+  val linkDestination: MarkdownLinkDestination?
+    get() = wholeLink?.children?.find { it.hasType(MarkdownElementTypes.LINK_DESTINATION) } as? MarkdownLinkDestination
 
   fun collectLinkDescriptionText(): String? {
     return wholeLinkText?.let {
