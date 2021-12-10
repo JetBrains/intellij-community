@@ -1337,6 +1337,8 @@
     <recoveryAction implementation="com.intellij.ide.actions.cache.InvalidateCachesAndRestartAction"/>
 
     <toolbarWidget implementation="com.intellij.openapi.wm.impl.headertoolbar.ProjectWidgetFactory"/>
+    <applicationService serviceInterface="com.intellij.openapi.application.ReadActionSupport"
+                        serviceImplementation="com.intellij.openapi.application.rw.PlatformReadActionSupport"/>
    </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.rw
 
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ReadConstraints
-import com.intellij.openapi.application.constraints.ConstrainedExecution
+import com.intellij.openapi.application.ReadConstraint
 import com.intellij.openapi.application.ex.ApplicationEx
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils
 import com.intellij.openapi.progress.withJob
@@ -12,7 +11,7 @@ import kotlin.coroutines.coroutineContext
 import kotlin.coroutines.resume
 
 internal class ReadAction<T>(
-  private val constraints: ReadConstraints,
+  private val constraints: List<ReadConstraint>,
   private val blocking: Boolean,
   private val action: () -> T
 ) {
@@ -24,7 +23,7 @@ internal class ReadAction<T>(
       "Must not call from EDT"
     }
     if (application.isReadAccessAllowed) {
-      val unsatisfiedConstraint = constraints.findUnsatisfiedConstraint()
+      val unsatisfiedConstraint = findUnsatisfiedConstraint()
       check(unsatisfiedConstraint == null) {
         "Cannot suspend until constraints are satisfied while holding the read lock: $unsatisfiedConstraint"
       }
@@ -33,6 +32,15 @@ internal class ReadAction<T>(
     return coroutineScope {
       readLoop(this)
     }
+  }
+
+  private fun findUnsatisfiedConstraint(): ReadConstraint? {
+    for (constraint in constraints) {
+      if (!constraint.isSatisfied()) {
+        return constraint
+      }
+    }
+    return null
   }
 
   private suspend fun readLoop(rootScope: CoroutineScope): T {
@@ -69,7 +77,7 @@ internal class ReadAction<T>(
   private fun tryReadAction(rootScope: CoroutineScope, readJob: Job): ReadResult<T>? {
     var result: ReadResult<T>? = null
     application.tryRunReadAction {
-      val unsatisfiedConstraint = constraints.findUnsatisfiedConstraint()
+      val unsatisfiedConstraint = findUnsatisfiedConstraint()
       result = if (unsatisfiedConstraint == null) {
         ReadResult.Successful(withJob(readJob, action))
       }
@@ -95,11 +103,11 @@ private suspend fun yieldToPendingWriteActions() {
   yieldUntilRun(ApplicationManager.getApplication()::invokeLater)
 }
 
-private fun waitForConstraint(rootScope: CoroutineScope, constraint: ConstrainedExecution.ContextConstraint): Job {
+private fun waitForConstraint(rootScope: CoroutineScope, constraint: ReadConstraint): Job {
   return rootScope.launch(Dispatchers.Unconfined + CoroutineName("waiting for constraint '$constraint'")) {
     check(ApplicationManager.getApplication().isReadAccessAllowed) // schedule while holding read lock
     yieldUntilRun(constraint::schedule)
-    check(constraint.isCorrectContext())
+    check(constraint.isSatisfied())
     // Job is finished, readLoop may continue the next attempt
   }
 }

@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.*
-import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
 import com.intellij.openapi.progress.Cancellation
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
@@ -49,18 +48,18 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
     val scheduled = Semaphore(1)
     lateinit var constraintRunnable: Runnable
     var satisfied = false
-    val constraint = object : ContextConstraint {
+    val constraint = object : ReadConstraint {
       override fun toString(): String = "dummy constraint"
-      override fun isCorrectContext(): Boolean = satisfied
+      override fun isSatisfied(): Boolean = satisfied
       override fun schedule(runnable: Runnable) {
         constraintRunnable = runnable
         scheduled.up()
       }
     }
     val job = launch(Dispatchers.Default) {
-      assertFalse(constraint.isCorrectContext())
-      cra(ReadConstraints.unconstrained().withConstraint(constraint)) {
-        assertTrue(constraint.isCorrectContext())
+      assertFalse(constraint.isSatisfied())
+      cra(listOf(constraint)) {
+        assertTrue(constraint.isSatisfied())
       }
     }
     scheduled.waitTimeout() // constraint was unsatisfied initially
@@ -106,16 +105,16 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
   fun `test read action with unsatisfiable constraint is cancellable`(): Unit = runBlocking {
     val scheduled = Semaphore(1)
     lateinit var constraintRunnable: Runnable
-    val unsatisfiableConstraint = object : ContextConstraint {
+    val unsatisfiableConstraint = object : ReadConstraint {
       override fun toString(): String = "unsatisfiable constraint"
-      override fun isCorrectContext(): Boolean = false
+      override fun isSatisfied(): Boolean = false
       override fun schedule(runnable: Runnable) {
         constraintRunnable = runnable
         scheduled.up()
       }
     }
     val job = launch(Dispatchers.Default) {
-      cra(ReadConstraints.unconstrained().withConstraint(unsatisfiableConstraint)) {
+      cra(listOf(unsatisfiableConstraint)) {
         fail("must not be called")
       }
     }
@@ -141,15 +140,15 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
    * @see NonBlockingReadActionTest.testSyncExecutionFailsInsideReadActionWhenConstraintsAreNotSatisfied
    */
   fun `test read action with unsatisfiable constraint fails inside non-coroutine read action`(): Unit = runBlocking(Dispatchers.Default) {
-    val unsatisfiableConstraint = object : ContextConstraint {
+    val unsatisfiableConstraint = object : ReadConstraint {
       override fun toString(): String = "unsatisfiable constraint"
-      override fun isCorrectContext(): Boolean = false
+      override fun isSatisfied(): Boolean = false
       override fun schedule(runnable: Runnable) = fail("must not be called")
     }
     runReadAction {
       runBlocking {
         try {
-          cra(ReadConstraints.unconstrained().withConstraint(unsatisfiableConstraint)) {
+          cra(listOf(unsatisfiableConstraint)) {
             fail("must not be called")
           }
           fail("exception must be thrown")
@@ -160,12 +159,12 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
     }
   }
 
-  protected abstract suspend fun <T> cra(constraints: ReadConstraints = ReadConstraints.unconstrained(), action: () -> T): T
+  protected abstract suspend fun <T> cra(constraints: List<ReadConstraint> = emptyList(), action: () -> T): T
 }
 
 class NonBlocking : SuspendingReadWriteTest() {
 
-  override suspend fun <T> cra(constraints: ReadConstraints, action: () -> T): T {
+  override suspend fun <T> cra(constraints: List<ReadConstraint>, action: () -> T): T {
     return constrainedReadAction(constraints, action)
   }
 
@@ -188,7 +187,7 @@ class NonBlocking : SuspendingReadWriteTest() {
   }
 
   fun `test read action is cancelled by write and restarted`(): Unit = runBlocking {
-    val job = twoAttemptJob(this, ReadConstraints.unconstrained())
+    val job = twoAttemptJob(this, emptyList())
     runWriteAction {}
     withTimeout(1000) {
       while (job.isActive) {
@@ -199,7 +198,7 @@ class NonBlocking : SuspendingReadWriteTest() {
   }
 
   fun `test read action with constraints is cancelled by write and restarted`(): Unit = runBlocking {
-    val job = twoAttemptJob(this, ReadConstraints.inSmartMode(project))
+    val job = twoAttemptJob(this, listOf(ReadConstraint.inSmartMode(project)))
     val application = ApplicationManager.getApplication()
     val dumbService = DumbServiceImpl.getInstance(project)
     application.runWriteAction { // cancel attempt 0
@@ -213,7 +212,7 @@ class NonBlocking : SuspendingReadWriteTest() {
     job.waitTimeout()
   }
 
-  private fun twoAttemptJob(cs: CoroutineScope, constraints: ReadConstraints): Job {
+  private fun twoAttemptJob(cs: CoroutineScope, constraints: List<ReadConstraint>): Job {
     val inRead = Semaphore(1)
     val beforeWrite = beforeWrite()
     val job = cs.launch(Dispatchers.Default) {
@@ -261,7 +260,7 @@ class NonBlocking : SuspendingReadWriteTest() {
 
 class Blocking : SuspendingReadWriteTest() {
 
-  override suspend fun <T> cra(constraints: ReadConstraints, action: () -> T): T {
+  override suspend fun <T> cra(constraints: List<ReadConstraint>, action: () -> T): T {
     return constrainedReadActionBlocking(constraints, action)
   }
 

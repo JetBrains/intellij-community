@@ -3,8 +3,6 @@
 
 package com.intellij.openapi.application
 
-import com.intellij.openapi.application.constraints.ConstrainedExecution.ContextConstraint
-import com.intellij.openapi.application.rw.ReadAction
 import com.intellij.openapi.progress.withJob
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
@@ -21,7 +19,7 @@ import kotlin.coroutines.CoroutineContext
  * @see readActionBlocking
  */
 suspend fun <T> readAction(action: () -> T): T {
-  return constrainedReadAction(ReadConstraints.unconstrained(), action)
+  return constrainedReadAction(constraints = emptyList(), action)
 }
 
 /**
@@ -32,7 +30,7 @@ suspend fun <T> readAction(action: () -> T): T {
  * @see smartReadActionBlocking
  */
 suspend fun <T> smartReadAction(project: Project, action: () -> T): T {
-  return constrainedReadAction(ReadConstraints.inSmartMode(project), action)
+  return constrainedReadAction(constraints = listOf(ReadConstraint.inSmartMode(project)), action)
 }
 
 /**
@@ -40,7 +38,7 @@ suspend fun <T> smartReadAction(project: Project, action: () -> T): T {
  * **without** preventing write actions.
  *
  * The function suspends if at the moment of calling it's not possible to acquire the read lock,
- * or if [constraints] are not [satisfied][ContextConstraint.isCorrectContext].
+ * or if [constraints] are not [satisfied][ReadConstraint.isSatisfied].
  * If the write action happens while the [action] is running, then the [action] is canceled,
  * and the function suspends until its possible to acquire the read lock, and then the [action] is tried again.
  *
@@ -50,8 +48,8 @@ suspend fun <T> smartReadAction(project: Project, action: () -> T): T {
  *
  * @see constrainedReadActionBlocking
  */
-suspend fun <T> constrainedReadAction(constraints: ReadConstraints, action: () -> T): T {
-  return ReadAction(constraints, blocking = false, action).runReadAction()
+suspend fun <T> constrainedReadAction(constraints: List<ReadConstraint>, action: () -> T): T {
+  return readActionSupport().executeReadAction(constraints, blocking = false, action)
 }
 
 /**
@@ -62,7 +60,7 @@ suspend fun <T> constrainedReadAction(constraints: ReadConstraints, action: () -
  * @see readAction
  */
 suspend fun <T> readActionBlocking(action: () -> T): T {
-  return constrainedReadActionBlocking(ReadConstraints.unconstrained(), action)
+  return constrainedReadActionBlocking(constraints = emptyList(), action)
 }
 
 /**
@@ -73,7 +71,7 @@ suspend fun <T> readActionBlocking(action: () -> T): T {
  * @see smartReadAction
  */
 suspend fun <T> smartReadActionBlocking(project: Project, action: () -> T): T {
-  return constrainedReadActionBlocking(ReadConstraints.inSmartMode(project), action)
+  return constrainedReadActionBlocking(constraints = listOf(ReadConstraint.inSmartMode(project)), action)
 }
 
 /**
@@ -81,7 +79,7 @@ suspend fun <T> smartReadActionBlocking(project: Project, action: () -> T): T {
  * **preventing** write actions.
  *
  * The function suspends if at the moment of calling it's not possible to acquire the read lock,
- * or if [constraints] are not [satisfied][ContextConstraint.isCorrectContext].
+ * or if [constraints] are not [satisfied][ReadConstraint.isSatisfied].
  * If the write action happens while the [action] is running, then the [action] is **not** canceled,
  * meaning the [action] will block pending write actions until finished.
  *
@@ -90,9 +88,11 @@ suspend fun <T> smartReadActionBlocking(project: Project, action: () -> T): T {
  *
  * @see constrainedReadAction
  */
-suspend fun <T> constrainedReadActionBlocking(constraints: ReadConstraints, action: () -> T): T {
-  return ReadAction(constraints, blocking = true, action).runReadAction()
+suspend fun <T> constrainedReadActionBlocking(constraints: List<ReadConstraint>, action: () -> T): T {
+  return readActionSupport().executeReadAction(constraints, blocking = true, action)
 }
+
+private fun readActionSupport() = ApplicationManager.getApplication().getService(ReadActionSupport::class.java)
 
 /**
  * Suspends until dumb mode is over and runs [action] in Smart Mode on EDT
