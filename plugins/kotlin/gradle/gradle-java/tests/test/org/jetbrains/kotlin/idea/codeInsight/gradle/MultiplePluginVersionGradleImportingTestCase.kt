@@ -109,11 +109,31 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         "build_tools_version" to "28.0.3",
     )
 
+    val isHmppEnabledByDefault get() = kotlinPluginVersion.isHmppEnabledByDefault
+
+    fun hmppProperties(): Map<String, String> =
+        if (isHmppEnabledByDefault) {
+            mapOf(
+                "enable_hmpp_flags" to "",
+                "disable_hmpp_flags" to "kotlin.mpp.hierarchicalStructureSupport=false"
+            )
+        } else {
+            mapOf(
+                "enable_hmpp_flags" to """
+                    kotlin.mpp.enableGranularSourceSetsMetadata=true
+                    kotlin.native.enableDependencyPropagation=false
+                    kotlin.mpp.enableHierarchicalCommonization=true
+                """.trimIndent(),
+                "disable_hmpp_flags" to ""
+            )
+        }
+
     protected fun repositories(useKts: Boolean): String = GradleKotlinTestUtils.listRepositories(useKts, gradleVersion)
 
     override val defaultProperties: Map<String, String>
         get() = super.defaultProperties.toMutableMap().apply {
             putAll(androidProperties())
+            putAll(hmppProperties())
             put("kotlin_plugin_version", kotlinPluginVersionString)
             put("kotlin_plugin_repositories", repositories(false))
             put("kts_kotlin_plugin_repositories", repositories(true))
