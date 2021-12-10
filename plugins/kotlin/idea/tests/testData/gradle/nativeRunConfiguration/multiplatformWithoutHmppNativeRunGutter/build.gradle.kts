@@ -13,22 +13,11 @@ kotlin {
             }
         }
     }
-
-    linuxX64("linux") {
-        binaries {
-            executable {
-                entryPoint = "sample.main"
-            }
-        }
-    }
-
     sourceSets {
         commonMain {
             dependencies {
                 implementation(kotlin("stdlib-common"))
             }
-        }
-        val macosMain by getting {
         }
     }
 }

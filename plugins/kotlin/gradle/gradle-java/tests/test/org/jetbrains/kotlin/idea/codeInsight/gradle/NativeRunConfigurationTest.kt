@@ -23,6 +23,14 @@ abstract class NativeRunConfigurationTest : MultiplePluginVersionGradleImporting
         }
     }
 
+    class MultiplatformWithoutHmppNativeRunGutter : NativeRunConfigurationTest() {
+        @Test
+        @TargetVersions("6.0+")
+        fun multiplatformWithoutHmppNativeRunGutter() {
+            doTest()
+        }
+    }
+
     class CustomEntryPointWithoutRunGutter : NativeRunConfigurationTest() {
         @Test
         @TargetVersions("6.0+")
