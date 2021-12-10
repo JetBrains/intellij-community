@@ -164,7 +164,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUiEx, Disposable {
     else if (model.canRequestMore()) {
       model.requestToLoadMore(() -> tryJumpTo(commitId, rowGetter, future, focus));
     }
-    else if (!myVisiblePack.isFull()) {
+    else if (!myVisiblePack.isFull() || myLogData.getDataPack() != myVisiblePack.getDataPack()) {
       invokeOnChange(() -> tryJumpTo(commitId, rowGetter, future, focus));
     }
     else if (result == COMMIT_DOES_NOT_MATCH) {
