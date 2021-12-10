@@ -4,7 +4,6 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.Queryable;
@@ -30,6 +29,7 @@ import com.intellij.ui.hover.HoverStateListener;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.animation.AlphaAnimated;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -545,9 +545,9 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
 
   void updateActiveAndHoverState() {
     ActionToolbar toolbar = getHeaderToolbar();
-    if (toolbar instanceof ActionToolbarImpl) {
-      ActionToolbarImpl impl = (ActionToolbarImpl)toolbar;
-      impl.myAlphaContext.setVisible(!isNewUI() || isWindowHovered || toolWindow.isActive());
+    if (toolbar instanceof AlphaAnimated) {
+      AlphaAnimated alpha = (AlphaAnimated)toolbar;
+      alpha.getAlphaAnimator().setVisible(!isNewUI() || isWindowHovered || toolWindow.isActive());
     }
   }
 

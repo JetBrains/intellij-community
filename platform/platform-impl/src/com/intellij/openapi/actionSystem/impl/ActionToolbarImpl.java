@@ -32,6 +32,8 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.animation.AlphaAnimationContext;
+import com.intellij.util.animation.AlphaAnimated;
+import com.intellij.util.animation.ShowHideAnimator;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -56,7 +58,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.util.IJSwingUtilities.getFocusedComponentInWindowOrSelf;
 
-public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickActionProvider {
+public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickActionProvider, AlphaAnimated {
   private static final Logger LOG = Logger.getInstance(ActionToolbarImpl.class);
 
   private static final Set<ActionToolbarImpl> ourToolbars = new LinkedHashSet<>();
@@ -157,11 +159,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private boolean myShowSeparatorTitles;
   private Image myCachedImage;
 
-  @ApiStatus.Internal
-  @ApiStatus.Experimental
-  public final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(composite -> {
-    if (isShowing()) repaint();
-  });
+  private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(this);
 
   private final EventDispatcher<ActionToolbarListener> myListeners = EventDispatcher.create(ActionToolbarListener.class);
 
@@ -297,13 +295,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @Override
+  public @NotNull ShowHideAnimator getAlphaAnimator() {
+    return myAlphaContext.getAnimator();
+  }
+
+  @Override
   public void paint(Graphics g) {
-    if (g instanceof Graphics2D && ExperimentalUI.isNewUI()) {
-      myAlphaContext.paintWithComposite((Graphics2D)g, () -> super.paint(g));
-    }
-    else {
-      super.paint(g);
-    }
+    myAlphaContext.paint(g, () -> super.paint(g));
   }
 
   @Override
