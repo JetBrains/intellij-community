@@ -901,11 +901,6 @@ public abstract class IncrementalJvmJpsTestGenerated extends AbstractIncremental
                 runTest("testData/incremental/withJava/javaUsedInKotlin/constantChanged/");
             }
 
-            @TestMetadata("constantPropertyChanged")
-            public void testConstantPropertyChanged() throws Exception {
-                runTest("testData/incremental/withJava/javaUsedInKotlin/constantPropertyChanged/");
-            }
-
             @TestMetadata("constantUnchanged")
             public void testConstantUnchanged() throws Exception {
                 runTest("testData/incremental/withJava/javaUsedInKotlin/constantUnchanged/");
