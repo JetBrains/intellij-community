@@ -9,13 +9,13 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import org.intellij.plugins.markdown.lang.index.MarkdownHeadersIndex;
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderImpl;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader;
 import org.intellij.plugins.markdown.lang.stubs.MarkdownStubElementType;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
-public class MarkdownHeaderStubElementType extends MarkdownStubElementType<MarkdownHeaderStubElement, MarkdownHeaderImpl> {
+public class MarkdownHeaderStubElementType extends MarkdownStubElementType<MarkdownHeaderStubElement, MarkdownHeader> {
   private static final Logger LOG = Logger.getInstance(MarkdownHeaderStubElementType.class);
 
   public MarkdownHeaderStubElementType(@NotNull String debugName) {
@@ -25,17 +25,17 @@ public class MarkdownHeaderStubElementType extends MarkdownStubElementType<Markd
   @NotNull
   @Override
   public PsiElement createElement(@NotNull ASTNode node) {
-    return new MarkdownHeaderImpl(node);
+    return new MarkdownHeader(node);
   }
 
   @Override
-  public MarkdownHeaderImpl createPsi(@NotNull MarkdownHeaderStubElement stub) {
-    return new MarkdownHeaderImpl(stub, this);
+  public MarkdownHeader createPsi(@NotNull MarkdownHeaderStubElement stub) {
+    return new MarkdownHeader(stub, this);
   }
 
   @NotNull
   @Override
-  public MarkdownHeaderStubElement createStub(@NotNull MarkdownHeaderImpl psi, StubElement parentStub) {
+  public MarkdownHeaderStubElement createStub(@NotNull MarkdownHeader psi, StubElement parentStub) {
     return new MarkdownHeaderStubElement(parentStub, this, psi.getName());
   }
 

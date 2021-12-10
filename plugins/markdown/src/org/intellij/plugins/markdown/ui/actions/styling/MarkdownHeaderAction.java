@@ -22,7 +22,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement;
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory;
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderImpl;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader;
 import org.intellij.plugins.markdown.ui.actions.MarkdownActionUtil;
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -75,7 +75,7 @@ public abstract class MarkdownHeaderAction extends AnAction implements DumbAware
 
       for (Caret caret : ContainerUtil.reverse(editor.getCaretModel().getAllCarets())) {
         PsiElement parent = Objects.requireNonNull(findParent(psiFile, caret));
-        MarkdownHeaderImpl header = PsiTreeUtil.getParentOfType(parent, MarkdownHeaderImpl.class, false);
+        MarkdownHeader header = PsiTreeUtil.getParentOfType(parent, MarkdownHeader.class, false);
 
         if (header != null && header.isValid()) {
           header.replace(createNewLevelHeader(header));
@@ -145,8 +145,8 @@ public abstract class MarkdownHeaderAction extends AnAction implements DumbAware
   }
 
   @NotNull
-  public MarkdownPsiElement createNewLevelHeader(@NotNull MarkdownHeaderImpl header) {
-    int level = sanitizeHeaderLevel(getLevelFunction().fun(Objects.requireNonNull(header).getHeaderNumber()));
+  public MarkdownPsiElement createNewLevelHeader(@NotNull MarkdownHeader header) {
+    int level = sanitizeHeaderLevel(getLevelFunction().fun(Objects.requireNonNull(header).getLevel()));
 
     MarkdownPsiElement newElement;
     Project project = header.getProject();

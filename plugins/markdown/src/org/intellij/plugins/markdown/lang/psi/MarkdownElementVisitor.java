@@ -33,7 +33,7 @@ public class MarkdownElementVisitor extends PsiElementVisitor {
     visitElement(codeFence);
   }
 
-  public void visitHeader(@NotNull MarkdownHeaderImpl header) {
+  public void visitHeader(@NotNull MarkdownHeader header) {
     visitElement(header);
   }
 }

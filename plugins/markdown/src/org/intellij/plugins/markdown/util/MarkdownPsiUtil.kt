@@ -14,7 +14,7 @@ import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 
@@ -105,7 +105,7 @@ internal object MarkdownPsiUtil {
 
     val isListsVisible = Registry.`is`("markdown.structure.view.list.visibility")
     when {
-      myElement is MarkdownHeaderImpl -> processHeader(structureContainer, myElement, myElement, consumer, nextHeaderConsumer)
+      myElement is MarkdownHeader -> processHeader(structureContainer, myElement, myElement, consumer, nextHeaderConsumer)
       myElement is MarkdownList && isListsVisible -> processList(myElement, consumer)
       myElement is MarkdownListItem && isListsVisible -> {
         if (!myElement.hasTrivialChildren()) {
@@ -141,7 +141,7 @@ internal object MarkdownPsiUtil {
           }
           processHeader(nextSibling, null, null, resultConsumer, nextHeaderConsumer)
         }
-        nextSibling is MarkdownHeaderImpl -> {
+        nextSibling is MarkdownHeader -> {
           if (sameLevelRestriction != null && isSameLevelOrHigher(nextSibling, sameLevelRestriction)) {
             nextHeaderConsumer.consume(nextSibling)
             break

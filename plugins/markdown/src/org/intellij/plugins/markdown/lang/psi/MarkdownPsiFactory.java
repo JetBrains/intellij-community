@@ -19,7 +19,7 @@ public enum MarkdownPsiFactory {
       return new MarkdownParagraphImpl(node);
     }
     if (MarkdownTokenTypeSets.HEADERS.contains(elementType)) {
-      return new MarkdownHeaderImpl(node);
+      return new MarkdownHeader(node);
     }
     if (elementType == MarkdownElementTypes.CODE_FENCE) {
       return ((MarkdownCodeFenceImpl)node);

@@ -90,13 +90,13 @@ public final class MarkdownPsiElementFactory {
   }
 
   @NotNull
-  public static MarkdownHeaderImpl createSetext(@NotNull Project project, @NotNull String text, @NotNull String symbol, int count) {
-    return (MarkdownHeaderImpl)createFile(project, text + "\n" + StringUtil.repeat(symbol, count)).getFirstChild().getFirstChild();
+  public static MarkdownHeader createSetext(@NotNull Project project, @NotNull String text, @NotNull String symbol, int count) {
+    return (MarkdownHeader)createFile(project, text + "\n" + StringUtil.repeat(symbol, count)).getFirstChild().getFirstChild();
   }
 
   @NotNull
-  public static MarkdownHeaderImpl createHeader(@NotNull Project project, @NotNull String text, int level) {
-    return (MarkdownHeaderImpl)createFile(project, StringUtil.repeat("#", level) + " " + text).getFirstChild().getFirstChild();
+  public static MarkdownHeader createHeader(@NotNull Project project, @NotNull String text, int level) {
+    return (MarkdownHeader)createFile(project, StringUtil.repeat("#", level) + " " + text).getFirstChild().getFirstChild();
   }
 
   @NotNull
