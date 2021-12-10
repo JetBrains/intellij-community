@@ -1,4 +1,4 @@
-// "Opt in for 'AliasMarker' in 'AliasMarkerUsage'" "true"
+// "Opt in for 'AliasMarker' on 'AliasMarkerUsage'" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME
 // ACTION: Add '-Xopt-in=AliasMarker' to module light_idea_test_case compiler arguments
