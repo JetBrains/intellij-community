@@ -1,13 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author peter
- */
 public abstract class AtomicNullableLazyValue<T> extends NullableLazyValue<T> {
   private volatile T myValue;
   private volatile boolean myComputed;
@@ -43,12 +39,10 @@ public abstract class AtomicNullableLazyValue<T> extends NullableLazyValue<T> {
   /** @deprecated please use {@link NullableLazyValue#atomicLazyNullable} instead */
   @Deprecated
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  @NotNull
-  public static <T> AtomicNullableLazyValue<T> createValue(@NotNull final Factory<? extends T> value) {
+  public static @NotNull <T> AtomicNullableLazyValue<T> createValue(@NotNull Factory<? extends T> value) {
     return new AtomicNullableLazyValue<T>() {
-      @Nullable
       @Override
-      protected T compute() {
+      protected @Nullable T compute() {
         return value.create();
       }
     };

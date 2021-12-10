@@ -6,21 +6,15 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * NOTE: Assumes that values computed by different threads are equal and interchangeable
- * and readers should be ready to get different instances on different invocations of the {@link #getValue()}
- *
- * @author peter
+ * and readers should be ready to get different instances on different invocations of the {@link #getValue()}.
  */
 public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> {
   private volatile boolean myComputed;
-  @Nullable private volatile T myValue;
+  private volatile @Nullable T myValue;
 
   @Override
-  @Nullable
-  protected abstract T compute();
-
-  @Override
-  @Nullable
-  public T getValue() {
+  @SuppressWarnings("DuplicatedCode")
+  public @Nullable T getValue() {
     boolean computed = myComputed;
     T value = myValue;
     if (!computed) {
@@ -42,16 +36,12 @@ public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> 
   /** @deprecated please use {@link NullableLazyValue#volatileLazyNullable} instead */
   @Deprecated
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
-  @NotNull
-  public static <T> VolatileNullableLazyValue<T> createValue(@NotNull final Factory<? extends T> value) {
+  public static @NotNull <T> VolatileNullableLazyValue<T> createValue(@NotNull Factory<? extends T> value) {
     return new VolatileNullableLazyValue<T>() {
-
-      @Nullable
       @Override
-      protected T compute() {
+      protected @Nullable T compute() {
         return value.create();
       }
     };
   }
-
 }
