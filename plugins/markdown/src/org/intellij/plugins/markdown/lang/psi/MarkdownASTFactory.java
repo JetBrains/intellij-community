@@ -6,7 +6,7 @@ import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.tree.IElementType;
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes;
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes;
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceContentImpl;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceContent;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl;
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow;
 import org.jetbrains.annotations.NotNull;
@@ -27,7 +27,7 @@ public class MarkdownASTFactory extends ASTFactory {
   @Override
   public LeafElement createLeaf(@NotNull IElementType type, @NotNull CharSequence text) {
     if (type == MarkdownTokenTypes.CODE_FENCE_CONTENT) {
-      return new MarkdownCodeFenceContentImpl(type, text);
+      return new MarkdownCodeFenceContent(type, text);
     }
     if (type == MarkdownTokenTypes.TABLE_SEPARATOR && text.length() > 1) {
       return new MarkdownTableSeparatorRow(text);
