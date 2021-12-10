@@ -383,4 +383,18 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             uFile.findElementByTextFromPsi<UExpression>("lst[0]").getExpressionType().toString()
         )
     }
+
+    fun checkDivByZero(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "MyClass.kt", """
+            val p = 1 / 0
+        """
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val p = uFile.findElementByTextFromPsi<UVariable>("p")
+        TestCase.assertNotNull("can't convert property p", p)
+        TestCase.assertNotNull("can't find property initializer", p.uastInitializer)
+        TestCase.assertNull("Should not see ArithmeticException", p.uastInitializer?.evaluate())
+    }
 }
