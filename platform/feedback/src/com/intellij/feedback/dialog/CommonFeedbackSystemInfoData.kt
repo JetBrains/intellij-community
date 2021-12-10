@@ -21,6 +21,9 @@ import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.streams.toList
 
+/** This number should be increased when [CommonFeedbackSystemInfoData] fields changing */
+const val COMMON_FEEDBACK_SYSTEM_INFO_VERSION = 1
+
 @Serializable
 data class CommonFeedbackSystemInfoData(
   val osVersion: String,
