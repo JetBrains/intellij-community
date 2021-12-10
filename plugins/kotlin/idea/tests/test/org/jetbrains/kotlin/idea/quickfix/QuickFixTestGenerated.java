@@ -11858,6 +11858,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/replaceInfixOrOperatorCall/containsBinaryOperator.kt");
         }
 
+        @TestMetadata("divAssignOnMutableMap.kt")
+        public void testDivAssignOnMutableMap() throws Exception {
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/divAssignOnMutableMap.kt");
+        }
+
         @TestMetadata("hasElvis.kt")
         public void testHasElvis() throws Exception {
             runTest("testData/quickfix/replaceInfixOrOperatorCall/hasElvis.kt");
@@ -11868,9 +11873,34 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/replaceInfixOrOperatorCall/list.kt");
         }
 
+        @TestMetadata("minusAssignOnMutableMap.kt")
+        public void testMinusAssignOnMutableMap() throws Exception {
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/minusAssignOnMutableMap.kt");
+        }
+
         @TestMetadata("notContainsBinaryOperator.kt")
         public void testNotContainsBinaryOperator() throws Exception {
             runTest("testData/quickfix/replaceInfixOrOperatorCall/notContainsBinaryOperator.kt");
+        }
+
+        @TestMetadata("plusAssignOnMutableMap.kt")
+        public void testPlusAssignOnMutableMap() throws Exception {
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/plusAssignOnMutableMap.kt");
+        }
+
+        @TestMetadata("plusAssignOnMutableMapWithNullableValueType.kt")
+        public void testPlusAssignOnMutableMapWithNullableValueType() throws Exception {
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/plusAssignOnMutableMapWithNullableValueType.kt");
+        }
+
+        @TestMetadata("remAssignOnMutableMap.kt")
+        public void testRemAssignOnMutableMap() throws Exception {
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/remAssignOnMutableMap.kt");
+        }
+
+        @TestMetadata("timesAssignOnMutableMap.kt")
+        public void testTimesAssignOnMutableMap() throws Exception {
+            runTest("testData/quickfix/replaceInfixOrOperatorCall/timesAssignOnMutableMap.kt");
         }
     }
 
