@@ -847,9 +847,49 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/addExclExclCall/operationBinary.kt");
             }
 
+            @TestMetadata("operationDecrement.kt")
+            public void testOperationDecrement() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationDecrement.kt");
+            }
+
+            @TestMetadata("operationDivAssign.kt")
+            public void testOperationDivAssign() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationDivAssign.kt");
+            }
+
             @TestMetadata("operationIn.kt")
             public void testOperationIn() throws Exception {
                 runTest("testData/quickfix/addExclExclCall/operationIn.kt");
+            }
+
+            @TestMetadata("operationIncrement.kt")
+            public void testOperationIncrement() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationIncrement.kt");
+            }
+
+            @TestMetadata("operationMinusAssign.kt")
+            public void testOperationMinusAssign() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationMinusAssign.kt");
+            }
+
+            @TestMetadata("operationPlusAssign.kt")
+            public void testOperationPlusAssign() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationPlusAssign.kt");
+            }
+
+            @TestMetadata("operationPlusAssignOnMutableMap.kt")
+            public void testOperationPlusAssignOnMutableMap() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationPlusAssignOnMutableMap.kt");
+            }
+
+            @TestMetadata("operationRemAssign.kt")
+            public void testOperationRemAssign() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationRemAssign.kt");
+            }
+
+            @TestMetadata("operationTimesAssign.kt")
+            public void testOperationTimesAssign() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationTimesAssign.kt");
             }
 
             @TestMetadata("operationUnary.kt")

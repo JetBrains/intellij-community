@@ -8,10 +8,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
-import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi.KtPsiFactory
-import org.jetbrains.kotlin.psi.createExpressionByPattern
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.*
 
 class AddExclExclCallFix(psiElement: PsiElement, val fixImplicitReceiver: Boolean = false) : ExclExclCallFix(psiElement),
     LowPriorityAction {
@@ -23,15 +21,45 @@ class AddExclExclCallFix(psiElement: PsiElement, val fixImplicitReceiver: Boolea
 
         val modifiedExpression = element ?: return
         val psiFactory = KtPsiFactory(project)
-        val exclExclExpression = if (fixImplicitReceiver) {
-            if (modifiedExpression is KtCallableReferenceExpression) {
+        if (fixImplicitReceiver) {
+            val exclExclExpression = if (modifiedExpression is KtCallableReferenceExpression) {
                 psiFactory.createExpressionByPattern("this!!::$0", modifiedExpression.callableReference)
             } else {
                 psiFactory.createExpressionByPattern("this!!.$0", modifiedExpression)
             }
+            modifiedExpression.replace(exclExclExpression)
         } else {
-            psiFactory.createExpressionByPattern("$0!!", modifiedExpression)
+            val parent = modifiedExpression.parent
+            val operationToken = when (parent) {
+                is KtBinaryExpression -> parent.operationToken
+                is KtUnaryExpression -> parent.operationToken
+                else -> null
+            }
+            when {
+                operationToken in KtTokens.AUGMENTED_ASSIGNMENTS && parent is KtBinaryExpression -> {
+                    val right = parent.right ?: return
+                    val newOperationToken = when (operationToken) {
+                        KtTokens.PLUSEQ -> KtTokens.PLUS
+                        KtTokens.MINUSEQ -> KtTokens.MINUS
+                        KtTokens.MULTEQ -> KtTokens.MUL
+                        KtTokens.PERCEQ -> KtTokens.PERC
+                        KtTokens.DIVEQ -> KtTokens.DIV
+                        else -> return
+                    }
+                    val newExpression = psiFactory.createExpressionByPattern(
+                        "$0 = $1!! ${newOperationToken.value} $2", modifiedExpression, modifiedExpression, right
+                    )
+                    parent.replace(newExpression)
+                }
+                (operationToken == KtTokens.PLUSPLUS || operationToken == KtTokens.MINUSMINUS) && parent is KtUnaryExpression -> {
+                    val newOperationToken = if (operationToken == KtTokens.PLUSPLUS) KtTokens.PLUS else KtTokens.MINUS
+                    val newExpression = psiFactory.createExpressionByPattern(
+                        "$0 = $1!! ${newOperationToken.value} 1", modifiedExpression, modifiedExpression
+                    )
+                    parent.replace(newExpression)
+                }
+                else -> modifiedExpression.replace(psiFactory.createExpressionByPattern("$0!!", modifiedExpression))
+            }
         }
-        modifiedExpression.replace(exclExclExpression)
     }
 }
