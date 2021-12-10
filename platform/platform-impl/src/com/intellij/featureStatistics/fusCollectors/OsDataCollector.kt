@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors
 
 import com.intellij.internal.statistic.beans.MetricEvent
@@ -94,10 +94,8 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
 
   private fun detectIsUnderWsl(): Boolean =
     try {
-      // We need to use loadLines and not loadText here, because loadText relies on getting the file size
-      // and the kernel returns size 0 for this special file.
-      val osrelease = Files.readString(Path.of("/proc/sys/kernel/osrelease"))
-      osrelease.contains("-microsoft-")
+      @Suppress("SpellCheckingInspection") val kernel = Files.readString(Path.of("/proc/sys/kernel/osrelease"))
+      kernel.contains("-microsoft-")
     }
     catch(e: IOException) {
       false
