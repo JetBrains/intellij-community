@@ -228,7 +228,7 @@ public final class MarkdownPsiElementFactory {
   }
 
   @ApiStatus.Experimental
-  public static @NotNull PsiElement createBlockquoteArrow(@NotNull Project project) {
+  public static @NotNull PsiElement createBlockQuoteArrow(@NotNull Project project) {
     final var contents = "> ";
     final var file = createFile(project, contents);
     return Objects.requireNonNull(file.findElementAt(1));

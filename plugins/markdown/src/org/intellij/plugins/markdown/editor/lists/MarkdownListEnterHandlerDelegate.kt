@@ -22,7 +22,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentRange
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAt
 import org.intellij.plugins.markdown.editor.lists.ListUtils.list
 import org.intellij.plugins.markdown.editor.lists.ListUtils.normalizedMarker
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuoteImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
@@ -99,7 +99,7 @@ internal class MarkdownListEnterHandlerDelegate : EnterHandlerDelegate {
     if (caretOffset == 0) return false
 
     return file.findElementAt(caretOffset - 1)
-      ?.parentOfTypes(MarkdownBlockQuoteImpl::class, MarkdownCodeFenceImpl::class) != null
+      ?.parentOfTypes(MarkdownBlockQuote::class, MarkdownCodeFenceImpl::class) != null
   }
 
   private fun handleEmptyItem(item: MarkdownListItemImpl, editor: Editor, file: PsiFile, originalHandler: EditorActionHandler?, dataContext: DataContext) {

@@ -25,7 +25,7 @@ public class MarkdownElementVisitor extends PsiElementVisitor {
     visitElement(table);
   }
 
-  public void visitBlockQuote(@NotNull MarkdownBlockQuoteImpl blockQuote) {
+  public void visitBlockQuote(@NotNull MarkdownBlockQuote blockQuote) {
     visitElement(blockQuote);
   }
 

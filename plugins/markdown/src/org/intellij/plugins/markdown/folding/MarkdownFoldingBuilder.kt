@@ -39,7 +39,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
 
       override fun visitParagraph(paragraph: MarkdownParagraphImpl) {
         val parent = paragraph.parent
-        if (parent is MarkdownBlockQuoteImpl && parent.childrenOfType<MarkdownParagraphImpl>().size <= 1) {
+        if (parent is MarkdownBlockQuote && parent.childrenOfType<MarkdownParagraphImpl>().size <= 1) {
           return
         }
         addDescriptors(paragraph)
@@ -51,7 +51,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
         super.visitTable(table)
       }
 
-      override fun visitBlockQuote(blockQuote: MarkdownBlockQuoteImpl) {
+      override fun visitBlockQuote(blockQuote: MarkdownBlockQuote) {
         addDescriptors(blockQuote)
         super.visitBlockQuote(blockQuote)
       }

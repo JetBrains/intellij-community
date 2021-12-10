@@ -16,7 +16,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuoteImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 
@@ -75,7 +75,7 @@ internal class MarkdownEnterHandler : EnterHandlerDelegateAdapter() {
 
 
   private fun processBlockQuote(editor: Editor, element: PsiElement) {
-    val quote = PsiTreeUtil.getParentOfType(element, MarkdownBlockQuoteImpl::class.java) ?: return
+    val quote = PsiTreeUtil.getParentOfType(element, MarkdownBlockQuote::class.java) ?: return
     val markdown = CodeStyle.getCustomSettings(quote.containingFile, MarkdownCustomCodeStyleSettings::class.java)
 
     var toAdd = ">"

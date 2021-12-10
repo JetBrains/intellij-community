@@ -12,7 +12,7 @@ import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuoteImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraphImpl
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
@@ -21,11 +21,11 @@ import org.intellij.plugins.markdown.util.hasType
 /**
  * Inserts block quote arrows `>` before wrapped text elements when reformatting block quotes.
  */
-internal class BlockquotePostFormatProcessor: PostFormatProcessor {
+internal class BlockQuotePostFormatProcessor: PostFormatProcessor {
   override fun processElement(source: PsiElement, settings: CodeStyleSettings): PsiElement {
-    if (shouldProcess(source.containingFile, settings) && source is MarkdownBlockQuoteImpl) {
+    if (shouldProcess(source.containingFile, settings) && source is MarkdownBlockQuote) {
       commit(source)
-      processBlockquote(source)
+      processBlockQuote(source)
     }
     return source
   }
@@ -36,10 +36,10 @@ internal class BlockquotePostFormatProcessor: PostFormatProcessor {
     }
     commit(source)
     val firstChild = source.firstChild?.firstChild ?: return rangeToReformat
-    val quotes = firstChild.siblings(forward = true, withSelf = true).filterIsInstance<MarkdownBlockQuoteImpl>()
+    val quotes = firstChild.siblings(forward = true, withSelf = true).filterIsInstance<MarkdownBlockQuote>()
     for (quote in quotes) {
       if (rangeToReformat.intersects(rangeToReformat)) {
-        processBlockquote(quote)
+        processBlockQuote(quote)
       }
     }
     return rangeToReformat
@@ -58,7 +58,7 @@ internal class BlockquotePostFormatProcessor: PostFormatProcessor {
     val elements = firstChild.siblings(forward = true, withSelf = true).filter(this::shouldProcessTextElement)
     for (element in elements) {
       repeat(level) {
-        val arrow = MarkdownPsiElementFactory.createBlockquoteArrow(paragraph.project)
+        val arrow = MarkdownPsiElementFactory.createBlockQuoteArrow(paragraph.project)
         paragraph.addBefore(arrow, element)
       }
     }
@@ -68,13 +68,13 @@ internal class BlockquotePostFormatProcessor: PostFormatProcessor {
     return element.hasType(MarkdownTokenTypes.TEXT) && element.prevSibling?.let(MarkdownPsiUtil.WhiteSpaces::isNewLine) == true
   }
 
-  private fun processBlockquote(blockquote: MarkdownBlockQuoteImpl, level: Int = 1) {
-    val firstChild = blockquote.firstChild ?: return
+  private fun processBlockQuote(blockQuote: MarkdownBlockQuote, level: Int = 1) {
+    val firstChild = blockQuote.firstChild ?: return
     val children = firstChild.siblings(forward = true, withSelf = true)
     for (element in children) {
       when (element) {
         is MarkdownParagraphImpl -> processParagraph(element, level)
-        is MarkdownBlockQuoteImpl -> processBlockquote(element, level + 1)
+        is MarkdownBlockQuote -> processBlockQuote(element, level + 1)
       }
     }
   }

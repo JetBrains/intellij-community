@@ -7,8 +7,8 @@ import com.intellij.psi.PsiElementVisitor;
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor;
 import org.jetbrains.annotations.NotNull;
 
-public class MarkdownBlockQuoteImpl extends MarkdownCompositePsiElementBase {
-  public MarkdownBlockQuoteImpl(@NotNull ASTNode node) {
+public class MarkdownBlockQuote extends MarkdownCompositePsiElementBase {
+  public MarkdownBlockQuote(@NotNull ASTNode node) {
     super(node);
   }
 
