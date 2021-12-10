@@ -113,7 +113,6 @@ fun <T> ExternalSystemTaskExecutionSettings.applyTestConfiguration(
     val commandLine = it.key
     val tasks = taskNameRegex.findAll(commandLine)
       .map { match -> match.groupValues[1] }
-      .map(::restoreEscaped)
       .toList()
 
     tasks + it.value

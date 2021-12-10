@@ -38,6 +38,6 @@ class TestGradleConfigurationProducerUtilTest {
     )
 
     assertTrue("Test configuration was not applied", applied)
-    assertEquals(listOf("task A", "task B", "FILTER", ":module1:module2:taskC", "taskD", "FILTER"), settingsUnderTest.taskNames)
+    assertEquals(listOf("'task A'", "'task B'", "FILTER", ":module1:module2:taskC", "taskD", "FILTER"), settingsUnderTest.taskNames)
   }
 }
