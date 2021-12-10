@@ -57,8 +57,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
@@ -312,7 +310,7 @@ public final class FindUsagesManager {
     try {
       final CompletableFuture<PsiElement[]> primaryElementsFuture = new CompletableFuture<>();
       final CompletableFuture<PsiElement[]> secondaryElementsFuture = new CompletableFuture<>();
-      EventQueue.invokeAndWait(() -> {
+      ApplicationManager.getApplication().invokeAndWait(() -> {
         // This is ugly, but some implementations of FindUsagesHandler do require a DispatcherThread for these operations.
         // for example: com.intellij.ide.util.SuperMethodWarningUtil.getTargetMethodCandidates
         // called from com.intellij.find.findUsages.JavaFindUsagesHandler.getPrimaryElements
@@ -324,10 +322,6 @@ public final class FindUsagesManager {
     }
     catch (InterruptedException e) {
       LOG.warn("primaryElements or secondaryElements calculation got interrupted! ", e);
-      return null;
-    }
-    catch (InvocationTargetException e) {
-      LOG.warn("can not calculate primaryElements or secondaryElements", e);
       return null;
     }
     catch (ExecutionException e) {
