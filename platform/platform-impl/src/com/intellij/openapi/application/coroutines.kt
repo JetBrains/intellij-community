@@ -46,7 +46,7 @@ suspend fun <T> smartReadAction(project: Project, action: () -> T): T {
  *
  * Since the [action] might me executed several times, it must be idempotent.
  * The function returns when given [action] was completed fully.
- * [Progress] passed to the action must be used to check for cancellation inside the [action].
+ * To support cancellation, the [action] must regularly invoke [com.intellij.openapi.progress.ProgressManager.checkCanceled].
  *
  * @see constrainedReadActionBlocking
  */
@@ -86,7 +86,7 @@ suspend fun <T> smartReadActionBlocking(project: Project, action: () -> T): T {
  * meaning the [action] will block pending write actions until finished.
  *
  * The function returns when given [action] was completed fully.
- * [Progress] passed to the action must be used to check for cancellation inside the [action].
+ * To support cancellation, the [action] must regularly invoke [com.intellij.openapi.progress.ProgressManager.checkCanceled].
  *
  * @see constrainedReadAction
  */
