@@ -9,9 +9,9 @@ import org.intellij.plugins.markdown.structureView.MarkdownBasePresentation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class MarkdownHtmlBlockImpl extends ASTWrapperPsiElement implements MarkdownPsiElement {
+public class MarkdownHtmlBlock extends ASTWrapperPsiElement implements MarkdownPsiElement {
 
-  public MarkdownHtmlBlockImpl(@NotNull ASTNode node) {
+  public MarkdownHtmlBlock(@NotNull ASTNode node) {
     super(node);
   }
 
