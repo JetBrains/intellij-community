@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.ToolWindowContentUiType
 import com.intellij.openapi.wm.ToolWindowType
@@ -251,7 +252,7 @@ abstract class ToolWindowHeader internal constructor(
     var drawBottomLine = true
 
     if (isNewUI()) {
-      val scrolled = ClientProperty.isTrue(nearestDecorator, InternalDecoratorImpl.SCROLLED_STATE)
+      val scrolled = ClientProperty.isTrue(nearestDecorator, SimpleToolWindowPanel.SCROLLED_STATE)
       drawBottomLine = (toolWindow.largeStripeAnchor == ToolWindowAnchor.BOTTOM
                         || (toolWindow.windowInfo.contentUiType == ToolWindowContentUiType.TABBED && toolWindow.contentManager.contentCount > 1)
                         || ToggleToolbarAction.hasVisibleToolwindowToolbars(toolWindow)

@@ -17,6 +17,7 @@ import com.intellij.openapi.actionSystem.impl.FusAwareAction
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
+import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.openapi.util.ActionCallback
 import com.intellij.openapi.util.BusyObject
 import com.intellij.openapi.util.Disposer
@@ -459,7 +460,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     private fun addAdjustListener(decorator: InternalDecoratorImpl?, component: JComponent) {
       UIUtil.findComponentOfType(component, JScrollPane::class.java)?.verticalScrollBar?.addAdjustmentListener { event ->
         decorator?.let {
-          ClientProperty.put(it, InternalDecoratorImpl.SCROLLED_STATE, event.adjustable?.value != 0)
+          ClientProperty.put(it, SimpleToolWindowPanel.SCROLLED_STATE, event.adjustable?.value != 0)
           it.header?.repaint()
         }
       }
