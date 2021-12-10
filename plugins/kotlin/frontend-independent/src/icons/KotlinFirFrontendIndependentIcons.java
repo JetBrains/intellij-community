@@ -24,6 +24,7 @@ public final class KotlinFirFrontendIndependentIcons {
   /** 16x16 */ public static final @NotNull Icon Expect = load("org/jetbrains/kotlin/idea/icons/expect.svg", -2910408808136595896L, 1);
   /** 16x16 */ public static final @NotNull Icon Field_value = load("org/jetbrains/kotlin/idea/icons/field_value.svg", 173519203061099646L, 0);
   /** 16x16 */ public static final @NotNull Icon Field_variable = load("org/jetbrains/kotlin/idea/icons/field_variable.svg", -4943884320640938494L, 0);
+  /** 16x16 */ public static final @NotNull Icon Fir = load("org/jetbrains/kotlin/idea/icons/fir.svg", 3005588519782924322L, 0);
   /** 16x16 */ public static final @NotNull Icon InterfaceKotlin = load("org/jetbrains/kotlin/idea/icons/interfaceKotlin.svg", 604473235153117087L, 1);
   /** 16x16 */ public static final @NotNull Icon Kotlin = load("org/jetbrains/kotlin/idea/icons/kotlin.svg", -4655772296543384162L, 0);
   /** 13x13 */ public static final @NotNull Icon Kotlin13 = load("org/jetbrains/kotlin/idea/icons/kotlin13.svg", -8126559440058425637L, 0);
