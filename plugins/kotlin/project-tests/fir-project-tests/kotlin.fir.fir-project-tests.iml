@@ -15,9 +15,9 @@
   </component>
   <component name="NewModuleRootManager" inherit-compiler-output="true">
     <exclude-output />
-    <content url="file://$MODULE_DIR$/../fir-project-tests">
-      <sourceFolder url="file://$MODULE_DIR$/../fir-project-tests/resources" type="java-resource" />
-      <sourceFolder url="file://$MODULE_DIR$/../fir-project-tests/test" isTestSource="true" />
+    <content url="file://$MODULE_DIR$">
+      <sourceFolder url="file://$MODULE_DIR$/resources" type="java-resource" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -51,7 +51,8 @@
     <orderEntry type="module" module-name="kotlin.compiler-plugins.noarg.gradle" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.kotlinx-serialization.gradle" scope="TEST" />
-    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.gradle" scope="TEST" />
+    <orderEntry type="module" module-name="kotlin.compiler-plugins.lombok.maven" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="kotlinc.analysis-api-providers" level="project" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.compiler-plugins.sam-with-receiver.gradle" scope="TEST" />
