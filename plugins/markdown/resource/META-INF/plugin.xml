@@ -113,7 +113,7 @@ Includes the following features:</p>
     <lang.fileViewProviderFactory language="Markdown"
                                   implementationClass="org.intellij.plugins.markdown.lang.MarkdownFileViewProviderFactory"/>
     <lang.parserDefinition language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.parser.MarkdownParserDefinition"/>
-    <lang.ast.factory language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.psi.MarkdownASTFactory"/>
+    <lang.ast.factory language="Markdown" implementationClass="org.intellij.plugins.markdown.lang.psi.MarkdownAstFactory"/>
 
     <lang.elementManipulator forClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence"
                              implementationClass="org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence$Manipulator"/>
