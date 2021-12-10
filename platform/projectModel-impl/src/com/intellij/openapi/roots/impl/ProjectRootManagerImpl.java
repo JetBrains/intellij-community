@@ -187,6 +187,17 @@ public class ProjectRootManagerImpl extends ProjectRootManagerEx implements Pers
   public ProjectRootManagerImpl(@NotNull Project project) {
     myProject = project;
     myRootsCache = getOrderRootsCache(project);
+    project.getMessageBus().connect().subscribe(ProjectJdkTable.JDK_TABLE_TOPIC, new ProjectJdkTable.Listener() {
+      @Override
+      public void jdkNameChanged(@NotNull Sdk jdk, @NotNull String previousName) {
+        String currentName = getProjectSdkName();
+        if (previousName.equals(currentName)) {
+          // if already had jdk name and that name was the name of the jdk just changed
+          myProjectSdkName = jdk.getName();
+          myProjectSdkType = jdk.getSdkType().getName();
+        }
+      }
+    });
   }
 
   @Override
