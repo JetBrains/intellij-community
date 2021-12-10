@@ -16,7 +16,7 @@ public enum MarkdownPsiFactory {
     final IElementType elementType = node.getElementType();
 
     if (elementType == MarkdownElementTypes.PARAGRAPH) {
-      return new MarkdownParagraphImpl(node);
+      return new MarkdownParagraph(node);
     }
     if (MarkdownTokenTypeSets.HEADERS.contains(elementType)) {
       return new MarkdownHeader(node);

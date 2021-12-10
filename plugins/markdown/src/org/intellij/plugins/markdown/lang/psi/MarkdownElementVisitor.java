@@ -13,7 +13,7 @@ public class MarkdownElementVisitor extends PsiElementVisitor {
     visitElement(linkDestination);
   }
 
-  public void visitParagraph(@NotNull MarkdownParagraphImpl paragraph) {
+  public void visitParagraph(@NotNull MarkdownParagraph paragraph) {
     visitElement(paragraph);
   }
 

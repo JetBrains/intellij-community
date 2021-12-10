@@ -78,7 +78,7 @@ public class MarkdownListItem extends MarkdownCompositePsiElementBase {
         return null;
       }
 
-      if (ContainerUtil.getFirstItem(getCompositeChildren()) instanceof MarkdownParagraphImpl) {
+      if (ContainerUtil.getFirstItem(getCompositeChildren()) instanceof MarkdownParagraph) {
         final MarkdownCompositePsiElementBase element = findChildByClass(MarkdownCompositePsiElementBase.class);
         assert element != null;
         return StringUtil.shortenTextWithEllipsis(element.getText(), PRESENTABLE_TEXT_LENGTH, 0);

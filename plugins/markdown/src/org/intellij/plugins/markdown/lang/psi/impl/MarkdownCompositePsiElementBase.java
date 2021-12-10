@@ -45,7 +45,7 @@ public abstract class MarkdownCompositePsiElementBase extends ASTWrapperPsiEleme
     if (children.size() != 1) {
       return false;
     }
-    return children.iterator().next() instanceof MarkdownParagraphImpl;
+    return children.iterator().next() instanceof MarkdownParagraph;
   }
 
   @Override

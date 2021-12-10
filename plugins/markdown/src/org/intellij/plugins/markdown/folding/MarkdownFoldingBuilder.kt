@@ -37,9 +37,9 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
         super.visitList(list)
       }
 
-      override fun visitParagraph(paragraph: MarkdownParagraphImpl) {
+      override fun visitParagraph(paragraph: MarkdownParagraph) {
         val parent = paragraph.parent
-        if (parent is MarkdownBlockQuote && parent.childrenOfType<MarkdownParagraphImpl>().size <= 1) {
+        if (parent is MarkdownBlockQuote && parent.childrenOfType<MarkdownParagraph>().size <= 1) {
           return
         }
         addDescriptors(paragraph)

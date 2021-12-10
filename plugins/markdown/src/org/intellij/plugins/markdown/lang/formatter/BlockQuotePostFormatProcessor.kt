@@ -14,7 +14,7 @@ import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeS
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownBlockQuote
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraphImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 import org.intellij.plugins.markdown.util.hasType
 
@@ -53,7 +53,7 @@ internal class BlockQuotePostFormatProcessor: PostFormatProcessor {
     return custom.INSERT_QUOTE_ARROWS_ON_WRAP
   }
 
-  private fun processParagraph(paragraph: MarkdownParagraphImpl, level: Int) {
+  private fun processParagraph(paragraph: MarkdownParagraph, level: Int) {
     val firstChild = paragraph.firstChild ?: return
     val elements = firstChild.siblings(forward = true, withSelf = true).filter(this::shouldProcessTextElement)
     for (element in elements) {
@@ -73,7 +73,7 @@ internal class BlockQuotePostFormatProcessor: PostFormatProcessor {
     val children = firstChild.siblings(forward = true, withSelf = true)
     for (element in children) {
       when (element) {
-        is MarkdownParagraphImpl -> processParagraph(element, level)
+        is MarkdownParagraph -> processParagraph(element, level)
         is MarkdownBlockQuote -> processBlockQuote(element, level + 1)
       }
     }

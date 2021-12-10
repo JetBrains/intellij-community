@@ -7,7 +7,7 @@ Markdown file
         PsiElement(Markdown:Markdown:TEXT)('123')
     PsiWhiteSpace('\n')
     PsiWhiteSpace('\n')
-    MarkdownParagraphImpl(Markdown:PARAGRAPH)
+    MarkdownParagraph(Markdown:PARAGRAPH)
       PsiElement(Markdown:Markdown:TEXT)('Hello how are you')
     PsiWhiteSpace('\n')
     PsiWhiteSpace('\n')
