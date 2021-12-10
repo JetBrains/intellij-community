@@ -12,11 +12,11 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-public class MarkdownListImpl extends MarkdownCompositePsiElementBase {
+public class MarkdownList extends MarkdownCompositePsiElementBase {
   private static final String ORDERED_LIST_TEXT = "Ordered list";
   private static final String UNORDERED_LIST_TEXT = "Unordered list";
 
-  public MarkdownListImpl(@NotNull ASTNode node) {
+  public MarkdownList(@NotNull ASTNode node) {
     super(node);
   }
 

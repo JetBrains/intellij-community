@@ -32,7 +32,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
         element.acceptChildren(this)
       }
 
-      override fun visitList(list: MarkdownListImpl) {
+      override fun visitList(list: MarkdownList) {
         addDescriptors(list)
         super.visitList(list)
       }

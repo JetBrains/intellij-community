@@ -10,7 +10,7 @@ import org.intellij.plugins.markdown.editor.lists.ListRenumberUtils.renumberInBu
 import org.intellij.plugins.markdown.editor.lists.ListUtils.items
 import org.intellij.plugins.markdown.editor.lists.Replacement.Companion.replaceSafelyIn
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
 
 /**
@@ -24,8 +24,8 @@ internal class MarkdownListItemTabHandler(baseHandler: EditorActionHandler?) : L
   override fun doIndentUnindent(item: MarkdownListItemImpl, file: MarkdownFile, document: Document): Boolean {
     val itemInfo = ListItemInfo(item, document)
 
-    val list = item.parent as MarkdownListImpl
-    val prevList = list.siblings(forward = false, withSelf = false).filterIsInstance<MarkdownListImpl>().firstOrNull()
+    val list = item.parent as MarkdownList
+    val prevList = list.siblings(forward = false, withSelf = false).filterIsInstance<MarkdownList>().firstOrNull()
 
     val siblings = (prevList?.items ?: emptyList()) + list.items
 
@@ -40,10 +40,10 @@ internal class MarkdownListItemTabHandler(baseHandler: EditorActionHandler?) : L
   }
 
   override fun updateNumbering(item: MarkdownListItemImpl, file: MarkdownFile, document: Document) {
-    val list = item.parent as MarkdownListImpl
+    val list = item.parent as MarkdownList
     list.renumberInBulk(document, recursive = false, restart = list.items.first() == item)
 
     PsiDocumentManager.getInstance(file.project).commitDocument(document)
-    list.parentOfType<MarkdownListImpl>()?.renumberInBulk(document, recursive = false, restart = false)
+    list.parentOfType<MarkdownList>()?.renumberInBulk(document, recursive = false, restart = false)
   }
 }

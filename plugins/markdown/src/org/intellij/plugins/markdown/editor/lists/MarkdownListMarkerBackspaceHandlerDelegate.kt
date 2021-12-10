@@ -21,7 +21,7 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.items
 import org.intellij.plugins.markdown.editor.lists.ListUtils.list
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
@@ -103,7 +103,7 @@ internal class MarkdownListMarkerBackspaceHandlerDelegate : BackspaceHandlerDele
 
     val onlyMarkerLine =
       CharArrayUtil.shiftForward(document.text, item.markerElement!!.endOffset - 1, " \t") == document.getLineEndOffset(itemFirstLine)
-    val hasPreviousItem = item.parentsOfType<MarkdownListImpl>().last().items.first() != item
+    val hasPreviousItem = item.parentsOfType<MarkdownList>().last().items.first() != item
     return hasPreviousItem && nearEmptyLine && onlyMarkerLine
   }
 }

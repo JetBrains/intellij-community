@@ -12,7 +12,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parentOfType
 import com.intellij.util.text.CharArrayUtil
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
 
 internal object ListUtils {
@@ -65,10 +65,10 @@ internal object ListUtils {
     return indentStr.replace("\t", " ".repeat(tabSize))
   }
 
-  val MarkdownListImpl.items get() = children.filterIsInstance<MarkdownListItemImpl>()
+  val MarkdownList.items get() = children.filterIsInstance<MarkdownListItemImpl>()
 
-  val MarkdownListItemImpl.sublists get() = children.filterIsInstance<MarkdownListImpl>()
-  val MarkdownListItemImpl.list get() = parent as MarkdownListImpl
+  val MarkdownListItemImpl.sublists get() = children.filterIsInstance<MarkdownList>()
+  val MarkdownListItemImpl.list get() = parent as MarkdownList
 
   /**
    * Returns a marker of the item with leading whitespaces trimmed, and with a single space in the end.

@@ -17,7 +17,7 @@ public class MarkdownElementVisitor extends PsiElementVisitor {
     visitElement(paragraph);
   }
 
-  public void visitList(@NotNull MarkdownListImpl list) {
+  public void visitList(@NotNull MarkdownList list) {
     visitElement(list);
   }
 

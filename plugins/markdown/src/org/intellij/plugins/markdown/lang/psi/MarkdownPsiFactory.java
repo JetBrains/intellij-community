@@ -28,7 +28,7 @@ public enum MarkdownPsiFactory {
       return new MarkdownImage(node);
     }
     if (MarkdownTokenTypeSets.LISTS.contains(elementType)) {
-      return new MarkdownListImpl(node);
+      return new MarkdownList(node);
     }
     if (elementType == MarkdownElementTypes.LIST_ITEM) {
       return new MarkdownListItemImpl(node);

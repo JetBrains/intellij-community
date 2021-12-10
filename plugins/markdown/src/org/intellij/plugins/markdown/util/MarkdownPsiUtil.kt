@@ -15,7 +15,7 @@ import org.intellij.plugins.markdown.lang.MarkdownLanguage
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderImpl
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
 
 internal object MarkdownPsiUtil {
@@ -89,7 +89,7 @@ internal object MarkdownPsiUtil {
   fun isSimpleNestedList(itemChildren: Array<PsiElement>) =
     itemChildren.size == 2 &&
     PsiUtilCore.getElementType(itemChildren[0]) == MarkdownElementTypes.PARAGRAPH &&
-    itemChildren[1] is MarkdownListImpl
+    itemChildren[1] is MarkdownList
 
   /*
    * nextHeaderConsumer 'null' means reaching EOF
@@ -106,7 +106,7 @@ internal object MarkdownPsiUtil {
     val isListsVisible = Registry.`is`("markdown.structure.view.list.visibility")
     when {
       myElement is MarkdownHeaderImpl -> processHeader(structureContainer, myElement, myElement, consumer, nextHeaderConsumer)
-      myElement is MarkdownListImpl && isListsVisible -> processList(myElement, consumer)
+      myElement is MarkdownList && isListsVisible -> processList(myElement, consumer)
       myElement is MarkdownListItemImpl && isListsVisible -> {
         if (!myElement.hasTrivialChildren()) {
           processListItem(myElement, consumer)
