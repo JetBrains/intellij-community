@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("JAVA_MODULE_DOES_NOT_EXPORT_PACKAGE")
 
 package com.intellij.codeInspection.javaDoc
@@ -126,7 +126,7 @@ class JavadocHtmlLintAnnotator : ExternalAnnotator<JavadocHtmlLintAnnotator.Info
 
     parameters.charset = file.charset
     parameters.vmParametersList.addProperty("user.language", "en")
-    parameters.mainClass = "com.sun.tools.doclint.DocLint"
+    parameters.mainClass = if (JavaSdkUtil.isJdkAtLeast(jdk, JavaSdkVersion.JDK_16)) "jdk.javadoc.internal.doclint.DocLint" else "com.sun.tools.doclint.DocLint"
     parameters.programParametersList.add(lintOptions)
     parameters.programParametersList.add(copy.path)
 
