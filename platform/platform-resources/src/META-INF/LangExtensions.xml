@@ -685,7 +685,6 @@
     <selectInTarget implementation="com.intellij.ide.navigationToolbar.SelectInNavBarTarget"/>
     <selectInTarget implementation="com.intellij.ide.impl.StructureViewSelectInTarget"/>
     <selectInTarget implementation="com.intellij.ide.impl.ProjectViewSelectInExplorerTarget"/>
-    <selectInTarget implementation="com.intellij.ide.favoritesTreeView.FavoritesViewSelectInTarget"/>
 
     <elementLookupRenderer implementation="com.intellij.codeInsight.template.impl.TemplateLookupRenderer"/>
 
@@ -925,6 +924,7 @@
                 factoryClass="com.intellij.ide.bookmark.ui.BookmarksViewFactory" order="after Structure"/>
     <projectService serviceImplementation="com.intellij.ide.bookmark.ui.BookmarksViewStateComponent"/>
     <editorFactoryListener implementation="com.intellij.ide.bookmark.GutterLineBookmarkUpdater"/>
+    <selectInTarget implementation="com.intellij.ide.bookmark.ui.BookmarksSelectInTarget"/>
     <actionPromoter implementation="com.intellij.ide.bookmark.actions.NodeMoveActionPromoter"/>
 
     <toolWindow id="TODO" anchor="bottom" icon="AllIcons.Toolwindows.ToolWindowTodo"
