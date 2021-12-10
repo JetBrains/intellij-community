@@ -12,7 +12,7 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
 import org.intellij.plugins.markdown.util.hasType
 
-class MarkdownImageImpl(node: ASTNode): ASTWrapperPsiElement(node), MarkdownPsiElement {
+class MarkdownImage(node: ASTNode): ASTWrapperPsiElement(node), MarkdownPsiElement {
   val exclamationMark: PsiElement?
     get() = firstChild
 
@@ -59,7 +59,7 @@ class MarkdownImageImpl(node: ASTNode): ASTWrapperPsiElement(node), MarkdownPsiE
     /**
      * Useful for determining if some element is an actual image by it's leaf child.
      */
-    fun getByLeadingExclamationMark(exclamationMark: PsiElement): MarkdownImageImpl? {
+    fun getByLeadingExclamationMark(exclamationMark: PsiElement): MarkdownImage? {
       if (!exclamationMark.hasType(MarkdownTokenTypes.EXCLAMATION_MARK)) {
         return null
       }
@@ -67,7 +67,7 @@ class MarkdownImageImpl(node: ASTNode): ASTWrapperPsiElement(node), MarkdownPsiE
       if (!image.hasType(MarkdownElementTypes.IMAGE) || image.firstChild != exclamationMark) {
         return null
       }
-      return image as? MarkdownImageImpl
+      return image as? MarkdownImage
     }
   }
 }

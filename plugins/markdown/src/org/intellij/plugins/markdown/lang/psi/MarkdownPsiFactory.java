@@ -25,7 +25,7 @@ public enum MarkdownPsiFactory {
       return ((MarkdownCodeFenceImpl)node);
     }
     if (elementType == MarkdownElementTypes.IMAGE) {
-      return new MarkdownImageImpl(node);
+      return new MarkdownImage(node);
     }
     if (MarkdownTokenTypeSets.LISTS.contains(elementType)) {
       return new MarkdownListImpl(node);

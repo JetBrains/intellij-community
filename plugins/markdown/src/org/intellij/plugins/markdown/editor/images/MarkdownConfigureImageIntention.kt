@@ -11,7 +11,7 @@ import com.intellij.psi.html.HtmlTag
 import com.intellij.psi.util.parentOfType
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownLanguage
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImageImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
 
 internal class MarkdownConfigureImageIntention: PsiElementBaseIntentionAction() {
   override fun getFamilyName(): String = text
@@ -43,7 +43,7 @@ internal class MarkdownConfigureImageIntention: PsiElementBaseIntentionAction() 
     private val searchFunctions by lazy { arrayOf(::findForMarkdown, ::findForHtml, ::findForTextHtml) }
 
     private fun findForMarkdown(element: PsiElement): Pair<PsiElement, ConfigureImageLineMarkerProviderBase<*>>? {
-      val targetElement = element.parentOfType<MarkdownImageImpl>(withSelf = true) ?: return null
+      val targetElement = element.parentOfType<MarkdownImage>(withSelf = true) ?: return null
       return targetElement to markdownProvider
     }
 
