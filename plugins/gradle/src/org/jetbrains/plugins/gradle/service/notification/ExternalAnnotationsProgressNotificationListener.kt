@@ -3,8 +3,13 @@ package org.jetbrains.plugins.gradle.service.notification
 
 import java.util.*
 
+/**
+ * Defines contract for callback to listen external annotations resolving notifications.
+ *
+ * @author Viktor Noskin
+ */
 interface ExternalAnnotationsProgressNotificationListener : EventListener {
   fun onStartResolve(id: ExternalAnnotationsTaskId)
 
-  fun onCancelResolve(id: ExternalAnnotationsTaskId)
+  fun onFinishResolve(id: ExternalAnnotationsTaskId)
 }

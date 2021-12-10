@@ -48,7 +48,7 @@ class ExternalAnnotationsDataService: AbstractProjectDataService<LibraryData, Li
 
     externalAnnotationNotificationManager.onStartResolve(ExternalAnnotationsTaskId.of(targetDataKey, project))
     resolveProvidedAnnotations(providedAnnotations, project) {
-      externalAnnotationNotificationManager.onCancelResolve(ExternalAnnotationsTaskId.of(targetDataKey, project))
+      externalAnnotationNotificationManager.onFinishResolve(ExternalAnnotationsTaskId.of(targetDataKey, project))
     }
   }
   companion object {
@@ -84,7 +84,7 @@ class ExternalAnnotationsModuleLibrariesService: AbstractProjectDataService<Modu
 
     externalAnnotationNotificationManager.onStartResolve(ExternalAnnotationsTaskId.of(targetDataKey, project))
     resolveProvidedAnnotations(providedAnnotations, project) {
-      externalAnnotationNotificationManager.onCancelResolve(ExternalAnnotationsTaskId.of(targetDataKey, project))
+      externalAnnotationNotificationManager.onFinishResolve(ExternalAnnotationsTaskId.of(targetDataKey, project))
     }
   }
 }
@@ -122,21 +122,24 @@ fun resolveProvidedAnnotations(providedAnnotations: Map<Library, Collection<Anno
   if (providedAnnotations.isNotEmpty()) {
     val total = providedAnnotations.map { it.value.size }.sum().toDouble()
     runBackgroundableTask(GradleBundle.message("gradle.tasks.annotations.title")) { indicator ->
-      indicator.isIndeterminate = false
-      val resolvers = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList
-      var index = 0
-      providedAnnotations.forEach { (lib, locations) ->
-        indicator.text = GradleBundle.message("gradle.tasks.annotations.looking.for", lib.name)
-        locations.forEach locations@ { location ->
-          if (locationsToSkip.contains(location)) return@locations
-          if (!resolvers.fold(false) { acc, res -> acc || res.resolve(project, lib, location) } ) {
-             locationsToSkip.add(location)
+      try {
+        indicator.isIndeterminate = false
+        val resolvers = ExternalAnnotationsArtifactsResolver.EP_NAME.extensionList
+        var index = 0
+        providedAnnotations.forEach { (lib, locations) ->
+          indicator.text = GradleBundle.message("gradle.tasks.annotations.looking.for", lib.name)
+          locations.forEach locations@ { location ->
+            if (locationsToSkip.contains(location)) return@locations
+            if (!resolvers.fold(false) { acc, res -> acc || res.resolve(project, lib, location) } ) {
+               locationsToSkip.add(location)
+            }
+            index++
+            indicator.fraction = index / total
           }
-          index++
-          indicator.fraction = index / total
         }
+      } finally {
+        onResolveCompleted()
       }
-      onResolveCompleted()
     }
   } else {
     onResolveCompleted()
