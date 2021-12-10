@@ -14,7 +14,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.execute
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension.Companion.matches
 import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils.getContent
-import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
+import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
@@ -64,7 +64,7 @@ class MarkdownRunLineMarkersProvider : RunLineMarkerContributor() {
 
 
   private fun processBlock(lang: String, element: PsiElement): Info? {
-    val language = LanguageGuesser.guessLanguageForInjection(lang)
+    val language = CodeFenceLanguageGuesser.guessLanguageForInjection(lang)
     val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull { it.isApplicable(language) } ?: return null
     val text = getContent(element.parent as MarkdownCodeFence, false)
       ?.fold(StringBuilder()) { acc, psiElement -> acc.append(psiElement.text) }

@@ -10,7 +10,7 @@ import org.intellij.markdown.ast.ASTNode
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.extensions.jcef.commandRunner.CommandRunnerExtension
-import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
+import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.ui.preview.html.DefaultCodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil
 import java.lang.ref.SoftReference
@@ -39,7 +39,7 @@ internal class MarkdownCodeFencePreviewHighlighter : CodeFenceGeneratingProvider
   private val currentFile: ThreadLocal<VirtualFile?> = ThreadLocal()
 
   override fun isApplicable(language: String): Boolean {
-    return LanguageGuesser.guessLanguageForInjection(language) != null
+    return CodeFenceLanguageGuesser.guessLanguageForInjection(language) != null
   }
 
   fun generateHtmlForFile(language: String, raw: String, node: ASTNode, file: VirtualFile): String {
@@ -50,7 +50,7 @@ internal class MarkdownCodeFencePreviewHighlighter : CodeFenceGeneratingProvider
   }
 
   override fun generateHtml(language: String, raw: String, node: ASTNode): String {
-    val lang = LanguageGuesser.guessLanguageForInjection(language) ?: return DefaultCodeFenceGeneratingProvider.escape(raw)
+    val lang = CodeFenceLanguageGuesser.guessLanguageForInjection(language) ?: return DefaultCodeFenceGeneratingProvider.escape(raw)
 
     val md5 = MarkdownUtil.md5(raw, language)
 

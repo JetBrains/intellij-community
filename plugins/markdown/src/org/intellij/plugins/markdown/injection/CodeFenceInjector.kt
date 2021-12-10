@@ -7,7 +7,7 @@ import com.intellij.lang.injection.MultiHostRegistrar
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.editor.MarkdownEnterHandler
-import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
+import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.formatter.blocks.MarkdownFormattingBlock
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
@@ -50,7 +50,7 @@ internal open class CodeFenceInjector : MultiHostInjector {
 
   protected open fun findLangForInjection(element: MarkdownCodeFence): Language? {
     val name = element.fenceLanguage ?: return null
-    return LanguageGuesser.guessLanguageForInjection(name).takeIf {
+    return CodeFenceLanguageGuesser.guessLanguageForInjection(name).takeIf {
       MarkdownSettings.getInstance(element.project).areInjectionsEnabled
     }
   }

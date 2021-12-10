@@ -1,5 +1,5 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.intellij.plugins.markdown.injection.alias
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.intellij.plugins.markdown.injection.aliases
 
 import com.intellij.lang.Language
 import com.intellij.lang.LanguageUtil
@@ -13,7 +13,7 @@ import org.intellij.plugins.markdown.injection.CodeFenceLanguageProvider
  * It would perform search by aliases, by ids and in [EmbeddedTokenTypesProvider]
  * case-insensitively
  */
-internal object LanguageGuesser {
+internal object CodeFenceLanguageGuesser {
   val customProviders: List<CodeFenceLanguageProvider>
     get() = CodeFenceLanguageProvider.EP_NAME.extensionList
 
@@ -41,7 +41,7 @@ internal object LanguageGuesser {
    */
   @JvmStatic
   private fun guessLanguage(value: String): Language? {
-    val name = LanguageInfoString.findId(value)
+    val name = CodeFenceLanguageAliases.findId(value)
 
     for (provider in customProviders) {
       val lang = provider.getLanguageByInfoString(name)
