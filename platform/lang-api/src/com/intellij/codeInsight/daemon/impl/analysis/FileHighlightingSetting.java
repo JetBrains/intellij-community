@@ -17,8 +17,12 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 public enum FileHighlightingSetting {
+  /**
+   * @deprecated Do not use. For "do not run highlighting, do not run inspections" setting use {@link #SKIP_HIGHLIGHTING}
+   */
+  @Deprecated
   NONE,
-  SKIP_HIGHLIGHTING,
-  FORCE_HIGHLIGHTING,
-  SKIP_INSPECTION
+  SKIP_HIGHLIGHTING,  // do not run highlighting/annotators nor inspections
+  FORCE_HIGHLIGHTING, // do run everything
+  SKIP_INSPECTION     // run everything except inspections
 }
