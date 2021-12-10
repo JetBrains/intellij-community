@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 @State(name = "HighlightingSettingsPerFile", storages = @Storage(StoragePathMacros.WORKSPACE_FILE))
 public class HighlightingSettingsPerFile extends HighlightingLevelManager implements PersistentStateComponent<Element> {
@@ -36,16 +37,16 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
   private final MessageBus myBus;
   private final Set<String> vcsIgnoreFileNames;
 
+  private final Map<VirtualFile, FileHighlightingSetting[]> myHighlightSettings = new HashMap<>();
+
   public HighlightingSettingsPerFile(@NotNull Project project, @NotNull MessageBus bus) {
     myBus = bus;
     vcsIgnoreFileNames = VcsFacade.getInstance().getVcsIgnoreFileNames(project);
   }
 
-  public static HighlightingSettingsPerFile getInstance(Project project) {
+  public static HighlightingSettingsPerFile getInstance(@NotNull Project project) {
     return (HighlightingSettingsPerFile)project.getService(HighlightingLevelManager.class);
   }
-
-  private final Map<VirtualFile, FileHighlightingSetting[]> myHighlightSettings = new HashMap<>();
 
   private static int getRootIndex(@NotNull PsiFile file) {
     FileViewProvider provider = file.getViewProvider();
@@ -66,13 +67,13 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
   public FileHighlightingSetting getHighlightingSettingForRoot(@NotNull PsiElement root) {
     PsiFile containingFile = root.getContainingFile();
     VirtualFile virtualFile = containingFile.getVirtualFile();
+    if (virtualFile == null) return FileHighlightingSetting.FORCE_HIGHLIGHTING;
     FileHighlightingSetting[] fileHighlightingSettings = myHighlightSettings.get(virtualFile);
     int index = getRootIndex(containingFile);
-
-    if (fileHighlightingSettings != null && fileHighlightingSettings.length > index) {
+    if (fileHighlightingSettings != null && index < fileHighlightingSettings.length) {
       return fileHighlightingSettings[index];
     }
-    return virtualFile == null ? FileHighlightingSetting.FORCE_HIGHLIGHTING : getDefaultHighlightingSetting(root.getProject(), virtualFile);
+    return getDefaultHighlightingSetting(root.getProject(), virtualFile);
   }
 
   @NotNull
@@ -101,8 +102,12 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     if (virtualFile == null) return;
     FileHighlightingSetting[] defaults = myHighlightSettings.get(virtualFile);
     int rootIndex = getRootIndex(containingFile);
-    if (defaults != null && rootIndex >= defaults.length) defaults = null;
-    if (defaults == null) defaults = getDefaults(containingFile);
+    if (defaults != null && rootIndex >= defaults.length) {
+      defaults = null;
+    }
+    if (defaults == null) {
+      defaults = getDefaults(containingFile);
+    }
     defaults[rootIndex] = setting;
     boolean toRemove = true;
     for (FileHighlightingSetting aDefault : defaults) {
@@ -186,12 +191,10 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
   }
 
   public int countRoots(@NotNull FileHighlightingSetting setting) {
-    int count = 0;
-    for (FileHighlightingSetting[] settingsForRoots : myHighlightSettings.values()) {
-      for (FileHighlightingSetting settingForRoot : settingsForRoots) {
-        if (settingForRoot == setting) count++;
-      }
-    }
-    return count;
+    return myHighlightSettings.values()
+      .stream()
+      .flatMap(array -> Stream.of(array))
+      .mapToInt(s -> s == setting ? 1 : 0)
+      .sum();
   }
 }

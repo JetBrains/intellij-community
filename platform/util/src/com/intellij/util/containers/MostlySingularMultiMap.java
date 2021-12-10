@@ -15,7 +15,7 @@ import java.util.stream.Stream;
 public class MostlySingularMultiMap<K, V> implements Serializable {
   private static final long serialVersionUID = 2784473565881807109L;
 
-  protected final Map<K, Object> myMap;
+  protected final Map<K, Object> myMap; // K -> V|ValueList<V>
 
   public MostlySingularMultiMap() {
     myMap = CollectionFactory.createSmallMemoryFootprintMap();
