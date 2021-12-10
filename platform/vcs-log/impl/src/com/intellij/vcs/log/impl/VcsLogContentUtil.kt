@@ -191,6 +191,12 @@ object VcsLogContentUtil {
     return selectMainLog(toolWindow.contentManager)
   }
 
+  /**
+   * Show given commit in the changes view tool window in the log tab matching a given predicate:
+   * - Try using one of the currently selected tabs if possible.
+   * - Otherwise try main log tab.
+   * - Otherwise create a new tab without filters and show commit there.
+   */
   private suspend fun showCommitInLogTab(project: Project, hash: Hash, root: VirtualFile,
                                          requestFocus: Boolean, predicate: (MainVcsLogUi) -> Boolean): MainVcsLogUi? {
     val logInitFuture = VcsProjectLog.waitWhenLogIsReady(project)
@@ -217,10 +223,13 @@ object VcsLogContentUtil {
     val selectedUis = manager.getVisibleLogUis(VcsLogManager.LogWindowKind.TOOL_WINDOW).filterIsInstance<MainVcsLogUi>()
     selectedUis.find { ui -> predicate(ui) && ui.showCommit(hash, root, requestFocus) }?.let { return it }
 
-    if (selectedUis.isEmpty() && isMainLogTab(window.contentManager.selectedContent)) {
-      // main log tab is already selected, just need to wait for initialization
-      val mainLogUi = VcsLogContentProvider.getInstance(project)!!.waitMainUiCreation().await()
-      if (mainLogUi != null && predicate(mainLogUi) && mainLogUi.showCommit(hash, root, requestFocus)) return mainLogUi
+    val mainLogUi = VcsLogContentProvider.getInstance(project)!!.waitMainUiCreation().await()
+    if (!selectedUis.contains(mainLogUi)) {
+      mainLogUi.refresher.setValid(true, false) // since main ui is not visible, it needs to be validated to find the commit
+      if (predicate(mainLogUi) && mainLogUi.showCommit(hash, root, requestFocus)) {
+        selectMainLog(window.contentManager)
+        return mainLogUi
+      }
     }
 
     val newUi = VcsProjectLog.getInstance(project).openLogTab(VcsLogFilterObject.EMPTY_COLLECTION,
