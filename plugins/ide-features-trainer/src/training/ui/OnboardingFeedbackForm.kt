@@ -3,6 +3,7 @@ package training.ui
 
 import com.intellij.feedback.FEEDBACK_REPORT_ID_KEY
 import com.intellij.feedback.FeedbackRequestType
+import com.intellij.feedback.dialog.COMMON_FEEDBACK_SYSTEM_INFO_VERSION
 import com.intellij.feedback.dialog.CommonFeedbackSystemInfoData
 import com.intellij.feedback.dialog.showFeedbackSystemInfoDialog
 import com.intellij.feedback.submitGeneralFeedback
@@ -50,6 +51,8 @@ import javax.swing.text.html.HTMLDocument
 private const val FEEDBACK_CONTENT_WIDTH = 500
 private const val SUB_OFFSET = 20
 
+/** Increase the additional number when onboarding feedback format is changed */
+private const val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 0
 
 fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData: OnboardingFeedbackData) {
   StatisticBase.logOnboardingFeedbackNotification(getFeedbackEntryPlace(project))
@@ -194,6 +197,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
 
     val collectedData = buildJsonObject {
       put(FEEDBACK_REPORT_ID_KEY, onboardingFeedbackData.feedbackReportId)
+      put("format_version", FEEDBACK_JSON_VERSION + onboardingFeedbackData.additionalFeedbackFormatVersion)
       for (function in saver) {
         function()
       }
