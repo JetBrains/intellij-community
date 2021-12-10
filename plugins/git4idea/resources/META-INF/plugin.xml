@@ -223,7 +223,7 @@
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="first"/>
     </action>
 
-    <action id="Vcs.ShowMoreActions" class="git4idea.actions.GitQuickActionsToolbarPopup" icon="AllIcons.Actions.More">
+    <action id="Vcs.Toolbar.ShowMoreActions" class="git4idea.actions.GitQuickActionsToolbarPopup" internal="true">
       <add-to-group group-id="SegmentedVcsActionsBarGroup" anchor="last"/>
     </action>
 
@@ -518,6 +518,7 @@
     <projectService serviceInterface="git4idea.branch.GitBrancher"
                     serviceImplementation="git4idea.branch.GitBrancherImpl"/>
     <projectService serviceInterface="git4idea.fetch.GitFetchSupport" serviceImplementation="git4idea.fetch.GitFetchSupportImpl" />
+    <projectService serviceImplementation="git4idea.actions.GitQuickActionsToolbarService" />
 
     <applicationService serviceImplementation="git4idea.config.GitVcsApplicationSettings"/>
     <applicationService serviceImplementation="git4idea.ssh.GitXmlRpcNativeSshService"/>

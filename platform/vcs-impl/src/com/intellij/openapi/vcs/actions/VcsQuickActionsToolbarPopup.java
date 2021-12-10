@@ -28,23 +28,6 @@ import java.util.Objects;
  */
 public class VcsQuickActionsToolbarPopup extends IconWithTextAction implements CustomComponentAction, DumbAware {
 
-  public VcsQuickActionsToolbarPopup() {
-    getTemplatePresentation().setText(VcsBundle.messagePointer("vcs.quicklist.popup.title"));
-  }
-
-  private static void showPopup(@NotNull AnActionEvent e, @NotNull ListPopup popup) {
-    InputEvent mouseEvent = e.getInputEvent();
-    if (mouseEvent instanceof MouseEvent) {
-      Object source = mouseEvent.getSource();
-      if (source instanceof JComponent) {
-        Point topLeftCorner = ((JComponent)source).getLocationOnScreen();
-        Point bottomLeftCorner = new Point(topLeftCorner.x, topLeftCorner.y + ((JComponent)source).getHeight());
-        popup.setLocation(bottomLeftCorner);
-        popup.show((JComponent)source);
-      }
-    }
-  }
-
   @NotNull
   @Override
   public JComponent createCustomComponent(@NotNull Presentation presentation, @NotNull String place) {
@@ -76,5 +59,18 @@ public class VcsQuickActionsToolbarPopup extends IconWithTextAction implements C
       action -> true, ActionPlaces.RUN_TOOLBAR_LEFT_SIDE);
 
     showPopup(e, popup);
+  }
+
+  private static void showPopup(@NotNull AnActionEvent e, @NotNull ListPopup popup) {
+    InputEvent mouseEvent = e.getInputEvent();
+    if (mouseEvent instanceof MouseEvent) {
+      Object source = mouseEvent.getSource();
+      if (source instanceof JComponent) {
+        Point topLeftCorner = ((JComponent)source).getLocationOnScreen();
+        Point bottomLeftCorner = new Point(topLeftCorner.x, topLeftCorner.y + ((JComponent)source).getHeight());
+        popup.setLocation(bottomLeftCorner);
+        popup.show((JComponent)source);
+      }
+    }
   }
 }

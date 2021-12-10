@@ -138,7 +138,7 @@ public class ActionButtonWithText extends ActionButton {
     int y2 = Math.max(iconR.y + iconR.height, textR.y + textR.height);
     Dimension rv = new Dimension(x2 - x1 + dx, y2 - y1 + dy);
 
-    rv.width += Math.max(basicSize.height - rv.height, 0);
+    rv.width += Math.max(basicSize.width - rv.width, 0);
     if (shallPaintDownArrow()) {
       rv.width += AllIcons.General.LinkDropTriangle.getIconWidth()  + JBUI.scale(TEXT_ARROW_SPACE);
     }

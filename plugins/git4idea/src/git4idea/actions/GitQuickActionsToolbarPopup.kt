@@ -3,19 +3,18 @@ package git4idea.actions
 
 import com.intellij.dvcs.repo.VcsRepositoryMappingListener
 import com.intellij.icons.AllIcons
-import com.intellij.ide.navigationToolbar.experimental.NewToolbarPaneListener
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
-import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.Service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.actions.VcsQuickActionsToolbarPopup
 import com.intellij.util.IconUtil
 import com.intellij.util.ui.JBInsets
-import git4idea.branch.GitBranchUtil
 import git4idea.i18n.GitBundle
+import git4idea.repo.GitRepositoryManager
 import java.awt.Color
 import java.awt.Dimension
 import java.awt.Insets
@@ -25,11 +24,16 @@ import javax.swing.JComponent
 /**
  * Git implementation of the quick popup action
  */
-internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
+@Service
+class GitQuickActionsToolbarService {
+  var gitMappingUpdated = false
 
-  init {
-    templatePresentation.text = GitBundle.message("action.Vcs.ShowMoreActions.text")
+  companion object {
+    fun getInstance(project: Project): GitQuickActionsToolbarService = project.getService(GitQuickActionsToolbarService::class.java)
   }
+}
+
+internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
 
   private inner class MyActionButtonWithText(
     action: AnAction,
@@ -47,33 +51,37 @@ internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
   }
 
   override fun update(e: AnActionEvent) {
-    val repo = e.project?.let { GitBranchUtil.getCurrentRepository(it) }
-    val noRepo = repo == null
-
+    e.project ?: return
     val presentation = e.presentation
-    presentation.icon = if (noRepo) {
+    val instance = GitQuickActionsToolbarService.getInstance(e.project!!)
+    if (!instance.gitMappingUpdated) {
+      presentation.isEnabledAndVisible = false
+      return
+    }
+    else {
+      presentation.isEnabledAndVisible = true
+    }
+
+    val repo = GitRepositoryManager.getInstance(e.project!!).repositories.isNotEmpty()
+
+    presentation.icon = if (repo) {
+      AllIcons.Actions.More.toSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+    }
+    else {
       AllIcons.Vcs.BranchNode
     }
-    else {
-      templatePresentation.icon.toSize(ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
-    }
 
-    presentation.text = if (noRepo) {
-      templatePresentation.text + " "
+    presentation.text = if (repo) {
+      ""
     }
     else {
-      ""
+      GitBundle.message("toolbar.vcs.show.more.actions") + " "
     }
   }
 
-  internal class MyGitRepositoryListener(private val project: Project) : VcsRepositoryMappingListener {
-
+  class MyGitRepositoryListener(val project: Project) : VcsRepositoryMappingListener {
     override fun mappingChanged() {
-      ApplicationManager.getApplication().invokeLater(Runnable {
-        project.messageBus
-          .syncPublisher(NewToolbarPaneListener.TOPIC)
-          .stateChanged()
-      }, project.disposed)
+      GitQuickActionsToolbarService.getInstance(project).gitMappingUpdated = true
     }
   }
 
