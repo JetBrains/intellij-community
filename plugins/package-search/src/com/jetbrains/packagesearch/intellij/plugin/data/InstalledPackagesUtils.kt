@@ -4,6 +4,7 @@ import com.intellij.buildsystem.model.unified.UnifiedCoordinates
 import com.intellij.buildsystem.model.unified.UnifiedDependency
 import com.intellij.openapi.application.readAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.io.DigestUtil
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModule
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ProjectModuleOperationProvider
@@ -37,7 +38,6 @@ import kotlinx.serialization.encoding.Encoder
 import kotlinx.serialization.encoding.decodeStructure
 import kotlinx.serialization.encoding.encodeStructure
 import kotlinx.serialization.json.Json
-import org.apache.commons.codec.binary.Hex
 import java.nio.file.Path
 import java.nio.file.Paths
 import kotlin.io.path.absolutePathString
@@ -110,7 +110,7 @@ internal suspend fun ProjectModule.installedDependencies(cacheDirectory: Path, j
     }
 
     val sha256Deferred: Deferred<String> = async(Dispatchers.IO) {
-        Hex.encodeHexString(DigestUtil.sha256().digest(buildFile.contentsToByteArray()))
+        StringUtil.toHexString(DigestUtil.sha256().digest(buildFile.contentsToByteArray()))
     }
 
     val cache = withContext(Dispatchers.IO) {

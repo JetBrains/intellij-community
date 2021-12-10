@@ -257,8 +257,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         // allows rerunning PKGS inspections on already opened files
         // when the data is finally available or changes for PackageUpdateInspection
         // or when a build file changes
-        merge(packageUpgradesStateFlow)
-            .onEach { DaemonCodeAnalyzer.getInstance(project).restart() }
+        packageUpgradesStateFlow.onEach { DaemonCodeAnalyzer.getInstance(project).restart() }
             .launchIn(this)
 
         coroutineContext.job.invokeOnCompletion { installedDependenciesExecutor.close() }
