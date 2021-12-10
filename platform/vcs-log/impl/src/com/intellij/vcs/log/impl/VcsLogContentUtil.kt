@@ -214,11 +214,10 @@ object VcsLogContentUtil {
       }
     }
 
-    val visibleLogUis = manager.getVisibleLogUis(VcsLogManager.LogWindowKind.TOOL_WINDOW)
-    val selectedUi = visibleLogUis.filterIsInstance<MainVcsLogUi>().firstOrNull() // can't filter out update logs
-    if (selectedUi != null && predicate(selectedUi) && selectedUi.showCommit(hash, root, requestFocus)) return selectedUi
+    val selectedUis = manager.getVisibleLogUis(VcsLogManager.LogWindowKind.TOOL_WINDOW).filterIsInstance<MainVcsLogUi>()
+    selectedUis.find { ui -> predicate(ui) && ui.showCommit(hash, root, requestFocus) }?.let { return it }
 
-    if (selectedUi == null && isMainLogTab(window.contentManager.selectedContent)) {
+    if (selectedUis.isEmpty() && isMainLogTab(window.contentManager.selectedContent)) {
       // main log tab is already selected, just need to wait for initialization
       val mainLogUi = VcsLogContentProvider.getInstance(project)!!.waitMainUiCreation().await()
       if (mainLogUi != null && predicate(mainLogUi) && mainLogUi.showCommit(hash, root, requestFocus)) return mainLogUi
