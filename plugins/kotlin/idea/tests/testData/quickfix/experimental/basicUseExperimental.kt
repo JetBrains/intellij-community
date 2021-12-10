@@ -1,4 +1,4 @@
-// "Opt in for 'MyExperimentalAPI' in 'bar'" "true"
+// "Opt in for 'MyExperimentalAPI' on 'bar'" "true"
 // PRIORITY: HIGH
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
 // WITH_RUNTIME

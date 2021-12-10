@@ -1,4 +1,4 @@
-// "Opt in for 'B' in 'root'" "true"
+// "Opt in for 'B' on 'root'" "true"
 // WITH_RUNTIME
 @RequiresOptIn
 annotation class A
