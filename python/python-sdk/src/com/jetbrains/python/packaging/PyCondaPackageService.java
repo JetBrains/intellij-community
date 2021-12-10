@@ -166,31 +166,29 @@ public class PyCondaPackageService implements PersistentStateComponent<PyCondaPa
   @Nullable
   private static String getCondaExecutableByName(@NotNull final String condaName) {
     final VirtualFile userHome = LocalFileSystem.getInstance().findFileByPath(SystemProperties.getUserHome().replace('\\', '/'));
-    if (userHome != null) {
-      for (String root : CONDA_DEFAULT_ROOTS) {
-        VirtualFile condaFolder = userHome.findChild(root);
-        String executableFile = findExecutable(condaName, condaFolder);
+
+    for (String root : CONDA_DEFAULT_ROOTS) {
+      VirtualFile condaFolder = userHome == null ? null : userHome.findChild(root);
+      String executableFile = findExecutable(condaName, condaFolder);
+      if (executableFile != null) return executableFile;
+
+      //noinspection IfStatementWithIdenticalBranches
+      if (SystemInfo.isWindows) {
+        condaFolder = userHome == null ? null : userHome.findFileByRelativePath("AppData\\Local\\Continuum\\" + root);
+        executableFile = findExecutable(condaName, condaFolder);
         if (executableFile != null) return executableFile;
-        if (SystemInfo.isWindows) {
-          final VirtualFile appData = userHome.findFileByRelativePath("AppData\\Local\\Continuum\\" + root);
-          executableFile = findExecutable(condaName, appData);
-          if (executableFile != null) return executableFile;
 
-          condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\ProgramData\\" + root);
-          executableFile = findExecutable(condaName, condaFolder);
-          if (executableFile != null) return executableFile;
+        condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\ProgramData\\" + root);
+        executableFile = findExecutable(condaName, condaFolder);
+        if (executableFile != null) return executableFile;
 
-          condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\" + root);
-          executableFile = findExecutable(condaName, condaFolder);
-          if (executableFile != null) return executableFile;
-        }
+        condaFolder = LocalFileSystem.getInstance().findFileByPath("C:\\" + root);
+        executableFile = findExecutable(condaName, condaFolder);
+        if (executableFile != null) return executableFile;
       }
-    }
-
-    if (!SystemInfo.isWindows) {
-      for (String root : CONDA_DEFAULT_ROOTS) {
-        final VirtualFile systemCondaFolder = LocalFileSystem.getInstance().findFileByPath("/opt/" + root);
-        final String executableFile = findExecutable(condaName, systemCondaFolder);
+      else {
+        condaFolder = LocalFileSystem.getInstance().findFileByPath("/opt/" + root);
+        executableFile = findExecutable(condaName, condaFolder);
         if (executableFile != null) return executableFile;
       }
     }
