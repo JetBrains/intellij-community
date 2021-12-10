@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.application.AppUIExecutor
 import com.intellij.openapi.application.impl.coroutineDispatchingContext
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.runBackgroundableTask
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.project.Project
@@ -22,10 +23,10 @@ import com.intellij.util.Consumer
 import com.intellij.util.ContentUtilEx
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
-import com.intellij.vcs.log.Hash
-import com.intellij.vcs.log.VcsLogBundle
-import com.intellij.vcs.log.VcsLogFilterCollection
-import com.intellij.vcs.log.VcsLogUi
+import com.intellij.vcs.log.*
+import com.intellij.vcs.log.data.DataPack
+import com.intellij.vcs.log.data.DataPackChangeListener
+import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.impl.VcsLogManager.VcsLogUiFactory
 import com.intellij.vcs.log.ui.MainVcsLogUi
 import com.intellij.vcs.log.ui.VcsLogPanel
@@ -47,6 +48,8 @@ import kotlin.coroutines.cancellation.CancellationException
  * Utility methods to operate VCS Log tabs as [Content]s of the [ContentManager] of the VCS toolwindow.
  */
 object VcsLogContentUtil {
+  private val LOG = logger<VcsLogContentUtil>()
+
   private fun getLogUi(c: JComponent): VcsLogUiEx? {
     val uis = VcsLogPanel.getLogUis(c)
     require(uis.size <= 1) { "Component $c has more than one log ui: $uis" }
@@ -105,24 +108,18 @@ object VcsLogContentUtil {
   }
 
   private suspend fun jumpToRevision(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath): Boolean {
-    return runInCurrentOrCreateNewTab(project) { logUi ->
+    val logUi = showCommitInLogTab(project, hash, root, true) { logUi ->
       if (logUi.properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
           logUi.properties.get(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
           !logUi.properties.getFilterValues(VcsLogFilterCollection.STRUCTURE_FILTER.name).isNullOrEmpty()) {
         // Structure filter might prevent us from navigating to FilePath
-        return@runInCurrentOrCreateNewTab false
+        return@showCommitInLogTab false
       }
+      return@showCommitInLogTab true
+    } ?: return false
 
-      val jumpResult = VcsLogUtil.jumpToCommit(logUi, hash, root, true, true).await()
-      when (jumpResult) {
-        VcsLogUiEx.JumpResult.SUCCESS -> {
-          logUi.selectFilePath(filePath, true)
-          true
-        }
-        null, VcsLogUiEx.JumpResult.COMMIT_NOT_FOUND -> true
-        VcsLogUiEx.JumpResult.COMMIT_DOES_NOT_MATCH -> false
-      }
-    }
+    logUi.selectFilePath(filePath, true)
+    return true
   }
 
   @JvmStatic
@@ -194,38 +191,89 @@ object VcsLogContentUtil {
     return selectMainLog(toolWindow.contentManager)
   }
 
-  private suspend fun runInCurrentOrCreateNewTab(project: Project, consumer: suspend (MainVcsLogUi) -> Boolean): Boolean {
+  private suspend fun showCommitInLogTab(project: Project, hash: Hash, root: VirtualFile,
+                                         requestFocus: Boolean, predicate: (MainVcsLogUi) -> Boolean): MainVcsLogUi? {
     val logInitFuture = VcsProjectLog.waitWhenLogIsReady(project)
     if (!logInitFuture.isDone) {
       withContext(Dispatchers.IO) {
         logInitFuture.get()
       }
     }
+    val manager = VcsProjectLog.getInstance(project).logManager ?: return null
+    val isLogUpToDate = manager.isLogUpToDate
+    if (!manager.containsCommit(hash, root)) {
+      if (isLogUpToDate) return null
+      manager.waitForRefresh()
+      if (!manager.containsCommit(hash, root)) return null
+    }
 
-    val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return false
+    val window = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return null
     if (!window.isVisible) {
       suspendCancellableCoroutine<Unit> { continuation ->
         window.activate { continuation.resumeWith(Result.success(Unit)) }
       }
     }
 
-    val manager = VcsProjectLog.getInstance(project).logManager ?: return false
-
     val visibleLogUis = manager.getVisibleLogUis(VcsLogManager.LogWindowKind.TOOL_WINDOW)
     val selectedUi = visibleLogUis.filterIsInstance<MainVcsLogUi>().firstOrNull() // can't filter out update logs
-    if (selectedUi != null && consumer(selectedUi)) return true
+    if (selectedUi != null && predicate(selectedUi) && selectedUi.showCommit(hash, root, requestFocus)) return selectedUi
 
     if (selectedUi == null && isMainLogTab(window.contentManager.selectedContent)) {
       // main log tab is already selected, just need to wait for initialization
       val mainLogUi = VcsLogContentProvider.getInstance(project)!!.waitMainUiCreation().await()
-      if (mainLogUi != null && consumer(mainLogUi)) return true
+      if (mainLogUi != null && predicate(mainLogUi) && mainLogUi.showCommit(hash, root, requestFocus)) return mainLogUi
     }
 
     val newUi = VcsProjectLog.getInstance(project).openLogTab(VcsLogFilterObject.EMPTY_COLLECTION,
-                                                              VcsLogManager.LogWindowKind.TOOL_WINDOW)
-    if (newUi != null && consumer(newUi)) return true
+                                                              VcsLogManager.LogWindowKind.TOOL_WINDOW) ?: return null
+    if (newUi.showCommit(hash, root, requestFocus)) return newUi
+    return null
+  }
 
-    return false
+  private suspend fun MainVcsLogUi.showCommit(hash: Hash, root: VirtualFile,
+                                              requestFocus: Boolean): Boolean {
+    val jumpResult = VcsLogUtil.jumpToCommit(this, hash, root, true, requestFocus).await()
+    return when (jumpResult) {
+      VcsLogUiEx.JumpResult.SUCCESS -> true
+      null, VcsLogUiEx.JumpResult.COMMIT_NOT_FOUND -> {
+        LOG.warn("Commit $hash for $root not found in $this")
+        false
+      }
+      VcsLogUiEx.JumpResult.COMMIT_DOES_NOT_MATCH -> false
+    }
+  }
+
+  private fun VcsLogManager.containsCommit(hash: Hash, root: VirtualFile): Boolean {
+    if (!dataManager.storage.containsCommit(CommitId(hash, root))) return false
+
+    val permanentGraphInfo = dataManager.dataPack.permanentGraph as? PermanentGraphInfo<Int> ?: return true
+
+    val commitIndex = dataManager.storage.getCommitIndex(hash, root)
+    val nodeId = permanentGraphInfo.permanentCommitsInfo.getNodeId(commitIndex)
+    return nodeId != VcsLogUiEx.COMMIT_NOT_FOUND
+  }
+
+  private suspend fun VcsLogManager.waitForRefresh() {
+    suspendCancellableCoroutine<Unit> { continuation ->
+      val dataPackListener = object : DataPackChangeListener {
+        override fun onDataPackChange(newDataPack: DataPack) {
+          if (isLogUpToDate) {
+            dataManager.removeDataPackChangeListener(this)
+            continuation.resumeWith(Result.success(Unit))
+          }
+        }
+      }
+      dataManager.addDataPackChangeListener(dataPackListener)
+      if (isLogUpToDate) {
+        dataManager.removeDataPackChangeListener(dataPackListener)
+        continuation.resumeWith(Result.success(Unit))
+        return@suspendCancellableCoroutine
+      }
+
+      scheduleUpdate()
+
+      continuation.invokeOnCancellation { dataManager.removeDataPackChangeListener(dataPackListener) }
+    }
   }
 
   @JvmStatic
