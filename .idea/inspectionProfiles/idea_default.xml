@@ -500,6 +500,7 @@
     <inspection_tool class="LoggerInitializedWithForeignClass" enabled="true" level="WARNING" enabled_by_default="true">
       <option name="loggerClassName" value="org.apache.log4j.Logger,org.slf4j.LoggerFactory,org.apache.commons.logging.LogFactory,java.util.logging.Logger,org.apache.logging.log4j.LogManager,com.intellij.openapi.diagnostic.Logger" />
       <option name="loggerFactoryMethodName" value="getLogger,getLogger,getLog,getLogger,getLogger,getInstance" />
+      <option name="ignoreSuperClass" value="true" />
     </inspection_tool>
     <inspection_tool class="LoopStatementThatDoesntLoopJS" enabled="false" level="WARNING" enabled_by_default="false" />
     <inspection_tool class="MakoArgumentListInspection" enabled="false" level="WARNING" enabled_by_default="false" />
