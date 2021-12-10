@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -93,7 +93,7 @@ public final class PluginManagerCore {
    * Bundled plugins that were updated.
    * When we update a bundled plugin, it becomes non-bundled, so it is more difficult for analytics to use that data.
    */
-  private static Set<PluginId> ourShadowedBundledPlugins;
+  private static Set<PluginId> shadowedBundledPlugins;
 
   private static Boolean isRunningFromSources;
   private static volatile CompletableFuture<DescriptorListLoadingContext> descriptorListFuture;
@@ -406,7 +406,7 @@ public final class PluginManagerCore {
       future.cancel(false);
     }
     DisabledPluginsState.invalidate();
-    ourShadowedBundledPlugins = null;
+    shadowedBundledPlugins = null;
   }
 
   private static void logPlugins(@NotNull List<IdeaPluginDescriptorImpl> plugins,
@@ -960,7 +960,7 @@ public final class PluginManagerCore {
 
     ourPluginsToDisable = initResult.effectiveDisabledIds;
     ourPluginsToEnable = initResult.disabledRequiredIds;
-    ourShadowedBundledPlugins = result.shadowedBundledIds;
+    shadowedBundledPlugins = result.shadowedBundledIds;
 
     activity.end();
     activity.setDescription("plugin count: " + initResult.pluginSet.enabledPlugins.size());
@@ -1047,16 +1047,15 @@ public final class PluginManagerCore {
   @ApiStatus.Internal
   public static boolean processAllNonOptionalDependencyIds(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                                            @NotNull Function<PluginId, FileVisitResult> consumer) {
-    return processAllNonOptionalDependencies(rootDescriptor,
-                                             (IdeaPluginDescriptorImpl descriptor) -> consumer.apply(descriptor.getPluginId()));
+    return processAllNonOptionalDependencies(rootDescriptor, (IdeaPluginDescriptorImpl descriptor) -> {
+      return consumer.apply(descriptor.getPluginId());
+    });
   }
 
   @ApiStatus.Internal
   public static boolean processAllNonOptionalDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                                           @NotNull Function<IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
-    return processAllNonOptionalDependencies(rootDescriptor,
-                                             new HashSet<>(),
-                                             consumer);
+    return processAllNonOptionalDependencies(rootDescriptor, new HashSet<>(), consumer);
   }
 
   /**
@@ -1068,7 +1067,7 @@ public final class PluginManagerCore {
   public static boolean processAllNonOptionalDependencies(@NotNull IdeaPluginDescriptorImpl rootDescriptor,
                                                           @NotNull Set<IdeaPluginDescriptorImpl> depProcessed,
                                                           @NotNull Function<IdeaPluginDescriptorImpl, FileVisitResult> consumer) {
-    for (IdeaPluginDescriptorImpl descriptor : getPluginSet().getModuleGraph().getDependencies(rootDescriptor)) {
+    for (IdeaPluginDescriptorImpl descriptor : getPluginSet().moduleGraph.getDependencies(rootDescriptor)) {
       switch (consumer.apply(descriptor)) {
         case TERMINATE:
           return false;
@@ -1088,7 +1087,7 @@ public final class PluginManagerCore {
   }
 
   public static synchronized boolean isUpdatedBundledPlugin(@NotNull PluginDescriptor plugin) {
-    return ourShadowedBundledPlugins != null && ourShadowedBundledPlugins.contains(plugin.getPluginId());
+    return shadowedBundledPlugins != null && shadowedBundledPlugins.contains(plugin.getPluginId());
   }
 
   //<editor-fold desc="Deprecated stuff.">

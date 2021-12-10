@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package com.intellij.ide.plugins
@@ -126,7 +126,8 @@ private fun toCoreAwareComparator(comparator: Comparator<IdeaPluginDescriptorImp
   }
 }
 
-private fun getOrEmpty(map: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>, descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> {
+private fun getOrEmpty(map: Map<IdeaPluginDescriptorImpl, Collection<IdeaPluginDescriptorImpl>>,
+                       descriptor: IdeaPluginDescriptorImpl): Collection<IdeaPluginDescriptorImpl> {
   return map.getOrDefault(descriptor, Collections.emptyList())
 }
 
