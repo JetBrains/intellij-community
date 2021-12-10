@@ -17,7 +17,7 @@ class ExternalAnnotationsProgressNotificationManagerImpl : ExternalAnnotationsPr
   }
 
   override fun removeNotificationListener(listener: ExternalAnnotationsProgressNotificationListener) {
-    dispatcher.listeners.remove(listener)
+    dispatcher.removeListener(listener)
   }
 
   override fun onStartResolve(id: ExternalAnnotationsTaskId) {
