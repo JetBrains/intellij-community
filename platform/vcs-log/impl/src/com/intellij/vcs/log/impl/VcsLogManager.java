@@ -88,6 +88,27 @@ public class VcsLogManager implements Disposable {
     return myPostponableRefresher.isLogVisible();
   }
 
+  /**
+   * Checks if this Log has full data pack and there are no postponed refreshes. Does not check if there are refreshes in progress.
+   */
+  @ApiStatus.Internal
+  @RequiresEdt
+  public boolean isLogUpToDate() {
+    return myLogData.getDataPack().isFull() && !myPostponableRefresher.hasPostponedRoots();
+  }
+
+  /**
+   * Schedules Log initialization and update even when none on the log tabs is visible and power save mode is enabled.
+   *
+   * @see PostponableLogRefresher#canRefreshNow()
+   */
+  @ApiStatus.Internal
+  @RequiresEdt
+  public void scheduleUpdate() {
+    myLogData.initialize();
+    myPostponableRefresher.refreshPostponedRoots();
+  }
+
   @NotNull
   public VcsLogData getDataManager() {
     return myLogData;

@@ -95,7 +95,13 @@ public final class PostponableLogRefresher {
     }
   }
 
-  private void refreshPostponedRoots() {
+  @RequiresEdt
+  public boolean hasPostponedRoots() {
+    return !myRootsToRefresh.isEmpty();
+  }
+
+  @RequiresEdt
+  public void refreshPostponedRoots() {
     Set<VirtualFile> toRefresh = new HashSet<>(myRootsToRefresh);
     myRootsToRefresh.removeAll(toRefresh); // clear the set, but keep roots which could possibly arrive after collecting them in the var.
     myLogData.refresh(toRefresh);
