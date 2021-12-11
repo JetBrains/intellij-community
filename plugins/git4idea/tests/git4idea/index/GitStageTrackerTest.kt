@@ -145,6 +145,7 @@ class GitStageTrackerTest : GitSingleRepoTest() {
   private fun <T> runWithTrackerUpdate(name: String, function: () -> T): T {
     return tracker.futureUpdate(name).let { futureUpdate ->
       val result = function()
+      changeListManager.waitEverythingDoneInTestMode()
       futureUpdate.waitOrCancel()
       return@let result
     }
