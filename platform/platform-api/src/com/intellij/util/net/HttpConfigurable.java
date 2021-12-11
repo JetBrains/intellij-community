@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.net;
 
 import com.intellij.configurationStore.XmlSerializer;
@@ -62,6 +62,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public volatile boolean PROXY_AUTHENTICATION;
   public boolean KEEP_PROXY_PASSWORD;
   public transient String LAST_ERROR;
+  public transient String CHECK_CONNECTION_URL = "http://";
 
   private final Map<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new HashMap<>();
   private final Set<CommonProxy.HostInfo> myGenericCancelled = new HashSet<>();

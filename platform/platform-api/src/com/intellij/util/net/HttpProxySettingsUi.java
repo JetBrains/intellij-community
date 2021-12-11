@@ -60,8 +60,6 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
   private JCheckBox myPacUrlCheckBox;
   private JTextField myPacUrlTextField;
 
-  private String myCheckConnectionUrl = "http://";
-
   @Override
   public boolean isModified(@NotNull HttpConfigurable settings) {
     return !Comparing.strEqual(myProxyExceptions.getText().trim(), settings.PROXY_EXCEPTIONS) ||
@@ -128,16 +126,17 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
         return;
       }
 
+      final HttpConfigurable settings = HttpConfigurable.getInstance();
       final String title = IdeBundle.message("dialog.title.check.proxy.settings");
-      myCheckConnectionUrl =
+      final String url =
         Messages.showInputDialog(myMainPanel,
                                  IdeBundle.message("message.text.enter.url.to.check.connection"),
-                                 title, Messages.getQuestionIcon(), myCheckConnectionUrl, null);
-      if (StringUtil.isEmptyOrSpaces(myCheckConnectionUrl)) {
+                                 title, Messages.getQuestionIcon(), settings.CHECK_CONNECTION_URL, null);
+      if (StringUtil.isEmptyOrSpaces(url)) {
         return;
       }
 
-      final HttpConfigurable settings = HttpConfigurable.getInstance();
+      settings.CHECK_CONNECTION_URL = url;
       try {
         apply(settings);
       }
@@ -148,7 +147,7 @@ class HttpProxySettingsUi implements ConfigurableUi<HttpConfigurable> {
       final AtomicReference<IOException> exceptionReference = new AtomicReference<>();
       ProgressManager.getInstance().runProcessWithProgressSynchronously(() -> {
         try {
-          HttpRequests.request(myCheckConnectionUrl).readTimeout(3 * 1000).tryConnect();
+          HttpRequests.request(url).readTimeout(3 * 1000).tryConnect();
         }
         catch (IOException e) {
           exceptionReference.set(e);
