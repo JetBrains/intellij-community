@@ -76,7 +76,7 @@ public final class CommandLineProcessor {
       if (openResult instanceof OpenResult.Success) {
         project = ((OpenResult.Success)openResult).getProject();
       }
-      else if (openResult instanceof OpenResult.Canceled) {
+      else if (openResult instanceof OpenResult.Cancel) {
         return CommandLineProcessorResult.createError(IdeBundle.message("dialog.message.open.cancelled"));
       }
     }
