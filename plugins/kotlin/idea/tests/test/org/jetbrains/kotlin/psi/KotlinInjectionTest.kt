@@ -498,6 +498,19 @@ abstract class KotlinInjectionTest : AbstractInjectionTest() {
             languageId = HTMLLanguage.INSTANCE.id, unInjectShouldBePresent = false,
             injectedText = "<html></html>"
         )
+
+        fun testPlusEqMutation() = doInjectionPresentTest(
+            """
+            @org.intellij.lang.annotations.Language("TEXT")
+            var text = "hello"
+
+            fun test() {
+              text += "wor<caret>ld"
+            }
+            """,
+            languageId = PlainTextLanguage.INSTANCE.id, unInjectShouldBePresent = false,
+            injectedText = "world"
+        )
     }
 
     class TestBucket3 : KotlinInjectionTest() {

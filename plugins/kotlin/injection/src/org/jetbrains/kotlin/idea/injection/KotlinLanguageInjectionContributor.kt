@@ -171,8 +171,9 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
             ?: injectWithMutation(place)
     }
 
+    private val stringOperators = listOf(KtTokens.EQ, KtTokens.PLUSEQ)
     private fun injectWithMutation(host: KtElement): InjectionInfo? {
-        val parent = (host.parent as? KtBinaryExpression)?.takeIf { it.operationToken == KtTokens.EQ } ?: return null
+        val parent = (host.parent as? KtBinaryExpression)?.takeIf { it.operationToken in stringOperators } ?: return null
         if (parent.right != host) return null
         val variable = parent.left ?: return null
 
