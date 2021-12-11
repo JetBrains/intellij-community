@@ -76,19 +76,19 @@ open class PerformanceProjectsTest : AbstractPerformanceProjectsTest() {
                         "compiler/backend/src/org/jetbrains/kotlin/codegen/inline/MethodInliner.kt"
                     )
 
-                    profile(EmptyProfile)
-
-                    filesToHighlight.forEach {fileToHighlight ->
-                        fixture(fileToHighlight).use { fixture ->
-                            measureHighlight(fixture, "empty profile")
-                        }
-                    }
-
                     profile(DefaultProfile)
 
                     filesToHighlight.forEach {fileToHighlight ->
                         fixture(fileToHighlight).use { fixture ->
                             measureHighlight(fixture)
+                        }
+                    }
+
+                    profile(EmptyProfile)
+
+                    filesToHighlight.forEach {fileToHighlight ->
+                        fixture(fileToHighlight).use { fixture ->
+                            measureHighlight(fixture, "empty profile")
                         }
                     }
 
