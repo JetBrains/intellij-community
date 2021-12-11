@@ -485,11 +485,27 @@ abstract class KotlinInjectionTest : AbstractInjectionTest() {
             injectedText = "<html></html>"
         )
 
+        fun testMutationNested() = doInjectionPresentTest(
+            """
+            class A { val b: B = B() }
+            class B {
+                @org.intellij.lang.annotations.Language("HTML")
+                var html = ""
+            }
+            fun test() {
+                val a = A()
+                a.b.html = "<ht<caret>ml></html>"
+            }
+            """,
+            languageId = HTMLLanguage.INSTANCE.id, unInjectShouldBePresent = false,
+            injectedText = "<html></html>"
+        )
+
         fun testMutationAbstract() = doInjectionPresentTest(
             """
             abstract class A {
                 @org.intellij.lang.annotations.Language("HTML")
-                var html
+                var html: String
             }
             fun A.test() {
               html = "<ht<caret>ml></html>"

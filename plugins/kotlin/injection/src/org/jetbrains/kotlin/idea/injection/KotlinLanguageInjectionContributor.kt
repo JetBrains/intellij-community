@@ -171,15 +171,19 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
             ?: injectWithMutation(place)
     }
 
-    private val stringOperators = listOf(KtTokens.EQ, KtTokens.PLUSEQ)
+    private val stringMutationOperators = listOf(KtTokens.EQ, KtTokens.PLUSEQ)
     private fun injectWithMutation(host: KtElement): InjectionInfo? {
-        val parent = (host.parent as? KtBinaryExpression)?.takeIf { it.operationToken in stringOperators } ?: return null
+        val parent = (host.parent as? KtBinaryExpression)?.takeIf { it.operationToken in stringMutationOperators } ?: return null
         if (parent.right != host) return null
-        val variable = parent.left ?: return null
 
         if (isAnalyzeOff(host.project)) return null
 
-        for (reference in variable.references) {
+        val property = when (val left = parent.left) {
+            is KtQualifiedExpression -> left.selectorExpression
+            else -> left
+        } ?: return null
+
+        for (reference in property.references) {
             ProgressManager.checkCanceled()
             val resolvedTo = reference.resolve()
             if (resolvedTo is KtProperty) {
