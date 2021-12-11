@@ -13,20 +13,20 @@ internal interface OpenResult {
   class Success(val project: Project) : OpenResult
 
   /**
-   * The IDE couldn't open the project by using a certain method, the client is free to try to open it some other way.
+   * The IDE failed to open the project by using a certain method, the client is free to try to open it some other way.
    */
-  object CouldntOpen: OpenResult
+  object Failure: OpenResult
 
   /**
    * The opening has been canceled by the user or by the IDE, there should be no further attempts to open this project.
    */
-  object Canceled: OpenResult
+  object Cancel: OpenResult
 
   companion object {
     @JvmStatic
-    fun canceled(): OpenResult = Canceled
+    fun cancel(): OpenResult = Cancel
 
     @JvmStatic
-    fun couldntOpen(): OpenResult = CouldntOpen
+    fun failure(): OpenResult = Failure
   }
 }

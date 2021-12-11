@@ -149,7 +149,7 @@ public final class ProjectUtil {
     NullableLazyValue<VirtualFile> lazyVirtualFile = NullableLazyValue.createValue(() -> getFileAndRefresh(file));
 
     if (!TrustedProjects.confirmOpeningAndSetProjectTrustedStateIfNeeded(file)) {
-      return OpenResult.canceled();
+      return OpenResult.cancel();
     }
 
     for (ProjectOpenProcessor provider : ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()) {
@@ -160,19 +160,19 @@ public final class ProjectUtil {
       // PlatformProjectOpenProcessor is not a strong project info holder, so, no need implement optimized case for PlatformProjectOpenProcessor  (VFS not required)
       VirtualFile virtualFile = lazyVirtualFile.getValue();
       if (virtualFile == null) {
-        return OpenResult.couldntOpen();
+        return OpenResult.failure();
       }
 
       if (provider.canOpenProject(virtualFile)) {
         Project project = chooseProcessorAndOpen(Collections.singletonList(provider), virtualFile, options);
-        return openResult(project, OpenResult.canceled());
+        return openResult(project, OpenResult.cancel());
       }
     }
 
     if (isValidProjectPath(file)) {
       // see OpenProjectTest.`open valid existing project dir with inability to attach using OpenFileAction` test about why `runConfigurators = true` is specified here
       Project project = ProjectManagerEx.getInstanceEx().openProject(file, options.withRunConfigurators());
-      return openResult(project, OpenResult.couldntOpen());
+      return openResult(project, OpenResult.failure());
     }
 
     if (options.checkDirectoryForFileBasedProjects && Files.isDirectory(file)) {
@@ -181,7 +181,7 @@ public final class ProjectUtil {
           String childPath = child.toString();
           if (childPath.endsWith(ProjectFileType.DOT_DEFAULT_EXTENSION)) {
             Project project = openProject(Paths.get(childPath), options);
-            return openResult(project, OpenResult.couldntOpen());
+            return openResult(project, OpenResult.failure());
           }
         }
       }
@@ -191,7 +191,7 @@ public final class ProjectUtil {
 
     List<ProjectOpenProcessor> processors = computeProcessors(file, lazyVirtualFile);
     if (processors.isEmpty()) {
-      return OpenResult.couldntOpen();
+      return OpenResult.failure();
     }
 
     Project project;
@@ -204,14 +204,14 @@ public final class ProjectUtil {
     else {
       VirtualFile virtualFile = lazyVirtualFile.getValue();
       if (virtualFile == null) {
-        return OpenResult.couldntOpen();
+        return OpenResult.failure();
       }
 
       project = chooseProcessorAndOpen(processors, virtualFile, options);
     }
 
     if (project == null) {
-      return OpenResult.couldntOpen();
+      return OpenResult.failure();
     }
 
     return new OpenResult.Success(postProcess(project));
@@ -702,7 +702,7 @@ public final class ProjectUtil {
           LOG.debug(location + ": load project from ", file);
           return ((OpenResult.Success)openResult).getProject();
         }
-        else if (openResult instanceof OpenResult.Canceled) {
+        else if (openResult instanceof OpenResult.Cancel) {
           LOG.debug(location + ": canceled project opening");
           return null;
         }
