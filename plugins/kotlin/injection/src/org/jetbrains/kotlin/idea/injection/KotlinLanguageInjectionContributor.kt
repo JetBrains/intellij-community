@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.search.usagesSearch.descriptor
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.util.findAnnotation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -156,7 +157,7 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
             ktHost.indentHandler = TrimIndentHandler(marginChar)
             return dotQualifiedExpression
         }
-        return ktHost;
+        return ktHost
     }
 
 
@@ -167,6 +168,26 @@ class KotlinLanguageInjectionContributor : LanguageInjectionContributor {
             ?: injectInAnnotationCall(place)
             ?: injectWithReceiver(place)
             ?: injectWithVariableUsage(place, originalHost)
+            ?: injectWithMutation(place)
+    }
+
+    private fun injectWithMutation(host: KtElement): InjectionInfo? {
+        val parent = (host.parent as? KtBinaryExpression)?.takeIf { it.operationToken == KtTokens.EQ } ?: return null
+        if (parent.right != host) return null
+        val variable = parent.left ?: return null
+
+        if (isAnalyzeOff(host.project)) return null
+
+        for (reference in variable.references) {
+            ProgressManager.checkCanceled()
+            val resolvedTo = reference.resolve()
+            if (resolvedTo is KtProperty) {
+                val annotation = resolvedTo.findAnnotation(FqName(AnnotationUtil.LANGUAGE)) ?: return null
+                return kotlinSupport?.toInjectionInfo(annotation)
+            }
+        }
+
+        return null
     }
 
     private fun injectReturnValue(place: KtElement): InjectionInfo? {

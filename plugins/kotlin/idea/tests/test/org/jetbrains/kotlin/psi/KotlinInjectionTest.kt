@@ -471,6 +471,33 @@ abstract class KotlinInjectionTest : AbstractInjectionTest() {
                 ShredInfo(range(3, 23), hostRange = range(13, 16), prefix = "missingValue", suffix = "check")
             )
         )
+
+        fun testMutation() = doInjectionPresentTest(
+            """
+            @org.intellij.lang.annotations.Language("HTML")
+            var html = ""
+
+            fun test() {
+              html = "<ht<caret>ml></html>"
+            }
+            """,
+            languageId = HTMLLanguage.INSTANCE.id, unInjectShouldBePresent = false,
+            injectedText = "<html></html>"
+        )
+
+        fun testMutationAbstract() = doInjectionPresentTest(
+            """
+            abstract class A {
+                @org.intellij.lang.annotations.Language("HTML")
+                var html
+            }
+            fun A.test() {
+              html = "<ht<caret>ml></html>"
+            }
+            """,
+            languageId = HTMLLanguage.INSTANCE.id, unInjectShouldBePresent = false,
+            injectedText = "<html></html>"
+        )
     }
 
     class TestBucket3 : KotlinInjectionTest() {
