@@ -128,7 +128,11 @@ public abstract class DialogWrapper {
 
   public static final Object DIALOG_CONTENT_PANEL_PROPERTY = new Object();
 
-  public static final Color ERROR_FOREGROUND_COLOR = JBColor.namedColor("Label.errorForeground", new JBColor(new Color(0xC7222D), JBColor.RED));
+  /**
+   * @deprecated use {@link UIUtil#getErrorForeground()}
+   */
+  @Deprecated
+  public static final Color ERROR_FOREGROUND_COLOR = UIUtil.getErrorForeground();
 
   /**
    * The shared instance of default border for dialog's content pane.
@@ -2034,7 +2038,7 @@ public abstract class DialogWrapper {
       StringBuilder sb = new StringBuilder("<html>");
       errors.forEach(
         vi -> {
-          Color color = vi.warning ? MessageType.WARNING.getTitleForeground() : ERROR_FOREGROUND_COLOR;
+          Color color = vi.warning ? MessageType.WARNING.getTitleForeground() : UIUtil.getErrorForeground();
           sb.append("<font color='#").append(ColorUtil.toHex(color)).append("'>")
             .append("<left>")
             .append(vi.message)

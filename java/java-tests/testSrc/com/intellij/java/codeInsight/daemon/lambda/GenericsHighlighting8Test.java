@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.DefaultLanguageHighlighterColors;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -1053,7 +1052,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
     String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
     String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
-    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
+    String red = ColorUtil.toHtmlColor(UIUtil.getErrorForeground());
     String expected = "<html><body><table>" +
                       "<tr>" +
                       "<td style='padding: 0px 16px 8px 4px;color: " + greyed + "'>Required type:</td>" +
@@ -1073,7 +1072,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
     String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
     String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
-    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
+    String red = ColorUtil.toHtmlColor(UIUtil.getErrorForeground());
     String expected = "<html><body><table>" +
                       "<tr>" +
                       "<td style='padding: 0px 16px 8px 4px;color: " + greyed+ "'>Required type:</td>" +
@@ -1095,7 +1094,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
     String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
     String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
-    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
+    String red = ColorUtil.toHtmlColor(UIUtil.getErrorForeground());
     String paramBgColor = ColorUtil.toHtmlColor(EditorColorsUtil.getGlobalOrDefaultColorScheme()
                                                   .getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
                                                   .getBackgroundColor());
@@ -1119,7 +1118,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
     String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
     String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
-    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
+    String red = ColorUtil.toHtmlColor(UIUtil.getErrorForeground());
     String paramBgColor = ColorUtil.toHtmlColor(EditorColorsUtil.getGlobalOrDefaultColorScheme()
       .getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
       .getBackgroundColor());
@@ -1143,7 +1142,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
     String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
     String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
-    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
+    String red = ColorUtil.toHtmlColor(UIUtil.getErrorForeground());
     String expected = "<html><body><table>" +
                       "<tr>" +
                       "<td style='padding: 0px 16px 8px 4px;color: " + greyed + "'>Required type:</td>" +
@@ -1166,7 +1165,7 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
     String toolTipForeground = ColorUtil.toHtmlColor(UIUtil.getToolTipForeground());
     String greyed = ColorUtil.toHtmlColor(UIUtil.getContextHelpForeground());
-    String red = ColorUtil.toHtmlColor(DialogWrapper.ERROR_FOREGROUND_COLOR);
+    String red = ColorUtil.toHtmlColor(UIUtil.getErrorForeground());
     String paramBgColor = ColorUtil.toHtmlColor(EditorColorsUtil.getGlobalOrDefaultColorScheme()
       .getAttributes(DefaultLanguageHighlighterColors.INLINE_PARAMETER_HINT)
       .getBackgroundColor());
