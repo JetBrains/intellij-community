@@ -1,12 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
-package org.jetbrains.kotlin.nj2k.conversions
+package org.jetbrains.kotlin.nj2k
 
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiPolyVariantReference
 import com.intellij.psi.PsiReference
 import com.intellij.psi.impl.java.stubs.index.JavaFullClassNameIndex
 import com.intellij.psi.search.GlobalSearchScope
@@ -21,7 +20,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getChildOfType
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.utils.addToStdlib.firstNotNullResult
-
 
 class JKResolver(val project: Project, module: Module?, private val contextElement: PsiElement) {
     private val scope = module?.let {
@@ -86,7 +84,6 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
             ?.firstNotNullResult(PsiReference::resolve)
     }
 
-
     private fun constructImportDirectiveWithContext(fqName: FqName): KtImportDirective {
         val importDirective = KtPsiFactory(contextElement).createImportDirective(ImportPath(fqName, false))
         importDirective.containingKtFile.analysisContext = contextElement.containingFile
@@ -101,18 +98,4 @@ class JKResolver(val project: Project, module: Module?, private val contextEleme
                 scope.compare(o1.containingFile.virtualFile, o2.containingFile.virtualFile)
             })
         }
-
-    fun multiResolveFqName(fqName: FqName): List<PsiElement> {
-        return constructImportDirectiveWithContext(fqName)
-            .getChildOfType<KtDotQualifiedExpression>()
-            ?.selectorExpression
-            ?.let { selector ->
-                selector.references.filterIsInstance<PsiPolyVariantReference>()
-                    .flatMap { polyVariantReference ->
-                        polyVariantReference
-                            .multiResolve(false)
-                            .mapNotNull { it.element }
-                    }
-            }.orEmpty()
-    }
 }
