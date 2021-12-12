@@ -1951,17 +1951,13 @@ public abstract class DialogWrapper {
       if (vi.component != null) {
         ComponentValidator v = ComponentValidator.getInstance(vi.component)
           .orElseGet(() -> new ComponentValidator(getDisposable()).installOn(vi.component));
-
-        // not really possible, simplify?
-        if (v != null) {
-          v.updateInfo(vi);
-          return;
-        }
+        v.updateInfo(vi);
       }
-
-      // show text in a panel for non-component errors
-      if (StringUtil.isNotEmpty(vi.message)) {
-        SwingUtilities.invokeLater(() -> myErrorText.appendError(vi));
+      else {
+        // show text in a panel for non-component errors
+        if (StringUtil.isNotEmpty(vi.message)) {
+          SwingUtilities.invokeLater(() -> myErrorText.appendError(vi));
+        }
       }
     });
   }
