@@ -55,6 +55,10 @@ final class JpsCompilationRunner {
   }
 
   static {
+    // Unset 'groovy.target.bytecode' which was possibly set by outside context
+    // to get target bytecode version from corresponding java compiler settings
+    System.clearProperty(GroovyRtConstants.GROOVY_TARGET_BYTECODE)
+
     setSystemPropertyIfUndefined(GlobalOptions.COMPILE_PARALLEL_OPTION, "true")
     def availableProcessors = Runtime.getRuntime().availableProcessors().toString()
     setSystemPropertyIfUndefined(GlobalOptions.COMPILE_PARALLEL_MAX_THREADS_OPTION, availableProcessors)
