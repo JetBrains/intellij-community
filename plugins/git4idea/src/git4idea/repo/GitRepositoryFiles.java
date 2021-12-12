@@ -83,6 +83,11 @@ public final class GitRepositoryFiles {
 
   private @Nullable @NonNls String myCustomHooksDirPath;
 
+  /**
+   * @param rootDir     Root of the repository (parent directory of '.git' file/directory).
+   * @param mainDir     '.git' directory location. For worktrees - location of the 'main_repo/.git'.
+   * @param worktreeDir '.git' directory location. For worktrees - location of the 'main_repo/.git/worktrees/worktree_name/'.
+   */
   private GitRepositoryFiles(@NotNull VirtualFile rootDir, @NotNull VirtualFile mainDir, @NotNull VirtualFile worktreeDir) {
     myRootDir = rootDir;
     myMainDir = mainDir;
@@ -116,8 +121,8 @@ public final class GitRepositoryFiles {
   }
 
   @NotNull
-  public static GitRepositoryFiles getInstance(@NotNull VirtualFile rootDir,
-                                               @NotNull VirtualFile gitDir) {
+  public static GitRepositoryFiles createInstance(@NotNull VirtualFile rootDir,
+                                                  @NotNull VirtualFile gitDir) {
     VirtualFile gitDirForWorktree = getMainGitDirForWorktree(gitDir);
     VirtualFile mainDir = gitDirForWorktree == null ? gitDir : gitDirForWorktree;
     return new GitRepositoryFiles(rootDir, mainDir, gitDir);
