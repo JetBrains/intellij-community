@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
+import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -66,11 +67,11 @@ final class ProjectStructureMapping {
       writer.writeStartArray()
       for (DistributionFileEntry entry : allEntries) {
         writer.writeStartObject()
-        writer.writeStringField("path", shortenPath(entry.path, buildPaths, extraRoot))
+        writer.writeStringField("path", shortenAndNormalizePath(entry.path, buildPaths, extraRoot))
         writer.writeStringField("type", entry.type)
         if (entry instanceof ModuleLibraryFileEntry) {
           writer.writeStringField("module", entry.moduleName)
-          writer.writeStringField("libraryFile", shortenPath(entry.libraryFile, buildPaths, extraRoot))
+          writer.writeStringField("libraryFile", shortenAndNormalizePath(entry.libraryFile, buildPaths, extraRoot))
           writer.writeNumberField("size", entry.size)
         }
         else if (entry instanceof ModuleOutputEntry) {
@@ -82,7 +83,7 @@ final class ProjectStructureMapping {
         }
         else if (entry instanceof ProjectLibraryEntry) {
           writer.writeStringField("library", entry.libraryName)
-          writer.writeStringField("libraryFile", shortenPath(entry.libraryFile, buildPaths, extraRoot))
+          writer.writeStringField("libraryFile", shortenAndNormalizePath(entry.libraryFile, buildPaths, extraRoot))
           writer.writeNumberField("size", entry.size)
         }
         writer.writeEndObject()
@@ -118,7 +119,7 @@ final class ProjectStructureMapping {
       List<DistributionFileEntry> fileEntries = entrySet.value
       Path file = entrySet.key
       writer.writeStartObject()
-      writer.writeStringField("name", shortenPath(file, buildPaths, null))
+      writer.writeStringField("name", shortenAndNormalizePath(file, buildPaths, null))
 
       writeProjectLibs(fileEntries, writer, buildPaths)
       writeModules(writer, fileEntries, buildPaths)
@@ -171,7 +172,7 @@ final class ProjectStructureMapping {
       }
 
       writer.writeStartObject()
-      writer.writeStringField("name", shortenPath(entry.libraryFile, buildPaths, null))
+      writer.writeStringField("name", shortenAndNormalizePath(entry.libraryFile, buildPaths, null))
       writer.writeNumberField("size", entry.size)
       writer.writeEndObject()
     }
@@ -203,7 +204,7 @@ final class ProjectStructureMapping {
       writer.writeArrayFieldStart("files")
       for (ProjectLibraryEntry fileEntry : entry.value) {
         writer.writeStartObject()
-        writer.writeStringField("name", shortenPath(fileEntry.libraryFile, buildPaths, null))
+        writer.writeStringField("name", shortenAndNormalizePath(fileEntry.libraryFile, buildPaths, null))
         writer.writeNumberField("size", fileEntry.size as long)
 
         ProjectLibraryData data = fileEntry.data
@@ -255,5 +256,9 @@ final class ProjectStructureMapping {
         return file.toString()
       }
     }
+  }
+
+  private static String shortenAndNormalizePath(Path file, BuildPaths buildPaths, @Nullable Path extraRoot) {
+    return FileUtil.toSystemIndependentName(shortenPath(file, buildPaths, extraRoot))
   }
 }
