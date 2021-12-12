@@ -30,6 +30,47 @@ class BuildDependenciesExtractTest(private val archiveType: TestArchiveType) {
   val temp = TemporaryFolder()
 
   @Test
+  fun `extractFileToCacheLocation - different options`() {
+    val testArchive = createTestFile(archiveType, listOf(TestFile("top-level/test.txt")))
+
+    val root1 = BuildDependenciesDownloader.extractFileToCacheLocation(
+      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+    Assert.assertEquals("top-level/test.txt", Files.readString(root1.resolve("top-level/test.txt")))
+
+    val root2 = BuildDependenciesDownloader.extractFileToCacheLocation(
+      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive,
+      BuildDependenciesExtractOptions.STRIP_ROOT)
+    Assert.assertEquals("top-level/test.txt", Files.readString(root2.resolve("test.txt")))
+
+    Assert.assertNotEquals(root1.toString(), root2.toString())
+
+    assertUpToDate {
+      val root1_copy = BuildDependenciesDownloader.extractFileToCacheLocation(
+        BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+      Assert.assertEquals(root1.toString(), root1_copy.toString())
+    }
+
+    assertUpToDate {
+      val root2_copy = BuildDependenciesDownloader.extractFileToCacheLocation(
+        BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive, BuildDependenciesExtractOptions.STRIP_ROOT)
+      Assert.assertEquals(root2.toString(), root2_copy.toString())
+    }
+  }
+
+  @Test
+  fun `extractFileToCacheLocation - strip root with different leading components`() {
+    val testArchive = createTestFile(archiveType, listOf(TestFile("top-level1/test1.txt"), TestFile("top-level2/test2.txt")))
+
+    BuildDependenciesDownloader.extractFileToCacheLocation(
+      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive)
+
+    thrown.expectMessage("$testArchive: entry name 'top-level2' should start with previously found prefix 'top-level1/'")
+    BuildDependenciesDownloader.extractFileToCacheLocation(
+      BuildDependenciesManualRunOnly.getCommunityRootFromWorkingDirectory(), testArchive,
+      BuildDependenciesExtractOptions.STRIP_ROOT)
+  }
+
+  @Test
   fun `extractFileToCacheLocation - up-to-date`() {
     val testArchive = createTestFile(archiveType, listOf(TestFile("a")))
 

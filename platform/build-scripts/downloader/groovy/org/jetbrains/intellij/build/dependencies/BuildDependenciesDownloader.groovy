@@ -35,8 +35,8 @@ final class BuildDependenciesDownloader {
     println(message)
   }
 
-  static Properties getDependenciesProperties(Path communityRoot) {
-    Path propertiesFile = communityRoot.resolve("build").resolve("dependencies").resolve("gradle.properties")
+  static Properties getDependenciesProperties(BuildDependenciesCommunityRoot communityRoot) {
+    Path propertiesFile = communityRoot.communityRoot.resolve("build").resolve("dependencies").resolve("gradle.properties")
     return loadProperties(propertiesFile)
   }
 
@@ -58,24 +58,24 @@ final class BuildDependenciesDownloader {
     return new URI(result)
   }
 
-  static void checkCommunityRoot(Path communityRoot) {
+  static void checkCommunityRoot(BuildDependenciesCommunityRoot communityRoot) {
     if (communityRoot == null) {
       throw new IllegalStateException("passed community root is null")
     }
 
-    def probeFile = communityRoot.resolve("intellij.idea.community.main.iml")
+    def probeFile = communityRoot.communityRoot.resolve("intellij.idea.community.main.iml")
     if (!Files.exists(probeFile)) {
       throw new IllegalStateException("community root was not found at $communityRoot")
     }
   }
 
-  private static Path getProjectLocalDownloadCache(Path communityRoot) {
-    Path projectLocalDownloadCache = communityRoot.resolve("build").resolve("download")
+  private static Path getProjectLocalDownloadCache(BuildDependenciesCommunityRoot communityRoot) {
+    Path projectLocalDownloadCache = communityRoot.communityRoot.resolve("build").resolve("download")
     Files.createDirectories(projectLocalDownloadCache)
     return projectLocalDownloadCache
   }
 
-  private static Path getDownloadCachePath(Path communityRoot) {
+  private static Path getDownloadCachePath(BuildDependenciesCommunityRoot communityRoot) {
     checkCommunityRoot(communityRoot)
 
     Path path
@@ -94,7 +94,7 @@ final class BuildDependenciesDownloader {
     return path
   }
 
-  static synchronized Path downloadFileToCacheLocation(Path communityRoot, URI uri) {
+  static synchronized Path downloadFileToCacheLocation(BuildDependenciesCommunityRoot communityRoot, URI uri) {
     String uriString = uri.toString()
     String lastNameFromUri = uriString.substring(uriString.lastIndexOf('/') + 1)
     String fileName = uriString.sha256().substring(0, 10) + "-" + lastNameFromUri
@@ -104,39 +104,42 @@ final class BuildDependenciesDownloader {
     return targetFile
   }
 
-  static synchronized Path extractFileToCacheLocation(Path communityRoot, Path archiveFile) {
+  static synchronized Path extractFileToCacheLocation(BuildDependenciesCommunityRoot communityRoot, Path archiveFile, BuildDependenciesExtractOptions... options) {
     Path cachePath = getDownloadCachePath(communityRoot)
 
-    String directoryName = archiveFile.fileName.toString() + "." + archiveFile.toString().sha256().substring(0, 6) + ".d"
+    String toHash = archiveFile.toString() + getExtractOptionsShortString(options)
+    String directoryName = archiveFile.fileName.toString() + "." + toHash.sha256().substring(0, 6) + ".d"
     Path targetDirectory = cachePath.resolve(directoryName)
     Path flagFile = cachePath.resolve(directoryName + ".flag")
-    extractFileWithFlagFileLocation(archiveFile, targetDirectory, flagFile)
+    extractFileWithFlagFileLocation(archiveFile, targetDirectory, flagFile, options)
 
     return targetDirectory
   }
 
-  private static byte[] getExpectedFlagFileContent(Path archiveFile, Path targetDirectory) {
+  private static byte[] getExpectedFlagFileContent(Path archiveFile, Path targetDirectory, BuildDependenciesExtractOptions[] options) {
     // Increment this number to force all clients to extract content again
     // e.g. when some issues in extraction code were fixed
     def codeVersion = 2
 
     long numberOfTopLevelEntries = Files.list(targetDirectory).withCloseable { it.count() }
 
-    return "$codeVersion\n$archiveFile\ntopLevelDirectoryEntries:$numberOfTopLevelEntries".getBytes(StandardCharsets.UTF_8)
+    return """$codeVersion\n$archiveFile\n
+topLevelDirectoryEntries:$numberOfTopLevelEntries\n
+options:${getExtractOptionsShortString(options)}\n""".getBytes(StandardCharsets.UTF_8)
   }
 
-  private static boolean checkFlagFile(Path archiveFile, Path flagFile, Path targetDirectory) {
+  private static boolean checkFlagFile(Path archiveFile, Path flagFile, Path targetDirectory, BuildDependenciesExtractOptions[] options) {
     if (!Files.isRegularFile(flagFile) || !Files.isDirectory(targetDirectory)) {
       return false
     }
 
     def existingContent = Files.readAllBytes(flagFile)
-    return existingContent == getExpectedFlagFileContent(archiveFile, targetDirectory)
+    return existingContent == getExpectedFlagFileContent(archiveFile, targetDirectory, options)
   }
 
   // assumes file at `archiveFile` is immutable
-  private static void extractFileWithFlagFileLocation(Path archiveFile, Path targetDirectory, Path flagFile) {
-    if (checkFlagFile(archiveFile, flagFile, targetDirectory)) {
+  private static void extractFileWithFlagFileLocation(Path archiveFile, Path targetDirectory, Path flagFile, BuildDependenciesExtractOptions[] options) {
+    if (checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
       debug("Skipping extract to $targetDirectory since flag file $flagFile is correct")
 
       // Update file modification time to maintain FIFO caches i.e.
@@ -171,24 +174,26 @@ final class BuildDependenciesDownloader {
       throw new IllegalStateException("File $archiveFile is smaller than 2 bytes, could not be extracted")
     }
 
+    boolean stripRoot = options.any { it == BuildDependenciesExtractOptions.STRIP_ROOT }
+
     if (start[0] == (byte)0x50 && start[1] == (byte)0x4B) {
-      BuildDependenciesUtil.extractZip(archiveFile, targetDirectory)
+      BuildDependenciesUtil.extractZip(archiveFile, targetDirectory, stripRoot)
     } else if (start[0] == (byte)0x1F && start[1] == (byte)0x8B) {
-      BuildDependenciesUtil.extractTarGz(archiveFile, targetDirectory)
+      BuildDependenciesUtil.extractTarGz(archiveFile, targetDirectory, stripRoot)
     } else {
       throw new IllegalStateException("Unknown archive format at $archiveFile. Currently only .tar.gz or .zip are supported")
     }
 
-    Files.write(flagFile, getExpectedFlagFileContent(archiveFile, targetDirectory))
-    if (!checkFlagFile(archiveFile, flagFile, targetDirectory)) {
+    Files.write(flagFile, getExpectedFlagFileContent(archiveFile, targetDirectory, options))
+    if (!checkFlagFile(archiveFile, flagFile, targetDirectory, options)) {
       throw new IllegalStateException("checkFlagFile must be true right after extracting the archive. flagFile:$flagFile archiveFile:$archiveFile target:$targetDirectory")
     }
   }
 
-  static void extractFile(Path archiveFile, Path target, Path communityRoot) {
+  static void extractFile(Path archiveFile, Path target, BuildDependenciesCommunityRoot communityRoot, BuildDependenciesExtractOptions... options) {
     Path flagFile = getProjectLocalDownloadCache(communityRoot)
       .resolve((archiveFile.toString() + target.toString()).sha256().substring(0, 6) + "-" + archiveFile.fileName.toString() + ".flag.txt")
-    extractFileWithFlagFileLocation(archiveFile, target, flagFile)
+    extractFileWithFlagFileLocation(archiveFile, target, flagFile, options)
   }
 
   private static void downloadFile(URI uri, Path target) {
@@ -251,6 +256,21 @@ final class BuildDependenciesDownloader {
     finally {
       span.end()
     }
+  }
+
+  private static String getExtractOptionsShortString(BuildDependenciesExtractOptions[] options) {
+    if (options.size() <= 0) return ""
+    StringBuilder sb = new StringBuilder()
+    for (BuildDependenciesExtractOptions option : options) {
+      switch (option) {
+        case BuildDependenciesExtractOptions.STRIP_ROOT:
+          sb.append("s")
+          break
+        default:
+          throw new IllegalStateException("Unhandled case: " + option)
+      }
+    }
+    return sb.toString()
   }
 
   @TestOnly

@@ -7,6 +7,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
+import org.jetbrains.annotations.Nullable
 import org.w3c.dom.Element
 import org.w3c.dom.Node
 
@@ -140,10 +141,21 @@ final class BuildDependenciesUtil {
     }
   }
 
-  static void extractZip(Path archiveFile, Path target) {
+  static String normalizeEntryName(String name) {
+    String withForwardSlashes = name.replace(backwardSlash, forwardSlash)
+    String trimmed = trim(withForwardSlashes, forwardSlash)
+    assertValidEntryName(trimmed)
+    return trimmed
+  }
+
+  static void extractZip(Path archiveFile, Path target, boolean stripRoot) {
     new ZipFile(archiveFile.toFile(), "UTF-8").withCloseable { zipFile ->
+      EntryNameConverter converter = new EntryNameConverter(archiveFile, target, stripRoot)
+
       zipFile.entries.each { ZipArchiveEntry entry ->
-        def entryPath = entryFile(target, entry.name)
+        def entryPath = converter.getOutputPath(entry.name, entry.isDirectory())
+        if (entryPath == null) return
+
         if (entry.isDirectory()) {
           Files.createDirectories(entryPath)
         }
@@ -161,13 +173,17 @@ final class BuildDependenciesUtil {
     }
   }
 
-  static void extractTarGz(Path archiveFile, Path target) {
+  static void extractTarGz(Path archiveFile, Path target, boolean stripRoot) {
     new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(Files.newInputStream(archiveFile)))).withCloseable { archive ->
+      EntryNameConverter converter = new EntryNameConverter(archiveFile, target, stripRoot)
+
       while (true) {
         TarArchiveEntry entry = (TarArchiveEntry) archive.getNextEntry()
         if (Objects.isNull(entry)) break
 
-        def entryPath = entryFile(target, entry.name)
+        def entryPath = converter.getOutputPath(entry.name, entry.isDirectory())
+        if (entryPath == null) continue
+
         if (entry.isDirectory()) {
           Files.createDirectories(entryPath)
         }
@@ -183,23 +199,85 @@ final class BuildDependenciesUtil {
     }
   }
 
-  private static char forwardSlash = '/'
+  private static class EntryNameConverter {
+    private final Path archiveFile
+    private final Path target
+    private final boolean stripRoot
 
-  static Path entryFile(Path outputDir, String entryName) throws IOException {
-    ensureValidPath(entryName)
-    return outputDir.resolve(trimStart(entryName, forwardSlash))
-  }
+    private String leadingComponentPrefix = null
 
-  private static void ensureValidPath(String entryName) throws IOException {
-    if (entryName.contains("..") && entryName.split("[/\\\\]").contains("..")) {
-      throw new IOException("Invalid entry name: " + entryName)
+    EntryNameConverter(Path archiveFile, Path target, boolean stripRoot) {
+      this.stripRoot = stripRoot
+      this.target = target
+      this.archiveFile = archiveFile
+    }
+
+    @Nullable
+    Path getOutputPath(String entryName, boolean isDirectory) {
+      String normalizedName = normalizeEntryName(entryName)
+      if (!stripRoot) {
+        return target.resolve(normalizedName)
+      }
+
+      if (leadingComponentPrefix == null) {
+        String[] split = normalizedName.split(forwardSlash.toString(), 2)
+        leadingComponentPrefix = split[0] + forwardSlash
+
+        if (split.length < 2) {
+          if (!isDirectory) {
+            throw new IllegalStateException("$archiveFile: first top-level entry must be a directory if strip root is enabled")
+          }
+
+          return null
+        }
+        else {
+          return target.resolve(split[1])
+        }
+      }
+
+      if (!normalizedName.startsWith(leadingComponentPrefix)) {
+        throw new IllegalStateException(
+          "$archiveFile: entry name '" + normalizedName + "' should start with previously found prefix '" + leadingComponentPrefix + "'")
+      }
+
+      return target.resolve(normalizedName.substring(leadingComponentPrefix.size()))
     }
   }
 
-  private static String trimStart(String s, char charToTrim) {
-    int index = 0
-    while (s.charAt(index) == charToTrim) index++
-    return s.substring(index)
+  private static char backwardSlash = '\\'
+  private static String backwardSlashString = backwardSlash.toString()
+  private static char forwardSlash = '/'
+  private static String forwardSlashString = forwardSlash.toString()
+  private static String doubleForwardSlashString = forwardSlashString + forwardSlashString
+
+  private static void assertValidEntryName(String normalizedEntryName) throws IOException {
+    if (normalizedEntryName.isBlank()) {
+      throw new IllegalStateException("Entry names should not be blank: '" + normalizedEntryName + "'")
+    }
+    if (normalizedEntryName.indexOf(backwardSlashString) >= 0) {
+      throw new IllegalStateException("Normalized entry names should not contain '" + backwardSlashString + "'")
+    }
+    if (normalizedEntryName.startsWith(forwardSlashString)) {
+      throw new IllegalStateException("Normalized entry names should not start with forward slash: " + normalizedEntryName)
+    }
+    if (normalizedEntryName.endsWith(forwardSlashString)) {
+      throw new IllegalStateException("Normalized entry names should not end with forward slash: " + normalizedEntryName)
+    }
+    if (normalizedEntryName.contains(doubleForwardSlashString)) {
+      throw new IllegalStateException("Normalized entry name should not contain '" + doubleForwardSlashString + "': " + normalizedEntryName)
+    }
+    if (normalizedEntryName.contains("..") && normalizedEntryName.split(forwardSlashString).contains("..")) {
+      throw new IOException("Invalid entry name: " + normalizedEntryName)
+    }
+  }
+
+  static String trim(String s, char charToTrim) {
+    int len = s.length()
+    int start = 0
+    while (start < len && s.charAt(start) == charToTrim) start++
+    int end = len
+    while (end > 0 && start < end && s.charAt(end - 1) == charToTrim) end--
+    return s.substring(start, end)
   }
 
   static void cleanDirectory(Path directory) {
