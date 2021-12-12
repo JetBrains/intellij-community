@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
@@ -37,6 +37,8 @@ import java.beans.PropertyChangeListener
 import java.util.function.Supplier
 import javax.swing.JPanel
 import javax.swing.SwingUtilities
+import javax.swing.event.PopupMenuEvent
+import javax.swing.event.PopupMenuListener
 import javax.swing.plaf.PanelUI
 
 abstract class ToolWindowHeader internal constructor(
@@ -55,6 +57,21 @@ abstract class ToolWindowHeader internal constructor(
   private val toolbar: ActionToolbar
   private var toolbarWest: ActionToolbar? = null
   private val westPanel: JPanel
+  private val popupMenuListener = object : PopupMenuListener {
+    override fun popupMenuWillBecomeVisible(event: PopupMenuEvent) = setPopupShowing(true)
+    override fun popupMenuWillBecomeInvisible(event: PopupMenuEvent) = setPopupShowing(false)
+    override fun popupMenuCanceled(event: PopupMenuEvent) = setPopupShowing(false)
+  }
+
+  var isPopupShowing = false
+    private set
+
+  private fun setPopupShowing(showing: Boolean) {
+    if (isPopupShowing != showing) {
+      isPopupShowing = showing
+      toolWindow.decorator.updateActiveAndHoverState()
+    }
+  }
 
   init {
     @Suppress("LeakingThis")
@@ -336,6 +353,7 @@ abstract class ToolWindowHeader internal constructor(
         y = inputEvent.y
       }
       myPopupState.prepareToShow(popupMenu.component)
+      popupMenu.component.addPopupMenuListener(popupMenuListener)
       popupMenu.component.show(inputEvent.component, x, y)
     }
 

@@ -547,7 +547,7 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
     ActionToolbar toolbar = getHeaderToolbar();
     if (toolbar instanceof AlphaAnimated) {
       AlphaAnimated alpha = (AlphaAnimated)toolbar;
-      alpha.getAlphaAnimator().setVisible(!isNewUI() || isWindowHovered || toolWindow.isActive());
+      alpha.getAlphaAnimator().setVisible(!isNewUI() || isWindowHovered || header.isPopupShowing() || toolWindow.isActive());
     }
   }
 
