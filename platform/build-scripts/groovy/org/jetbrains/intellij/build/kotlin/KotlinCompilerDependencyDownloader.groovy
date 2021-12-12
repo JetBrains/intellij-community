@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.kotlin
 
 import groovy.transform.CompileStatic
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.dependencies.BuildDependenciesManualRunOnly
 
 import java.nio.file.Path
@@ -13,7 +14,7 @@ import static org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloa
 
 @CompileStatic
 class KotlinCompilerDependencyDownloader {
-  static Path downloadAndExtractKotlinPlugin(Path communityRoot) {
+  static Path downloadAndExtractKotlinPlugin(BuildDependenciesCommunityRoot communityRoot) {
     String kotlinCompilerBuild = getDependenciesProperties(communityRoot).getProperty("kotlinCompilerBuild")
 
     String pluginsMavenRepository = "https://cache-redirector.jetbrains.com/plugins.jetbrains.com/maven"

@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build
 import com.intellij.openapi.util.io.FileUtilRt
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 
 import java.nio.file.Path
 /**
@@ -16,6 +17,7 @@ abstract class BuildPaths {
 
     this.buildOutputRoot = FileUtilRt.toSystemIndependentName(buildOutputDir.toString())
     communityHome = FileUtilRt.toSystemIndependentName(communityHomeDir.toString())
+    this.buildDependenciesCommunityRoot = new BuildDependenciesCommunityRoot(communityHomeDir)
 
     tempDir = buildOutputDir.resolve("temp")
     temp = FileUtilRt.toSystemIndependentName(tempDir.toString())
@@ -31,6 +33,7 @@ abstract class BuildPaths {
    */
   final String communityHome
   final Path communityHomeDir
+  final BuildDependenciesCommunityRoot buildDependenciesCommunityRoot
 
   /**
    * Path to a base directory of the project which will be compiled

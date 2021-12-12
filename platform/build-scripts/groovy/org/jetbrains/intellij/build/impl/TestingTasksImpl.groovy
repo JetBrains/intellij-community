@@ -396,7 +396,7 @@ class TestingTasksImpl extends TestingTasks {
       }
     }
     else {
-      runtimeDir = context.bundledJreManager.sdkHomeForCurrentOsAndArch
+      runtimeDir = context.bundledJreManager.getSdkHomeForCurrentOsAndArch()
     }
 
     if (SystemInfoRt.isWindows) {

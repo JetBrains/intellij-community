@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.kotlin
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.BuildMessages
 import org.jetbrains.intellij.build.BuildOptions
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesCommunityRoot
 import org.jetbrains.intellij.build.impl.BuildUtils
 import org.jetbrains.intellij.build.impl.CompilationTasksImpl
 
@@ -25,7 +26,7 @@ final class KotlinBinaries {
   }
 
   @Lazy Path kotlinPluginHome = {
-    KotlinCompilerDependencyDownloader.downloadAndExtractKotlinPlugin(Path.of(communityHome))
+    KotlinCompilerDependencyDownloader.downloadAndExtractKotlinPlugin(new BuildDependenciesCommunityRoot(Path.of(communityHome)))
   }()
 
   @Lazy Path kotlinCompilerHome = {
