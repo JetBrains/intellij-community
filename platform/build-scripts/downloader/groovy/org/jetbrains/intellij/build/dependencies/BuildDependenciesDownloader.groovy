@@ -7,6 +7,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
+import org.jetbrains.annotations.TestOnly
 
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -18,6 +19,8 @@ import java.nio.file.Paths
 import java.nio.file.StandardCopyOption
 import java.nio.file.attribute.FileTime
 import java.time.Instant
+import java.util.concurrent.atomic.AtomicInteger
+import java.util.stream.Collectors
 
 @CompileStatic
 final class BuildDependenciesDownloader {
@@ -102,21 +105,14 @@ final class BuildDependenciesDownloader {
   }
 
   static synchronized Path extractFileToCacheLocation(Path communityRoot, Path archiveFile) {
-    String directoryName = archiveFile.toString().sha256().substring(0, 6) + "-" + archiveFile.fileName.toString()
-    Path cacheDirectory = getDownloadCachePath(communityRoot).resolve(directoryName + ".d")
+    Path cachePath = getDownloadCachePath(communityRoot)
 
-    // Maintain one top-level directory (cacheDirectory) under persistent cache directory, since
-    // TeamCity removes whole top-level directories upon cleanup, so both flag and extract directory
-    // will be deleted at the same time
-    Path flagFile = cacheDirectory.resolve(".flag")
-    Path extractDirectory = cacheDirectory.resolve(archiveFile.fileName.toString() + ".d")
-    extractFileWithFlagFileLocation(archiveFile, extractDirectory, flagFile)
+    String directoryName = archiveFile.fileName.toString() + "." + archiveFile.toString().sha256().substring(0, 6) + ".d"
+    Path targetDirectory = cachePath.resolve(directoryName)
+    Path flagFile = cachePath.resolve(directoryName + ".flag")
+    extractFileWithFlagFileLocation(archiveFile, targetDirectory, flagFile)
 
-    // Update file modification time to maintain FIFO caches i.e.
-    // in persistent cache folder on TeamCity agent
-    Files.setLastModifiedTime(cacheDirectory, FileTime.from(Instant.now()))
-
-    return extractDirectory
+    return targetDirectory
   }
 
   private static byte[] getExpectedFlagFileContent(Path archiveFile, Path targetDirectory) {
@@ -145,7 +141,9 @@ final class BuildDependenciesDownloader {
 
       // Update file modification time to maintain FIFO caches i.e.
       // in persistent cache folder on TeamCity agent
-      Files.setLastModifiedTime(targetDirectory, FileTime.from(Instant.now()))
+      FileTime now = FileTime.from(Instant.now())
+      Files.setLastModifiedTime(targetDirectory, now)
+      Files.setLastModifiedTime(flagFile, now)
 
       return
     }
@@ -159,8 +157,14 @@ final class BuildDependenciesDownloader {
     }
 
     info(" * Extracting $archiveFile to $targetDirectory")
+    extractCount.incrementAndGet()
 
     Files.createDirectories(targetDirectory)
+
+    List<Path> filesAfterCleaning = Files.list(targetDirectory).withCloseable { it.collect(Collectors.toList()) }
+    if (!filesAfterCleaning.isEmpty()) {
+      throw new IllegalStateException("Target directory " + targetDirectory + " is not empty after cleaning: " + filesAfterCleaning.join(" "))
+    }
 
     byte[] start = Files.newInputStream(archiveFile).withCloseable { it.readNBytes(2) }
     if (start.length < 2) {
@@ -183,7 +187,7 @@ final class BuildDependenciesDownloader {
 
   static void extractFile(Path archiveFile, Path target, Path communityRoot) {
     Path flagFile = getProjectLocalDownloadCache(communityRoot)
-      .resolve(archiveFile.toString().sha256().substring(0, 6) + "-" + archiveFile.fileName.toString() + ".flag.txt")
+      .resolve((archiveFile.toString() + target.toString()).sha256().substring(0, 6) + "-" + archiveFile.fileName.toString() + ".flag.txt")
     extractFileWithFlagFileLocation(archiveFile, target, flagFile)
   }
 
@@ -205,7 +209,7 @@ final class BuildDependenciesDownloader {
         return
       }
 
-      // save to the same disk to ensure that move will be atomic and not as a copy
+      // save to the same directory to ensure that move will be atomic and not as a copy
       Path tempFile = target.parent.resolve(("${target.fileName}-${(now.epochSecond - 1634886185).toString(36)}-${now.nano.toString(36)}.tmp" as String)
                                               .with { it.length() > 255 ? it.substring(it.length() - 255) : it})
       try {
@@ -246,4 +250,7 @@ final class BuildDependenciesDownloader {
       span.end()
     }
   }
+
+  @TestOnly
+  static AtomicInteger extractCount = new AtomicInteger()
 }

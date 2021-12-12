@@ -153,6 +153,7 @@ final class BuildDependenciesUtil {
           }
 
           if (isPosix && (entry.unixMode & 0111) != 0) {
+            //noinspection SpellCheckingInspection
             Files.setPosixFilePermissions(entryPath, PosixFilePermissions.fromString("rwxr-xr-x"))
           }
         }
@@ -174,6 +175,7 @@ final class BuildDependenciesUtil {
           Files.copy(archive, entryPath)
 
           if (isPosix && (entry.mode & 0111) != 0) {
+            //noinspection SpellCheckingInspection
             Files.setPosixFilePermissions(entryPath, PosixFilePermissions.fromString("rwxr-xr-x"))
           }
         }
