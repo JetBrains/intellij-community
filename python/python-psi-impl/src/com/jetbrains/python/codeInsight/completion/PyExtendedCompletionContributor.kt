@@ -6,7 +6,6 @@ import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.project.DumbAware
 import com.intellij.patterns.StandardPatterns
-import com.intellij.psi.MultiplePsiFilesPerDocumentFileViewProvider
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.util.PsiTreeUtil
@@ -90,10 +89,6 @@ abstract class PyExtendedCompletionContributor : CompletionContributor(), DumbAw
       if (prefix.contains(".")) {
         return false
       }
-    }
-    val provider = element.containingFile.viewProvider
-    if (provider is MultiplePsiFilesPerDocumentFileViewProvider) {
-      return false
     }
 
     return PsiTreeUtil.getParentOfType(element, PyImportStatementBase::class.java) == null
