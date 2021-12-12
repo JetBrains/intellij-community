@@ -2048,10 +2048,6 @@ public abstract class DialogWrapper {
       setVisible(true);
       updateSize();
     }
-
-    private boolean isTextSet(@NotNull List<ValidationInfo> info) {
-      return errors.equals(info);
-    }
   }
 
   public final @NotNull DialogWrapperPeer getPeer() {
