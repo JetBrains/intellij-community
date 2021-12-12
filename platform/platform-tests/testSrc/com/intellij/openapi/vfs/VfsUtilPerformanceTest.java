@@ -173,14 +173,14 @@ public class VfsUtilPerformanceTest {
   public void testGetPathPerformance() throws Exception {
     LightTempDirTestFixtureImpl fixture = new LightTempDirTestFixtureImpl();
     fixture.setUp();
-    Disposer.register(myDisposableRule.getDisposable(), () -> {
+    Disposer.register(myDisposableRule.getDisposable(), () -> EdtTestUtil.runInEdtAndWait(() -> {
       try {
         fixture.tearDown();
       }
       catch (Exception e) {
         ExceptionUtil.rethrowAllAsUnchecked(e);
       }
-    });
+    }));
 
     EdtTestUtil.runInEdtAndWait(() -> {
       String path = "unitTest_testGetPathPerformance_6542623412414351229/" +
