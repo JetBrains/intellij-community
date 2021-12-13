@@ -130,15 +130,6 @@ public class ConstExprent extends Exprent {
         return new TextBuffer(ret).enclose("'", "'");
 
       case CodeConstants.TYPE_BYTE:
-        int byteVal = (Integer)value;
-        if (!literal) {
-          if (byteVal == Byte.MAX_VALUE) {
-            return new FieldExprent("MAX_VALUE", "java/lang/Byte", true, null, FieldDescriptor.BYTE_DESCRIPTOR, bytecode).toJava(0, tracer);
-          }
-          else if (byteVal == Byte.MIN_VALUE) {
-            return new FieldExprent("MIN_VALUE", "java/lang/Byte", true, null, FieldDescriptor.BYTE_DESCRIPTOR, bytecode).toJava(0, tracer);
-          }
-        }
         return new TextBuffer(value.toString());
       case CodeConstants.TYPE_BYTECHAR:
       case CodeConstants.TYPE_SHORT:

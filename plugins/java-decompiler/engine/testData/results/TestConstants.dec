@@ -6,8 +6,8 @@ public class TestConstants {
    static final char C0 = '\n';
    static final char C1 = 'a';
    static final char C2 = 'Ȁ';
-   static final byte BMin = Byte.MIN_VALUE;
-   static final byte BMax = Byte.MAX_VALUE;
+   static final byte BMin = -128;
+   static final byte BMax = 127;
    static final short SMin = Short.MIN_VALUE;
    static final short SMax = Short.MAX_VALUE;
    static final int IMin = Integer.MIN_VALUE;
