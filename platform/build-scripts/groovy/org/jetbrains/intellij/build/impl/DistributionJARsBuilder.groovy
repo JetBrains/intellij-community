@@ -40,7 +40,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
 import java.time.ZonedDateTime
-import java.util.concurrent.Callable
 import java.util.concurrent.ForkJoinTask
 import java.util.concurrent.TimeUnit
 import java.util.function.*
@@ -61,6 +60,12 @@ final class DistributionJARsBuilder {
    */
   private static final String THIRD_PARTY_LIBRARIES_FILE_PATH = "license/third-party-libraries.html"
   private static final String PLUGINS_DIRECTORY = "plugins"
+  private static final Comparator<PluginLayout> PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE = new Comparator<PluginLayout>() {
+    @Override
+    int compare(PluginLayout o1, PluginLayout o2) {
+      return o1.mainModule.compareTo(o2.mainModule)
+    }
+  }
 
   final PlatformLayout platform
   private final Set<PluginLayout> pluginsToPublish
@@ -257,8 +262,9 @@ final class DistributionJARsBuilder {
     Path antTargetFile = antDir == null ? null : antDir.resolve("lib/ant.jar")
 
     ModuleOutputPatcher moduleOutputPatcher = new ModuleOutputPatcher()
-    ForkJoinTask<List<DistributionFileEntry>> buildPlatformTask =
-      buildHelper.createTask(spanBuilder("build platform lib"), new Supplier<List<DistributionFileEntry>>() {
+    ForkJoinTask<List<DistributionFileEntry>> buildPlatformTask = buildHelper.createTask(
+      spanBuilder("build platform lib"),
+      new Supplier<List<DistributionFileEntry>>() {
         @Override
         List<DistributionFileEntry> get() {
           List<ForkJoinTask<?>> tasks = new ArrayList<>()
@@ -290,7 +296,8 @@ final class DistributionJARsBuilder {
                                  antTargetFile)
           return result
         }
-      })
+      }
+    )
     List<DistributionFileEntry> entries = ForkJoinTask.invokeAll(Arrays.asList(
       buildPlatformTask,
       createBuildBundledPluginTask(pluginLayouts, buildPlatformTask, context),
@@ -299,53 +306,11 @@ final class DistributionJARsBuilder {
                                        !isUpdateFromSources && context.options.compressNonBundledPluginArchive,
                                        buildPlatformTask,
                                        context),
-      ForkJoinTask.adapt(new Callable<List<DistributionFileEntry>>() {
-        @Override
-        List<DistributionFileEntry> call() throws Exception {
-          if (antDir == null) {
-            return Collections.emptyList()
-          }
-
-          List sources = new ArrayList<>()
-          BiFunction<Path, IntConsumer, ?> createZipSource = buildHelper.createZipSource
-          List<DistributionFileEntry> result = new ArrayList<>()
-          ProjectLibraryData libraryData = new ProjectLibraryData("Ant", "", ProjectLibraryData.PackMode.MERGED)
-          buildHelper.copyDir(context.paths.communityHomeDir.resolve("lib/ant"), antDir,
-                              new Predicate<Path>() {
-                                @Override
-                                boolean test(Path path) {
-                                  return !path.endsWith("src")
-                                }
-                              },
-                              new Predicate<Path>() {
-                                @Override
-                                boolean test(Path file) {
-                                  if (!file.toString().endsWith(".jar")) {
-                                    return true
-                                  }
-
-                                  sources.add(createZipSource.apply(file, new IntConsumer() {
-                                    @Override
-                                    void accept(int size) {
-                                      result.add(new ProjectLibraryEntry(antTargetFile, libraryData, file, size))
-                                    }
-                                  }))
-                                  return false
-                                }
-                              })
-
-          // path in class log - empty, do not reorder, doesn't matter
-          sources.sort(null)
-          buildHelper.buildJars.accept(List.of(new Triple(antTargetFile, "", sources)), false)
-          return result
-        }
-      })
-      ).findAll { it != null })
+      antDir == null ? null : copyAnt(antDir, antTargetFile, context)
+    ).findAll { it != null })
       .collectMany {
-        Object result = it.rawResult
-        return (List<DistributionFileEntry>)(result instanceof List<?>
-          ? (List<DistributionFileEntry>)result
-          : Collections.<List<DistributionFileEntry>> emptyList())
+        List<DistributionFileEntry> result = it.rawResult
+        return result == null ? Collections.<DistributionFileEntry> emptyList() : result
       }
 
     // must be before reorderJars as these additional plugins maybe required for IDE start-up
@@ -400,6 +365,55 @@ final class DistributionJARsBuilder {
     if (Files.exists(context.paths.distAllDir.resolve("lib/${context.productProperties.productLayout.mainJarName}"))) {
       packInternalUtilities(context)
     }
+  }
+
+  @NotNull
+  private static ForkJoinTask<List<DistributionFileEntry>> copyAnt(@NotNull Path antDir,
+                                                                   @NotNull Path antTargetFile,
+                                                                   @NotNull BuildContext context) {
+    BuildHelper buildHelper = BuildHelper.getInstance(context)
+    return buildHelper.createTask(
+      spanBuilder("copy Ant lib").setAttribute("antDir", antDir.toString()),
+      new Supplier<List<DistributionFileEntry>>() {
+        @Override
+        List<DistributionFileEntry> get() {
+          List sources = new ArrayList<>()
+          BiFunction<Path, IntConsumer, ?> createZipSource = buildHelper.createZipSource
+          List<DistributionFileEntry> result = new ArrayList<>()
+          ProjectLibraryData libraryData = new ProjectLibraryData("Ant", "", ProjectLibraryData.PackMode.MERGED)
+          buildHelper.copyDir(
+            context.paths.communityHomeDir.resolve("lib/ant"), antDir,
+            new Predicate<Path>() {
+              @Override
+              boolean test(Path path) {
+                return !path.endsWith("src")
+              }
+            },
+            new Predicate<Path>() {
+              @Override
+              boolean test(Path file) {
+                if (!file.toString().endsWith(".jar")) {
+                  return true
+                }
+
+                sources.add(createZipSource.apply(file, new IntConsumer() {
+                  @Override
+                  void accept(int size) {
+                    result.add(new ProjectLibraryEntry(antTargetFile, libraryData, file, size))
+                  }
+                }))
+                return false
+              }
+            }
+          )
+
+          sources.sort(null)
+          // path in class log - empty, do not reorder, doesn't matter
+          buildHelper.buildJars.accept(List.of(new Triple(antTargetFile, "", sources)), false)
+          return result
+        }
+      }
+    )
   }
 
   private static void packInternalUtilities(BuildContext context) {
@@ -672,6 +686,10 @@ final class DistributionJARsBuilder {
               pluginsToBundle.add(plugin)
             }
           }
+
+          // Doesn't make sense to require passing here a list with a stable order - unnecessary complication. Just sort by main module.
+          pluginsToBundle.sort(PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE)
+
           Span.current().setAttribute("satisfiableCount", pluginsToBundle.size())
           return buildPlugins(new ModuleOutputPatcher(), pluginsToBundle,
                               context.paths.distAllDir.resolve(PLUGINS_DIRECTORY), context, buildPlatformTask, null)
@@ -819,7 +837,7 @@ final class DistributionJARsBuilder {
           boolean prepareCustomPluginRepositoryForPublishedPlugins = context.productProperties.productLayout
             .prepareCustomPluginRepositoryForPublishedPlugins
           List<DistributionFileEntry> mappings = buildPlugins(
-            moduleOutputPatcher, pluginsToPublish, stageDir, context, buildPlatformLibTask,
+            moduleOutputPatcher, pluginsToPublish.sort(false, PLUGIN_LAYOUT_COMPARATOR_BY_MAIN_MODULE), stageDir, context, buildPlatformLibTask,
             new BiConsumer<PluginLayout, Path>() {
               @Override
               void accept(PluginLayout plugin, Path pluginDir) {
@@ -979,7 +997,7 @@ final class DistributionJARsBuilder {
   // It will be changed once will be safe to build plugins in parallel.
   @NotNull
   private List<DistributionFileEntry> buildPlugins(ModuleOutputPatcher moduleOutputPatcher,
-                                                   Collection<PluginLayout> pluginsToInclude,
+                                                   Collection<PluginLayout> plugins,
                                                    Path targetDirectory,
                                                    BuildContext context,
                                                    @Nullable ForkJoinTask<?> buildPlatformTask,
@@ -994,7 +1012,7 @@ final class DistributionJARsBuilder {
 
     BuildHelper buildHelper = BuildHelper.getInstance(context)
     // must be as a closure, dont' use "for in" here - to capture supplier variables.
-    pluginsToInclude.each { PluginLayout plugin ->
+    plugins.each { PluginLayout plugin ->
       boolean isHelpPlugin = "intellij.platform.builtInHelp" == plugin.mainModule
       if (!isHelpPlugin) {
         checkOutputOfPluginModules(plugin.mainModule, plugin.moduleJars, plugin.moduleExcludes, context)
