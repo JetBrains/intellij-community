@@ -510,7 +510,7 @@ public class ClassWriter {
       List<ClassNode> permittedOuterSubClasses = getClassNodes(permittedSubclassSignature).stream()
         .filter(subClass -> !subClass.enclosingClasses.contains(node.classStruct.qualifiedName))
         .collect(Collectors.toList());
-      if (!permittedOuterSubClasses.isEmpty()) { // only generate permits lists for nested classes
+      if (!permittedOuterSubClasses.isEmpty()) { // only generate permits lists for non-nested classes
         buffer.append("permits ");
         for (int i = 0; i < permittedOuterSubClasses.size(); i++) {
           if (i > 0) {

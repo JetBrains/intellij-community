@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -30,7 +30,6 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
 import java.io.IOException;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.stream.Collectors;
 
 public class ClassesProcessor implements CodeConstants {
   public static final int AVERAGE_CLASS_SIZE = 16 * 1024;
@@ -124,24 +123,22 @@ public class ClassesProcessor implements CodeConstants {
       }
     }
 
-    // set non-sealed if class extends or implements a sealed class
-    for (Entry<String, ClassNode> ent : mapRootClasses.entrySet()) {
-      ClassNode clazz = ent.getValue();
-      List<String> qualifiedSealedSuperNames = new ArrayList<>(Arrays.asList(clazz.classStruct.getInterfaceNames()));
-      PrimitiveConstant superConst = clazz.classStruct.superClass;
-      if (superConst != null) qualifiedSealedSuperNames.add(superConst.getString());
-      List<ClassNode> potentialSealedSupers = qualifiedSealedSuperNames.stream()
-        .map(mapRootClasses::get)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
-      for (ClassNode potentialSealedSuper : potentialSealedSupers) {
-        if (potentialSealedSuper.classStruct.getPermittedSubclasses() != null &&
-          potentialSealedSuper.classStruct.getPermittedSubclasses().contains(clazz.classStruct.qualifiedName) &&
+    // set non-sealed if class extends or implements a sealed class and is not final or sealed itself
+    for (ClassNode clazz : mapRootClasses.values()) {
+      if (clazz.classStruct.isVersion15() &&
           (clazz.access & CodeConstants.ACC_FINAL) == 0 &&
-          clazz.classStruct.getPermittedSubclasses() == null
-        ) {
-          clazz.setNonSealed(true);
-        }
+          clazz.classStruct.getPermittedSubclasses() == null) {
+        List<String> qualifiedSealedSuperNames = new ArrayList<>(Arrays.asList(clazz.classStruct.getInterfaceNames()));
+        PrimitiveConstant superConst = clazz.classStruct.superClass;
+        if (superConst != null) qualifiedSealedSuperNames.add(superConst.getString());
+        clazz.setNonSealed(
+          qualifiedSealedSuperNames.stream()
+            .map(mapRootClasses::get)
+            .filter(Objects::nonNull)
+            .map(potentialSuper -> potentialSuper.classStruct.getPermittedSubclasses())
+            .filter(Objects::nonNull)
+            .anyMatch(permittedList -> permittedList.contains(clazz.classStruct.qualifiedName))
+        );
       }
     }
 
