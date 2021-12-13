@@ -122,4 +122,8 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     fun testDivByZero() {
         doCheck("DivByZero", ::checkDivByZero)
     }
+
+    fun testDetailsOfDeprecatedHidden() {
+        doCheck("DetailsOfDeprecatedHidden", ::checkDetailsOfDeprecatedHidden)
+    }
 }

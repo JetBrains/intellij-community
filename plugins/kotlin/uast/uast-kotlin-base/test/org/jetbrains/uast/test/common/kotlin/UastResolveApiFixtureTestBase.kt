@@ -397,4 +397,33 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertNotNull("can't find property initializer", p.uastInitializer)
         TestCase.assertNull("Should not see ArithmeticException", p.uastInitializer?.evaluate())
     }
+
+    fun checkDetailsOfDeprecatedHidden(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "MyClass.kt", """
+            @Deprecated(level = DeprecationLevel.WARNING, message="subject to change")
+            fun test1() { }
+            @Deprecated(level = DeprecationLevel.HIDDEN, message="no longer supported")
+            fun test2() { }
+        """
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+
+        val test1 = uFile.findElementByTextFromPsi<UMethod>("test1")
+        TestCase.assertNotNull("can't convert function test1", test1)
+        TestCase.assertTrue("Warning level, hasAnnotation", test1.javaPsi.hasAnnotation("kotlin.Deprecated"))
+        TestCase.assertTrue("Warning level, isDeprecated", test1.javaPsi.isDeprecated)
+        TestCase.assertTrue("Warning level, public", test1.javaPsi.hasModifierProperty(PsiModifier.PUBLIC))
+
+        val test2 = uFile.findElementByTextFromPsi<UMethod>("test2")
+        TestCase.assertNotNull("can't convert function test2", test2)
+        // KTIJ-18716
+        TestCase.assertFalse("Hidden level, hasAnnotation", test2.javaPsi.hasAnnotation("kotlin.Deprecated"))
+        // KTIJ-18039
+        TestCase.assertFalse("Hidden level, isDeprecated", test2.javaPsi.isDeprecated)
+        // KTIJ-18720
+        TestCase.assertFalse("Hidden level, public", test2.javaPsi.hasModifierProperty(PsiModifier.PUBLIC))
+    }
+
 }
