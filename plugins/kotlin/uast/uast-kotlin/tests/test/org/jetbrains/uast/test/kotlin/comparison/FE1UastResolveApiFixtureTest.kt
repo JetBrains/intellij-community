@@ -66,4 +66,8 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     fun testDivByZero() {
         checkDivByZero(myFixture)
     }
+
+    fun testDetailsOfDeprecatedHidden() {
+        checkDetailsOfDeprecatedHidden(myFixture)
+    }
 }
