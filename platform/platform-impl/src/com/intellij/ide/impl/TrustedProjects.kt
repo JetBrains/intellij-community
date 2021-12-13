@@ -219,7 +219,7 @@ class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSett
   }
 
   var trustedState: ThreeState
-    get() = if (isTrustedCheckDisabled()) ThreeState.YES else state.isTrusted
+    get() = state.isTrusted
     set(value) {
       state.isTrusted = value
     }
