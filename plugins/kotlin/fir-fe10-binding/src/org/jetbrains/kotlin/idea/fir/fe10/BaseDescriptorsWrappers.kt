@@ -122,7 +122,7 @@ abstract class KtSymbolBasedDeclarationDescriptor(val context: FE10BindingContex
     override fun getSource(): SourceElement = ktSymbol.psi.safeAs<KtPureElement>().toSourceElement()
 
     override fun getContainingDeclaration(): DeclarationDescriptor {
-        if (ktSymbol !is KtSymbolWithKind) error("ContainingDeclaration should be overriden")
+        if (ktSymbol !is KtSymbolWithKind) error("ContainingDeclaration should be overridden")
 
         val containerSymbol = context.withAnalysisSession {
             (ktSymbol as KtSymbolWithKind).getContainingSymbol()
@@ -253,7 +253,6 @@ class KtSymbolBasedClassDescriptor(override val ktSymbol: KtNamedClassOrObjectSy
     override fun getDefaultFunctionTypeForSamInterface(): SimpleType = noImplementation()
 }
 
-
 class KtSymbolBasedTypeParameterDescriptor(
     override val ktSymbol: KtTypeParameterSymbol, context: FE10BindingContext
 ) : KtSymbolBasedDeclarationDescriptor(context), KtSymbolBasedNamed, TypeParameterDescriptor {
@@ -280,7 +279,6 @@ class KtSymbolBasedTypeParameterDescriptor(
     override fun isCapturedFromOuterDeclaration(): Boolean = noImplementation()
     override fun getStorageManager(): StorageManager = noImplementation()
 }
-
 
 abstract class KtSymbolBasedFunctionLikeDescriptor(context: FE10BindingContext) :
     KtSymbolBasedDeclarationDescriptor(context), FunctionDescriptor {
@@ -340,7 +338,6 @@ class KtSymbolBasedFunctionDescriptor(override val ktSymbol: KtFunctionSymbol, c
     override fun getModality(): Modality = ktSymbol.modality
 
     override fun getTypeParameters(): List<TypeParameterDescriptor> = getTypeParameters(ktSymbol)
-
 
     override fun getOverriddenDescriptors(): Collection<FunctionDescriptor> {
         val overriddenKtSymbols = context.withAnalysisSession {
@@ -751,7 +748,6 @@ class KtSymbolBasedPropertySetterDescriptor(
     override fun getOriginal(): PropertySetterDescriptor = context.incorrectImplementation { this }
     override fun getOverriddenDescriptors(): Collection<PropertySetterDescriptor> = implementationPostponed()
 }
-
 
 class KtSymbolBasedPackageFragmentDescriptor(
     override val fqName: FqName,
