@@ -5,7 +5,6 @@ import com.fasterxml.jackson.core.JsonFactory
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.util.DefaultIndenter
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter
-import com.intellij.openapi.util.io.FileUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
@@ -240,12 +239,12 @@ final class ProjectStructureMapping {
 
   private static String shortenPath(Path file, BuildPaths buildPaths, @Nullable Path extraRoot) {
     if (file.startsWith(MAVEN_REPO)) {
-      return "\$MAVEN_REPOSITORY\$" + File.separatorChar + MAVEN_REPO.relativize(file).toString()
+      return "\$MAVEN_REPOSITORY\$/" + MAVEN_REPO.relativize(file).toString().replace(File.separatorChar, (char)'/')
     }
 
     Path projectHome = buildPaths.projectHomeDir
     if (file.startsWith(projectHome)) {
-      return "\$PROJECT_DIR\$" + File.separatorChar + projectHome.relativize(file).toString()
+      return "\$PROJECT_DIR\$/" + projectHome.relativize(file).toString()
     }
     else {
       Path buildOutputDir = buildPaths.buildOutputDir
@@ -262,6 +261,6 @@ final class ProjectStructureMapping {
   }
 
   private static String shortenAndNormalizePath(Path file, BuildPaths buildPaths, @Nullable Path extraRoot) {
-    return FileUtil.toSystemIndependentName(shortenPath(file, buildPaths, extraRoot))
+    return shortenPath(file, buildPaths, extraRoot).replace(File.separatorChar, (char)'/')
   }
 }

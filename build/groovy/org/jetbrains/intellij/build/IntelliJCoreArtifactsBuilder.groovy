@@ -1,13 +1,16 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
+import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.impl.LayoutBuilder
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectLibraryEntry
 import org.jetbrains.intellij.build.impl.projectStructureMapping.ProjectStructureMapping
 
 import java.nio.file.Files
 import java.nio.file.Path
+
 /**
  * Builds artifacts which are used in Kotlin Compiler and UpSource
  *
@@ -66,10 +69,12 @@ final class IntelliJCoreArtifactsBuilder {
     }
   }
 
+  @CompileStatic
   void generateProjectStructureMapping(@NotNull File targetFile) {
     ProjectStructureMapping mapping = new ProjectStructureMapping()
     processCoreLayout(buildContext.paths.tempDir, mapping, false)
-    mapping.addEntry(new ProjectLibraryEntry(Path.of("annotations.jar"), "jetbrains-annotations-java5", null, 0))
+    ProjectLibraryData data = new ProjectLibraryData("jetbrains-annotations-java5", "", ProjectLibraryData.PackMode.MERGED)
+    mapping.addEntry(new ProjectLibraryEntry(Path.of("annotations.jar"), data, null, 0))
     mapping.generateJsonFile(targetFile.toPath(), buildContext.paths)
   }
 
