@@ -214,7 +214,8 @@ public final class ProjectUtil {
       return OpenResult.failure();
     }
 
-    return new OpenResult.Success(postProcess(project));
+    postProcess(project);
+    return new OpenResult.Success(project);
   }
 
   private static @NotNull OpenResult openResult(@Nullable Project project, @NotNull OpenResult alternative) {
