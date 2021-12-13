@@ -11,6 +11,9 @@ import com.intellij.codeInspection.dataFlow.fix.FindDfaProblemCauseFix;
 import com.intellij.codeInspection.dataFlow.fix.ReplaceWithBooleanEqualsFix;
 import com.intellij.codeInspection.dataFlow.fix.SurroundWithRequireNonNullFix;
 import com.intellij.codeInspection.nullable.NullableStuffInspection;
+import com.intellij.codeInspection.ui.InspectionOptionContainer;
+import com.intellij.codeInspection.ui.OptionAccessor;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -35,8 +38,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.Map;
 
 import static com.intellij.java.JavaBundle.message;
 import static com.intellij.xml.util.XmlStringUtil.wrapInHtml;
@@ -234,17 +238,11 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     return new NullableStuffInspection.NavigateToNullLiteralArguments(parameter);
   }
 
-  private static JCheckBox createCheckBoxWithHTML(@Nls String text, boolean selected, Consumer<? super JCheckBox> consumer) {
-    JCheckBox box = new JCheckBox(wrapInHtml(text));
-    box.setVerticalTextPosition(TOP);
-    box.setSelected(selected);
-    box.getModel().addItemListener(event -> consumer.accept(box));
-    return box;
-  }
-
-  private final class OptionsPanel extends JPanel {
+  private final class OptionsPanel extends JPanel implements InspectionOptionContainer {
     private static final int BUTTON_OFFSET = 20;
     private final JButton myConfigureAnnotations;
+    private final Map<String, @Nls String> myCheckboxes = new HashMap<>();
+    private final OptionAccessor.Default myAccessor = new OptionAccessor.Default(DataFlowInspection.this);
 
     private OptionsPanel() {
       super(new GridBagLayout());
@@ -257,35 +255,35 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
       JCheckBox suggestNullables = createCheckBoxWithHTML(
         message("inspection.data.flow.nullable.quickfix.option"),
-        SUGGEST_NULLABLE_ANNOTATIONS, box -> SUGGEST_NULLABLE_ANNOTATIONS = box.isSelected());
+        "SUGGEST_NULLABLE_ANNOTATIONS");
 
       JCheckBox treatUnknownMembersAsNullable = createCheckBoxWithHTML(
         message("inspection.data.flow.treat.non.annotated.members.and.parameters.as.nullable"),
-        TREAT_UNKNOWN_MEMBERS_AS_NULLABLE, box -> TREAT_UNKNOWN_MEMBERS_AS_NULLABLE = box.isSelected());
+        "TREAT_UNKNOWN_MEMBERS_AS_NULLABLE");
 
       JCheckBox reportNullArguments = createCheckBoxWithHTML(
         message("inspection.data.flow.report.not.null.required.parameter.with.null.literal.argument.usages"),
-        REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER, box -> REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER = box.isSelected());
+        "REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER");
 
       JCheckBox reportNullableMethodsReturningNotNull = createCheckBoxWithHTML(
         message("inspection.data.flow.report.nullable.methods.that.always.return.a.non.null.value"),
-        REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL, box -> REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = box.isSelected());
+        "REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL");
 
       JCheckBox dontReportTrueAsserts = createCheckBoxWithHTML(
         message("inspection.data.flow.true.asserts.option"),
-        DONT_REPORT_TRUE_ASSERT_STATEMENTS, box -> DONT_REPORT_TRUE_ASSERT_STATEMENTS = box.isSelected());
+        "DONT_REPORT_TRUE_ASSERT_STATEMENTS");
 
       JCheckBox ignoreAssertions = createCheckBoxWithHTML(
         message("inspection.data.flow.ignore.assert.statements"),
-        IGNORE_ASSERT_STATEMENTS, box -> IGNORE_ASSERT_STATEMENTS = box.isSelected());
+        "IGNORE_ASSERT_STATEMENTS");
 
       JCheckBox reportConstantReferences = createCheckBoxWithHTML(
         message("inspection.data.flow.warn.when.reading.a.value.guaranteed.to.be.constant"),
-        REPORT_CONSTANT_REFERENCE_VALUES, box -> REPORT_CONSTANT_REFERENCE_VALUES = box.isSelected());
+        "REPORT_CONSTANT_REFERENCE_VALUES");
 
       JCheckBox reportUnsoundWarnings = createCheckBoxWithHTML(
         message("inspection.data.flow.report.problems.that.happen.only.on.some.code.paths"),
-        REPORT_UNSOUND_WARNINGS, box -> REPORT_UNSOUND_WARNINGS = box.isSelected());
+        "REPORT_UNSOUND_WARNINGS");
 
       gc.insets = JBUI.emptyInsets();
       gc.gridy = 0;
@@ -332,6 +330,24 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         preferred.width = size.width + BUTTON_OFFSET;
       }
       return preferred;
+    }
+
+    @Override
+    public @NotNull HtmlChunk getLabelForCheckbox(@NotNull String property) {
+      String label = myCheckboxes.get(property);
+      if (label == null) {
+        throw new IllegalArgumentException("Invalid property name: " + property);
+      }
+      return HtmlChunk.raw(label);
+    }
+
+    private JCheckBox createCheckBoxWithHTML(@Nls String text, String accessorId) {
+      myCheckboxes.put(accessorId, text);
+      JCheckBox box = new JCheckBox(wrapInHtml(text));
+      box.setVerticalTextPosition(TOP);
+      box.setSelected(myAccessor.getOption(accessorId));
+      box.getModel().addItemListener(event -> myAccessor.setOption(accessorId, box.isSelected()));
+      return box;
     }
   }
 }
