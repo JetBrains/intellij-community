@@ -48,8 +48,9 @@ public final class FileWatchRequestModifier implements Runnable, Disposable {
 
       Set<String> newWatchedRoots = CollectionFactory.createFilePathSet();
       for (VcsDirectoryMapping mapping : myNewMappings.getDirectoryMappings()) {
+        AbstractVcs vcs = ProjectLevelVcsManager.getInstance(myProject).findVcsByName(mapping.getVcs());
         // <Project> mappings are ignored because they should already be watched by the Project
-        if (!mapping.isDefaultMapping()) {
+        if (!mapping.isDefaultMapping() && vcs.needsLFSWatchesForRoots()) {
           newWatchedRoots.add(FileUtil.toCanonicalPath(mapping.getDirectory()));
         }
       }
