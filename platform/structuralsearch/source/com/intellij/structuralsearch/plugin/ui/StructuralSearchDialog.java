@@ -369,6 +369,11 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   }
 
   @Override
+  protected @NotNull DialogStyle getStyle() {
+    return DialogStyle.COMPACT;
+  }
+
+  @Override
   protected JComponent createCenterPanel() {
     mySearchEditorPanel = new OnePixelSplitter(false, 1.0f);
     mySearchEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
