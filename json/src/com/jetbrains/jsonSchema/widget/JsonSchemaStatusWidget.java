@@ -65,8 +65,8 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   private final AtomicReference<Pair<VirtualFile, Boolean>> mySuppressInfoRef = new AtomicReference<>();
 
-  private VirtualFile myLastUpdatedFile;
-  private WidgetState mySchemaWidgetState;
+  private volatile VirtualFile myLastUpdatedFile;
+  private volatile WidgetState mySchemaWidgetState;
   private ProgressIndicator myCurrentProgress;
 
   JsonSchemaStatusWidget(@NotNull Project project) {
