@@ -9,10 +9,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JPanel
-import javax.swing.JToggleButton
+import javax.swing.*
 import kotlin.math.min
 
 /**
@@ -72,7 +69,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         RowLayout.LABEL_ALIGNED -> {
           buildLabelRow(row.cells, row.getIndent(), maxColumnsCount, row.rowLayout, rowsGridBuilder)
 
-          buildCell(row.cells[0], true, row.getIndent(), row.cells.size == 1, 1, panel, rowsGridBuilder)
+          buildCell(row.cells[0], isLabelGap(row.cells.getOrNull(1)), row.getIndent(), row.cells.size == 1, 1, panel, rowsGridBuilder)
 
           if (row.cells.size > 1) {
             val subGridBuilder = rowsGridBuilder.subGridBuilder(width = maxColumnsCount - 1,
@@ -131,7 +128,6 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
           cell.label?.let {
             if (cell.labelPosition == LabelPosition.LEFT) {
               val labelCell = CellImpl(dialogPanelConfig, it, row)
-                .gap(RightGap.SMALL)
               row.cells.add(i, labelCell)
               i++
             }
@@ -148,6 +144,15 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         i++
       }
     }
+  }
+
+  /**
+   * According to https://jetbrains.design/intellij/principles/layout/#checkboxes-and-radio-buttons
+   * space between label and CheckBox/RadioButton should be increased
+   */
+  private fun isLabelGap(cellAfterLabel: CellBaseImpl<*>?): Boolean {
+    val component = (cellAfterLabel as? CellImpl<*>)?.component
+    return !(component is JCheckBox || component is JRadioButton)
   }
 
   private fun setLastColumnResizable(builder: RowsGridBuilder) {
@@ -183,14 +188,16 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
       val lastCell = cellIndex == cells.size - 1
       val width = if (lastCell) maxColumnsCount - cellIndex else 1
       val leftGap = if (cellIndex == 0) firstCellIndent else 0
-      val rowLabel = cell is CellImpl<*> && cell.component.getClientProperty(DslComponentProperty.ROW_LABEL) == true
-      buildCell(cell, rowLabel, leftGap, lastCell, width, panel, builder)
+      val isLabel = cell is CellImpl<*> && (cell.component.getClientProperty(DslComponentProperty.ROW_LABEL) == true ||
+                                            cell.component.getClientProperty(DslComponentPropertyInternal.CELL_LABEL) == true)
+
+      buildCell(cell, isLabel && isLabelGap(cells.getOrNull(cellIndex + 1)), leftGap, lastCell, width, panel, builder)
     }
   }
 
-  private fun buildCell(cell: CellBaseImpl<*>?, rowLabel: Boolean, leftGap: Int, lastCell: Boolean, width: Int,
+  private fun buildCell(cell: CellBaseImpl<*>?, isLabelGap: Boolean, leftGap: Int, lastCell: Boolean, width: Int,
                         panel: DialogPanel, builder: RowsGridBuilder) {
-    val rightGap = getRightGap(cell, lastCell, rowLabel)
+    val rightGap = getRightGap(cell, lastCell, isLabelGap)
 
     when (cell) {
       is CellImpl<*> -> {
@@ -264,7 +271,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
     }
   }
 
-  private fun getRightGap(cell: CellBaseImpl<*>?, lastCell: Boolean, rowLabel: Boolean): Int {
+  private fun getRightGap(cell: CellBaseImpl<*>?, lastCell: Boolean, isLabelGap: Boolean): Int {
     if (cell == null) {
       return 0
     }
@@ -284,7 +291,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
       }
     }
 
-    return if (rowLabel) dialogPanelConfig.spacing.horizontalSmallGap else dialogPanelConfig.spacing.horizontalDefaultGap
+    return if (isLabelGap) dialogPanelConfig.spacing.horizontalSmallGap else dialogPanelConfig.spacing.horizontalDefaultGap
   }
 
 

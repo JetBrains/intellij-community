@@ -165,6 +165,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
       group(message("group.soft.wraps")) {
         row {
           val useSoftWraps = checkBox(cdUseSoftWrapsAtEditor)
+            .gap(RightGap.SMALL)
           textField()
             .bindText({ editorSettings.softWrapFileMasks }, { editorSettings.softWrapFileMasks = it })
             .columns(COLUMNS_LARGE)
@@ -188,8 +189,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
         row { checkBox(cdShowSoftWrapsOnlyOnCaretLine) }
       }
       group(message("group.virtual.space")) {
-        row {
-          label(message("checkbox.allow.placement.of.caret.label"))
+        row(message("checkbox.allow.placement.of.caret.label")) {
           checkBox(virtualSpace)
           checkBox(caretInsideTabs)
         }
@@ -234,6 +234,7 @@ class EditorOptionsPanel : BoundCompositeConfigurable<UnnamedConfigurable>(messa
         lateinit var stripEnabledBox: Cell<JBCheckBox>
         row {
           stripEnabledBox = checkBox(cdStripTrailingSpacesEnabled)
+            .gap(RightGap.SMALL)
           val model = DefaultComboBoxModel(
             arrayOf(
               EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED,

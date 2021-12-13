@@ -128,6 +128,7 @@ internal class CellImpl<T : JComponent>(
   override fun label(label: JLabel, position: LabelPosition): CellImpl<T> {
     this.label = label
     labelPosition = position
+    label.putClientProperty(DslComponentPropertyInternal.CELL_LABEL, true)
     return this
   }
 

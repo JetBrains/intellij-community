@@ -19,7 +19,6 @@ import org.jetbrains.annotations.ApiStatus
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
-import javax.swing.DefaultComboBoxModel
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.JScrollPane
@@ -49,7 +48,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     val result = JBTabbedPane()
     result.minimumSize = Dimension(300, 200)
     result.preferredSize = Dimension(800, 600)
-    result.addTab("Labels", createLabelsPanel())
+    result.addTab("Labels", JScrollPane(LabelsPanel().panel))
     result.addTab("Text Fields", createTextFields())
     result.addTab("Comments", JScrollPane(createCommentsPanel()))
     result.addTab("Text MaxLine", createTextMaxLinePanel())
@@ -59,32 +58,6 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     result.addTab("Cells With Sub-Panels", createCellsWithPanels())
     result.addTab("Placeholder", PlaceholderPanel(myDisposable).panel)
     result.addTab("Resizable Rows", createResizableRows())
-
-    return result
-  }
-
-  fun createLabelsPanel(): JPanel {
-    val result = panel {
-      val model = DefaultComboBoxModel<String>()
-      var index = 0
-      row("Label for row") {
-        comboBox(model)
-      }
-      row {
-        val textField = intTextField()
-          .text("50")
-        button("Add items") {
-          val newItems = (1..textField.component.text.toInt()).map { "Item ${index++}" }
-          model.addAll(newItems)
-        }
-        button("Clear") {
-          model.removeAllElements()
-        }
-      }
-    }
-    val disposable = Disposer.newDisposable()
-    result.registerValidators(disposable)
-    Disposer.register(myDisposable, disposable)
 
     return result
   }
