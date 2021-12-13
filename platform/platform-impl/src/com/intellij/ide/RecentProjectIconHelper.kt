@@ -27,8 +27,9 @@ import java.awt.image.BufferedImage
 import java.net.MalformedURLException
 import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import java.nio.file.Paths
+import java.util.*
 import javax.swing.Icon
+import kotlin.collections.HashMap
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 import kotlin.math.max
@@ -60,20 +61,17 @@ internal class RecentProjectIconHelper {
     @JvmStatic
     fun createIcon(file: Path): Icon? {
       try {
-        if ("svg" == file.extension.toLowerCase()) {
+        if ("svg" == file.extension.lowercase(Locale.ENGLISH)) {
           return IconDeferrer.getInstance().defer(EmptyIcon.create(projectIconSize()), Pair(file.toAbsolutePath(), StartupUiUtil.isUnderDarcula())) {
-            val icon = IconLoader.findIcon(file.toUri().toURL(), false)
-            if (icon != null) {
-              if (icon is ScaleContextAware) {
-                icon.updateScaleContext(ScaleContext.create())
-              }
+            val icon = IconLoader.findIcon(file.toUri().toURL(), false) ?: return@defer null
 
-              val iconSize = max(icon.iconWidth, icon.iconHeight)
-              if (iconSize == projectIconSize()) return@defer icon
-              return@defer IconUtil.scale(icon, null, projectIconSize().toFloat() / iconSize)
+            if (icon is ScaleContextAware) {
+              icon.updateScaleContext(ScaleContext.create())
             }
 
-            icon
+            val iconSize = max(icon.iconWidth, icon.iconHeight)
+            if (iconSize == projectIconSize()) return@defer icon
+            return@defer IconUtil.scale(icon, null, projectIconSize().toFloat() / iconSize)
           }
         }
         val image = ImageLoader.loadFromUrl(file.toUri().toURL()) ?: return null
@@ -117,7 +115,7 @@ internal class RecentProjectIconHelper {
         .take(2)
         .map { word -> word.firstOrNull { !it.isWhitespace() } ?: "" }
         .joinToString("")
-        .toUpperCase()
+        .uppercase(Locale.getDefault())
 
     private fun calculateIcon(path: @SystemIndependent String, isDark: Boolean): Icon? {
       val lookup = if (isDark) sequenceOf("icon_dark.svg", "icon.svg", "icon_dark.png", "icon.png") else sequenceOf("icon.svg", "icon.png")

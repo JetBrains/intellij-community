@@ -120,8 +120,8 @@ class ProjectIconUI(val projectPath: @SystemIndependent String) {
         e.presentation.isEnabledAndVisible = pathToIcon != null || (Files.exists(pathToIcon()) && !iconRemoved)
       }
     }
-    return ActionManager.getInstance().createActionToolbar("ProjectIconDialog", DefaultActionGroup(removeIconAction),true)
-      .apply { setTargetComponent(iconLabel) }
+    return ActionManager.getInstance().createActionToolbar("ProjectIconDialog", DefaultActionGroup(removeIconAction), true)
+      .apply { targetComponent = iconLabel }
   }
 
   fun pathToIcon() = Path("${projectPath}/.idea/icon.svg")
