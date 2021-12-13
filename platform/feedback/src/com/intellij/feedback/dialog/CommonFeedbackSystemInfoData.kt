@@ -30,7 +30,8 @@ data class CommonFeedbackSystemInfoData(
   private val memorySize: Long, // in megabytes
   val coresNumber: Int,
   val appVersionWithBuild: String,
-  private val licenseInfo: List<String>,
+  private val isEvaluationLicense: Boolean?,
+  private val licenseRestrictions: List<String>,
   val runtimeVersion: String,
   private val registry: List<String>,
   private val disabledBundledPlugins: List<String>,
@@ -43,7 +44,8 @@ data class CommonFeedbackSystemInfoData(
         getMemorySize(),
         getCoresNumber(),
         getAppVersionWithBuild(),
-        getLicenseInfo(),
+        getLicenseEvaluationInfo(),
+        getLicenseRestrictionsInfo(),
         getRuntimeVersion(),
         getRegistryKeys(),
         getDisabledPlugins(),
@@ -77,20 +79,12 @@ data class CommonFeedbackSystemInfoData(
       return appVersion
     }
 
-    private fun getLicenseInfo(): List<String> {
-      val licensingFacade = LicensingFacade.getInstance()
-      return if (licensingFacade != null) {
-        val licenseInfoList = ArrayList<String>()
-        val licensedTo = licensingFacade.licensedToMessage
-        if (licensedTo != null) {
-          licenseInfoList.add(licensedTo)
-        }
-        licenseInfoList.addAll(licensingFacade.licenseRestrictionsMessages)
-        licenseInfoList
-      }
-      else {
-        emptyList()
-      }
+    private fun getLicenseRestrictionsInfo(): List<String> {
+      return LicensingFacade.getInstance()?.licenseRestrictionsMessages ?: emptyList()
+    }
+    
+    private fun getLicenseEvaluationInfo(): Boolean? {
+      return LicensingFacade.getInstance()?.isEvaluationLicense
     }
 
     private fun getRuntimeVersion() = SystemInfo.JAVA_RUNTIME_VERSION + SystemInfo.OS_ARCH
@@ -121,11 +115,19 @@ data class CommonFeedbackSystemInfoData(
   }
 
   fun getMemorySizeForDialog() = memorySize.toString() + "M"
-  fun getLicenseInfoForDialog() = if (licenseInfo.isEmpty())
+  fun getLicenseRestrictionsForDialog() = if (licenseRestrictions.isEmpty())
     FeedbackBundle.message("dialog.created.project.system.info.panel.license.no.info")
   else
-    licenseInfo.joinToString("\n")
+    licenseRestrictions.joinToString("\n")
 
+  fun getIsLicenseEvaluationForDialog(): String {
+    return when (isEvaluationLicense) {
+      true -> "True"
+      false -> "False"
+      null -> "No Info"
+    } 
+  } 
+  
   fun getRegistryKeysForDialog(): String {
     val registryKeys: String = registry.joinToString("\n")
     return if (!StringUtil.isEmpty(registryKeys)) {
@@ -155,5 +157,4 @@ data class CommonFeedbackSystemInfoData(
       FeedbackBundle.message("dialog.created.project.system.info.panel.nonbundled.plugins.empty")
     }
   }
-
 }
