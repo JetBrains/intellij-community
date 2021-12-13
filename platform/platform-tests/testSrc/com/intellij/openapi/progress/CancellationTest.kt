@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.testFramework.ApplicationRule
@@ -50,7 +50,7 @@ class CancellationTest {
       withJob(job) {
         ProgressManager.checkCanceled()
         lock.up()
-        cancelled.waitUp()
+        cancelled.timeoutWaitUp()
         assertCheckCanceledThrows()
         pm.executeNonCancelableSection {
           ProgressManager.checkCanceled()
@@ -58,7 +58,7 @@ class CancellationTest {
         assertCheckCanceledThrows()
       }
     }
-    lock.waitUp()
+    lock.timeoutWaitUp()
     job.cancel()
     cancelled.up()
     waitAssertCompletedNormally(future)

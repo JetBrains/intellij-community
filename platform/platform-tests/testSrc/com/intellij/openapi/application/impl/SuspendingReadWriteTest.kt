@@ -2,16 +2,13 @@
 package com.intellij.openapi.application.impl
 
 import com.intellij.openapi.application.*
-import com.intellij.openapi.progress.Cancellation
-import com.intellij.openapi.progress.ProgressManager
-import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.*
 import com.intellij.openapi.project.DumbServiceImpl
 import com.intellij.openapi.util.Disposer
 import com.intellij.testFramework.LeakHunter
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.UIUtil
-import junit.framework.TestCase
 import kotlinx.coroutines.*
 import java.util.concurrent.atomic.AtomicInteger
 import kotlin.coroutines.Continuation
@@ -62,10 +59,10 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
         assertTrue(constraint.isSatisfied())
       }
     }
-    scheduled.waitTimeout() // constraint was unsatisfied initially
+    scheduled.timeoutWaitUp() // constraint was unsatisfied initially
     satisfied = true
     constraintRunnable.run() // retry with satisfied constraint
-    job.waitTimeout()
+    job.timeoutJoin()
   }
 
   fun `test read action is cancellable`(): Unit = runBlocking {
@@ -79,8 +76,11 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
         }
       }
     }
-    inRead.waitTimeout()
-    job.cancelAndWaitTimeout()
+    inRead.timeoutWaitUp()
+    job.cancel()
+    job.timeoutJoin()
+    job.job.cancel()
+    job.job.timeoutJoin()
   }
 
   fun `test suspending action inside read action is cancellable`(): Unit = runBlocking {
@@ -90,16 +90,16 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
       cra {
         runBlockingCancellable {
           inRead.up()
-          cancelled.waitTimeout()
+          cancelled.timeoutWaitUp()
           ensureActive() // should throw
           fail()
         }
       }
     }
-    inRead.waitTimeout()
+    inRead.timeoutWaitUp()
     job.cancel()
     cancelled.up()
-    job.waitTimeout()
+    job.timeoutJoin()
   }
 
   fun `test read action with unsatisfiable constraint is cancellable`(): Unit = runBlocking {
@@ -118,8 +118,9 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
         fail("must not be called")
       }
     }
-    scheduled.waitTimeout()
-    job.cancelAndWaitTimeout()
+    scheduled.timeoutWaitUp()
+    job.job.cancel()
+    job.job.timeoutJoin()
     LeakHunter.checkLeak(constraintRunnable, Continuation::class.java)
   }
 
@@ -133,7 +134,7 @@ abstract class SuspendingReadWriteTest : LightPlatformTestCase() {
           assertEquals(42, cra { 42 })
         }
       }
-    }.waitTimeout()
+    }.timeoutJoin()
   }
 
   /**
@@ -177,19 +178,19 @@ class NonBlocking : SuspendingReadWriteTest() {
         assertFalse(attempt)
         attempt = true
         inRead.up()
-        beforeWrite.waitTimeout()
+        beforeWrite.timeoutWaitUp()
         assertTrue(Cancellation.isCancelled())
       }
     }
-    inRead.waitTimeout()
+    inRead.timeoutWaitUp()
     runWriteAction {}
-    job.waitTimeout()
+    job.timeoutJoin()
   }
 
   fun `test read action is cancelled by write and restarted`(): Unit = runBlocking {
     val job = twoAttemptJob(this, emptyList())
     runWriteAction {}
-    withTimeout(1000) {
+    withTimeout(TEST_TIMEOUT_MS) {
       while (job.isActive) {
         coroutineContext.ensureActive()
         UIUtil.dispatchAllInvocationEvents()
@@ -209,7 +210,7 @@ class NonBlocking : SuspendingReadWriteTest() {
       dumbService.isDumb = false
     }
     // retry with unsatisfied constraint
-    withTimeout(1000) {
+    withTimeout(TEST_TIMEOUT_MS) {
       while (job.isActive && isActive) {
         UIUtil.dispatchAllInvocationEvents()
       }
@@ -223,7 +224,7 @@ class NonBlocking : SuspendingReadWriteTest() {
       var attempts = 0
       constrainedReadAction(constraints) {
         inRead.up()
-        beforeWrite.waitTimeout()
+        beforeWrite.timeoutWaitUp()
         when (attempts) {
           0 -> assertTrue(Cancellation.isCancelled())
           1 -> assertFalse(Cancellation.isCancelled())
@@ -233,7 +234,7 @@ class NonBlocking : SuspendingReadWriteTest() {
         ProgressManager.checkCanceled()
       }
     }
-    inRead.waitTimeout()
+    inRead.timeoutWaitUp()
     return job
   }
 
@@ -258,7 +259,7 @@ class NonBlocking : SuspendingReadWriteTest() {
       UIUtil.dispatchAllInvocationEvents()
       delay(10)
     }
-    job.waitTimeout()
+    job.timeoutJoin()
   }
 }
 
@@ -278,14 +279,14 @@ class Blocking : SuspendingReadWriteTest() {
         assertFalse(attempt)
         attempt = true
         inRead.up()
-        beforeWrite.waitTimeout()
+        beforeWrite.timeoutWaitUp()
         assertFalse(Cancellation.isCancelled())
         ProgressManager.checkCanceled()
       }
     }
     inRead.waitFor()
     application.runWriteAction {}
-    job.waitTimeout()
+    job.timeoutJoin()
   }
 }
 
@@ -299,20 +300,4 @@ private fun beforeWrite(): Semaphore {
     }
   }, listenerDisposable)
   return beforeWrite
-}
-
-private fun Semaphore.waitTimeout() {
-  TestCase.assertTrue(waitFor(1000))
-}
-
-private suspend fun Job.waitTimeout() {
-  withTimeout(1000) {
-    join()
-  }
-}
-
-private suspend fun Job.cancelAndWaitTimeout() {
-  withTimeout(1000) {
-    cancelAndJoin()
-  }
 }

@@ -9,7 +9,6 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.Semaphore
 import kotlinx.coroutines.*
 import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
 
 class ProgressCoroutineTest : LightPlatformTestCase() {
 
@@ -43,9 +42,9 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
         }
       }
     }
-    assertTrue(lock.waitFor(2000))
+    lock.timeoutWaitUp()
     indicator.cancel()
-    future.get(2000, TimeUnit.MILLISECONDS)
+    future.timeoutGet()
   }
 
   fun `test job cancellation cancels indicator`(): Unit = runBlocking {
@@ -60,10 +59,9 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
         }
       }
     }
-    assertTrue(lock.waitFor(2000))
-    withTimeout(2000) {
-      job.cancelAndJoin()
-    }
+    lock.timeoutWaitUp()
+    job.cancel()
+    job.timeoutJoin()
   }
 
   fun `test PCE from runUnderIndicator is rethrown`(): Unit = runBlocking {
@@ -75,7 +73,7 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
           throw ProcessCanceledException()
         }
       }
-      assertTrue(lock.waitFor(2000))
+      lock.timeoutWaitUp()
       try {
         deferred.await()
         fail("PCE expected")
@@ -110,7 +108,7 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
         progressSink?.details("World")
         xx()
       }
-    }.get(2000, TimeUnit.MILLISECONDS)
+    }.timeoutGet()
     assertEquals(indicator.myText, "Hello")
     assertEquals(indicator.myText2, "World")
     assertEquals(indicator.myFraction, 0.42)
@@ -153,7 +151,7 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
       withJob(job) {
         checkCancelledEvenWithPCEDisabled(null)
         started.up()
-        assertTrue(canCheck.waitFor(2000))
+        canCheck.timeoutWaitUp()
         try {
           checkCancelledEvenWithPCEDisabled(null)
           fail()
@@ -162,9 +160,9 @@ class ProgressCoroutineTest : LightPlatformTestCase() {
         }
       }
     }
-    assertTrue(started.waitFor(2000))
+    started.timeoutWaitUp()
     job.cancel()
     canCheck.up()
-    f.get(2000, TimeUnit.MILLISECONDS)
+    f.timeoutGet()
   }
 }
