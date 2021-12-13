@@ -23,6 +23,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("annotationOnElvis.kt")
+    public void testAnnotationOnElvis() throws Exception {
+        runTest("testData/declaration/annotationOnElvis.kt");
+    }
+
     @TestMetadata("doWhile.kt")
     public void testDoWhile() throws Exception {
         runTest("testData/declaration/doWhile.kt");

@@ -23,6 +23,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("annotationOnElvis.kt")
+    public void testAnnotationOnElvis() throws Exception {
+        runTest("../uast-kotlin-fir/testData/declaration/annotationOnElvis.kt");
+    }
+
     @TestMetadata("doWhile.kt")
     public void testDoWhile() throws Exception {
         runTest("../../uast-kotlin-fir/testData/declaration/doWhile.kt");
