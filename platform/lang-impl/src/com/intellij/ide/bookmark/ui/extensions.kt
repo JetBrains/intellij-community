@@ -24,10 +24,11 @@ internal val AbstractTreeNode<*>.asDescriptor: OpenFileDescriptor?
     val project = project ?: return null
     if (!canNavigateToSource()) return null
     val descriptor = BookmarksListProvider.EP.getExtensions(project).firstNotNullOfOrNull { it.getDescriptor(this) }
-    if (descriptor != null) return descriptor
-    val node = this as? ProjectViewNode<*>
-    return node?.virtualFile?.let { OpenFileDescriptor(project, it) }
+    return descriptor ?: asVirtualFile?.let { OpenFileDescriptor(project, it) }
   }
+
+internal val AbstractTreeNode<*>.asVirtualFile
+  get() = (this as? ProjectViewNode<*>)?.virtualFile
 
 @Suppress("DialogTitleCapitalization")
 internal fun StatusText.initialize(owner: Component) {
