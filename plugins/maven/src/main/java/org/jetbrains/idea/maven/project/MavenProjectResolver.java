@@ -94,7 +94,7 @@ public class MavenProjectResolver {
 
       MavenUtil.restartConfigHighlightning(project, mavenProjects);
     }
-    myTree.fireAllProjectsResolved();
+    if (myTree != null) myTree.resolutionCompleted();
   }
 
 

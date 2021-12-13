@@ -134,7 +134,7 @@ public final class MavenIndicesManager implements Disposable {
 
     projectsManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
-      public void allProjectsResolved() {
+      public void resolutionCompleted() {
         scheduleUpdateIndicesList(null);
       }
     }, this);
