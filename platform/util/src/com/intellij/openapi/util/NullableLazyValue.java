@@ -39,6 +39,7 @@ public abstract class NullableLazyValue<T> {
     };
   }
 
+  @SuppressWarnings("deprecation")
   public static @NotNull <T> NullableLazyValue<T> atomicLazyNullable(@NotNull Supplier<? extends T> value) {
     return new AtomicNullableLazyValue<T>() {
       @Override

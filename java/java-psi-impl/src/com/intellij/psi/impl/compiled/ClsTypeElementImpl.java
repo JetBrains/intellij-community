@@ -1,7 +1,6 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
-import com.intellij.openapi.util.AtomicNullableLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.psi.*;
@@ -18,6 +17,9 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.Objects;
+
+import static com.intellij.openapi.util.NotNullLazyValue.atomicLazy;
+import static com.intellij.openapi.util.NullableLazyValue.atomicLazyNullable;
 
 public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement {
   static final char VARIANCE_NONE = '\0';
@@ -50,15 +52,8 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
     myTypeText = TypeInfo.internFrequentType(typeText);
     myVariance = variance;
     myAnnotations = annotations;
-    myChild = new AtomicNullableLazyValue<ClsElementImpl>() {
-      @Override
-      protected ClsElementImpl compute() {
-        return calculateChild();
-      }
-    };
-    myCachedType = NotNullLazyValue.atomicLazy(() -> {
-      return calculateType();
-    });
+    myChild = atomicLazyNullable(() -> calculateChild());
+    myCachedType = atomicLazy(() -> calculateType());
   }
 
   @Override
