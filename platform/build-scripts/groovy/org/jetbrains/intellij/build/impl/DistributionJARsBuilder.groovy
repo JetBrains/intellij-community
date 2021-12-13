@@ -309,6 +309,7 @@ final class DistributionJARsBuilder {
           List sources = new ArrayList<>()
           BiFunction<Path, IntConsumer, ?> createZipSource = buildHelper.createZipSource
           List<DistributionFileEntry> result = new ArrayList<>()
+          ProjectLibraryData libraryData = new ProjectLibraryData("Ant", "", ProjectLibraryData.PackMode.MERGED)
           buildHelper.copyDir(context.paths.communityHomeDir.resolve("lib/ant"), antDir,
                               new Predicate<Path>() {
                                 @Override
@@ -326,7 +327,7 @@ final class DistributionJARsBuilder {
                                   sources.add(createZipSource.apply(file, new IntConsumer() {
                                     @Override
                                     void accept(int size) {
-                                      result.add(new ProjectLibraryEntry(antTargetFile, "Ant", file, size))
+                                      result.add(new ProjectLibraryEntry(antTargetFile, libraryData, file, size))
                                     }
                                   }))
                                   return false
@@ -1303,7 +1304,8 @@ final class DistributionJARsBuilder {
           entries.add(new ModuleLibraryFileEntry(artifactFile, ((JpsModuleReference)parentReference).moduleName, null, 0))
         }
         else {
-          entries.add(new ProjectLibraryEntry(artifactFile, library.name, null, 0))
+          ProjectLibraryData libraryData = new ProjectLibraryData(library.name, "", ProjectLibraryData.PackMode.MERGED)
+          entries.add(new ProjectLibraryEntry(artifactFile, libraryData, null, 0))
         }
       }
     }

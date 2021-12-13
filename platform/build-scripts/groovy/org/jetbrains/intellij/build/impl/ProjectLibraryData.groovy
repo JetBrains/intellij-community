@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 
 @CompileStatic
 final class ProjectLibraryData {
@@ -11,6 +12,8 @@ final class ProjectLibraryData {
   final PackMode packMode
   // plugin to list of modules that uses the library
   final Map<String, List<String>> dependentModules = new TreeMap<>()
+
+  final @Nullable String reason
 
   enum PackMode {
     // merged into some uber jar
@@ -24,9 +27,14 @@ final class ProjectLibraryData {
   }
 
   ProjectLibraryData(@NotNull String libraryName, String relativeOutputPath, @NotNull PackMode packMode) {
+    this(libraryName, relativeOutputPath, packMode, null)
+  }
+
+  ProjectLibraryData(@NotNull String libraryName, String relativeOutputPath, @NotNull PackMode packMode, @Nullable String reason) {
     this.libraryName = libraryName
     this.relativeOutputPath = relativeOutputPath
     this.packMode = packMode
+    this.reason = reason
   }
 
   boolean equals(o) {

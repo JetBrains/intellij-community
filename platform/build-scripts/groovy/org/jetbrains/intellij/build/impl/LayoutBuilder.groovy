@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.text.Strings
@@ -288,7 +288,8 @@ final class LayoutBuilder {
                                                                     ((JpsModuleReference)parentReference).moduleName, libraryFile, 0))
       }
       else {
-        projectStructureMapping.addEntry(new ProjectLibraryEntry(Path.of(getOutputFilePath(outputFileName)), library.name, libraryFile, 0))
+        ProjectLibraryData libraryData = new ProjectLibraryData(library.name, "", ProjectLibraryData.PackMode.MERGED)
+        projectStructureMapping.addEntry(new ProjectLibraryEntry(Path.of(getOutputFilePath(outputFileName)), libraryData, libraryFile, 0))
       }
     }
 

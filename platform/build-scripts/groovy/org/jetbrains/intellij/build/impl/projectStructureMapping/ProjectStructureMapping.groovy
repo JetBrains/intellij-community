@@ -82,7 +82,7 @@ final class ProjectStructureMapping {
           writer.writeStringField("module", entry.moduleName)
         }
         else if (entry instanceof ProjectLibraryEntry) {
-          writer.writeStringField("library", entry.libraryName)
+          writer.writeStringField("library", entry.data.libraryName)
           writer.writeStringField("libraryFile", shortenAndNormalizePath(entry.libraryFile, buildPaths, extraRoot))
           writer.writeNumberField("size", entry.size)
         }
@@ -184,10 +184,15 @@ final class ProjectStructureMapping {
 
   private static void writeProjectLibs(@NotNull List<DistributionFileEntry> entries, JsonGenerator writer, BuildPaths buildPaths) {
     // group by library
-    Map<String, List<ProjectLibraryEntry>> map = new TreeMap<>()
+    Map<ProjectLibraryData, List<ProjectLibraryEntry>> map = new TreeMap<>(new Comparator<ProjectLibraryData>() {
+      @Override
+      int compare(ProjectLibraryData o1, ProjectLibraryData o2) {
+        return o1.libraryName.compareTo(o2.libraryName)
+      }
+    })
     for (DistributionFileEntry entry : entries) {
       if (entry instanceof ProjectLibraryEntry) {
-        map.computeIfAbsent(entry.libraryName, { new ArrayList<ProjectLibraryEntry>()}).add(entry as ProjectLibraryEntry)
+        map.computeIfAbsent(entry.data, { new ArrayList<ProjectLibraryEntry>()}).add(entry as ProjectLibraryEntry)
       }
     }
 
@@ -196,27 +201,25 @@ final class ProjectStructureMapping {
     }
 
     writer.writeArrayFieldStart("projectLibraries")
-    for (Map.Entry<String, List<ProjectLibraryEntry>> entry : map.entrySet()) {
+    for (Map.Entry<ProjectLibraryData, List<ProjectLibraryEntry>> entry : map.entrySet()) {
       writer.writeStartObject()
 
-      writer.writeStringField("name", entry.key)
+      ProjectLibraryData data = entry.key
+      writer.writeStringField("name", data.libraryName)
 
       writer.writeArrayFieldStart("files")
       for (ProjectLibraryEntry fileEntry : entry.value) {
         writer.writeStartObject()
         writer.writeStringField("name", shortenAndNormalizePath(fileEntry.libraryFile, buildPaths, null))
         writer.writeNumberField("size", fileEntry.size as long)
-
-        ProjectLibraryData data = fileEntry.data
-        if (fileEntry.reason != null) {
-          writer.writeStringField("reason", fileEntry.reason)
-        }
-        if (data != null && !data.dependentModules.isEmpty()) {
-          writeModuleDependents(writer, data)
-        }
         writer.writeEndObject()
       }
       writer.writeEndArray()
+
+      if (data.reason != null) {
+        writer.writeStringField("reason", data.reason)
+      }
+      writeModuleDependents(writer, data)
 
       writer.writeEndObject()
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -316,7 +316,8 @@ final class JarPackager {
         sourceList.add(createZipSource.apply(file, new IntConsumer() {
           @Override
           void accept(int size) {
-            projectStructureMapping.add(new ProjectLibraryEntry(jarFile, library.name, file, null, "explicitUnpack", size))
+            ProjectLibraryData libraryData = new ProjectLibraryData(library.name, "", PackMode.MERGED, "explicitUnpack")
+            projectStructureMapping.add(new ProjectLibraryEntry(jarFile, libraryData, file, size))
           }
         }))
       }
@@ -553,8 +554,7 @@ final class JarPackager {
           projectStructureMapping.add(new ModuleLibraryFileEntry(targetFile, moduleReference.moduleName, file, size))
         }
         else {
-          ProjectLibraryData libMetadata = libToMetadata.get(library)
-          projectStructureMapping.add(new ProjectLibraryEntry(targetFile, library.name, file, libMetadata, null, size))
+          projectStructureMapping.add(new ProjectLibraryEntry(targetFile, libToMetadata.get(library), file, size))
         }
       }
     }
