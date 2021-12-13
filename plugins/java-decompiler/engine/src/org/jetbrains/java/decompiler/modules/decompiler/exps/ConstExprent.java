@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -15,8 +15,11 @@ import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 
 public class ConstExprent extends Exprent {
   private static final Map<Integer, String> CHAR_ESCAPES = Map.of(
@@ -236,15 +239,15 @@ public class ConstExprent extends Exprent {
           }
         }
         else if (Double.isNaN(doubleVal)) {
-          return new TextBuffer("0.0D / 0.0D");
+          return new TextBuffer("0.0 / 0.0");
         }
         else if (doubleVal == Double.POSITIVE_INFINITY) {
-          return new TextBuffer("1.0D / 0.0D");
+          return new TextBuffer("1.0 / 0.0");
         }
         else if (doubleVal == Double.NEGATIVE_INFINITY) {
-          return new TextBuffer("-1.0D / 0.0D");
+          return new TextBuffer("-1.0 / 0.0");
         }
-        return new TextBuffer(value.toString()).append('D');
+        return new TextBuffer(value.toString());
 
       case CodeConstants.TYPE_NULL:
         return new TextBuffer("null");

@@ -10,7 +10,7 @@ public class TestPrimitives {
       this.printInt(123);// 11
       this.printLong(123L);// 12
       this.printFloat(1.23F);// 13
-      this.printDouble(1.23D);// 14
+      this.printDouble(1.23);// 14
       this.printChar('Z');// 15
       this.printBooleanBoxed(true);// 17
       this.printByteBoxed((byte)123);// 18
@@ -19,7 +19,7 @@ public class TestPrimitives {
       this.printIntBoxed(40000);// 21
       this.printLongBoxed(123L);// 22
       this.printFloatBoxed(1.23F);// 23
-      this.printDoubleBoxed(1.23D);// 24
+      this.printDoubleBoxed(1.23);// 24
       this.printCharBoxed('Z');// 25
       this.printBoolean(Boolean.valueOf("true"));// 27
       this.printByte(Byte.valueOf("123"));// 28
@@ -33,8 +33,8 @@ public class TestPrimitives {
       this.printChar(this.getCharacter());// 37
       System.out.printf("%b, %d, %d, %d, %c, %d", true, 1, 213, 40000, 'c', 42L);// 39
       System.out.printf("%b, %d, %d, %d", this.getBoolean(), this.getByte(), this.getShort(), this.getInt());// 40
-      new TestPrimitives(false, (byte)123, (short)257, 40000, 123L, 3.14F, 1.618D, 'A');// 42
-      new TestPrimitives('A', 1.618D, 3.14F, 123L, 40000, (short)257, (byte)123, false);// 43
+      new TestPrimitives(false, (byte)123, (short)257, 40000, 123L, 3.14F, 1.618, 'A');// 42
+      new TestPrimitives('A', 1.618, 3.14F, 123L, 40000, (short)257, (byte)123, false);// 43
       new TestPrimitives(Boolean.valueOf("false"), Byte.valueOf("123"), Short.valueOf("257"), Integer.valueOf("40000"), Long.valueOf("123"), Float.valueOf("3.14"), Double.valueOf("1.618"), new Character('A'));// 44 45
    }// 46
 

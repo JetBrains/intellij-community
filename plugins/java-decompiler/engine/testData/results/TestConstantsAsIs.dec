@@ -21,11 +21,11 @@ public class TestConstantsAsIs {
    static final float FPos = 1.0F / 0.0F;
    static final float FMin = 1.4E-45F;
    static final float FMax = 3.4028235E38F;
-   static final double DNan = 0.0D / 0.0D;
-   static final double DNeg = -1.0D / 0.0D;
-   static final double DPos = 1.0D / 0.0D;
-   static final double DMin = 4.9E-324D;
-   static final double DMax = 1.7976931348623157E308D;
+   static final double DNan = 0.0 / 0.0;
+   static final double DNeg = -1.0 / 0.0;
+   static final double DPos = 1.0 / 0.0;
+   static final double DMin = 4.9E-324;
+   static final double DMax = 1.7976931348623157E308;
 
    @TestConstantsAsIs.A(byte.class)
    void m1() {
