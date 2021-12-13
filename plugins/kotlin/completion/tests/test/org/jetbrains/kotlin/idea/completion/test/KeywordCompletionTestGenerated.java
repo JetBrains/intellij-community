@@ -108,9 +108,19 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("testData/keywords/BreakContinue.kt");
     }
 
+    @TestMetadata("BreakPrefixMatching.kt")
+    public void testBreakPrefixMatching() throws Exception {
+        runTest("testData/keywords/BreakPrefixMatching.kt");
+    }
+
     @TestMetadata("BreakWithLabel.kt")
     public void testBreakWithLabel() throws Exception {
         runTest("testData/keywords/BreakWithLabel.kt");
+    }
+
+    @TestMetadata("BreakWithLabelPrefix.kt")
+    public void testBreakWithLabelPrefix() throws Exception {
+        runTest("testData/keywords/BreakWithLabelPrefix.kt");
     }
 
     @TestMetadata("CommaExpected.kt")
@@ -123,9 +133,19 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("testData/keywords/CompanionObjectBeforeObject.kt");
     }
 
+    @TestMetadata("ContinuePrefixMatching.kt")
+    public void testContinuePrefixMatching() throws Exception {
+        runTest("testData/keywords/ContinuePrefixMatching.kt");
+    }
+
     @TestMetadata("ContinueWithLabel.kt")
     public void testContinueWithLabel() throws Exception {
         runTest("testData/keywords/ContinueWithLabel.kt");
+    }
+
+    @TestMetadata("ContinueWithLabelPrefix.kt")
+    public void testContinueWithLabelPrefix() throws Exception {
+        runTest("testData/keywords/ContinueWithLabelPrefix.kt");
     }
 
     @TestMetadata("Else1.kt")
@@ -458,9 +478,14 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
         runTest("testData/keywords/Return5.kt");
     }
 
-    @TestMetadata("Return6.kt")
-    public void testReturn6() throws Exception {
-        runTest("testData/keywords/Return6.kt");
+    @TestMetadata("Return6_1.kt")
+    public void testReturn6_1() throws Exception {
+        runTest("testData/keywords/Return6_1.kt");
+    }
+
+    @TestMetadata("Return6_2.kt")
+    public void testReturn6_2() throws Exception {
+        runTest("testData/keywords/Return6_2.kt");
     }
 
     @TestMetadata("Return7.kt")
@@ -516,6 +541,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("ReturnNullableBoolean.kt")
     public void testReturnNullableBoolean() throws Exception {
         runTest("testData/keywords/ReturnNullableBoolean.kt");
+    }
+
+    @TestMetadata("ReturnPrefixMatching.kt")
+    public void testReturnPrefixMatching() throws Exception {
+        runTest("testData/keywords/ReturnPrefixMatching.kt");
     }
 
     @TestMetadata("ReturnSet.kt")
@@ -601,6 +631,11 @@ public class KeywordCompletionTestGenerated extends AbstractKeywordCompletionTes
     @TestMetadata("ThisInCompanion.kt")
     public void testThisInCompanion() throws Exception {
         runTest("testData/keywords/ThisInCompanion.kt");
+    }
+
+    @TestMetadata("ThisLabelPrefix.kt")
+    public void testThisLabelPrefix() throws Exception {
+        runTest("testData/keywords/ThisLabelPrefix.kt");
     }
 
     @TestMetadata("ThisPrefixMatching.kt")
