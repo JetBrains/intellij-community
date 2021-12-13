@@ -418,10 +418,8 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
 
         val test2 = uFile.findElementByTextFromPsi<UMethod>("test2")
         TestCase.assertNotNull("can't convert function test2", test2)
-        // KTIJ-18716
-        TestCase.assertFalse("Hidden level, hasAnnotation", test2.javaPsi.hasAnnotation("kotlin.Deprecated"))
-        // KTIJ-18039
-        TestCase.assertFalse("Hidden level, isDeprecated", test2.javaPsi.isDeprecated)
+        TestCase.assertTrue("Hidden level, hasAnnotation", test2.javaPsi.hasAnnotation("kotlin.Deprecated"))
+        TestCase.assertTrue("Hidden level, isDeprecated", test2.javaPsi.isDeprecated)
         // KTIJ-18720
         TestCase.assertFalse("Hidden level, public", test2.javaPsi.hasModifierProperty(PsiModifier.PUBLIC))
     }

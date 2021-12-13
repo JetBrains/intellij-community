@@ -6,6 +6,8 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.*
 import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterListBuilder
+import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.UastErrorType
@@ -115,6 +117,32 @@ abstract class UastFakeLightMethodBase<T: KtDeclaration>(
     protected val baseResolveProviderService: BaseKotlinUastResolveProviderService by lz {
         ServiceManager.getService(BaseKotlinUastResolveProviderService::class.java)
             ?: error("${BaseKotlinUastResolveProviderService::class.java.name} is not available for ${this::class.simpleName}")
+    }
+
+    private val _annotations: Array<PsiAnnotation> by lz {
+        original.annotationEntries.map { entry ->
+            KtLightAnnotationForSourceEntry(
+                name = entry.shortName?.identifier,
+                lazyQualifiedName = { baseResolveProviderService.qualifiedAnnotationName(entry) },
+                kotlinOrigin = entry,
+                parent = original,
+                lazyClsDelegate = null
+            )
+        }.toTypedArray()
+    }
+
+    override fun getAnnotations(): Array<PsiAnnotation> {
+        return _annotations
+    }
+
+    override fun hasAnnotation(fqn: String): Boolean {
+        return _annotations.find { it.hasQualifiedName(fqn) } != null
+    }
+
+    override fun isDeprecated(): Boolean {
+        return hasAnnotation(StandardClassIds.Annotations.Deprecated.asFqNameString()) ||
+                hasAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED) ||
+                super.isDeprecated()
     }
 
     override fun getReturnType(): PsiType? {
