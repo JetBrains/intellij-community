@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.openapi.diagnostic.logger
@@ -25,6 +25,7 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import java.net.MalformedURLException
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.Paths
 import javax.swing.Icon
@@ -49,7 +50,12 @@ internal class RecentProjectIconHelper {
       return path.parent.resolve("$ideaDir/$ideaDir.$fileNameWithoutExt/$ideaDir")
     }
 
-    fun getDotIdeaPath(path: String) = getDotIdeaPath(Paths.get(path))
+    fun getDotIdeaPath(path: String): Path? = try {
+      getDotIdeaPath(Path.of(path))
+    }
+    catch (e: InvalidPathException) {
+      null
+    }
 
     @JvmStatic
     fun createIcon(file: Path): Icon? {
@@ -114,11 +120,8 @@ internal class RecentProjectIconHelper {
         .toUpperCase()
 
     private fun calculateIcon(path: @SystemIndependent String, isDark: Boolean): Icon? {
-      val lookup = if (isDark) listOf("icon_dark.svg", "icon.svg", "icon_dark.png", "icon.png")
-      else listOf("icon.svg", "icon.png")
-      val iconName = lookup.firstOrNull { getDotIdeaPath(path).resolve(it).exists() } ?: return null
-
-      val file = getDotIdeaPath(path).resolve(iconName)
+      val lookup = if (isDark) sequenceOf("icon_dark.svg", "icon.svg", "icon_dark.png", "icon.png") else sequenceOf("icon.svg", "icon.png")
+      val file = lookup.map { getDotIdeaPath(path)?.resolve(it) }.filterNotNull().firstOrNull { it.exists() } ?: return null
 
       val fileInfo = file.basicAttributesIfExists() ?: return null
       val timestamp = fileInfo.lastModifiedTime().toMillis()

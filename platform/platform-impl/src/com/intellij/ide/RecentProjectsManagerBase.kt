@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet")
 
 package com.intellij.ide
@@ -50,6 +50,7 @@ import java.awt.image.BufferedImage
 import java.lang.ref.WeakReference
 import java.nio.ByteBuffer
 import java.nio.file.Files
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.*
@@ -758,7 +759,13 @@ private fun readProjectName(path: String): String {
     return path
   }
 
-  val file = Path.of(path)
+  val file = try {
+    Path.of(path)
+  }
+  catch (e: InvalidPathException) {
+    return path
+  }
+
   if (!file.isDirectory()) {
     val fileName = file.fileName
     if (fileName != null) {
