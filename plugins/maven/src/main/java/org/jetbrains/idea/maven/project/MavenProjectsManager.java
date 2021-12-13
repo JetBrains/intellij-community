@@ -913,7 +913,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void completeMavenSyncOnImportCompletion(MavenSyncConsole console) {
     waitForImportCompletion().onProcessed(o -> {
-      MavenUtil.notifyMavenProblems(myProject);
+      MavenResolveResultProcessor.notifyMavenProblems(myProject);
       console.finishImport();
     });
   }
