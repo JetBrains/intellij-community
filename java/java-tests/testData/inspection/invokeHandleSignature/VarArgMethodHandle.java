@@ -23,5 +23,23 @@ public class VarArgMethodHandle {
     System.out.println(MH_main.invokeExact<warning descr="One argument is expected">(1, 2)</warning>.toString());
     System.out.println(MH_main.invokeExact(new String[] {"one", "two"}).toString());
     System.out.println(MH_main.invokeExact(<warning descr="Argument type should be exactly 'java.lang.String[]'">new Object[] {"one", "two"}</warning>).toString());
+
+    MethodHandle MH_vararg = publicLookup().findStatic(VarArgMethodHandle.class, "vararg", methodType(void.class, Object.class, Object[].class));
+
+    MethodHandle MH_vararg2 = publicLookup().findStatic(VarArgMethodHandle.class, "vararg2", methodType(void.class, Object.class, String[].class));
+    MH_vararg.invoke(1);
+    MH_vararg.invoke(1, 2);
+    MH_vararg.invoke(1, 2, 3);
+    MH_vararg.invokeExact<warning descr="2 arguments are expected">(1, 2, 3)</warning>;
+    MH_vararg2.invoke(1);
+    MH_vararg2.invoke(1, <warning descr="Argument is not assignable to 'java.lang.String'">2</warning>);
+    MH_vararg2.invoke(1, <warning descr="Argument is not assignable to 'java.lang.String'">2</warning>, <warning descr="Argument is not assignable to 'java.lang.String'">3</warning>);
+    MH_vararg2.invokeExact<warning descr="2 arguments are expected">(1, 2, 3)</warning>;
+    MH_vararg2.invoke(1, "x");
+    MH_vararg2.invoke(1, "x", "y");
+    MH_vararg2.invokeExact<warning descr="2 arguments are expected">(1, "x", "y")</warning>;
   }
+
+  public static <T> void vararg(T first, T... rest) {}
+  public static void vararg2(Object first, String... rest) {}
 }
