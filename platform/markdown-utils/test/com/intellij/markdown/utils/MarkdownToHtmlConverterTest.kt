@@ -1,7 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.collaboration.markdown
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.markdown.utils
 
-import com.intellij.collaboration.lang.HtmlSyntaxHighlighter
+import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
 import com.intellij.openapi.util.text.HtmlChunk
 import org.intellij.markdown.IElementType
 import org.intellij.markdown.MarkdownElementTypes

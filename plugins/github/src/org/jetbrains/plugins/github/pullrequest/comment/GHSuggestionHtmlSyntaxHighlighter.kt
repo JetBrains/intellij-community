@@ -1,9 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.comment
 
-import com.intellij.collaboration.lang.HtmlSyntaxHighlighter
-import com.intellij.collaboration.lang.HtmlSyntaxHighlighter.Companion.colorHtmlChunk
 import com.intellij.lang.Language
+import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter
+import com.intellij.markdown.utils.lang.HtmlSyntaxHighlighter.Companion.colorHtmlChunk
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.diff.impl.patch.PatchHunk
 import com.intellij.openapi.diff.impl.patch.PatchLine
