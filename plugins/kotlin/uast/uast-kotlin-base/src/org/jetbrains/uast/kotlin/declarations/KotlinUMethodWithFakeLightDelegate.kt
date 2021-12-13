@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
@@ -18,6 +19,10 @@ class KotlinUMethodWithFakeLightDelegate(
 
     override val uAnnotations: List<UAnnotation>
         get() = original.annotationEntries.mapNotNull { it.toUElementOfType() }
+
+    override fun getTextRange(): TextRange {
+        return original.textRange
+    }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
