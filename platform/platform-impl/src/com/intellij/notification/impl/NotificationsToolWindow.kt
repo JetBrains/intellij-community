@@ -85,15 +85,18 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     fun expire(notification: Notification?) {
       iterate { it.accept(notification) }
 
-      synchronized(myLock) {
-        if (notification == null) {
-          for (n in myNotificationList) {
-            n.expire()
-          }
+      if (notification == null) {
+        val notifications = ArrayList<Notification>()
+        synchronized(myLock) {
+          notifications.addAll(myNotificationList)
           myNotificationList.clear()
         }
-        else {
-          notification.expire()
+        for (n in notifications) {
+          n.expire()
+        }
+      }
+      else {
+        synchronized(myLock) {
           myNotificationList.remove(notification)
         }
       }
@@ -215,35 +218,34 @@ private class NotificationContent(val project: Project,
 
   private fun expire(notification: Notification?) {
     if (notification == null) {
-      for (n in myNotifications) {
-        n.expire()
-      }
-    }
-    else {
-      notification.expire()
-    }
-    remove(notification)
-  }
+      val notifications = ArrayList(myNotifications)
 
-  private fun remove(notification: Notification?) {
-    if (notification == null) {
       myNotifications.clear()
       myIconNotifications.clear()
       suggestions.clear()
       timeline.clear()
       setStatusMessage(null)
+      updateIcon()
+
+      for (n in notifications) {
+        n.expire()
+      }
     }
     else {
-      if (notification.isSuggestionType) {
-        suggestions.remove(notification)
-      }
-      else {
-        timeline.remove(notification)
-      }
-      myNotifications.remove(notification)
-      myIconNotifications.remove(notification)
-      setStatusMessage()
+      remove(notification)
     }
+  }
+
+  private fun remove(notification: Notification) {
+    if (notification.isSuggestionType) {
+      suggestions.remove(notification)
+    }
+    else {
+      timeline.remove(notification)
+    }
+    myNotifications.remove(notification)
+    myIconNotifications.remove(notification)
+    setStatusMessage()
     updateIcon()
   }
 
@@ -369,7 +371,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
   private val mySuggestionGotItPanel = JPanel(BorderLayout())
 
   private lateinit var myClearCallback: (List<Notification>) -> Unit
-  private lateinit var myRemoveCallback: Consumer<Notification?>
+  private lateinit var myRemoveCallback: Consumer<Notification>
 
   init {
     background = NotificationComponent.BG_COLOR
@@ -511,7 +513,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     }
   }
 
-  fun setRemoveCallback(callback: Consumer<Notification?>) {
+  fun setRemoveCallback(callback: Consumer<Notification>) {
     myRemoveCallback = callback
   }
 
@@ -650,7 +652,7 @@ private class NotificationComponent(val notification: Notification,
   private var myMorePopupVisible = false
   private var myRoundColor = BG_COLOR
   private lateinit var myDoNotAskHandler: (Boolean) -> Unit
-  private lateinit var myRemoveCallback: Consumer<Notification?>
+  private lateinit var myRemoveCallback: Consumer<Notification>
   private var myLafUpdater: Runnable? = null
 
   init {
@@ -894,7 +896,7 @@ private class NotificationComponent(val notification: Notification,
     myDoNotAskHandler = handler
   }
 
-  fun setRemoveCallback(callback: Consumer<Notification?>) {
+  fun setRemoveCallback(callback: Consumer<Notification>) {
     myRemoveCallback = callback
   }
 
