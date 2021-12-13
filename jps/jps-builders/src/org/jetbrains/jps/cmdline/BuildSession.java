@@ -14,7 +14,6 @@ import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataOutputStream;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -24,10 +23,7 @@ import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.cache.loader.JpsOutputLoaderManager;
-import org.jetbrains.jps.incremental.MessageHandler;
-import org.jetbrains.jps.incremental.RebuildRequestedException;
-import org.jetbrains.jps.incremental.TargetTypeRegistry;
-import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.incremental.messages.*;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
@@ -167,6 +163,7 @@ final class BuildSession implements Runnable, CanceledStatus {
       if (ProjectStamps.PORTABLE_CACHES && myBuildType == BuildType.BUILD) {
         LOG.info("Trying to download JPS caches before build");
         myCacheLoadManager = new JpsOutputLoaderManager(myBuildRunner.getLoadedJpsProject(), this, myProjectPath, myChannel, mySessionId);
+        myCacheLoadManager.estimateProjectBuildTime(myBuildRunner, myScopes);
         myCacheLoadManager.measureConnectionSpeed();
         myCacheLoadManager.load(true, false);
       }

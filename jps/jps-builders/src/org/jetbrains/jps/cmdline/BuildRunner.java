@@ -174,6 +174,11 @@ public final class BuildRunner {
     }
   }
 
+  public CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes) throws Exception {
+    final boolean forceClean = myForceCleanCaches && myFilePaths.isEmpty();
+    return createCompilationScope(pd, scopes, myFilePaths, forceClean, false);
+  }
+
   private static CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes, Collection<String> paths,
                                                      final boolean forceClean, final boolean includeDependenciesToScope) throws Exception {
     Set<BuildTargetType<?>> targetTypes = new HashSet<>();

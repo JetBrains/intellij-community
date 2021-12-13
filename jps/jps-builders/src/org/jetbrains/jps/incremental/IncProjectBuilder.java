@@ -278,30 +278,7 @@ public final class IncProjectBuilder {
       }
     }
     // compute estimated times for dirty targets
-    long estimatedWorkTime = 0L;
-
-    final Predicate<BuildTarget<?>> isAffected = new Predicate<BuildTarget<?>>() {
-      private final Set<BuildTargetType<?>> allTargetsAffected = new HashSet<>(JavaModuleBuildTargetType.ALL_TYPES);
-      @Override
-      public boolean test(BuildTarget<?> target) {
-        // optimization, since we know here that all targets of types JavaModuleBuildTargetType are affected
-        return allTargetsAffected.contains(target.getTargetType()) || scope.isAffected(target);
-      }
-    };
-    final BuildTargetIndex targetIndex = myProjectDescriptor.getBuildTargetIndex();
-    for (BuildTarget<?> target : targetIndex.getAllTargets()) {
-      if (!targetIndex.isDummy(target)) {
-        final long avgTimeToBuild = targetsState.getAverageBuildTime(target.getTargetType());
-        if (avgTimeToBuild > 0) {
-          // 1. in general case this time should include dependency analysis and cache update times
-          // 2. need to check isAffected() since some targets (like artifacts) may be unaffected even for rebuild
-          if (targetsState.getTargetConfiguration(target).isTargetDirty(myProjectDescriptor) && isAffected.test(target)) {
-            estimatedWorkTime += avgTimeToBuild;
-          }
-        }
-      }
-    }
-
+    long estimatedWorkTime = calculateEstimatedBuildTime(myProjectDescriptor, targetsState, scope);
     if (LOG.isDebugEnabled()) {
       LOG.debug("Rebuild heuristic: estimated build time / timeThreshold : " + estimatedWorkTime + " / " + timeThreshold);
     }
@@ -315,6 +292,34 @@ public final class IncProjectBuilder {
       myMessageDispatcher.processMessage(new CompilerMessage("", BuildMessage.Kind.INFO, message));
       throw new RebuildRequestedException(null);
     }
+  }
+
+  public static long calculateEstimatedBuildTime(ProjectDescriptor projectDescriptor, BuildTargetsState targetsState, CompileScope scope) {
+    // compute estimated times for dirty targets
+    long estimatedBuildTime = 0L;
+
+    final Predicate<BuildTarget<?>> isAffected = new Predicate<BuildTarget<?>>() {
+      private final Set<BuildTargetType<?>> allTargetsAffected = new HashSet<>(JavaModuleBuildTargetType.ALL_TYPES);
+      @Override
+      public boolean test(BuildTarget<?> target) {
+        // optimization, since we know here that all targets of types JavaModuleBuildTargetType are affected
+        return allTargetsAffected.contains(target.getTargetType()) || scope.isAffected(target);
+      }
+    };
+    final BuildTargetIndex targetIndex = projectDescriptor.getBuildTargetIndex();
+    for (BuildTarget<?> target : targetIndex.getAllTargets()) {
+      if (!targetIndex.isDummy(target)) {
+        final long avgTimeToBuild = targetsState.getAverageBuildTime(target.getTargetType());
+        if (avgTimeToBuild > 0) {
+          // 1. in general case this time should include dependency analysis and cache update times
+          // 2. need to check isAffected() since some targets (like artifacts) may be unaffected even for rebuild
+          if (targetsState.getTargetConfiguration(target).isTargetDirty(projectDescriptor) && isAffected.test(target)) {
+            estimatedBuildTime += avgTimeToBuild;
+          }
+        }
+      }
+    }
+    return estimatedBuildTime;
   }
 
   private void requestRebuild(Exception e, Throwable cause) throws RebuildRequestedException {

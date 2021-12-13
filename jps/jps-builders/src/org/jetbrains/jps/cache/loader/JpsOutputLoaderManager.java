@@ -20,12 +20,20 @@ import org.jetbrains.jps.cache.git.GitCommitsIterator;
 import org.jetbrains.jps.cache.loader.JpsOutputLoader.LoaderStatus;
 import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
+import org.jetbrains.jps.cmdline.BuildRunner;
+import org.jetbrains.jps.cmdline.ProjectDescriptor;
+import org.jetbrains.jps.incremental.CompileScope;
+import org.jetbrains.jps.incremental.IncProjectBuilder;
+import org.jetbrains.jps.incremental.MessageHandler;
+import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.incremental.fs.BuildFSState;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -36,6 +44,7 @@ import static org.jetbrains.jps.cache.JpsCachesPluginUtil.INTELLIJ_REPO_NAME;
 
 public class JpsOutputLoaderManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(JpsOutputLoaderManager.class);
+  private static final String FS_STATE_FILE = "fs_state.dat";
   private static final int COMMITS_COUNT_THRESHOLD = 150;
   private final AtomicBoolean hasRunningTask;
   //private final CompilerWorkspaceConfiguration myWorkspaceConfiguration;
@@ -75,6 +84,41 @@ public class JpsOutputLoaderManager implements Disposable {
 
   public void measureConnectionSpeed() {
     JpsServerConnectionUtil.measureConnectionSpeed(myNettyClient);
+  }
+
+  public void estimateProjectBuildTime(BuildRunner buildRunner,
+                                       List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
+    try {
+      long startTime = System.currentTimeMillis();
+      BuildFSState fsState = new BuildFSState(false);
+      final File dataStorageRoot = Utils.getDataStorageRoot(myProjectPath);
+      if (dataStorageRoot == null) {
+        LOG.warn("Cannot determine build data storage root for project");
+        return;
+      }
+      final boolean storageFilesAbsent = !dataStorageRoot.exists() || !new File(dataStorageRoot, FS_STATE_FILE).exists();
+      if (storageFilesAbsent) {
+        // invoked the very first time for this project
+        buildRunner.setForceCleanCaches(true);
+        LOG.debug("Storage files are absent");
+      }
+      ProjectDescriptor projectDescriptor = buildRunner.load(MessageHandler.DEAF, dataStorageRoot, fsState);
+      long contextInitializationTime = System.currentTimeMillis() - startTime;
+      LOG.info("Time spend to context initialization: " + contextInitializationTime);
+      CompileScope compilationScope = buildRunner.createCompilationScope(projectDescriptor, scopes);
+      long compilation = IncProjectBuilder.calculateEstimatedBuildTime(projectDescriptor, projectDescriptor.getTargetsState(),
+                                                                       compilationScope);
+      long totalCalculationTime = System.currentTimeMillis() - startTime;
+      LOG.info("Calculated build time: " + compilation);
+      LOG.info("Time spend to context initialization and time calculation: " + totalCalculationTime);
+      LOG.info("Trying to download JPS caches before build");
+    }
+    catch (IOException e) {
+      e.printStackTrace();
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   public void load(boolean isForceUpdate, boolean verbose) {
