@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInspection.reference;
 
@@ -41,8 +41,6 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   private String[] mySuppressions;
 
   private volatile boolean myIsDeleted;
-
-  private final CountDownLatch myInitSignal = new CountDownLatch(1);
 
   protected RefElementImpl(@NotNull String name, @NotNull RefElement owner) {
     super(name, owner.getRefManager());
@@ -256,20 +254,22 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return checkFlag(IS_INITIALIZED_MASK);
   }
 
-  public void setInitialized(final boolean initialized) {
+  public synchronized void setInitialized(final boolean initialized) {
     setFlag(initialized, IS_INITIALIZED_MASK);
     if (initialized) {
-      myInitSignal.countDown();
+      notifyAll();
     }
   }
 
   @Override
-  public final void waitForInitialized() {
+  public final synchronized void waitForInitialized() {
     if (!Registry.is("batch.inspections.process.project.usages.in.parallel")) {
       return;
     }
     try {
-      myInitSignal.await();
+      while (!isInitialized()) {
+        wait(100);
+      }
     }
     catch (InterruptedException ignore) {}
   }
