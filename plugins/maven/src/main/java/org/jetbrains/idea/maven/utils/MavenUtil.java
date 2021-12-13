@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.utils;
 
+import com.intellij.build.issue.BuildIssue;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -67,9 +68,13 @@ import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.CleanBrokenArtifactsAndReimportQuickFix;
+import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.RepositoryBlockedSyncIssue;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.server.MavenServerEmbedder;
+import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.server.MavenServerProgressIndicator;
+import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.jetbrains.idea.maven.wizards.MavenProjectBuilder;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
@@ -85,11 +90,14 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.CRC32;
 
@@ -98,6 +106,8 @@ import static com.intellij.openapi.util.io.JarUtil.loadProperties;
 import static com.intellij.openapi.util.text.StringUtil.*;
 import static com.intellij.util.xml.NanoXmlBuilder.stop;
 import static icons.ExternalSystemIcons.Task;
+import static org.jetbrains.idea.maven.model.MavenProjectProblem.ProblemType.REPOSITORY;
+import static org.jetbrains.idea.maven.model.MavenProjectProblem.ProblemType.REPOSITORY_BLOCKED;
 
 public class MavenUtil {
   public static final String INTELLIJ_PLUGIN_ID = "org.jetbrains.idea.maven";
@@ -1083,8 +1093,23 @@ public class MavenUtil {
       }
     }
   }
-
   public static void notifySyncForUnresolved(@NotNull Project project, @NotNull Collection<MavenProjectReaderResult> results) {
+    Map<MavenProjectProblem.ProblemType, Set<String>> repositoryProblemByType = getRepositoryProblems(results);
+    if (!repositoryProblemByType.isEmpty()) {
+      for (String problem : repositoryProblemByType.getOrDefault(REPOSITORY_BLOCKED, Collections.emptySet())) {
+        BuildIssue buildIssue = RepositoryBlockedSyncIssue.getIssue(project, problem);
+        MavenProjectsManager.getInstance(project).getSyncConsole()
+          .getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
+          .showBuildIssue(problem, buildIssue);
+      }
+      for (String problem : repositoryProblemByType.getOrDefault(REPOSITORY, Collections.emptySet())) {
+        MavenProjectsManager.getInstance(project).getSyncConsole()
+          .getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
+          .showError(problem);
+      }
+      return;
+    }
+
     Set<MavenArtifact> unresolvedArtifacts = new HashSet<>();
     for (MavenProjectReaderResult result : results) {
       if (result.mavenModel.getDependencies() != null) {
@@ -1107,6 +1132,16 @@ public class MavenUtil {
       syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
         .showBuildIssue(artifact.getMavenId().getKey(), fix);
     }
+  }
+
+  @NotNull
+  private static Map<MavenProjectProblem.ProblemType, Set<String>> getRepositoryProblems(
+    @NotNull Collection<MavenProjectReaderResult> results
+  ) {
+    return results.stream()
+      .flatMap(readerResult -> readerResult.readingProblems.stream())
+      .filter(problem -> problem.getType() == REPOSITORY_BLOCKED || problem.getType() == REPOSITORY)
+      .collect(Collectors.groupingBy(p -> p.getType(), Collectors.mapping(p -> p.getDescription(), Collectors.toSet())));
   }
 
   public static boolean newModelEnabled(Project project) {
