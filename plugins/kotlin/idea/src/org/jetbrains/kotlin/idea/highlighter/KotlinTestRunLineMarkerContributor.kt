@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.highlighter
 
@@ -18,11 +18,14 @@ import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.platform.SimplePlatform
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.idePlatformKind
+import org.jetbrains.kotlin.platform.isMultiPlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatformWithTarget
 import org.jetbrains.kotlin.psi.KtClass
+import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
 import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
+import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import javax.swing.Icon
 
@@ -65,11 +68,17 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
         val declaration = element.getStrictParentOfType<KtNamedDeclaration>() ?: return null
         if (declaration.nameIdentifier != element) return null
 
-        if (declaration !is KtClass && declaration !is KtNamedFunction) return null
-
-        if (declaration is KtNamedFunction && declaration.containingClass() == null) return null
-
         val targetPlatform = declaration.module?.platform ?: return null
+
+        if (declaration is KtNamedFunction) {
+            if (declaration.containingClassOrObject == null) return null
+            if (targetPlatform.isMultiPlatform() && declaration.containingClass() == null) return null
+        }
+        else {
+            if (declaration !is KtClassOrObject) return null
+            if (targetPlatform.isMultiPlatform() && declaration !is KtClass) return null
+        }
+
         if (!targetPlatform.providesRunnableTests()) return null
 
         if (!isUnderKotlinSourceRootTypes(declaration.containingFile)) return null

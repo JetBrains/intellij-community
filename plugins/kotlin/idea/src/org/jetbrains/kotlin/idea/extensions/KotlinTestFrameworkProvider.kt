@@ -50,7 +50,7 @@ interface KotlinTestFrameworkProvider {
         val testFunction = if (checkMethod) element.getParentOfType<KtNamedFunction>(strict = false) else null
         val owner = PsiTreeUtil.getParentOfType(testFunction ?: element, KtClassOrObject::class.java, KtDeclarationWithBody::class.java)
 
-        var testClass = (owner as? KtClass)?.toLightClass()
+        var testClass = (owner as? KtClassOrObject)?.toLightClass()
         if (testClass == null || !isTestJavaClass(testClass)) {
             val file = element.containingFile as? KtFile ?: return null
             testClass = findSingleJavaTestClassInFile(file, ::isTestJavaClass) ?: return null

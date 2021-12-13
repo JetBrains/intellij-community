@@ -4,11 +4,13 @@ package org.jetbrains.kotlin.idea.run
 import com.intellij.execution.PsiLocation
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.junit.JUnitConfiguration
+import com.intellij.execution.lineMarker.RunLineMarkerProvider
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import com.intellij.util.ThreeState
 import org.jetbrains.kotlin.idea.junit.JunitKotlinTestFrameworkProvider
 import org.junit.Assert
 
-public class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
+class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
     
     override fun setUp() {
         super.setUp()
@@ -16,20 +18,45 @@ public class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
     fun testAvailableInsideAnonymous() {
+        doTestObjectDeclaration(
+            """
+                      import org.junit.Test
+                      class tests {
+                          @Test
+                          fun foo() {
+                              val c  = object {
+                                  fun bar() = sequence<Int> {
+                                     <caret>
+                                  }
+                              }
+                          }
+                      }
+                    """
+        )
+    }
+
+    fun testAvailableInsideObject() {
+        doTestObjectDeclaration(
+            """
+                      import org.junit.Test
+                      object tests {
+                          @Test
+                          fun foo() {
+                              <caret>
+                          }
+                      }
+                    """
+        )
+        assertEquals(ThreeState.UNSURE, RunLineMarkerProvider.hadAnythingRunnable(myFixture.file.virtualFile))
+        assertEquals(0, myFixture.findGuttersAtCaret().size)
+        val gutters = myFixture.findAllGutters()
+        assertEquals(2, gutters.size)
+        assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.file.virtualFile))
+    }
+
+    private fun doTestObjectDeclaration(fileText: String) {
         val file = myFixture.configureByText(
-            "tests.kt", """
-      import org.junit.Test
-      class tests {
-          @Test
-          fun foo() {
-              val c  = object {
-                  fun bar() = sequence<Int> {
-                     <caret>
-                  }
-              }
-          }
-      }
-    """.trimIndent()
+            "tests.kt", fileText.trimIndent()
         )!!
 
         val element = file.findElementAt(myFixture.caretOffset)!!
