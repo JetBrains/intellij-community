@@ -141,6 +141,7 @@ fun Project.getTrustedState(): ThreeState {
     return ThreeState.YES
   }
 
+  @Suppress("DEPRECATION")
   return this.service<TrustedProjectSettings>().trustedState
 }
 
@@ -210,6 +211,7 @@ fun isPathTrustedInSettings(path: Path): Boolean = service<TrustedPathsSettings>
 @State(name = "Trusted.Project.Settings", storages = [Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE)])
 @Service(Service.Level.PROJECT)
 @ApiStatus.Internal
+@Deprecated("Use TrustedPaths instead")
 class TrustedProjectSettings : SimplePersistentStateComponent<TrustedProjectSettings.State>(State()) {
 
   class State : BaseState() {
