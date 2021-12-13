@@ -962,6 +962,16 @@
       "key": "ToggleButton.onForeground"
     },
     {
+      "key": "ToolBar.horizontalToolbarInsets",
+      "description": "Default insets for horizontal action toolbars",
+      "since": "2022.1"
+    },
+    {
+      "key": "ToolBar.verticalToolbarInsets",
+      "description": "Default insets for vertical action toolbars",
+      "since": "2022.1"
+    },
+    {
       "key": "ToolTip.infoForeground",
       "description": "\"Inspection Info\" text in inspection error tooltips",
       "since": "2019.2"
