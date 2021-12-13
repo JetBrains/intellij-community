@@ -415,7 +415,10 @@ public class GeneralCommandLine implements UserDataHolder {
       }
     }
 
-    if (SystemInfo.isMacOSCatalina && ("/usr/bin/python".equals(exePath) || exePath.startsWith("/usr/bin/python2"))) {
+    if (SystemInfo.isMacOSCatalina &&
+        ("/usr/bin/python".equals(exePath) ||
+         exePath.startsWith("/usr/bin/python2") ||
+         exePath.startsWith("/System/Library/Frameworks/Python.framework/Versions/2.7/"))) {
       LOG.error(new IllegalArgumentException("Don't use '" + exePath + "' on macOS (see IDEA-271050). Args: " + myProgramParams.getList()));
     }
 
