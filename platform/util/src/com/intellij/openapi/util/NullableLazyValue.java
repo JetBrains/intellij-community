@@ -49,6 +49,11 @@ public abstract class NullableLazyValue<T> {
     };
   }
 
+  /**
+   * NOTE: Assumes that values computed by different threads are equal and interchangeable
+   * and readers should be ready to get different instances on different invocations of the {@link #getValue()}.
+   */
+  @SuppressWarnings("deprecation")
   public static @NotNull <T> NullableLazyValue<T> volatileLazyNullable(@NotNull Supplier<? extends T> value) {
     return new VolatileNullableLazyValue<T>() {
       @Override

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.colors;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -19,6 +19,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
+
 
 /**
  * A type of item with a distinct highlighting in an editor or in other views.
@@ -35,16 +37,9 @@ public final class TextAttributesKey implements Comparable<TextAttributesKey> {
   private static final ConcurrentMap<String, TextAttributesKey> ourRegistry = new ConcurrentHashMap<>();
 
   private static final NullableLazyValue<TextAttributeKeyDefaultsProvider> ourDefaultsProvider =
-    new VolatileNullableLazyValue<TextAttributeKeyDefaultsProvider>() {
-      @Nullable
-      @Override
-      protected TextAttributeKeyDefaultsProvider compute() {
-        return ApplicationManager.getApplication().getService(TextAttributeKeyDefaultsProvider.class);
-      }
-    };
+    volatileLazyNullable(() -> ApplicationManager.getApplication().getService(TextAttributeKeyDefaultsProvider.class));
 
-  @NotNull
-  private final String myExternalName;
+  private final @NotNull String myExternalName;
   private final TextAttributes myDefaultAttributes;
   private final TextAttributesKey myFallbackAttributeKey;
 

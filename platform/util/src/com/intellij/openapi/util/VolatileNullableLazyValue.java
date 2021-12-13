@@ -1,16 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * NOTE: Assumes that values computed by different threads are equal and interchangeable
- * and readers should be ready to get different instances on different invocations of the {@link #getValue()}.
- */
+@ApiStatus.NonExtendable
 public abstract class VolatileNullableLazyValue<T> extends NullableLazyValue<T> {
   private volatile boolean myComputed;
   private volatile @Nullable T myValue;
+
+  /** @deprecated please use {@link NullableLazyValue#volatileLazyNullable} instead */
+  @Deprecated
+  protected VolatileNullableLazyValue() { }
 
   @Override
   @SuppressWarnings("DuplicatedCode")

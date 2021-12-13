@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.completion.CompletionMemory;
@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 /**
  * @author ven
@@ -87,13 +88,14 @@ public final class ExpectedTypesProvider {
   private static ExpectedTypeInfoImpl createInfoImpl(@NotNull PsiType type, @ExpectedTypeInfo.Type int kind, PsiType defaultType, @NotNull TailType tailType) {
     return new ExpectedTypeInfoImpl(type, kind, defaultType, tailType, null, ExpectedTypeInfoImpl.NULL);
   }
+
   @NotNull
   private static ExpectedTypeInfoImpl createInfoImpl(@NotNull PsiType type,
                                                      int kind,
                                                      PsiType defaultType,
                                                      @NotNull TailType tailType,
                                                      PsiMethod calledMethod,
-                                                     NullableComputable<String> expectedName) {
+                                                     Supplier<String> expectedName) {
     return new ExpectedTypeInfoImpl(type, kind, defaultType, tailType, calledMethod, expectedName);
   }
 
@@ -448,7 +450,7 @@ public final class ExpectedTypesProvider {
 
     private void visitMethodReturnType(final PsiMethod scopeMethod, PsiType type, boolean tailTypeSemicolon) {
       if (type != null) {
-        NullableComputable<String> expectedName;
+        Supplier<String> expectedName;
         if (PropertyUtilBase.isSimplePropertyAccessor(scopeMethod)) {
           expectedName = () -> PropertyUtilBase.getPropertyName(scopeMethod);
         }
@@ -564,7 +566,7 @@ public final class ExpectedTypesProvider {
         PsiType type = lExpr.getType();
         if (type != null) {
           TailType tailType = getAssignmentRValueTailType(assignment);
-          NullableComputable<String> expectedName = ExpectedTypeInfoImpl.NULL;
+          Supplier<String> expectedName = ExpectedTypeInfoImpl.NULL;
           if (lExpr instanceof PsiReferenceExpression) {
             PsiElement refElement = ((PsiReferenceExpression)lExpr).resolve();
             if (refElement instanceof PsiVariable) {
@@ -792,7 +794,7 @@ public final class ExpectedTypesProvider {
         return null;
       }
 
-      NullableComputable<String> expectedName = ExpectedTypeInfoImpl.NULL;
+      Supplier<String> expectedName = ExpectedTypeInfoImpl.NULL;
       if (anotherExpr instanceof PsiReferenceExpression) {
         PsiElement refElement = ((PsiReferenceExpression)anotherExpr).resolve();
         if (refElement instanceof PsiVariable) {
