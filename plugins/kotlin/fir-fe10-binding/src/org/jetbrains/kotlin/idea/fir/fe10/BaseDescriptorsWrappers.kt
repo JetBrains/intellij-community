@@ -540,6 +540,8 @@ class KtSymbolBasedValueParameterDescriptor(
             return context.builtIns.getArrayElementType(type)
         }
 
+    override fun cleanCompileTimeInitializerCache() {}
+
     override fun getOriginal(): ValueParameterDescriptor = context.incorrectImplementation { this }
 
     override fun copy(newOwner: CallableDescriptor, newName: Name, newIndex: Int): ValueParameterDescriptor =
@@ -603,6 +605,8 @@ class KtSymbolBasedPropertyDescriptor(
         val constantInitializer = ktSymbol.initializer as? KtConstantInitializerValue ?: return null
         return constantInitializer.constant.toConstantValue()
     }
+
+    override fun cleanCompileTimeInitializerCache() {}
 
     override fun isConst(): Boolean = ktSymbol.initializer != null
 
