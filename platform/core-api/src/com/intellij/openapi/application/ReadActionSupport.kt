@@ -2,6 +2,7 @@
 package com.intellij.openapi.application
 
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ThrowableComputable
 import org.jetbrains.annotations.ApiStatus.Internal
 
 @Internal
@@ -12,4 +13,6 @@ interface ReadActionSupport {
   fun committedDocumentsConstraint(project: Project): ReadConstraint
 
   suspend fun <X> executeReadAction(constraints: List<ReadConstraint>, blocking: Boolean, action: () -> X): X
+
+  fun <X, E : Throwable> computeCancellable(action: ThrowableComputable<X, E>): X
 }

@@ -1,10 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.util.RunnableCallable;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread;
+import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.ApiStatus.Experimental;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -78,5 +84,31 @@ public abstract class ReadAction<T> extends BaseActionRunnable<T> {
   @Contract(pure = true)
   public static <T> NonBlockingReadAction<T> nonBlocking(@NotNull Callable<? extends T> task) {
     return AsyncExecutionService.getService().buildNonBlockingReadAction(task);
+  }
+
+  /**
+   * Runs the specified computation in a cancellable read action.
+   * <p/>
+   * If there is a running or a requested write action, this method throws {@link CannotReadException},
+   * otherwise the computation is executed immediately in the current thread.
+   * If a write action is requested during the computation, the computation becomes cancelled
+   * (i.e., {@link ProgressManager#checkCanceled()} starts to throw inside the computation),
+   * and this method throws {@link CannotReadException}.
+   *
+   * @throws CannotReadException if the read action cannot be started,
+   *                             or if it was cancelled by a requested write action during its execution
+   */
+  @Experimental
+  @RequiresBackgroundThread
+  public static <T, E extends Throwable> T computeCancellable(
+    @RequiresReadLock ThrowableComputable<T, E> computable
+  ) throws E, CannotReadException {
+    return ApplicationManager.getApplication().getService(ReadActionSupport.class).computeCancellable(computable);
+  }
+
+  public static final class CannotReadException extends ProcessCanceledException {
+
+    @Internal
+    public CannotReadException() { super(); }
   }
 }
