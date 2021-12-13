@@ -3,6 +3,7 @@ package org.jetbrains.intellij.build
 import org.jetbrains.intellij.build.impl.BaseLayout
 import org.jetbrains.intellij.build.impl.BuildTasksImpl
 import org.jetbrains.intellij.build.impl.PlatformLayout
+import org.jetbrains.intellij.build.impl.ProjectLibraryData
 
 import java.nio.file.Paths
 import java.util.function.Consumer
@@ -90,10 +91,10 @@ class MPSProperties extends JetBrainsProductProperties {
                 withModule("intellij.java.guiForms.rt")
 
                 withModule("intellij.java.rt", "idea_rt.jar", null)
-                withProjectLibrary("Eclipse")
-                withProjectLibrary("JUnit4")
-                withProjectLibrary("http-client-3.1")
-                withProjectLibrary("pty4j") // for terminal plugin
+                withProjectLibrary("Eclipse", ProjectLibraryData.PackMode.MERGED)
+                withProjectLibrary("JUnit4", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+                withProjectLibrary("http-client-3.1", ProjectLibraryData.PackMode.MERGED)
+                withProjectLibrary("pty4j", ProjectLibraryData.PackMode.STANDALONE_MERGED) // for terminal plugin
                 withoutProjectLibrary("Ant")
                 withoutProjectLibrary("Gradle")
             }
