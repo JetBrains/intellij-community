@@ -14,7 +14,6 @@ import com.intellij.psi.filters.*
 import com.intellij.psi.filters.position.LeftNeighbour
 import com.intellij.psi.filters.position.PositionElementFilter
 import com.intellij.psi.tree.IElementType
-import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.parentOfType
 import com.intellij.psi.util.parentOfTypes
 import org.jetbrains.kotlin.KtNodeTypes
@@ -50,9 +49,6 @@ open class KeywordLookupObject {
 object KeywordCompletion {
     private val ALL_KEYWORDS = (KEYWORDS.types + SOFT_KEYWORDS.types)
         .map { it as KtKeywordToken }
-
-    private val KEYWORDS_TO_IGNORE_PREFIX =
-        TokenSet.create(OVERRIDE_KEYWORD /* it's needed to complete overrides that should be work by member name too */)
 
     private val INCOMPATIBLE_KEYWORDS_AROUND_SEALED = setOf(
         SEALED_KEYWORD,
@@ -134,6 +130,26 @@ object KeywordCompletion {
         return keywordToken in nextKeywords
     }
 
+    private fun ignorePrefixForKeyword(completionPosition: PsiElement, keywordToken: KtKeywordToken): Boolean =
+        when (keywordToken) {
+            // it's needed to complete overrides that should work by member name too
+            OVERRIDE_KEYWORD -> true
+
+            // keywords that might be used with labels (@label) after them
+            THIS_KEYWORD,
+            RETURN_KEYWORD,
+            BREAK_KEYWORD,
+            CONTINUE_KEYWORD -> {
+                // If the position is parsed as an expression and has a label, it means that the completion is performed
+                // in a place like `return@la<caret>`. The prefix matcher in this case will have its prefix == "la",
+                // and it won't match with the keyword text ("return" in this case).
+                // That's why we want to ignore the prefix matcher for such positions
+                completionPosition is KtExpressionWithLabel && completionPosition.getTargetLabel() != null
+            }
+
+            else -> false
+        }
+
     private fun handleCompoundKeyword(
         position: PsiElement,
         keywordToken: KtKeywordToken,
@@ -169,7 +185,7 @@ object KeywordCompletion {
 
         if (keywordToken == DYNAMIC_KEYWORD && isJvmModule) return // not supported for JVM
 
-        if (keywordToken !in KEYWORDS_TO_IGNORE_PREFIX && !prefixMatcher.isStartMatch(keyword)) return
+        if (!ignorePrefixForKeyword(position, keywordToken) && !prefixMatcher.isStartMatch(keyword)) return
 
         if (!parserFilter(keywordToken)) return
 
