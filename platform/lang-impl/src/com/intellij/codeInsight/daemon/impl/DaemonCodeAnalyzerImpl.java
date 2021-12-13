@@ -966,7 +966,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   @TestOnly
   @NotNull
-  protected synchronized DaemonProgressIndicator getUpdateProgress() {
+  synchronized DaemonProgressIndicator getUpdateProgress() {
     return myUpdateProgress;
   }
 
