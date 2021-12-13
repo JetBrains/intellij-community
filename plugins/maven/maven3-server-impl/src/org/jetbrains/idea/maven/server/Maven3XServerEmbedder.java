@@ -67,7 +67,10 @@ import org.codehaus.plexus.context.DefaultContext;
 import org.codehaus.plexus.logging.BaseLoggerManager;
 import org.codehaus.plexus.logging.Logger;
 import org.codehaus.plexus.personality.plexus.lifecycle.phase.InitializationException;
+import org.codehaus.plexus.util.ExceptionUtils;
+import org.codehaus.plexus.util.StringUtils;
 import org.eclipse.aether.DefaultRepositorySystemSession;
+import org.eclipse.aether.RepositoryException;
 import org.eclipse.aether.RepositorySystemSession;
 import org.eclipse.aether.graph.Dependency;
 import org.eclipse.aether.graph.DependencyVisitor;
@@ -1187,7 +1190,7 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
     for (Throwable each : exceptions) {
       if (each == null) continue;
 
-      Maven3ServerGlobals.getLogger().info(each);
+      Maven3ServerGlobals.getLogger().print(ExceptionUtils.getFullStackTrace(each));
       myConsoleWrapper.info("Validation error:", each);
 
       if (each instanceof IllegalStateException && each.getCause() != null) {
@@ -1221,9 +1224,19 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         collector.add(MavenProjectProblem.createStructureProblem(
           traceElement.getFileName() + ":" + traceElement.getLineNumber(), each.getMessage()));
       }
+      else if (each instanceof RepositoryException){
+        myConsoleWrapper.error("Maven server repository problem", each);
+        String message = getRootMessage(each);
+        if (message.contains("Blocked mirror for repositories:")) {
+          String errorMessage = message.substring(message.indexOf("Blocked mirror for repositories:"));
+          collector.add(MavenProjectProblem.createProblem(path, errorMessage, MavenProjectProblem.ProblemType.REPOSITORY_BLOCKED, true));
+        } else {
+          collector.add(MavenProjectProblem.createProblem(path, message, MavenProjectProblem.ProblemType.REPOSITORY, true));
+        }
+      }
       else {
         myConsoleWrapper.error("Maven server structure problem", each);
-        collector.add(MavenProjectProblem.createStructureProblem(path, each.getMessage(), true));
+        collector.add(MavenProjectProblem.createStructureProblem(path, getRootMessage(each), true));
       }
     }
     for (ModelProblem problem : modelProblems) {
@@ -1255,6 +1268,14 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
         collector.add(MavenProjectProblem.createStructureProblem(source, problem.getMessage(), true));
       }
     }
+  }
+
+  @NotNull
+  private static String getRootMessage(Throwable each) throws RemoteException {
+    String baseMessage = each.getMessage() != null ? each.getMessage() : "";
+    Throwable rootCause = ExceptionUtils.getRootCause(each);
+    String rootMessage = rootCause != null ? rootCause.getMessage() : "";
+    return StringUtils.isNotEmpty(rootMessage) ? rootMessage : baseMessage;
   }
 
   @NotNull
