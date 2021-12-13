@@ -6,16 +6,15 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
+import com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.*
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.operations.AnonymousParallelOperationTrace
 import com.intellij.openapi.observable.operations.asProperty
-import com.intellij.openapi.observable.properties.AtomicObservableProperty
-import com.intellij.openapi.observable.properties.ObservableClearableProperty
-import com.intellij.openapi.observable.properties.transform
-import com.intellij.openapi.observable.properties.and
+import com.intellij.openapi.observable.properties.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.whenStructureChanged
@@ -280,6 +279,13 @@ class DependencyAnalyzerViewImpl(
       .apply { templatePresentation.icon = AllIcons.Actions.Show }
       .asActionButton()
       .bindEnabled(dependencyLoadingProperty)
+    val reloadNotificationProperty = ProjectReloadNotificationProperty()
+    val projectReloadSeparator = separator()
+      .bindVisible(reloadNotificationProperty)
+    val projectReloadAction = action { ProjectRefreshAction.refreshProject(project) }
+      .apply { templatePresentation.icon = AllIcons.Actions.BuildLoadChanges }
+      .asActionButton()
+      .bindVisible(reloadNotificationProperty)
 
     val dependencyTitle = label(ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.title"))
     val dependencyList = JBList(dependencyListModel)
@@ -331,7 +337,9 @@ class DependencyAnalyzerViewImpl(
           scopeFilterSelector,
           separator(),
           dependencyInspectionFilterButton,
-          viewOptionsButton
+          viewOptionsButton,
+          projectReloadSeparator,
+          projectReloadAction
         ))
       }
       setContent(horizontalSplitPanel(SPLIT_VIEW_PROPORTION_PROPERTY, 0.5f) {
@@ -542,6 +550,22 @@ class DependencyAnalyzerViewImpl(
     companion object {
       val EMPTY = DependencyModel(emptyList())
     }
+  }
+
+  private inner class ProjectReloadNotificationProperty : ObservableProperty<Boolean> {
+    private val notificationAware get() = ExternalSystemProjectNotificationAware.getInstance(project)
+
+    override fun get() = systemId in notificationAware.getSystemIds()
+
+    override fun afterChange(listener: (Boolean) -> Unit) =
+      ExternalSystemProjectNotificationAware.whenNotificationChanged(project) {
+        listener(get())
+      }
+
+    override fun afterChange(listener: (Boolean) -> Unit, parentDisposable: Disposable) =
+      ExternalSystemProjectNotificationAware.whenNotificationChanged(project, {
+        listener(get())
+      }, parentDisposable)
   }
 
   companion object {

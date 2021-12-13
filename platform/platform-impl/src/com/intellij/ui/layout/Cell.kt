@@ -780,9 +780,13 @@ private val TextFieldWithBrowseButton.emptyText
   get() = (textField as JBTextField).emptyText
 
 fun <C : Component> C.bindEnabled(property: ObservableProperty<Boolean>): C = apply {
-  property.afterChange {
-    UIUtil.setEnabledRecursively(this, it)
-  }
+  UIUtil.setEnabledRecursively(this, property.get())
+  property.afterChange { UIUtil.setEnabledRecursively(this, it) }
+}
+
+fun <C : Component> C.bindVisible(property: ObservableProperty<Boolean>): C = apply {
+  isVisible = property.get()
+  property.afterChange { isVisible = it }
 }
 
 fun <C : ComponentWithEmptyText> C.bindEmptyText(property: ObservableClearableProperty<@NlsContexts.StatusText String>): C = apply {
