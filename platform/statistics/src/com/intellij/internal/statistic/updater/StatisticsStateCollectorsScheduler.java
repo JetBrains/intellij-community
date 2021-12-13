@@ -40,6 +40,11 @@ public class StatisticsStateCollectorsScheduler implements ApplicationInitialize
 
   private static void runStatesLogging() {
     if (!StatisticsUploadAssistant.isSendAllowed()) return;
+
+    // avoid overlapping logging from periodic scheduler and OneTimeLogger (long indexing case)
+    JobScheduler.getScheduler().schedule(() -> myOneTimeLogger.allowExecution.set(false),
+                                         LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN, TimeUnit.MINUTES);
+
     JobScheduler.getScheduler().scheduleWithFixedDelay(() -> FUStateUsagesLogger.create().logApplicationStates(),
                                                        LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN,
                                                        LOG_APPLICATION_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
