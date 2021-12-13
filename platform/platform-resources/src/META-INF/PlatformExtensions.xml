@@ -1215,7 +1215,6 @@
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService" headlessImplementation=""/>
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyActivity" order="last"/>
 
-    <postStartupActivity implementation="com.intellij.ide.bookmarks.BookmarkManager$MyStartupActivity"/>
     <notificationGroup id="System Clipboard" displayType="BALLOON"/>
     <notificationGroup id="Project Startup Tasks Messages" displayType="NONE"/>
     <notificationGroup id="scrolling-capabilities-debug" displayType="NONE"/>

@@ -925,6 +925,7 @@
                 factoryClass="com.intellij.ide.projectView.impl.FavoritesViewToolWindowFactory" order="after Structure"/>
     <toolWindow id="Bookmarks" anchor="left" icon="AllIcons.Toolwindows.ToolWindowBookmarks" secondary="true"
                 factoryClass="com.intellij.ide.bookmark.ui.BookmarksViewFactory" order="after Structure"/>
+    <postStartupActivity implementation="com.intellij.ide.bookmark.BookmarksStartupActivity"/>
     <projectService serviceImplementation="com.intellij.ide.bookmark.ui.BookmarksViewStateComponent"/>
     <editorFactoryListener implementation="com.intellij.ide.bookmark.GutterLineBookmarkUpdater"/>
     <selectInTarget implementation="com.intellij.ide.bookmark.ui.BookmarksSelectInTarget"/>
