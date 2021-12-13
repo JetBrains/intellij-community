@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.simple;
 
 import com.intellij.diff.DiffContext;
@@ -6,6 +6,7 @@ import com.intellij.diff.actions.AllLinesIterator;
 import com.intellij.diff.actions.BufferedLineIterator;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.impl.ui.DifferencesLabel;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.util.*;
@@ -46,7 +47,7 @@ import java.util.List;
 
 import static com.intellij.diff.util.DiffUtil.getLineCount;
 
-public class SimpleDiffViewer extends TwosideTextDiffViewer {
+public class SimpleDiffViewer extends TwosideTextDiffViewer implements DifferencesLabel.DifferencesCounter {
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
   @NotNull private final MyStatusPanel myStatusPanel;
@@ -360,8 +361,9 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer {
     return myStatusPanel;
   }
 
-  public @Nullable String getStatusMessage() {
-    return myStatusPanel.getMessage();
+  @Override
+  public int getTotalDifferences() {
+    return getNonSkippedDiffChanges().size();
   }
 
   @NotNull
