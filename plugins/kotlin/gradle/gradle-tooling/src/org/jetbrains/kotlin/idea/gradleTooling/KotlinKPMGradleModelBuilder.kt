@@ -5,27 +5,18 @@ import org.gradle.api.Project
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinModuleBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinProjectModelSettingsBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinKpmExtensionReflection
+import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
-import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 
-class KotlinKPMGradleModelBuilder : ModelBuilderService.Ex {
+class KotlinKPMGradleModelBuilder : AbstractModelBuilderService() {
     override fun canBuild(modelName: String?): Boolean = modelName == KotlinKPMGradleModel::class.java.name
 
     override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder = ErrorMessageBuilder
         .create(project, e, "Gradle import errors")
         .withDescription("Unable to build Kotlin PM20 project configuration")
 
-
-    override fun buildAll(modelName: String?, project: Project?, context: ModelBuilderContext): KotlinKPMGradleModel? {
-        return buildKotlinKPMGradleModel(project ?: return null)
-    }
-
-    override fun buildAll(modelName: String?, project: Project?): KotlinKPMGradleModel? {
-        return buildKotlinKPMGradleModel(project ?: return null)
-    }
-
-    private fun buildKotlinKPMGradleModel(project: Project): KotlinKPMGradleModel? {
+    override fun buildAll(modelName: String, project: Project, context: ModelBuilderContext): KotlinKPMGradleModel? {
         try {
             val kpmExtension = project.kpmExtension ?: return null
             val kpmExtensionReflection = KotlinKpmExtensionReflection(kpmExtension)
