@@ -25,10 +25,9 @@ import javax.swing.JTextField
 interface MessagesService {
   companion object {
     @JvmStatic
-    fun getInstance(): MessagesService = when (val app = ApplicationManager.getApplication()) {
-      null -> MessagesService::class.java.classLoader.loadClass("com.intellij.ui.messages.MessagesServiceImpl").getDeclaredConstructor().newInstance() as MessagesService
-      else -> app.getService(MessagesService::class.java)
-    }
+    fun getInstance(): MessagesService =
+      ApplicationManager.getApplication()?.getService(MessagesService::class.java)
+      ?: MessagesService::class.java.classLoader.loadClass("com.intellij.ui.messages.MessagesServiceImpl").getDeclaredConstructor().newInstance() as MessagesService
   }
 
   fun showMessageDialog(project: Project?,
