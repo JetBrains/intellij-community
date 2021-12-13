@@ -25,7 +25,6 @@ import com.intellij.openapi.ui.DialogWrapperDialog;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.*;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -93,17 +92,21 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   @Override
   public void expire(@NotNull Notification notification) {
     UIUtil.invokeLaterIfNeeded(() -> {
-      EventLog.expireNotification(notification);
-      if (Registry.is("ide.notification.action.center", false)) {
-        NotificationsToolWindowFactory.Companion.remove(notification);
+      if (ActionCenter.isEnabled()) {
+        NotificationsToolWindowFactory.Companion.expire(notification);
+      }
+      else {
+        EventLog.expireNotification(notification);
       }
     });
   }
 
   public void expireAll() {
-    EventLog.expireNotifications();
-    if (Registry.is("ide.notification.action.center", false)) {
-      NotificationsToolWindowFactory.Companion.remove(null);
+    if (ActionCenter.isEnabled()) {
+      NotificationsToolWindowFactory.Companion.expire(null);
+    }
+    else {
+      EventLog.expireNotifications();
     }
   }
 
@@ -329,11 +332,11 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
 
     if (balloon instanceof BalloonImpl) {
-      if (displayType == NotificationDisplayType.BALLOON || ProjectUtil.getOpenProjects().length == 0 || Registry.is("ide.notification.action.center", false)) {
+      if (displayType == NotificationDisplayType.BALLOON || ProjectUtil.getOpenProjects().length == 0 || ActionCenter.isEnabled()) {
         frameActivateBalloonListener(balloon, () -> {
           if (!balloon.isDisposed()) {
             int delay = 10000;
-            if (Registry.is("ide.notification.action.center", false) && displayType == NotificationDisplayType.STICKY_BALLOON) {
+            if (ActionCenter.isEnabled() && displayType == NotificationDisplayType.STICKY_BALLOON) {
               delay = 300000;
             }
             ((BalloonImpl)balloon).startSmartFadeoutTimer(delay);
@@ -699,7 +702,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
       balloonImpl.getContent().addMouseListener(new MouseAdapter() {
       });
       balloon.setAnimationEnabled(false);
-      if (Registry.is("ide.notification.action.center", false)) {
+      if (ActionCenter.isEnabled()) {
         balloonImpl.setShadowBorderProvider(new NotificationBalloonRoundShadowBorderProvider(layoutData.fillColor, layoutData.borderColor));
       }
       else {
@@ -758,7 +761,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     List<AnAction> actions = notification.getActions();
     int actionsSize = actions.size();
 
-    if (Registry.is("ide.notification.action.center", false) && notification.isSuggestionType()) {
+    if (ActionCenter.isEnabled() && notification.isSuggestionType()) {
       if (actionsSize == 1) {
         AnAction action = actions.get(0);
         JButton button = new JButton(action.getTemplateText());

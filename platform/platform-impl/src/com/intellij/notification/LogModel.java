@@ -45,7 +45,7 @@ public final class LogModel  {
     fireModelChanged();
   }
 
-  private static void fireModelChanged() {
+  public static void fireModelChanged() {
     ApplicationManager.getApplication().getMessageBus().syncPublisher(LOG_MODEL_CHANGED).modelChanged();
   }
 
@@ -59,6 +59,16 @@ public final class LogModel  {
       fireModelChanged();
     }
     return result;
+  }
+
+  public void setStatusMessage(@Nullable Notification notification) {
+    if (notification == null) {
+      setStatusMessage(null, 0);
+    }
+    else {
+      myStatuses.put(notification, EventLog.formatForLog(notification, "").status);
+      setStatusMessage(notification, notification.getTimestamp());
+    }
   }
 
   void setStatusMessage(@Nullable Notification statusMessage, long stamp) {
