@@ -32,7 +32,6 @@ public abstract class NullableLazyValue<T> {
 
   public static @NotNull <T> NullableLazyValue<T> lazyNullable(@NotNull Supplier<? extends T> value) {
     return new NullableLazyValue<T>() {
-
       @Override
       protected @Nullable T compute() {
         return value.get();
@@ -58,6 +57,8 @@ public abstract class NullableLazyValue<T> {
     };
   }
 
+  /** @deprecated please use {@link NullableLazyValue#lazyNullable} instead */
+  @Deprecated
   public static @NotNull <T> NullableLazyValue<T> createValue(@NotNull Factory<? extends T> value) {
     return new NullableLazyValue<T>() {
       @Override

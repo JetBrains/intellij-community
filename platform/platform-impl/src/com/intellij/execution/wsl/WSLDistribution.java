@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.google.common.net.InetAddresses;
@@ -44,6 +44,7 @@ import java.nio.file.Paths;
 import java.util.*;
 
 import static com.intellij.execution.wsl.WSLUtil.LOG;
+import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
 /**
  * Represents a single linux distribution in WSL, installed after <a href="https://blogs.msdn.microsoft.com/commandline/2017/10/11/whats-new-in-wsl-in-windows-10-fall-creators-update/">Fall Creators Update</a>
@@ -67,10 +68,10 @@ public class WSLDistribution {
   private final @NotNull WslDistributionDescriptor myDescriptor;
   private final @Nullable Path myExecutablePath;
   private @Nullable Integer myVersion;
-  private final NullableLazyValue<String> myHostIp = NullableLazyValue.createValue(this::readHostIp);
-  private final NullableLazyValue<String> myWslIp = NullableLazyValue.createValue(this::readWslIp);
-  private final NullableLazyValue<String> myShellPath = NullableLazyValue.createValue(this::readShellPath);
-  private final NullableLazyValue<String> myUserHomeProvider = NullableLazyValue.createValue(this::readUserHome);
+  private final NullableLazyValue<String> myHostIp = lazyNullable(this::readHostIp);
+  private final NullableLazyValue<String> myWslIp = lazyNullable(this::readWslIp);
+  private final NullableLazyValue<String> myShellPath = lazyNullable(this::readShellPath);
+  private final NullableLazyValue<String> myUserHomeProvider = lazyNullable(this::readUserHome);
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
     this(dist.myDescriptor, dist.myExecutablePath);

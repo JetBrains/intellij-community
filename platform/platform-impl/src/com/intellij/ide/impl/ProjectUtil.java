@@ -55,6 +55,8 @@ import java.util.List;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
+import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
+
 public final class ProjectUtil extends ProjectUtilCore {
   private static final Logger LOG = Logger.getInstance(ProjectUtil.class);
 
@@ -144,7 +146,7 @@ public final class ProjectUtil extends ProjectUtilCore {
       }
     }
 
-    NullableLazyValue<VirtualFile> lazyVirtualFile = NullableLazyValue.createValue(() -> getFileAndRefresh(file));
+    NullableLazyValue<VirtualFile> lazyVirtualFile = lazyNullable(() -> getFileAndRefresh(file));
 
     if (!TrustedProjects.confirmOpeningAndSetProjectTrustedStateIfNeeded(file)) {
       return OpenResult.canceled();
@@ -226,7 +228,7 @@ public final class ProjectUtil extends ProjectUtilCore {
       }
     }
 
-    NullableLazyValue<VirtualFile> lazyVirtualFile = NullableLazyValue.createValue(() -> getFileAndRefresh(file));
+    NullableLazyValue<VirtualFile> lazyVirtualFile = lazyNullable(() -> getFileAndRefresh(file));
 
     for (ProjectOpenProcessor provider : ProjectOpenProcessor.EXTENSION_POINT_NAME.getIterable()) {
       if (!provider.isStrongProjectInfoHolder()) {

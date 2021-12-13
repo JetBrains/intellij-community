@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.dom.impl;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -37,6 +37,8 @@ import org.jetbrains.idea.devkit.dom.index.IdeaPluginRegistrationIndex;
 import org.jetbrains.idea.devkit.util.DescriptorI18nUtil;
 
 import java.util.*;
+
+import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
 public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGroup> {
 
@@ -183,7 +185,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
       presentation.setIcon(ElementPresentationManager.getIcon(actionOrGroup));
 
       NullableLazyValue<PropertiesFile> propertiesFile =
-        NullableLazyValue.createValue(() -> DescriptorI18nUtil.findBundlePropertiesFile(actionOrGroup));
+        lazyNullable(() -> DescriptorI18nUtil.findBundlePropertiesFile(actionOrGroup));
 
       final String text = getLocalizedText(actionOrGroup, ActionOrGroup.TextType.TEXT, propertiesFile);
       if (StringUtil.isNotEmpty(text)) {
