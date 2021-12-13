@@ -833,6 +833,12 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     myProjectsTree = newTree;
   }
 
+  @ApiStatus.Internal
+  @Nullable
+  public MavenProjectsTree getProjectsTree() {
+    return myProjectsTree;
+  }
+
   private void scheduleUpdateAllProjects(boolean forceImportAndResolve) {
     doScheduleUpdateProjects(null, false, forceImportAndResolve);
   }

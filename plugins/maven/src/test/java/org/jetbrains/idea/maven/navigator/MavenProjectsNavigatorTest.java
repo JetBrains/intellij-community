@@ -18,6 +18,10 @@ package org.jetbrains.idea.maven.navigator;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import org.jetbrains.idea.maven.project.importing.FilesList;
+import org.jetbrains.idea.maven.project.importing.MavenImportFlow;
+import org.jetbrains.idea.maven.project.importing.MavenInitialImportContext;
+import org.jetbrains.idea.maven.project.importing.MavenReadContext;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -60,8 +64,9 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     createModulePom("m", "<groupId>test</groupId>" +
                          "<artifactId>m</artifactId>" +
                          "<version>1</version>");
-    myProjectsManager.resetManagedFilesAndProfilesInTests(Collections.singletonList(myProjectPom), MavenExplicitProfiles.NONE);
-    waitForReadingCompletion();
+
+    readFiles(myProjectPom);
+
 
     myProjectsManager.fireActivatedInTests();
     assertEquals(1, getRootNodes().size());
@@ -337,8 +342,22 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
   }
 
   private void readFiles(VirtualFile... files) {
-    myProjectsManager.addManagedFiles(Arrays.asList(files));
-    waitForReadingCompletion();
+    if (isNewImportingProcess) {
+      MavenImportFlow flow = new MavenImportFlow();
+      MavenInitialImportContext initialImportContext =
+        flow.prepareNewImport(myProject, getMavenProgressIndicator(),
+                              new FilesList(files),
+                              getMavenGeneralSettings(),
+                              getMavenImporterSettings(),
+                              Collections.emptyList(), Collections.emptyList());
+      MavenReadContext readContext = flow.readMavenFiles(initialImportContext, Collections.emptyList(), Collections.emptyList());
+      flow.updateProjectManager(readContext);
+      myNavigator.scheduleStructureUpdate();
+    }
+    else {
+      myProjectsManager.addManagedFiles(Arrays.asList(files));
+      waitForReadingCompletion();
+    }
   }
 
   private List<MavenProjectsStructure.ProjectNode> getRootNodes() {

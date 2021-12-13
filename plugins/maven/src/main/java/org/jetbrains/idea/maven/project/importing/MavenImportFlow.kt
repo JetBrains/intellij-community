@@ -102,6 +102,10 @@ class MavenImportFlow {
   }
 
   private fun loadOrCreateProjectTree(projectManager: MavenProjectsManager): MavenProjectsTree {
+    val existing = projectManager.projectsTree
+    if (existing != null) {
+      return existing
+    }
     val file = projectManager.projectsTreeFile
     try {
       if (file.exists()) {

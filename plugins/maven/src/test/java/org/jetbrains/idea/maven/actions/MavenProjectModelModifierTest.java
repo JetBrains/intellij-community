@@ -11,6 +11,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.RunAll;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.idea.maven.dom.MavenDomWithIndicesTestCase;
@@ -25,6 +26,14 @@ import java.util.regex.Pattern;
 public class MavenProjectModelModifierTest extends MavenDomWithIndicesTestCase {
   private static final ExternalLibraryDescriptor COMMONS_IO_LIBRARY_DESCRIPTOR_2_4 =
     new ExternalLibraryDescriptor("commons-io", "commons-io", "2.4", "2.4");
+
+  @Override
+  protected void tearDown() throws Exception {
+    RunAll.runAll(
+      () -> stopMavenImportManager(),
+      () -> super.tearDown()
+    );
+  }
 
   @Test
   public void testAddExternalLibraryDependency() {
