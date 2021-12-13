@@ -528,9 +528,16 @@ public class ClassWriter {
 
   private static List<ClassNode> getClassNodes(List<String> qualifiedClassNames) {
     return qualifiedClassNames.stream()
-      .map(str -> DecompilerContext.getClassProcessor().getMapRootClasses().get(str))
+      .map(str -> {
+        ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(str);
+        if (node == null) {
+          DecompilerContext.getLogger().writeMessage("Could not find class " + str, IFernflowerLogger.Severity.WARN);
+        }
+        return node;
+      })
+      .filter(Objects::nonNull)
       .collect(Collectors.toList()
-    );
+      );
   }
 
   private static boolean isVarArgRecord(StructClass cl) {
