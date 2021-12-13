@@ -260,7 +260,10 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
               }
               collectTestMembers(psiClasses, checkAbstract, checkIsTest, processor);
               for (PsiElement psiMember : processor.getCollection()) {
-                classes.add(((PsiClass)psiMember).getQualifiedName());
+                String qName = ((PsiClass)psiMember).getQualifiedName();
+                if (qName != null) {
+                  classes.add(qName);
+                }
               }
             }
           }
@@ -274,10 +277,14 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
   private boolean collectTestMembers(PsiElement[] elements,
                                      boolean checkAbstract,
                                      boolean checkIsTest,
-                                     PsiElementProcessor.CollectElements<PsiElement> processor, LinkedHashSet<? super String> classes) {
+                                     PsiElementProcessor.CollectElements<PsiElement> processor,
+                                     LinkedHashSet<? super String> classes) {
     collectTestMembers(elements, checkAbstract, checkIsTest, processor);
     for (PsiElement psiClass : processor.getCollection()) {
-      classes.add(getQName(psiClass));
+      String qName = getQName(psiClass);
+      if (qName != null) {
+        classes.add(qName);
+      }
     }
     return classes.size() > 1;
   }
@@ -301,11 +308,13 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     return null;
   }
 
+  @Nullable
   public String getQName(PsiElement psiMember) {
     return getQName(psiMember, null);
   }
 
-  public String getQName(PsiElement psiMember, Location location) {
+  @Nullable
+  public String getQName(PsiElement psiMember, @Nullable Location location) {
     if (psiMember instanceof PsiClass) {
       return ClassUtil.getJVMClassName((PsiClass)psiMember);
     }

@@ -425,7 +425,10 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     if (patternsElement != null) {
       final LinkedHashSet<String> tests = new LinkedHashSet<>();
       for (Element patternElement : patternsElement.getChildren(PATTERN_EL_NAME)) {
-        tests.add(patternElement.getAttributeValue(TEST_CLASS_ATT_NAME));
+        String value = patternElement.getAttributeValue(TEST_CLASS_ATT_NAME);
+        if (value != null) {
+          tests.add(value);
+        }
       }
       myData.setPatterns(tests);
     }
@@ -570,15 +573,15 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   public void bePatternConfiguration(List<PsiClass> classes, PsiMethod method) {
     myData.TEST_OBJECT = TEST_PATTERN;
     final LinkedHashSet<String> patterns = new LinkedHashSet<>();
-    final String methodSufiix;
+    final String methodSuffix;
     if (method != null) {
       myData.METHOD_NAME = Data.getMethodPresentation(method);
-      methodSufiix = "," + myData.METHOD_NAME;
+      methodSuffix = "," + myData.METHOD_NAME;
     } else {
-      methodSufiix = "";
+      methodSuffix = "";
     }
     for (PsiClass pattern : classes) {
-      patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + methodSufiix);
+      patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + methodSuffix);
     }
     myData.setPatterns(patterns);
     final Module module = RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).findModule(this, getConfigurationModule()
