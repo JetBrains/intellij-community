@@ -54,7 +54,6 @@ abstract class AbstractKotlinMavenImporterTest : KotlinMavenImportingTestCase() 
 
     override fun setUp() {
         super.setUp()
-        repositoryPath = File(myDir, "repo").path
         createStdProjectFolders()
     }
 
