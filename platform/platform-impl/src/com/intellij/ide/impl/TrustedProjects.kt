@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("TrustedProjects")
 @file:ApiStatus.Experimental
 
@@ -175,27 +175,33 @@ private fun createDoNotAskOptionForLocation(projectLocation: Path): DoNotAskOpti
   }
 }
 
-private fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
-                                       ApplicationManager.getApplication().isHeadlessEnvironment ||
-                                       java.lang.Boolean.getBoolean("idea.is.integration.test") ||
-                                       java.lang.Boolean.getBoolean("idea.trust.all.projects")
-                                       
+@ApiStatus.Internal
+fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
+                               ApplicationManager.getApplication().isHeadlessEnvironment ||
+                               java.lang.Boolean.getBoolean("idea.is.integration.test") ||
+                               java.lang.Boolean.getBoolean("idea.trust.all.projects")
+
+private fun isTrustedCheckDisabledForProduct(): Boolean = java.lang.Boolean.getBoolean("idea.trust.disabled")
+
 
 private fun isProjectImplicitlyTrusted(project: Project): Boolean =
   isProjectImplicitlyTrusted(project.basePath?.let { Paths.get(it) }, project)
 
 @JvmOverloads
 @ApiStatus.Internal
-fun isProjectImplicitlyTrusted(projectDir: Path?, project : Project? = null): Boolean {
-  if (isTrustedCheckDisabled()) {
+fun isProjectImplicitlyTrusted(projectDir: Path?, project: Project? = null): Boolean {
+  if (isTrustedCheckDisabled() || isTrustedCheckDisabledForProduct()) {
     return true
   }
-  if (projectDir != null && service<TrustedPathsSettings>().isPathTrusted(projectDir)) {
+  if (projectDir != null && isPathTrustedInSettings(projectDir)) {
     TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_PATH.log(project)
     return true
   }
   return false
 }
+
+@ApiStatus.Internal
+fun isPathTrustedInSettings(path: Path): Boolean = service<TrustedPathsSettings>().isPathTrusted(path)
 
 /**
  * Per-project "is this project trusted" setting from the previous version of the trusted API.
