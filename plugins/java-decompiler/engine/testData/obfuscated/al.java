@@ -8,9 +8,9 @@ public class al implements Comparable<al> {
    private final ak a;
    private final List<n<Date, Double>> b = new ArrayList();
    private final List<n<Date, Double>> c = new ArrayList();
-   private double d = 0.0D;
-   private double e = 0.0D;
-   private double f = 0.0D;
+   private double d = 0.0;
+   private double e = 0.0;
+   private double f = 0.0;
    private static final String[] g;
 
    public al(ak var1) {
@@ -52,7 +52,7 @@ public class al implements Comparable<al> {
    public double e() {
       try {
          if (this.b.isEmpty()) {
-            return 0.0D;
+            return 0.0;
          }
       } catch (a_ var1) {
          throw var1;
@@ -64,7 +64,7 @@ public class al implements Comparable<al> {
    public double f() {
       try {
          if (this.c.isEmpty()) {
-            return 0.0D;
+            return 0.0;
          }
       } catch (a_ var1) {
          throw var1;

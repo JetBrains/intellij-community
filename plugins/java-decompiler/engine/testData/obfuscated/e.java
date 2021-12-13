@@ -67,7 +67,7 @@ class e<K, V> implements a<K, V> {
          throw var5;
       }
 
-      var10000 = Math.round(100.0D * (double)var1 / (double)(var1 + var3));
+      var10000 = Math.round(100.0 * (double)var1 / (double)(var1 + var3));
       return var10000;
    }
 
