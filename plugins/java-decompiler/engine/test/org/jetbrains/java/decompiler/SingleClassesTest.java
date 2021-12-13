@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -64,6 +64,10 @@ public class SingleClassesTest {
   @Test public void testConstants() {
     DecompilerContext.setProperty(IFernflowerPreferences.LITERALS_AS_IS, "0");
     doTest("pkg/TestConstants");
+  }
+  @Test public void testInteger() {
+    DecompilerContext.setProperty(IFernflowerPreferences.LITERALS_AS_IS, "0");
+    doTest("java/lang/Integer");
   }
   @Test public void testEnum() { doTest("pkg/TestEnum"); }
   @Test public void testDebugSymbols() { doTest("pkg/TestDebugSymbols"); }
