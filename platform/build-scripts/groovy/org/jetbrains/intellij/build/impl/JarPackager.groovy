@@ -163,27 +163,21 @@ final class JarPackager {
     Map<JpsLibrary, List<Path>> libraryToMerge = packager.packLibraries(actualModuleJars, outputDir, layout, copiedFiles, extraLibSources)
 
     boolean isRootDir = context.paths.distAllDir == outputDir.parent
+    List libSources
     if (isRootDir) {
       for (Map.Entry<String, Predicate<String>> rule : EXTRA_MERGE_RULES.entrySet() ) {
         packager.mergeLibsByPredicate(rule.key, libraryToMerge, outputDir, rule.value)
       }
-    }
 
-    List libSources
-    if (libraryToMerge.isEmpty()) {
-      libSources = null
-    }
-    else if (isRootDir) {
-      libSources = packager.filesToSourceWithMappings(outputDir.resolve(BaseLayout.APP_JAR), libraryToMerge)
-    }
-    else {
-      boolean isSeparateUberJar = actualModuleJars.size() != 1
-      Path uberJarFile = outputDir.resolve(isSeparateUberJar ? "3rd-party.jar" : actualModuleJars.keySet().first())
-      libSources = packager.filesToSourceWithMappings(uberJarFile, libraryToMerge)
-      if (isSeparateUberJar) {
-        packager.jarDescriptors.add(new JarDescriptor(uberJarFile, libSources))
+      if (libraryToMerge.isEmpty()) {
         libSources = null
       }
+      else {
+        libSources = packager.filesToSourceWithMappings(outputDir.resolve(BaseLayout.APP_JAR), libraryToMerge)
+      }
+    }
+    else if (!libraryToMerge.isEmpty()) {
+      throw new IllegalStateException("Libraries were not merged: " + libraryToMerge)
     }
 
     // must be concurrent - buildJars executed in parallel
@@ -325,7 +319,6 @@ final class JarPackager {
     return new JarDescriptor(jarFile, sourceList, modules)
   }
 
-  //buildJar(jarFile, sourceList, !layoutSpec.copyFiles, buildContext)
   @CompileStatic
   @EqualsAndHashCode
   @ToString
@@ -355,10 +348,6 @@ final class JarPackager {
     Map<JpsLibrary, List<Path>> toMerge = new HashMap<JpsLibrary, List<Path>>()
     Predicate<String> isLibraryMergeable = buildHelper.isLibraryMergeable
 
-    if (!layout.includedProjectLibraries.isEmpty()) {
-      context.messages.debug("included project libraries: " + layout.includedProjectLibraries.join("\n"))
-    }
-
     for (ProjectLibraryData libraryData in layout.includedProjectLibraries) {
       JpsLibrary library = context.project.libraryCollection.findLibrary(libraryData.libraryName)
       if (library == null) {
@@ -377,12 +366,8 @@ final class JarPackager {
       List<Path> files = getLibraryFiles(library, copiedFiles, false)
 
       PackMode packMode = libraryData.packMode
-      if (layout instanceof PlatformLayout &&
-          ((PlatformLayout)layout).projectLibrariesWithRemovedVersionFromJarNames.contains(libraryData.libraryName)) {
-        packMode = PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME
-      }
-      else if (packMode == PackMode.MERGED && !EXTRA_MERGE_RULES.values().any { it.test(libName) } &&
-               !isLibraryMergeable.test(libName)) {
+      if (packMode == PackMode.MERGED && !EXTRA_MERGE_RULES.values().any { it.test(libName) } &&
+          !isLibraryMergeable.test(libName)) {
         packMode = PackMode.STANDALONE_MERGED
       }
 

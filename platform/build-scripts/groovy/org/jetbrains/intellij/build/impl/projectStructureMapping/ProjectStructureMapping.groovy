@@ -130,10 +130,15 @@ final class ProjectStructureMapping {
   }
 
   private static void writeModules(JsonGenerator writer, List<DistributionFileEntry> fileEntries, BuildPaths buildPaths) {
-    writer.writeArrayFieldStart("modules")
+    boolean opened = false
     for (DistributionFileEntry o : fileEntries) {
       if (!(o instanceof ModuleOutputEntry)) {
         continue
+      }
+
+      if (!opened) {
+        writer.writeArrayFieldStart("modules")
+        opened = true
       }
 
       ModuleOutputEntry entry = (ModuleOutputEntry)o
@@ -147,7 +152,9 @@ final class ProjectStructureMapping {
 
       writer.writeEndObject()
     }
-    writer.writeEndArray()
+    if (opened) {
+      writer.writeEndArray()
+    }
   }
 
   private static void writeModuleLibraries(List<DistributionFileEntry> fileEntries,
@@ -184,6 +191,7 @@ final class ProjectStructureMapping {
   private static void writeProjectLibs(@NotNull List<DistributionFileEntry> entries, JsonGenerator writer, BuildPaths buildPaths) {
     // group by library
     Map<ProjectLibraryData, List<ProjectLibraryEntry>> map = new TreeMap<>(new Comparator<ProjectLibraryData>() {
+      @SuppressWarnings("ChangeToOperator")
       @Override
       int compare(ProjectLibraryData o1, ProjectLibraryData o2) {
         return o1.libraryName.compareTo(o2.libraryName)

@@ -224,8 +224,8 @@ final class DistributionJARsBuilder {
     return result
   }
 
-  List<String> getPlatformModules() {
-    return (platform.includedModuleNames as List<String>) + toolModules
+  Collection<String> getPlatformModules() {
+    return platform.getIncludedModuleNames() + toolModules
   }
 
   /**
@@ -1068,12 +1068,14 @@ final class DistributionJARsBuilder {
 
     if (!scrambleTasks.isEmpty()) {
       // scrambling can require classes from platform
-      buildHelper.span(spanBuilder("wait for platform lib for scrambling"), new Runnable() {
-        @Override
-        void run() {
-          buildPlatformTask?.join()
-        }
-      })
+      if (buildPlatformTask != null) {
+        buildHelper.span(spanBuilder("wait for platform lib for scrambling"), new Runnable() {
+          @Override
+          void run() {
+            buildPlatformTask.join()
+          }
+        })
+      }
       BuildHelper.invokeAllSettled(scrambleTasks)
     }
     return entries
@@ -1146,7 +1148,6 @@ final class DistributionJARsBuilder {
    * @param moduleJars mapping from JAR path relative to 'lib' directory to names of modules
    * @param additionalResources pairs of resources files and corresponding relative output paths
    */
-
   static List<DistributionFileEntry> layout(BaseLayout layout,
                                             Path targetDirectory,
                                             boolean copyFiles,
@@ -1158,8 +1159,7 @@ final class DistributionJARsBuilder {
       checkModuleExcludes(layout.moduleExcludes, context)
     }
 
-    Collection<ForkJoinTask<Collection<DistributionFileEntry>>> tasks =
-      new ArrayList<ForkJoinTask<Collection<DistributionFileEntry>>>(3)
+    Collection<ForkJoinTask<Collection<DistributionFileEntry>>> tasks = new ArrayList<ForkJoinTask<Collection<DistributionFileEntry>>>(3)
 
     // patchers must be executed _before_ pack because patcher patches module output
     if (copyFiles && layout instanceof PluginLayout && !layout.patchers.isEmpty()) {
@@ -1177,7 +1177,7 @@ final class DistributionJARsBuilder {
     tasks.add(buildHelper.createTask(spanBuilder("pack"), new Supplier<Collection<DistributionFileEntry>>() {
       @Override
       Collection<DistributionFileEntry> get() {
-        Map<String, List<String>> actualModuleJars = new LinkedHashMap<>()
+        Map<String, List<String>> actualModuleJars = new TreeMap<>()
         for (Map.Entry<String, Collection<String>> entry in moduleJars.entrySet()) {
           Collection<String> modules = entry.value
           String jarPath = getActualModuleJarPath(entry.key, modules, layout.explicitlySetJarPaths, context)
@@ -1242,8 +1242,12 @@ final class DistributionJARsBuilder {
       }
     }
 
-    if (layout instanceof PluginLayout) {
-      List<Pair<BiFunction<Path, BuildContext, Path>, String>> resourceGenerators = layout.resourceGenerators
+    if (!(layout instanceof PluginLayout)) {
+      return
+    }
+
+    List<Pair<BiFunction<Path, BuildContext, Path>, String>> resourceGenerators = layout.resourceGenerators
+    if (!resourceGenerators.isEmpty()) {
       buildHelper.span(spanBuilder("generate and pack resources"), new Runnable() {
         @Override
         void run() {
@@ -1310,7 +1314,7 @@ final class DistributionJARsBuilder {
     JpsCompositePackagingElement rootElement = artifact.getRootElement()
     for (JpsPackagingElement element in rootElement.children) {
       if (element instanceof JpsProductionModuleOutputPackagingElement) {
-        entries.add(new ModuleOutputEntry(artifactFile, element.moduleReference.moduleName, 0))
+        entries.add(new ModuleOutputEntry(artifactFile, element.moduleReference.moduleName, 0, "artifact: " + artifact.name))
       }
       else if (element instanceof JpsTestModuleOutputPackagingElement) {
         entries.add(new ModuleTestOutputEntry(artifactFile, element.moduleReference.moduleName))
