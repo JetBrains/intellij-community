@@ -2,7 +2,7 @@
 package org.dom4j;
 
 /**
- * Class stab for maven server - for prevent ClassNotFoundException.
+ * Class stub for maven server - to prevent ClassNotFoundException in getComponent(ArchetypeArtifactManager.class).
  */
-public class DocumentException extends Exception{
+public class DocumentException extends Exception {
 }
