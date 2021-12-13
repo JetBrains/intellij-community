@@ -15,13 +15,13 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_MAIN_SOURCE_SET_NAME
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_TEST_SOURCE_SET_NAME
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
+import org.jetbrains.plugins.gradle.tooling.AbstractModelBuilderService
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
-import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
 
 private val MPP_BUILDER_LOGGER = Logging.getLogger(KotlinMPPGradleModelBuilder::class.java)
 
-class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
+class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
 
     override fun getErrorMessageBuilder(project: Project, e: Exception): ErrorMessageBuilder {
         return ErrorMessageBuilder
@@ -31,10 +31,6 @@ class KotlinMPPGradleModelBuilder : ModelBuilderService.Ex {
 
     override fun canBuild(modelName: String?): Boolean {
         return modelName == KotlinMPPGradleModel::class.java.name
-    }
-
-    override fun buildAll(modelName: String, project: Project): KotlinMPPGradleModel? {
-        return buildAll(project, null)
     }
 
     override fun buildAll(modelName: String, project: Project, builderContext: ModelBuilderContext): KotlinMPPGradleModel? {
