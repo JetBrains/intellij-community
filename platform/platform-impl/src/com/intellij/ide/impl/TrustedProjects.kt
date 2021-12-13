@@ -176,25 +176,33 @@ private fun createDoNotAskOptionForLocation(projectLocation: Path): DialogWrappe
   }
 }
 
-private fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
-                                       ApplicationManager.getApplication().isHeadlessEnvironment ||
-                                       SystemProperties.`is`("idea.is.integration.test")
+@ApiStatus.Internal
+fun isTrustedCheckDisabled() = ApplicationManager.getApplication().isUnitTestMode ||
+                               ApplicationManager.getApplication().isHeadlessEnvironment ||
+                               java.lang.Boolean.getBoolean("idea.is.integration.test") ||
+                               java.lang.Boolean.getBoolean("idea.trust.all.projects")
+
+private fun isTrustedCheckDisabledForProduct(): Boolean = java.lang.Boolean.getBoolean("idea.trust.disabled")
+
 
 private fun isProjectImplicitlyTrusted(project: Project): Boolean =
   isProjectImplicitlyTrusted(project.basePath?.let { Paths.get(it) }, project)
 
 @JvmOverloads
 @ApiStatus.Internal
-internal fun isProjectImplicitlyTrusted(projectDir: Path?, project : Project? = null): Boolean {
-  if (isTrustedCheckDisabled()) {
+internal fun isProjectImplicitlyTrusted(projectDir: Path?, project: Project? = null): Boolean {
+  if (isTrustedCheckDisabled() || isTrustedCheckDisabledForProduct()) {
     return true
   }
-  if (projectDir != null && service<TrustedPathsSettings>().isPathTrusted(projectDir)) {
+  if (projectDir != null && isPathTrustedInSettings(projectDir)) {
     TrustedProjectsStatistics.PROJECT_IMPLICITLY_TRUSTED_BY_PATH.log(project)
     return true
   }
   return false
 }
+
+@ApiStatus.Internal
+fun isPathTrustedInSettings(path: Path): Boolean = service<TrustedPathsSettings>().isPathTrusted(path)
 
 /**
  * Per-project "is this project trusted" setting from the previous version of the trusted API.
