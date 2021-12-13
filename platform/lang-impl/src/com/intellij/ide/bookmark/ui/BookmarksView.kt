@@ -5,6 +5,7 @@ import com.intellij.ide.DefaultTreeExpander
 import com.intellij.ide.OccurenceNavigator
 import com.intellij.ide.bookmark.*
 import com.intellij.ide.bookmark.ui.tree.BookmarksTreeStructure
+import com.intellij.ide.bookmark.ui.tree.FolderNodeComparator
 import com.intellij.ide.bookmark.ui.tree.FolderNodeUpdater
 import com.intellij.ide.bookmark.ui.tree.VirtualFileVisitor
 import com.intellij.ide.dnd.DnDSupport
@@ -49,7 +50,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   private val selectionAlarm = SingleAlarm(this::selectionChanged, 50, stateForComponent(this), this)
 
   private val structure = BookmarksTreeStructure(this)
-  val model = StructureTreeModel(structure, this)
+  val model = StructureTreeModel(structure, FolderNodeComparator(project), this)
   val tree = DnDAwareTree(AsyncTreeModel(model, this))
   private val treeExpander = DefaultTreeExpander(tree)
   private val panel = BorderLayoutPanel()
