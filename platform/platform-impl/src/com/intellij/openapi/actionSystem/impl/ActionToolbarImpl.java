@@ -1679,7 +1679,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       setOpaque(false);
     }
     else {
-      setBorder(JBUI.Borders.empty(2));
+      Insets i = myOrientation == SwingConstants.VERTICAL ? UIManager.getInsets("ToolBar.verticalToolbarInsets")
+                                                          : UIManager.getInsets("ToolBar.horizontalToolbarInsets");
+      if (i != null) {
+        setBorder(JBUI.Borders.empty(i.top, i.left, i.bottom, i.right));
+      } else {
+        setBorder(JBUI.Borders.empty(2));
+      }
+
       setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : DEFAULT_MINIMUM_BUTTON_SIZE);
       setOpaque(true);
       setLayoutPolicy(AUTO_LAYOUT_POLICY);
