@@ -28,12 +28,10 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
-import java.io.IOException;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -112,19 +109,8 @@ public abstract class CreateTemplateInPackageAction<T extends PsiElement> extend
           contentEntry.getSourceFolders().length > 0) {
         return directory;
       }
-      try {
-        VirtualFile src = WriteAction.compute(() -> VfsUtil.createDirectoryIfMissing(contentEntry.getFile(), "src"));
-        contentEntry.addSourceFolder(src, false);
-        WriteAction.run(() -> modifiableModel.commit());
-        PsiDirectory srcDir = PsiManager.getInstance(module.getProject()).findDirectory(src);
-        if (srcDir != null) {
-          return srcDir;
-        }
-        LOG.error("No directory found: " + src);
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
+      contentEntry.addSourceFolder(directory.getVirtualFile(), false);
+      WriteAction.run(() -> modifiableModel.commit());
     }
     return directory;
   }
