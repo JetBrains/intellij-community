@@ -180,6 +180,16 @@ public final class MadTestingUtil {
     for (String shortId : except) {
       disableInspection(project, profile, shortId);
     }
+    replaceProfile(project, profile);
+  }
+
+  public static void enableDefaultInspections(@NotNull Project project) {
+    InspectionProfileImpl.INIT_INSPECTIONS = true;
+    InspectionProfileImpl profile = new InspectionProfileImpl("defaultInspections");
+    replaceProfile(project, profile);
+  }
+
+  private static void replaceProfile(@NotNull Project project, InspectionProfileImpl profile) {
     // instantiate all tools to avoid extension loading in inconvenient moment
     profile.getAllEnabledInspectionTools(project).forEach(state -> state.getTool().getTool());
 
