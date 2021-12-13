@@ -7,6 +7,7 @@ import javax.swing.border.EmptyBorder
 
 data class Gaps(val top: Int = 0, val left: Int = 0, val bottom: Int = 0, val right: Int = 0) {
   companion object {
+    @JvmField
     val EMPTY = Gaps(0)
   }
 

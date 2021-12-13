@@ -44,7 +44,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
 
   protected VcsLogPopupComponent(@NotNull Supplier<@NlsContexts.Label String> displayName) {
     myDisplayName = displayName;
-    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.Companion.getEMPTY());
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY);
   }
 
   public JComponent initUi() {
