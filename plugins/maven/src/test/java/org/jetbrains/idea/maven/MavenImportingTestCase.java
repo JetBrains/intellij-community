@@ -483,6 +483,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
     }
 
     myResolvedContext = flow.resolveDependencies(myReadContext);
+    mySourcesGeneratedContext = flow.resolveFolders(myResolvedContext);
     myImportedContext = flow.commitToWorkspaceModel(myResolvedContext);
     myProjectsTree = myReadContext.getProjectsTree();
     flow.updateProjectManager(myReadContext);
@@ -588,7 +589,6 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
   protected void resolveFoldersAndImport() {
     if (isNewImportingProcess) {
       importProject();
-      mySourcesGeneratedContext = new MavenImportFlow().resolveFolders(myResolvedContext);
       return;
     }
 

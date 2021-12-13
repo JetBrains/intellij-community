@@ -32,6 +32,17 @@ import java.nio.file.Path
 @ApiStatus.Experimental
 class MavenImportFlow {
 
+  fun addManagedFiles(project: Project,
+                      indicator: MavenProgressIndicator,
+                      files: List<VirtualFile>): MavenInitialImportContext {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    val manager = MavenProjectsManager.getInstance(project);
+    val allFiles = ArrayList(manager.projectsFiles)
+    allFiles.addAll(files)
+    val profiles = MavenProjectsManager.getInstance(project).explicitProfiles
+    return MavenInitialImportContext(project, FilesList(allFiles), profiles, manager.generalSettings, manager.importingSettings, indicator)
+  }
+
   fun prepareNewImport(project: Project,
                        indicator: MavenProgressIndicator,
                        importPaths: ImportPaths,
@@ -102,10 +113,6 @@ class MavenImportFlow {
   }
 
   private fun loadOrCreateProjectTree(projectManager: MavenProjectsManager): MavenProjectsTree {
-    val existing = projectManager.projectsTree
-    if (existing != null) {
-      return existing
-    }
     val file = projectManager.projectsTreeFile
     try {
       if (file.exists()) {

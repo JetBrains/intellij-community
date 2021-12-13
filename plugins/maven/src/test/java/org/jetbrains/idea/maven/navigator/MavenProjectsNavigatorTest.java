@@ -24,6 +24,7 @@ import org.jetbrains.idea.maven.project.importing.MavenInitialImportContext;
 import org.jetbrains.idea.maven.project.importing.MavenReadContext;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -170,7 +171,7 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
     assertEquals(1, getRootNodes().size());
 
     myProjectsManager.removeManagedFiles(Collections.singletonList(myProjectPom));
-    waitForReadingCompletion();
+    readFiles();
     assertEquals(0, getRootNodes().size());
   }
 
@@ -344,9 +345,11 @@ public class MavenProjectsNavigatorTest extends MavenMultiVersionImportingTestCa
   private void readFiles(VirtualFile... files) {
     if (isNewImportingProcess) {
       MavenImportFlow flow = new MavenImportFlow();
+      List<VirtualFile> allFiles = new ArrayList<>(myProjectsManager.getProjectsFiles());
+      allFiles.addAll(Arrays.asList(files));
       MavenInitialImportContext initialImportContext =
         flow.prepareNewImport(myProject, getMavenProgressIndicator(),
-                              new FilesList(files),
+                              new FilesList(allFiles),
                               getMavenGeneralSettings(),
                               getMavenImporterSettings(),
                               Collections.emptyList(), Collections.emptyList());
