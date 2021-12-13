@@ -11,7 +11,7 @@ import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 
 @RunsInEdt
-class KotlinJUnit5AcceptanceTest0 : LightJavaCodeInsightFixtureTestCase5() {
+class KotlinJUnit5AcceptanceTest : LightJavaCodeInsightFixtureTestCase5() {
   @BeforeEach
   internal fun setUp() {
     JUnit5TestFrameworkSetupUtil.setupJUnit5Library(fixture)
