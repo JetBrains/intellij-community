@@ -2124,7 +2124,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       }
     });
 
-    highlightErrors();
+    List<HighlightInfo> errors = highlightErrors();
+    assertNotEmpty(errors);
     UIUtil.dispatchAllInvocationEvents();
     IntentionHintComponent lastHintBeforeDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
     assertNotNull(lastHintBeforeDeletion);
@@ -3104,15 +3105,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertTrue(visibleRange.toString(), visibleRange.getStartOffset() > 0);
     myDaemonCodeAnalyzer.restart();
     expectedVisibleRange = visibleRange;
-    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new CheckVisibleRangeAnnotator()}, ()->{
-      assertEmpty(doHighlighting());
-    });
+    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new CheckVisibleRangeAnnotator()}, ()-> assertEmpty(doHighlighting()));
     makeWholeEditorWindowVisible(editor);
     myDaemonCodeAnalyzer.restart();
     expectedVisibleRange = new TextRange(0, editor.getDocument().getTextLength());
-    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new CheckVisibleRangeAnnotator()}, ()->{
-      assertEmpty(doHighlighting());
-    });
+    useAnnotatorsIn(PlainTextLanguage.INSTANCE, new MyRecordingAnnotator[]{new CheckVisibleRangeAnnotator()}, ()-> assertEmpty(doHighlighting()));
   }
   private static class MyVisibleRangeInspection extends MyTrackingInspection {
     @Override

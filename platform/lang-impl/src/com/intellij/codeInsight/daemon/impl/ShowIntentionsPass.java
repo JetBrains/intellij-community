@@ -71,11 +71,11 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
     assert myFile != null : FileDocumentManager.getInstance().getFile(myEditor.getDocument());
   }
 
-  public static @NotNull List<HighlightInfo.IntentionActionDescriptor> getAvailableFixes(final @NotNull Editor editor,
-                                                                                         final @NotNull PsiFile file,
-                                                                                         final int passId,
+  public static @NotNull List<HighlightInfo.IntentionActionDescriptor> getAvailableFixes(@NotNull Editor editor,
+                                                                                         @NotNull PsiFile file,
+                                                                                         int passId,
                                                                                          int offset) {
-    final Project project = file.getProject();
+    Project project = file.getProject();
 
     List<HighlightInfo.IntentionActionDescriptor> result = new ArrayList<>();
     DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true,
@@ -87,9 +87,9 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   }
 
   public static boolean markActionInvoked(@NotNull Project project,
-                                          final @NotNull Editor editor,
+                                          @NotNull Editor editor,
                                           @NotNull IntentionAction action) {
-    final int offset = ((EditorEx)editor).getExpectedCaretOffset();
+    int offset = ((EditorEx)editor).getExpectedCaretOffset();
 
     List<HighlightInfo> infos = new ArrayList<>();
     DaemonCodeAnalyzerImpl.processHighlightsNearOffset(editor.getDocument(), project, HighlightSeverity.INFORMATION, offset, true,
@@ -135,7 +135,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
 
       int start = range.getStartOffset();
       int end = range.getEndOffset();
-      final Project project = file.getProject();
+      Project project = file.getProject();
       if (start > offset || offset > end) {
         continue;
       }
@@ -297,19 +297,19 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   /**
    * Collects intention actions from providers intended to be invoked in a background thread.
    */
-  public static void getActionsToShow(final @NotNull Editor hostEditor,
-                                      final @NotNull PsiFile hostFile,
-                                      final @NotNull IntentionsInfo intentions,
+  public static void getActionsToShow(@NotNull Editor hostEditor,
+                                      @NotNull PsiFile hostFile,
+                                      @NotNull IntentionsInfo intentions,
                                       int passIdToShowIntentionsFor) {
     getActionsToShow(hostEditor, hostFile, intentions, passIdToShowIntentionsFor, true);
   }
-  private static void getActionsToShow(final @NotNull Editor hostEditor,
-                                       final @NotNull PsiFile hostFile,
-                                       final @NotNull IntentionsInfo intentions,
+  private static void getActionsToShow(@NotNull Editor hostEditor,
+                                       @NotNull PsiFile hostFile,
+                                       @NotNull IntentionsInfo intentions,
                                        int passIdToShowIntentionsFor,
                                        boolean queryIntentionActions) {
     int offset = hostEditor.getCaretModel().getOffset();
-    final PsiElement psiElement = hostFile.findElementAt(offset);
+    PsiElement psiElement = hostFile.findElementAt(offset);
     if (psiElement != null) PsiUtilCore.ensureValid(psiElement);
 
     intentions.setOffset(offset);
@@ -324,7 +324,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
       highestPriorityInfoFinder.process(info);
     }
 
-    @Nullable HighlightInfo infoAtCursor = highestPriorityInfoFinder.getResult();
+    HighlightInfo infoAtCursor = highestPriorityInfoFinder.getResult();
     intentions.setHighlightInfoType(infoAtCursor != null ? infoAtCursor.type : null);
     if (infoAtCursor == null) {
       intentions.errorFixesToShow.addAll(fixes);
@@ -376,7 +376,7 @@ public final class ShowIntentionsPass extends TextEditorHighlightingPass {
   public static void fillIntentionsInfoForHighlightInfo(@NotNull HighlightInfo infoAtCursor,
                                                         @NotNull IntentionsInfo intentions,
                                                         @NotNull List<? extends HighlightInfo.IntentionActionDescriptor> fixes) {
-    final boolean isError = infoAtCursor.getSeverity() == HighlightSeverity.ERROR;
+    boolean isError = infoAtCursor.getSeverity() == HighlightSeverity.ERROR;
     for (HighlightInfo.IntentionActionDescriptor fix : fixes) {
       if (fix.isError() && isError) {
         intentions.errorFixesToShow.add(fix);
