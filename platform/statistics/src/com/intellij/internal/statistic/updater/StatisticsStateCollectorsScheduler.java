@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.updater;
 
 import com.intellij.concurrency.JobScheduler;
@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
@@ -20,14 +21,17 @@ import java.util.Map;
 import java.util.concurrent.Future;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class StatisticsStateCollectorsScheduler implements ApplicationInitializedListener {
   public static final int LOG_APPLICATION_STATES_INITIAL_DELAY_IN_MIN = 10;
   public static final int LOG_APPLICATION_STATES_DELAY_IN_MIN = 24 * 60;
+  private static final int LOG_APPLICATION_STATE_SMART_MODE_DELAY_IN_SECONDS = 60;
   public static final int LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN = 5;
   public static final int LOG_PROJECTS_STATES_DELAY_IN_MIN = 12 * 60;
 
   private static final Map<Project, Future<?>> myPersistStatisticsSessionsMap = Collections.synchronizedMap(new HashMap<>());
+  private static final OneTimeLogger myOneTimeLogger = new OneTimeLogger();
 
   @Override
   public void componentsInitialized() {
@@ -51,6 +55,17 @@ public class StatisticsStateCollectorsScheduler implements ApplicationInitialize
                                     LOG_PROJECTS_STATES_INITIAL_DELAY_IN_MIN, LOG_PROJECTS_STATES_DELAY_IN_MIN, TimeUnit.MINUTES);
           myPersistStatisticsSessionsMap.put(project, future);
         });
+
+        if (myOneTimeLogger.allowExecution.get()) {
+          DumbService.getInstance(project).runWhenSmart(() -> {
+            // wait until all projects will exit dumb mode
+            if (ContainerUtil.exists(ProjectManager.getInstance().getOpenProjects(),
+                                     p -> !p.isDisposed() && p.isInitialized() && DumbService.getInstance(p).isDumb())) {
+              return;
+            }
+            myOneTimeLogger.scheduleLogging();
+          });
+        }
       }
 
       @Override
@@ -61,5 +76,17 @@ public class StatisticsStateCollectorsScheduler implements ApplicationInitialize
         }
       }
     });
+  }
+
+  private static class OneTimeLogger {
+    private final AtomicBoolean allowExecution = new AtomicBoolean(true);
+
+    public void scheduleLogging() {
+      // Check and execute only once because several projects can exit dumb mode at the same time
+      if (allowExecution.getAndSet(false)) {
+        JobScheduler.getScheduler().schedule(() -> FUStateUsagesLogger.create().logApplicationStatesOnStartup(),
+                                             LOG_APPLICATION_STATE_SMART_MODE_DELAY_IN_SECONDS, TimeUnit.SECONDS);
+      }
+    }
   }
 }
