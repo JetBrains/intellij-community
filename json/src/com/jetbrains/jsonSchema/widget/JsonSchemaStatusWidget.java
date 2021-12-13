@@ -144,6 +144,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       ReadAction.nonBlocking(() -> scheduleComponentUpdate(file, finishUpdate))
         .expireWith(getUpdateAlarm())
         .withDocumentsCommitted(myProject)
+        .coalesceBy(this, file)
         .submit(AppExecutorUtil.getAppExecutorService());
     }
   }
