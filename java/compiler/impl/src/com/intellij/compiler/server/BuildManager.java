@@ -381,7 +381,7 @@ public final class BuildManager implements Disposable {
 
       @Override
       public void batchChangeCompleted(@NotNull Project project) {
-        allowBackgroundTasks();
+        allowBackgroundTasks(false);
       }
     });
 
@@ -432,8 +432,15 @@ public final class BuildManager implements Disposable {
     mySuspendBackgroundTasksCounter.incrementAndGet();
   }
 
-  public void allowBackgroundTasks() {
-    mySuspendBackgroundTasksCounter.decrementAndGet();
+  public void allowBackgroundTasks(boolean resetState) {
+    if (resetState) {
+      mySuspendBackgroundTasksCounter.set(0);
+    }
+    else {
+      if (mySuspendBackgroundTasksCounter.decrementAndGet() < 0) {
+        mySuspendBackgroundTasksCounter.incrementAndGet();
+      }
+    }
   }
 
   private static @NotNull String getFallbackSdkHome() {
