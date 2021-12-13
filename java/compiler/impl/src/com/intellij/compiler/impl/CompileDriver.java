@@ -142,7 +142,7 @@ public final class CompileDriver {
         ExitStatus exitStatus = COMPILE_SERVER_BUILD_STATUS.get(compileContext);
         task.setEndCompilationStamp(exitStatus, System.currentTimeMillis());
         result.set(exitStatus);
-        buildManager.allowBackgroundTasks();
+        buildManager.allowBackgroundTasks(false);
         if (!myProject.isDisposed()) {
           CompilerCacheManager.getInstance(myProject).flushCaches();
         }
@@ -487,7 +487,9 @@ public final class CompileDriver {
       }
       finally {
         compileWorkSpan.complete();
-        buildManager.allowBackgroundTasks();
+        buildManager.allowBackgroundTasks(
+          true // reset state on explicit build to compensate possibly unbalanced postpone/allow calls (e.g. via BatchFileChangeListener.start/stop)
+        );
         Tracer.Span flushCompilerCaches = Tracer.start("flush compiler caches");
         compilerCacheManager.flushCaches();
         flushCompilerCaches.complete();
