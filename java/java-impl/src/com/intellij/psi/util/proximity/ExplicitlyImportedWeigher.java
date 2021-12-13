@@ -90,8 +90,15 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
         String packageName = StringUtil.getPackageName(qname);
         if ("java.lang".equals(packageName)) return 100;
 
-        // The whole package is imported on demand
-        if (importedNames.contains(packageName)) return topLevel ? 80 : 60;
+        if (importedNames.contains(packageName)) {
+          if (topLevel) {
+            // The whole package is imported on demand
+            return 80;
+          }
+          // Nested class which is eligible for on demand import (import static pkg.TopClass.*)
+          // Rank higher than non-imported classes but still lower than top-level imported classes.
+          return 60;
+        }
 
         // check if anything from the same package is already imported in the file:
         //    people are likely to refer to the same subsystem as they're already working
