@@ -1,6 +1,7 @@
 class Test {
   /**
    * foo comment
+   *
    * @param param
    */
   void foo(Param param) {
