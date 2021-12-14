@@ -134,7 +134,7 @@ final class MacDmgBuilder {
       "",
       "",
       "",
-      (jreArchivePath == null ? "no-jdk" : '"' + jreArchivePath.fileName.toString() + '"'),
+      (jreArchivePath == null ? "no-jdk" : jreArchivePath.fileName.toString()),
       "no",
       customizer.bundleIdentifier,
       ), tempDir)
