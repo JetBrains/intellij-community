@@ -83,7 +83,7 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     internal val LIST_KEY = Key.create<Supplier<List<Notification>>>("listCallbackInterface")
 
     fun expire(notification: Notification?) {
-      iterate { it.accept(notification) }
+      iterateExpire { it.accept(notification) }
 
       if (notification == null) {
         val notifications = ArrayList<Notification>()
@@ -121,16 +121,16 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
         return null
       }
       val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ID)
-      if (toolWindow != null) {
+      if (toolWindow != null && toolWindow.contentManagerIfCreated != null) {
         return ArrayList(toolWindow.contentManager.getContent(0)!!.getUserData(stateKey)!!.get())
       }
       return null
     }
 
-    private fun iterate(callback: (Consumer<Notification?>) -> Unit) {
+    private fun iterateExpire(callback: (Consumer<Notification?>) -> Unit) {
       for (project in ProjectUtilCore.getOpenProjects()) {
         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ID)
-        if (toolWindow != null) {
+        if (toolWindow != null && toolWindow.contentManagerIfCreated != null) {
           callback.invoke(toolWindow.contentManager.getContent(0)!!.getUserData(EXPIRE_KEY)!!)
         }
       }
@@ -180,6 +180,7 @@ private class NotificationContent(val project: Project,
     content.putUserData(NotificationsToolWindowFactory.ADD_KEY, Consumer(::add))
     content.putUserData(NotificationsToolWindowFactory.EXPIRE_KEY, Consumer(::expire))
     content.putUserData(NotificationsToolWindowFactory.STATE_KEY, Supplier { myIconNotifications })
+    content.putUserData(NotificationsToolWindowFactory.LIST_KEY, Supplier { myNotifications })
 
     suggestions.setRemoveCallback(Consumer(::remove))
     timeline.setClearCallback(::clear)
@@ -1039,8 +1040,10 @@ fun addNotification(project: Project?, notification: Notification) {
   }
   else {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
-    if (toolWindow == null) {
-      addToCache(notification)
+    if (toolWindow == null || toolWindow.contentManagerIfCreated == null) {
+      synchronized(NotificationsToolWindowFactory.myLock) {
+        NotificationsToolWindowFactory.myNotificationList.add(notification)
+      }
       EventLog.getLogModel(project).setStatusMessage(notification)
     }
     else {
