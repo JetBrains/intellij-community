@@ -143,5 +143,5 @@ UFile (package = ) [public final class ResolveKt {...]
         UMethod (name = foo) [public final fun foo() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
         UMethod (name = A) [public fun A() = UastEmptyExpression]
-        UMethod (name = inlineFoo) [fun inlineFoo() : void {...}]
+        UMethod (name = inlineFoo) [public fun inlineFoo() : void {...}]
             UBlockExpression [{...}] : PsiType:Unit
