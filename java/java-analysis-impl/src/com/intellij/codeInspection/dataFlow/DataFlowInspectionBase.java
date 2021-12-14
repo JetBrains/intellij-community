@@ -164,24 +164,11 @@ public abstract class DataFlowInspectionBase extends AbstractBaseJavaLocalInspec
       }
 
       @Override
-      public void visitWhileStatement(PsiWhileStatement statement) {
-        checkLoopCondition(statement.getCondition());
-      }
-
-      @Override
       public void visitDoWhileStatement(PsiDoWhileStatement statement) {
-        checkLoopCondition(statement.getCondition());
-      }
-
-      @Override
-      public void visitForStatement(PsiForStatement statement) {
-        checkLoopCondition(statement.getCondition());
-      }
-
-      private void checkLoopCondition(PsiExpression condition) {
-        condition = PsiUtil.skipParenthesizedExprDown(condition);
+        PsiExpression condition = PsiUtil.skipParenthesizedExprDown(statement.getCondition());
         if (condition != null && condition.textMatches(PsiKeyword.FALSE)) {
-          holder.registerProblem(condition, JavaAnalysisBundle.message("dataflow.message.constant.no.ref", 0), createSimplifyBooleanExpressionFix(condition, false));
+          holder.registerProblem(condition, JavaAnalysisBundle.message("dataflow.message.constant.no.ref", 0),
+                                 createSimplifyBooleanExpressionFix(condition, false));
         }
       }
     };
