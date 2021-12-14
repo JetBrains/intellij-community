@@ -11,7 +11,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.hash.ContentHashEnumerator;
-import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentStringEnumerator;
 import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
@@ -35,7 +34,7 @@ final class PersistentFSConnection {
 
   private final IntList myFreeRecords;
   @NotNull
-  private final VfsDependentEnum<String> myAttributesList;
+  private final VfsDependentEnum myAttributesList;
   @NotNull
   private final PersistentFSPaths myPersistentFSPaths;
 
@@ -80,7 +79,7 @@ final class PersistentFSConnection {
     if (markDirty) {
       markDirty();
     }
-    myAttributesList = new VfsDependentEnum<>(getPersistentFSPaths(), "attrib", EnumeratorStringDescriptor.INSTANCE, 1);
+    myAttributesList = new VfsDependentEnum(getPersistentFSPaths(), "attrib", 1);
 
     if (FSRecords.backgroundVfsFlush) {
       myFlushingFuture = FlushingDaemon.everyFiveSeconds(new Runnable() {

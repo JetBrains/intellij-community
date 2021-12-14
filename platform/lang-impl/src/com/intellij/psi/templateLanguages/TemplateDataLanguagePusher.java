@@ -13,7 +13,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.persistent.VfsDependentEnum;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.io.EnumeratorStringDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,9 +25,8 @@ public class TemplateDataLanguagePusher implements FileIntPropertyPusher<Languag
 
   public static final Key<Language> KEY = Key.create("TEMPLATE_DATA_LANGUAGE");
 
-  private static final VfsDependentEnum<String> ourLanguagesEnumerator = new VfsDependentEnum<>(
+  private static final VfsDependentEnum ourLanguagesEnumerator = new VfsDependentEnum(
     "languages",
-    EnumeratorStringDescriptor.INSTANCE,
     1
   );
 
