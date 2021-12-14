@@ -651,6 +651,9 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/lombok/intellij.lombok.iml" filepath="$PROJECT_DIR$/plugins/lombok/intellij.lombok.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/lombok/generated/intellij.lombok.generated.iml" filepath="$PROJECT_DIR$/plugins/lombok/generated/intellij.lombok.generated.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/markdown/intellij.markdown.iml" filepath="$PROJECT_DIR$/plugins/markdown/intellij.markdown.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/markdown/core/intellij.markdown.core.iml" filepath="$PROJECT_DIR$/plugins/markdown/core/intellij.markdown.core.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/markdown/fenceInjection/intellij.markdown.fenceInjection.iml" filepath="$PROJECT_DIR$/plugins/markdown/fenceInjection/intellij.markdown.fenceInjection.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/markdown/test/intellij.markdown.tests.iml" filepath="$PROJECT_DIR$/plugins/markdown/test/intellij.markdown.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/intellij.maven.iml" filepath="$PROJECT_DIR$/plugins/maven/intellij.maven.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver/common/intellij.maven.artifactResolver.common.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver/common/intellij.maven.artifactResolver.common.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/maven/artifact-resolver-m2/intellij.maven.artifactResolver.m2.iml" filepath="$PROJECT_DIR$/plugins/maven/artifact-resolver-m2/intellij.maven.artifactResolver.m2.iml" />

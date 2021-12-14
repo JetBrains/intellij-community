@@ -198,6 +198,10 @@ final class CommunityRepositoryModules {
     plugin("intellij.toml") {
       withModule("intellij.toml.core")
       withModule("intellij.toml.json")
+    },
+    plugin("intellij.markdown") {
+      withModule("intellij.markdown.core")
+      withModule("intellij.markdown.fenceInjection")
     }
   )
 
