@@ -108,7 +108,7 @@ object VcsLogContentUtil {
   }
 
   private suspend fun jumpToRevision(project: Project, root: VirtualFile, hash: Hash, filePath: FilePath): Boolean {
-    val logUi = showCommitInLogTab(project, hash, root, true) { logUi ->
+    val logUi = showCommitInLogTab(project, hash, root, false) { logUi ->
       if (logUi.properties.exists(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
           logUi.properties.get(MainVcsLogUiProperties.SHOW_ONLY_AFFECTED_CHANGES) &&
           !logUi.properties.getFilterValues(VcsLogFilterCollection.STRUCTURE_FILTER.name).isNullOrEmpty()) {
