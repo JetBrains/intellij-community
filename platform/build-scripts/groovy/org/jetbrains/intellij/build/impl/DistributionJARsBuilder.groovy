@@ -202,7 +202,7 @@ final class DistributionJARsBuilder {
   private static BuildTaskRunnable<Void> createBuildBrokenPluginListTask() {
     return BuildTaskRunnable.task(BuildOptions.BROKEN_PLUGINS_LIST_STEP, "Build broken plugin list") { BuildContext buildContext ->
       Path targetFile = buildContext.paths.tempDir.resolve("brokenPlugins.db")
-      String currentBuildString = buildContext.buildNumber
+      String currentBuildString = buildContext.fullBuildNumber
       BuildHelper.getInstance(buildContext).brokenPluginsTask.invokeWithArguments(targetFile,
                                                                                   currentBuildString,
                                                                                   buildContext.options.isInDevelopmentMode,
