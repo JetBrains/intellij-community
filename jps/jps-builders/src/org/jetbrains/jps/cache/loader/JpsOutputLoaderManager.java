@@ -213,7 +213,7 @@ public class JpsOutputLoaderManager implements Disposable {
       LOG.info("Can't calculate approximate project build time");
       return false;
     }
-    return expectedDownloadTimeSec * 1000 > approximateBuildTime;
+    return expectedDownloadTimeSec * 1000 < approximateBuildTime;
   }
 
   private void startLoadingForCommit(@NotNull String commitId) {
