@@ -31,11 +31,13 @@ import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.PredefinedSearchScopeProviderImpl;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.Scopes;
+import com.intellij.ui.dsl.builder.SpacingConfiguration;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,19 +111,11 @@ public class ScopePanel extends JPanel {
     myToolbar.setForceMinimumSize(true);
     myToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
 
-    final GroupLayout layout = new GroupLayout(this);
+    final MigLayout layout = new MigLayout("ins 0, fill", "[grow 0]0[]");
     setLayout(layout);
-    layout.setHorizontalGroup(
-      layout.createSequentialGroup()
-            .addComponent(myToolbar, GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 25, 25)
-            .addComponent(myScopeDetailsPanel)
-    );
-    layout.setVerticalGroup(
-      layout.createParallelGroup()
-            .addComponent(myToolbar)
-            .addComponent(myScopeDetailsPanel)
-    );
+    final var spacing = SpacingConfiguration.Companion.createIntelliJSpacingConfiguration();
+    add(myToolbar, "gapbottom 3, gapright " + spacing.getHorizontalSmallGap());
+    add(myScopeDetailsPanel, "grow 100 0" );
   }
 
   private void selectNamedScope(String selectedScope) {
