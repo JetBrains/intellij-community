@@ -1,4 +1,4 @@
-package icons;
+package org.jetbrains.plugins.notebooks.visualization;
 
 import com.intellij.ui.IconManager;
 import org.jetbrains.annotations.NotNull;
