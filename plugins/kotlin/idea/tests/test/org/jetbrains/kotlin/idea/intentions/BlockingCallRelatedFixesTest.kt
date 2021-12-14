@@ -31,7 +31,7 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
             "org/jetbrains/annotations/Blocking.java",
             """
                 package org.jetbrains.annotations; 
-                
+
                 public @interface Blocking {}
             """.trimIndent()
         )
@@ -39,7 +39,7 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
             "org/jetbrains/annotations/NonBlocking.java",
             """
                 package org.jetbrains.annotations; 
-                
+
                 public @interface NonBlocking {}
             """.trimIndent()
         )
@@ -47,7 +47,7 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
             "blockingMethod.kt",
             """
                 import org.jetbrains.annotations.Blocking
-                
+
                 @Blocking fun block(): Int { return 42 }
             """.trimIndent()
         )
@@ -73,7 +73,7 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
             """
                 import kotlinx.coroutines.Dispatchers
                 import kotlinx.coroutines.withContext
-                
+
                 suspend fun wrapWithContextFix() {
                     val variable = withContext(Dispatchers.IO) {
                         block()
@@ -89,7 +89,7 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
             "ioDispatcherInFlow.kt",
             """
             import kotlinx.coroutines.flow.flow
-                        
+
             fun flowFix() {
                 flow<Int> { <warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">blo<caret>ck</warning>() }
             }
@@ -104,7 +104,8 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
             """
                 import kotlinx.coroutines.Dispatchers
                 import kotlinx.coroutines.flow.flow
-                            
+                import kotlinx.coroutines.flow.flowOn
+
                 fun flowFix() {
                     flow<Int> { block() }
                         .flowOn(Dispatchers.IO)
@@ -173,6 +174,7 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
             """
             import kotlinx.coroutines.Dispatchers
             import kotlinx.coroutines.flow.flow
+            import kotlinx.coroutines.flow.flowOn
 
             fun flowFix() {
                 flow<Int> { block() }
@@ -245,7 +247,7 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
             """
             import kotlinx.coroutines.Dispatchers
             import kotlinx.coroutines.withContext
-            
+
             suspend fun switchContext() {
                 withContext(Dispatchers.IO) {
                     block()
@@ -262,12 +264,12 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
             import kotlinx.coroutines.Dispatchers
             import kotlinx.coroutines.withContext
             import org.jetbrains.annotations.Blocking
-            
+
             class Foo {
                 @Blocking
                 fun bar() {}
             }
-            
+
             suspend fun wrapWithContextFix() {
                 val variable = Foo().<warning descr="Possibly blocking call in non-blocking context could lead to thread starvation">ba<caret>r</warning>()
                 print(variable)
@@ -278,16 +280,17 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
         val action = myFixture.getAvailableIntention("Wrap call in 'withContext'")
 
         myFixture.launchAction(action!!)
-        myFixture.checkResult("""
+        myFixture.checkResult(
+            """
             import kotlinx.coroutines.Dispatchers
             import kotlinx.coroutines.withContext
             import org.jetbrains.annotations.Blocking
-            
+
             class Foo {
                 @Blocking
                 fun bar() {}
             }
-            
+
             suspend fun wrapWithContextFix() {
                 val variable = withContext(Dispatchers.IO) {
                     Foo().bar()
@@ -305,9 +308,9 @@ class BlockingCallRelatedFixesTest : KotlinLightCodeInsightFixtureTestCase() {
             import kotlinx.coroutines.Dispatchers
             import kotlinx.coroutines.withContext
             import org.jetbrains.annotations.NonBlocking
-            
+
             fun acceptSimpleBlock(block: () -> Unit) { block() }
-            
+
             @NonBlocking
             fun differentContexts() {
                 acceptSimpleBlock {
