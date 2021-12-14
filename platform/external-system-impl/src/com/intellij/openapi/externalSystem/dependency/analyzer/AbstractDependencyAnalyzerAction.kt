@@ -9,7 +9,7 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.registry.Registry
 
-abstract class AbstractAnalyzeDependenciesAction : AnAction(), DumbAware {
+abstract class AbstractDependencyAnalyzerAction : AnAction(), DumbAware {
   abstract fun getSystemId(e: AnActionEvent): ProjectSystemId?
 
   abstract fun getExternalProjectPath(e: AnActionEvent): String?

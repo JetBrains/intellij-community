@@ -729,7 +729,7 @@
               class="org.jetbrains.idea.maven.navigator.actions.RemoveMavenRunConfigurationAction"/>
     </group>
 
-    <action id="Maven.AnalyzeDependencies" class="org.jetbrains.idea.maven.project.actions.AnalyzeDependenciesAction">
+    <action id="Maven.AnalyzeDependencies" class="org.jetbrains.idea.maven.project.actions.MavenDependencyAnalyzerAction">
       <add-to-group group-id="Maven.BaseProjectMenu" anchor="last"/>
       <add-to-group group-id="Maven.NavigatorActionsToolbar" anchor="after" relative-to-action="Maven.ToggleSkipTests"/>
     </action>
