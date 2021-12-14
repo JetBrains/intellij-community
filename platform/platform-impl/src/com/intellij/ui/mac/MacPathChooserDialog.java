@@ -21,6 +21,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.OwnerOptional;
+import com.jetbrains.JBRFileDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +63,13 @@ public class MacPathChooserDialog implements PathChooserDialog, FileChooserDialo
       .ifFrame(frameConsumer)
       .ifNull(frameConsumer);
 
-    JdkEx.trySetFileDialogCanChooseModes(myFileDialog, myFileChooserDescriptor.isChooseFolders(), myFileChooserDescriptor.isChooseFiles());
+    JBRFileDialog jbrDialog = JBRFileDialog.get(myFileDialog);
+    if (jbrDialog != null) {
+      int hints = jbrDialog.getHints();
+      if (myFileChooserDescriptor.isChooseFolders()) hints |= JBRFileDialog.SELECT_DIRECTORIES_HINT;
+      if (myFileChooserDescriptor.isChooseFiles()) hints |= JBRFileDialog.SELECT_FILES_HINT;
+      jbrDialog.setHints(hints);
+    }
   }
 
   private static @NlsContexts.DialogTitle String getChooserTitle(final FileChooserDescriptor descriptor) {

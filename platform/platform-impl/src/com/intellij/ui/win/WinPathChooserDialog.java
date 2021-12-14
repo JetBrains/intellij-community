@@ -20,6 +20,7 @@ import com.intellij.ui.UIBundle;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.OwnerOptional;
+import com.jetbrains.JBRFileDialog;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -63,17 +64,15 @@ public class WinPathChooserDialog implements PathChooserDialog, FileChooserDialo
   private void initExtendedProperties() {
     if (myFileDialog == null) return;
 
-    JdkEx.trySetCommonFileDialogLocalization(
-      myFileDialog,
-      IdeBundle.message("windows.native.common.dialog.open"),
-      IdeBundle.message("windows.native.common.dialog.select.folder"));
-    boolean isFolderExclusiveMode = myFileChooserDescriptor.isChooseFolders() && !myFileChooserDescriptor.isChooseFiles();
-    if (isFolderExclusiveMode)
-      JdkEx.trySetFolderPickerMode(myFileDialog, true);
-
-    boolean isFileExclusiveMode = myFileChooserDescriptor.isChooseFiles() && !myFileChooserDescriptor.isChooseFolders();
-    if (isFileExclusiveMode)
-      JdkEx.trySetFileExclusivePickerMode(myFileDialog, true);
+    JBRFileDialog jbrDialog = JBRFileDialog.get(myFileDialog);
+    if (jbrDialog != null) {
+      jbrDialog.setLocalizationStrings(IdeBundle.message("windows.native.common.dialog.open"),
+                                       IdeBundle.message("windows.native.common.dialog.select.folder"));
+      int hints = jbrDialog.getHints();
+      if (myFileChooserDescriptor.isChooseFolders()) hints |= JBRFileDialog.SELECT_DIRECTORIES_HINT;
+      if (myFileChooserDescriptor.isChooseFiles()) hints |= JBRFileDialog.SELECT_FILES_HINT;
+      jbrDialog.setHints(hints);
+    }
   }
 
   private static @NlsContexts.DialogTitle String getChooserTitle(final FileChooserDescriptor descriptor) {

@@ -432,6 +432,8 @@ final class CommunityLibraryLicenses {
                        license: "GNU General Public License, version 2, with the Classpath Exception",
                        url: "https://github.com/JetBrains/JetBrainsRuntime",
                        licenseUrl: "https://github.com/JetBrains/JetBrainsRuntime/blob/master/LICENSE"),
+    new LibraryLicense(name: "JetBrains Runtime API", libraryName: "jbr-api",
+                       url: "https://github.com/JetBrains/JetBrainsRuntime").apache(),
     new LibraryLicense(name: "jetCheck", libraryName: "jetCheck", url: "https://github.com/JetBrains/jetCheck").apache(),
     new LibraryLicense(name: "JGit", libraryName: "JGit", license: "Eclipse Distribution License 1.0",
                        licenseUrl: "https://www.eclipse.org/org/documents/edl-v10.php", url: "https://www.eclipse.org/jgit/"),
