@@ -89,21 +89,15 @@ final class BuildDependenciesDownloader {
 
   static synchronized Path extractFileToCacheLocation(Path communityRoot, Path archiveFile) {
     try {
-      String directoryName = DigestUtils.sha256Hex(JPS_BOOTSTRAP_SALT + archiveFile).substring(0, 6) + "-" + archiveFile.getFileName().toString();
-      Path cacheDirectory = getDownloadCachePath(communityRoot).resolve(directoryName + ".d");
+      Path cachePath = getDownloadCachePath(communityRoot);
 
-      // Maintain one top-level directory (cacheDirectory) under persistent cache directory, since
-      // TeamCity removes whole top-level directories upon cleanup, so both flag and extract directory
-      // will be deleted at the same time
-      Path flagFile = cacheDirectory.resolve(".flag.jps-bootstrap");
-      Path extractDirectory = cacheDirectory.resolve(archiveFile.getFileName().toString() + ".d");
-      extractFileWithFlagFileLocation(archiveFile, extractDirectory, flagFile);
+      String toHash = JPS_BOOTSTRAP_SALT + archiveFile.toString();
+      String directoryName = archiveFile.getFileName().toString() + "." + DigestUtils.sha256Hex(toHash).substring(0, 6) + ".d";
+      Path targetDirectory = cachePath.resolve(directoryName);
+      Path flagFile = cachePath.resolve(directoryName + ".flag");
+      extractFileWithFlagFileLocation(archiveFile, targetDirectory, flagFile);
 
-      // Update file modification time to maintain FIFO caches i.e.
-      // in persistent cache folder on TeamCity agent
-      Files.setLastModifiedTime(cacheDirectory, FileTime.from(Instant.now()));
-
-      return extractDirectory;
+      return targetDirectory;
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -140,7 +134,9 @@ final class BuildDependenciesDownloader {
 
       // Update file modification time to maintain FIFO caches i.e.
       // in persistent cache folder on TeamCity agent
-      Files.setLastModifiedTime(targetDirectory, FileTime.from(Instant.now()));
+      FileTime now = FileTime.from(Instant.now());
+      Files.setLastModifiedTime(targetDirectory, now);
+      Files.setLastModifiedTime(flagFile, now);
 
       return;
     }
