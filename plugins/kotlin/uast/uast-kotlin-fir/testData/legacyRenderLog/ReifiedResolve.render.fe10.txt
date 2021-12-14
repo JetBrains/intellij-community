@@ -9,7 +9,7 @@ public final class ReifiedResolveKt {
         var y: java.lang.String = bar()
         var z: java.util.List<? extends java.lang.String> = listOf("foo").filterIsInstance()
     }
-    static fun foo(@org.jetbrains.annotations.NotNull init: kotlin.jvm.functions.Function1<? super T,? extends kotlin.Unit>) : T {
+    public static fun foo(@org.jetbrains.annotations.NotNull init: kotlin.jvm.functions.Function1<? super T,? extends kotlin.Unit>) : T {
         TODO("message")
     }
 }
