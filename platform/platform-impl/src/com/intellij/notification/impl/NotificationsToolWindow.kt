@@ -208,6 +208,9 @@ private class NotificationContent(val project: Project,
   }
 
   private fun add(notification: Notification) {
+    if (!NotificationsConfigurationImpl.getSettings(notification.groupId).isShouldLog) {
+      return
+    }
     if (notification.isSuggestionType) {
       suggestions.add(notification, singleSelectionHandler)
     }

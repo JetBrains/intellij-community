@@ -2,6 +2,7 @@
 package com.intellij.notification.impl.ui
 
 import com.intellij.ide.IdeBundle
+import com.intellij.notification.ActionCenter
 import com.intellij.notification.NotificationDisplayType
 import com.intellij.notification.NotificationDisplayType.*
 import com.intellij.notification.impl.NotificationsConfigurationImpl
@@ -39,7 +40,8 @@ class NotificationSettingsUi(var notification: NotificationSettingsWrapper, val 
         }
       }
       row {
-        log = checkBox(IdeBundle.message("notifications.configurable.column.log"),
+        log = checkBox(IdeBundle.message(
+          if (ActionCenter.isEnabled()) "notifications.configurable.column.toolwindow" else "notifications.configurable.column.log"),
                        {notification.isShouldLog},
                        {notification.isShouldLog = it}).component
         log.addActionListener {
