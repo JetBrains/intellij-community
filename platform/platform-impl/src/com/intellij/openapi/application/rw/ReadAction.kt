@@ -59,8 +59,7 @@ internal class ReadAction<T>(
 
   private suspend fun tryReadAction(rootScope: CoroutineScope): ReadResult<T> {
     if (blocking) {
-      return tryReadAction(rootScope, rootScope.coroutineContext.job)
-             ?: ReadResult.WritePending
+      return tryReadBlocking(rootScope)
     }
     var result: ReadResult<T>? = null
     rootScope.launch(CoroutineName("read action")) {
@@ -71,6 +70,11 @@ internal class ReadAction<T>(
       }
     }.join()
     return result
+           ?: ReadResult.WritePending
+  }
+
+  private fun tryReadBlocking(rootScope: CoroutineScope): ReadResult<T> {
+    return tryReadAction(rootScope, rootScope.coroutineContext.job)
            ?: ReadResult.WritePending
   }
 
