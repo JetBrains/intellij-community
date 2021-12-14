@@ -1,6 +1,6 @@
 UFile (package = ) [public final class ReifiedParametersKt {...]
     UClass (name = ReifiedParametersKt) [public final class ReifiedParametersKt {...}]
-        UMethod (name = functionWithLambda) [static fun functionWithLambda(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull process: kotlin.jvm.functions.Function1<? super T,? extends java.lang.Integer>) : int {...}]
+        UMethod (name = functionWithLambda) [public static fun functionWithLambda(@org.jetbrains.annotations.Nullable t: T, @org.jetbrains.annotations.NotNull process: kotlin.jvm.functions.Function1<? super T,? extends java.lang.Integer>) : int {...}]
             UParameter (name = t) [@org.jetbrains.annotations.Nullable var t: T]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UParameter (name = process) [@org.jetbrains.annotations.NotNull var process: kotlin.jvm.functions.Function1<? super T,? extends java.lang.Integer>]
@@ -11,7 +11,7 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
                         UIdentifier (Identifier (process)) [UIdentifier (Identifier (process))]
                         USimpleNameReferenceExpression (identifier = invoke, resolvesTo = null) [invoke] = external invoke(t)(Undetermined)
                         USimpleNameReferenceExpression (identifier = t) [t] = Undetermined
-        UMethod (name = functionWithVararg) [static fun functionWithVararg(@org.jetbrains.annotations.Nullable i: int, @org.jetbrains.annotations.NotNull t: T[]) : T {...}]
+        UMethod (name = functionWithVararg) [public static fun functionWithVararg(@org.jetbrains.annotations.Nullable i: int, @org.jetbrains.annotations.NotNull t: T[]) : T {...}]
             UParameter (name = i) [@org.jetbrains.annotations.Nullable var i: int]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UParameter (name = t) [@org.jetbrains.annotations.NotNull var t: T[]]
@@ -21,7 +21,7 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
                     UArrayAccessExpression [t[0]] = Undetermined
                         USimpleNameReferenceExpression (identifier = t) [t] = Undetermined
                         ULiteralExpression (value = 0) [0] = 0
-        UMethod (name = functionWithReceiver) [static fun functionWithReceiver(@org.jetbrains.annotations.Nullable $this$functionWithReceiver: T, @org.jetbrains.annotations.Nullable i: int) : T {...}]
+        UMethod (name = functionWithReceiver) [public static fun functionWithReceiver(@org.jetbrains.annotations.Nullable $this$functionWithReceiver: T, @org.jetbrains.annotations.Nullable i: int) : T {...}]
             UParameter (name = $this$functionWithReceiver) [@org.jetbrains.annotations.Nullable var $this$functionWithReceiver: T]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UParameter (name = i) [@org.jetbrains.annotations.Nullable var i: int]
@@ -29,7 +29,7 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return this] = Nothing
                     UThisExpression (label = null) [this] = Undetermined
-        UMethod (name = name with spaces) [static fun name with spaces(@org.jetbrains.annotations.Nullable $this$name with spaces: T, @org.jetbrains.annotations.Nullable i: int) : T {...}]
+        UMethod (name = name with spaces) [public static fun name with spaces(@org.jetbrains.annotations.Nullable $this$name with spaces: T, @org.jetbrains.annotations.Nullable i: int) : T {...}]
             UParameter (name = $this$name with spaces) [@org.jetbrains.annotations.Nullable var $this$name with spaces: T]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
             UParameter (name = i) [@org.jetbrains.annotations.Nullable var i: int]
@@ -37,7 +37,7 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return this] = Nothing
                     UThisExpression (label = null) [this] = Undetermined
-        UMethod (name = functionWithParamAnnotation) [static fun functionWithParamAnnotation(@org.jetbrains.annotations.Nullable @kotlin.Suppress(names = "s") t: T) : T {...}]
+        UMethod (name = functionWithParamAnnotation) [public static fun functionWithParamAnnotation(@org.jetbrains.annotations.Nullable @kotlin.Suppress(names = "s") t: T) : T {...}]
             UParameter (name = t) [@org.jetbrains.annotations.Nullable @kotlin.Suppress(names = "s") var t: T]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
                 UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "s")]
@@ -46,7 +46,7 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return t] = Nothing
                     USimpleNameReferenceExpression (identifier = t) [t] = Undetermined
-        UMethod (name = functionUnresolved) [static fun functionUnresolved(@null @kotlin.Suppress(names = "s") t: <ErrorType>) : T {...}]
+        UMethod (name = functionUnresolved) [public static fun functionUnresolved(@null @kotlin.Suppress(names = "s") t: <ErrorType>) : T {...}]
             UParameter (name = t) [@null @kotlin.Suppress(names = "s") var t: <ErrorType>]
                 UAnnotation (fqName = null) [@null]
                 UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "s")]
