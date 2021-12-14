@@ -5,6 +5,7 @@ package org.jetbrains.uast.kotlin.psi
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.*
+import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterBuilder
 import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterListBuilder
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -24,10 +25,11 @@ class UastFakeLightMethod(
         KotlinLightTypeParameterListBuilder(this).also { paramList ->
             for ((i, p) in original.typeParameters.withIndex()) {
                 paramList.addParameter(
-                    object : LightTypeParameterBuilder(
+                    object : KotlinLightTypeParameterBuilder(
                         p.name ?: "__no_name__",
                         this,
-                        i
+                        i,
+                        p
                     ) {
                         private val myExtendsList by lz {
                             super.getExtendsList().apply {
