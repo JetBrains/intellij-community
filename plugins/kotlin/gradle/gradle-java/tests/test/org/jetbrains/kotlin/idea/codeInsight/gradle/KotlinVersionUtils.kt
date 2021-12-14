@@ -163,21 +163,4 @@ fun KotlinVersion.toWildcard(): KotlinVersion {
     )
 }
 
-// TODO: Simplify it after 1.6.20 release by `this >= KotlinVersion(1,6,20)`
-val KotlinVersion.isHmppEnabledByDefault get(): Boolean {
-    return if (major == 1 && minor == 6 && patch == 20) {
-        if (classifier == null) return true
-        if (!isDev) return true
-
-        val buildNumber = Regex("""dev-?(\d*)""")
-            .find(classifier)
-            ?.groupValues
-            ?.get(1)
-            ?.toIntOrNull()
-            ?: return true
-
-        buildNumber >= 6442 // Build number where HMPP was enabled by default
-    } else {
-        this > KotlinVersion(1, 6, 20)
-    }
-}
+val KotlinVersion.isHmppEnabledByDefault get() = this >= parseKotlinVersion("1.6.20-dev-6442")
