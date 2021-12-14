@@ -167,6 +167,10 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     return false;
   }
 
+  public boolean isResolvedArtifact() {
+    return myResolved;
+  }
+
   @NotNull
   public File getFile() {
     return myFile;
@@ -365,7 +369,6 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     if (myScope != null ? !myScope.equals(that.myScope) : that.myScope != null) return false;
     if (myExtension != null ? !myExtension.equals(that.myExtension) : that.myExtension != null) return false;
     if (myFile != null ? !myFile.equals(that.myFile) : that.myFile != null) return false;
-    if (myResolved != that.myResolved) return false;
 
     return true;
   }
