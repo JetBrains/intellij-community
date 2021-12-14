@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.junit
 
@@ -77,7 +77,7 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
 
         val location = context.location ?: return false
         val element = location.psiElement
-        val module = context.module?.asJvmModule() ?: return false
+        context.module?.asJvmModule() ?: return false
 
         if (!ProjectRootsUtil.isInProjectOrLibSource(element) || element.containingFile !is KtFile) {
             return false
@@ -90,6 +90,7 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
         
         val testEntity = JunitKotlinTestFrameworkProvider.getJavaTestEntity(element, checkMethod = true) ?: return false
 
+        val originalModule = configuration.configurationModule.module
         val testMethod = testEntity.testMethod
         if (testMethod != null) {
             configuration.beMethodConfiguration(PsiLocation.fromPsiElement(testMethod))
@@ -97,8 +98,8 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
             configuration.beClassConfiguration(testEntity.testClass)
         }
 
+        configuration.restoreOriginalModule(originalModule)
         JavaRunConfigurationExtensionManager.instance.extendCreatedConfiguration(configuration, location)
-        configuration.setModule(module)
         return true
     }
 
