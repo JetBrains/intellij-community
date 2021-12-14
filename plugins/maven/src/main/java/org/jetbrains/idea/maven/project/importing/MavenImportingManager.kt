@@ -9,6 +9,7 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.vfs.VirtualFile
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -29,15 +30,19 @@ class MavenImportingManager(val project: Project) {
 
   private val waitingPromises = ArrayList<AsyncPromise<MavenImportFinishedContext>>()
 
+  fun linkAndImportFile(pom: VirtualFile): Promise<MavenImportFinishedContext> {
+    ApplicationManager.getApplication().assertIsDispatchThread()
+    val manager = MavenProjectsManager.getInstance(project);
+    val files = ArrayList(MavenProjectsManager.getInstance(project).projectsFiles)
+    files.add(pom)
+    return openProjectAndImport(FilesList(files), manager.importingSettings, manager.generalSettings);
+  }
+
   fun openProjectAndImport(importPaths: ImportPaths,
                            importingSettings: MavenImportingSettings,
                            generalSettings: MavenGeneralSettings): Promise<MavenImportFinishedContext> {
     ApplicationManager.getApplication().assertIsDispatchThread()
-    if (currentContext != null) {
-      if (currentContext !is MavenImportFinishedContext) {
-        throw IllegalStateException("Importing is in progress already")
-      }
-    }
+    assertNoCurrentImport()
     MavenUtil.setupProjectSdk(project)
     currentContext = MavenStartedImport(project)
     ApplicationManager.getApplication().executeOnPooledThread {
@@ -55,9 +60,10 @@ class MavenImportingManager(val project: Project) {
           }
           catch (e: Throwable) {
             val promises = getAndClearWaitingPromises(MavenImportFinishedContext(e, project))
-            if(indicator.isCanceled){
+            if (indicator.isCanceled) {
               promises.forEach { it.setError("Cancelled") }
-            } else {
+            }
+            else {
               MavenLog.LOG.error(e)
               promises.forEach { it.setError(e) }
             }
@@ -67,6 +73,14 @@ class MavenImportingManager(val project: Project) {
 
     }
     return getImportFinishPromise()
+  }
+
+  private fun assertNoCurrentImport() {
+    if (currentContext != null) {
+      if (currentContext !is MavenImportFinishedContext) {
+        throw IllegalStateException("Importing is in progress already")
+      }
+    }
   }
 
   private fun doImport(indicator: MavenProgressIndicator,
@@ -174,7 +188,7 @@ class MavenImportingManager(val project: Project) {
     }
   }
 
-   fun forceStopImport() {
+  fun forceStopImport() {
     currentContext?.let { it.indicator.cancel() }
   }
 
