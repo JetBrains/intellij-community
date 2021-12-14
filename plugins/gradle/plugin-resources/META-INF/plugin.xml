@@ -206,6 +206,10 @@
       <add-to-group group-id="ExternalSystemView.ActionsToolbar.CenterPanel" anchor="after"
                     relative-to-action="ExternalSystem.SelectProjectDataToImport"/>
     </action>
+    <action id="Gradle.DependencyAnalyzer.GoTo" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerGoToAction">
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
+    </action>
 
     <action id="Gradle.ShowDaemons" class="org.jetbrains.plugins.gradle.internal.daemon.ShowGradleDaemonsAction"/>
 

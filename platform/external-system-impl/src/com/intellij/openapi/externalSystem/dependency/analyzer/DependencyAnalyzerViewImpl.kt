@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.*
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView.Companion.ACTION_PLACE
 import com.intellij.openapi.externalSystem.dependency.analyzer.util.*
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
@@ -24,10 +25,8 @@ import com.intellij.openapi.ui.asSequence
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SearchTextField
-import com.intellij.ui.components.JBList
 import com.intellij.ui.components.JBLoadingPanel
 import com.intellij.ui.layout.*
-import com.intellij.ui.treeStructure.SimpleTree
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
@@ -90,6 +89,16 @@ class DependencyAnalyzerViewImpl(
     ApplicationManager.getApplication().assertIsDispatchThread()
     setSelectedExternalProject(externalProjectPath)
     this.dependency = dependency
+  }
+
+  override fun getData(dataId: String): Any? {
+    return when (dataId) {
+      DependencyAnalyzerView.VIEW.name -> this
+      DependencyAnalyzerView.PROJECT.name -> project
+      DependencyAnalyzerView.EXTERNAL_SYSTEM_ID.name -> systemId
+      DependencyAnalyzerView.EXTERNAL_PROJECT_PATH.name -> externalProject?.path
+      else -> null
+    }
   }
 
   private fun updateViewModel() {
@@ -265,30 +274,28 @@ class DependencyAnalyzerViewImpl(
     val dependencyInspectionFilterButton = toggleAction(showDependencyWarningsProperty)
       .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.conflicts.show") }
       .apply { templatePresentation.icon = AllIcons.General.ShowWarning }
-      .asActionButton()
+      .asActionButton(ACTION_PLACE)
       .bindEnabled(dependencyLoadingProperty)
     val showDependencyGroupIdAction = toggleAction(showDependencyGroupIdProperty)
       .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.groupId.show") }
     val viewOptionsButton = popupActionGroup(showDependencyGroupIdAction)
       .apply { templatePresentation.icon = AllIcons.Actions.Show }
-      .asActionButton()
+      .asActionButton(ACTION_PLACE)
       .bindEnabled(dependencyLoadingProperty)
     val reloadNotificationProperty = ProjectReloadNotificationProperty()
     val projectReloadSeparator = separator()
       .bindVisible(reloadNotificationProperty)
     val projectReloadAction = action { ProjectRefreshAction.refreshProject(project) }
       .apply { templatePresentation.icon = AllIcons.Actions.BuildLoadChanges }
-      .asActionButton()
+      .asActionButton(ACTION_PLACE)
       .bindVisible(reloadNotificationProperty)
 
     val dependencyTitle = label(ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.title"))
-    val dependencyList = JBList(dependencyListModel)
-      .apply { cellRenderer = DependencyListRenderer(showDependencyGroupIdProperty) }
+    val dependencyList = DependencyList(dependencyListModel, showDependencyGroupIdProperty, this)
       .bindEmptyText(dependencyEmptyTextProperty)
       .bindDependency(dependencyProperty)
       .bindEnabled(dependencyLoadingProperty)
-    val dependencyTree = SimpleTree(dependencyTreeModel)
-      .apply { cellRenderer = DependencyTreeRenderer(showDependencyGroupIdProperty) }
+    val dependencyTree = DependencyTree(dependencyTreeModel, showDependencyGroupIdProperty, this)
       .bindEmptyText(dependencyEmptyTextProperty)
       .bindDependency(dependencyProperty)
       .bindEnabled(dependencyLoadingProperty)
@@ -301,26 +308,24 @@ class DependencyAnalyzerViewImpl(
     val showDependencyTreeButton = toggleAction(showDependencyTreeProperty)
       .apply { templatePresentation.text = ExternalSystemBundle.message("external.system.dependency.analyzer.resolved.tree.show") }
       .apply { templatePresentation.icon = AllIcons.Actions.ShowAsTree }
-      .asActionButton()
+      .asActionButton(ACTION_PLACE)
       .bindEnabled(dependencyLoadingProperty)
     val expandDependencyTreeButton = expandTreeAction(dependencyTree)
-      .asActionButton()
+      .asActionButton(ACTION_PLACE)
       .bindEnabled(showDependencyTreeProperty and dependencyLoadingProperty)
     val collapseDependencyTreeButton = collapseTreeAction(dependencyTree)
-      .asActionButton()
+      .asActionButton(ACTION_PLACE)
       .bindEnabled(showDependencyTreeProperty and dependencyLoadingProperty)
 
     val usagesTitle = label(usagesTitleProperty)
-    val usagesTree = SimpleTree(usagesTreeModel)
-      .apply { cellRenderer = UsagesTreeRenderer(showDependencyGroupIdProperty) }
+    val usagesTree = UsagesTree(usagesTreeModel, showDependencyGroupIdProperty, this)
       .apply { emptyText.text = "" }
-      .apply { expandAllWhenStructureChanged(this) }
       .bindEnabled(dependencyLoadingProperty)
     val expandUsagesTreeButton = expandTreeAction(usagesTree)
-      .asActionButton()
+      .asActionButton(ACTION_PLACE)
       .bindEnabled(dependencyLoadingProperty)
     val collapseUsagesTreeButton = collapseTreeAction(usagesTree)
-      .asActionButton()
+      .asActionButton(ACTION_PLACE)
       .bindEnabled(dependencyLoadingProperty)
 
     component = toolWindowPanel {
@@ -396,9 +401,9 @@ class DependencyAnalyzerViewImpl(
   }
 
   companion object {
-    private val SEARCH_HISTORY_PROPERTY = DependencyAnalyzerView::class.java.name + ".search"
-    private val SHOW_GROUP_ID_PROPERTY = DependencyAnalyzerView::class.java.name + ".showGroupId"
-    private val SHOW_AS_TREE_PROPERTY = DependencyAnalyzerView::class.java.name + ".showAsTree"
-    private val SPLIT_VIEW_PROPORTION_PROPERTY = DependencyAnalyzerView::class.java.name + ".splitProportion"
+    private const val SEARCH_HISTORY_PROPERTY = "ExternalSystem.DependencyAnalyzerView.search"
+    private const val SHOW_GROUP_ID_PROPERTY = "ExternalSystem.DependencyAnalyzerView.showGroupId"
+    private const val SHOW_AS_TREE_PROPERTY = "ExternalSystem.DependencyAnalyzerView.showAsTree"
+    private const val SPLIT_VIEW_PROPORTION_PROPERTY = "ExternalSystem.DependencyAnalyzerView.splitProportion"
   }
 }

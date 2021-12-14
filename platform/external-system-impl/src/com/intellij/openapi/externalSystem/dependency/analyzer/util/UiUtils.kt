@@ -122,8 +122,8 @@ internal fun popupActionGroup(vararg actions: AnAction) =
   DefaultActionGroup(*actions)
     .apply { isPopup = true }
 
-internal fun AnAction.asActionButton() =
-  ActionButton(this, templatePresentation.clone(), ActionPlaces.UNKNOWN, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
+internal fun AnAction.asActionButton(place: String) =
+  ActionButton(this, templatePresentation.clone(), place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE)
     .apply { border = JBUI.Borders.empty(ACTION_BORDER) }
 
 internal fun separator() =
