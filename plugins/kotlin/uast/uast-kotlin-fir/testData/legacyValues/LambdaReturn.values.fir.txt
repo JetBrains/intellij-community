@@ -11,7 +11,7 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                 UDeclarationsExpression [var b: int = 1] = Undetermined
                                     ULocalVariable (name = b) [var b: int = 1]
                                         ULiteralExpression (value = 1) [1] = 1
-                                UReturnExpression [return a + b] = Undetermined
+                                UReturnExpression [return a + b] = Nothing
                                     UBinaryExpression (operator = +) [a + b] = Undetermined (depending on: (var b = 1))
                                         USimpleNameReferenceExpression (identifier = a) [a] = external a()
                                         USimpleNameReferenceExpression (identifier = b) [b] = (var b = 1)
@@ -24,7 +24,7 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                 UDeclarationsExpression [var c: int = 1] = Undetermined
                                     ULocalVariable (name = c) [var c: int = 1]
                                         ULiteralExpression (value = 1) [1] = 1
-                                UReturnExpression [return if (a > 0) a + c else a - c] = Undetermined
+                                UReturnExpression [return if (a > 0) a + c else a - c] = Nothing
                                     UIfExpression [if (a > 0) a + c else a - c] = Undetermined (depending on: (var c = 1))
                                         UBinaryExpression (operator = >) [a > 0] = Undetermined
                                             USimpleNameReferenceExpression (identifier = a) [a] = external a()
@@ -100,18 +100,18 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                     USimpleNameReferenceExpression (identifier = it) [it] = external it()
                                     ULiteralExpression (value = 5) [5] = 5
                                 UReturnExpression [return] = Nothing
-                            UDeclarationsExpression [var b: int = 1] = Nothing
+                            UDeclarationsExpression [var b: int = 1] = Undetermined
                                 ULocalVariable (name = b) [var b: int = 1]
                                     ULiteralExpression (value = 1) [1] = 1
                             UReturnExpression [return it + b] = Nothing
                                 UBinaryExpression (operator = +) [it + b] = Undetermined (depending on: (var b = 1))
                                     USimpleNameReferenceExpression (identifier = it) [it] = external it()
                                     USimpleNameReferenceExpression (identifier = b) [b] = (var b = 1)
-                UDeclarationsExpression [var x: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}] = Nothing
+                UDeclarationsExpression [var x: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}] = Undetermined
                     ULocalVariable (name = x) [var x: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                         ULambdaExpression [{ ...}] = Undetermined
                             UBlockExpression [{...}] = Undetermined
-                                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)...@org.jetbrains.annotations.NotNull var b: int = vardbcd0724.<anonymous class>()] = Nothing
+                                UDeclarationsExpression [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)...@org.jetbrains.annotations.NotNull var b: int = vardbcd0724.<anonymous class>()] = Undetermined
                                     ULocalVariable (name = vardbcd0724) [@org.jetbrains.annotations.NotNull var vardbcd0724: java.util.List<? extends java.lang.Integer> = listOf(1, 2)]
                                         UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
                                         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2)) [listOf(1, 2)] = external listOf(1, 2)(1, 2)
@@ -133,7 +133,7 @@ UFile (package = org.jetbrains.uast.kotlin) [package org.jetbrains.uast.kotlin..
                                             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [<anonymous class>()] = external <anonymous class>()()
                                                 UIdentifier (Identifier (component2)) [UIdentifier (Identifier (component2))]
                                                 USimpleNameReferenceExpression (identifier = <anonymous class>, resolvesTo = null) [<anonymous class>] = external <anonymous class>()()
-                UDeclarationsExpression [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}] = Nothing
+                UDeclarationsExpression [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}] = Undetermined
                     ULocalVariable (name = y) [var y: kotlin.jvm.functions.Function0<? extends kotlin.Unit> = { ...}]
                         ULambdaExpression [{ ...}] = Undetermined
                             UBlockExpression [{...}] = external listOf(1)(1)
