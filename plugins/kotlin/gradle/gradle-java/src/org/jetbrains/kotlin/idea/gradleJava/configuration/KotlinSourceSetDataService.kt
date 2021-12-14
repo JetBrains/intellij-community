@@ -18,10 +18,7 @@ import com.intellij.openapi.roots.ExportableOrderEntry
 import com.intellij.openapi.roots.ModifiableRootModel
 import com.intellij.openapi.util.io.FileUtil
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
-import org.jetbrains.kotlin.config.JvmTarget
-import org.jetbrains.kotlin.config.KotlinModuleKind
-import org.jetbrains.kotlin.config.SourceKotlinRootType
-import org.jetbrains.kotlin.config.TestSourceKotlinRootType
+import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.facet.*
 import org.jetbrains.kotlin.idea.gradle.configuration.KotlinSourceSetInfo
 import org.jetbrains.kotlin.idea.gradle.configuration.findChildModuleById
@@ -91,7 +88,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 populateNonJvmSourceRootTypes(nodeToImport, ideModule)
             }
 
-            configureFacet(sourceSetData, kotlinSourceSet, mainModuleData, ideModule, modelsProvider, projectPlatforms)?.let { facet ->
+            configureFacet(sourceSetData, kotlinSourceSet, null, mainModuleData, ideModule, modelsProvider, projectPlatforms)?.let { facet ->
                 GradleProjectImportHandler.getInstances(project).forEach { it.importBySourceSet(facet, nodeToImport) }
             }
 
@@ -152,21 +149,25 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
         fun configureFacet(
             moduleData: ModuleData,
             kotlinSourceSet: KotlinSourceSetInfo,
+            additionalRunTasks: List<ExternalSystemRunTask>? = null,
             mainModuleNode: DataNode<ModuleData>,
             ideModule: Module,
             modelsProvider: IdeModifiableModelsProvider
         ) = configureFacet(
             moduleData,
             kotlinSourceSet,
+            additionalRunTasks,
             mainModuleNode,
             ideModule,
             modelsProvider,
             enumValues<KotlinPlatform>().toList()
         )
 
+        @OptIn(ExperimentalStdlibApi::class)
         fun configureFacet(
             moduleData: ModuleData,
             kotlinSourceSet: KotlinSourceSetInfo,
+            additionalRunTasks: List<ExternalSystemRunTask>? = null,
             mainModuleNode: DataNode<ModuleData>,
             ideModule: Module,
             modelsProvider: IdeModifiableModelsProvider,
@@ -218,7 +219,11 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
                 kind = kotlinSourceSet.kotlinComponent.kind
 
                 isTestModule = kotlinSourceSet.isTestModule
-                externalSystemRunTasks = ArrayList(kotlinSourceSet.externalSystemRunTasks)
+
+                externalSystemRunTasks = buildList {
+                    addAll(kotlinSourceSet.externalSystemRunTasks)
+                    additionalRunTasks?.let(::addAll)
+                }
 
                 externalProjectId = kotlinSourceSet.gradleModuleId
 

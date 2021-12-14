@@ -27,9 +27,6 @@ import org.gradle.tooling.model.idea.IdeaModule
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.ManualLanguageFeatureSetting
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
-import org.jetbrains.kotlin.config.ExternalSystemNativeMainRunTask
-import org.jetbrains.kotlin.config.ExternalSystemRunTask
-import org.jetbrains.kotlin.config.ExternalSystemTestRunTask
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.PlatformVersion
 import org.jetbrains.kotlin.idea.gradle.configuration.*
@@ -41,8 +38,7 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.createKotlinMppPop
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.getCompilations
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDependenciesByCompilations
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDependenciesBySourceSetVisibilityGraph
-import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.fullName
-import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getKotlinModuleId
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.*
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo
@@ -517,51 +513,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             //TODO improve passing version of used multiplatform
         }
 
-        private fun calculateRunTasks(
-            mppModel: KotlinMPPGradleModel,
-            gradleModule: IdeaModule,
-            resolverCtx: ProjectResolverContext
-        ): Map<KotlinSourceSet, Collection<ExternalSystemRunTask>> {
-            val sourceSetToRunTasks: MutableMap<KotlinSourceSet, MutableCollection<ExternalSystemRunTask>> = HashMap()
-            val dependsOnReverseGraph: MutableMap<String, MutableSet<KotlinSourceSet>> = HashMap()
-            mppModel.targets.forEach { target ->
-                target.compilations.forEach { compilation ->
-                    val testRunTasks = target.testTasksFor(compilation)
-                        .map {
-                            ExternalSystemTestRunTask(
-                                it.taskName,
-                                gradleModule.gradleProject.path,
-                                target.name
-                            )
-                        }
-                    val nativeMainRunTasks = target.nativeMainRunTasks
-                        .filter { task -> task.compilationName == compilation.name }
-                        .map {
-                            ExternalSystemNativeMainRunTask(
-                                it.taskName,
-                                getKotlinModuleId(gradleModule, compilation, resolverCtx),
-                                target.name,
-                                it.entryPoint,
-                                it.debuggable
-                            )
-                        }
-                    val allRunTasks = testRunTasks + nativeMainRunTasks
-                    compilation.declaredSourceSets.forEach { sourceSet ->
-                        sourceSetToRunTasks.getOrPut(sourceSet) { LinkedHashSet() } += allRunTasks
-                        mppModel.resolveAllDependsOnSourceSets(sourceSet).forEach { dependentModule ->
-                            dependsOnReverseGraph.getOrPut(dependentModule.name) { LinkedHashSet() } += sourceSet
-                        }
-                    }
-                }
-            }
-            mppModel.sourceSetsByName.forEach { (sourceSetName, sourceSet) ->
-                dependsOnReverseGraph[sourceSetName]?.forEach { dependingSourceSet ->
-                    sourceSetToRunTasks.getOrPut(sourceSet) { LinkedHashSet() } += sourceSetToRunTasks[dependingSourceSet] ?: emptyList()
-                }
-            }
-            return sourceSetToRunTasks
-        }
-
         fun populateContentRoots(
             gradleModule: IdeaModule,
             ideModule: DataNode<ModuleData>,
@@ -939,12 +890,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
             return compilerArguments
         }
 
-        internal fun getGradleModuleQualifiedName(
-            resolverCtx: ProjectResolverContext,
-            gradleModule: IdeaModule,
-            simpleName: String
-        ): String = getModuleId(resolverCtx, gradleModule) + ":" + simpleName
-
         private fun ExternalProject.notImportedCommonSourceSets() =
             GradlePropertiesFileFacade.forExternalProject(this).readProperty(KOTLIN_NOT_IMPORTED_COMMON_SOURCE_SETS_SETTING)?.equals(
                 "true",
@@ -959,13 +904,6 @@ open class KotlinMPPGradleProjectResolver : AbstractProjectResolverExtension() {
 
         internal fun shouldDelegateToOtherPlugin(kotlinSourceSet: KotlinSourceSet): Boolean =
             kotlinSourceSet.actualPlatforms.platforms.singleOrNull() == KotlinPlatform.ANDROID
-    }
-}
-
-private fun KotlinTarget.testTasksFor(compilation: KotlinCompilation) = testRunTasks.filter { task ->
-    when (name) {
-        "android" -> task.taskName.endsWith(compilation.name, true)
-        else -> task.compilationName == compilation.name
     }
 }
 
