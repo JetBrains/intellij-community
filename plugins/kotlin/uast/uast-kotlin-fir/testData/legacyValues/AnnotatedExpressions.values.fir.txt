@@ -48,7 +48,7 @@ UFile (package = ) [public final class AnnotatedExpressionsKt {...]
                             USwitchClauseExpressionWithBody [str.isBlank() -> {...] = Undetermined
                                 UQualifiedReferenceExpression [str.isBlank()] = external isBlank()()
                                     UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "DEPRECATION")]
-                                        UNamedExpression (name = names) [names = "DEPRECATION"] = Nothing
+                                        UNamedExpression (name = names) [names = "DEPRECATION"] = Undetermined
                                             ULiteralExpression (value = "DEPRECATION") ["DEPRECATION"] = "DEPRECATION"
                                     USimpleNameReferenceExpression (identifier = str) [str] = Undetermined
                                     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [isBlank()] = external isBlank()()
