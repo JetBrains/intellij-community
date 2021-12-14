@@ -106,7 +106,7 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
       return getNotifications(project, STATE_KEY) ?: Collections.emptyList()
     }
 
-    fun getNotifications(project: Project): List<Notification> {
+    fun getNotifications(project: Project?): List<Notification> {
       val notifications = getNotifications(project, LIST_KEY)
       if (notifications == null) {
         synchronized(myLock) {
@@ -116,7 +116,10 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
       return notifications
     }
 
-    private fun getNotifications(project: Project, stateKey: Key<Supplier<List<Notification>>>): List<Notification>? {
+    private fun getNotifications(project: Project?, stateKey: Key<Supplier<List<Notification>>>): List<Notification>? {
+      if (project == null) {
+        return null
+      }
       val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ID)
       if (toolWindow != null) {
         return ArrayList(toolWindow.contentManager.getContent(0)!!.getUserData(stateKey)!!.get())

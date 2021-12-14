@@ -114,7 +114,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
   public <T extends Notification> T @NotNull [] getNotificationsOfType(@NotNull Class<T> klass, @Nullable Project project) {
     List<T> result = new ArrayList<>();
     if (project == null || !project.isDefault() && !project.isDisposed()) {
-      for (Notification notification : EventLog.getLogModel(project).getNotifications()) {
+      for (Notification notification : ActionCenter.getNotifications(project, true)) {
         if (klass.isInstance(notification)) {
           @SuppressWarnings("unchecked") T t = (T)notification;
           result.add(t);

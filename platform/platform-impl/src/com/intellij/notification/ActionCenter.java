@@ -11,17 +11,21 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Alexander Lobas
  */
 public class ActionCenter {
-  public static @NotNull List<Notification> getNotifications(@NotNull Project project) {
+  public static @NotNull List<Notification> getNotifications(@Nullable Project project, boolean createService) {
     if (isEnabled()) {
       return NotificationsToolWindowFactory.Companion.getNotifications(project);
     }
-    return EventLog.getNotifications(project);
+    if (project == null && !createService) {
+      return Collections.emptyList();
+    }
+    return createService ? EventLog.getLogModel(project).getNotifications() : EventLog.getNotifications(project);
   }
 
   public static void showNotification(@NotNull Project project, @NotNull String groupId, @NotNull List<String> ids) {
@@ -33,11 +37,8 @@ public class ActionCenter {
     }
   }
 
-  public static void expireNotifications(@Nullable Project project) {
-    List<Notification> notifications =
-      isEnabled() ? NotificationsToolWindowFactory.Companion.getNotifications(project) : EventLog.getLogModel(project).getNotifications();
-
-    for (Notification notification : notifications) {
+  public static void expireNotifications(@NotNull Project project) {
+    for (Notification notification : getNotifications(project, true)) {
       notification.expire();
     }
   }
