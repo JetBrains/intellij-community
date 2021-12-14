@@ -24,6 +24,8 @@ import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
 import java.util.List;
 
 final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
@@ -123,13 +125,15 @@ final class WslBuildCommandLineBuilder implements BuildCommandLineBuilder {
       return path;
     }
     Path targetFile = myHostClasspathDirectory.resolve(path.getFileName());
-    if (!Files.exists(targetFile)) {
-      try {
+    try {
+      FileTime originalFileTimestamp = Files.getLastModifiedTime(path);
+      FileTime targetFileTimestamp = Files.exists(targetFile) ? Files.getLastModifiedTime(targetFile) : null;
+      if (targetFileTimestamp == null || targetFileTimestamp.compareTo(originalFileTimestamp) < 0) {
         FileUtil.copyFileOrDir(path.toFile(), targetFile.toFile());
       }
-      catch (IOException ignored) {
-        return path;
-      }
+    }
+    catch (IOException ignored) {
+      return path;
     }
     return targetFile;
   }

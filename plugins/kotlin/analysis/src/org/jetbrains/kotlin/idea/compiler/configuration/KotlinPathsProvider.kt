@@ -34,7 +34,10 @@ object KotlinPathsProvider {
         onError: (String) -> Unit,
     ): File? {
         val destination = getKotlinPaths(version).homePath
-        if (destination.isDirectory) {
+
+        val unpackedDistTimestamp = destination.lastModified()
+        val packedDistTimestamp = getExpectedMavenArtifactJarPath(KOTLIN_DIST_ARTIFACT_ID, version).lastModified()
+        if (unpackedDistTimestamp != 0L && packedDistTimestamp != 0L && unpackedDistTimestamp >= packedDistTimestamp) {
             return destination
         }
         destination.deleteRecursively()
