@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.formatter;
 
@@ -26,6 +26,11 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
         public static class AfterUnmatchedBrace extends AbstractTypingIndentationTestBase {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("AtEndOfFile.after.kt")
+            public void testAtEndOfFile() throws Exception {
+                runTest("testData/indentationOnNewline/afterUnmatchedBrace/AtEndOfFile.after.kt");
             }
 
             @TestMetadata("LambdaArgumentBeforeFunctionInitializer.after.kt")
@@ -96,9 +101,9 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
 
-            @TestMetadata("listAccess.after.kt")
+            @TestMetadata("ListAccess.after.kt")
             public void testListAccess() throws Exception {
-                runTest("testData/indentationOnNewline/arrayAccess/listAccess.after.kt");
+                runTest("testData/indentationOnNewline/arrayAccess/ListAccess.after.kt");
             }
         }
 
@@ -1532,6 +1537,11 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                     runTest("testData/indentationOnNewline/ArgumentListNormalIndent.after.kt");
                 }
 
+                @TestMetadata("AutoIndentInWhenClause.after.kt")
+                public void testAutoIndentInWhenClause() throws Exception {
+                    runTest("testData/indentationOnNewline/AutoIndentInWhenClause.after.kt");
+                }
+
                 @TestMetadata("BlockCommentAfterCatch.after.kt")
                 public void testBlockCommentAfterCatch() throws Exception {
                     runTest("testData/indentationOnNewline/BlockCommentAfterCatch.after.kt");
@@ -1552,6 +1562,29 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                     runTest("testData/indentationOnNewline/ConsecutiveCallsInSafeCallsEnd.after.kt");
                 }
 
+                @TestMetadata("EnterInFunctionWithExpressionBody.after.kt")
+                public void testEnterInFunctionWithExpressionBody() throws Exception {
+                    runTest("testData/indentationOnNewline/EnterInFunctionWithExpressionBody.after.kt");
+                }
+
+                @TestMetadata("EnterInMultiDeclaration.after.kt")
+                public void testEnterInMultiDeclaration() throws Exception {
+                    runTest("testData/indentationOnNewline/EnterInMultiDeclaration.after.kt");
+                }
+
+                @TestMetadata("EnterInVariableDeclaration.after.kt")
+                public void testEnterInVariableDeclaration() throws Exception {
+                    runTest("testData/indentationOnNewline/EnterInVariableDeclaration.after.kt");
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/indentationOnNewline")
+            public static class TestBucket002 extends AbstractTypingIndentationTestBase {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
+
                 @TestMetadata("EoLCommentAfterCatch.after.kt")
                 public void testEoLCommentAfterCatch() throws Exception {
                     runTest("testData/indentationOnNewline/EoLCommentAfterCatch.after.kt");
@@ -1570,14 +1603,6 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                 @TestMetadata("FunctionBlock.after.kt")
                 public void testFunctionBlock() throws Exception {
                     runTest("testData/indentationOnNewline/FunctionBlock.after.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/indentationOnNewline")
-            public static class TestBucket002 extends AbstractTypingIndentationTestBase {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
 
                 @TestMetadata("HigherOrderFunction.after.kt")
@@ -1610,6 +1635,11 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                     runTest("testData/indentationOnNewline/InDelegationListNotEmpty.after.kt");
                 }
 
+                @TestMetadata("InElseBlockBeforeParenthesis.after.kt")
+                public void testInElseBlockBeforeParenthesis() throws Exception {
+                    runTest("testData/indentationOnNewline/InElseBlockBeforeParenthesis.after.kt");
+                }
+
                 @TestMetadata("InEnumAfterSemicolon.after.kt")
                 public void testInEnumAfterSemicolon() throws Exception {
                     runTest("testData/indentationOnNewline/InEnumAfterSemicolon.after.kt");
@@ -1623,6 +1653,11 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                 @TestMetadata("InEnumInitializerListNotEmpty.after.kt")
                 public void testInEnumInitializerListNotEmpty() throws Exception {
                     runTest("testData/indentationOnNewline/InEnumInitializerListNotEmpty.after.kt");
+                }
+
+                @TestMetadata("InIfBlockBeforeParenthesis.after.kt")
+                public void testInIfBlockBeforeParenthesis() throws Exception {
+                    runTest("testData/indentationOnNewline/InIfBlockBeforeParenthesis.after.kt");
                 }
 
                 @TestMetadata("InLabmdaAfterArrow.after.kt")
@@ -1649,6 +1684,14 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                 public void testInLambdaInsideChainCallSameLineWithSpaces() throws Exception {
                     runTest("testData/indentationOnNewline/InLambdaInsideChainCallSameLineWithSpaces.after.kt");
                 }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/indentationOnNewline")
+            public static class TestBucket003 extends AbstractTypingIndentationTestBase {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
 
                 @TestMetadata("InLambdaInsideChainCallWithNewLine.after.kt")
                 public void testInLambdaInsideChainCallWithNewLine() throws Exception {
@@ -1665,6 +1708,26 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                     runTest("testData/indentationOnNewline/InMultilineLambdaAfterArrow.after.kt");
                 }
 
+                @TestMetadata("IndentBeforeElseWithBlock.after.kt")
+                public void testIndentBeforeElseWithBlock() throws Exception {
+                    runTest("testData/indentationOnNewline/IndentBeforeElseWithBlock.after.kt");
+                }
+
+                @TestMetadata("IndentBeforeElseWithoutBlock.after.kt")
+                public void testIndentBeforeElseWithoutBlock() throws Exception {
+                    runTest("testData/indentationOnNewline/IndentBeforeElseWithoutBlock.after.kt");
+                }
+
+                @TestMetadata("IndentNotFinishedVariableEndAfterEquals.after.kt")
+                public void testIndentNotFinishedVariableEndAfterEquals() throws Exception {
+                    runTest("testData/indentationOnNewline/IndentNotFinishedVariableEndAfterEquals.after.kt");
+                }
+
+                @TestMetadata("IndentOnFinishedVariableEndAfterEquals.after.kt")
+                public void testIndentOnFinishedVariableEndAfterEquals() throws Exception {
+                    runTest("testData/indentationOnNewline/IndentOnFinishedVariableEndAfterEquals.after.kt");
+                }
+
                 @TestMetadata("KT20783.after.kt")
                 public void testKT20783() throws Exception {
                     runTest("testData/indentationOnNewline/KT20783.after.kt");
@@ -1678,14 +1741,6 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                 @TestMetadata("LambdaInArguments2.after.kt")
                 public void testLambdaInArguments2() throws Exception {
                     runTest("testData/indentationOnNewline/LambdaInArguments2.after.kt");
-                }
-            }
-
-            @RunWith(JUnit3RunnerWithInners.class)
-            @TestMetadata("testData/indentationOnNewline")
-            public static class TestBucket003 extends AbstractTypingIndentationTestBase {
-                private void runTest(String testDataFilePath) throws Exception {
-                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
 
                 @TestMetadata("LargeFile.after.kt")
@@ -1718,6 +1773,11 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                     runTest("testData/indentationOnNewline/NotFirstParameter.after.kt");
                 }
 
+                @TestMetadata("ReindentOnUnmatchedBrace.after.kt")
+                public void testReindentOnUnmatchedBrace() throws Exception {
+                    runTest("testData/indentationOnNewline/ReindentOnUnmatchedBrace.after.kt");
+                }
+
                 @TestMetadata("ReturnContinue.after.kt")
                 public void testReturnContinue() throws Exception {
                     runTest("testData/indentationOnNewline/ReturnContinue.after.kt");
@@ -1732,10 +1792,83 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                 public void testSemicolon2() throws Exception {
                     runTest("testData/indentationOnNewline/Semicolon2.after.kt");
                 }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/indentationOnNewline")
+            public static class TestBucket004 extends AbstractTypingIndentationTestBase {
+                private void runTest(String testDataFilePath) throws Exception {
+                    KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                }
 
                 @TestMetadata("SettingAlignMultilineParametersInCalls.after.kt")
                 public void testSettingAlignMultilineParametersInCalls() throws Exception {
                     runTest("testData/indentationOnNewline/SettingAlignMultilineParametersInCalls.after.kt");
+                }
+
+                @TestMetadata("SmartEnterBetweenOpeningAndClosingBrackets.after.kt")
+                public void testSmartEnterBetweenOpeningAndClosingBrackets() throws Exception {
+                    runTest("testData/indentationOnNewline/SmartEnterBetweenOpeningAndClosingBrackets.after.kt");
+                }
+
+                @TestMetadata("SmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline.after.kt")
+                public void testSmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline() throws Exception {
+                    runTest("testData/indentationOnNewline/SmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline.after.kt");
+                }
+
+                @TestMetadata("SmartEnterWithTabsInMethodParameters.after.kt")
+                public void testSmartEnterWithTabsInMethodParameters() throws Exception {
+                    runTest("testData/indentationOnNewline/SmartEnterWithTabsInMethodParameters.after.kt");
+                }
+
+                @TestMetadata("SmartEnterWithTabsOnConstructorParameters.after.kt")
+                public void testSmartEnterWithTabsOnConstructorParameters() throws Exception {
+                    runTest("testData/indentationOnNewline/SmartEnterWithTabsOnConstructorParameters.after.kt");
+                }
+
+                @TestMetadata("SmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultiline.after.kt")
+                public void testSmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultiline() throws Exception {
+                    runTest("testData/indentationOnNewline/SmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultiline.after.kt");
+                }
+
+                @TestMetadata("SmartEnterWithTrailingCommaAndWhitespaceBeforeLineBreak.after.kt")
+                public void testSmartEnterWithTrailingCommaAndWhitespaceBeforeLineBreak() throws Exception {
+                    runTest("testData/indentationOnNewline/SmartEnterWithTrailingCommaAndWhitespaceBeforeLineBreak.after.kt");
+                }
+
+                @TestMetadata("SmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters.after.kt")
+                public void testSmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters() throws Exception {
+                    runTest("testData/indentationOnNewline/SmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters.after.kt");
+                }
+
+                @TestMetadata("SplitStringByEnter.after.kt")
+                public void testSplitStringByEnter() throws Exception {
+                    runTest("testData/indentationOnNewline/SplitStringByEnter.after.kt");
+                }
+
+                @TestMetadata("SplitStringByEnterAddParentheses.after.kt")
+                public void testSplitStringByEnterAddParentheses() throws Exception {
+                    runTest("testData/indentationOnNewline/SplitStringByEnterAddParentheses.after.kt");
+                }
+
+                @TestMetadata("SplitStringByEnterBeforeEscapeSequence.after.kt")
+                public void testSplitStringByEnterBeforeEscapeSequence() throws Exception {
+                    runTest("testData/indentationOnNewline/SplitStringByEnterBeforeEscapeSequence.after.kt");
+                }
+
+                @TestMetadata("SplitStringByEnterBeforeSubstitution.after.kt")
+                public void testSplitStringByEnterBeforeSubstitution() throws Exception {
+                    runTest("testData/indentationOnNewline/SplitStringByEnterBeforeSubstitution.after.kt");
+                }
+
+                @TestMetadata("SplitStringByEnterEmpty.after.kt")
+                public void testSplitStringByEnterEmpty() throws Exception {
+                    runTest("testData/indentationOnNewline/SplitStringByEnterEmpty.after.kt");
+                }
+
+                @TestMetadata("SplitStringByEnterExistingParentheses.after.kt")
+                public void testSplitStringByEnterExistingParentheses() throws Exception {
+                    runTest("testData/indentationOnNewline/SplitStringByEnterExistingParentheses.after.kt");
                 }
             }
         }

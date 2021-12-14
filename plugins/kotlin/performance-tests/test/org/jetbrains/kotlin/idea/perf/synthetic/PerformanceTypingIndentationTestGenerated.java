@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
@@ -26,6 +26,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         public static class AfterUnmatchedBrace extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("AtEndOfFile.after.kt")
+            public void testAtEndOfFile() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/afterUnmatchedBrace/AtEndOfFile.after.kt");
             }
 
             @TestMetadata("LambdaArgumentBeforeFunctionInitializer.after.kt")
@@ -96,9 +101,9 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
 
-            @TestMetadata("listAccess.after.kt")
+            @TestMetadata("ListAccess.after.kt")
             public void testListAccess() throws Exception {
-                runTest("../idea/tests/testData/indentationOnNewline/arrayAccess/listAccess.after.kt");
+                runTest("../idea/tests/testData/indentationOnNewline/arrayAccess/ListAccess.after.kt");
             }
         }
 
@@ -1465,6 +1470,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/indentationOnNewline/ArgumentListNormalIndent.after.kt");
             }
 
+            @TestMetadata("AutoIndentInWhenClause.after.kt")
+            public void testAutoIndentInWhenClause() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/AutoIndentInWhenClause.after.kt");
+            }
+
             @TestMetadata("BlockCommentAfterCatch.after.kt")
             public void testBlockCommentAfterCatch() throws Exception {
                 runTest("../idea/tests/testData/indentationOnNewline/BlockCommentAfterCatch.after.kt");
@@ -1483,6 +1493,21 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
             @TestMetadata("ConsecutiveCallsInSafeCallsEnd.after.kt")
             public void testConsecutiveCallsInSafeCallsEnd() throws Exception {
                 runTest("../idea/tests/testData/indentationOnNewline/ConsecutiveCallsInSafeCallsEnd.after.kt");
+            }
+
+            @TestMetadata("EnterInFunctionWithExpressionBody.after.kt")
+            public void testEnterInFunctionWithExpressionBody() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/EnterInFunctionWithExpressionBody.after.kt");
+            }
+
+            @TestMetadata("EnterInMultiDeclaration.after.kt")
+            public void testEnterInMultiDeclaration() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/EnterInMultiDeclaration.after.kt");
+            }
+
+            @TestMetadata("EnterInVariableDeclaration.after.kt")
+            public void testEnterInVariableDeclaration() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/EnterInVariableDeclaration.after.kt");
             }
 
             @TestMetadata("EoLCommentAfterCatch.after.kt")
@@ -1535,6 +1560,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/indentationOnNewline/InDelegationListNotEmpty.after.kt");
             }
 
+            @TestMetadata("InElseBlockBeforeParenthesis.after.kt")
+            public void testInElseBlockBeforeParenthesis() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InElseBlockBeforeParenthesis.after.kt");
+            }
+
             @TestMetadata("InEnumAfterSemicolon.after.kt")
             public void testInEnumAfterSemicolon() throws Exception {
                 runTest("../idea/tests/testData/indentationOnNewline/InEnumAfterSemicolon.after.kt");
@@ -1548,6 +1578,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
             @TestMetadata("InEnumInitializerListNotEmpty.after.kt")
             public void testInEnumInitializerListNotEmpty() throws Exception {
                 runTest("../idea/tests/testData/indentationOnNewline/InEnumInitializerListNotEmpty.after.kt");
+            }
+
+            @TestMetadata("InIfBlockBeforeParenthesis.after.kt")
+            public void testInIfBlockBeforeParenthesis() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/InIfBlockBeforeParenthesis.after.kt");
             }
 
             @TestMetadata("InLabmdaAfterArrow.after.kt")
@@ -1588,6 +1623,26 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
             @TestMetadata("InMultilineLambdaAfterArrow.after.kt")
             public void testInMultilineLambdaAfterArrow() throws Exception {
                 runTest("../idea/tests/testData/indentationOnNewline/InMultilineLambdaAfterArrow.after.kt");
+            }
+
+            @TestMetadata("IndentBeforeElseWithBlock.after.kt")
+            public void testIndentBeforeElseWithBlock() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/IndentBeforeElseWithBlock.after.kt");
+            }
+
+            @TestMetadata("IndentBeforeElseWithoutBlock.after.kt")
+            public void testIndentBeforeElseWithoutBlock() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/IndentBeforeElseWithoutBlock.after.kt");
+            }
+
+            @TestMetadata("IndentNotFinishedVariableEndAfterEquals.after.kt")
+            public void testIndentNotFinishedVariableEndAfterEquals() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/IndentNotFinishedVariableEndAfterEquals.after.kt");
+            }
+
+            @TestMetadata("IndentOnFinishedVariableEndAfterEquals.after.kt")
+            public void testIndentOnFinishedVariableEndAfterEquals() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/IndentOnFinishedVariableEndAfterEquals.after.kt");
             }
 
             @TestMetadata("KT20783.after.kt")
@@ -1635,6 +1690,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 runTest("../idea/tests/testData/indentationOnNewline/NotFirstParameter.after.kt");
             }
 
+            @TestMetadata("ReindentOnUnmatchedBrace.after.kt")
+            public void testReindentOnUnmatchedBrace() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/ReindentOnUnmatchedBrace.after.kt");
+            }
+
             @TestMetadata("ReturnContinue.after.kt")
             public void testReturnContinue() throws Exception {
                 runTest("../idea/tests/testData/indentationOnNewline/ReturnContinue.after.kt");
@@ -1653,6 +1713,71 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
             @TestMetadata("SettingAlignMultilineParametersInCalls.after.kt")
             public void testSettingAlignMultilineParametersInCalls() throws Exception {
                 runTest("../idea/tests/testData/indentationOnNewline/SettingAlignMultilineParametersInCalls.after.kt");
+            }
+
+            @TestMetadata("SmartEnterBetweenOpeningAndClosingBrackets.after.kt")
+            public void testSmartEnterBetweenOpeningAndClosingBrackets() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/SmartEnterBetweenOpeningAndClosingBrackets.after.kt");
+            }
+
+            @TestMetadata("SmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline.after.kt")
+            public void testSmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/SmartEnterBetweenOpeningAndClosingBracketsWithInvertedAlignWhenMultiline.after.kt");
+            }
+
+            @TestMetadata("SmartEnterWithTabsInMethodParameters.after.kt")
+            public void testSmartEnterWithTabsInMethodParameters() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/SmartEnterWithTabsInMethodParameters.after.kt");
+            }
+
+            @TestMetadata("SmartEnterWithTabsOnConstructorParameters.after.kt")
+            public void testSmartEnterWithTabsOnConstructorParameters() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/SmartEnterWithTabsOnConstructorParameters.after.kt");
+            }
+
+            @TestMetadata("SmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultiline.after.kt")
+            public void testSmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultiline() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/SmartEnterWithTabsOnConstructorParametersWithInvertedAlignWhenMultiline.after.kt");
+            }
+
+            @TestMetadata("SmartEnterWithTrailingCommaAndWhitespaceBeforeLineBreak.after.kt")
+            public void testSmartEnterWithTrailingCommaAndWhitespaceBeforeLineBreak() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/SmartEnterWithTrailingCommaAndWhitespaceBeforeLineBreak.after.kt");
+            }
+
+            @TestMetadata("SmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters.after.kt")
+            public void testSmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/SmartEnterWithoutLineBreakBeforeClosingBracketInMethodParameters.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnter.after.kt")
+            public void testSplitStringByEnter() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/SplitStringByEnter.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterAddParentheses.after.kt")
+            public void testSplitStringByEnterAddParentheses() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/SplitStringByEnterAddParentheses.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterBeforeEscapeSequence.after.kt")
+            public void testSplitStringByEnterBeforeEscapeSequence() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/SplitStringByEnterBeforeEscapeSequence.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterBeforeSubstitution.after.kt")
+            public void testSplitStringByEnterBeforeSubstitution() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/SplitStringByEnterBeforeSubstitution.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterEmpty.after.kt")
+            public void testSplitStringByEnterEmpty() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/SplitStringByEnterEmpty.after.kt");
+            }
+
+            @TestMetadata("SplitStringByEnterExistingParentheses.after.kt")
+            public void testSplitStringByEnterExistingParentheses() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/SplitStringByEnterExistingParentheses.after.kt");
             }
         }
     }
