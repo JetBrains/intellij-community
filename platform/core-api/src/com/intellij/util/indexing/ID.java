@@ -53,7 +53,11 @@ public class ID<K, V> extends IndexId<K,V> {
   }
 
   private static short stringToId(@NotNull String name) {
-    return ourNameToIdRegistry.enumerate(name);
+    int id = ourNameToIdRegistry.enumerate(name);
+    if (id != (short)id) {
+      throw new AssertionError("Too many indexes registered");
+    }
+    return (short)id;
   }
 
   static void reinitializeDiskStorage() {
