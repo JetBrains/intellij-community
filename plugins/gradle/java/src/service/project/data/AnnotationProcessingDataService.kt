@@ -16,7 +16,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants
 import com.intellij.openapi.externalSystem.util.Order
 import com.intellij.openapi.module.Module
-import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ContentEntry
 import com.intellij.openapi.roots.ModifiableRootModel
@@ -26,7 +25,6 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFileManager
-import org.jetbrains.annotations.NotNull
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
 import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile
@@ -205,7 +203,7 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
 
       val orphans = profiles
         .filter {
-          it.moduleNames.all { configuredModule -> isGradleModule(project, configuredModule) }
+          it.moduleNames.all { configuredModule -> isGradleModule(configuredModule, modelsProvider) }
           && importedProcessingProfiles.none { imported -> imported.matches(it) }
         }
         .toMutableList()
@@ -213,9 +211,9 @@ class AnnotationProcessingDataService : AbstractProjectDataService<AnnotationPro
       orphans
     }
 
-  private fun isGradleModule(project: Project, moduleName: String): Boolean {
+  private fun isGradleModule(moduleName: String, modelsProvider: IdeModifiableModelsProvider): Boolean {
     return ExternalSystemApiUtil.isExternalSystemAwareModule(GradleConstants.SYSTEM_ID,
-      ModuleManager.getInstance(project).findModuleByName(moduleName))
+      modelsProvider.findIdeModule(moduleName))
   }
 
   override fun removeData(toRemoveComputable: Computable<out Collection<ProcessorConfigProfile>>,
