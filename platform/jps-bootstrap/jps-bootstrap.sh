@@ -100,8 +100,8 @@ fi
 
 set -x
 
-"$JAVA_HOME/bin/java" -Daether.connector.resumeDownloads=false -jar "$JPS_BOOTSTRAP_COMMUNITY_HOME/lib/ant/lib/ant-launcher.jar" "-Dbuild.dir=$JPS_BOOTSTRAP_WORK_DIR" -f "$JPS_BOOTSTRAP_DIR/jps-bootstrap-classpath.xml"
+"$JAVA_HOME/bin/java" -ea -Daether.connector.resumeDownloads=false -jar "$JPS_BOOTSTRAP_COMMUNITY_HOME/lib/ant/lib/ant-launcher.jar" "-Dbuild.dir=$JPS_BOOTSTRAP_WORK_DIR" -f "$JPS_BOOTSTRAP_DIR/jps-bootstrap-classpath.xml"
 
 export JPS_BOOTSTRAP_COMMUNITY_HOME
 export JPS_BOOTSTRAP_WORK_DIR
-exec "$JAVA_HOME/bin/java" -Xmx2g -Djava.awt.headless=true -classpath "$JPS_BOOTSTRAP_WORK_DIR/jps-bootstrap.out.lib/*" org.jetbrains.jpsBootstrap.JpsBootstrapMain "$@"
+exec "$JAVA_HOME/bin/java" -ea -Xmx2g -Djava.awt.headless=true -classpath "$JPS_BOOTSTRAP_WORK_DIR/jps-bootstrap.out.lib/*" org.jetbrains.jpsBootstrap.JpsBootstrapMain "$@"
