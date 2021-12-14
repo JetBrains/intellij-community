@@ -8170,6 +8170,16 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/convertToConcatenatedString/handlesEscapeString.kt");
         }
 
+        @TestMetadata("hasPlusSign.kt")
+        public void testHasPlusSign() throws Exception {
+            runTest("testData/intentions/convertToConcatenatedString/hasPlusSign.kt");
+        }
+
+        @TestMetadata("hasPlusSignInRawString.kt")
+        public void testHasPlusSignInRawString() throws Exception {
+            runTest("testData/intentions/convertToConcatenatedString/hasPlusSignInRawString.kt");
+        }
+
         @TestMetadata("interpolate2StringConstants.kt")
         public void testInterpolate2StringConstants() throws Exception {
             runTest("testData/intentions/convertToConcatenatedString/interpolate2StringConstants.kt");
