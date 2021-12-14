@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -463,7 +463,17 @@ public final class HighlightUtil {
           String message = JavaErrorBundle.message("lvti.compound");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(variable).create();
         }
+      }
+    }
+    return null;
+  }
 
+  @Nullable
+  static HighlightInfo checkVarTypeApplicability(PsiTypeElement typeElement) {
+    if (typeElement != null && typeElement.isInferredType()) {
+      PsiElement parent = typeElement.getParent();
+      PsiVariable variable = tryCast(parent, PsiVariable.class);
+      if (variable instanceof PsiLocalVariable) {
         PsiExpression initializer = variable.getInitializer();
         if (initializer == null) {
           String message = JavaErrorBundle.message("lvti.no.initializer");
@@ -483,8 +493,19 @@ public final class HighlightUtil {
         PsiType lType = variable.getType();
         if (PsiType.NULL.equals(lType)) {
           boolean isSelfReferencing = ReferencesSearch.search(variable, new LocalSearchScope(initializer)).findFirst() != null;
-          String message = JavaErrorBundle.message(isSelfReferencing ? "lvti.selfReferenced" : "lvti.null");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+          String key = null;
+          if (isSelfReferencing) {
+            key = "lvti.selfReferenced";
+          }
+          else if (SyntaxTraverser.psiTraverser(initializer)
+                     .filter(PsiLiteralExpression.class)
+                     .find(l -> PsiType.NULL.equals(l.getType())) != null) {
+            key = "lvti.null";
+          }
+          if (key != null) {
+            String message = JavaErrorBundle.message(key);
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+          }
         }
         if (PsiType.VOID.equals(lType)) {
           String message = JavaErrorBundle.message("lvti.void");

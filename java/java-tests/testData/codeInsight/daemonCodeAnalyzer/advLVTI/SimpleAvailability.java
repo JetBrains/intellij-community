@@ -10,6 +10,7 @@ class Main {
         <error descr="Cannot infer type: 'var' on variable without initializer">var</error> e;
         var f = <error descr="Array initializer is not allowed here">{ 6 }</error>;
         <error descr="Cannot infer type: variable initializer is self-referencing">var</error> g = (g = 7);
+        <error descr="Cannot infer type: variable initializer is self-referencing">var</error> x = (x = 1) + 1;
     }
 
     private static  void localVariableType() {
@@ -35,6 +36,7 @@ class Main {
         Function<String, String> f1 = (<error descr="Cannot resolve symbol 'var'">var</error> var) -> var;
 
         <error descr="Cannot infer type: variable initializer is 'void'">var</error> h = localVariableDeclaration();
+        <error descr="Cannot infer type: variable initializer is 'null'">var</error> cond = true ? null : null;
     }
 
     private void forEachType(String[] strs, Iterable<String> it, Iterable raw) {
