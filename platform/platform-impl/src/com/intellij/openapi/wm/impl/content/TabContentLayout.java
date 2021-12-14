@@ -172,7 +172,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
 
       if (myUi.myDropOverIndex != -1) {
         data.requiredWidth += myUi.myDropOverWidth;
-        data.toLayout.add(myUi.myDropOverIndex - 1, myDropOverPlaceholder);
+        data.toLayout.add(Math.max(0, myUi.myDropOverIndex - 1), myDropOverPlaceholder);
       }
 
       data.toFitWidth = bounds.getSize().width - data.eachX;
