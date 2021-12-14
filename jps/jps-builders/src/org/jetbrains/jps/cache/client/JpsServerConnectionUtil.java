@@ -40,7 +40,7 @@ public class JpsServerConnectionUtil {
   private static final Logger LOG = Logger.getInstance(JpsServerConnectionUtil.class);
   private static final String CDN_CACHE_HEADER = "X-Cache";
 
-  public static void measureConnectionSpeed(@NotNull JpsNettyClient nettyClient) {
+  public static @Nullable Long measureConnectionSpeed(@NotNull JpsNettyClient nettyClient) {
     long start = System.currentTimeMillis();
     String initialFile = calculateFileName(null);
     Long firstChunkConnectionSpeed = measureConnectionSpeedOnFile(nettyClient, initialFile);
@@ -49,8 +49,10 @@ public class JpsServerConnectionUtil {
       Long connectionSpeed = measureConnectionSpeedOnFile(nettyClient, nextChunkFileName);
       long connectionSpeedTime = (System.currentTimeMillis() - start) / 1000;
       LOG.info("Checking connection speed took: " + connectionSpeedTime + "s");
+      return connectionSpeed;
     } else {
       LOG.info("Connection speed is too small");
+      return firstChunkConnectionSpeed;
     }
   }
 

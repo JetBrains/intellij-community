@@ -12,6 +12,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
+import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.cache.client.JpsNettyClient;
 import org.jetbrains.jps.cache.client.JpsServerClient;
@@ -22,11 +23,9 @@ import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
-import org.jetbrains.jps.incremental.CompileScope;
-import org.jetbrains.jps.incremental.IncProjectBuilder;
-import org.jetbrains.jps.incremental.MessageHandler;
-import org.jetbrains.jps.incremental.Utils;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
+import org.jetbrains.jps.incremental.storage.BuildTargetsState;
 import org.jetbrains.jps.model.JpsProject;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
@@ -45,13 +44,17 @@ import static org.jetbrains.jps.cache.JpsCachesPluginUtil.INTELLIJ_REPO_NAME;
 public class JpsOutputLoaderManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(JpsOutputLoaderManager.class);
   private static final String FS_STATE_FILE = "fs_state.dat";
-  private static final int COMMITS_COUNT_THRESHOLD = 150;
+  private static final int DEFAULT_PROJECT_MODULES_COUNT = 2200;
+  private static final int COMMITS_COUNT_THRESHOLD = 600;
+  private static final int PROJECT_MODULE_SIZE_KB = 500;
   private final AtomicBoolean hasRunningTask;
   //private final CompilerWorkspaceConfiguration myWorkspaceConfiguration;
+  private Map<BuildTargetType<?>, Long> myOriginalBuildStatistic;
   private List<JpsOutputLoader<?>> myJpsOutputLoadersLoaders;
   private final JpsMetadataLoader myMetadataLoader;
   private final CanceledStatus myCanceledStatus;
   private final JpsServerClient myServerClient;
+  private boolean isCacheDownloaded;
   private final String myBuildOutDir;
   private final String myProjectPath;
   private final JpsNettyClient myNettyClient;
@@ -74,6 +77,7 @@ public class JpsOutputLoaderManager implements Disposable {
     myProjectPath = projectPath;
     hasRunningTask = new AtomicBoolean();
     myBuildOutDir = getBuildDirPath(project);
+    myOriginalBuildStatistic = new HashMap<>();
     myServerClient = JpsServerClient.getServerClient();
     myMetadataLoader = new JpsMetadataLoader(projectPath, myServerClient);
     //myWorkspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
@@ -82,48 +86,10 @@ public class JpsOutputLoaderManager implements Disposable {
     //if (!buildManager.isGeneratePortableCachesEnabled()) buildManager.setGeneratePortableCachesEnabled(true);
   }
 
-  public void measureConnectionSpeed() {
-    JpsServerConnectionUtil.measureConnectionSpeed(myNettyClient);
-  }
-
-  public void estimateProjectBuildTime(BuildRunner buildRunner,
-                                       List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
-    try {
-      long startTime = System.currentTimeMillis();
-      BuildFSState fsState = new BuildFSState(false);
-      final File dataStorageRoot = Utils.getDataStorageRoot(myProjectPath);
-      if (dataStorageRoot == null) {
-        LOG.warn("Cannot determine build data storage root for project");
-        return;
-      }
-      final boolean storageFilesAbsent = !dataStorageRoot.exists() || !new File(dataStorageRoot, FS_STATE_FILE).exists();
-      if (storageFilesAbsent) {
-        // invoked the very first time for this project
-        buildRunner.setForceCleanCaches(true);
-        LOG.debug("Storage files are absent");
-      }
-      ProjectDescriptor projectDescriptor = buildRunner.load(MessageHandler.DEAF, dataStorageRoot, fsState);
-      long contextInitializationTime = System.currentTimeMillis() - startTime;
-      LOG.info("Time spend to context initialization: " + contextInitializationTime);
-      CompileScope compilationScope = buildRunner.createCompilationScope(projectDescriptor, scopes);
-      long compilation = IncProjectBuilder.calculateEstimatedBuildTime(projectDescriptor, projectDescriptor.getTargetsState(),
-                                                                       compilationScope);
-      long totalCalculationTime = System.currentTimeMillis() - startTime;
-      LOG.info("Calculated build time: " + compilation);
-      LOG.info("Time spend to context initialization and time calculation: " + totalCalculationTime);
-      LOG.info("Trying to download JPS caches before build");
-    }
-    catch (IOException e) {
-      e.printStackTrace();
-    }
-    catch (Exception e) {
-      e.printStackTrace();
-    }
-  }
-
-  public void load(boolean isForceUpdate, boolean verbose) {
+  public void load(@NotNull BuildRunner buildRunner, boolean isForceUpdate,
+                   @NotNull List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
     if (!canRunNewLoading()) return;
-    Pair<String, Integer> commitInfo = getNearestCommit(isForceUpdate, verbose);
+    Pair<String, Integer> commitInfo = getNearestCommit(buildRunner, isForceUpdate, scopes);
     if (commitInfo != null) {
       //assert myProject != null;
       //myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingStarted();
@@ -142,6 +108,15 @@ public class JpsOutputLoaderManager implements Disposable {
     hasRunningTask.set(false);
   }
 
+  public void updateBuildStatistic(@NotNull ProjectDescriptor projectDescriptor) {
+    if (!hasRunningTask.get() && isCacheDownloaded) {
+      BuildTargetsState targetsState = projectDescriptor.getTargetsState();
+      myOriginalBuildStatistic.forEach((buildTargetType, originalBuildTime) -> {
+        targetsState.setAverageBuildTime(buildTargetType, originalBuildTime);
+      });
+    }
+  }
+
   public void saveLatestBuiltCommitId(@NotNull CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status status) {
     if (status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.CANCELED ||
         status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.ERRORS ) return;
@@ -149,7 +124,8 @@ public class JpsOutputLoaderManager implements Disposable {
   }
 
   @Nullable
-  private Pair<String, Integer> getNearestCommit(boolean isForceUpdate, boolean verbose) {
+  private Pair<String, Integer> getNearestCommit(@NotNull BuildRunner buildRunner, boolean isForceUpdate,
+                                                 @NotNull List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
     Map<String, Set<String>> availableCommitsPerRemote = myServerClient.getCacheKeysPerRemote(myNettyClient);
     //List<GitCommitsIterator> repositoryList = GitRepositoryUtil.getCommitsIterator(myProject, availableCommitsPerRemote.keySet());
 
@@ -194,9 +170,9 @@ public class JpsOutputLoaderManager implements Disposable {
     }
     LOG.info("Commits count between latest success compilation and current commit: " + commitsCountBetweenCompilation +
              ". Detected commit to download: " + commitToDownload);
-    if (commitsCountBetweenCompilation < COMMITS_COUNT_THRESHOLD) {
-      String message = JpsBuildBundle.message("notification.content.commits.count.threshold");
-      LOG.info(message);
+    if (!isDownloadQuickerThanLocalBuild(buildRunner, commitsCountBetweenCompilation, scopes)) {
+      String message = JpsBuildBundle.message("notification.content.local.build.is.quicker");
+      LOG.warn(message);
       myNettyClient.sendDescriptionStatusMessage(message);
       return null;
     }
@@ -207,6 +183,37 @@ public class JpsOutputLoaderManager implements Disposable {
       return null;
     }
     return Pair.create(commitToDownload, commitsBehind);
+  }
+
+  private boolean isDownloadQuickerThanLocalBuild(BuildRunner buildRunner, int commitsCountBetweenCompilation,
+                                                  List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
+    Long connectionSpeed = JpsServerConnectionUtil.measureConnectionSpeed(myNettyClient);
+    if (connectionSpeed == null) {
+      LOG.info("Connection speed is too small to download caches");
+      return false;
+    }
+
+    Pair<Long, Integer> buildTimeAndProjectModulesCount = estimateProjectBuildTime(buildRunner, scopes);
+    int projectModulesCount = DEFAULT_PROJECT_MODULES_COUNT;
+    long approximateBuildTime = 0;
+    if (buildTimeAndProjectModulesCount != null) {
+      approximateBuildTime = buildTimeAndProjectModulesCount.first;
+      projectModulesCount = buildTimeAndProjectModulesCount.second;
+    }
+    int approximateDownloadSizeKB = projectModulesCount * PROJECT_MODULE_SIZE_KB + 512_000;
+    long expectedDownloadTimeSec = approximateDownloadSizeKB * 1024L / connectionSpeed;
+    LOG.info("Approximate expected download size: " + approximateDownloadSizeKB  + "KB. Expected download time: " + expectedDownloadTimeSec + "sec.");
+
+    if (approximateBuildTime == 0 && commitsCountBetweenCompilation > COMMITS_COUNT_THRESHOLD) {
+      LOG.info("Can't calculate approximate project build time, but there are " + commitsCountBetweenCompilation + " not compiled " +
+               "commits and internet connection is good enough. Expected download time: " + expectedDownloadTimeSec + "sec.");
+      return true;
+    }
+    if (approximateBuildTime == 0) {
+      LOG.info("Can't calculate approximate project build time");
+      return false;
+    }
+    return expectedDownloadTimeSec * 1000 > approximateBuildTime;
   }
 
   private void startLoadingForCommit(@NotNull String commitId) {
@@ -318,6 +325,7 @@ public class JpsOutputLoaderManager implements Disposable {
     }
 
     myNettyClient.sendLatestDownloadCommitMessage(commitId);
+    isCacheDownloaded = true;
     //PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
     //BuildManager.getInstance().clearState(myProject);
     //long endTime = System.nanoTime() - startTime;
@@ -369,5 +377,41 @@ public class JpsOutputLoaderManager implements Disposable {
     //                               JpsCacheBundle.message("notification.content.update.compiler.caches.failed"), NotificationType.WARNING)
     //    .notify(myProject);
     //});
+  }
+
+  private @Nullable Pair<Long, Integer> estimateProjectBuildTime(BuildRunner buildRunner,
+                                       List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
+    try {
+      long startTime = System.currentTimeMillis();
+      BuildFSState fsState = new BuildFSState(false);
+      final File dataStorageRoot = Utils.getDataStorageRoot(myProjectPath);
+      if (dataStorageRoot == null) {
+        LOG.warn("Cannot determine build data storage root for project");
+        return null;
+      }
+      if (!dataStorageRoot.exists() || !new File(dataStorageRoot, FS_STATE_FILE).exists()) {
+        // invoked the very first time for this project
+        buildRunner.setForceCleanCaches(true);
+        LOG.info("Storage files are absent");
+      }
+      ProjectDescriptor projectDescriptor = buildRunner.load(MessageHandler.DEAF, dataStorageRoot, fsState);
+      long contextInitializationTime = System.currentTimeMillis() - startTime;
+      LOG.info("Time spend to context initialization: " + contextInitializationTime);
+      CompileScope compilationScope = buildRunner.createCompilationScope(projectDescriptor, scopes);
+      long estimatedBuildTime = IncProjectBuilder.calculateEstimatedBuildTime(projectDescriptor, projectDescriptor.getTargetsState(),
+                                                                       compilationScope);
+      BuildTargetsState targetsState = projectDescriptor.getTargetsState();
+      for (BuildTargetType<?> type : TargetTypeRegistry.getInstance().getTargetTypes()) {
+        myOriginalBuildStatistic.put(type,  targetsState.getAverageBuildTime(type));
+      }
+      long totalCalculationTime = System.currentTimeMillis() - startTime;
+      LOG.info("Calculated build time: " + estimatedBuildTime);
+      LOG.info("Time spend to context initialization and time calculation: " + totalCalculationTime);
+      return Pair.create(estimatedBuildTime, projectDescriptor.getProject().getModules().size());
+    }
+    catch (Exception e) {
+      LOG.warn("Exception at calculation approximate build time", e);
+    }
+    return null;
   }
 }

@@ -160,12 +160,11 @@ final class BuildSession implements Runnable, CanceledStatus {
         profilingHelper.startProfiling();
       }
 
+      myCacheLoadManager = null;
       if (ProjectStamps.PORTABLE_CACHES && myBuildType == BuildType.BUILD) {
         LOG.info("Trying to download JPS caches before build");
         myCacheLoadManager = new JpsOutputLoaderManager(myBuildRunner.getLoadedJpsProject(), this, myProjectPath, myChannel, mySessionId);
-        myCacheLoadManager.estimateProjectBuildTime(myBuildRunner, myScopes);
-        myCacheLoadManager.measureConnectionSpeed();
-        myCacheLoadManager.load(true, false);
+        myCacheLoadManager.load(myBuildRunner, true, myScopes);
       }
 
       runBuild(new MessageHandler() {
@@ -332,6 +331,7 @@ final class BuildSession implements Runnable, CanceledStatus {
         }
       }
       myProjectDescriptor = pd;
+      if (myCacheLoadManager != null) myCacheLoadManager.updateBuildStatistic(myProjectDescriptor);
 
       myLastEventOrdinal = myInitialFSDelta != null? myInitialFSDelta.getOrdinal() : 0L;
 
