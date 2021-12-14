@@ -2,7 +2,7 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
     UClass (name = AnnotationParametersKt) [public final class AnnotationParametersKt {...}]
         UMethod (name = foo) [@RequiresPermission(anyOf = intArrayOf(1, 2, 3))...}]
             UAnnotation (fqName = RequiresPermission) [@RequiresPermission(anyOf = intArrayOf(1, 2, 3))]
-                UNamedExpression (name = anyOf) [anyOf = intArrayOf(1, 2, 3)] = Nothing
+                UNamedExpression (name = anyOf) [anyOf = intArrayOf(1, 2, 3)] = Undetermined
                     UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [intArrayOf(1, 2, 3)] = external intArrayOf(1, 2, 3)(1, 2, 3)
                         UIdentifier (Identifier (intArrayOf)) [UIdentifier (Identifier (intArrayOf))]
                         USimpleNameReferenceExpression (identifier = intArrayOf, resolvesTo = null) [intArrayOf] = external intArrayOf(1, 2, 3)(1, 2, 3)
@@ -10,26 +10,26 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
                         ULiteralExpression (value = 2) [2] = 2
                         ULiteralExpression (value = 3) [3] = 3
             UAnnotation (fqName = IntRange) [@IntRange(from = 10, to = 0)]
-                UNamedExpression (name = from) [from = 10] = Nothing
+                UNamedExpression (name = from) [from = 10] = Undetermined
                     ULiteralExpression (value = 10) [10] = (long)10
-                UNamedExpression (name = to) [to = 0] = Nothing
+                UNamedExpression (name = to) [to = 0] = Undetermined
                     ULiteralExpression (value = 0) [0] = (long)0
             UAnnotation (fqName = WithDefaultValue) [@WithDefaultValue]
             UAnnotation (fqName = SuppressLint) [@SuppressLint(value = "Lorem")]
-                UNamedExpression (name = value) [value = "Lorem"] = Nothing
+                UNamedExpression (name = value) [value = "Lorem"] = Undetermined
                     ULiteralExpression (value = "Lorem") ["Lorem"] = "Lorem"
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return 5] = Nothing
                     ULiteralExpression (value = 5) [5] = 5
         UMethod (name = bar) [@IntRange(from = 0, to = 100)...}]
             UAnnotation (fqName = IntRange) [@IntRange(from = 0, to = 100)]
-                UNamedExpression (name = from) [from = 0] = Nothing
+                UNamedExpression (name = from) [from = 0] = Undetermined
                     ULiteralExpression (value = 0) [0] = (long)0
-                UNamedExpression (name = to) [to = 100] = Nothing
+                UNamedExpression (name = to) [to = 100] = Undetermined
                     ULiteralExpression (value = 100) [100] = (long)100
             UAnnotation (fqName = SuppressLint) [@SuppressLint(value = <noref>("Lorem", "Ipsum", "Dolor"))]
-                UNamedExpression (name = value) [value = <noref>("Lorem", "Ipsum", "Dolor")] = Nothing
-                    UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [<noref>("Lorem", "Ipsum", "Dolor")] = Nothing
+                UNamedExpression (name = value) [value = <noref>("Lorem", "Ipsum", "Dolor")] = Undetermined
+                    UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [<noref>("Lorem", "Ipsum", "Dolor")] = external <noref>("Lorem", "Ipsum", "Dolor")("Lorem", "Ipsum", "Dolor")
                         ULiteralExpression (value = "Lorem") ["Lorem"] = "Lorem"
                         ULiteralExpression (value = "Ipsum") ["Ipsum"] = "Ipsum"
                         ULiteralExpression (value = "Dolor") ["Dolor"] = "Dolor"
@@ -38,7 +38,7 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
                     USimpleNameReferenceExpression (identifier = Unit) [Unit] = external Unit()
         UMethod (name = fooWithArrLiteral) [@RequiresPermission(anyOf = collectionLiteral[1, 2, 3])...}]
             UAnnotation (fqName = RequiresPermission) [@RequiresPermission(anyOf = collectionLiteral[1, 2, 3])]
-                UNamedExpression (name = anyOf) [anyOf = collectionLiteral[1, 2, 3]] = Nothing
+                UNamedExpression (name = anyOf) [anyOf = collectionLiteral[1, 2, 3]] = Undetermined
                     UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [collectionLiteral[1, 2, 3]] = external collectionLiteral[1, 2, 3](1, 2, 3)
                         UIdentifier (Identifier ([)) [UIdentifier (Identifier ([))]
                         ULiteralExpression (value = 1) [1] = 1
@@ -49,7 +49,7 @@ UFile (package = ) [public final class AnnotationParametersKt {...]
                     ULiteralExpression (value = 5) [5] = 5
         UMethod (name = fooWithStrArrLiteral) [@RequiresStrPermission(strs = collectionLiteral["a", "b", "c"])...}]
             UAnnotation (fqName = RequiresStrPermission) [@RequiresStrPermission(strs = collectionLiteral["a", "b", "c"])]
-                UNamedExpression (name = strs) [strs = collectionLiteral["a", "b", "c"]] = Nothing
+                UNamedExpression (name = strs) [strs = collectionLiteral["a", "b", "c"]] = Undetermined
                     UCallExpression (kind = UastCallKind(name='array_initializer'), argCount = 3)) [collectionLiteral["a", "b", "c"]] = external collectionLiteral["a", "b", "c"]("a", "b", "c")
                         UIdentifier (Identifier ([)) [UIdentifier (Identifier ([))]
                         ULiteralExpression (value = "a") ["a"] = "a"

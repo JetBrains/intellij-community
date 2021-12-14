@@ -34,7 +34,22 @@ abstract class KotlinAbstractUElement(
             return false
         }
 
-        return this.psi == other.psi
+        // See https://youtrack.jetbrains.com/issue/KTIJ-9793 for more details.
+        if (this.psi == other.psi) {
+            if (this.psi == null) {
+                // Two UElements can be different but both have null PSI fields; in that case, do a deeper check
+                if (this === other) { // same instance: always equal
+                    return true
+                }
+                if (this.javaClass !== other.javaClass) { // different types: never equal
+                    return false
+                }
+                return this.asSourceString() == other.asSourceString() // source code equality
+            }
+            return true
+        } else {
+            return false
+        }
     }
 
     override fun hashCode(): Int {

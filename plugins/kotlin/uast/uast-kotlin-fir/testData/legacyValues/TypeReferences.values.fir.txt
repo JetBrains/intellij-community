@@ -61,7 +61,7 @@ UFile (package = ) [public final class TypeReferencesKt {...]
                                 ULambdaExpression [{ var it: T ->...}] = Undetermined
                                     UParameter (name = it) [var it: T]
                                     UBlockExpression [{...}] = Nothing
-                                        UReturnExpression [return it.toString()] = Undetermined
+                                        UReturnExpression [return it.toString()] = Nothing
                                             UQualifiedReferenceExpression [it.toString()] = external toString()()
                                                 USimpleNameReferenceExpression (identifier = it) [it] = external it()
                                                 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0)) [toString()] = external toString()()

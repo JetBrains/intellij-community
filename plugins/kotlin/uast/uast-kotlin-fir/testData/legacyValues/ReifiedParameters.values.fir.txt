@@ -41,7 +41,7 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
             UParameter (name = t) [@org.jetbrains.annotations.Nullable @kotlin.Suppress(names = "s") var t: T]
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable) [@org.jetbrains.annotations.Nullable]
                 UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "s")]
-                    UNamedExpression (name = names) [names = "s"] = Nothing
+                    UNamedExpression (name = names) [names = "s"] = Undetermined
                         ULiteralExpression (value = "s") ["s"] = "s"
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return t] = Nothing
@@ -50,7 +50,7 @@ UFile (package = ) [public final class ReifiedParametersKt {...]
             UParameter (name = t) [@null @kotlin.Suppress(names = "s") var t: <ErrorType>]
                 UAnnotation (fqName = null) [@null]
                 UAnnotation (fqName = kotlin.Suppress) [@kotlin.Suppress(names = "s")]
-                    UNamedExpression (name = names) [names = "s"] = Nothing
+                    UNamedExpression (name = names) [names = "s"] = Undetermined
                         ULiteralExpression (value = "s") ["s"] = "s"
             UBlockExpression [{...}] = Nothing
                 UReturnExpression [return t] = Nothing
