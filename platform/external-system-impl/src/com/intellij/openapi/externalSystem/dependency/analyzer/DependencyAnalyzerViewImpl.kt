@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.autoimport.ExternalSystemProjectNotificationAware
 import com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.*
+import com.intellij.openapi.externalSystem.dependency.analyzer.util.*
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle

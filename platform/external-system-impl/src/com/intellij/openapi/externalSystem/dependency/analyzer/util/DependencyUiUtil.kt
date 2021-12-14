@@ -1,9 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.externalSystem.dependency.analyzer
+package com.intellij.openapi.externalSystem.dependency.analyzer.util
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Status
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.ObservableClearableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
@@ -136,8 +137,8 @@ internal class DependencyGroup(val variances: List<Dependency>) {
   val data by lazy { variances.first().data }
   val scopes by lazy { variances.map { it.scope }.toSet() }
   val usages by lazy { variances.map { it.usage }.toSet() }
-  val warnings by lazy { variances.flatMap { it.status }.filterIsInstance<DependencyContributor.Status.Warning>() }
-  val isOmitted by lazy { variances.all { DependencyContributor.Status.Omitted in it.status } }
+  val warnings by lazy { variances.flatMap { it.status }.filterIsInstance<Status.Warning>() }
+  val isOmitted by lazy { variances.all { Status.Omitted in it.status } }
   val hasWarnings by lazy { warnings.isNotEmpty() }
 
   override fun toString() = "s${scopes.size} v${variances.size} $data"
