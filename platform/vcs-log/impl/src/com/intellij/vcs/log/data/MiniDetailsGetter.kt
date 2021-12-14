@@ -3,7 +3,6 @@ package com.intellij.vcs.log.data
 
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
@@ -18,6 +17,7 @@ import com.intellij.vcs.log.VcsLogObjectsFactory
 import com.intellij.vcs.log.VcsLogProvider
 import com.intellij.vcs.log.data.index.IndexedDetails
 import com.intellij.vcs.log.data.index.VcsLogIndex
+import com.intellij.vcs.log.runInEdt
 import com.intellij.vcs.log.util.SequentialLimitedLifoExecutor
 import it.unimi.dsi.fastutil.ints.*
 import java.awt.EventQueue
@@ -189,7 +189,7 @@ class MiniDetailsGetter internal constructor(project: Project,
   }
 
   override fun notifyLoaded() {
-    invokeAndWaitIfNeeded {
+    runInEdt(disposableFlag) {
       for (loadingFinishedListener in loadingFinishedListeners) {
         loadingFinishedListener.run()
       }
