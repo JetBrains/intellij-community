@@ -27,31 +27,27 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.*;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 
-public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
-
-  private static final Set<IElementType> binaryPromotionOperators = new THashSet<>();
-
-  static {
-    binaryPromotionOperators.add(JavaTokenType.ASTERISK);
-    binaryPromotionOperators.add(JavaTokenType.DIV);
-    binaryPromotionOperators.add(JavaTokenType.PERC);
-    binaryPromotionOperators.add(JavaTokenType.PLUS);
-    binaryPromotionOperators.add(JavaTokenType.MINUS);
-    binaryPromotionOperators.add(JavaTokenType.LT);
-    binaryPromotionOperators.add(JavaTokenType.LE);
-    binaryPromotionOperators.add(JavaTokenType.GT);
-    binaryPromotionOperators.add(JavaTokenType.GE);
-    binaryPromotionOperators.add(JavaTokenType.EQEQ);
-    binaryPromotionOperators.add(JavaTokenType.NE);
-    binaryPromotionOperators.add(JavaTokenType.AND);
-    binaryPromotionOperators.add(JavaTokenType.XOR);
-    binaryPromotionOperators.add(JavaTokenType.OR);
-  }
+public final class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
+  private static final Set<IElementType> binaryPromotionOperators = Set.of(
+    JavaTokenType.ASTERISK,
+    JavaTokenType.DIV,
+    JavaTokenType.PERC,
+    JavaTokenType.PLUS,
+    JavaTokenType.MINUS,
+    JavaTokenType.LT,
+    JavaTokenType.LE,
+    JavaTokenType.GT,
+    JavaTokenType.GE,
+    JavaTokenType.EQEQ,
+    JavaTokenType.NE,
+    JavaTokenType.AND,
+    JavaTokenType.XOR,
+    JavaTokenType.OR
+  );
 
   @NotNull
   @Override

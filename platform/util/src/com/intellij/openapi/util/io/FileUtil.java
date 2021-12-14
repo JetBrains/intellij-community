@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util.io;
 
 import com.intellij.UtilBundle;
@@ -46,7 +46,9 @@ public class FileUtil extends FileUtilRt {
   /**
    * @deprecated use {@link com.intellij.util.containers.CollectionFactory#createFilePathSet()}, or other createFilePath*() methods from there
    */
+  @SuppressWarnings("unchecked")
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final TObjectHashingStrategy<String> PATH_HASHING_STRATEGY = 
     SystemInfoRt.isFileSystemCaseSensitive
     ? TObjectHashingStrategy.CANONICAL
@@ -56,6 +58,7 @@ public class FileUtil extends FileUtilRt {
    * @deprecated use {@link com.intellij.util.containers.CollectionFactory#createFilePathSet()}, or other createFilePath*() methods from there
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static final TObjectHashingStrategy<File> FILE_HASHING_STRATEGY =
     new TObjectHashingStrategy<File>() {
       @Override
