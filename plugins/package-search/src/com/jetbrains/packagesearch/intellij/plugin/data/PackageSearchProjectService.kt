@@ -19,6 +19,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.coroutineModuleTransform
 import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
+import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.mapLatestTimedWithLoading
 import com.jetbrains.packagesearch.intellij.plugin.util.modifiedBy
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
@@ -165,7 +166,9 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         .mapLatestTimedWithLoading(
             loggingContext = "moduleModelsStateFlow",
             loadingFlow = moduleModelsLoadingFlow
-        ) { projectModules -> projectModules.parallelMap { it to ModuleModel(it) }.toMap() }
+        ) { projectModules ->
+            projectModules.parallelMap { it to ModuleModel(it) }.toMap()
+        }
         .modifiedBy(projectModulesChangesFlow) { repositories, changedModules ->
             repositories.parallelUpdatedKeys(changedModules) { ModuleModel(it) }
         }

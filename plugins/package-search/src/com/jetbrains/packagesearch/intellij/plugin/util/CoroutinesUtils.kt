@@ -178,12 +178,12 @@ internal inline fun <reified T, reified R> Flow<T>.modifiedBy(
     crossinline transform: suspend (T, R) -> T
 ): Flow<T> = flow {
     coroutineScope {
-        val queue = Channel<Any?>()
+        val queue = Channel<Any?>(capacity = 1)
 
         val mutex = Mutex(locked = true)
-        onEach {
+        this@modifiedBy.onEach {
             queue.send(it)
-            mutex.unlock()
+            if (mutex.isLocked) mutex.unlock()
         }.launchIn(this)
         mutex.lock()
         modifierFlow.onEach { queue.send(it) }.launchIn(this)
