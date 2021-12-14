@@ -81,15 +81,17 @@ internal class ReadAction<T>(
   private fun tryReadAction(rootScope: CoroutineScope, readJob: Job): ReadResult<T>? {
     var result: ReadResult<T>? = null
     application.tryRunReadAction {
-      result = insideReadAction(rootScope, readJob)
+      withJob(readJob) {
+        result = insideReadAction(rootScope)
+      }
     }
     return result
   }
 
-  private fun insideReadAction(rootScope: CoroutineScope, readJob: Job): ReadResult<T> {
+  private fun insideReadAction(rootScope: CoroutineScope): ReadResult<T> {
     val unsatisfiedConstraint = findUnsatisfiedConstraint()
     return if (unsatisfiedConstraint == null) {
-      ReadResult.Successful(withJob(readJob, action))
+      ReadResult.Successful(action())
     }
     else {
       ReadResult.UnsatisfiedConstraint(waitForConstraint(rootScope, unsatisfiedConstraint))
