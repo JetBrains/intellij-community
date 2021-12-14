@@ -1,17 +1,17 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.dependency.analyzer
 
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.*
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency.Data.Artifact
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency.Data.Module
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Status.Omitted
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.*
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency.Data.Artifact
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency.Data.Module
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Status.Omitted
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.util.LocalTimeCounter
 import com.intellij.util.PathUtil
 
-abstract class DummyDependencyContributor(private val project: Project) : DependencyContributor {
+abstract class DummyDependencyAnalyzerContributor(private val project: Project) : DependencyAnalyzerContributor {
 
   @Suppress("HardCodedStringLiteral")
   private fun externalProject(externalProjectPath: String) =

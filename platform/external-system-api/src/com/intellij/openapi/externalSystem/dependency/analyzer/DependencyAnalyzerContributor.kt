@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nls
  * are called from non-modal background thread to free UI thread when data is being loaded.
  * @see DependencyAnalyzerExtension.createContributor
  */
-interface DependencyContributor {
+interface DependencyAnalyzerContributor {
 
   /**
    * @param listener should be called when dependencies data changed.

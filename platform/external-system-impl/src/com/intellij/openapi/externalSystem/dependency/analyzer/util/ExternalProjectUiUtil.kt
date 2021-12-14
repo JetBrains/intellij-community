@@ -2,7 +2,7 @@
 package com.intellij.openapi.externalSystem.dependency.analyzer.util
 
 import com.intellij.ide.plugins.newui.HorizontalLayout
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.ExternalProject
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.ExternalProject
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.ObservableClearableProperty

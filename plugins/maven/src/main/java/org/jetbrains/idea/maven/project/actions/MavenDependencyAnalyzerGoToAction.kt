@@ -4,7 +4,7 @@ package org.jetbrains.idea.maven.project.actions
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import org.jetbrains.idea.maven.utils.MavenUtil

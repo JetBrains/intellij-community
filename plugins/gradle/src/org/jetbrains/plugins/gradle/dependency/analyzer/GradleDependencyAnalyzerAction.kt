@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.dependency.analyzer
 
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.externalSystem.dependency.analyzer.AbstractDependencyAnalyzerAction
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor
 import org.jetbrains.plugins.gradle.util.GradleConstants
 
 class GradleDependencyAnalyzerAction : AbstractDependencyAnalyzerAction() {
@@ -11,5 +11,5 @@ class GradleDependencyAnalyzerAction : AbstractDependencyAnalyzerAction() {
 
   override fun getExternalProjectPath(e: AnActionEvent): String? = null
 
-  override fun getDependency(e: AnActionEvent): DependencyContributor.Dependency? = null
+  override fun getDependency(e: AnActionEvent): DependencyAnalyzerContributor.Dependency? = null
 }

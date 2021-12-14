@@ -4,7 +4,7 @@ package org.jetbrains.plugins.gradle.dependency.analyzer
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import org.jetbrains.plugins.gradle.util.GradleConstants
@@ -19,7 +19,7 @@ class GradleDependencyAnalyzerGoToAction : AnAction() {
     val dependency = e.getData(DependencyAnalyzerView.DEPENDENCY)
     e.presentation.isEnabledAndVisible =
       systemId == GradleConstants.SYSTEM_ID &&
-      dependency?.data is DependencyContributor.Dependency.Data.Artifact
+      dependency?.data is DependencyAnalyzerContributor.Dependency.Data.Artifact
   }
 
   init {

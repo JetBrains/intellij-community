@@ -3,9 +3,9 @@ package org.jetbrains.plugins.gradle.dependency.analyzer
 
 import com.google.gson.GsonBuilder
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency
-import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyContributor.Dependency.Data.Artifact
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency
+import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency.Data.Artifact
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.project.dependencies.*
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
@@ -30,7 +30,7 @@ import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.collections.ArrayList
 
-class GradleDependencyContributor(private val project: Project) : DependencyContributor {
+class GradleDependencyAnalyzerContributor(private val project: Project) : DependencyAnalyzerContributor {
   private val projects = ConcurrentHashMap<String, GradleModuleData>()
   private val configurationNodesMap = ConcurrentHashMap<String, List<DependencyScopeNode>>()
   private val dependencyMap = ConcurrentHashMap<Long, Dependency>()
@@ -49,7 +49,7 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
     }, parentDisposable)
   }
 
-  override fun getExternalProjects(): List<DependencyContributor.ExternalProject> {
+  override fun getExternalProjects(): List<DependencyAnalyzerContributor.ExternalProject> {
     if (projects.isEmpty()) {
       ProjectDataManager.getInstance().getExternalProjectsData(project, GradleConstants.SYSTEM_ID)
         .mapNotNull { it.externalProjectStructure }
@@ -58,10 +58,10 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
         .filterNot(GradleModuleData::isBuildSrcModule)
         .associateByTo(projects, GradleModuleData::gradleProjectDir)
     }
-    return projects.values.map { DependencyContributor.ExternalProject(it.gradleProjectDir, it.moduleName) }
+    return projects.values.map { DependencyAnalyzerContributor.ExternalProject(it.gradleProjectDir, it.moduleName) }
   }
 
-  override fun getDependencyScopes(externalProjectPath: String): List<DependencyContributor.Scope> {
+  override fun getDependencyScopes(externalProjectPath: String): List<DependencyAnalyzerContributor.Scope> {
     val gradleModuleData = projects[externalProjectPath] ?: return emptyList()
     return getOrRefreshData(gradleModuleData).map { it.toScope() }
   }
@@ -96,7 +96,7 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
   }
 
   private fun addDependencies(usage: Dependency,
-                              scope: DependencyContributor.Scope,
+                              scope: DependencyAnalyzerContributor.Scope,
                               dependencyNode: DependencyNode,
                               dependencies: MutableList<Dependency>,
                               gradleProjectDir: String) {
@@ -107,7 +107,7 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
     }
   }
 
-  private fun createDependency(dependencyNode: DependencyNode, scope: DependencyContributor.Scope, usage: Dependency): Dependency? {
+  private fun createDependency(dependencyNode: DependencyNode, scope: DependencyAnalyzerContributor.Scope, usage: Dependency): Dependency? {
     when (dependencyNode) {
       is ReferenceNode -> {
         val dependency = dependencyMap[dependencyNode.id] ?: return null
@@ -122,20 +122,20 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
     }
   }
 
-  private fun DependencyNode.getStatus(data: Dependency.Data): List<DependencyContributor.Status> {
-    val status = mutableListOf<DependencyContributor.Status>()
+  private fun DependencyNode.getStatus(data: Dependency.Data): List<DependencyAnalyzerContributor.Status> {
+    val status = mutableListOf<DependencyAnalyzerContributor.Status>()
     // see, org.gradle.api.tasks.diagnostics.internal.graph.nodes.RenderableDependency.ResolutionState
     val resolutionState = resolutionState
     if (resolutionState == "FAILED" || resolutionState == "UNRESOLVED") {
       val message = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.unresolved")
-      status.add(DependencyContributor.Status.Warning(message))
+      status.add(DependencyAnalyzerContributor.Status.Warning(message))
     }
     val selectionReason = selectionReason
     if (data is Artifact && selectionReason != null && selectionReason.startsWith("between versions")) {
       val conflictedVersion = selectionReason.substringAfter("between versions ${data.version} and ", "")
       if (conflictedVersion.isNotEmpty()) {
         val message = ExternalSystemBundle.message("external.system.dependency.analyzer.warning.version.conflict", conflictedVersion)
-        status.add(DependencyContributor.Status.Warning(message))
+        status.add(DependencyAnalyzerContributor.Status.Warning(message))
       }
     }
     return status
@@ -155,7 +155,7 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
 
   companion object {
     @Suppress("HardCodedStringLiteral")
-    internal val defaultConfiguration = DependencyContributor.Scope("default", "default", "Default")
+    internal val defaultConfiguration = DependencyAnalyzerContributor.Scope("default", "default", "Default")
 
 
     private fun GradleModuleData.getDependencies(project: Project): List<DependencyScopeNode> {
@@ -189,6 +189,6 @@ class GradleDependencyContributor(private val project: Project) : DependencyCont
       return dependencyScopeNodes
     }
 
-    private fun DependencyScopeNode.toScope() = DependencyContributor.Scope(scope, scope, StringUtil.toTitleCase(scope))
+    private fun DependencyScopeNode.toScope() = DependencyAnalyzerContributor.Scope(scope, scope, StringUtil.toTitleCase(scope))
   }
 }

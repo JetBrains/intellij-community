@@ -8,7 +8,7 @@ import com.intellij.openapi.project.Project
 
 interface DependencyAnalyzerExtension {
 
-  fun createContributor(project: Project, systemId: ProjectSystemId, parentDisposable: Disposable): DependencyContributor?
+  fun createContributor(project: Project, systemId: ProjectSystemId, parentDisposable: Disposable): DependencyAnalyzerContributor?
 
   companion object {
     @JvmField
