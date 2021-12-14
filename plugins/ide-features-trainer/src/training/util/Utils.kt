@@ -53,7 +53,10 @@ import javax.swing.*
 fun createNamedSingleThreadExecutor(name: String): ExecutorService =
   Executors.newSingleThreadExecutor(ThreadFactoryBuilder().setNameFormat(name).build())
 
-private val excludedLanguages: Map<String, Array<String>> = mapOf("AppCode" to arrayOf("JavaScript")) //IDE name to language id
+private val excludedLanguages: Map<String, Array<String>> = mapOf( //IDE name to language id
+  "AppCode" to arrayOf("JavaScript"),
+  "DataSpell" to arrayOf("Python"),
+)
 
 fun courseCanBeUsed(languageId: String): Boolean {
   val excludedCourses = excludedLanguages[ApplicationNamesInfo.getInstance().productName]
