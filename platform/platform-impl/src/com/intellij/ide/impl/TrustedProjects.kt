@@ -7,7 +7,7 @@ package com.intellij.ide.impl
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.ex.ApplicationInfoEx
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
 import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.Logger
@@ -54,8 +54,8 @@ fun confirmOpeningAndSetProjectTrustedStateIfNeeded(projectFileOrDir: Path): Boo
 
 private fun confirmOpeningUntrustedProject(projectDir: Path): OpenUntrustedProjectChoice = confirmOpeningUntrustedProject(
   projectDir,
-  IdeBundle.message("untrusted.project.open.dialog.title"),
-  IdeBundle.message("untrusted.project.open.dialog.text", ApplicationInfoEx.getInstanceEx().fullApplicationName),
+  IdeBundle.message("untrusted.project.open.dialog.title", projectDir.fileName),
+  IdeBundle.message("untrusted.project.open.dialog.text", ApplicationNamesInfo.getInstance().fullProductName),
   IdeBundle.message("untrusted.project.dialog.trust.button"),
   IdeBundle.message("untrusted.project.open.dialog.distrust.button"),
   IdeBundle.message("untrusted.project.open.dialog.cancel.button")
