@@ -30,7 +30,7 @@ import java.util.Objects;
 public class VcsQuickActionsToolbarPopup extends IconWithTextAction implements CustomComponentAction, DumbAware {
 
   public VcsQuickActionsToolbarPopup() {
-    getTemplatePresentation().setText(ActionsBundle.message("action.VcsQuickActionsToolbarPopup.text"));
+    getTemplatePresentation().setText(VcsBundle.messagePointer("vcs.quicklist.popup.title"));
   }
 
   @NotNull
@@ -63,7 +63,9 @@ public class VcsQuickActionsToolbarPopup extends IconWithTextAction implements C
       group, dataContext, JBPopupFactory.ActionSelectionAid.NUMBERING, true, null, -1,
       action -> true, ActionPlaces.RUN_TOOLBAR_LEFT_SIDE);
 
-    showPopup(e, popup);
+    var component = e.getInputEvent().getComponent();
+    popup.showUnderneathOf(component);
+
   }
 
   @Override
