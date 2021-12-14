@@ -166,7 +166,8 @@ public final class PluginManagerCore {
     brokenPluginVersions = new SoftReference<>(brokenPlugins);
     Path updatedBrokenPluginFile = getUpdatedBrokenPluginFile();
     try (DataOutputStream out = new DataOutputStream(new BufferedOutputStream(Files.newOutputStream(updatedBrokenPluginFile), 32_000))) {
-      out.write(1);
+      out.write(2);
+      out.writeUTF(getBuildNumber().asString());
       out.writeInt(brokenPlugins.size());
       for (Map.Entry<PluginId, Set<String>> entry : brokenPlugins.entrySet()) {
         out.writeUTF(entry.getKey().getIdString());
@@ -196,19 +197,38 @@ public final class PluginManagerCore {
   }
 
   private static @NotNull Map<PluginId, Set<String>> readBrokenPluginFile() {
+    Map<PluginId, Set<String>> result = null;
     Path updatedBrokenPluginFile = getUpdatedBrokenPluginFile();
-    Path brokenPluginsStorage;
     if (Files.exists(updatedBrokenPluginFile)) {
-      brokenPluginsStorage = updatedBrokenPluginFile;
+      result = tryReadBrokenPluginsFile(updatedBrokenPluginFile);
+      if (result != null) {
+        getLogger().debug("Using cached broken plugins file");
+      }
     }
-    else {
-      brokenPluginsStorage = Paths.get(PathManager.getBinPath() + "/brokenPlugins.db");
+    if (result == null) {
+      result = tryReadBrokenPluginsFile(Paths.get(PathManager.getBinPath() + "/brokenPlugins.db"));
+      if (result != null) {
+        getLogger().debug("Using broken plugins file from IDE distribution");
+      }
     }
+    if (result != null) {
+      return result;
+    }
+    return Collections.emptyMap();
+  }
+
+  @Nullable
+  private static Map<PluginId, Set<String>> tryReadBrokenPluginsFile(Path brokenPluginsStorage) {
     try (DataInputStream stream = new DataInputStream(new BufferedInputStream(Files.newInputStream(brokenPluginsStorage), 32_000))) {
       int version = stream.readUnsignedByte();
-      if (version != 1) {
-        getLogger().error("Unsupported version of " + brokenPluginsStorage + "(fileVersion=" + version + ", supportedVersion=1)");
-        return Collections.emptyMap();
+      if (version != 2) {
+        getLogger().info("Unsupported version of " + brokenPluginsStorage + "(fileVersion=" + version + ", supportedVersion=2)");
+        return null;
+      }
+      String buildNumber = stream.readUTF();
+      if (!buildNumber.equals(getBuildNumber().toString())) {
+        getLogger().info("Ignoring cached broken plugins file from an earlier IDE build (" + buildNumber + ")");
+        return null;
       }
 
       int count = stream.readInt();
@@ -229,7 +249,7 @@ public final class PluginManagerCore {
     catch (IOException e) {
       getLogger().error("Failed to read " + brokenPluginsStorage, e);
     }
-    return Collections.emptyMap();
+    return null;
   }
 
   public static void writePluginsList(@NotNull Collection<PluginId> ids, @NotNull Writer writer) throws IOException {
