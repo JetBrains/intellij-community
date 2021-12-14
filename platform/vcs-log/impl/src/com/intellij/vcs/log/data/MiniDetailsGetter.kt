@@ -4,7 +4,6 @@ package com.intellij.vcs.log.data
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Computable
@@ -204,7 +203,6 @@ class MiniDetailsGetter internal constructor(project: Project,
   private class TaskDescriptor(val commits: IntSet)
 
   companion object {
-    private val LOG = Logger.getInstance(AbstractDataGetter::class.java)
     private const val MAX_LOADING_TASKS = 10
 
     private inline fun <V> Iterable<Int>.associateNotNull(transform: (Int) -> V?): Int2ObjectMap<V> {
