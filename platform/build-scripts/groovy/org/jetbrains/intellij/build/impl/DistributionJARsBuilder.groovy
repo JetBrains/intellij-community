@@ -432,7 +432,7 @@ final class DistributionJARsBuilder {
 
   @Nullable
   private static ForkJoinTask<?> createBuildBrokenPluginListTask(@NotNull BuildContext context) {
-    String buildString = context.buildNumber
+    String buildString = context.fullBuildNumber
     Path targetFile = context.paths.tempDir.resolve("brokenPlugins.db")
     BuildHelper helper = BuildHelper.getInstance(context)
     return helper.createSkippableTask(
