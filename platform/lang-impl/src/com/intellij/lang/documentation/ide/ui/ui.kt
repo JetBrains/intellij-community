@@ -1,19 +1,23 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.documentation.CornerAwareScrollPaneLayout
+import com.intellij.codeInsight.documentation.DocumentationManager
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.lang.documentation.DocumentationData
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.SideBorder
 import com.intellij.ui.components.JBLayeredPane
 import com.intellij.util.ui.UIUtil
+import org.jetbrains.annotations.Nls
 import java.awt.Dimension
 import javax.swing.JComponent
 import javax.swing.JLayeredPane
@@ -86,4 +90,19 @@ internal fun scrollPaneWithCorner(parent: Disposable, scrollPane: JScrollPane, c
   layeredPane.setLayer(corner, JLayeredPane.PALETTE_LAYER)
   layeredPane.add(corner)
   return layeredPane
+}
+
+@Suppress("TestOnlyProblems")
+internal fun linkChunk(presentableText: @Nls String, data: DocumentationData): HtmlChunk? {
+  val externalUrl = data.externalUrl
+  if (externalUrl != null) {
+    return DocumentationManager.getLink(presentableText, externalUrl)
+           ?: DocumentationManager.getGenericExternalDocumentationLink(presentableText)
+  }
+  val linkUrls = data.linkUrls
+  if (linkUrls.isNotEmpty()) {
+    return DocumentationManager.getExternalLinks(presentableText, linkUrls)
+           ?: DocumentationManager.getGenericExternalDocumentationLink(presentableText)
+  }
+  return null
 }

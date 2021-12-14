@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.documentation.*
-import com.intellij.codeInsight.documentation.DocumentationManager.*
+import com.intellij.codeInsight.documentation.DocumentationManager.SELECTED_QUICK_DOC_TEXT
+import com.intellij.codeInsight.documentation.DocumentationManager.decorate
 import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.DocumentationData
 import com.intellij.lang.documentation.DocumentationImageResolver
@@ -155,7 +156,7 @@ internal class DocumentationUI(
         )
       } ?: HtmlChunk.text(locationText)
     }
-    val linkChunk = getLink(presentation.presentableText, data.externalUrl)
+    val linkChunk = linkChunk(presentation.presentableText, data)
     val decorated = decorate(data.html, locationChunk, linkChunk)
     val scrollingPosition = data.anchor?.let(ScrollingPosition::Anchor) ?: ScrollingPosition.Reset
     update(decorated, scrollingPosition)

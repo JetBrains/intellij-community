@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation
 
 import com.intellij.util.AsyncSupplier
@@ -22,7 +22,7 @@ sealed interface DocumentationResult {
       anchor: String? = null,
       imageResolver: DocumentationImageResolver? = null,
     ): DocumentationResult {
-      return DocumentationData(html, anchor, externalUrl = null, imageResolver)
+      return DocumentationData(html, anchor, externalUrl = null, linkUrls = emptyList(), imageResolver)
     }
 
     /**
@@ -37,7 +37,7 @@ sealed interface DocumentationResult {
       externalUrl: String,
       imageResolver: DocumentationImageResolver? = null,
     ): DocumentationResult {
-      return DocumentationData(html, anchor, externalUrl, imageResolver)
+      return DocumentationData(html, anchor, externalUrl, linkUrls = emptyList(), imageResolver)
     }
 
     /**
