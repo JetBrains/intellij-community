@@ -200,7 +200,7 @@ class DependencyAnalyzerViewImpl(
       return null
     }
     val rootDependencyGroup = dependenciesForTree
-      .filter { it.usage == null }
+      .filter { it.parent == null }
       .createDependencyGroups()
       .singleOrNull()
     if (rootDependencyGroup == null) {
@@ -211,7 +211,7 @@ class DependencyAnalyzerViewImpl(
 
     val nodeMap = LinkedHashMap<Dependency, MutableList<Dependency>>()
     for (dependency in dependenciesForTree) {
-      val usage = dependency.usage ?: continue
+      val usage = dependency.parent ?: continue
       val children = nodeMap.getOrPut(usage) { ArrayList() }
       children.add(dependency)
     }
@@ -239,7 +239,7 @@ class DependencyAnalyzerViewImpl(
     var current: Dependency? = dependency
     while (current != null) {
       dependencyPath.add(current)
-      current = current.usage
+      current = current.parent
     }
     return dependencyPath
   }

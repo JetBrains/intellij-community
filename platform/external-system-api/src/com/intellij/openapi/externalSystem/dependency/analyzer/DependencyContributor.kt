@@ -45,9 +45,9 @@ interface DependencyContributor {
     override fun toString() = title
   }
 
-  data class Dependency(val data: Data, val scope: Scope, val usage: Dependency?, val status: List<Status>) {
+  data class Dependency(val data: Data, val scope: Scope, val parent: Dependency?, val status: List<Status>) {
 
-    override fun toString() = "($scope) $data -> $usage"
+    override fun toString() = "($scope) $data -> $parent"
 
     sealed interface Data {
 

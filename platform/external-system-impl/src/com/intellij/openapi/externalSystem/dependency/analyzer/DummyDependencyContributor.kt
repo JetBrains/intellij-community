@@ -163,7 +163,7 @@ abstract class DummyDependencyContributor(private val project: Project) : Depend
   private fun matchesUsagePathPrefix(dependency: Dependency?, vararg ids: String): Boolean {
     if (ids.isEmpty()) return true
     return dependency?.data?.id == ids.first() &&
-           matchesUsagePathPrefix(dependency.usage, *ids.drop(1).toTypedArray())
+           matchesUsagePathPrefix(dependency.parent, *ids.drop(1).toTypedArray())
   }
 
   private val Dependency.Data.id

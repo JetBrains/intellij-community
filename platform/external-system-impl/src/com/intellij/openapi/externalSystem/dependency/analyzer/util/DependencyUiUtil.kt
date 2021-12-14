@@ -43,7 +43,7 @@ internal fun <C : JTree> C.bindDependency(property: ObservableClearableProperty<
       { dependency ->
         model.asSequence()
           .map { it.userObject as DependencyGroup }
-          .find { it.data == dependency?.data && dependency.usage in it.usages }
+          .find { it.data == dependency?.data && dependency.parent in it.parents }
       },
       { it?.variances?.firstOrNull() }
     )
@@ -136,7 +136,7 @@ internal class UsagesTreeRenderer(private val showGroupIdProperty: ObservablePro
 internal class DependencyGroup(val variances: List<Dependency>) {
   val data by lazy { variances.first().data }
   val scopes by lazy { variances.map { it.scope }.toSet() }
-  val usages by lazy { variances.map { it.usage }.toSet() }
+  val parents by lazy { variances.map { it.parent }.toSet() }
   val warnings by lazy { variances.flatMap { it.status }.filterIsInstance<Status.Warning>() }
   val isOmitted by lazy { variances.all { Status.Omitted in it.status } }
   val hasWarnings by lazy { warnings.isNotEmpty() }
