@@ -10,10 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.ObservableClearableProperty
-import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.observable.properties.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
@@ -41,6 +38,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
 import javax.swing.text.JTextComponent
+import javax.swing.tree.DefaultMutableTreeNode
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KMutableProperty0
 
@@ -760,7 +758,7 @@ fun <T, C : DropDownLink<T>> C.bind(property: ObservableClearableProperty<T>): C
   }
 }
 
-fun <T, C : JList<T>> C.bind(property: ObservableClearableProperty<T>): C = apply {
+fun <T, C : JList<T>> C.bind(property: ObservableClearableProperty<T?>): C = apply {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -776,8 +774,21 @@ fun <T, C : JList<T>> C.bind(property: ObservableClearableProperty<T>): C = appl
   }
 }
 
-private val TextFieldWithBrowseButton.emptyText
-  get() = (textField as JBTextField).emptyText
+fun <T, C : JTree> C.bind(property: ObservableClearableProperty<T?>) = apply {
+  val mutex = AtomicBoolean()
+  property.afterChange {
+    mutex.lockOrSkip {
+      selectionPath = model.getTreePath(property.get())
+    }
+  }
+  addTreeSelectionListener {
+    mutex.lockOrSkip {
+      val node = lastSelectedPathComponent as? DefaultMutableTreeNode
+      @Suppress("UNCHECKED_CAST")
+      property.set(node?.userObject as T?)
+    }
+  }
+}
 
 fun <C : Component> C.bindEnabled(property: ObservableProperty<Boolean>): C = apply {
   UIUtil.setEnabledRecursively(this, property.get())
