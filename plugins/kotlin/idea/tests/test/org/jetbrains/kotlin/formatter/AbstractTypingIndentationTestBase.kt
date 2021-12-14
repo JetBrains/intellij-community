@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.formatter
 
+import com.intellij.injected.editor.EditorWindow
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.util.io.FileUtil
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightPlatformCodeInsightTestCase
 import org.jetbrains.kotlin.idea.test.configureCodeStyleAndRun
 import org.jetbrains.kotlin.test.InTextDirectivesUtils
 import org.jetbrains.kotlin.test.KotlinTestUtils
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert
 import java.io.File
 
@@ -30,6 +32,7 @@ abstract class AbstractTypingIndentationTestBase : KotlinLightPlatformCodeInsigh
         val originFileName = testFileName + testFileExtension
         val originalFile = File(afterFile.parent, originFileName)
         val originalFileText = FileUtil.loadFile(originalFile, true)
+
         val withoutCustomLineIndentProvider = InTextDirectivesUtils.findStringWithPrefixes(
             originalFileText,
             "// WITHOUT_CUSTOM_LINE_INDENT_PROVIDER"
@@ -100,6 +103,7 @@ abstract class AbstractTypingIndentationTestBase : KotlinLightPlatformCodeInsigh
     private fun typeAndCheck(beforeFilePath: String, afterFilePath: String, errorMessage: String, invertResult: Boolean = false) {
         configureByFile(beforeFilePath)
         executeAction(IdeActions.ACTION_EDITOR_ENTER)
+        val editor = editor.safeAs<EditorWindow>()?.delegate ?: editor
         val actualTextWithCaret = StringBuilder(editor.document.text).insert(
             editor.caretModel.offset,
             EditorTestUtil.CARET_TAG

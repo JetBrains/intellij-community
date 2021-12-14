@@ -956,6 +956,340 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/indentationOnNewline/multilineString")
+        public abstract static class MultilineString extends AbstractTypingIndentationTestBase {
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/indentationOnNewline/multilineString/spaces")
+            public abstract static class Spaces extends AbstractTypingIndentationTestBase {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/indentationOnNewline/multilineString/spaces")
+                public static class TestBucket001 extends AbstractTypingIndentationTestBase {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("DontAddMarginCharWhenMultilineWithoutMargins.after.kt")
+                    public void testDontAddMarginCharWhenMultilineWithoutMargins() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/DontAddMarginCharWhenMultilineWithoutMargins.after.kt");
+                    }
+
+                    @TestMetadata("DontAddMarginWhenItIsUnused.after.kt")
+                    public void testDontAddMarginWhenItIsUnused() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/DontAddMarginWhenItIsUnused.after.kt");
+                    }
+
+                    @TestMetadata("DontAddTrimCallWhenAlreadyMultiline.after.kt")
+                    public void testDontAddTrimCallWhenAlreadyMultiline() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/DontAddTrimCallWhenAlreadyMultiline.after.kt");
+                    }
+
+                    @TestMetadata("DontAddTrimCallWhenAlreadyMultilineFirstLine.after.kt")
+                    public void testDontAddTrimCallWhenAlreadyMultilineFirstLine() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/DontAddTrimCallWhenAlreadyMultilineFirstLine.after.kt");
+                    }
+
+                    @TestMetadata("DontInsertTrimMargin1.after.kt")
+                    public void testDontInsertTrimMargin1() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/DontInsertTrimMargin1.after.kt");
+                    }
+
+                    @TestMetadata("DontInsertTrimMargin2.after.kt")
+                    public void testDontInsertTrimMargin2() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/DontInsertTrimMargin2.after.kt");
+                    }
+
+                    @TestMetadata("DontInsertTrimMargin3.after.kt")
+                    public void testDontInsertTrimMargin3() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/DontInsertTrimMargin3.after.kt");
+                    }
+
+                    @TestMetadata("DontInsertTrimMargin4.after.kt")
+                    public void testDontInsertTrimMargin4() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/DontInsertTrimMargin4.after.kt");
+                    }
+
+                    @TestMetadata("EnterAfterOpenningBrace.after.kt")
+                    public void testEnterAfterOpenningBrace() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterAfterOpenningBrace.after.kt");
+                    }
+
+                    @TestMetadata("EnterBeforeLongEntryOneLine.after.kt")
+                    public void testEnterBeforeLongEntryOneLine() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterBeforeLongEntryOneLine.after.kt");
+                    }
+
+                    @TestMetadata("EnterBeforeMarginChar.after.kt")
+                    public void testEnterBeforeMarginChar() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterBeforeMarginChar.after.kt");
+                    }
+
+                    @TestMetadata("EnterBeforeShortEntryOneLine.after.kt")
+                    public void testEnterBeforeShortEntryOneLine() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterBeforeShortEntryOneLine.after.kt");
+                    }
+
+                    @TestMetadata("EnterInInfixMargin.after.kt")
+                    public void testEnterInInfixMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterInInfixMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterInInjectedFragment.after.kt")
+                    public void testEnterInInjectedFragment() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterInInjectedFragment.after.kt");
+                    }
+
+                    @TestMetadata("EnterInMethodCallMargin.after.kt")
+                    public void testEnterInMethodCallMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterInMethodCallMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterInOneLineAfterSpaces.after.kt")
+                    public void testEnterInOneLineAfterSpaces() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterInOneLineAfterSpaces.after.kt");
+                    }
+
+                    @TestMetadata("EnterInTwoLinesNoMarginCall.after.kt")
+                    public void testEnterInTwoLinesNoMarginCall() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterInTwoLinesNoMarginCall.after.kt");
+                    }
+
+                    @TestMetadata("EnterInsideBraces.after.kt")
+                    public void testEnterInsideBraces() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterInsideBraces.after.kt");
+                    }
+
+                    @TestMetadata("EnterInsideBraces1.after.kt")
+                    public void testEnterInsideBraces1() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterInsideBraces1.after.kt");
+                    }
+
+                    @TestMetadata("EnterInsideBraces2.after.kt")
+                    public void testEnterInsideBraces2() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterInsideBraces2.after.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/indentationOnNewline/multilineString/spaces")
+                public static class TestBucket002 extends AbstractTypingIndentationTestBase {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("EnterInsideTextMargin.after.kt")
+                    public void testEnterInsideTextMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterInsideTextMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterMLSimpleMargin.after.kt")
+                    public void testEnterMLSimpleMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterMLSimpleMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterMLStartOnSameLineMargin.after.kt")
+                    public void testEnterMLStartOnSameLineMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterMLStartOnSameLineMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterOnFirstLineWithPresentTrimMargin.after.kt")
+                    public void testEnterOnFirstLineWithPresentTrimMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterOnFirstLineWithPresentTrimMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterOnFirstLineWithPresentTrimMarginAndLine.after.kt")
+                    public void testEnterOnFirstLineWithPresentTrimMarginAndLine() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterOnFirstLineWithPresentTrimMarginAndLine.after.kt");
+                    }
+
+                    @TestMetadata("EnterOnFirstNonEmptyLineWithPresentTrimMargin.after.kt")
+                    public void testEnterOnFirstNonEmptyLineWithPresentTrimMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterOnFirstNonEmptyLineWithPresentTrimMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterOnNewLine.after.kt")
+                    public void testEnterOnNewLine() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterOnNewLine.after.kt");
+                    }
+
+                    @TestMetadata("EnterSimple.after.kt")
+                    public void testEnterSimple() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterSimple.after.kt");
+                    }
+
+                    @TestMetadata("EnterWithTextMargin.after.kt")
+                    public void testEnterWithTextMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterWithTextMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterWithTextOnNewLineMargin.after.kt")
+                    public void testEnterWithTextOnNewLineMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterWithTextOnNewLineMargin.after.kt");
+                    }
+
+                    @TestMetadata("InsertCustomMargin.after.kt")
+                    public void testInsertCustomMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/InsertCustomMargin.after.kt");
+                    }
+
+                    @TestMetadata("InsertCustomMarginInLineStart.after.kt")
+                    public void testInsertCustomMarginInLineStart() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/InsertCustomMarginInLineStart.after.kt");
+                    }
+
+                    @TestMetadata("InsertDefaultMargin.after.kt")
+                    public void testInsertDefaultMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/InsertDefaultMargin.after.kt");
+                    }
+
+                    @TestMetadata("NoTrimIndentInAnnotations.after.kt")
+                    public void testNoTrimIndentInAnnotations() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/NoTrimIndentInAnnotations.after.kt");
+                    }
+
+                    @TestMetadata("NoTrimIndentInConst.after.kt")
+                    public void testNoTrimIndentInConst() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/NoTrimIndentInConst.after.kt");
+                    }
+
+                    @TestMetadata("RestoreIndentFromEmptyLine.after.kt")
+                    public void testRestoreIndentFromEmptyLine() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/RestoreIndentFromEmptyLine.after.kt");
+                    }
+                }
+            }
+
+            @RunWith(JUnit3RunnerWithInners.class)
+            @TestMetadata("testData/indentationOnNewline/multilineString/withTabs")
+            public abstract static class WithTabs extends AbstractTypingIndentationTestBase {
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/indentationOnNewline/multilineString/withTabs/tabs2")
+                public static class Tabs2 extends AbstractTypingIndentationTestBase {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("DontInsertTrimMarginCall.after.kt")
+                    public void testDontInsertTrimMarginCall() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs2/DontInsertTrimMarginCall.after.kt");
+                    }
+
+                    @TestMetadata("EnterInMethodCallMargin.after.kt")
+                    public void testEnterInMethodCallMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs2/EnterInMethodCallMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterInTwoLinesNoMarginCall.after.kt")
+                    public void testEnterInTwoLinesNoMarginCall() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs2/EnterInTwoLinesNoMarginCall.after.kt");
+                    }
+
+                    @TestMetadata("EnterInsideBraces.after.kt")
+                    public void testEnterInsideBraces() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs2/EnterInsideBraces.after.kt");
+                    }
+
+                    @TestMetadata("EnterInsideText.after.kt")
+                    public void testEnterInsideText() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs2/EnterInsideText.after.kt");
+                    }
+
+                    @TestMetadata("EnterMLSimpleMargin.after.kt")
+                    public void testEnterMLSimpleMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs2/EnterMLSimpleMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterMLStartOnSameLineMargin.after.kt")
+                    public void testEnterMLStartOnSameLineMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs2/EnterMLStartOnSameLineMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterOnNewLineMargin.after.kt")
+                    public void testEnterOnNewLineMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs2/EnterOnNewLineMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterSimpleMargin.after.kt")
+                    public void testEnterSimpleMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs2/EnterSimpleMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterWithTextMargin.after.kt")
+                    public void testEnterWithTextMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs2/EnterWithTextMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterWithTextOnNewLineMargin.after.kt")
+                    public void testEnterWithTextOnNewLineMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs2/EnterWithTextOnNewLineMargin.after.kt");
+                    }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/indentationOnNewline/multilineString/withTabs/tabs4")
+                public static class Tabs4 extends AbstractTypingIndentationTestBase {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                    }
+
+                    @TestMetadata("DontInsertTrimMarginCall.after.kt")
+                    public void testDontInsertTrimMarginCall() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs4/DontInsertTrimMarginCall.after.kt");
+                    }
+
+                    @TestMetadata("EnterInMethodCallMargin.after.kt")
+                    public void testEnterInMethodCallMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs4/EnterInMethodCallMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterInsideBraces.after.kt")
+                    public void testEnterInsideBraces() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs4/EnterInsideBraces.after.kt");
+                    }
+
+                    @TestMetadata("EnterInsideText.after.kt")
+                    public void testEnterInsideText() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs4/EnterInsideText.after.kt");
+                    }
+
+                    @TestMetadata("EnterMLSimpleMargin.after.kt")
+                    public void testEnterMLSimpleMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs4/EnterMLSimpleMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterMLStartOnSameLineMargin.after.kt")
+                    public void testEnterMLStartOnSameLineMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs4/EnterMLStartOnSameLineMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterOnNewLineMargin.after.kt")
+                    public void testEnterOnNewLineMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs4/EnterOnNewLineMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterSimpleMargin.after.kt")
+                    public void testEnterSimpleMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs4/EnterSimpleMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterWithTabsAfterMarginChar.after.kt")
+                    public void testEnterWithTabsAfterMarginChar() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs4/EnterWithTabsAfterMarginChar.after.kt");
+                    }
+
+                    @TestMetadata("EnterWithTextMargin.after.kt")
+                    public void testEnterWithTextMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs4/EnterWithTextMargin.after.kt");
+                    }
+
+                    @TestMetadata("EnterWithTextOnNewLineMargin.after.kt")
+                    public void testEnterWithTextOnNewLineMargin() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/withTabs/tabs4/EnterWithTextOnNewLineMargin.after.kt");
+                    }
+                }
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/indentationOnNewline/script")
         public static class Script extends AbstractTypingIndentationTestBase {
             private void runTest(String testDataFilePath) throws Exception {
