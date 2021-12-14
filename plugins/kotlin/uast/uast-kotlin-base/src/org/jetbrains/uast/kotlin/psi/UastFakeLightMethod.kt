@@ -7,6 +7,7 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.light.*
 import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterListBuilder
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -112,6 +113,25 @@ abstract class UastFakeLightMethodBase<T: KtDeclaration>(
         if (original.safeAs<KtNamedFunction>()?.isTopLevel == true) {
             addModifier(PsiModifier.STATIC)
         }
+    }
+
+    override fun hasModifierProperty(name: String): Boolean {
+        if (name == PsiModifier.PUBLIC || name == PsiModifier.PROTECTED || name == PsiModifier.PRIVATE) {
+            if (original.hasModifier(KtTokens.PRIVATE_KEYWORD)) {
+                return name == PsiModifier.PRIVATE
+            }
+            if (original.hasModifier(KtTokens.PROTECTED_KEYWORD)) {
+                return name == PsiModifier.PROTECTED
+            }
+
+            // TODO: inherited via override
+
+            return name == PsiModifier.PUBLIC
+        }
+
+        // TODO: modality, special keywords, such as strictfp, synchronized, external, etc.
+
+        return super.hasModifierProperty(name)
     }
 
     protected val baseResolveProviderService: BaseKotlinUastResolveProviderService by lz {
