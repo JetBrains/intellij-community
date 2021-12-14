@@ -608,6 +608,7 @@
     },
 
     "SearchField.errorBackground": "#ffcccc",
+    "SearchField.errorForeground": "#ff0000",
 
     "SearchMatch.endBackground": "#ffd042b3",
     "SearchMatch.startBackground": "#ffd042b3",
