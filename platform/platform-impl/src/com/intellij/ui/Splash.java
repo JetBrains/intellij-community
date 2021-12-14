@@ -38,7 +38,7 @@ import java.util.Objects;
  * To customize your IDE splash go to YourIdeNameApplicationInfo.xml and edit 'logo' tag. For more information see documentation for
  * the tag attributes in ApplicationInfo.xsd file.
  */
-public final class Splash extends Window {
+public final class Splash extends Dialog {
   private static final float JBUI_INIT_SCALE = JBUIScale.scale(1f);
 
   private final int myWidth;
@@ -53,7 +53,8 @@ public final class Splash extends Window {
   private final Image image;
 
   public Splash(@NotNull ApplicationInfoEx info) {
-    super(null);
+    super((Frame)null);
+    setUndecorated(true);
 
     progressSlidePainter = info.getProgressSlides().isEmpty() ? null : new ProgressSlidePainter(info);
     progressHeight = uiScale(info.getProgressHeight());
@@ -69,7 +70,6 @@ public final class Splash extends Window {
     //noinspection UseJBColor
     progressColor = rgba == -1 ? null : new Color((int)rgba, rgba > 0xffffff);
 
-    setAutoRequestFocus(false);
     setSize(new Dimension(myWidth, myHeight));
     setLocationInTheCenterOfScreen(this);
   }
