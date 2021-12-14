@@ -7,10 +7,10 @@ import com.intellij.debugger.engine.BreakpointStepMethodFilter
 class KotlinMethodReferenceFilter(
     target: KotlinMethodReferenceSmartStepTarget
 ) : KotlinMethodFilter(
-        target.descriptor,
-        target.callingExpressionLines,
-        false,
-        target.declaration
+    target.declaration,
+    false,
+    target.callingExpressionLines,
+    target.targetMethodName
 ), BreakpointStepMethodFilter {
     private val breakpointPosition: SourcePosition?
     private val lastStatementLine: Int

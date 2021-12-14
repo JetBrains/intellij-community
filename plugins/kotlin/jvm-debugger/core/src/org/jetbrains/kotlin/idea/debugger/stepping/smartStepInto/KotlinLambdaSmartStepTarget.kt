@@ -2,38 +2,47 @@
 
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
+import com.intellij.debugger.engine.MethodFilter
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Range
-import org.jetbrains.kotlin.builtins.isSuspendFunctionType
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.idea.KotlinIcons
+import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFunction
-import org.jetbrains.kotlin.resolve.inline.InlineUtil
-import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import javax.swing.Icon
 
 class KotlinLambdaSmartStepTarget(
-    resultingDescriptor: CallableDescriptor,
-    parameter: ValueParameterDescriptor,
     highlightElement: KtFunction,
+    declaration: KtDeclaration,
     lines: Range<Int>,
-    val isInline: Boolean = InlineUtil.isInline(resultingDescriptor),
-    val isSuspend: Boolean = parameter.type.isSuspendFunctionType,
-    val methodName: String = OperatorNameConventions.INVOKE.asString()
+    private val info: KotlinLambdaInfo
 ) : KotlinSmartStepTarget(
-        calcLabel(resultingDescriptor, parameter, methodName),
+        info.getLabel(),
         highlightElement,
         true,
         lines
 ) {
-    override fun createMethodFilter() =
-        KotlinLambdaMethodFilter(this)
+    private val declarationPtr = declaration.createSmartPointer()
+
+    override fun createMethodFilter(): MethodFilter {
+        val lambdaMethodFilter = KotlinLambdaMethodFilter(
+            highlightElement as KtFunction,
+            callingExpressionLines,
+            info
+        )
+
+        if (!info.isSuspend && !info.isCallerMethodInline && Registry.get("debugger.async.smart.step.into").asBoolean()) {
+            val declaration = runReadAction { declarationPtr.element }
+            return KotlinLambdaAsyncMethodFilter(
+                declaration,
+                callingExpressionLines,
+                info,
+                lambdaMethodFilter
+            )
+        }
+        return lambdaMethodFilter
+    }
 
     override fun getIcon(): Icon = KotlinIcons.LAMBDA
-
-    fun getLambda() = highlightElement as KtFunction
 }
-
-private fun calcLabel(descriptor: DeclarationDescriptor, parameter: ValueParameterDescriptor, functionName: String) =
-    "${descriptor.name.asString()}: ${parameter.name.asString()}.$functionName()"

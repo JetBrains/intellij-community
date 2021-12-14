@@ -2,18 +2,17 @@
 package org.jetbrains.kotlin.idea.debugger.stepping.smartStepInto
 
 import com.intellij.util.Range
-import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.kotlin.psi.KtDeclarationWithBody
 import javax.swing.Icon
 
 class KotlinMethodReferenceSmartStepTarget(
-    val descriptor: CallableMemberDescriptor,
-    val declaration: KtDeclarationWithBody,
+    highlightElement: KtCallableReferenceExpression,
+    lines: Range<Int>,
     label: String,
-    val highlightElement: KtCallableReferenceExpression,
-    lines: Range<Int>
+    val targetMethodName: String,
+    val declaration: KtDeclarationWithBody
 ) : KotlinSmartStepTarget(label, highlightElement, true, lines) {
     override fun createMethodFilter() =
         KotlinMethodReferenceFilter(this)

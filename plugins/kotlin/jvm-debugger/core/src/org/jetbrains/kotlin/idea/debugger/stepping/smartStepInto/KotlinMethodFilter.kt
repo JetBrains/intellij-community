@@ -8,36 +8,25 @@ import com.sun.jdi.LocalVariable
 import com.sun.jdi.Location
 import com.sun.jdi.Method
 import org.jetbrains.kotlin.descriptors.CallableMemberDescriptor
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.ConstructorDescriptor
-import org.jetbrains.kotlin.descriptors.PropertyAccessorDescriptor
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.debugger.getInlineFunctionNamesAndBorders
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.load.java.JvmAbi
-import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfTypesAndPredicate
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import org.jetbrains.kotlin.resolve.annotations.argumentValue
 
 open class KotlinMethodFilter(
-    descriptor: CallableMemberDescriptor,
-    val lines: Range<Int>?,
-    val isInvoke: Boolean,
-    declaration: KtDeclaration?
+    declaration: KtDeclaration?,
+    private val isInvoke: Boolean,
+    private val lines: Range<Int>?,
+    private val targetMethodName: String
 ) : NamedMethodFilter {
     private val declarationPtr = declaration?.createSmartPointer()
-
-    private val targetMethodName: String = when (descriptor) {
-        is ClassDescriptor, is ConstructorDescriptor -> "<init>"
-        is PropertyAccessorDescriptor -> descriptor.getJvmMethodName()
-        else -> descriptor.name.asString()
-    }
 
     override fun locationMatches(process: DebugProcessImpl, location: Location): Boolean {
         val method = location.method()
@@ -104,21 +93,8 @@ open class KotlinMethodFilter(
                // Otherwise, nested inline with the same method name will not work correctly.
                method.getInlineFunctionNamesAndBorders().filter { location in it.value }.any { it.key.isInlinedFromFunction(targetMethodName) }
     }
-
-    companion object {
-        private val JVM_NAME_FQ_NAME = FqName("kotlin.jvm.JvmName")
-
-        private fun PropertyAccessorDescriptor.getJvmMethodName(): String {
-            val jvmNameAnnotation = annotations.findAnnotation(JVM_NAME_FQ_NAME)
-            val jvmName = jvmNameAnnotation?.argumentValue(JvmName::name.name)?.value as? String
-            if (jvmName != null) {
-                return jvmName
-            }
-            return JvmAbi.getterName(correspondingProperty.name.asString())
-        }
-
-        private fun LocalVariable.isInlinedFromFunction(methodName: String) =
-            name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) &&
-            name().substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) == methodName
-    }
 }
+
+private fun LocalVariable.isInlinedFromFunction(methodName: String) =
+    name().startsWith(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) &&
+    name().substringAfter(JvmAbi.LOCAL_VARIABLE_NAME_PREFIX_INLINE_FUNCTION) == methodName
