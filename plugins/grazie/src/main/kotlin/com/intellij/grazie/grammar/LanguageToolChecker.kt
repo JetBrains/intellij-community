@@ -81,11 +81,12 @@ open class LanguageToolChecker : TextChecker() {
 
     override fun getTooltipTemplate(): String = toTooltipTemplate(match)
 
-    override fun getReplacementRange() = highlightRange
+    override fun getReplacementRange(): TextRange = highlightRanges[0]
     override fun getCorrections(): List<String> = match.suggestedReplacements
     override fun getPatternRange() = TextRange(match.patternFromPos, match.patternToPos)
 
     override fun fitsGroup(group: RuleGroup): Boolean {
+      val highlightRange = highlightRanges[0]
       val ruleId = match.rule.id
       if (RuleGroup.INCOMPLETE_SENTENCE in group.rules) {
         if (highlightRange.startOffset == 0 &&

@@ -117,7 +117,7 @@ class ReportingTest : BasePlatformTestCase() {
     return object : TextProblem(rule, text, range) {
       override fun getShortMessage() = "this problem"
       override fun getDescriptionTemplate(isOnTheFly: Boolean) = "something"
-      override fun getReplacementRange() = highlightRange
+      override fun getReplacementRange() = range
       override fun getCorrections() = corrections
       override fun getCustomFixes() = customFixes
     }
