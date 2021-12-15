@@ -4,7 +4,6 @@ package com.intellij.lang.properties;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.properties.charset.Native2AsciiCharset;
 import com.intellij.openapi.fileTypes.LanguageFileType;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import org.jetbrains.annotations.NotNull;
@@ -45,8 +44,7 @@ public final class PropertiesFileType extends LanguageFileType {
 
   @Override
   public String getCharset(@NotNull VirtualFile file, byte @NotNull [] content) {
-    Charset guessed = content.length == 0 ? null : new CharsetToolkit(content, PROPERTIES_DEFAULT_CHARSET, true).guessEncoding(content.length);
-    Charset charset = guessed == null ? EncodingRegistry.getInstance().getDefaultCharsetForPropertiesFiles(file) : guessed;
+    Charset charset = EncodingRegistry.getInstance().getDefaultCharsetForPropertiesFiles(file);
     if (charset == null) {
       charset = PROPERTIES_DEFAULT_CHARSET;
     }
