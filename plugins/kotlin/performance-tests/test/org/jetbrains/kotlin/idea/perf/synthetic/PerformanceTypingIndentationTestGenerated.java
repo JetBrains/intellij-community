@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.perf.synthetic;
 
@@ -56,6 +56,21 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
             @TestMetadata("NotApplicableOnInitializer2.after.kt")
             public void testNotApplicableOnInitializer2() throws Exception {
                 runTest("../idea/tests/testData/indentationOnNewline/afterUnmatchedBrace/NotApplicableOnInitializer2.after.kt");
+            }
+
+            @TestMetadata("UnfinishedLambdaInCode.after.kt")
+            public void testUnfinishedLambdaInCode() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/afterUnmatchedBrace/UnfinishedLambdaInCode.after.kt");
+            }
+
+            @TestMetadata("UnfinishedLambdaInCodeAsVarInitiailzer.after.kt")
+            public void testUnfinishedLambdaInCodeAsVarInitiailzer() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/afterUnmatchedBrace/UnfinishedLambdaInCodeAsVarInitiailzer.after.kt");
+            }
+
+            @TestMetadata("UnfinishedLambdaWithCommentInCode.after.kt")
+            public void testUnfinishedLambdaWithCommentInCode() throws Exception {
+                runTest("../idea/tests/testData/indentationOnNewline/afterUnmatchedBrace/UnfinishedLambdaWithCommentInCode.after.kt");
             }
 
             @TestMetadata("WhenBeforeLocalPropertyInitializer.after.kt")
