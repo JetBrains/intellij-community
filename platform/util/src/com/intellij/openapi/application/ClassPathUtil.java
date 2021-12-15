@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application;
 
 import com.intellij.openapi.util.text.Strings;
@@ -50,7 +50,6 @@ public final class ClassPathUtil {
       org.jdom.Document.class,                            // jDOM
       org.apache.log4j.Appender.class,                    // Log4J
       it.unimi.dsi.fastutil.objects.Object2IntMap.class,  // fastutil
-      gnu.trove.THashSet.class,                           // Trove,
       com.sun.jna.TypeMapper.class,                       // JNA
       com.sun.jna.platform.FileUtils.class,               // JNA (jna-platform)
       org.apache.oro.text.regex.PatternMatcher.class,     // OROMatcher

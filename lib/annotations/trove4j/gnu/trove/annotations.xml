@@ -71,7 +71,10 @@
     <item name='gnu.trove.THashSet boolean add(E) 0'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
-  <item name='gnu.trove.TIntFunction'>
+    <item name='gnu.trove.TIntArrayList'>
+        <annotation name='java.lang.Deprecated'/>
+    </item>
+    <item name='gnu.trove.TIntFunction'>
     <annotation name='java.lang.FunctionalInterface'/>
   </item>
   <item name='gnu.trove.TIntHashSet'>
