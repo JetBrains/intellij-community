@@ -387,7 +387,7 @@ public class JavaDocInfoGenerator {
    * Converts a relative link into {@link DocumentationManagerProtocol#PSI_ELEMENT_PROTOCOL PSI_ELEMENT_PROTOCOL}-type link if possible.
    */
   @Nullable
-  static String createReferenceForRelativeLink(@NotNull String relativeLink, @NotNull PsiElement contextElement) {
+  public static String createReferenceForRelativeLink(@NotNull String relativeLink, @NotNull PsiElement contextElement) {
     String fragment = null;
     int hashPosition = relativeLink.indexOf('#');
     if (hashPosition >= 0) {

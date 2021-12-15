@@ -42,4 +42,40 @@ public class DocumentationProviderEx implements DocumentationProvider {
   public Image getLocalImageForElement(@NotNull PsiElement element, @NotNull String imageSpec) {
     return null;
   }
+
+  @ApiStatus.Experimental
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  public static @Nullable HtmlChunk getDefaultLocationInfo(@Nullable PsiElement element) {
+    if (element == null) return null;
+
+    PsiFile file = element.getContainingFile();
+    VirtualFile vfile = file == null ? null : file.getVirtualFile();
+    if (vfile == null) return null;
+
+    if (element.getUseScope() instanceof LocalSearchScope) return null;
+
+    ProjectFileIndex fileIndex = ProjectRootManager.getInstance(element.getProject()).getFileIndex();
+    Module module = fileIndex.getModuleForFile(vfile);
+
+    if (module != null) {
+      if (ModuleManager.getInstance(element.getProject()).getModules().length == 1) return null;
+      return HtmlChunk.fragment(
+        HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.Module"),
+        HtmlChunk.nbsp(),
+        HtmlChunk.text(module.getName())
+      );
+    }
+    else {
+      return fileIndex.getOrderEntriesForFile(vfile).stream()
+        .filter(it -> it instanceof LibraryOrderEntry || it instanceof JdkOrderEntry)
+        .findFirst()
+        .map(it -> HtmlChunk.fragment(
+          HtmlChunk.tag("icon").attr("src", "AllIcons.Nodes.PpLibFolder"),
+          HtmlChunk.nbsp(),
+          HtmlChunk.text(it.getPresentableName())
+        ))
+        .orElse(null);
+    }
+  }
 }

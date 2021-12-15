@@ -383,19 +383,23 @@ public abstract class AbstractExternalFilter {
     }
   }
 
-  private static class MyReader extends InputStreamReader {
+  protected static class MyReader extends InputStreamReader {
     private final ByteArrayInputStream myInputStream;
 
-    MyReader(ByteArrayInputStream in) {
+    public MyReader(ByteArrayInputStream in) {
       super(in);
       in.reset();
       myInputStream = in;
     }
 
-    MyReader(ByteArrayInputStream in, String charsetName) throws UnsupportedEncodingException {
+    public MyReader(ByteArrayInputStream in, String charsetName) throws UnsupportedEncodingException {
       super(in, charsetName);
       in.reset();
       myInputStream = in;
+    }
+
+    public ByteArrayInputStream getInputStream() {
+      return myInputStream;
     }
   }
 

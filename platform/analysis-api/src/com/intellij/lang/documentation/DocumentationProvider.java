@@ -69,6 +69,13 @@ public interface DocumentationProvider {
     return null;
   }
 
+  @ApiStatus.Experimental
+  @RequiresReadLock
+  @RequiresBackgroundThread
+  default @Nullable HtmlChunk getLocationInfo(@Nullable PsiElement element) {
+    return null;
+  }
+
   /**
    * Returns the list of possible URLs to show as external documentation for the specified element.
    *

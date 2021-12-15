@@ -62,5 +62,8 @@
     <orderEntry type="library" name="intellij-markdown" level="project" />
     <orderEntry type="module" module-name="intellij.java.compiler.impl" />
     <orderEntry type="library" name="Velocity" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.builtInServer.impl" />
+    <orderEntry type="module" module-name="intellij.platform.ide.util.io.impl" />
+    <orderEntry type="library" name="jsoup" level="project" />
   </component>
 </module>

@@ -30,9 +30,12 @@ open class KDocTemplate : Template<StringBuilder> {
             val content = Placeholder<StringBuilder>()
             val sections = Placeholder<StringBuilder>()
             override fun StringBuilder.apply() {
-                append(CONTENT_START)
-                insert(content)
-                append(CONTENT_END)
+                val computedContent = buildString { insert(content) }
+                if (computedContent.isNotBlank()) {
+                    append(CONTENT_START)
+                    append(computedContent)
+                    append(CONTENT_END)
+                }
 
                 append(SECTIONS_START)
                 insert(sections)

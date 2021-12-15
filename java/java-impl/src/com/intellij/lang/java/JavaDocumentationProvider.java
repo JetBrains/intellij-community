@@ -15,10 +15,8 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LanguageCommenters;
-import com.intellij.lang.documentation.CodeDocumentationProvider;
-import com.intellij.lang.documentation.CompositeDocumentationProvider;
-import com.intellij.lang.documentation.DocumentationSettings;
-import com.intellij.lang.documentation.ExternalDocumentationProvider;
+import com.intellij.lang.documentation.*;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -33,6 +31,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -142,6 +141,70 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       substitutor = ((PsiReferenceExpression)originalElement).advancedResolve(true).getSubstitutor();
     }
     return substitutor;
+  }
+
+  @Override
+  public @Nullable HtmlChunk getLocationInfo(@Nullable PsiElement element) {
+    if (element == null) {
+      return null;
+    }
+    return ReadAction.compute(() -> doGetLocationInfo(element));
+  }
+
+  private static @Nullable HtmlChunk doGetLocationInfo(@NotNull PsiElement element) {
+    HtmlChunk baseInfo = DocumentationProviderEx.getDefaultLocationInfo(element);
+    JavaDocHighlightingManager highlightingManager = JavaDocHighlightingManagerImpl.getInstance();
+
+    @NlsSafe String ownerLink = null;
+    String ownerIcon = null;
+
+    if (element instanceof PsiClass) {
+      PsiFile file = element.getContainingFile();
+      if (file instanceof PsiJavaFile) {
+        String packageName = ((PsiJavaFile)file).getPackageName();
+        if (!packageName.isEmpty()) {
+          PsiPackage aPackage = JavaPsiFacade.getInstance(file.getProject()).findPackage(packageName);
+          StringBuilder packageFqnBuilder = new StringBuilder();
+          if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) {
+            appendStyledSpan(packageFqnBuilder, highlightingManager.getClassNameAttributes(), packageName);
+          }
+          else {
+            packageFqnBuilder.append(packageName);
+          }
+          ownerLink = generateLink(aPackage, packageFqnBuilder.toString(), false, false);
+          ownerIcon = "AllIcons.Nodes.Package";
+        }
+      }
+    }
+    else if (element instanceof PsiMember) {
+      PsiClass parentClass = ((PsiMember)element).getContainingClass();
+      if (parentClass != null && !PsiUtil.isArrayClass(parentClass)) {
+        String qName = parentClass.getQualifiedName();
+        if (qName != null) {
+          StringBuilder classFqnBuilder = new StringBuilder();
+          if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) {
+            appendStyledSpan(classFqnBuilder, highlightingManager.getClassNameAttributes(), qName);
+          }
+          else {
+            classFqnBuilder.append(qName);
+          }
+          generateTypeParameters(parentClass, classFqnBuilder, highlightingManager);
+          ownerLink = generateLink(parentClass, classFqnBuilder.toString(), false, false);
+          ownerIcon = "AllIcons.Nodes.Class";
+        }
+      }
+    }
+
+    if (ownerLink != null) {
+      return HtmlChunk.fragment(
+        HtmlChunk.tag("icon").attr("src", ownerIcon),
+        HtmlChunk.nbsp(),
+        HtmlChunk.raw(ownerLink),
+        HtmlChunk.br(),
+        baseInfo != null ? baseInfo : HtmlChunk.empty()
+      );
+    }
+    return baseInfo;
   }
 
   private static String generateLink(PsiElement element, String label, boolean plainLink, boolean isRenderedDoc) {
@@ -933,7 +996,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Nullable
-  private static List<String> findUrlForVirtualFile(Project project, VirtualFile virtualFile, String relPath) {
+  public static List<String> findUrlForVirtualFile(Project project, VirtualFile virtualFile, String relPath) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     Module module = fileIndex.getModuleForFile(virtualFile);

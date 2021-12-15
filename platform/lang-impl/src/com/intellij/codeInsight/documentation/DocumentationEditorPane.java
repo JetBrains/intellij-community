@@ -30,7 +30,7 @@ import java.awt.event.KeyEvent;
 import java.util.Map;
 import java.util.function.Function;
 
-import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.prepareCSS;
+import static com.intellij.codeInsight.documentation.DocumentationHtmlUtil.addDocumentationPaneDefaultCssRules;
 
 @Internal
 public abstract class DocumentationEditorPane extends JEditorPane {
@@ -77,7 +77,7 @@ public abstract class DocumentationEditorPane extends JEditorPane {
                                  ExtendableHTMLViewFactory.Extensions.icons(iconResolver::apply),
                                  DocumentationHtmlUtil.getModuleIconsExtension())
       .withFontResolver(EditorCssFontResolver.getGlobalInstance()).build();
-    prepareCSS(editorKit);
+    addDocumentationPaneDefaultCssRules(editorKit);
 
     setEditorKit(editorKit);
     setBorder(JBUI.Borders.empty());
