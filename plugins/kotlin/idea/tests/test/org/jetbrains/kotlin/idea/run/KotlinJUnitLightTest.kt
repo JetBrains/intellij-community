@@ -2,8 +2,12 @@
 package org.jetbrains.kotlin.idea.run
 
 import com.intellij.execution.PsiLocation
+import com.intellij.execution.RunManager.Companion.getInstance
+import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
 import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.execution.impl.RunManagerImpl
+import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
 import com.intellij.execution.junit.JUnitConfiguration
 import com.intellij.execution.junit2.info.MethodLocation
 import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties
@@ -11,6 +15,7 @@ import com.intellij.execution.lineMarker.RunLineMarkerProvider
 import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ThreeState
@@ -18,15 +23,25 @@ import org.jetbrains.kotlin.idea.junit.JunitKotlinTestFrameworkProvider
 import org.junit.Assert
 
 class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
+    private val tempSettings: MutableSet<RunnerAndConfigurationSettings> = HashSet()
+
+    @Throws(Exception::class)
+    override fun tearDown() {
+        val runManager = getInstance(project)
+        for (setting in tempSettings) {
+            runManager.removeConfiguration(setting)
+        }
+        super.tearDown()
+    }
     
     override fun setUp() {
         super.setUp()
-        myFixture.addClass("package org.junit; public @interface Test {}");
+        myFixture.addClass("package org.junit; public @interface Test {}")
         myFixture.addClass("package junit.framework; public class TestCase {}")
     }
 
     fun testAvailableInsideAnonymous() {
-        doTestObjectDeclaration(
+        doTestMethodConfiguration(
             """
                       import org.junit.Test
                       class tests {
@@ -44,7 +59,7 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
     fun testAvailableInsideObject() {
-        doTestObjectDeclaration(
+        doTestMethodConfiguration(
             """
                       import org.junit.Test
                       object tests {
@@ -62,7 +77,7 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
         assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.file.virtualFile))
     }
 
-    private fun doTestObjectDeclaration(fileText: String) {
+    private fun doTestMethodConfiguration(fileText: String) {
         val file = myFixture.configureByText(
             "tests.kt", fileText.trimIndent()
         )!!
@@ -84,7 +99,55 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
     }
 
 
-    fun testStackTraceParseerAcceptsJavaStacktrace() {
+    fun testPatternConfiguration() {
+        doTestMethodConfiguration("""
+            import junit.framework.TestCase
+            abstract class Test : TestCase() {
+              fun te<caret>st1() {}
+              fun test2() {}
+            
+              class TestX : Test()
+              class TestY : Test()
+            }
+        """)
+    }
+
+    fun testIsConfiguredPattern() {
+        val file = myFixture.configureByText(
+            "tests.kt", """
+                import org.junit.Test
+                class TestOne {
+                <caret>
+                    @Test fun testOneA() {}
+                    @Test fun testOneB() {}
+                }
+                
+                class TestTwo {
+                    @Test fun testTwo() {}
+                }
+        """)
+        val manager = getInstance(project)
+        val test = JUnitConfiguration("patterns", project)
+        test.bePatternConfiguration(((file as PsiClassOwner).classes).toList(), null)
+        val settings = RunnerAndConfigurationSettingsImpl(manager as RunManagerImpl, test)
+        manager.addConfiguration(settings)
+        tempSettings.add(settings)
+        
+        val element = file.findElementAt(myFixture.caretOffset)!!
+
+        val location = PsiLocation(element)
+        val context = ConfigurationContext.createEmptyContextForLocation(location)
+        val contexts = context.configurationsFromContext
+        Assert.assertEquals(1, contexts!!.size)
+        val fromContext = contexts[0]
+        assert(fromContext.configuration is JUnitConfiguration)
+        val testObject = (fromContext.configuration as JUnitConfiguration).persistentData.TEST_OBJECT
+        assert(testObject == JUnitConfiguration.TEST_CLASS) {
+            "method should be suggested to run, but $testObject was used instead"
+        }
+    }
+
+    fun testStackTraceParserAcceptsJavaStacktrace() {
         myFixture.configureByText("tests.kt",
             """class tests : junit.framework.TestCase() {
   fun testMe() {
