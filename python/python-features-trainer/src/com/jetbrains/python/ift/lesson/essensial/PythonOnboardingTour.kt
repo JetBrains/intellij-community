@@ -368,7 +368,7 @@ class PythonOnboardingTour :
     task {
       text(PythonLessonsBundle.message("python.onboarding.run.sample", strong(runItem), action("RunClass")))
       checkToolWindowState("Run", true)
-      stateCheck {
+      timerCheck {
         configurations().isNotEmpty()
       }
       restoreIfModified(sample)
