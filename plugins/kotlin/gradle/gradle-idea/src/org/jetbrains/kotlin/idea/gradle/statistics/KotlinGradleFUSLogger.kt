@@ -140,6 +140,7 @@ class KotlinGradleFUSLogger : StartupActivity, DumbAware, Runnable {
                 StringMetrics.JS_TARGET_MODE,
                 BooleanMetrics.JS_SOURCE_MAP,
                 StringMetrics.JS_PROPERTY_LAZY_INITIALIZATION,
+                StringMetrics.JS_OUTPUT_GRANULARITY,
                 BooleanMetrics.JS_KLIB_INCREMENTAL,
                 BooleanMetrics.JS_IR_INCREMENTAL,
             )
