@@ -449,7 +449,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final JPanel centerPanel = new JPanel(myCenterPanelLayout);
     centerPanel.add(wrapper, "grow, span, wrap");
     centerPanel.add(myReplacePanel, "grow, span, wrap");
-    centerPanel.add(myScopePanel, "grow 100 0, gap 8 8 4 3");
+    centerPanel.add(myScopePanel, "grow 100 0, gap 8 8 6 3");
 
     myScopePanel.invalidate();
     return centerPanel;
@@ -712,7 +712,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myOptionsToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     myOptionsToolbar.setForceMinimumSize(true);
 
-    final JPanel northPanel = new JPanel(new MigLayout("ins 0, fill", "[]0[grow 0]"));
+    final JPanel northPanel = new JPanel(new MigLayout("ins 4 0 3 0, fill", "[]0[grow 0]"));
     northPanel.add(historyToolbar.getComponent());
     northPanel.add(myOptionsToolbar.getComponent());
     return northPanel;
@@ -1306,7 +1306,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   }
 
   private void updateCenterPanelRowConstraints() {
-    myCenterPanelLayout.setRowConstraints(myReplace ? "[grow 100]0[grow 100]0[grow 0]" : "[grow 100]0[grow 0]");
+    myCenterPanelLayout.setRowConstraints(myReplace ? "[grow 100]14[grow 100]0[grow 0]" : "[grow 100]0[grow 0]");
   }
 
   private class CopyConfigurationAction extends AnAction implements DumbAware {
