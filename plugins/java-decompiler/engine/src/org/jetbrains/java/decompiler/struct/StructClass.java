@@ -204,8 +204,12 @@ public class StructClass extends StructMember {
     return majorVersion >= CodeConstants.BYTECODE_JAVA_8;
   }
 
-  public boolean isVersion15() {
-    return majorVersion >= CodeConstants.BYTECODE_JAVA_15;
+  public boolean hasSealedClassesSupport() {
+    return majorVersion >= CodeConstants.BYTECODE_JAVA_17 || (majorVersion >= CodeConstants.BYTECODE_JAVA_15 && isPreviewVersion());
+  }
+
+  public boolean isPreviewVersion() {
+    return minorVersion == 0xFFFF;
   }
 
   public boolean isVersion16() {

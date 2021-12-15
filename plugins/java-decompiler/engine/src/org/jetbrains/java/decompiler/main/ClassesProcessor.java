@@ -125,7 +125,7 @@ public class ClassesProcessor implements CodeConstants {
 
     // set non-sealed if class extends or implements a sealed class and is not final or sealed itself
     for (ClassNode clazz : mapRootClasses.values()) {
-      if (clazz.classStruct.isVersion15() &&
+      if (clazz.classStruct.hasSealedClassesSupport() &&
           (clazz.access & CodeConstants.ACC_FINAL) == 0 &&
           clazz.classStruct.getPermittedSubclasses() == null) {
         List<String> qualifiedSealedSuperNames = new ArrayList<>(Arrays.asList(clazz.classStruct.getInterfaceNames()));
