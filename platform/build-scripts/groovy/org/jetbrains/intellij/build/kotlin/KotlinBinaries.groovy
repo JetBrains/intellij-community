@@ -40,19 +40,27 @@ final class KotlinBinaries {
     def kotlinPluginLibPath = "$compilerHome/lib"
     def kotlincLibPath = "$compilerHome/kotlinc/lib"
     if (new File(kotlinPluginLibPath).exists() && new File(kotlincLibPath).exists()) {
-      ["jps/kotlin-jps-plugin.jar", "kotlin-plugin.jar", "kotlin-reflect.jar", "kotlin-common.jar"].each {
-        def completePath = "$kotlinPluginLibPath/$it"
-        if (!new File(completePath).exists()) {
+      ["jps/kotlin-jps-plugin.jar", "kotlin-reflect.jar", "kotlin-common.jar"].each { String jarPath ->
+        def completePath = "$kotlinPluginLibPath/$jarPath"
+        if (!addToJpsClassPathIfExists(ant, completePath)) {
           throw new IllegalStateException("KotlinBinaries: '$completePath' doesn't exist")
         }
-        BuildUtils.addToJpsClassPath(completePath, ant)
       }
-      ["kotlin-stdlib.jar"].each {
-        def completePath = "$kotlincLibPath/$it"
-        if (!new File(completePath).exists()) {
+      if (!addToJpsClassPathIfExists(ant, "$kotlinPluginLibPath/kotlin-plugin.jar")) {
+        String[] pluginJars = new File(kotlinPluginLibPath).list()
+        ["kotlin-compiler-common-for-ide-", "kotlin-compiler-fe10-for-ide-", "kotlin-compiler-ir-for-ide-"].each { String jarPrefix ->
+          String jarFileName = pluginJars.find { it.startsWith(jarPrefix) }
+          if (jarFileName == null) {
+            throw new IllegalStateException("KotlinBinaries: '$kotlinPluginLibPath/$jarPrefix...' doesn't exist")
+          }
+          BuildUtils.addToJpsClassPath("$kotlinPluginLibPath/$jarFileName", ant)
+        }
+      }
+      ["kotlin-stdlib.jar"].each { String jarPath ->
+        def completePath = "$kotlincLibPath/$jarPath"
+        if (!addToJpsClassPathIfExists(ant, completePath)) {
           throw new IllegalStateException("KotlinBinaries: '$completePath' doesn't exist")
         }
-        BuildUtils.addToJpsClassPath(completePath, ant)
       }
     }
     else {
@@ -60,6 +68,16 @@ final class KotlinBinaries {
         "Could not find Kotlin JARs at $kotlinPluginLibPath and $kotlincLibPath: run `./gradlew $SET_UP_COMPILER_GRADLE_TASK` in dependencies module to download Kotlin JARs"
       )
     }
+  }
+
+  private static boolean addToJpsClassPathIfExists(AntBuilder ant, String completeJarPath) {
+    File file = new File(completeJarPath)
+    if (!file.exists()) {
+      return false
+    }
+
+    BuildUtils.addToJpsClassPath(completeJarPath, ant)
+    return true
   }
 
   boolean isCompilerRequired() {
