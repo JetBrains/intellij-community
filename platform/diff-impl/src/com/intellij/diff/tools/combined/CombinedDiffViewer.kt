@@ -69,8 +69,37 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
   }
 
   internal fun addChildBlock(content: CombinedDiffBlockContent, needBorder: Boolean) {
-    val diffBlockFactory = CombinedDiffBlockFactory.findApplicable(content) ?: return
+   val diffBlock = createDiffBlock(content, needBorder)
 
+    contentPanel.add(diffBlock.component)
+    diffBlocks.add(diffBlock)
+    content.viewer.init()
+  }
+
+  internal fun insertChildBlock(content: CombinedDiffBlockContent, position: CombinedDiffRequest.InsertPosition?): CombinedDiffBlock {
+    val above = position?.above ?: false
+    val insertIndex =
+      if (position == null) -1
+      else diffBlocks.indexOfFirst { it.content.path == position.path && it.content.fileStatus == position.fileStatus }
+        .let { if (above) it else it.inc() }
+
+    val diffBlock = createDiffBlock(content, diffBlocks.size > 1 && insertIndex > 0)
+
+    if (insertIndex != -1 && insertIndex < diffBlocks.size) {
+      contentPanel.add(diffBlock.component, insertIndex)
+      diffBlocks.add(insertIndex, diffBlock)
+    }
+    else {
+      contentPanel.add(diffBlock.component)
+      diffBlocks.add(diffBlock)
+    }
+
+    content.viewer.init()
+
+    return diffBlock
+  }
+
+  private fun createDiffBlock(content: CombinedDiffBlockContent, needBorder: Boolean): CombinedDiffBlock {
     val viewer = content.viewer
     if (viewer.isEditorBased) {
       viewer.editors.forEach { it.settings.additionalLinesCount = 0 }
@@ -79,13 +108,18 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
       focusListener.register(viewer.component, this)
     }
 
+    val diffBlockFactory = CombinedDiffBlockFactory.findApplicable(content)!!
+
     val diffBlock = diffBlockFactory.createBlock(content, needBorder)
     Disposer.register(diffBlock, viewer)
+    Disposer.register(diffBlock, Disposable {
+      if (diffBlocks.remove(diffBlock)) {
+        contentPanel.remove(diffBlock.component)
+      }
+    })
     Disposer.register(this, diffBlock)
 
-    contentPanel.add(diffBlock.component)
-    diffBlocks.add(diffBlock)
-    viewer.init()
+    return diffBlock
   }
 
   override fun getComponent(): JComponent = scrollPane

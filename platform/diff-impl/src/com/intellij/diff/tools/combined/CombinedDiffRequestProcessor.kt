@@ -9,15 +9,26 @@ import com.intellij.diff.impl.DiffSettingsHolder
 import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings.Companion.getSettings
 import com.intellij.diff.impl.ui.DifferencesLabel
 import com.intellij.diff.requests.DiffRequest
+import com.intellij.diff.tools.combined.CombinedDiffRequest.NewChildDiffRequestData
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUtil
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.runBlockingCancellable
+import com.intellij.openapi.progress.runUnderIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.util.concurrency.annotations.RequiresEdt
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private val LOG = logger<CombinedDiffRequestProcessor>()
 
@@ -148,6 +159,26 @@ open class CombinedDiffRequestProcessor(project: Project?,
   // Combined diff builder logic
   //
 
+  @RequiresEdt
+  fun addChildRequest(requestData: NewChildDiffRequestData, childRequestProducer: DiffRequestProducer): CombinedDiffBlock? {
+    val combinedViewer = viewer ?: return null
+    val combinedRequest = request ?: return null
+    val indicator = EmptyProgressIndicator()
+    val childDiffRequest =
+      runBlockingCancellable(indicator) {
+        withContext(Dispatchers.IO) { runUnderIndicator { loadRequest(childRequestProducer, indicator) } }
+      }
+
+    val position = requestData.position
+    val childRequest =
+      CombinedDiffRequest.ChildDiffRequest(childDiffRequest, requestData.path, requestData.fileStatus)
+
+    combinedRequest.addChild(childRequest, position)
+
+    return CombinedDiffViewerBuilder.addNewChildDiffViewer(combinedViewer, context, requestData, childDiffRequest)
+      ?.apply { Disposer.register(this, Disposable { combinedRequest.removeChild(childRequest) }) }
+  }
+
   class CombinedDiffViewerBuilder : DiffExtension() {
 
     override fun onViewerCreated(viewer: FrameDiffTool.DiffViewer, context: DiffContext, request: DiffRequest) {
@@ -159,41 +190,60 @@ open class CombinedDiffRequestProcessor(project: Project?,
     }
 
     companion object {
+      fun addNewChildDiffViewer(viewer: CombinedDiffViewer,
+                                context: DiffContext,
+                                diffRequestData: NewChildDiffRequestData,
+                                request: DiffRequest,
+                                needTakeTool: (FrameDiffTool) -> Boolean = { true }): CombinedDiffBlock? {
+        val content = buildBlockContent(viewer, context, request, diffRequestData.path, diffRequestData.fileStatus, needTakeTool)
+                      ?: return null
+        return viewer.insertChildBlock(content, diffRequestData.position)
+      }
+
       fun buildCombinedDiffChildViewers(viewer: CombinedDiffViewer,
                                         context: DiffContext,
                                         request: CombinedDiffRequest,
                                         needTakeTool: (FrameDiffTool) -> Boolean = { true }) {
-        val diffSettings = getSettings(context.getUserData(DiffUserDataKeys.PLACE))
-        val diffTools = DiffManagerEx.getInstance().diffTools
-
-        for ((index, childRequest) in request.requests.withIndex()) {
-          val childDiffRequest = childRequest.request
-          childDiffRequest.putUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF, true)
-          val frameDiffTool =
-            if (viewer.unifiedDiff && UnifiedDiffTool.INSTANCE.canShow(context, childDiffRequest)) {
-              UnifiedDiffTool.INSTANCE
-            }
-            else {
-              getDiffToolsExceptUnified(context, diffSettings, diffTools, childDiffRequest, needTakeTool)
-            }
-
-          val childViewer = frameDiffTool
-                              ?.let { findSubstitutor(it, context, childDiffRequest) }
-                              ?.createComponent(context, childDiffRequest)
-                            ?: continue
-
-          EP_NAME.forEachExtensionSafe { extension ->
-            try {
-              extension.onViewerCreated(childViewer, context, childDiffRequest)
-            }
-            catch (e: Throwable) {
-              LOG.error(e)
-            }
-          }
-
-          val content = CombinedDiffBlockContent(childViewer, childRequest.path, childRequest.fileStatus)
+        for ((index, childRequest) in request.getChildRequests().withIndex()) {
+          val content = buildBlockContent(viewer, context, childRequest.request, childRequest.path, childRequest.fileStatus, needTakeTool)
+                        ?: continue
           viewer.addChildBlock(content, index > 0)
         }
+      }
+
+      private fun buildBlockContent(viewer: CombinedDiffViewer,
+                                    context: DiffContext,
+                                    request: DiffRequest,
+                                    path: FilePath,
+                                    fileStatus: FileStatus,
+                                    needTakeTool: (FrameDiffTool) -> Boolean = { true }): CombinedDiffBlockContent? {
+        val diffSettings = getSettings(context.getUserData(DiffUserDataKeys.PLACE))
+        val diffTools = DiffManagerEx.getInstance().diffTools
+        request.putUserData(DiffUserDataKeys.ALIGNED_TWO_SIDED_DIFF, true)
+
+        val frameDiffTool =
+          if (viewer.unifiedDiff && UnifiedDiffTool.INSTANCE.canShow(context, request)) {
+            UnifiedDiffTool.INSTANCE
+          }
+          else {
+            getDiffToolsExceptUnified(context, diffSettings, diffTools, request, needTakeTool)
+          }
+
+        val childViewer = frameDiffTool
+                            ?.let { findSubstitutor(it, context, request) }
+                            ?.createComponent(context, request)
+                          ?: return null
+
+        EP_NAME.forEachExtensionSafe { extension ->
+          try {
+            extension.onViewerCreated(childViewer, context, request)
+          }
+          catch (e: Throwable) {
+            LOG.error(e)
+          }
+        }
+
+        return CombinedDiffBlockContent(childViewer, path, fileStatus)
       }
 
       private fun findSubstitutor(tool: FrameDiffTool, context: DiffContext, request: DiffRequest): FrameDiffTool {
