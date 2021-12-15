@@ -420,7 +420,7 @@ public class ClassWriter {
     }
 
     List<StructRecordComponent> components = cl.getRecordComponents();
-    List<String> permittedSubclassSignature = cl.getPermittedSubclasses();
+    List<String> permittedSubclassQualifiedNames = cl.getPermittedSubclasses();
 
     if (components != null) {
       // records are implicitly final
@@ -429,7 +429,7 @@ public class ClassWriter {
 
     appendModifiers(buffer, flags, CLASS_ALLOWED, isInterface, CLASS_EXCLUDED);
 
-    if (permittedSubclassSignature != null) {
+    if (permittedSubclassQualifiedNames != null) {
       buffer.append("sealed ");
     }
     else if (node.isNonSealed()) {
@@ -506,38 +506,29 @@ public class ClassWriter {
       }
     }
 
-    if (permittedSubclassSignature != null) {
-      List<ClassNode> permittedOuterSubClasses = getClassNodes(permittedSubclassSignature).stream()
-        .filter(subClass -> !subClass.enclosingClasses.contains(node.classStruct.qualifiedName))
-        .collect(Collectors.toList());
-      if (!permittedOuterSubClasses.isEmpty()) { // only generate permits lists for non-nested classes
+    if (permittedSubclassQualifiedNames != null && !permittedSubclassQualifiedNames.isEmpty()) {
+      Set<String> qualifiedNested = node.nested.stream()
+        .map(nestedNode -> nestedNode.classStruct.qualifiedName)
+        .collect(Collectors.toSet());
+      boolean allSubClassesAreNested = Set.copyOf(permittedSubclassQualifiedNames).equals(qualifiedNested);
+      if (!allSubClassesAreNested) { // only generate permits lists for non-nested classes
         buffer.append("permits ");
-        for (int i = 0; i < permittedOuterSubClasses.size(); i++) {
-          if (i > 0) {
-            buffer.append(", ");
+        for (int i = 0; i < permittedSubclassQualifiedNames.size(); i++) {
+          String qualifiedName = permittedSubclassQualifiedNames.get(i);
+          boolean isNested = qualifiedNested.contains(qualifiedName);
+          if (!isNested) {
+            if (i > 0) {
+              buffer.append(", ");
+            }
+            DecompilerContext.getImportCollector().getShortName(qualifiedName);
+            String simpleName = qualifiedName.substring(qualifiedName.lastIndexOf('/') + 1);
+            buffer.append(simpleName);
           }
-          ClassNode subClass = permittedOuterSubClasses.get(i);
-          DecompilerContext.getImportCollector().getShortName(subClass.classStruct.qualifiedName); // add qualified name to potential import list
-          buffer.append(subClass.simpleName);
         }
         buffer.append(' ');
       }
     }
     buffer.append('{').appendLineSeparator();
-  }
-
-  private static List<ClassNode> getClassNodes(List<String> qualifiedClassNames) {
-    return qualifiedClassNames.stream()
-      .map(str -> {
-        ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(str);
-        if (node == null) {
-          DecompilerContext.getLogger().writeMessage("Could not find class " + str, IFernflowerLogger.Severity.WARN);
-        }
-        return node;
-      })
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList()
-      );
   }
 
   private static boolean isVarArgRecord(StructClass cl) {
