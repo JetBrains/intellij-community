@@ -1,9 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.target
 
+import com.intellij.execution.configuration.AbstractRunConfiguration
 import com.intellij.execution.configurations.RunConfigurationBase
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.options.SettingsEditor
 import com.intellij.openapi.projectRoots.Sdk
 import org.jetbrains.annotations.ApiStatus
 
@@ -19,6 +21,11 @@ interface RunConfigurationTargetEnvironmentAdjuster {
    * [isEnabledFor] or the utility method [findTargetEnvironmentRequestAdjuster].
    */
   fun adjust(targetEnvironmentRequest: TargetEnvironmentRequest, runConfiguration: RunConfigurationBase<*>)
+
+  fun providesAdditionalRunConfigurationUI(): Boolean
+
+  fun createAdditionalRunConfigurationUI(runConfiguration: AbstractRunConfiguration,
+                                         sdkGetter: () -> Sdk?): SettingsEditor<AbstractRunConfiguration>?
 
   fun isEnabledFor(sdk: Sdk): Boolean
 

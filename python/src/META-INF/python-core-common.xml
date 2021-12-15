@@ -593,6 +593,8 @@
 
     <inspectionExtension implementation="com.jetbrains.python.sdk.configuration.PyInterpreterInspectionSuppressor"/>
     <inspectionExtension implementation="com.jetbrains.python.inspections.PyUnresolvedReferenceDefaultInspectionExtension" order="last"/>
+
+    <runConfigurationEditorExtension implementation="com.jetbrains.python.run.PyRunConfigurationTargetOptions"/>
   </extensions>
 
   <actions>
