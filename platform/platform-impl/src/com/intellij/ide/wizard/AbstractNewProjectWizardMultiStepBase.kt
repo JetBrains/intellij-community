@@ -27,7 +27,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
   override fun setupUI(builder: Panel) {
     with(builder) {
       row(label) {
-        if (steps.size > 4) {
+        if (steps.size > 6) {
           comboBox(DefaultComboBoxModel(steps.map { it.key }.toTypedArray()))
             .bindItem(stepProperty)
         }
