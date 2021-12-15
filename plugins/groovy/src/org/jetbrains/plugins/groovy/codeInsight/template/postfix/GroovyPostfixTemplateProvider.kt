@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.GroovyBundle
 
 class GroovyPostfixTemplateProvider : PostfixTemplateProvider {
+
   override fun getTemplates(): Set<PostfixTemplate> = BUILTIN_TEMPLATES
 
   override fun isTerminalSymbol(currentChar: Char): Boolean = currentChar == '.' || currentChar == '|'
@@ -22,14 +23,9 @@ class GroovyPostfixTemplateProvider : PostfixTemplateProvider {
     return copyFile
   }
 
-  override fun getId(): String {
-    return "builtin.groovy"
-  }
+  override fun getId(): String = "builtin.groovy"
 
-  override fun getPresentableName(): String {
-    return GroovyBundle.message("postfix.template.provider.name")
-  }
-
+  override fun getPresentableName(): String = GroovyBundle.message("postfix.template.provider.name")
 
 }
 
