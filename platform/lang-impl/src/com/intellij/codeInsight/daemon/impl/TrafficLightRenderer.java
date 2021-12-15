@@ -105,9 +105,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   /**
    * Returns a new instance of an array filled with a number of highlighters with a given severity.
    * {@code errorCount[idx]} equals to a number of highlighters of severity with index {@code idx} in this markup model.
-   * Severity index can be obtained via `SeverityRegistrar#getSeverityIdx(HighlightSeverity)`.
+   * Severity index can be obtained via {@link SeverityRegistrar#getSeverityIdx(HighlightSeverity)}.
    */
-  protected int @NotNull [] getErrorCount() {
+  protected int @NotNull [] getErrorCounts() {
     return cachedErrors.clone();
   }
 
@@ -145,7 +145,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   protected static final class DaemonCodeAnalyzerStatus {
     public boolean errorAnalyzingFinished;  // all passes are done
     List<ProgressableTextEditorHighlightingPass> passes = Collections.emptyList();
-    public int[] errorCount = ArrayUtilRt.EMPTY_INT_ARRAY;
+    public int[] errorCounts = ArrayUtilRt.EMPTY_INT_ARRAY;
     public @Nls String reasonWhyDisabled;
     public @Nls String reasonWhySuspended;
 
@@ -161,7 +161,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       for (ProgressableTextEditorHighlightingPass passStatus : passes) {
         s += String.format("(%s %2.0f%% %b)", passStatus.getPresentableName(), passStatus.getProgress() * 100, passStatus.isFinished());
       }
-      s += "; error count: "+errorCount.length+": "+new IntArrayList(errorCount);
+      s += "; error counts: " + errorCounts.length + ": " + new IntArrayList(errorCounts);
       return s;
     }
   }
@@ -236,7 +236,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       return status;
     }
 
-    status.errorCount = getErrorCount();
+    status.errorCounts = getErrorCounts();
     status.passes = ContainerUtil.filter(myDaemonCodeAnalyzer.getPassesToShowProgressFor(myDocument),
                                          p -> !StringUtil.isEmpty(p.getPresentableName()) && p.getProgress() >= 0);
 
@@ -284,10 +284,10 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       details = "";
     }
 
-    int[] errorCount = status.errorCount;
+    int[] errorCounts = status.errorCounts;
     Icon mainIcon = null;
-    for (int i = errorCount.length - 1; i >= 0; i--) {
-      int count = errorCount[i];
+    for (int i = errorCounts.length - 1; i >= 0; i--) {
+      int count = errorCounts[i];
       if (count > 0) {
         HighlightSeverity severity = mySeverityRegistrar.getSeverityByIndex(i);
         if (severity != null) {
