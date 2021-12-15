@@ -1044,10 +1044,17 @@ fun addNotification(project: Project?, notification: Notification) {
   else {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
     if (toolWindow == null || toolWindow.contentManagerIfCreated == null) {
+      val notifications = if (toolWindow == null) null else ArrayList<Notification>()
       synchronized(NotificationsToolWindowFactory.myLock) {
         NotificationsToolWindowFactory.myNotificationList.add(notification)
+        notifications?.addAll(NotificationsToolWindowFactory.myNotificationList)
       }
       EventLog.getLogModel(project).setStatusMessage(notification)
+      if (notifications != null) {
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed, Runnable {
+          toolWindow!!.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(notifications))
+        })
+      }
     }
     else {
       ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed, Runnable {
