@@ -5,6 +5,7 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.impl.CloseProjectWindowHelper
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
@@ -183,27 +184,32 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     linksPanel.border = EmptyBorder(0, 0, JBUI.scale(12), 0)
 
     linksPanel.add(moduleNameLabel)
-    if (findLanguageSupport(learnToolWindow.project) != null) {
-      linksPanel.add(Box.createHorizontalGlue())
+    linksPanel.add(Box.createHorizontalGlue())
 
-      val exitLink = JLabel(LearnBundle.message("exit.learning.link"), AllIcons.Actions.Exit, SwingConstants.LEADING)
-      exitLink.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
-      exitLink.addMouseListener(object : MouseAdapter() {
-        override fun mouseClicked(e: MouseEvent) {
-          if (!StatisticBase.isLearnProjectCloseLogged) {
-            StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.EXIT_LINK)
-          }
-          LessonManager.instance.stopLesson()
-          val langSupport = LangManager.getInstance().getLangSupport()
-          langSupport?.onboardingFeedbackData?.let {
-            showOnboardingLessonFeedbackForm(learnToolWindow.project, it, false)
-            langSupport.onboardingFeedbackData = null
-          }
-          CloseProjectWindowHelper().windowClosing(learnToolWindow.project)
+    val exitLink = JLabel(LearnBundle.message("exit.learning.link"), AllIcons.Actions.Exit, SwingConstants.LEADING)
+    exitLink.cursor = Cursor.getPredefinedCursor(Cursor.HAND_CURSOR)
+    exitLink.addMouseListener(object : MouseAdapter() {
+      override fun mouseClicked(e: MouseEvent) {
+        if (!StatisticBase.isLearnProjectCloseLogged) {
+          StatisticBase.logLessonStopped(StatisticBase.LessonStopReason.EXIT_LINK)
         }
-      })
-      linksPanel.add(exitLink)
-    }
+        LessonManager.instance.stopLesson()
+        val langSupport = LangManager.getInstance().getLangSupport()
+        val project = learnToolWindow.project
+        langSupport?.onboardingFeedbackData?.let {
+          showOnboardingLessonFeedbackForm(project, it, false)
+          langSupport.onboardingFeedbackData = null
+        }
+
+        if (findLanguageSupport(project) != null) {
+          CloseProjectWindowHelper().windowClosing(project)
+        } else {
+          LearningUiManager.resetModulesView()
+          ToolWindowManager.getInstance(project).getToolWindow(LearnToolWindowFactory.LEARN_TOOL_WINDOW)?.hide()
+        }
+      }
+    })
+    linksPanel.add(exitLink)
 
     val headerPanel = VerticalBox()
     headerPanel.isOpaque = false
