@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -82,6 +83,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.textCompletion.TextCompletionUtil;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import net.miginfocom.swing.MigLayout;
 import org.jdom.JDOMException;
@@ -266,6 +268,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     textField.setFont(EditorFontType.getGlobalPlainFont());
     textField.setPreferredSize(new Dimension(550, 150));
     textField.setMinimumSize(new Dimension(200, 50));
+    textField.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
     return textField;
   }
 
@@ -376,7 +379,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   @Override
   protected JComponent createCenterPanel() {
     final var searchPanel = new JPanel(new MigLayout("fill, ins 0, hidemode 3", "[grow 0]0[grow 0]0[grow 0]0[grow 0][]", "[grow 100][grow 0]"));
-    searchPanel.setBackground(com.intellij.util.ui.UIUtil.getTextFieldBackground());
+    searchPanel.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
 
     mySearchEditorPanel = new OnePixelSplitter(false, 1.0f);
     mySearchEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
@@ -514,6 +517,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     final DefaultActionGroup replacementActionGroup = new DefaultActionGroup(shortenFqn, staticImport, reformat);
     final ActionToolbar replacementToolbar = actionManager.createActionToolbar("StructuralSearchDialog", replacementActionGroup, true);
     replacementToolbar.setTargetComponent(null);
+    replacementToolbar.getComponent().setBorder(JBUI.Borders.empty());
+    replacementToolbar.getComponent().setOpaque(false);
 
     final OnePixelSplitter replaceEditorPanel = new OnePixelSplitter(false, 1.0f);
     replaceEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
@@ -522,6 +527,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
     final JPanel wrapper = new JPanel(new MigLayout("ins 0, fill", "", "[grow 100]0[grow 0]"));
     final Color color = UIManager.getColor("Borders.ContrastBorderColor");
+    wrapper.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
     wrapper.setBorder(IdeBorderFactory.createBorder(color));
     wrapper.add(replaceEditorPanel, "grow 100, wrap");
     wrapper.add(replacementToolbar.getComponent(), "gap 8 8 8 8");
