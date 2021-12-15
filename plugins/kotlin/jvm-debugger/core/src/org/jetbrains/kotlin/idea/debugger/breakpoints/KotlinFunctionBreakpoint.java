@@ -115,6 +115,10 @@ public class KotlinFunctionBreakpoint extends BreakpointWithHighlighter<JavaMeth
         Task.Backgroundable task = new Task.Backgroundable(project, KotlinDebuggerCoreBundle.message("function.breakpoint.initialize")) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
+                // We can't wait for a smart mode under a read access. It would result to exceptions
+                // or a possible deadlock. So return here.
+                if (ApplicationManager.getApplication().isReadAccessAllowed() && DumbService.isDumb(project)) return;
+
                 SourcePosition sourcePosition = KotlinFunctionBreakpoint.this.getSourcePosition();
                 MethodDescriptor descriptor =
                         sourcePosition == null
