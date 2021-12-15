@@ -1,6 +1,6 @@
 // PSI_ELEMENT: org.jetbrains.kotlin.psi.KtObjectDeclaration
 // OPTIONS: usages
-class A {
+class A() {
     init {
         foo()
         v
@@ -10,7 +10,7 @@ class A {
         ext() // companion object is extension receiver
     }
 
-    companion <caret>object : Foo {
+    companion <caret>object: Foo {
         fun foo() {
         }
 
