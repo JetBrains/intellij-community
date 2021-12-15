@@ -6,7 +6,6 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.Semaphore
 import junit.framework.TestCase.*
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.job
 import kotlinx.coroutines.runBlocking
 import org.junit.ClassRule
 import org.junit.Test
@@ -33,9 +32,8 @@ class CancellationTest {
   @Test
   fun `current coroutine job`(): Unit = runBlocking {
     assertNull(Cancellation.currentJob())
-    val job = coroutineContext.job
-    withJob {
-      assertSame(job, Cancellation.currentJob())
+    withJob { currentJob ->
+      assertSame(currentJob, Cancellation.currentJob())
     }
     assertNull(Cancellation.currentJob())
   }
