@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
 import org.jetbrains.kotlin.resolve.multiplatform.ExpectedActualResolver
 import org.jetbrains.kotlin.resolve.multiplatform.OptionalAnnotationUtil
+import org.jetbrains.kotlin.resolve.multiplatform.onlyFromThisModule
 
 class OptionalExpectationInspection : AbstractKotlinInspection() {
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean, session: LocalInspectionToolSession): PsiElementVisitor {
@@ -39,13 +40,18 @@ class OptionalExpectationInspection : AbstractKotlinInspection() {
             if (implementingModules.isEmpty()) return
 
             for (actualModuleDescriptor in implementingModules) {
-                val compatibility = ExpectedActualResolver.findActualForExpected(descriptor, actualModuleDescriptor) ?: continue
+                val compatibility = ExpectedActualResolver.findActualForExpected(
+                    descriptor, actualModuleDescriptor, onlyFromThisModule(actualModuleDescriptor)
+                ) ?: continue
+
                 if (!compatibility.allStrongIncompatibilities() &&
                     (ExpectActualCompatibility.Compatible in compatibility ||
                             !compatibility.values.flatMapTo(
                                 hashSetOf()
                             ) { it }.all { actual ->
-                                val expectedOnes = ExpectedActualResolver.findExpectedForActual(actual, descriptor.module)
+                                val expectedOnes = ExpectedActualResolver.findExpectedForActual(
+                                    actual, onlyFromThisModule(descriptor.module)
+                                )
                                 expectedOnes != null && ExpectActualCompatibility.Compatible in expectedOnes.keys
                             })
                 ) continue
