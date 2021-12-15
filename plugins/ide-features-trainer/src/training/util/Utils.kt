@@ -264,6 +264,6 @@ internal fun filterUnseenLessons(newLessons: List<Lesson>): List<Lesson> {
   return unseenLessons
 }
 
-internal val iftNotificationGroup: NotificationGroup get() =
+val iftNotificationGroup: NotificationGroup get() =
   NotificationGroup.findRegisteredGroup("IDE Features Trainer")
   ?: error("Not found notificationGroup for IDE Features Trainer")
