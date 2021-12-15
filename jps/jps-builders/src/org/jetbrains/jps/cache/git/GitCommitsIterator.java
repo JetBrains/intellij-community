@@ -20,7 +20,7 @@ public class GitCommitsIterator implements Iterator<String> {
   private static String latestDownloadedCommit = "";
   private static int fetchedCount;
   private int currentPosition;
-  private String remote;
+  private final String remote;
 
   public GitCommitsIterator(@NotNull JpsNettyClient nettyClient, @NotNull String remoteUrl) {
     myNettyClient = nettyClient;

@@ -19,8 +19,10 @@ import org.jetbrains.jps.cache.client.JpsServerClient;
 import org.jetbrains.jps.cache.client.JpsServerConnectionUtil;
 import org.jetbrains.jps.cache.git.GitCommitsIterator;
 import org.jetbrains.jps.cache.loader.JpsOutputLoader.LoaderStatus;
+import org.jetbrains.jps.cache.model.ProjectBuildStatistic;
 import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
+import org.jetbrains.jps.cache.model.SystemOpsStatistic;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
@@ -32,7 +34,6 @@ import org.jetbrains.jps.model.java.JpsJavaProjectExtension;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
@@ -45,13 +46,15 @@ public class JpsOutputLoaderManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(JpsOutputLoaderManager.class);
   private static final String FS_STATE_FILE = "fs_state.dat";
   private static final int DEFAULT_PROJECT_MODULES_COUNT = 2200;
+  private static final int PROJECT_MODULE_DOWNLOAD_SIZE_BYTES = 512_000;
+  private static final int AVERAGE_CACHE_SIZE_BYTES = 512_000 * 1024;
+  private static final int PROJECT_MODULE_SIZE_DISK_BYTES = 921_600;
   private static final int COMMITS_COUNT_THRESHOLD = 600;
-  private static final int PROJECT_MODULE_SIZE_KB = 500;
   private final AtomicBoolean hasRunningTask;
   //private final CompilerWorkspaceConfiguration myWorkspaceConfiguration;
-  private Map<BuildTargetType<?>, Long> myOriginalBuildStatistic;
   private List<JpsOutputLoader<?>> myJpsOutputLoadersLoaders;
   private final JpsMetadataLoader myMetadataLoader;
+  private ProjectBuildStatistic myOriginalBuildStatistic;
   private final CanceledStatus myCanceledStatus;
   private final JpsServerClient myServerClient;
   private boolean isCacheDownloaded;
@@ -77,7 +80,6 @@ public class JpsOutputLoaderManager implements Disposable {
     myProjectPath = projectPath;
     hasRunningTask = new AtomicBoolean();
     myBuildOutDir = getBuildDirPath(project);
-    myOriginalBuildStatistic = new HashMap<>();
     myServerClient = JpsServerClient.getServerClient();
     myMetadataLoader = new JpsMetadataLoader(projectPath, myServerClient);
     //myWorkspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
@@ -111,9 +113,14 @@ public class JpsOutputLoaderManager implements Disposable {
   public void updateBuildStatistic(@NotNull ProjectDescriptor projectDescriptor) {
     if (!hasRunningTask.get() && isCacheDownloaded) {
       BuildTargetsState targetsState = projectDescriptor.getTargetsState();
-      myOriginalBuildStatistic.forEach((buildTargetType, originalBuildTime) -> {
+      myOriginalBuildStatistic.getBuildTargetTypeStatistic().forEach((buildTargetType, originalBuildTime) -> {
         targetsState.setAverageBuildTime(buildTargetType, originalBuildTime);
+        LOG.info("Saving old build statistic for " + buildTargetType.getTypeId() + " with value " + originalBuildTime);
       });
+      Long originalBuildStatisticProjectRebuildTime = myOriginalBuildStatistic.getProjectRebuildTime();
+      targetsState.setLastSuccessfulRebuildDuration(originalBuildStatisticProjectRebuildTime);
+      LOG.info("Saving old project rebuild time " + originalBuildStatisticProjectRebuildTime);
+
     }
   }
 
@@ -187,8 +194,8 @@ public class JpsOutputLoaderManager implements Disposable {
 
   private boolean isDownloadQuickerThanLocalBuild(BuildRunner buildRunner, int commitsCountBetweenCompilation,
                                                   List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
-    Long connectionSpeed = JpsServerConnectionUtil.measureConnectionSpeed(myNettyClient);
-    if (connectionSpeed == null) {
+    SystemOpsStatistic systemOpsStatistic = JpsServerConnectionUtil.measureConnectionSpeed(myNettyClient);
+    if (systemOpsStatistic == null) {
       LOG.info("Connection speed is too small to download caches");
       return false;
     }
@@ -200,20 +207,29 @@ public class JpsOutputLoaderManager implements Disposable {
       approximateBuildTime = buildTimeAndProjectModulesCount.first;
       projectModulesCount = buildTimeAndProjectModulesCount.second;
     }
-    int approximateDownloadSizeKB = projectModulesCount * PROJECT_MODULE_SIZE_KB + 512_000;
-    long expectedDownloadTimeSec = approximateDownloadSizeKB * 1024L / connectionSpeed;
-    LOG.info("Approximate expected download size: " + approximateDownloadSizeKB  + "KB. Expected download time: " + expectedDownloadTimeSec + "sec.");
+
+    double magicCoefficient = 1.3;
+    int approximateSizeToDelete = projectModulesCount * PROJECT_MODULE_SIZE_DISK_BYTES;
+    int approximateDownloadSize = projectModulesCount * PROJECT_MODULE_DOWNLOAD_SIZE_BYTES + AVERAGE_CACHE_SIZE_BYTES;
+    long expectedDownloadTimeSec = approximateDownloadSize / systemOpsStatistic.getConnectionSpeedBytesPerSec();
+    long expectedDecompressionTimeSec = approximateDownloadSize / systemOpsStatistic.getDecompressionTimeBytesPesSec();
+    long expectedDeleteTimeSec = approximateSizeToDelete / systemOpsStatistic.getDeletionTimeBytesPerSec();
+    long expectedTimeOfWorkSec = (long)(expectedDeleteTimeSec * magicCoefficient) + expectedDownloadTimeSec + expectedDecompressionTimeSec;
+    LOG.info("Expected download size: " + StringUtil.formatFileSize(approximateDownloadSize) + ". Expected download time: " + expectedDownloadTimeSec + "sec. " +
+             "Expected decompression time: " + expectedDecompressionTimeSec + "sec. " +
+             "Expected size to delete: " + StringUtil.formatFileSize(approximateDownloadSize) + ". Expected delete time: " + expectedDeleteTimeSec + "sec. " +
+             "Total time of working: " + expectedTimeOfWorkSec + "sec.");
 
     if (approximateBuildTime == 0 && commitsCountBetweenCompilation > COMMITS_COUNT_THRESHOLD) {
       LOG.info("Can't calculate approximate project build time, but there are " + commitsCountBetweenCompilation + " not compiled " +
-               "commits and internet connection is good enough. Expected download time: " + expectedDownloadTimeSec + "sec.");
+               "and it seems that it will be faster to download caches.");
       return true;
     }
     if (approximateBuildTime == 0) {
       LOG.info("Can't calculate approximate project build time");
       return false;
     }
-    return expectedDownloadTimeSec * 1000 < approximateBuildTime;
+    return expectedTimeOfWorkSec * 1000 < approximateBuildTime;
   }
 
   private void startLoadingForCommit(@NotNull String commitId) {
@@ -401,9 +417,11 @@ public class JpsOutputLoaderManager implements Disposable {
       long estimatedBuildTime = IncProjectBuilder.calculateEstimatedBuildTime(projectDescriptor, projectDescriptor.getTargetsState(),
                                                                        compilationScope);
       BuildTargetsState targetsState = projectDescriptor.getTargetsState();
+      Map<BuildTargetType<?>, Long> buildTargetTypeStatistic = new HashMap<>();
       for (BuildTargetType<?> type : TargetTypeRegistry.getInstance().getTargetTypes()) {
-        myOriginalBuildStatistic.put(type,  targetsState.getAverageBuildTime(type));
+        buildTargetTypeStatistic.put(type,  targetsState.getAverageBuildTime(type));
       }
+      myOriginalBuildStatistic = new ProjectBuildStatistic(targetsState.getLastSuccessfulRebuildDuration(), buildTargetTypeStatistic);
       long totalCalculationTime = System.currentTimeMillis() - startTime;
       LOG.info("Calculated build time: " + estimatedBuildTime);
       LOG.info("Time spend to context initialization and time calculation: " + totalCalculationTime);

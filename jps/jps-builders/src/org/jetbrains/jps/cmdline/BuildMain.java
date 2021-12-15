@@ -250,7 +250,7 @@ public final class BuildMain {
           }
           case REPOSITORY_COMMITS_RESULT: {
             CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult repositoryCommitsResult = controllerMessage.getRepositoryCommitsResult();
-            LOG.info("Got repository commits: " + repositoryCommitsResult.getCommitList());
+            LOG.info("Got " + repositoryCommitsResult.getCommitList().size() + " repository commits");
             GitCommitsIterator.setRepositoryCommits(repositoryCommitsResult.getCommitList(),
                                                     repositoryCommitsResult.getLatestBuiltMasterCommit(),
                                                     repositoryCommitsResult.getLatestDownloadCommit());

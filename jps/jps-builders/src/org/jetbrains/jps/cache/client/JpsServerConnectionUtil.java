@@ -6,6 +6,7 @@ import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.io.CountingGZIPInputStream;
+import com.intellij.util.io.ZipUtil;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -15,6 +16,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
+import org.jetbrains.jps.cache.model.SystemOpsStatistic;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -39,24 +41,29 @@ import java.util.Map;
 public class JpsServerConnectionUtil {
   private static final Logger LOG = Logger.getInstance(JpsServerConnectionUtil.class);
   private static final String CDN_CACHE_HEADER = "X-Cache";
+  private static final String INITIAL_FILE_FOR_SPEED_TEST = "2_MB.zip";
 
-  public static @Nullable Long measureConnectionSpeed(@NotNull JpsNettyClient nettyClient) {
+  public static @Nullable SystemOpsStatistic measureConnectionSpeed(@NotNull JpsNettyClient nettyClient) {
     long start = System.currentTimeMillis();
-    String initialFile = calculateFileName(null);
-    Long firstChunkConnectionSpeed = measureConnectionSpeedOnFile(nettyClient, initialFile);
-    String nextChunkFileName = calculateFileName(firstChunkConnectionSpeed);
+    SystemOpsStatistic firstSystemStats = measureConnectionSpeedOnFile(nettyClient, INITIAL_FILE_FOR_SPEED_TEST, null);
+    if (firstSystemStats == null) {
+      LOG.info("Can't detect connection speed");
+      return null;
+    }
+    String nextChunkFileName = calculateFileName(firstSystemStats);
     if (nextChunkFileName != null) {
-      Long connectionSpeed = measureConnectionSpeedOnFile(nettyClient, nextChunkFileName);
+      SystemOpsStatistic statistic = measureConnectionSpeedOnFile(nettyClient, nextChunkFileName, firstSystemStats);
       long connectionSpeedTime = (System.currentTimeMillis() - start) / 1000;
-      LOG.info("Checking connection speed took: " + connectionSpeedTime + "s");
-      return connectionSpeed;
+      LOG.info("Checking system operations: connection speed, decompression and delete took: " + connectionSpeedTime + "s");
+      return statistic;
     } else {
       LOG.info("Connection speed is too small");
-      return firstChunkConnectionSpeed;
     }
+    return null;
   }
 
-  private static @Nullable Long measureConnectionSpeedOnFile(@NotNull JpsNettyClient nettyClient, @NotNull String fileName) {
+  private static @Nullable SystemOpsStatistic measureConnectionSpeedOnFile(@NotNull JpsNettyClient nettyClient, @NotNull String fileName,
+                                                                           @Nullable SystemOpsStatistic previousSystemStats) {
     Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders(nettyClient);
     String url = calculateURL(fileName);
     LOG.info("Checking connection speed base on the file: " + fileName);
@@ -71,7 +78,6 @@ public class JpsServerConnectionUtil {
         Header header = response.getFirstHeader(CDN_CACHE_HEADER);
 
         File downloadedFile = saveToFile(FileUtil.createTempFile("download.", ".tmp").toPath(), responseEntity, null).toFile();
-        //File downloadedFile = request.saveToFile(FileUtil.createTempFile("download.", ".tmp"), indicator);
         long downloadTime = System.currentTimeMillis() - start;
         long bytesPerSecond = fileSize / downloadTime * 1000;
 
@@ -82,20 +88,34 @@ public class JpsServerConnectionUtil {
         else {
           LOG.info("Speed of connection to S3: " + StringUtil.formatFileSize(bytesPerSecond) + "/s; " + formatInternetSpeed(bytesPerSecond * 8));
         }
+
+        long decompressionTime;
+        if (previousSystemStats == null) {
+          start = System.currentTimeMillis();
+          ZipUtil.extract(downloadedFile, FileUtil.createTempDirectory("decompress", ".tmp"), null);
+          decompressionTime = System.currentTimeMillis() - start;
+          LOG.info("Time spent to decompress file " + fileName + " " + decompressionTime + "ms");
+        } else {
+          // We reuse decompression value because it measures only once
+          decompressionTime = previousSystemStats.getDecompressionTimeBytesPesSec();
+        }
+        start = System.currentTimeMillis();
         FileUtil.delete(downloadedFile);
-        return bytesPerSecond;
+        long deletionTime = System.currentTimeMillis() - start;
+        LOG.info("Time spent to delete file " + fileName + " " + deletionTime + "ms");
+        return new SystemOpsStatistic(downloadTime, decompressionTime, deletionTime, fileSize);
       } else {
         String errorText = StreamUtil.readText(new InputStreamReader(responseEntity.getContent(), StandardCharsets.UTF_8));
         LOG.warn("Request: " + url + " Error: " + response.getStatusLine().getStatusCode() + " body: " + errorText);
       }
     } catch (IOException e) {
-      LOG.warn("Failed to download file for measurement connection speed", e);
+      LOG.warn("Failed to download/delete/decompress file for measurement system stats", e);
     }
     return null;
   }
 
-  private static @Nullable String calculateFileName(@Nullable Long connectionSpeed) {
-    if (connectionSpeed == null) return "2_MB.dat";
+  private static @Nullable String calculateFileName(@NotNull SystemOpsStatistic systemOpsStatistic) {
+    long connectionSpeed = systemOpsStatistic.getConnectionSpeedBytesPerSec();
     if (connectionSpeed > 3_000_000) return "75_MB.dat";
     if (connectionSpeed > 2_000_000) return "50_MB.dat";
     if (connectionSpeed > 1_300_000) return "25_MB.dat";
