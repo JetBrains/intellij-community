@@ -55,7 +55,7 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
     if (lookup != null) {
       LookupElement item = lookup.getCurrentItem()
       assertNotNull item
-      assertTrue !clazz.isInstance(item)
+      assertTrue (!(item instanceof PostfixTemplateLookupElement) || !clazz.isInstance(item.postfixTemplate))
     }
   }
 
@@ -97,5 +97,9 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
 
   void testNoNNForPrimitive() {
     doNoPopupTest "int x = 1; x.<caret>", "nn", GrIfNotNullExpressionPostfixTemplate
+  }
+
+  void testNull() {
+    doAutoPopupTest "foo().<caret>", "null", "if (foo() == null) {\n    \n}", GrIfNullExpressionPostfixTemplate
   }
 }

@@ -37,4 +37,5 @@ private fun getBuiltinTemplates(groovyPostfixTemplateProvider: GroovyPostfixTemp
   GrNewExpressionPostfixTemplate(groovyPostfixTemplateProvider),
   GrIfNotNullExpressionPostfixTemplate(groovyPostfixTemplateProvider, "nn"),
   GrIfNotNullExpressionPostfixTemplate(groovyPostfixTemplateProvider, "notnull"),
+  GrIfNullExpressionPostfixTemplate(groovyPostfixTemplateProvider),
 )
