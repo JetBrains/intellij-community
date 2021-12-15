@@ -109,7 +109,7 @@ public class NewExprent extends Exprent {
       if (constructor != null) { // should be true only for a lambda expression with a virtual content method
         lst.add(constructor);
       }
-      lst.addAll(this.constructor.getLstParameters());
+      lst.addAll(this.constructor.getParameters());
     }
 
     return lst;
@@ -150,7 +150,7 @@ public class NewExprent extends Exprent {
         String enclosing = null;
 
         if (!lambda && constructor != null) {
-          enclosing = getQualifiedNewInstance(child.anonymousClassType.value, constructor.getLstParameters(), indent, tracer);
+          enclosing = getQualifiedNewInstance(child.anonymousClassType.value, constructor.getParameters(), indent, tracer);
           if (enclosing != null) {
             buf.append(enclosing).append('.');
           }
@@ -194,11 +194,11 @@ public class NewExprent extends Exprent {
       buf.append('(');
 
       if (!lambda && constructor != null) {
-        List<Exprent> parameters = constructor.getLstParameters();
+        List<Exprent> parameters = constructor.getParameters();
         List<VarVersionPair> mask = child.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, constructor.getStringDescriptor()).synthParameters;
         if (mask == null) {
           InvocationExprent superCall = child.superInvocation;
-          mask = ExprUtil.getSyntheticParametersMask(superCall.getClassname(), superCall.getStringDescriptor(), parameters.size());
+          mask = ExprUtil.getSyntheticParametersMask(superCall.getClassName(), superCall.getStringDescriptor(), parameters.size());
         }
 
         int start = enumConst ? 2 : 0;
@@ -255,7 +255,7 @@ public class NewExprent extends Exprent {
         String enclosing = null;
 
         if (constructor != null) {
-          enclosing = getQualifiedNewInstance(newType.value, constructor.getLstParameters(), indent, tracer);
+          enclosing = getQualifiedNewInstance(newType.value, constructor.getParameters(), indent, tracer);
           if (enclosing != null) {
             buf.append(enclosing).append('.');
           }
@@ -277,8 +277,8 @@ public class NewExprent extends Exprent {
       }
 
       if (constructor != null) {
-        List<Exprent> parameters = constructor.getLstParameters();
-        List<VarVersionPair> mask = ExprUtil.getSyntheticParametersMask(constructor.getClassname(), constructor.getStringDescriptor(), parameters.size());
+        List<Exprent> parameters = constructor.getParameters();
+        List<VarVersionPair> mask = ExprUtil.getSyntheticParametersMask(constructor.getClassName(), constructor.getStringDescriptor(), parameters.size());
 
         int start = enumConst ? 2 : 0;
         if (!enumConst || start < parameters.size()) {

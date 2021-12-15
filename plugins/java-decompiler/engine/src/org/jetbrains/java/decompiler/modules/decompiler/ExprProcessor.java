@@ -844,7 +844,7 @@ public class ExprProcessor implements CodeConstants {
       // "unbox" invocation parameters, e.g. 'byteSet.add((byte)123)' or 'new ShortContainer((short)813)'
       if (exprent.type == Exprent.EXPRENT_INVOCATION && ((InvocationExprent)exprent).isBoxingCall()) {
         InvocationExprent invocationExprent = (InvocationExprent)exprent;
-        exprent = invocationExprent.getLstParameters().get(0);
+        exprent = invocationExprent.getParameters().get(0);
         int paramType = invocationExprent.getDescriptor().params[0].type;
         if (exprent.type == Exprent.EXPRENT_CONST && ((ConstExprent)exprent).getConstType().type != paramType) {
           leftType = new VarType(paramType);

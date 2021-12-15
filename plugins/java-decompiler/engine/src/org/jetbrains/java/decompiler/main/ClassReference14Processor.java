@@ -29,28 +29,28 @@ public final class ClassReference14Processor {
   static {
     InvocationExprent invFor = new InvocationExprent();
     invFor.setName("forName");
-    invFor.setClassname("java/lang/Class");
+    invFor.setClassName("java/lang/Class");
     invFor.setStringDescriptor("(Ljava/lang/String;)Ljava/lang/Class;");
     invFor.setDescriptor(MethodDescriptor.parseDescriptor("(Ljava/lang/String;)Ljava/lang/Class;"));
     invFor.setStatic(true);
-    invFor.setLstParameters(Collections.singletonList(new VarExprent(0, VarType.VARTYPE_STRING, null)));
+    invFor.setParameters(Collections.singletonList(new VarExprent(0, VarType.VARTYPE_STRING, null)));
     BODY_EXPR = new ExitExprent(ExitExprent.EXIT_RETURN, invFor, VarType.VARTYPE_CLASS, null);
 
     InvocationExprent ctor = new InvocationExprent();
     ctor.setName(CodeConstants.INIT_NAME);
-    ctor.setClassname("java/lang/NoClassDefFoundError");
+    ctor.setClassName("java/lang/NoClassDefFoundError");
     ctor.setStringDescriptor("()V");
-    ctor.setFunctype(InvocationExprent.TYP_INIT);
+    ctor.setFuncType(InvocationExprent.TYPE_INIT);
     ctor.setDescriptor(MethodDescriptor.parseDescriptor("()V"));
     NewExprent newExpr = new NewExprent(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/NoClassDefFoundError"), new ArrayList<>(), null);
     newExpr.setConstructor(ctor);
     InvocationExprent invCause = new InvocationExprent();
     invCause.setName("initCause");
-    invCause.setClassname("java/lang/NoClassDefFoundError");
+    invCause.setClassName("java/lang/NoClassDefFoundError");
     invCause.setStringDescriptor("(Ljava/lang/Throwable;)Ljava/lang/Throwable;");
     invCause.setDescriptor(MethodDescriptor.parseDescriptor("(Ljava/lang/Throwable;)Ljava/lang/Throwable;"));
     invCause.setInstance(newExpr);
-    invCause.setLstParameters(
+    invCause.setParameters(
       Collections.singletonList(new VarExprent(2, new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/ClassNotFoundException"), null)));
     HANDLER_EXPR = new ExitExprent(ExitExprent.EXIT_THROW, invCause, null, null);
   }
@@ -213,14 +213,14 @@ public final class ClassReference14Processor {
                     if (asexpr.getLeft().equals(field) && asexpr.getRight().type == Exprent.EXPRENT_INVOCATION) {
                       InvocationExprent invexpr = (InvocationExprent)asexpr.getRight();
 
-                      if (invexpr.getClassname().equals(wrapper.getClassStruct().qualifiedName) &&
+                      if (invexpr.getClassName().equals(wrapper.getClassStruct().qualifiedName) &&
                           invexpr.getName().equals(meth.methodStruct.getName()) &&
                           invexpr.getStringDescriptor().equals(meth.methodStruct.getDescriptor())) {
 
-                        if (invexpr.getLstParameters().get(0).type == Exprent.EXPRENT_CONST) {
+                        if (invexpr.getParameters().get(0).type == Exprent.EXPRENT_CONST) {
                           wrapper.getHiddenMembers()
                             .add(InterpreterUtil.makeUniqueKey(fd.getName(), fd.getDescriptor()));  // hide synthetic field
-                          return ((ConstExprent)invexpr.getLstParameters().get(0)).getValue().toString();
+                          return ((ConstExprent)invexpr.getParameters().get(0)).getValue().toString();
                         }
                       }
                     }

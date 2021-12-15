@@ -132,7 +132,7 @@ public class NestedClassProcessor {
             for (int i = 0; i < md_content.params.length; ++i) {
               VarVersionPair varVersion = new VarVersionPair(varIndex, 0);
               if (i < vars_count) {
-                Exprent param = inv_dynamic.getLstParameters().get(param_index + i);
+                Exprent param = inv_dynamic.getParameters().get(param_index + i);
 
                 if (param.type == Exprent.EXPRENT_VAR) {
                   mapNewNames.put(varVersion, enclosingMethod.varproc.getVarName(new VarVersionPair((VarExprent)param)));
@@ -267,8 +267,8 @@ public class NestedClassProcessor {
               if (expr.type == Exprent.EXPRENT_NEW) {
                 InvocationExprent constructor = ((NewExprent)expr).getConstructor();
 
-                if (constructor != null && mapVarMasks.containsKey(constructor.getClassname())) { // non-static inner class constructor
-                  String refClassName = constructor.getClassname();
+                if (constructor != null && mapVarMasks.containsKey(constructor.getClassName())) { // non-static inner class constructor
+                  String refClassName = constructor.getClassName();
                   ClassNode nestedClassNode = node.getClassNode(refClassName);
 
                   if (nestedClassNode.type != ClassNode.CLASS_MEMBER) {
@@ -281,7 +281,7 @@ public class NestedClassProcessor {
                     List<VarFieldPair> lstTemp = new ArrayList<>();
 
                     for (int i = 0; i < mask.size(); i++) {
-                      Exprent param = constructor.getLstParameters().get(i);
+                      Exprent param = constructor.getParameters().get(i);
                       VarFieldPair pair = null;
 
                       if (param.type == Exprent.EXPRENT_VAR && mask.get(i) != null) {
@@ -513,7 +513,7 @@ public class NestedClassProcessor {
                 CodeConstants.INIT_NAME.equals(method.methodStruct.getName()) &&
                 exprent.type == Exprent.EXPRENT_INVOCATION) {
               InvocationExprent invokeExpr = (InvocationExprent)exprent;
-              if (invokeExpr.getFunctype() == InvocationExprent.TYP_INIT) {
+              if (invokeExpr.getFuncType() == InvocationExprent.TYPE_INIT) {
                 // invocation of the super constructor in an anonymous class
                 child.superInvocation = invokeExpr; // FIXME: save original names of parameters
                 return 2;
@@ -871,7 +871,7 @@ public class NestedClassProcessor {
           res = classname.equals(((FieldExprent)expr).getClassname());
           break;
         case Exprent.EXPRENT_INVOCATION:
-          res = classname.equals(((InvocationExprent)expr).getClassname());
+          res = classname.equals(((InvocationExprent)expr).getClassName());
           break;
         case Exprent.EXPRENT_NEW:
           VarType newType = expr.getExprType();

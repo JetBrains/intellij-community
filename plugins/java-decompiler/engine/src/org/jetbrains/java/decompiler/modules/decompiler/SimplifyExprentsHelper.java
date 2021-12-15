@@ -518,8 +518,8 @@ public class SimplifyExprentsHelper {
         for (Exprent expr : lstExprents) {
           if (expr.type == Exprent.EXPRENT_NEW) {
             NewExprent newExpr = (NewExprent)expr;
-            if (newExpr.getConstructor() != null && !newExpr.getConstructor().getLstParameters().isEmpty() &&
-                newExpr.getConstructor().getLstParameters().get(0).equals(invocation.getInstance())) {
+            if (newExpr.getConstructor() != null && !newExpr.getConstructor().getParameters().isEmpty() &&
+                newExpr.getConstructor().getParameters().get(0).equals(invocation.getInstance())) {
 
               String classname = newExpr.getNewType().value;
               ClassNode node = DecompilerContext.getClassProcessor().getMapRootClasses().get(classname);
@@ -556,7 +556,7 @@ public class SimplifyExprentsHelper {
             if (remote.type == Exprent.EXPRENT_INVOCATION) {
               InvocationExprent in = (InvocationExprent)remote;
 
-              if (in.getFunctype() == InvocationExprent.TYP_INIT &&
+              if (in.getFuncType() == InvocationExprent.TYPE_INIT &&
                   in.getInstance().type == Exprent.EXPRENT_VAR &&
                   as.getLeft().equals(in.getInstance())) {
                 newExpr.setConstructor(in);
@@ -593,7 +593,7 @@ public class SimplifyExprentsHelper {
     if (exprent.type == Exprent.EXPRENT_INVOCATION) {
       InvocationExprent in = (InvocationExprent)exprent;
 
-      if (in.getInvocationTyp() == InvocationExprent.INVOKE_DYNAMIC) {
+      if (in.getInvocationType() == InvocationExprent.INVOKE_DYNAMIC) {
         String lambda_class_name = cl.qualifiedName + in.getInvokeDynamicClassSuffix();
         ClassNode lambda_class = DecompilerContext.getClassProcessor().getMapRootClasses().get(lambda_class_name);
 
@@ -623,7 +623,7 @@ public class SimplifyExprentsHelper {
 
     if (exprent.type == Exprent.EXPRENT_INVOCATION) {
       InvocationExprent in = (InvocationExprent)exprent;
-      if (in.getFunctype() == InvocationExprent.TYP_INIT && in.getInstance().type == Exprent.EXPRENT_NEW) {
+      if (in.getFuncType() == InvocationExprent.TYPE_INIT && in.getInstance().type == Exprent.EXPRENT_NEW) {
         NewExprent newExpr = (NewExprent)in.getInstance();
         newExpr.setConstructor(in);
         in.setInstance(null);
