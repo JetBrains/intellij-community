@@ -13,7 +13,11 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentsOfType
 import com.siyeh.ig.psiutils.BoolUtils
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import kotlin.math.max
 
 object GroovyPostfixTemplateUtils {
@@ -46,6 +50,14 @@ object GroovyPostfixTemplateUtils {
                ?.toList() ?: emptyList()
     }
 
+  }
+
+  fun shouldBeParenthesized(expr: GrExpression): Boolean = when(expr) {
+    is GrOperatorExpression -> true
+    is GrConditionalExpression -> true
+    is GrSafeCastExpression -> true
+    is GrMethodCallExpression -> expr.argumentList.leftParen == null && expr.argumentList.rightParen == null
+    else -> false
   }
 
 }

@@ -9,6 +9,7 @@ import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettin
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.GrCastExpressionPostfixTemplate
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.GrParenthesizedExpressionPostfixTemplate
 import org.jetbrains.plugins.groovy.completion.GroovyAutoPopupTest
 
@@ -47,11 +48,15 @@ class GroovyPostfixTemplatesTest extends GroovyAutoPopupTest {
       myFixture.checkResult result
     }
     else {
-      assertNull(lookup);
+      2assertNull(lookup);
     }
   }
 
   void testPar() {
     doAutoPopupTest "1.<caret>", "par", "(1)", GrParenthesizedExpressionPostfixTemplate
+  }
+
+  void testCast() {
+    doAutoPopupTest "1.<caret>", "cast", "1 as <caret>", GrCastExpressionPostfixTemplate
   }
 }

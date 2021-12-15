@@ -4,4 +4,7 @@ package org.jetbrains.plugins.groovy.codeInsight.template.postfix
 import com.intellij.codeInsight.template.postfix.templates.ParenthesizedPostfixTemplate
 
 class GrParenthesizedExpressionPostfixTemplate :
-  ParenthesizedPostfixTemplate(GroovyPostfixTemplateUtils.GROOVY_PSI_INFO, GroovyPostfixTemplateUtils.EXPRESSION_SELECTOR)
+  ParenthesizedPostfixTemplate(GroovyPostfixTemplateUtils.GROOVY_PSI_INFO, GroovyPostfixTemplateUtils.EXPRESSION_SELECTOR) {
+
+  override fun getId(): String = "groovy.postfix.template.par"
+}

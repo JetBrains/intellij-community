@@ -9,7 +9,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle
 
 class GroovyPostfixTemplateProvider : PostfixTemplateProvider {
 
-  override fun getTemplates(): Set<PostfixTemplate> = BUILTIN_TEMPLATES
+  override fun getTemplates(): Set<PostfixTemplate> = getBuiltinTemplates(this)
 
   override fun isTerminalSymbol(currentChar: Char): Boolean = currentChar == '.' || currentChar == '|'
 
@@ -29,6 +29,7 @@ class GroovyPostfixTemplateProvider : PostfixTemplateProvider {
 
 }
 
-private val BUILTIN_TEMPLATES: Set<PostfixTemplate> = setOf(
-  GrParenthesizedExpressionPostfixTemplate()
+private fun getBuiltinTemplates(groovyPostfixTemplateProvider: GroovyPostfixTemplateProvider): Set<PostfixTemplate> = setOf(
+  GrParenthesizedExpressionPostfixTemplate(),
+  GrCastExpressionPostfixTemplate(groovyPostfixTemplateProvider),
 )
