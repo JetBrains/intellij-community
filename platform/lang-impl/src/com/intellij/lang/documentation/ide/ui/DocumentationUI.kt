@@ -13,6 +13,7 @@ import com.intellij.lang.documentation.ide.actions.PRIMARY_GROUP_ID
 import com.intellij.lang.documentation.ide.actions.registerBackForwardActions
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.impl.DocumentationRequest
+import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.EDT
@@ -145,7 +146,15 @@ internal class DocumentationUI(
     }
     imageResolver = data.imageResolver
     val presentation = request.presentation
-    val locationChunk = presentation.locationText?.let { locationText ->
+    val locationChunk = data.locationHtml?.let { HtmlChunk.raw(it) } ?: getDefaultLocationChunk(presentation)
+    val linkChunk = linkChunk(presentation.presentableText, data)
+    val decorated = decorate(data.html, locationChunk, linkChunk)
+    val scrollingPosition = data.anchor?.let(ScrollingPosition::Anchor) ?: ScrollingPosition.Reset
+    update(decorated, scrollingPosition)
+  }
+
+  private fun getDefaultLocationChunk(presentation: TargetPresentation): HtmlChunk? {
+    return presentation.locationText?.let { locationText ->
       presentation.locationIcon?.let { locationIcon ->
         val iconKey = htmlFactory.registerIcon(locationIcon)
         HtmlChunk.fragment(
@@ -155,10 +164,6 @@ internal class DocumentationUI(
         )
       } ?: HtmlChunk.text(locationText)
     }
-    val linkChunk = linkChunk(presentation.presentableText, data)
-    val decorated = decorate(data.html, locationChunk, linkChunk)
-    val scrollingPosition = data.anchor?.let(ScrollingPosition::Anchor) ?: ScrollingPosition.Reset
-    update(decorated, scrollingPosition)
   }
 
   private fun fetchingProgress() {
