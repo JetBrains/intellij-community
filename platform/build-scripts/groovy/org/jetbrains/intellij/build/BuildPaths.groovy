@@ -72,9 +72,4 @@ abstract class BuildPaths {
    */
   final String temp
   final Path tempDir
-
-  /**
-   * Path to a directory containing JDK (currently Java 11) which is used to compile the project
-   */
-  String jdkHome
 }

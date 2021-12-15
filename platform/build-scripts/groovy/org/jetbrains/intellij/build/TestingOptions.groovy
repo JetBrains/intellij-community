@@ -70,7 +70,7 @@ class TestingOptions {
    * By default {@code runtimeBuild} from gradle.properties will be used.
    * If it is missing then tests will run under the same runtime which is used to run the build scripts.
    */
-  String customJrePath = System.getProperty(TEST_JRE_PROPERTY)
+  String customRuntimePath = System.getProperty(TEST_JRE_PROPERTY)
 
   /**
    * Specifies if ant or junit 5 direct runner should be used 

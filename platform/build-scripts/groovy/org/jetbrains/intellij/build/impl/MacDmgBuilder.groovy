@@ -30,7 +30,7 @@ final class MacDmgBuilder {
                               boolean notarize) {
     String javaExePath = null
     if (jreArchivePath != null) {
-      String rootDir = BundledJreManager.jbrRootDir(jreArchivePath) ?: "jdk"
+      String rootDir = BundledRuntime.rootDir(jreArchivePath) ?: "jdk"
       javaExePath = "../${rootDir}/Contents/Home/bin/java"
     }
 
@@ -96,7 +96,7 @@ final class MacDmgBuilder {
         @Override
         void run() {
           Files.createDirectories(tempDir)
-          bundleJBRAndSignSitLocally(sitFile, tempDir, jreArchivePath, customizer, context)
+          bundleRuntimeAndSignSitLocally(sitFile, tempDir, jreArchivePath, customizer, context)
         }
       })
     }
@@ -114,7 +114,7 @@ final class MacDmgBuilder {
   }
 
   @SuppressWarnings('SpellCheckingInspection')
-  private static void bundleJBRAndSignSitLocally(Path targetFile,
+  private static void bundleRuntimeAndSignSitLocally(Path targetFile,
                                                  Path tempDir,
                                                  Path jreArchivePath,
                                                  MacDistributionCustomizer customizer,

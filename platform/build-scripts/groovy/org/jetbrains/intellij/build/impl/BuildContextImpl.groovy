@@ -177,8 +177,8 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  BundledJreManager getBundledJreManager() {
-    compilationContext.bundledJreManager
+  BundledRuntime getBundledRuntime() {
+    compilationContext.bundledRuntime
   }
 
   @Override

@@ -71,7 +71,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   void buildArtifacts(Path osSpecificDistPath) {
     copyFilesForOsDistribution(osSpecificDistPath)
     buildContext.executeStep("build linux .tar.gz", BuildOptions.LINUX_ARTIFACTS_STEP) {
-      if (customizer.buildTarGzWithoutBundledJre) {
+      if (customizer.buildTarGzWithoutBundledRuntime) {
         buildContext.executeStep("Build Linux .tar.gz without bundled JRE", BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP) {
           buildTarGz(null, osSpecificDistPath, "-no-jbr", buildContext)
         }
@@ -81,7 +81,7 @@ final class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         return
       }
 
-      Path jreDirectoryPath = buildContext.bundledJreManager.extractJre(BundledJreManager.getProductJbrPrefix(buildContext), OsFamily.LINUX, JvmArchitecture.x64)
+      Path jreDirectoryPath = buildContext.bundledRuntime.extract(BundledRuntime.getProductPrefix(buildContext), OsFamily.LINUX, JvmArchitecture.x64)
       Path tarGzPath = buildTarGz(jreDirectoryPath.toString(), osSpecificDistPath, "", buildContext)
 
       if (jreDirectoryPath != null) {

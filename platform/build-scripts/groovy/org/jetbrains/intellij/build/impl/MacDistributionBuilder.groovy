@@ -174,7 +174,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
                                                          .setAttribute("arch", arch.name()), new Supplier<Void>() {
       @Override
       Void get() {
-        ForkJoinTask.invokeAll(buildForArch(arch, context.bundledJreManager, macZip, notarize, customizer, context)
+        ForkJoinTask.invokeAll(buildForArch(arch, context.bundledRuntime, macZip, notarize, customizer, context)
                                  .findAll { it != null })
 
         return null
@@ -183,7 +183,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
   }
 
   private static List<ForkJoinTask<?>> buildForArch(JvmArchitecture arch,
-                                                    BundledJreManager jreManager,
+                                                    BundledRuntime jreManager,
                                                     Path macZip,
                                                     boolean notarize,
                                                     MacDistributionCustomizer customizer,
@@ -218,7 +218,7 @@ final class MacDistributionBuilder extends OsSpecificDistributionBuilder {
         new Runnable() {
           @Override
           void run() {
-            Path jreArchive = jreManager.findJreArchive(BundledJreManager.getProductJbrPrefix(context), OsFamily.MACOS, arch)
+            Path jreArchive = jreManager.findArchive(BundledRuntime.getProductPrefix(context), OsFamily.MACOS, arch)
             MacDmgBuilder.signAndBuildDmg(context, customizer, context.proprietaryBuildTools.macHostProperties, macZip,
                                           additional, jreArchive, suffix, notarize)
           }

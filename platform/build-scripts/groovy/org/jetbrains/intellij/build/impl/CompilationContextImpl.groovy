@@ -47,7 +47,7 @@ final class CompilationContextImpl implements CompilationContext {
   final Map<String, String> newToOldModuleName
   final Map<String, JpsModule> nameToModule
   final DependenciesProperties dependenciesProperties
-  final BundledJreManager bundledJreManager
+  final BundledRuntime bundledRuntime
   JpsCompilationData compilationData
 
   @SuppressWarnings("GrUnresolvedAccess")
@@ -93,7 +93,7 @@ final class CompilationContextImpl implements CompilationContext {
   }
 
   private static void defineJavaSdk(CompilationContext context) {
-    def homePath = context.bundledJreManager.getSdkHomeForCurrentOsAndArch()
+    def homePath = context.bundledRuntime.getHomeForCurrentOsAndArch()
     def jbrHome = toCanonicalPath(homePath.toString())
     def jbrVersionName = "11"
 
@@ -173,7 +173,7 @@ final class CompilationContextImpl implements CompilationContext {
     paths = new BuildPathsImpl(communityHome, projectHome, buildOutputRoot, logDir)
 
     this.dependenciesProperties = new DependenciesProperties(this)
-    this.bundledJreManager = new BundledJreManager(this)
+    this.bundledRuntime = new BundledRuntime(this)
   }
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
@@ -198,7 +198,7 @@ final class CompilationContextImpl implements CompilationContext {
     this.paths = context.paths
     this.compilationData = context.compilationData
     this.dependenciesProperties = context.dependenciesProperties
-    this.bundledJreManager = context.bundledJreManager
+    this.bundledRuntime = context.bundledRuntime
   }
 
   CompilationContextImpl cloneForContext(BuildMessages messages) {

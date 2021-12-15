@@ -3,7 +3,7 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.intellij.build.impl.BundledJreManager
+import org.jetbrains.intellij.build.impl.BundledRuntime
 import org.jetbrains.intellij.build.impl.DependenciesProperties
 import org.jetbrains.intellij.build.impl.JpsCompilationData
 import org.jetbrains.jps.model.JpsModel
@@ -22,7 +22,7 @@ interface CompilationContext {
   JpsProject getProject()
   JpsModel getProjectModel()
   DependenciesProperties getDependenciesProperties()
-  BundledJreManager getBundledJreManager()
+  BundledRuntime getBundledRuntime()
 
   JpsCompilationData getCompilationData()
 

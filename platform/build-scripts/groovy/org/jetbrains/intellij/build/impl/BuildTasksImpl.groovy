@@ -976,7 +976,7 @@ idea.fatal.error.notification=disabled
           break
       }
       builder.copyFilesForOsDistribution(targetDirectory, arch)
-      buildContext.bundledJreManager.extractJreTo(BundledJreManager.getProductJbrPrefix(buildContext), currentOs, targetDirectory.resolve("jbr"), arch)
+      buildContext.bundledRuntime.extractTo(BundledRuntime.getProductPrefix(buildContext), currentOs, targetDirectory.resolve("jbr"), arch)
 
       List<String> executableFilesPatterns = builder.generateExecutableFilesPatterns(true)
       updateExecutablePermissions(targetDirectory, executableFilesPatterns)

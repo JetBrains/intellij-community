@@ -389,14 +389,14 @@ class TestingTasksImpl extends TestingTasks {
     String contentsHome = "Contents/Home"
 
     Path runtimeDir
-    if (options.customJrePath != null) {
-      runtimeDir = Path.of(options.customJrePath)
+    if (options.customRuntimePath != null) {
+      runtimeDir = Path.of(options.customRuntimePath)
       if (!Files.isDirectory(runtimeDir)) {
         throw new IllegalStateException("Custom Jre path from system property '" + TestingOptions.TEST_JRE_PROPERTY + "' is missing: " + runtimeDir)
       }
     }
     else {
-      runtimeDir = context.bundledJreManager.getSdkHomeForCurrentOsAndArch()
+      runtimeDir = context.bundledRuntime.getHomeForCurrentOsAndArch()
     }
 
     if (SystemInfoRt.isWindows) {
