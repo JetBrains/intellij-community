@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.*;
 import com.intellij.util.*;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -86,20 +85,6 @@ public final class ContainerUtil {
       map.put(entry.getFirst(), entry.getSecond());
     }
     return map;
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static @NotNull <T> TObjectHashingStrategy<T> canonicalStrategy() {
-    //noinspection unchecked
-    return TObjectHashingStrategy.CANONICAL;
-  }
-
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static @NotNull <T> TObjectHashingStrategy<T> identityStrategy() {
-    //noinspection unchecked
-    return TObjectHashingStrategy.IDENTITY;
   }
 
   /**
@@ -264,16 +249,6 @@ public final class ContainerUtil {
     return set;
   }
 
-  /**
-   * @deprecated Use {@link HashSet#HashSet(Collection)}
-   */
-  @Contract(pure = true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull <T> HashSet<T> newHashSet(@NotNull Collection<? extends T> collection) {
-    return new HashSet<>(collection);
-  }
-
   public static @NotNull <T> HashSet<T> newHashSet(@NotNull Iterator<? extends T> iterator) {
     HashSet<T> set = new HashSet<>();
     while (iterator.hasNext()) set.add(iterator.next());
@@ -387,6 +362,7 @@ public final class ContainerUtil {
       case 1:
         return Collections.singleton(elements[0]);
       default:
+        //noinspection SSBasedInspection
         return Collections.unmodifiableSet(new HashSet<>(Arrays.asList(elements)));
     }
   }
@@ -515,6 +491,7 @@ public final class ContainerUtil {
     public <T> T @NotNull [] toArray(T @NotNull [] a) {
       int size = size();
       T[] result = a.length >= size ? a : ArrayUtil.newArray(ArrayUtil.getComponentType(a), size);
+      //noinspection SuspiciousSystemArraycopy
       System.arraycopy(myStore, 0, result, 0, size);
       if (result.length > size) {
         result[size] = null;
@@ -1856,7 +1833,7 @@ public final class ContainerUtil {
   /**
    * @param array an input array to process
    * @param mapping a side-effect free function which transforms array elements
-   * @param emptyArray an empty array of desired result type (may be returned if the result is also empty)
+   * @param emptyArray an empty array of desired result type (maybe returned if the result is also empty)
    * @return array consisting of the elements from the input array converted by mapping with nulls filtered out
    */
   @Contract(pure=true)
@@ -2504,41 +2481,6 @@ public final class ContainerUtil {
   @Contract(value = " -> new", pure = true)
   public static @NotNull <K,V> ConcurrentMap<@NotNull K,@NotNull V> createConcurrentWeakMap() {
     return CollectionFactory.createConcurrentWeakMap();
-  }
-
-  public static @NotNull <K> HashingStrategy<K> createHashingStrategy(@NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
-    return new HashingStrategy<K>() {
-      @Override
-      public int hashCode(@Nullable K object) {
-        return hashingStrategy.computeHashCode(object);
-      }
-
-      @Override
-      public boolean equals(@Nullable K o1, @Nullable K o2) {
-        return hashingStrategy.equals(o1, o2);
-      }
-    };
-  }
-
-  /**
-   * @deprecated Use {@link CollectionFactory#createConcurrentWeakMap(int, float, int, HashingStrategy)}
-   * or {@link CollectionFactory#createConcurrentWeakIdentityMap()} (int, float, int)}.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull <K, V> ConcurrentMap<@NotNull K, @NotNull V> createConcurrentWeakMap(int initialCapacity,
-                                                                                     float loadFactor,
-                                                                                     int concurrencyLevel,
-                                                                                     @NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
-    return CollectionFactory.createConcurrentWeakMap(initialCapacity, loadFactor, concurrencyLevel, createHashingStrategy(hashingStrategy));
-  }
-
-  /**
-   * @deprecated Use {@link CollectionFactory#createConcurrentWeakMap()}
-   */
-  @Deprecated
-  public static @NotNull <K,V> ConcurrentMap<@NotNull K,@NotNull V> createConcurrentWeakMap(@NotNull TObjectHashingStrategy<? super K> hashingStrategy) {
-    return CollectionFactory.createConcurrentWeakMap(createHashingStrategy(hashingStrategy));
   }
 
   /**

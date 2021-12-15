@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.test;
 
 import com.intellij.find.FindManager;
@@ -50,7 +50,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.usageView.UsageInfo;
-import com.intellij.util.BooleanFunction;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
@@ -456,7 +455,7 @@ public abstract class ExternalSystemImportingTestCase extends ExternalSystemTest
     return ModuleRootManager.getInstance(getModule(module));
   }
 
-  protected void ignoreData(BooleanFunction<? super DataNode<?>> booleanFunction, final boolean ignored) {
+  protected void ignoreData(Predicate<? super DataNode<?>> booleanFunction, final boolean ignored) {
     final ExternalProjectInfo externalProjectInfo = ProjectDataManagerImpl.getInstance().getExternalProjectData(
       myProject, getExternalSystemId(), getCurrentExternalProjectSettings().getExternalProjectPath());
     assertNotNull(externalProjectInfo);

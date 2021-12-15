@@ -38,7 +38,7 @@ public final class ClassPathUtil {
   }
 
   public static @NotNull Class<?> @NotNull [] getUtilClasses() {
-    @SuppressWarnings("UnnecessaryFullyQualifiedName") Class<?>[] classes = {
+    @SuppressWarnings({"UnnecessaryFullyQualifiedName", "deprecation"}) Class<?>[] classes = {
       PathManager.class,                                  // module 'intellij.platform.util'
       Strings.class,                                      // module 'intellij.platform.util.base'
       XmlDomReader.class,                                 // module 'intellij.platform.util.xmlDom'
@@ -50,6 +50,7 @@ public final class ClassPathUtil {
       org.jdom.Document.class,                            // jDOM
       org.apache.log4j.Appender.class,                    // Log4J
       it.unimi.dsi.fastutil.objects.Object2IntMap.class,  // fastutil
+      gnu.trove.THashSet.class,                           // Trove,
       com.sun.jna.TypeMapper.class,                       // JNA
       com.sun.jna.platform.FileUtils.class,               // JNA (jna-platform)
       org.apache.oro.text.regex.PatternMatcher.class,     // OROMatcher

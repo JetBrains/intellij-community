@@ -115,8 +115,6 @@ public final class ClasspathBootstrap {
 
     // intellij.platform.util
     addToClassPath(cp, ClassPathUtil.getUtilClasses());
-    //noinspection UnnecessaryFullyQualifiedName,deprecation
-    addToClassPath(gnu.trove.THashSet.class, cp);
 
     ClassPathUtil.addKotlinStdlib(cp);
     addToClassPath(cp, COMMON_REQUIRED_CLASSES);

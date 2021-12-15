@@ -19,7 +19,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -275,7 +274,7 @@ public final class LowLevelSearchUtil {
       }
       cachedOccurrences = occurrences.toIntArray();
       if (cachedMap == null) {
-        cachedMap = ConcurrencyUtil.cacheOrGet(cache, text, ContainerUtil.createConcurrentSoftMap());
+        cachedMap = ConcurrencyUtil.cacheOrGet(cache, text, CollectionFactory.createConcurrentSoftMap());
       }
       cachedMap.put(searcher, cachedOccurrences);
     }

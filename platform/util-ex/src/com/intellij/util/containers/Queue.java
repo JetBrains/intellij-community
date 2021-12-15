@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -11,7 +12,8 @@ import java.util.Arrays;
  * @deprecated use {@link java.util.ArrayDeque} instead
  */
 @Deprecated
-public class Queue<T> {
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+public final class Queue<T> {
   private Object[] myArray;
   private int myFirst;
   private int myLast;
