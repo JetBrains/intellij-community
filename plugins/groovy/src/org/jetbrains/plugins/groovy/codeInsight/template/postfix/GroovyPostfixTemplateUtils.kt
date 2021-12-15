@@ -5,7 +5,9 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpres
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplatePsiInfo
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
+import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiExpression
@@ -13,10 +15,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentsOfType
 import com.siyeh.ig.psiutils.BoolUtils
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrSafeCastExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import kotlin.math.max
 
@@ -39,7 +38,7 @@ object GroovyPostfixTemplateUtils {
     }
   }
 
-  val EXPRESSION_SELECTOR = object : PostfixTemplateExpressionSelectorBase(Conditions.alwaysTrue()) {
+  private fun getGenericExpressionSelector(condition: Condition<in PsiElement>) = object : PostfixTemplateExpressionSelectorBase(condition) {
 
     override fun getNonFilteredExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> {
       val actualOffset = max(offset - 1, 0)
@@ -52,7 +51,13 @@ object GroovyPostfixTemplateUtils {
 
   }
 
-  fun shouldBeParenthesized(expr: GrExpression): Boolean = when(expr) {
+  val EXPRESSION_SELECTOR = getGenericExpressionSelector(Conditions.alwaysTrue())
+
+  val CONSTRUCTOR_SELECTOR = getGenericExpressionSelector { element ->
+    element is GrMethodCallExpression || (element is GrReferenceExpression && element.resolve() is PsiClass)
+  }
+
+  fun shouldBeParenthesized(expr: GrExpression): Boolean = when (expr) {
     is GrOperatorExpression -> true
     is GrConditionalExpression -> true
     is GrSafeCastExpression -> true

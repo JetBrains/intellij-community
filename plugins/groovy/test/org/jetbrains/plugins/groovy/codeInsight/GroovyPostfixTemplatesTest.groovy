@@ -12,6 +12,7 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrCastExpressionPostfixTemplate
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrForeachPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrNewExpressionPostfixTemplate
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrParenthesizedExpressionPostfixTemplate
 
 class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
@@ -54,10 +55,11 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
     myFixture.configureByText "_.groovy", baseText
     type textToType
     Lookup lookup = myFixture.getLookup()
-    assertNotNull(lookup)
-    LookupElement item = lookup.getCurrentItem()
-    assertNotNull item
-    assertTrue !clazz.isInstance(item)
+    if (lookup != null) {
+      LookupElement item = lookup.getCurrentItem()
+      assertNotNull item
+      assertTrue !clazz.isInstance(item)
+    }
   }
 
   void testPar() {
@@ -74,5 +76,17 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
 
   void testNoForWithNonIterable() {
     doNoPopupTest "1.<caret>", "for", GrForeachPostfixTemplate
+  }
+
+  void testNewWithClass() {
+    doAutoPopupTest "String.<caret>", "new", "new String()", GrNewExpressionPostfixTemplate
+  }
+
+  void testNewWithCall() {
+    doAutoPopupTest "foo().<caret>", "new", "new foo()", GrNewExpressionPostfixTemplate
+  }
+
+  void testNoNew() {
+    doNoPopupTest "1.", "new", GrNewExpressionPostfixTemplate
   }
 }

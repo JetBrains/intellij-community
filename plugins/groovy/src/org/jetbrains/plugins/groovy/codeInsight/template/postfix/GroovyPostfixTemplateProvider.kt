@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrCastExpressionPostfixTemplate
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrForeachPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrNewExpressionPostfixTemplate
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrParenthesizedExpressionPostfixTemplate
 
 class GroovyPostfixTemplateProvider : PostfixTemplateProvider {
@@ -36,4 +37,5 @@ private fun getBuiltinTemplates(groovyPostfixTemplateProvider: GroovyPostfixTemp
   GrParenthesizedExpressionPostfixTemplate(),
   GrCastExpressionPostfixTemplate(groovyPostfixTemplateProvider),
   GrForeachPostfixTemplate(groovyPostfixTemplateProvider),
+  GrNewExpressionPostfixTemplate(groovyPostfixTemplateProvider),
 )
