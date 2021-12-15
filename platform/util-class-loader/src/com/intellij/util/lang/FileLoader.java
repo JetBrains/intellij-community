@@ -334,7 +334,7 @@ final class FileLoader implements Loader {
 
   @Override
   public boolean containsName(String name) {
-    return name.isEmpty() || nameFilter.test(name);
+    return nameFilter.test(name);
   }
 
   private static final class LoaderData implements ClasspathCache.IndexRegistrar {
@@ -399,7 +399,11 @@ final class FileLoader implements Loader {
     }
 
     @Override
-    public boolean test(@NotNull String name) {
+    public boolean test(String name) {
+      if (name.isEmpty()) {
+        return true;
+      }
+
       int lastIndex = name.length() - 1;
       int end = name.charAt(lastIndex) == '/' ? lastIndex : name.length();
       return filter.mightContain(Xx3UnencodedString.hashUnencodedStringRange(name, 0, end));
