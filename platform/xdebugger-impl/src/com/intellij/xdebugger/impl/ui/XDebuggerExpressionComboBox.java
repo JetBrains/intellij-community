@@ -5,7 +5,6 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
@@ -13,7 +12,6 @@ import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
-import com.intellij.openapi.wm.impl.InternalDecoratorImpl;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
@@ -192,16 +190,6 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
         }
       };
       myDelegate.getEditorComponent().setFontInheritedFromLAF(false);
-      myDelegate.getEditorComponent().addPropertyChangeListener("ancestor", evt -> {
-        if (evt.getNewValue() == null) {
-          // Workaround for IDEA-273987, IDEA-278153
-          var editor = myDelegate.getEditor();
-          if (editor != null && !editor.isDisposed() &&
-              SwingUtilities.getAncestorOfClass(InternalDecoratorImpl.class, editor.getComponent()) != null) {
-            EditorFactory.getInstance().releaseEditor(editor);
-          }
-        }
-      });
       JComponent comp = myDelegate.getEditorComponent();
       if (languageInside) {
         comp = addChooser(comp);
