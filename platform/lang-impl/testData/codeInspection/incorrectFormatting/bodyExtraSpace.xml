@@ -5,7 +5,7 @@
             <hand/>
         </arm>
         <arm/>
-        <leg<warning descr="Incorrect whitespace, 0 space(s) expected"> </warning>/>
+        <leg<warning descr="Incorrect whitespace"> </warning>/>
         <leg>
             <foot/>
         </leg>

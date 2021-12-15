@@ -2,12 +2,12 @@
     <head/>
     <body>
         <arm>
-<warning descr="Missing line feed">             </warning><hand/>
+<warning descr="Incorrect whitespace">             </warning><hand/>
         </arm>
         <arm/>
         <leg/>
         <leg>
             <foot/>
-<warning descr="Missing line feed">         </warning></leg>
+<warning descr="Incorrect whitespace">         </warning></leg>
     </body>
 </root>

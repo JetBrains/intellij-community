@@ -5,7 +5,6 @@ import com.intellij.codeInspection.InspectionManager
 import com.intellij.codeInspection.LocalQuickFix
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType.WARNING
-import com.intellij.codeInspection.ProblemHighlightType.WEAK_WARNING
 import com.intellij.lang.ASTNode
 import com.intellij.lang.LangBundle
 import com.intellij.lang.VirtualFormattingListener
@@ -44,16 +43,12 @@ sealed class FormattingChange(val file: PsiFile, val range: TextRange) {
 }
 
 class ReplaceChange(file: PsiFile, range: TextRange, val replacement: String) : FormattingChange(file, range) {
-  override fun message(): String {
-    if (range.isEmpty) {
-      if (replacement == " ") return LangBundle.message("inspection.incorrect.formatting.wrong.whitespace.problem.descriptor.missing.space")
-    }
 
-    return when (val n = replacement.lines().size - 1) {
-      0 -> LangBundle.message("inspection.incorrect.formatting.wrong.whitespace.problem.descriptor.missing.spaces", replacement.length)
-      1 -> LangBundle.message("inspection.incorrect.formatting.wrong.whitespace.problem.descriptor.missing.linefeed")
-      else -> LangBundle.message("inspection.incorrect.formatting.wrong.whitespace.problem.descriptor.missing.lines", n - 1)
-    }
+  override fun message() = if (range.isEmpty) {
+    LangBundle.message("inspection.incorrect.formatting.wrong.whitespace.problem.descriptor.missing.whitespace")
+  }
+  else {
+    LangBundle.message("inspection.incorrect.formatting.wrong.whitespace.problem.descriptor.incorrect.whitespace")
   }
 
   override fun fixes(): Array<LocalQuickFix>? {
