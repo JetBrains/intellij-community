@@ -416,6 +416,7 @@ final class BuildHelper {
     Set<String> ideClasspath = new LinkedHashSet<String>()
 
     Span.current().addEvent("collect classpath to run application starter", Attributes.of(AttributeKey.stringArrayKey("args"), arguments))
+    context.messages.debug("Collecting classpath to run application starter '${arguments.first()}:")
     for (moduleName in modules) {
       for (pathElement in context.getModuleRuntimeClasspath(context.findRequiredModule(moduleName), false)) {
         if (ideClasspath.add(pathElement)) {
