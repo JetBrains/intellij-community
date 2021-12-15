@@ -43,7 +43,7 @@ public class ClassesProcessor implements CodeConstants {
     private int accessFlags;
 
     private static boolean equal(Inner o1, Inner o2) {
-      return o1.type == o2.type && o1.accessFlags == o2.accessFlags && InterpreterUtil.equalObjects(o1.simpleName, o2.simpleName);
+      return o1.type == o2.type && o1.accessFlags == o2.accessFlags && Objects.equals(o1.simpleName, o2.simpleName);
     }
   }
 

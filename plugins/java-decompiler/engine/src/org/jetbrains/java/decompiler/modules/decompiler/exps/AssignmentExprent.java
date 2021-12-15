@@ -16,6 +16,7 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class AssignmentExprent extends Exprent {
@@ -165,8 +166,8 @@ public class AssignmentExprent extends Exprent {
     if (!(o instanceof AssignmentExprent)) return false;
 
     AssignmentExprent as = (AssignmentExprent)o;
-    return InterpreterUtil.equalObjects(left, as.getLeft()) &&
-           InterpreterUtil.equalObjects(right, as.getRight()) &&
+    return Objects.equals(left, as.getLeft()) &&
+           Objects.equals(right, as.getRight()) &&
            condType == as.getCondType();
   }
 

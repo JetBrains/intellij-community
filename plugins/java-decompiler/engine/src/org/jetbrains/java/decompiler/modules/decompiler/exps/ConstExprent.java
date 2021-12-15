@@ -14,15 +14,11 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.Map.Entry;
-import java.util.Set;
 
 public class ConstExprent extends Exprent {
   private static final String SHORT_SIG = "java/lang/Short";
@@ -341,8 +337,8 @@ public class ConstExprent extends Exprent {
     if (!(o instanceof ConstExprent)) return false;
 
     ConstExprent cn = (ConstExprent)o;
-    return InterpreterUtil.equalObjects(constType, cn.getConstType()) &&
-           InterpreterUtil.equalObjects(value, cn.getValue());
+    return Objects.equals(constType, cn.getConstType()) &&
+           Objects.equals(value, cn.getValue());
   }
 
   @Override

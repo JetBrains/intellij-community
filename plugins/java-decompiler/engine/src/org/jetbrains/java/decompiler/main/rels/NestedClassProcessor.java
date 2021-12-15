@@ -302,7 +302,7 @@ public class NestedClassProcessor {
                     }
                     else {
                       for (int i = 0; i < pairMask.size(); i++) {
-                        if (!InterpreterUtil.equalObjects(pairMask.get(i), lstTemp.get(i))) {
+                        if (!Objects.equals(pairMask.get(i), lstTemp.get(i))) {
                           pairMask.set(i, null);
                         }
                       }

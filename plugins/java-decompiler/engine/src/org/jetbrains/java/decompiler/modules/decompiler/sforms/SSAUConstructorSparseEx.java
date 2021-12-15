@@ -13,14 +13,10 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class SSAUConstructorSparseEx {
@@ -686,7 +682,7 @@ public class SSAUConstructorSparseEx {
     }
 
     for (Entry<Integer, FastSparseSet<Integer>> ent2 : map2.entryList()) {
-      if (!InterpreterUtil.equalObjects(map1.get(ent2.getKey()), ent2.getValue())) {
+      if (!Objects.equals(map1.get(ent2.getKey()), ent2.getValue())) {
         return false;
       }
     }

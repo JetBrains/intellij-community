@@ -16,13 +16,13 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 
 public class SSAConstructorSparseEx {
 
@@ -422,7 +422,7 @@ public class SSAConstructorSparseEx {
     }
 
     for (Entry<Integer, FastSparseSet<Integer>> ent2 : map2.entryList()) {
-      if (!InterpreterUtil.equalObjects(map1.get(ent2.getKey()), ent2.getValue())) {
+      if (!Objects.equals(map1.get(ent2.getKey()), ent2.getValue())) {
         return false;
       }
     }

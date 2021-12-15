@@ -5,6 +5,7 @@ import java.io.*;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
@@ -79,10 +80,6 @@ public final class InterpreterUtil {
     return (set.size() == 0);
   }
 
-  public static boolean equalObjects(Object first, Object second) {
-    return first == null ? second == null : first.equals(second);
-  }
-
   public static boolean equalLists(List<?> first, List<?> second) {
     if (first == null) {
       return second == null;
@@ -93,7 +90,7 @@ public final class InterpreterUtil {
 
     if (first.size() == second.size()) {
       for (int i = 0; i < first.size(); i++) {
-        if (!equalObjects(first.get(i), second.get(i))) {
+        if (!Objects.equals(first.get(i), second.get(i))) {
           return false;
         }
       }

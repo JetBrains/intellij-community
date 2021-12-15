@@ -11,7 +11,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.Irreducible
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.util.*;
@@ -149,7 +148,7 @@ public final class DomHelper {
           domsSuccs.add(stat);
         }
 
-        if (!InterpreterUtil.equalObjects(domsSuccs, doms)) {
+        if (!Objects.equals(domsSuccs, doms)) {
 
           lists.put(stat, domsSuccs);
 

@@ -21,6 +21,7 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class NewExprent extends Exprent {
@@ -431,9 +432,9 @@ public class NewExprent extends Exprent {
     if (!(o instanceof NewExprent)) return false;
 
     NewExprent ne = (NewExprent)o;
-    return InterpreterUtil.equalObjects(newType, ne.getNewType()) &&
+    return Objects.equals(newType, ne.getNewType()) &&
            InterpreterUtil.equalLists(lstDims, ne.getLstDims()) &&
-           InterpreterUtil.equalObjects(constructor, ne.getConstructor()) &&
+           Objects.equals(constructor, ne.getConstructor()) &&
            directArrayInit == ne.directArrayInit &&
            InterpreterUtil.equalLists(lstArrayElements, ne.getLstArrayElements());
   }

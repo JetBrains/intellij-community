@@ -531,11 +531,11 @@ public class InvocationExprent extends Exprent {
     if (!(o instanceof InvocationExprent)) return false;
 
     InvocationExprent it = (InvocationExprent)o;
-    return InterpreterUtil.equalObjects(name, it.getName()) &&
-           InterpreterUtil.equalObjects(className, it.getClassName()) &&
+    return Objects.equals(name, it.getName()) &&
+           Objects.equals(className, it.getClassName()) &&
            isStatic == it.isStatic() &&
-           InterpreterUtil.equalObjects(instance, it.getInstance()) &&
-           InterpreterUtil.equalObjects(descriptor, it.getDescriptor()) &&
+           Objects.equals(instance, it.getInstance()) &&
+           Objects.equals(descriptor, it.getDescriptor()) &&
            funcType == it.getFuncType() &&
            InterpreterUtil.equalLists(parameters, it.getParameters());
   }
