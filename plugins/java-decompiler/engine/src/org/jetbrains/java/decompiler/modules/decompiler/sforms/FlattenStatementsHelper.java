@@ -92,7 +92,7 @@ public class FlattenStatementsHelper {
       if (statEntry.succEdges == null) {
 
         switch (stat.type) {
-          case Statement.TYPE_BASICBLOCK:
+          case Statement.TYPE_BASIC_BLOCK:
             node = new DirectNode(DirectNode.NODE_DIRECT, stat, (BasicBlockStatement)stat);
             if (stat.getExprents() != null) {
               node.exprents = stat.getExprents();
@@ -122,8 +122,8 @@ public class FlattenStatementsHelper {
             }
 
             break;
-          case Statement.TYPE_CATCHALL:
-          case Statement.TYPE_TRYCATCH:
+          case Statement.TYPE_CATCH_ALL:
+          case Statement.TYPE_TRY_CATCH:
             DirectNode firstnd = new DirectNode(DirectNode.NODE_TRY, stat, stat.id + "_try");
 
             mapDestinationNodes.put(stat.id, new String[]{firstnd.id, null});
@@ -135,7 +135,7 @@ public class FlattenStatementsHelper {
               listEdges.add(new Edge(firstnd.id, st.id, StatEdge.TYPE_REGULAR));
 
               LinkedList<StackEntry> stack = stackFinally;
-              if (stat.type == Statement.TYPE_CATCHALL && ((CatchAllStatement)stat).isFinally()) {
+              if (stat.type == Statement.TYPE_CATCH_ALL && ((CatchAllStatement)stat).isFinally()) {
                 stack = new LinkedList<>(stackFinally);
 
                 if (st == stat.getFirst()) { // catch head
@@ -236,13 +236,13 @@ public class FlattenStatementsHelper {
                 sourcenode = nodecond;
             }
             break;
-          case Statement.TYPE_SYNCRONIZED:
+          case Statement.TYPE_SYNCHRONIZED:
           case Statement.TYPE_SWITCH:
           case Statement.TYPE_IF:
           case Statement.TYPE_SEQUENCE:
           case Statement.TYPE_ROOT:
             int statsize = stat.getStats().size();
-            if (stat.type == Statement.TYPE_SYNCRONIZED) {
+            if (stat.type == Statement.TYPE_SYNCHRONIZED) {
               statsize = 2;  // exclude the handler if synchronized
             }
 
@@ -250,7 +250,7 @@ public class FlattenStatementsHelper {
               List<Exprent> tailexprlst = null;
 
               switch (stat.type) {
-                case Statement.TYPE_SYNCRONIZED:
+                case Statement.TYPE_SYNCHRONIZED:
                   tailexprlst = ((SynchronizedStatement)stat).getHeadexprentList();
                   break;
                 case Statement.TYPE_SWITCH:

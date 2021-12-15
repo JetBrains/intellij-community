@@ -706,11 +706,11 @@ public class SSAUConstructorSparseEx {
     SFormsFastMapDirect map;
 
     switch (stat.type) {
-      case Statement.TYPE_CATCHALL:
-      case Statement.TYPE_TRYCATCH:
+      case Statement.TYPE_CATCH_ALL:
+      case Statement.TYPE_TRY_CATCH:
 
         List<VarExprent> lstVars;
-        if (stat.type == Statement.TYPE_CATCHALL) {
+        if (stat.type == Statement.TYPE_CATCH_ALL) {
           lstVars = ((CatchAllStatement)stat).getVars();
         }
         else {
@@ -777,13 +777,13 @@ public class SSAUConstructorSparseEx {
         break;
       }
 
-      if (parent.type == Statement.TYPE_CATCHALL ||
-          parent.type == Statement.TYPE_TRYCATCH) {
+      if (parent.type == Statement.TYPE_CATCH_ALL ||
+          parent.type == Statement.TYPE_TRY_CATCH) {
         if (parent.getFirst() == stat) {
           return parent.id;
         }
       }
-      else if (parent.type == Statement.TYPE_SYNCRONIZED) {
+      else if (parent.type == Statement.TYPE_SYNCHRONIZED) {
         if (((SynchronizedStatement)parent).getBody() == stat) {
           return parent.id;
         }

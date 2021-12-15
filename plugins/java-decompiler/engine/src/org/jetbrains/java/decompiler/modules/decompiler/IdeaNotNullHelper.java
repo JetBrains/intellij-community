@@ -54,7 +54,7 @@ public final class IdeaNotNullHelper {
       if (ifbranch != null &&
           if_condition.type == Exprent.EXPRENT_FUNCTION &&
           ((FunctionExprent)if_condition).getFuncType() == FunctionExprent.FUNCTION_EQ &&
-          ifbranch.type == Statement.TYPE_BASICBLOCK &&
+          ifbranch.type == Statement.TYPE_BASIC_BLOCK &&
           ifbranch.getExprents().size() == 1 &&
           ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT) {
 
@@ -176,7 +176,7 @@ public final class IdeaNotNullHelper {
 
     Statement parent = stat.getParent();
 
-    if (parent != null && parent.type == Statement.TYPE_IF && stat.type == Statement.TYPE_BASICBLOCK && stat.getExprents().size() == 1) {
+    if (parent != null && parent.type == Statement.TYPE_IF && stat.type == Statement.TYPE_BASIC_BLOCK && stat.getExprents().size() == 1) {
       Exprent exprent = stat.getExprents().get(0);
       if (exprent.type == Exprent.EXPRENT_EXIT) {
         ExitExprent exit_exprent = (ExitExprent)exprent;
@@ -205,7 +205,7 @@ public final class IdeaNotNullHelper {
                 second_param.getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
               //if(first_param.type == Exprent.EXPRENT_VAR && ((VarExprent)first_param).getIndex() == var_value.getIndex()) {
               if (first_param.equals(exprent_value)) {        // TODO: check for absence of side effects like method invocations etc.
-                if (ifbranch.type == Statement.TYPE_BASICBLOCK &&
+                if (ifbranch.type == Statement.TYPE_BASIC_BLOCK &&
                     ifbranch.getExprents().size() == 1 &&
                     // TODO: special check for IllegalStateException
                     ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT) {
@@ -238,7 +238,7 @@ public final class IdeaNotNullHelper {
     }
     else if (parent != null &&
              parent.type == Statement.TYPE_SEQUENCE &&
-             stat.type == Statement.TYPE_BASICBLOCK &&
+             stat.type == Statement.TYPE_BASIC_BLOCK &&
              stat.getExprents().size() == 1) {
       Exprent exprent = stat.getExprents().get(0);
       if (exprent.type == Exprent.EXPRENT_EXIT) {
@@ -268,7 +268,7 @@ public final class IdeaNotNullHelper {
               if (second_param.type == Exprent.EXPRENT_CONST &&
                   second_param.getExprType().type == CodeConstants.TYPE_NULL) { // TODO: reversed parameter order
                 if (first_param.equals(exprent_value)) {        // TODO: check for absence of side effects like method invocations etc.
-                  if (ifbranch.type == Statement.TYPE_BASICBLOCK &&
+                  if (ifbranch.type == Statement.TYPE_BASIC_BLOCK &&
                       ifbranch.getExprents().size() == 1 &&
                       // TODO: special check for IllegalStateException
                       ifbranch.getExprents().get(0).type == Exprent.EXPRENT_EXIT) {

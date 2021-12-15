@@ -71,10 +71,10 @@ public class VarTypeProcessor {
       Statement stat = stack.removeFirst();
 
       List<VarExprent> lstVars = null;
-      if (stat.type == Statement.TYPE_CATCHALL) {
+      if (stat.type == Statement.TYPE_CATCH_ALL) {
         lstVars = ((CatchAllStatement)stat).getVars();
       }
-      else if (stat.type == Statement.TYPE_TRYCATCH) {
+      else if (stat.type == Statement.TYPE_TRY_CATCH) {
         lstVars = ((CatchStatement)stat).getVars();
       }
 

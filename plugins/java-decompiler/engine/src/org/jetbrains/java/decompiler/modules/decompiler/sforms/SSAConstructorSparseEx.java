@@ -441,11 +441,11 @@ public class SSAConstructorSparseEx {
     SFormsFastMapDirect map;
 
     switch (stat.type) {
-      case Statement.TYPE_CATCHALL:
-      case Statement.TYPE_TRYCATCH:
+      case Statement.TYPE_CATCH_ALL:
+      case Statement.TYPE_TRY_CATCH:
 
         List<VarExprent> lstVars;
-        if (stat.type == Statement.TYPE_CATCHALL) {
+        if (stat.type == Statement.TYPE_CATCH_ALL) {
           lstVars = ((CatchAllStatement)stat).getVars();
         }
         else {

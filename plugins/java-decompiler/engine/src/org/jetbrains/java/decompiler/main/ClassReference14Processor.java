@@ -133,10 +133,10 @@ public final class ClassReference14Processor {
           mt.hasModifier(CodeConstants.ACC_STATIC)) {
 
         RootStatement root = method.root;
-        if (root != null && root.getFirst().type == Statement.TYPE_TRYCATCH) {
+        if (root != null && root.getFirst().type == Statement.TYPE_TRY_CATCH) {
           CatchStatement cst = (CatchStatement)root.getFirst();
-          if (cst.getStats().size() == 2 && cst.getFirst().type == Statement.TYPE_BASICBLOCK &&
-              cst.getStats().get(1).type == Statement.TYPE_BASICBLOCK &&
+          if (cst.getStats().size() == 2 && cst.getFirst().type == Statement.TYPE_BASIC_BLOCK &&
+              cst.getStats().get(1).type == Statement.TYPE_BASIC_BLOCK &&
               cst.getVars().get(0).getVarType().equals(new VarType(CodeConstants.TYPE_OBJECT, 0, "java/lang/ClassNotFoundException"))) {
 
             BasicBlockStatement body = (BasicBlockStatement)cst.getFirst();

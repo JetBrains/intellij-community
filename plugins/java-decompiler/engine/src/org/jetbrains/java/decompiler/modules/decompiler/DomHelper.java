@@ -220,7 +220,7 @@ public final class DomHelper {
       removeSynchronizedHandler(st);
     }
 
-    if (stat.type == Statement.TYPE_SYNCRONIZED) {
+    if (stat.type == Statement.TYPE_SYNCHRONIZED) {
       ((SynchronizedStatement)stat).removeExc();
     }
   }
@@ -251,7 +251,7 @@ public final class DomHelper {
               next = next.getFirst();
             }
 
-            if (next.type == Statement.TYPE_CATCHALL) {
+            if (next.type == Statement.TYPE_CATCH_ALL) {
 
               CatchAllStatement ca = (CatchAllStatement)next;
 

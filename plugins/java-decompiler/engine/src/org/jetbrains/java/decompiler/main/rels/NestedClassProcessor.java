@@ -786,7 +786,7 @@ public class NestedClassProcessor {
           case Statement.TYPE_IF:
           case Statement.TYPE_ROOT:
           case Statement.TYPE_SWITCH:
-          case Statement.TYPE_SYNCRONIZED:
+          case Statement.TYPE_SYNCHRONIZED:
             stack.add(st.getFirst());
             break;
           default:

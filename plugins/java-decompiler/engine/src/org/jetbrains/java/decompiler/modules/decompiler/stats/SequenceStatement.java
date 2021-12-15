@@ -19,7 +19,7 @@ public class SequenceStatement extends Statement {
   // *****************************************************************************
 
   private SequenceStatement() {
-    type = Statement.TYPE_SEQUENCE;
+    super(Statement.TYPE_SEQUENCE);
   }
 
   public SequenceStatement(List<? extends Statement> lst) {

@@ -64,7 +64,7 @@ public final class LoopExtractHelper {
     }
 
     for (StatEdge edge : stat.getLabelEdges()) {
-      if (edge.getType() != StatEdge.TYPE_CONTINUE && edge.getDestination().type != Statement.TYPE_DUMMYEXIT) {
+      if (edge.getType() != StatEdge.TYPE_CONTINUE && edge.getDestination().type != Statement.TYPE_DUMMY_EXIT) {
         return false;
       }
     }

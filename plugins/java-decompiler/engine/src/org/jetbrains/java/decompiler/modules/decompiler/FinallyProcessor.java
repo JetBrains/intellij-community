@@ -57,7 +57,7 @@ public class FinallyProcessor {
       Statement stat = stack.removeLast();
 
       Statement parent = stat.getParent();
-      if (parent != null && parent.type == Statement.TYPE_CATCHALL &&
+      if (parent != null && parent.type == Statement.TYPE_CATCH_ALL &&
           stat == parent.getFirst() && !parent.isCopied()) {
 
         CatchAllStatement fin = (CatchAllStatement)parent;
@@ -265,7 +265,7 @@ public class FinallyProcessor {
     }
 
     // empty finally block?
-    if (fstat.getHandler().type == Statement.TYPE_BASICBLOCK) {
+    if (fstat.getHandler().type == Statement.TYPE_BASIC_BLOCK) {
 
       boolean isEmpty = false;
       boolean isFirstLast = mapLast.containsKey(firstBasicBlock);
@@ -420,7 +420,7 @@ public class FinallyProcessor {
     do {
       Statement st = lst.get(index);
 
-      if (st.type == Statement.TYPE_BASICBLOCK) {
+      if (st.type == Statement.TYPE_BASIC_BLOCK) {
         index++;
       }
       else {

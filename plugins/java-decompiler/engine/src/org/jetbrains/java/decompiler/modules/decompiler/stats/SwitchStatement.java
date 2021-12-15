@@ -29,7 +29,7 @@ public final class SwitchStatement extends Statement {
   private Exprent headExprent;
 
   private SwitchStatement() {
-    type = TYPE_SWITCH;
+    super(TYPE_SWITCH);
   }
 
   private SwitchStatement(@NotNull Statement head, @Nullable Statement postStatement) {
@@ -51,7 +51,7 @@ public final class SwitchStatement extends Statement {
 
   @Nullable
   public static Statement isHead(@NotNull Statement head) {
-    if (head.type == Statement.TYPE_BASICBLOCK && head.getLastBasicType() == Statement.LASTBASICTYPE_SWITCH) {
+    if (head.type == Statement.TYPE_BASIC_BLOCK && head.getLastBasicType() == Statement.LASTBASICTYPE_SWITCH) {
       List<Statement> statements = new ArrayList<>();
       if (DecHelper.isChoiceStatement(head, statements)) {
         Statement post = statements.remove(0);

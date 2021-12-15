@@ -128,7 +128,7 @@ public final class SequenceHelper {
     outer:
     while (true) {
       for (Statement st : stat.getStats()) {
-        if ((st.getStats().isEmpty() || st.getExprents() != null) && st.type != Statement.TYPE_BASICBLOCK) {
+        if ((st.getStats().isEmpty() || st.getExprents() != null) && st.type != Statement.TYPE_BASIC_BLOCK) {
           destroyAndFlattenStatement(st);
           continue outer;
         }
@@ -271,7 +271,7 @@ public final class SequenceHelper {
       case Statement.TYPE_IF:
       case Statement.TYPE_SEQUENCE:
       case Statement.TYPE_SWITCH:
-      case Statement.TYPE_SYNCRONIZED:
+      case Statement.TYPE_SYNCHRONIZED:
         return getFirstExprentlist(stat.getFirst());
     }
 

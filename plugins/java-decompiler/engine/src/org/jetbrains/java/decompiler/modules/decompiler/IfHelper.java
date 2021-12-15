@@ -617,8 +617,8 @@ public final class IfHelper {
       switch (stat.type) {
         case Statement.TYPE_SEQUENCE:
           return hasDirectEndEdge(stat.getStats().getLast(), from);
-        case Statement.TYPE_CATCHALL:
-        case Statement.TYPE_TRYCATCH:
+        case Statement.TYPE_CATCH_ALL:
+        case Statement.TYPE_TRY_CATCH:
           for (Statement st : stat.getStats()) {
             if (hasDirectEndEdge(st, from)) {
               return true;
@@ -632,7 +632,7 @@ public final class IfHelper {
                    hasDirectEndEdge(ifstat.getElsestat(), from);
           }
           break;
-        case Statement.TYPE_SYNCRONIZED:
+        case Statement.TYPE_SYNCHRONIZED:
           return hasDirectEndEdge(stat.getStats().get(1), from);
         case Statement.TYPE_SWITCH:
           for (Statement st : stat.getStats()) {

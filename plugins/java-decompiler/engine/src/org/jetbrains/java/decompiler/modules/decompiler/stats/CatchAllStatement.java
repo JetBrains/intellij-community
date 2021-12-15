@@ -32,7 +32,7 @@ public final class CatchAllStatement extends Statement {
   // *****************************************************************************
 
   private CatchAllStatement() {
-    type = Statement.TYPE_CATCHALL;
+    super(Statement.TYPE_CATCH_ALL);
   }
 
   private CatchAllStatement(Statement head, Statement handler) {
@@ -109,7 +109,7 @@ public final class CatchAllStatement extends Statement {
     }
 
     List<StatEdge> lstSuccs = first.getSuccessorEdges(STATEDGE_DIRECT_ALL);
-    if (first.type == TYPE_TRYCATCH && first.varDefinitions.isEmpty() && isFinally &&
+    if (first.type == TYPE_TRY_CATCH && first.varDefinitions.isEmpty() && isFinally &&
         !labeled && !first.isLabeled() && (lstSuccs.isEmpty() || !lstSuccs.get(0).explicit)) {
       TextBuffer content = ExprProcessor.jmpWrapper(first, indent, true, tracer);
       content.setLength(content.length() - new_line_separator.length());

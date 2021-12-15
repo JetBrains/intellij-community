@@ -85,10 +85,10 @@ public class VarDefinitionHelper {
       Statement st = stack.removeFirst();
 
       List<VarExprent> lstVars = null;
-      if (st.type == Statement.TYPE_CATCHALL) {
+      if (st.type == Statement.TYPE_CATCH_ALL) {
         lstVars = ((CatchAllStatement)st).getVars();
       }
-      else if (st.type == Statement.TYPE_TRYCATCH) {
+      else if (st.type == Statement.TYPE_TRY_CATCH) {
         lstVars = ((CatchStatement)st).getVars();
       }
 
@@ -221,7 +221,7 @@ public class VarDefinitionHelper {
             case Statement.TYPE_IF:
             case Statement.TYPE_ROOT:
             case Statement.TYPE_SWITCH:
-            case Statement.TYPE_SYNCRONIZED:
+            case Statement.TYPE_SYNCHRONIZED:
               stack.add(st.getFirst());
               break;
             default:
@@ -258,7 +258,7 @@ public class VarDefinitionHelper {
               currVars.add(dost.getConditionExprent());
             }
           }
-          else if (st.type == DoStatement.TYPE_CATCHALL) {
+          else if (st.type == DoStatement.TYPE_CATCH_ALL) {
             CatchAllStatement fin = (CatchAllStatement)st;
             if (fin.isFinally() && fin.getMonitor() != null) {
               currVars.add(fin.getMonitor());

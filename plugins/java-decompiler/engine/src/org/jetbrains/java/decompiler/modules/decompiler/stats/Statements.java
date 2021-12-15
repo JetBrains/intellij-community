@@ -22,7 +22,7 @@ public final class Statements {
       case Statement.TYPE_IF:
       case Statement.TYPE_ROOT:
       case Statement.TYPE_SWITCH:
-      case Statement.TYPE_SYNCRONIZED:
+      case Statement.TYPE_SYNCHRONIZED:
         return findFirstData(stat.getFirst());
       default:
         return null;
