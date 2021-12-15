@@ -1,13 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.feedback.dialog
 
-import com.intellij.feedback.DEFAULT_NO_EMAIL_ZENDESK_REQUESTER
-import com.intellij.feedback.FEEDBACK_REPORT_ID_KEY
+import com.intellij.feedback.*
 import com.intellij.feedback.bundle.FeedbackBundle
-import com.intellij.feedback.createFeedbackAgreementComponent
 import com.intellij.feedback.state.projectCreation.ProjectCreationInfoService
 import com.intellij.feedback.statistics.ProjectCreationFeedbackCountCollector
-import com.intellij.feedback.submitGeneralFeedback
 import com.intellij.ide.feedback.RatingComponent
 import com.intellij.openapi.application.ApplicationBundle
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
@@ -38,9 +35,13 @@ import javax.swing.SwingUtilities
 
 class ProjectCreationFeedbackDialog(
   private val project: Project?,
-  createdProjectTypeName: String
+  createdProjectTypeName: String,
+  private val forTest: Boolean
 ) : DialogWrapper(project) {
 
+  /** Increase the additional number when onboarding feedback format is changed */
+  private val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 0
+  
   private val TICKET_TITLE_ZENDESK = "Project Creation Feedback"
   private val FEEDBACK_TYPE_ZENDESK = "Project Creation Feedback"
 
@@ -101,7 +102,8 @@ class ProjectCreationFeedbackDialog(
                           createCollectedDataJsonString(),
                           email,
                           { ProjectCreationFeedbackCountCollector.logFeedbackSentSuccessfully() },
-                          { ProjectCreationFeedbackCountCollector.logFeedbackSentError() }
+                          { ProjectCreationFeedbackCountCollector.logFeedbackSentError() },
+                          if (forTest) FeedbackRequestType.TEST_REQUEST else FeedbackRequestType.PRODUCTION_REQUEST
     )
   }
 
@@ -144,6 +146,7 @@ class ProjectCreationFeedbackDialog(
   private fun createCollectedDataJsonString(): String {
     val collectedData = buildJsonObject {
       put(FEEDBACK_REPORT_ID_KEY, "new_project_creation_dialog")
+      put("format_version", FEEDBACK_JSON_VERSION)
       put("rating", ratingProperty.get())
       put("project_type", systemInfoData.createdProjectTypeName)
       putJsonArray("problems") {

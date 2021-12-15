@@ -48,7 +48,7 @@ enum class FeedbackTypes {
     }
 
     override fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper {
-      return ProjectCreationFeedbackDialog(project, getLastCreatedProjectTypeName(forTest))
+      return ProjectCreationFeedbackDialog(project, getLastCreatedProjectTypeName(forTest), forTest)
     }
 
     private fun getLastCreatedProjectTypeName(forTest: Boolean): String {
