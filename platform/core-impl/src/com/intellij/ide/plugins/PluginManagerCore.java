@@ -209,13 +209,13 @@ public final class PluginManagerCore {
     if (Files.exists(updatedBrokenPluginFile)) {
       result = tryReadBrokenPluginsFile(updatedBrokenPluginFile);
       if (result != null) {
-        getLogger().debug("Using cached broken plugins file");
+        getLogger().info("Using cached broken plugins file");
       }
     }
     if (result == null) {
       result = tryReadBrokenPluginsFile(Paths.get(PathManager.getBinPath() + "/brokenPlugins.db"));
       if (result != null) {
-        getLogger().debug("Using broken plugins file from IDE distribution");
+        getLogger().info("Using broken plugins file from IDE distribution");
       }
     }
     if (result != null) {
