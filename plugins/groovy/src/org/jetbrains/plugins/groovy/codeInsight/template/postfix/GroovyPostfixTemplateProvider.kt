@@ -6,6 +6,9 @@ import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvid
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrCastExpressionPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrForeachPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrParenthesizedExpressionPostfixTemplate
 
 class GroovyPostfixTemplateProvider : PostfixTemplateProvider {
 

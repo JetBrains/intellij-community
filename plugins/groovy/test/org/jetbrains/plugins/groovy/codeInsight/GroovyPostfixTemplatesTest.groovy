@@ -10,15 +10,15 @@ import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLooku
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.codeInsight.template.postfix.GrCastExpressionPostfixTemplate
-import org.jetbrains.plugins.groovy.codeInsight.template.postfix.GrForeachPostfixTemplate
-import org.jetbrains.plugins.groovy.codeInsight.template.postfix.GrParenthesizedExpressionPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrCastExpressionPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrForeachPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrParenthesizedExpressionPostfixTemplate
 
 class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
 
   @Override
   void setUp() throws Exception {
-    super.setUp();
+    super.setUp()
     CodeInsightSettings.instance.selectAutopopupSuggestionsByChars = true
     LiveTemplateCompletionContributor.setShowTemplatesInTests(false, myFixture.getTestRootDisposable())
   }

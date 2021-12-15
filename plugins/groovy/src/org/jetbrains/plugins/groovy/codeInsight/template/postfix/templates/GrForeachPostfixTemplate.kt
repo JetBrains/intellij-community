@@ -1,5 +1,5 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.plugins.groovy.codeInsight.template.postfix
+package org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates
 
 import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.impl.MacroCallNode
@@ -11,6 +11,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.project.DumbService
 import com.intellij.psi.PsiElement
 import com.intellij.psi.util.parentsOfType
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.GroovyPostfixTemplateProvider
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.GroovyPostfixTemplateUtils
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.conditions.GrIterablePostfixTemplateExpressionCondition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
 
