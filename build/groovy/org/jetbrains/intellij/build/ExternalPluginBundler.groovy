@@ -1,10 +1,8 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
-import com.intellij.util.SystemProperties
+
 import com.intellij.util.io.ZipUtil
 import groovy.transform.CompileStatic
-
-import java.nio.file.Path
 
 @CompileStatic
 final class ExternalPluginBundler {
@@ -14,7 +12,7 @@ final class ExternalPluginBundler {
                      String targetDirectory,
                      String buildTaskName = pluginName) {
     def dependenciesProjectDir = new File(dependenciesPath)
-    new GradleRunner(dependenciesProjectDir, buildContext.paths.projectHome, buildContext.messages, buildContext.options, { Path.of(SystemProperties.getJavaHome()) }).run(
+    new GradleRunner(dependenciesProjectDir, buildContext.paths.projectHome, buildContext.messages, buildContext.options).run(
       "Downloading $pluginName plugin...", "setup${buildTaskName}Plugin")
     Properties properties = new Properties()
     new File(dependenciesProjectDir, "gradle.properties").withInputStream {

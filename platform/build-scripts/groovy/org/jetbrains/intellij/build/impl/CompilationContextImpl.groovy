@@ -31,7 +31,6 @@ import org.jetbrains.jps.util.JpsPathUtil
 import java.nio.file.Files
 import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicLong
-import java.util.concurrent.atomic.AtomicReference
 import java.util.function.BiFunction
 
 @CompileStatic
@@ -78,14 +77,12 @@ final class CompilationContextImpl implements CompilationContext {
     def model = loadProject(projectHome, kotlinBinaries, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
 
-    AtomicReference<Path> jdkHomeRef = new AtomicReference<>()
-    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, options, { jdkHomeRef.get() })
+    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, options)
 
     projectHome = toCanonicalPath(projectHome)
     def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
-    def jdkHome = defineJavaSdk(context)
-    jdkHomeRef.set(jdkHome)
+    defineJavaSdk(context)
     context.prepareForBuild()
 
     // not as part of prepareForBuild because prepareForBuild may be called several times per each product or another flavor
@@ -95,7 +92,7 @@ final class CompilationContextImpl implements CompilationContext {
     return context
   }
 
-  private static Path defineJavaSdk(CompilationContext context) {
+  private static void defineJavaSdk(CompilationContext context) {
     def homePath = context.bundledJreManager.getSdkHomeForCurrentOsAndArch()
     def jbrHome = toCanonicalPath(homePath.toString())
     def jbrVersionName = "11"
@@ -119,8 +116,6 @@ final class CompilationContextImpl implements CompilationContext {
         readModulesFromReleaseFile(context.projectModel, sdkName, jbrHome)
       }
     }
-
-    return homePath
   }
 
   private static def readModulesFromReleaseFile(JpsModel model, String sdkName, String sdkHome) {

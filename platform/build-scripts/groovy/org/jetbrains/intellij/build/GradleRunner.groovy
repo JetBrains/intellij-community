@@ -6,7 +6,6 @@ import com.intellij.util.SystemProperties
 import groovy.transform.CompileStatic
 import io.opentelemetry.api.trace.Span
 
-import java.nio.file.Path
 import java.util.function.Supplier
 
 @CompileStatic
@@ -14,7 +13,6 @@ final class GradleRunner {
   final File gradleProjectDir
   private final String projectDir
   private final BuildMessages messages
-  private final Supplier<Path> javaHome
   private final List<String> additionalParams
   private final BuildOptions options
 
@@ -23,14 +21,12 @@ final class GradleRunner {
     String projectDir,
     BuildMessages messages,
     BuildOptions options,
-    Supplier<Path> javaHome,
     List<String> additionalParams = getDefaultAdditionalParams()
   ) {
     this.messages = messages
     this.options = options
     this.projectDir = projectDir
     this.gradleProjectDir = gradleProjectDir
-    this.javaHome = javaHome
     this.additionalParams = additionalParams
   }
 
@@ -55,16 +51,8 @@ final class GradleRunner {
     return runInner(title, buildFile, false, false, tasks)
   }
 
-  /**
-   * Invokes Gradle tasks on {@link #gradleProjectDir} project.
-   * Ignores the result of running Gradle.
-   */
-  boolean forceRun(String title, String... tasks) {
-    return runInner(title, null, true, false, tasks)
-  }
-
   GradleRunner withParams(List<String> additionalParams) {
-    return new GradleRunner(gradleProjectDir, projectDir, messages, options, javaHome, this.additionalParams + additionalParams)
+    return new GradleRunner(gradleProjectDir, projectDir, messages, options, this.additionalParams + additionalParams)
   }
 
   private static List<String> getDefaultAdditionalParams() {
@@ -131,15 +119,7 @@ final class GradleRunner {
     command.addAll(additionalParams)
     command.addAll(tasks)
     def processBuilder = new ProcessBuilder(command).directory(gradleProjectDir)
-
-    Path javaHomeValue = javaHome.get()
-    if (javaHomeValue != null) {
-      processBuilder.environment().put("JAVA_HOME", javaHomeValue.toString())
-    }
-    else {
-      processBuilder.environment().put("JAVA_HOME", SystemProperties.javaHome)
-    }
-
+    processBuilder.environment().put("JAVA_HOME", SystemProperties.javaHome)
     def process = processBuilder.start()
     process.consumeProcessOutputStream((OutputStream)System.out)
     process.consumeProcessErrorStream((OutputStream)System.err)
