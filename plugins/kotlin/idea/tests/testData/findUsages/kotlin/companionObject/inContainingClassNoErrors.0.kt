@@ -16,7 +16,7 @@ class A() {
 
         val v = 42
 
-        fun Int.get(a: Int) = this + a
+        operator fun Int.get(a: Int) = this + a
     }
 }
 
@@ -25,5 +25,4 @@ interface Foo
 fun Foo.ext() {
 }
 
-// DISABLE-ERRORS
 // FIR_COMPARISON

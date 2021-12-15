@@ -33,6 +33,11 @@ public abstract class FindUsagesFirTestGenerated extends AbstractFindUsagesFirTe
                 runTest("../idea/tests/testData/findUsages/kotlin/companionObject/inContainingClass.0.kt");
             }
 
+            @TestMetadata("inContainingClassNoErrors.0.kt")
+            public void testInContainingClassNoErrors() throws Exception {
+                runTest("../idea/tests/testData/findUsages/kotlin/companionObject/inContainingClassNoErrors.0.kt");
+            }
+
             @TestMetadata("javaUsage.0.kt")
             public void testJavaUsage() throws Exception {
                 runTest("../idea/tests/testData/findUsages/kotlin/companionObject/javaUsage.0.kt");
