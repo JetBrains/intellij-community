@@ -23,8 +23,12 @@ import javax.swing.JComponent
  */
 @Service
 class GitQuickActionsToolbarService {
-  var gitMappingUpdated = false
+  var gitMappingInitialized = false
+    private set
 
+  fun initializationComplete() {
+    gitMappingInitialized = true
+  }
   companion object {
     fun getInstance(project: Project): GitQuickActionsToolbarService = project.getService(GitQuickActionsToolbarService::class.java)
   }
@@ -53,10 +57,9 @@ internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
       return
     }
     e.project ?: return
-    templatePresentation.text = ""
     val presentation = e.presentation
     val instance = GitQuickActionsToolbarService.getInstance(e.project!!)
-    if (!instance.gitMappingUpdated) {
+    if (!instance.gitMappingInitialized) {
       presentation.isEnabledAndVisible = false
       return
     }
@@ -83,7 +86,7 @@ internal class GitQuickActionsToolbarPopup : VcsQuickActionsToolbarPopup() {
 
   class MyGitRepositoryListener(val project: Project) : VcsRepositoryMappingListener {
     override fun mappingChanged() {
-      GitQuickActionsToolbarService.getInstance(project).gitMappingUpdated = true
+      GitQuickActionsToolbarService.getInstance(project).initializationComplete()
     }
   }
 
