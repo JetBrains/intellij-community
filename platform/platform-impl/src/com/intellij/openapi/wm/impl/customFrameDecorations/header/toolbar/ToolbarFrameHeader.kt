@@ -13,8 +13,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.impl.IdeMenuBar
+import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.AbstractMenuFrameHeader
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
+import com.intellij.openapi.wm.impl.headertoolbar.isSeparateToolbarShown
 import com.intellij.ui.IconManager
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -33,11 +35,12 @@ private enum class ShowMode {
   MENU, TOOLBAR
 }
 
-internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : AbstractMenuFrameHeader(frame), UISettingsListener {
+internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : AbstractMenuFrameHeader(frame), UISettingsListener, ToolbarHolder {
 
   private val myMenuBar = ideMenu
   private val myMenuButton = createMenuButton()
-  private val myToolbar = createToolbar()
+  private var myToolbar : MainToolbar? = null
+  private val myToolbarPlaceholder = NonOpaquePanel()
   private val myHeaderContent = createHeaderContent()
 
   private var myMode = ShowMode.MENU
@@ -46,7 +49,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     layout = GridBagLayout()
     val gb = GridBag().anchor(WEST)
 
-    updateHeaderContent(UISettings.instance)
+    updateLayout(UISettings.instance)
 
     productIcon.border = JBUI.Borders.empty(V, H)
     add(productIcon, gb.nextLine().next().anchor(WEST))
@@ -56,10 +59,26 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     setCustomFrameTopBorder({ false }, {true})
   }
 
+  override fun updateToolbar() {
+    removeToolbar()
+    myToolbar = createToolbar()
+    myToolbarPlaceholder.add(myToolbar)
+    myToolbarPlaceholder.revalidate()
+  }
+
+  override fun removeToolbar() {
+    myToolbarPlaceholder.removeAll()
+    myToolbarPlaceholder.revalidate()
+  }
+
   override fun updateMenuActions(forceRebuild: Boolean) {} //todo remove
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
-    updateHeaderContent(uiSettings)
+    updateLayout(uiSettings)
+    when (myMode) {
+      ShowMode.TOOLBAR -> updateToolbar()
+      ShowMode.MENU -> removeToolbar()
+    }
   }
 
   override fun getHitTestSpots(): List<RelativeRectangle> {
@@ -78,7 +97,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
       }
       ShowMode.TOOLBAR -> {
         res.add(getElementRect(myMenuButton))
-        myToolbar.components.filter { it.isVisible }.forEach { res.add(getElementRect(it)) }
+        myToolbar?.components?.filter { it.isVisible }?.forEach { res.add(getElementRect(it)) }
       }
     }
 
@@ -103,7 +122,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     val toolbarPnl = NonOpaquePanel(GridBagLayout()).apply {
       val gb = GridBag().anchor(WEST).nextLine()
       add(myMenuButton, gb.next().insetRight(25))
-      add(myToolbar, gb.next().weightx(1.0).fillCellHorizontally())
+      add(myToolbarPlaceholder, gb.next().weightx(1.0).fillCellHorizontally())
     }
 
     res.add(ShowMode.MENU.name, menuPnl)
@@ -112,13 +131,13 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     return res
   }
 
-  private fun updateHeaderContent(settings: UISettings) {
-    myMode = if (settings.separateMainMenu) ShowMode.MENU else ShowMode.TOOLBAR
+  private fun updateLayout(settings: UISettings) {
+    myMode = if (isSeparateToolbarShown(settings)) ShowMode.MENU else ShowMode.TOOLBAR
     val layout = myHeaderContent.layout as CardLayout
     layout.show(myHeaderContent, myMode.name)
   }
 
-  private fun createToolbar(): JPanel = MainToolbar().apply { isOpaque = false }
+  private fun createToolbar(): MainToolbar = MainToolbar().apply { isOpaque = false }
 
   private fun createMenuButton(): AbstractButton {
     val button = FixedSizeButton(20)

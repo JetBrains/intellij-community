@@ -1,9 +1,11 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl.headertoolbar
 
+import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.components.panels.HorizontalLayout
 import java.awt.event.ComponentAdapter
@@ -100,4 +102,8 @@ private class VisibleComponentsPool {
            ?: elements[Position.Right]!!.lastOrNull() { it.isVisible }
            ?: elements[Position.Center]!!.lastOrNull() { it.isVisible }
   }
+}
+
+internal fun isSeparateToolbarShown(settings : UISettings) : Boolean {
+  return !SystemInfo.isWindows || settings.separateMainMenu
 }

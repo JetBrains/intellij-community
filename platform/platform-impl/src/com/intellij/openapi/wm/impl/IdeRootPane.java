@@ -23,6 +23,7 @@ import com.intellij.openapi.wm.impl.customFrameDecorations.header.MenuFrameHeade
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.titleLabel.CustomDecorationPath;
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar.ToolbarFrameHeader;
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar;
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarKt;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBBox;
@@ -231,19 +232,40 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   void updateToolbar() {
+    ToolbarHolder delegate = getToolbarHolderDelegate();
+    if (delegate != null) {
+      delegate.updateToolbar();
+      return;
+    }
+
     removeToolbar();
-    myToolbar = ExperimentalUI.isNewToolbar() ? createExperimentalToolbar() : createToolbar();
+    myToolbar = createToolbar();
     myNorthPanel.add(myToolbar, 0);
     updateToolbarVisibility();
     myContentPane.revalidate();
   }
 
   public void removeToolbar() {
+    ToolbarHolder delegate = getToolbarHolderDelegate();
+    if (delegate != null) {
+      delegate.removeToolbar();
+      return;
+    }
+
     if (myToolbar != null) {
       disposeIfNeeded(myToolbar);
       myNorthPanel.remove(myToolbar);
       myToolbar = null;
     }
+  }
+
+  private @Nullable ToolbarHolder getToolbarHolderDelegate() {
+    UISettings settings = UISettings.getShadowInstance();
+    if (ExperimentalUI.isNewToolbar() && !MainToolbarKt.isSeparateToolbarShown(settings)) {
+      return (ToolbarHolder)myCustomFrameTitlePane;
+    }
+
+    return null;
   }
 
   private static void disposeIfNeeded(JComponent comp) {
@@ -277,6 +299,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   private static @NotNull JComponent createToolbar() {
+    if (ExperimentalUI.isNewToolbar()) return createExperimentalToolbar();
+
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
     ActionToolbar toolBar = ActionManagerEx.getInstanceEx()
       .createActionToolbar(ActionPlaces.MAIN_TOOLBAR, Objects.requireNonNull(group), true);
@@ -317,7 +341,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private void updateToolbarVisibility() {
     UISettings uiSettings = UISettings.getShadowInstance();
     if (myToolbar != null) {
-      myToolbar.setVisible(uiSettings.getShowMainToolbar() && !uiSettings.getPresentationMode());
+      boolean visible = ((ExperimentalUI.isNewToolbar() && MainToolbarKt.isSeparateToolbarShown(uiSettings))
+                         || (!ExperimentalUI.isNewToolbar() && uiSettings.getShowMainToolbar()))
+                        && !uiSettings.getPresentationMode();
+      myToolbar.setVisible(visible);
     }
   }
 

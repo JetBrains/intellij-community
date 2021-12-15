@@ -268,7 +268,8 @@
       },
       "dropdown": {
         "borderInsets": "12,6,12,6"
-      }
+      },
+      "background": "Grey2"
     },
 
     "Tree.rowHeight": "24",
