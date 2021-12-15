@@ -26,6 +26,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 
+import static org.jetbrains.jpsBootstrap.BuildDependenciesDownloader.info;
+
 @SuppressWarnings("SameParameterValue")
 public class JpsProjectUtils {
   public static JpsModel loadJpsProject(Path projectHome) throws Exception {
@@ -77,6 +79,8 @@ public class JpsProjectUtils {
   }
 
   private static void addSdk(JpsModel model, String sdkName, String sdkHome) throws IOException {
+    info("Adding SDK '" + sdkName + "' at " + sdkHome);
+
     JpsJavaExtensionService.getInstance().addJavaSdk(model.getGlobal(), sdkName, sdkHome);
     JpsLibrary additionalSdk = model.getGlobal().getLibraryCollection().findLibrary(sdkName);
     if (additionalSdk == null) {

@@ -26,9 +26,9 @@ import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.fatal;
 public class ClassesFromJpsBuild {
   public static final String CLASSES_FROM_JPS_BUILD_ENV_NAME = "JPS_BOOTSTRAP_CLASSES_FROM_JPS_BUILD";
 
-  public static void buildModule(JpsModule module, Path projectHome, JpsModel model, Path jpsBootstrapWorkDir) throws Exception {
+  public static void buildModule(JpsModule module, Path ideaHomePath, JpsModel model, Path jpsBootstrapWorkDir) throws Exception {
     // Workaround for KTIJ-19065
-    System.setProperty(PathManager.PROPERTY_HOME_PATH, projectHome.toString());
+    System.setProperty(PathManager.PROPERTY_HOME_PATH, ideaHomePath.toString());
 
     System.setProperty("kotlin.incremental.compilation", "true");
     System.setProperty("kotlin.daemon.enabled", "false");
