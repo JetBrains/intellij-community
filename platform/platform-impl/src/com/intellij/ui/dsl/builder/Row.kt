@@ -321,9 +321,9 @@ interface Row {
    */
   fun textArea(): Cell<JBTextArea>
 
-  fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
+  fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
 
-  fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
+  fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
 
   /**
    * Overrides all gaps around row by [customRowGaps]. Should be used for very specific cases
