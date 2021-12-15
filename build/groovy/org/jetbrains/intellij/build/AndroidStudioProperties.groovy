@@ -224,7 +224,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
   LinuxDistributionCustomizer createLinuxCustomizer(String projectHome) {
     return new LinuxDistributionCustomizer() {
       {
-        buildTarGzWithoutBundledJre = false
+        buildTarGzWithoutBundledRuntime = false
         iconPngPath = "$projectHome/adt-branding/src/artwork/icon_AS_128.png"
         iconPngPathForEAP = "$projectHome/adt-branding/src/artwork/preview/icon_AS_128.png"
       }
