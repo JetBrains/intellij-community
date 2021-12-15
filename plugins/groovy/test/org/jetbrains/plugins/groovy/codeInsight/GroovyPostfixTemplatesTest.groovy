@@ -94,4 +94,8 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
   void testNotnull() {
     doAutoPopupTest "foo().<caret>", "notnull", "if (foo() != null) {\n    \n}", GrIfNotNullExpressionPostfixTemplate
   }
+
+  void testNoNNForPrimitive() {
+    doNoPopupTest "int x = 1; x.<caret>", "nn", GrIfNotNullExpressionPostfixTemplate
+  }
 }
