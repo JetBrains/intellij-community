@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.xdebugger.impl.breakpoints
 
 import com.intellij.icons.AllIcons
@@ -33,11 +33,13 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
   @Suppress("SpellCheckingInspection")
   @PropertyKey(resourceBundle = XDebuggerBundle.BUNDLE)
   private val rootNameKey = "xbreakpoints.dialog.title"
+  private val root by lazy { RootNode(project, rootNameKey) }
 
   override fun getWeight() = 200
   override fun getProject() = project
 
-  override fun createNode(): AbstractTreeNode<*> = RootNode(project, rootNameKey)
+  override fun createNode(): AbstractTreeNode<*>? = if (root.hasVisibleBreakpoints()) root else null
+
   override fun getDescriptor(node: AbstractTreeNode<*>): OpenFileDescriptor? {
     val item = node.equalityObject as? BreakpointItem ?: return null
     val breakpoint = item.breakpoint as? XBreakpoint<*> ?: return null
@@ -74,6 +76,8 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
     private val cache = AbstractTreeNodeCache<Any, AbstractTreeNode<*>>(this) {
       if (it is BreakpointItem) ItemNode(project, it) else if (it is XBreakpointGroup) GroupNode(project, it) else null
     }
+
+    fun hasVisibleBreakpoints() = valid.get()
 
     fun getKeys(value: Any) = synchronized(map) { map.mapNotNull { if (it.value == value) it.key else null } }.sortedWith(this)
 
@@ -131,8 +135,14 @@ internal class BreakpointListProvider(private val project: Project) : BookmarksL
       }
       val newValid = breakpoints.any { it.value == value }
       val oldValid = valid.getAndSet(newValid)
-      val node = if (newValid != oldValid) parent else if (newValid) this else null
-      node?.let { project.messageBus.syncPublisher(BookmarksListener.TOPIC).structureChanged(it) }
+      if (oldValid != newValid) {
+        // rebuild the whole tree to show/hide this root
+        project.messageBus.syncPublisher(BookmarksListener.TOPIC).structureChanged(null)
+      }
+      else if (newValid) {
+        // rebuild only the nodes under this root
+        project.messageBus.syncPublisher(BookmarksListener.TOPIC).structureChanged(this)
+      }
     }
 
     init {

@@ -4,7 +4,7 @@ package com.intellij.ide.bookmark.ui
 import com.intellij.icons.AllIcons
 import com.intellij.ide.bookmark.BookmarkBundle.message
 import com.intellij.ide.bookmark.BookmarkOccurrence
-import com.intellij.ide.bookmark.BookmarksListProvider
+import com.intellij.ide.bookmark.BookmarksListProviderService
 import com.intellij.ide.bookmark.ui.tree.BookmarkNode
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
@@ -23,7 +23,7 @@ internal val AbstractTreeNode<*>.asDescriptor: OpenFileDescriptor?
   get() {
     val project = project ?: return null
     if (!canNavigateToSource()) return null
-    val descriptor = BookmarksListProvider.EP.getExtensions(project).firstNotNullOfOrNull { it.getDescriptor(this) }
+    val descriptor = BookmarksListProviderService.getProviders(project).firstNotNullOfOrNull { it.getDescriptor(this) }
     return descriptor ?: asVirtualFile?.let { OpenFileDescriptor(project, it) }
   }
 
