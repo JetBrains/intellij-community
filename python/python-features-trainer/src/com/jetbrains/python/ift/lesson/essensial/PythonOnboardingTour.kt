@@ -78,7 +78,6 @@ import training.learn.lesson.general.run.toggleBreakpointTask
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
-import training.ui.showOnboardingFeedbackNotification
 import training.util.*
 import java.awt.Point
 import java.awt.Rectangle
@@ -181,7 +180,7 @@ class PythonOnboardingTour :
     uiSettings.fireUISettingsChanged()
 
     if (!lessonEndInfo.lessonPassed) {
-      showFeedbackNotification(project)
+      LessonUtil.showFeedbackNotification(this, project)
       return
     }
     val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
@@ -210,22 +209,7 @@ class PythonOnboardingTour :
         }
       }
       if (result != Messages.YES) {
-        showFeedbackNotification(project)
-      }
-    }
-  }
-
-  private fun showFeedbackNotification(project: Project) {
-    invokeLater {
-      if (project.isDisposed) {
-        return@invokeLater
-      }
-      module.primaryLanguage?.let { langSupport ->
-        // exit link will show notification directly and reset this field to null
-        langSupport.onboardingFeedbackData?.let {
-          showOnboardingFeedbackNotification(project, it)
-        }
-        langSupport.onboardingFeedbackData = null
+        LessonUtil.showFeedbackNotification(this, project)
       }
     }
   }
