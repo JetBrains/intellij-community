@@ -9,6 +9,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.cache.client.JpsServerClient;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
+import org.jetbrains.jps.cache.statistics.JpsCacheLoadingSystemStats;
 import org.jetbrains.jps.incremental.Utils;
 
 import java.io.File;
@@ -47,13 +48,14 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
     LOG.info("Start extraction of JPS caches");
 
     File zipFile = (File)loadResults;
+    long fileSize = zipFile.length();
     File tmpFolder = new File(myBuildCacheFolder.getParentFile(), "tmp");
     try {
       // Start extracting after download
       myContext.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.extracting.downloaded.results"));
       myContext.checkCanceled();
-      long start = System.currentTimeMillis();
 
+      long start = System.currentTimeMillis();
       AtomicInteger extractItemsCount = new AtomicInteger();
       new Decompressor.Zip(zipFile).postProcessor(path -> {
         extractItemsCount.incrementAndGet();
@@ -64,7 +66,11 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
           extractItemsCount.set(0);
         }
       }).extract(tmpFolder.toPath());
+      JpsCacheLoadingSystemStats.setDecompressionTimeMs(fileSize, System.currentTimeMillis() - start);
+
+      long deletionStart = System.currentTimeMillis();
       FileUtil.delete(zipFile);
+      JpsCacheLoadingSystemStats.setDeletionTimeMs(fileSize, System.currentTimeMillis() - deletionStart);
       LOG.info("Unzip compilation caches took: " + (System.currentTimeMillis() - start));
       //subTaskIndicator.finished();
       //extractIndicatorManager.finished(this);

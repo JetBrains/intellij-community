@@ -3,6 +3,7 @@ package com.intellij.compiler.server;
 
 import com.intellij.compiler.cache.client.JpsServerAuthUtil;
 import com.intellij.compiler.cache.git.GitRepositoryUtil;
+import com.intellij.compiler.cache.statistic.JpsCacheLoadingStats;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -64,23 +65,32 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         }
         break;
       case REPOSITORY_COMMITS_REQUEST:
-        CmdlineRemoteProto.Message.BuilderMessage.CommitMessage latestCommitMessage = msg.getCommitMessage();
-        String latestCommit = latestCommitMessage.getCommit();
+        CmdlineRemoteProto.Message.BuilderMessage.CommitAndDownloadStatistics downloadStatistics = msg.getCommitAndDownloadStatistics();
+        String latestCommit = downloadStatistics.getCommit();
         List<String> repositoryCommits = GitRepositoryUtil.fetchRepositoryCommits(myProject, latestCommit);
+
+        long deletionSpeed = 0;
+        long decompressionSpeed = 0;
         String latestDownloadedCommit = "";
         String nearestRemoteMasterCommit = "";
         if (latestCommit.isEmpty()) {
           nearestRemoteMasterCommit = GitRepositoryUtil.getLatestBuiltMasterCommitId();
           latestDownloadedCommit = GitRepositoryUtil.getLatestDownloadedCommit();
+          decompressionSpeed = JpsCacheLoadingStats.getApproximateDecompressionSpeed();
+          deletionSpeed = JpsCacheLoadingStats.getApproximateDeletionSpeed();
         }
         CmdlineRemoteProto.Message.ControllerMessage message = CmdlineProtoUtil.createRepositoryCommitsMessage(repositoryCommits,
                                                                                                                nearestRemoteMasterCommit,
-                                                                                                               latestDownloadedCommit);
+                                                                                                               latestDownloadedCommit,
+                                                                                                               deletionSpeed,
+                                                                                                               decompressionSpeed);
         channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, message));
         break;
-      case SAVE_LATEST_DOWNLOADED_COMMIT_MESSAGE:
-        CmdlineRemoteProto.Message.BuilderMessage.CommitMessage latestDownloadedCommitMessage = msg.getCommitMessage();
-        GitRepositoryUtil.saveLatestDownloadedCommit(latestDownloadedCommitMessage.getCommit());
+      case SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE:
+        CmdlineRemoteProto.Message.BuilderMessage.CommitAndDownloadStatistics downloadStatisticsMessage = msg.getCommitAndDownloadStatistics();
+        GitRepositoryUtil.saveLatestDownloadedCommit(downloadStatisticsMessage.getCommit());
+        JpsCacheLoadingStats.saveApproximateDecompressionSpeed(downloadStatisticsMessage.getDecompressionSpeed());
+        JpsCacheLoadingStats.saveApproximateDeletionSpeed(downloadStatisticsMessage.getDeletionSpeed());
         break;
       case SAVE_LATEST_BUILT_COMMIT_MESSAGE:
         GitRepositoryUtil.saveLatestBuiltMasterCommit(myProject);

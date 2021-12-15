@@ -130,34 +130,40 @@ public final class CmdlineProtoUtil {
       .setRequestParams(requestParam).build();
   }
 
-  public static BuilderMessage createRequestRepositoryCommits(@NotNull String latestCommit) {
-    BuilderMessage.CommitMessage.Builder requestCommitsBuilder = BuilderMessage.CommitMessage.newBuilder();
+  public static BuilderMessage createRequestRepositoryCommitsAndStatistics(@NotNull String latestCommit) {
+    BuilderMessage.CommitAndDownloadStatistics.Builder requestCommitsBuilder = BuilderMessage.CommitAndDownloadStatistics.newBuilder();
     requestCommitsBuilder.setCommit(latestCommit);
     BuilderMessage.Builder newBuilder = BuilderMessage.newBuilder();
     newBuilder.setType(BuilderMessage.Type.REPOSITORY_COMMITS_REQUEST);
-    newBuilder.setCommitMessage(requestCommitsBuilder.build());
+    newBuilder.setCommitAndDownloadStatistics(requestCommitsBuilder.build());
     return newBuilder.build();
   }
 
-  public static BuilderMessage createSaveLatestDownloadCommitMessage(@NotNull String latestDownloadCommit) {
-    BuilderMessage.CommitMessage.Builder requestCommitsBuilder = BuilderMessage.CommitMessage.newBuilder();
-    requestCommitsBuilder.setCommit(latestDownloadCommit);
+  public static BuilderMessage createSaveDownloadStatisticMessage(@NotNull String latestDownloadCommit, long decompressionSpeed,
+                                                                  long deletionSpeed) {
+    BuilderMessage.CommitAndDownloadStatistics.Builder downloadStatisticsBuilder = BuilderMessage.CommitAndDownloadStatistics.newBuilder();
+    downloadStatisticsBuilder.setCommit(latestDownloadCommit);
+    downloadStatisticsBuilder.setDecompressionSpeed(decompressionSpeed);
+    downloadStatisticsBuilder.setDeletionSpeed(deletionSpeed);
     BuilderMessage.Builder newBuilder = BuilderMessage.newBuilder();
-    newBuilder.setType(BuilderMessage.Type.SAVE_LATEST_DOWNLOADED_COMMIT_MESSAGE);
-    newBuilder.setCommitMessage(requestCommitsBuilder.build());
+    newBuilder.setType(BuilderMessage.Type.SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE);
+    newBuilder.setCommitAndDownloadStatistics(downloadStatisticsBuilder.build());
     return newBuilder.build();
   }
 
   public static CmdlineRemoteProto.Message.ControllerMessage createRepositoryCommitsMessage(@NotNull List<String> commits,
                                                                                             @NotNull String nearestRemoteMasterCommit,
-                                                                                            @NotNull String latestDownloadedCommit) {
+                                                                                            @NotNull String latestDownloadedCommit,
+                                                                                            long deletionSpeed, long decompressionSpeed) {
     CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.Builder repositoryCommitsResult =
       CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.newBuilder();
     repositoryCommitsResult.addAllCommit(commits);
     repositoryCommitsResult.setLatestDownloadCommit(latestDownloadedCommit);
     repositoryCommitsResult.setLatestBuiltMasterCommit(nearestRemoteMasterCommit);
+    repositoryCommitsResult.setDecompressionSpeed(decompressionSpeed);
+    repositoryCommitsResult.setDeletionSpeed(deletionSpeed);
     return CmdlineRemoteProto.Message.ControllerMessage.newBuilder()
-      .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.REPOSITORY_COMMITS_RESULT)
+      .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.REPOSITORY_COMMITS_AND_STATS_RESULT)
       .setRepositoryCommitsResult(repositoryCommitsResult.build()).build();
   }
 

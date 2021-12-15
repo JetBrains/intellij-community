@@ -23,6 +23,7 @@ import org.jetbrains.jps.cache.model.ProjectBuildStatistic;
 import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
 import org.jetbrains.jps.cache.model.SystemOpsStatistic;
+import org.jetbrains.jps.cache.statistics.JpsCacheLoadingSystemStats;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
@@ -340,7 +341,9 @@ public class JpsOutputLoaderManager implements Disposable {
       return;
     }
 
-    myNettyClient.sendLatestDownloadCommitMessage(commitId);
+    // Statistic should be available if cache downloaded successfully
+    myNettyClient.sendDownloadStatisticMessage(commitId, JpsCacheLoadingSystemStats.getDecompressionSpeedBytesPesSec(),
+                                               JpsCacheLoadingSystemStats.getDeletionSpeedBytesPerSec());
     isCacheDownloaded = true;
     //PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
     //BuildManager.getInstance().clearState(myProject);

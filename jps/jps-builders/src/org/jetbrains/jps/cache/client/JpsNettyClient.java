@@ -33,12 +33,15 @@ public class JpsNettyClient {
     }
   }
 
-  public void sendLatestDownloadCommitMessage(@NotNull String latestDownloadCommit) {
-    channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createSaveLatestDownloadCommitMessage(latestDownloadCommit)));
+  public void sendDownloadStatisticMessage(@NotNull String latestDownloadCommit, long decompressionTimeBytesPesSec,
+                                           long deletionTimeBytesPerSec) {
+    channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createSaveDownloadStatisticMessage(latestDownloadCommit,
+                                                                                                                    decompressionTimeBytesPesSec,
+                                                                                                                    deletionTimeBytesPerSec)));
   }
 
   public void requestRepositoryCommits(@NotNull String latestCommit) {
-    channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createRequestRepositoryCommits(latestCommit)));
+    channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createRequestRepositoryCommitsAndStatistics(latestCommit)));
   }
 
   public void requestAuthToken() {

@@ -35,7 +35,7 @@ message Message {
       FS_EVENT = 3;
       CONSTANT_SEARCH_RESULT = 4;
       AUTHENTICATION_TOKEN = 5;
-      REPOSITORY_COMMITS_RESULT = 6;
+      REPOSITORY_COMMITS_AND_STATS_RESULT = 6;
     }
 
     message FSEvent {
@@ -85,6 +85,8 @@ message Message {
       repeated string commit = 1;
       required string latest_built_master_commit = 2;
       required string latest_download_commit = 3;
+      required int64 decompression_speed = 4;
+      required int64 deletion_speed = 5;
     }
 
     required Type type = 1;
@@ -104,7 +106,7 @@ message Message {
       AUTH_TOKEN_REQUEST = 5;
       CACHE_DOWNLOAD_MESSAGE = 6;
       REPOSITORY_COMMITS_REQUEST = 7;
-      SAVE_LATEST_DOWNLOADED_COMMIT_MESSAGE = 8;
+      SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE = 8;
       SAVE_LATEST_BUILT_COMMIT_MESSAGE = 9;
     }
 
@@ -175,8 +177,10 @@ message Message {
       optional float  done = 9;
     }
 
-    message CommitMessage {
+    message CommitAndDownloadStatistics {
       required string commit = 1;
+      required int64 decompression_speed = 2;
+      required int64 deletion_speed = 3;
     }
 
     required Type type = 1;
@@ -184,7 +188,7 @@ message Message {
     optional CompileMessage compile_message = 3;
     optional ConstantSearchTask constant_search_task = 4;
     optional CacheDownloadMessage cache_download_message = 5;
-    optional CommitMessage commit_message = 6;
+    optional CommitAndDownloadStatistics commit_and_download_statistics = 6;
   }
 
   required UUID session_id = 1;
