@@ -43,7 +43,6 @@ class GrazieInspection : LocalInspectionTool() {
         if (texts.sumOf { it.length } > 50_000) return // too large text
 
         for (extracted in sortByPriority(texts, session.priorityRange)) {
-          println(extracted) //todo
           val runner = CheckerRunner(extracted)
           runner.run(checkers) { problem ->
             runner.toProblemDescriptors(problem, isOnTheFly).forEach(holder::registerProblem)
