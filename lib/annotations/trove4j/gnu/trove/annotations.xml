@@ -68,6 +68,9 @@
   <item name='gnu.trove.TIntFunction'>
     <annotation name='java.lang.FunctionalInterface'/>
   </item>
+  <item name='gnu.trove.TIntHashSet'>
+    <annotation name='java.lang.Deprecated'/>
+  </item>
   <item name='gnu.trove.TIntHashingStrategy'>
     <annotation name='java.lang.FunctionalInterface'/>
   </item>
