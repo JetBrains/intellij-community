@@ -12,7 +12,7 @@ data class WslPath(val distributionId: String, val linuxPath: String) {
 
   companion object {
     @JvmStatic
-    fun parseWindowsUncPath(windowsUncPath : String) : WslPath? {
+    fun parseWindowsUncPath(windowsUncPath: String): WslPath? {
       if (!WSLUtil.isSystemCompatible()) return null
       var path = FileUtil.toSystemDependentName(windowsUncPath)
       if (!path.startsWith(WslConstants.UNC_PREFIX)) return null
@@ -23,6 +23,9 @@ data class WslPath(val distributionId: String, val linuxPath: String) {
     }
 
     @JvmStatic
-    fun getDistributionByWindowsUncPath(windowsUncPath : String) : WSLDistribution? = parseWindowsUncPath(windowsUncPath)?.distribution
+    fun getDistributionByWindowsUncPath(windowsUncPath: String): WSLDistribution? = parseWindowsUncPath(windowsUncPath)?.distribution
+
+    @JvmStatic
+    fun isWslUncPath(windowsUncPath: String): Boolean = parseWindowsUncPath(windowsUncPath) != null
   }
 }
