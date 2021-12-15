@@ -7,10 +7,14 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
-import com.intellij.psi.*
+import com.intellij.psi.PsiClass
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiExpression
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentsOfType
 import com.siyeh.ig.psiutils.BoolUtils
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.conditions.GrNullablePostfixTemplateExpressionCondition
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
@@ -54,9 +58,9 @@ object GroovyPostfixTemplateUtils {
 
   val EXPRESSION_SELECTOR = getGenericExpressionSelector()
 
-  val NULLABLE_TOP_EXPRESSION_SELECTOR = getGenericExpressionSelector(true) { element ->
-    element is GrExpression && element.type !is PsiPrimitiveType
-  }
+  fun getNullableTopExpressionSelector() = getGenericExpressionSelector(true, GrNullablePostfixTemplateExpressionCondition())
+
+  fun getNullableExpressionSelector() = getGenericExpressionSelector(false, GrNullablePostfixTemplateExpressionCondition())
 
   val CONSTRUCTOR_SELECTOR = getGenericExpressionSelector { element ->
     element is GrMethodCallExpression || (element is GrReferenceExpression && element.resolve() is PsiClass)

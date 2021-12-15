@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.GroovyPostfixTemplateUtils
 
 class GrIfNullExpressionPostfixTemplate(provider: PostfixTemplateProvider) :
-  GrPostfixTemplateBase("null", "if (expr == null)", GroovyPostfixTemplateUtils.NULLABLE_TOP_EXPRESSION_SELECTOR, provider) {
+  GrPostfixTemplateBase("null", "if (expr == null)", GroovyPostfixTemplateUtils.getNullableTopExpressionSelector(), provider) {
 
   override fun getGroovyTemplateString(element: PsiElement): String =
 """if (__expr__ == null) {
