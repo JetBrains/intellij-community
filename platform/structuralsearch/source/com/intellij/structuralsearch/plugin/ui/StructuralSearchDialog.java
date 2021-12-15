@@ -520,35 +520,15 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myReplaceCriteriaEdit = createEditor(true);
     replaceEditorPanel.setFirstComponent(myReplaceCriteriaEdit);
 
-    final JPanel wrapper = new JPanel(new BorderLayout());
+    final JPanel wrapper = new JPanel(new MigLayout("ins 0, fill", "", "[grow 100]0[grow 0]"));
     final Color color = UIManager.getColor("Borders.ContrastBorderColor");
     wrapper.setBorder(IdeBorderFactory.createBorder(color));
-    wrapper.add(replaceEditorPanel, BorderLayout.CENTER);
+    wrapper.add(replaceEditorPanel, "grow 100, wrap");
+    wrapper.add(replacementToolbar.getComponent(), "gap 8 8 8 8");
 
-    final JPanel replacePanel = new JPanel(null);
-    final GroupLayout layout = new GroupLayout(replacePanel);
-    replacePanel.setLayout(layout);
-    layout.setHorizontalGroup(
-      layout.createParallelGroup()
-        .addGroup(
-          layout.createSequentialGroup()
-            .addComponent(labelToolbar.getComponent(), GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-            .addPreferredGap(LayoutStyle.ComponentPlacement.UNRELATED, 20, Integer.MAX_VALUE)
-            .addComponent(replacementToolbar.getComponent(), GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        )
-        .addComponent(wrapper)
-    );
-    layout.setVerticalGroup(
-      layout.createSequentialGroup().
-        addGroup(
-          layout.createParallelGroup(GroupLayout.Alignment.CENTER)
-            .addComponent(labelToolbar.getComponent(), GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-            .addComponent(replacementToolbar.getComponent(), GroupLayout.PREFERRED_SIZE, GroupLayout.DEFAULT_SIZE, GroupLayout.PREFERRED_SIZE)
-        )
-        .addGap(4)
-        .addComponent(wrapper)
-    );
-
+    final JPanel replacePanel = new JPanel(new MigLayout("ins 0, fill", "", "[grow 0]4[grow 100]"));
+    replacePanel.add(labelToolbar.getComponent(), "wrap");
+    replacePanel.add(wrapper, "grow 100");
     return replacePanel;
   }
 
