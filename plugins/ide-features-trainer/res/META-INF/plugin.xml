@@ -124,6 +124,10 @@
                  description="Use scroll animation in IFT lessons."
                  defaultValue="TRUE"
                  restartRequired="false"/>
+    <registryKey key="ift.send.onboarding.feedback"
+                 description="Where to send onboarding lessons feedback (nowhere, staging, production)."
+                 defaultValue="nowhere"
+                 restartRequired="false"/>
     <registryKey key="ift.adapt.to.not.native.localization"
                  description="Lessons logic will be changed like using not native localization."
                  defaultValue="FALSE"

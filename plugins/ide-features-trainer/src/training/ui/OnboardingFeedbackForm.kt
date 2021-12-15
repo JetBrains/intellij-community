@@ -18,6 +18,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeBalloonLayoutImpl
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame
 import com.intellij.ui.HyperlinkAdapter
@@ -211,7 +212,7 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     val description = getShortDescription(likenessResult(), technicalIssuesOption, freeForm)
     submitGeneralFeedback(project, onboardingFeedbackData.reportTitle, description,
                           onboardingFeedbackData.reportTitle, jsonConverter.encodeToString(collectedData),
-                          feedbackRequestType = FeedbackRequestType.NO_REQUEST
+                          feedbackRequestType = getFeedbackRequestType()
     )
   }
   StatisticBase.logOnboardingFeedbackDialogResult(
@@ -222,6 +223,12 @@ fun showOnboardingLessonFeedbackForm(project: Project?,
     experiencedUser = experiencedUserOption.isChosen
   )
   return maySendFeedback
+}
+
+private fun getFeedbackRequestType() = when(Registry.stringValue("ift.send.onboarding.feedback")) {
+  "production" -> FeedbackRequestType.PRODUCTION_REQUEST
+  "staging" -> FeedbackRequestType.TEST_REQUEST
+  else -> FeedbackRequestType.NO_REQUEST
 }
 
 private fun getShortDescription(likenessResult: FeedbackLikenessAnswer,
