@@ -24,13 +24,12 @@ import com.intellij.psi.*
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.util.PsiEditorUtil
 import com.intellij.refactoring.HelpID
-import com.intellij.refactoring.IntroduceVariableUtil
 import com.intellij.refactoring.RefactoringBundle
 import com.intellij.refactoring.extractMethod.ExtractMethodDialog
 import com.intellij.refactoring.extractMethod.ExtractMethodHandler
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.addSiblingAfter
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.guessMethodName
-import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.wrapWithCodeBlock
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replacePsiRange
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.selectTargetClass
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodPipeline.withFilteredAnnotations
 import com.intellij.refactoring.extractMethod.newImpl.MapFromDialog.mapFromDialog
@@ -173,7 +172,7 @@ class MethodExtractor {
   fun replaceElements(sourceElements: List<PsiElement>, callElements: List<PsiElement>, anchor: PsiMember, method: PsiMethod): ExtractedElements {
     return WriteAction.compute<ExtractedElements, Throwable> {
       val addedMethod = anchor.addSiblingAfter(method) as PsiMethod
-      val replacedCallElements = replace(sourceElements, callElements)
+      val replacedCallElements = replacePsiRange(sourceElements, callElements)
       ExtractedElements(replacedCallElements, addedMethod)
     }
   }
@@ -297,27 +296,6 @@ class MethodExtractor {
     }
 
     return ExtractedElements(formattedCallElements, method)
-  }
-
-  fun replace(source: List<PsiElement>, target: List<PsiElement>): List<PsiElement> {
-    val sourceAsExpression = source.singleOrNull() as? PsiExpression
-    val targetAsExpression = target.singleOrNull() as? PsiExpression
-    if (sourceAsExpression != null && targetAsExpression != null) {
-      val replacedExpression = IntroduceVariableUtil.replace(sourceAsExpression,
-                                                             targetAsExpression,
-                                                             sourceAsExpression.project)
-      return listOf(replacedExpression)
-    }
-
-    val normalizedTarget = if (target.size > 1 && source.first().parent !is PsiCodeBlock) {
-      wrapWithCodeBlock(target)
-    }
-    else {
-      target
-    }
-    val replacedElements = normalizedTarget.reversed().map { statement -> source.last().addSiblingAfter(statement) }.reversed()
-    source.first().parent.deleteChildRange(source.first(), source.last())
-    return replacedElements
   }
 
   private fun needsNullabilityAnnotations(project: Project): Boolean {

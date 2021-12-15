@@ -17,6 +17,7 @@ import com.intellij.psi.impl.source.codeStyle.JavaCodeStyleManagerImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
+import com.intellij.refactoring.IntroduceVariableUtil
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput
 import com.intellij.refactoring.extractMethod.newImpl.structures.DataOutput.*
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
@@ -245,5 +246,26 @@ object ExtractMethodHelper {
 
     return initialMethodNames.filter { PsiNameHelper.getInstance(project).isIdentifier(it) }
       .map { propertyName -> suggestGetterName(propertyName) }
+  }
+
+  fun replacePsiRange(source: List<PsiElement>, target: List<PsiElement>): List<PsiElement> {
+    val sourceAsExpression = source.singleOrNull() as? PsiExpression
+    val targetAsExpression = target.singleOrNull() as? PsiExpression
+    if (sourceAsExpression != null && targetAsExpression != null) {
+      val replacedExpression = IntroduceVariableUtil.replace(sourceAsExpression,
+                                                             targetAsExpression,
+                                                             sourceAsExpression.project)
+      return listOf(replacedExpression)
+    }
+
+    val normalizedTarget = if (target.size > 1 && source.first().parent !is PsiCodeBlock) {
+      wrapWithCodeBlock(target)
+    }
+    else {
+      target
+    }
+    val replacedElements = normalizedTarget.reversed().map { statement -> source.last().addSiblingAfter(statement) }.reversed()
+    source.first().parent.deleteChildRange(source.first(), source.last())
+    return replacedElements
   }
 }

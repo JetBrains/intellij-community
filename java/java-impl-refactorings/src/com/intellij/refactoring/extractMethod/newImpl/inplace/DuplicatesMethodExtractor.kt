@@ -16,6 +16,7 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.refactoring.extractMethod.SignatureSuggesterPreviewDialog
 import com.intellij.refactoring.extractMethod.newImpl.*
 import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.inputParameterOf
+import com.intellij.refactoring.extractMethod.newImpl.ExtractMethodHelper.replacePsiRange
 import com.intellij.refactoring.extractMethod.newImpl.JavaDuplicatesFinder.Companion.textRangeOf
 import com.intellij.refactoring.extractMethod.newImpl.structures.ExtractOptions
 import com.intellij.refactoring.extractMethod.newImpl.structures.InputParameter
@@ -44,7 +45,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     this.extractOptions = extractOptions
 
     val elementsToReplace = MethodExtractor().prepareRefactoringElements(extractOptions)
-    val calls = MethodExtractor().replace(elements, elementsToReplace.callElements)
+    val calls = replacePsiRange(elements, elementsToReplace.callElements)
     val method = targetClass.addAfter(elementsToReplace.method, anchor) as PsiMethod
 
     this.callsToReplace = calls.map(SmartPointerManager::createPointer)
@@ -113,7 +114,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     if (duplicates.isEmpty()) return
 
     val replacedMethod = runWriteAction {
-      MethodExtractor().replace(calls, elementsToReplace.callElements)
+      replacePsiRange(calls, elementsToReplace.callElements)
       method.replace(elementsToReplace.method) as PsiMethod
     }
 
@@ -131,7 +132,7 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
         builder.buildCall(call, duplicateOptions.flowOutput, duplicateOptions.dataOutput, duplicateOptions.exposedLocalVariables)
       }
       runWriteAction {
-        MethodExtractor().replace(duplicate.candidate, callElements)
+        replacePsiRange(duplicate.candidate, callElements)
       }
     }
   }
