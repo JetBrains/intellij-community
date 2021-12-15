@@ -20,9 +20,7 @@ import training.featuresSuggester.NoSuggestion
 class IntroduceVariableSuggesterKotlinTest : IntroduceVariableSuggesterTest() {
     override val testingCodeFileName = "KotlinCodeExample.kt"
 
-    override fun getTestDataPath(): String {
-        return "${homePath.removeSuffix("/community")}/community/plugins/kotlin/features-trainer/testData"
-    }
+    override fun getTestDataPath() = KotlinSuggestersTestUtils.testDataPath
 
     override fun `testIntroduce expression from IF and get suggestion`() {
         with(myFixture) {

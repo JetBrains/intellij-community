@@ -12,9 +12,7 @@ import training.featuresSuggester.SurroundWithSuggesterTest
 class SurroundWithSuggesterKotlinTest : SurroundWithSuggesterTest() {
     override val testingCodeFileName = "KotlinCodeExample.kt"
 
-    override fun getTestDataPath(): String {
-        return "${homePath.removeSuffix("/community")}/community/plugins/kotlin/features-trainer/testData"
-    }
+    override fun getTestDataPath() = KotlinSuggestersTestUtils.testDataPath
 
     override fun `testSurround one statement with IF and get suggestion`() {
         with(myFixture) {

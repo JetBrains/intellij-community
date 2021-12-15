@@ -15,9 +15,7 @@ import training.featuresSuggester.ReplaceCompletionSuggesterTest
 class ReplaceCompletionSuggesterJavaTest : ReplaceCompletionSuggesterTest() {
   override val testingCodeFileName = "JavaCodeExample.java"
 
-  override fun getTestDataPath(): String {
-    return "${homePath.removeSuffix("/community")}/community/java/java-features-trainer/testData"
-  }
+  override fun getTestDataPath() = JavaSuggestersTestUtils.testDataPath
 
   override fun `testDelete and type dot, complete method call, remove previous identifier and get suggestion`() {
     with(myFixture) {

@@ -14,9 +14,7 @@ import training.featuresSuggester.ReplaceCompletionSuggesterTest
 class ReplaceCompletionSuggesterKotlinTest : ReplaceCompletionSuggesterTest() {
     override val testingCodeFileName = "KotlinCodeExample.kt"
 
-    override fun getTestDataPath(): String {
-        return "${homePath.removeSuffix("/community")}/community/plugins/kotlin/features-trainer/testData"
-    }
+    override fun getTestDataPath() = KotlinSuggestersTestUtils.testDataPath
 
     override fun `testDelete and type dot, complete method call, remove previous identifier and get suggestion`() {
         with(myFixture) {

@@ -18,9 +18,7 @@ import training.featuresSuggester.IntroduceVariableSuggesterTest
 class IntroduceVariableSuggesterPythonTest : IntroduceVariableSuggesterTest() {
   override val testingCodeFileName = "PythonCodeExample.py"
 
-  override fun getTestDataPath(): String {
-    return "${homePath.removeSuffix("/community")}/community/python/python-features-trainer/testData"
-  }
+  override fun getTestDataPath() = PythonSuggestersTestUtils.testDataPath
 
   override fun `testIntroduce expression from IF and get suggestion`() {
     with(myFixture) {

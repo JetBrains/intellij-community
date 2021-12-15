@@ -12,9 +12,7 @@ import training.featuresSuggester.NoSuggestion
 class FileStructureSuggesterPythonTest : FileStructureSuggesterTest() {
   override val testingCodeFileName = "PythonCodeExample.py"
 
-  override fun getTestDataPath(): String {
-    return "${homePath.removeSuffix("/community")}/community/python/python-features-trainer/testData"
-  }
+  override fun getTestDataPath() = PythonSuggestersTestUtils.testDataPath
 
   override fun `testFind field and get suggestion`() {
     with(myFixture) {

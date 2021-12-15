@@ -13,9 +13,7 @@ class LineCommentingSuggesterJavaTest : FeatureSuggesterTest() {
   override val testingCodeFileName = "JavaCodeExample.java"
   override val testingSuggesterId = "Comment with line comment"
 
-  override fun getTestDataPath(): String {
-    return "${homePath.removeSuffix("/community")}/community/java/java-features-trainer/testData"
-  }
+  override fun getTestDataPath() = JavaSuggestersTestUtils.testDataPath
 
   fun `testComment 3 lines in a row and get suggestion`() {
     with(myFixture) {

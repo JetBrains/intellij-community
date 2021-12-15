@@ -13,9 +13,7 @@ class LineCommentingSuggesterPythonTest : FeatureSuggesterTest() {
   override val testingCodeFileName = "PythonCodeExample.py"
   override val testingSuggesterId = "Comment with line comment"
 
-  override fun getTestDataPath(): String {
-    return "${homePath.removeSuffix("/community")}/community/python/python-features-trainer/testData"
-  }
+  override fun getTestDataPath() = PythonSuggestersTestUtils.testDataPath
 
   fun `testComment 3 lines in a row and get suggestion`() {
     with(myFixture) {

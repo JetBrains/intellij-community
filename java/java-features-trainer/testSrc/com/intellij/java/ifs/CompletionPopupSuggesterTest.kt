@@ -13,9 +13,7 @@ class CompletionPopupSuggesterTest : FeatureSuggesterTest() {
   override val testingCodeFileName = "JavaCodeExample.java"
   override val testingSuggesterId = "Completion"
 
-  override fun getTestDataPath(): String {
-    return "${homePath.removeSuffix("/community")}/community/java/java-features-trainer/testData"
-  }
+  override fun getTestDataPath() = JavaSuggestersTestUtils.testDataPath
 
   fun `testDelete and type dot, complete method call and get suggestion`() {
     with(myFixture) {

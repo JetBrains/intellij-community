@@ -15,9 +15,7 @@ import training.featuresSuggester.UnwrapSuggesterTest
 class UnwrapSuggesterKotlinTest : UnwrapSuggesterTest() {
     override val testingCodeFileName = "KotlinCodeExample.kt"
 
-    override fun getTestDataPath(): String {
-        return "${homePath.removeSuffix("/community")}/community/plugins/kotlin/features-trainer/testData"
-    }
+    override fun getTestDataPath() = KotlinSuggestersTestUtils.testDataPath
 
     override fun `testUnwrap IF statement and get suggestion`() {
         with(myFixture) {

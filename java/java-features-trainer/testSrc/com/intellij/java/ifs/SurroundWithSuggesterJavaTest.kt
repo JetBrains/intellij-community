@@ -13,9 +13,7 @@ import training.featuresSuggester.SurroundWithSuggesterTest
 class SurroundWithSuggesterJavaTest : SurroundWithSuggesterTest() {
   override val testingCodeFileName = "JavaCodeExample.java"
 
-  override fun getTestDataPath(): String {
-    return "${homePath.removeSuffix("/community")}/community/java/java-features-trainer/testData"
-  }
+  override fun getTestDataPath() = JavaSuggestersTestUtils.testDataPath
 
   override fun `testSurround one statement with IF and get suggestion`() {
     with(myFixture) {

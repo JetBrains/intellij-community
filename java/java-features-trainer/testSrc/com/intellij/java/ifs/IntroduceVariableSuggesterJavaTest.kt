@@ -20,10 +20,7 @@ import training.featuresSuggester.NoSuggestion
 class IntroduceVariableSuggesterJavaTest : IntroduceVariableSuggesterTest() {
   override val testingCodeFileName = "JavaCodeExample.java"
 
-  override fun getTestDataPath(): String {
-    return "${homePath.removeSuffix("/community")}/community/java/java-features-trainer/testData"
-  }
-
+  override fun getTestDataPath() = JavaSuggestersTestUtils.testDataPath
   override fun `testIntroduce expression from IF and get suggestion`() {
     with(myFixture) {
       cutBetweenLogicalPositions(lineStartIndex = 9, columnStartIndex = 23, lineEndIndex = 9, columnEndIndex = 38)
