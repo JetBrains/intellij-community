@@ -34,7 +34,6 @@ import com.intellij.workspaceModel.ide.WorkspaceModel;
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage;
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
-import com.intellij.workspaceModel.storage.WorkspaceEntityStorageDiffBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.configurers.MavenModuleConfigurer;
@@ -94,13 +93,16 @@ public class MavenProjectImporter {
 
   @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
+    long startTime = System.currentTimeMillis();
     if (MavenUtil.newModelEnabled(myProject)) {
       myModelsProvider = new ModifiableModelsProviderProxyImpl(myProject, myDiff);
     } else {
       myModelsProvider = new ModifiableModelsProviderProxyWrapper(myIdeModifiableModelsProvider);
     }
     myModuleModel = myModelsProvider.getModuleModelProxy();
-    return importProjectOldWay();
+    List<MavenProjectsProcessorTask> tasks = importProjectOldWay();
+    LOG.info("[maven import] applying models took " + (System.currentTimeMillis() - startTime) + "ms");
+    return tasks;
   }
 
   @Nullable
@@ -195,6 +197,8 @@ public class MavenProjectImporter {
 
     MavenUtil.runInBackground(myProject, MavenProjectBundle.message("command.name.configuring.projects"), false, indicator -> {
       float count = 0;
+      long startTime = System.currentTimeMillis();
+      LOG.info("[maven import] applying " + configurers.size() + " configurers to " + myAllProjects.size() + " Maven projects");
       for (MavenProject mavenProject : myAllProjects) {
         Module module = myMavenProjectToModule.get(mavenProject);
         if (module == null) {
@@ -206,6 +210,7 @@ public class MavenProjectImporter {
           configurer.configure(mavenProject, myProject, module);
         }
       }
+      LOG.info("[maven import] configuring projects took " + (System.currentTimeMillis() - startTime) + "ms");
     });
   }
 

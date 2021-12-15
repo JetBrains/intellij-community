@@ -16,14 +16,15 @@
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.internal.statistic.StructuredIdeActivity;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.ControlFlowException;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.statistics.ExternalSystemStatUtilKt;
 import com.intellij.openapi.externalSystem.statistics.ProjectImportCollector;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsContexts;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.jetbrains.annotations.NotNull;
@@ -35,6 +36,7 @@ import java.util.LinkedList;
 import java.util.Queue;
 
 public class MavenProjectsProcessor {
+  private static final Logger LOG = Logger.getInstance(MavenProjectsProcessor.class);
   private final Project myProject;
   private final @NlsContexts.Command String myTitle;
   private final boolean myCancellable;
@@ -140,7 +142,7 @@ public class MavenProjectsProcessor {
         StructuredIdeActivity activity = ExternalSystemStatUtilKt.importActivityStarted(myProject, MavenUtil.SYSTEM_ID, () ->
           Collections.singletonList(ProjectImportCollector.TASK_CLASS.with(finalTask.getClass()))
         );
-
+        long startTime = System.currentTimeMillis();
         try {
           final MavenGeneralSettings mavenGeneralSettings = MavenProjectsManager.getInstance(myProject).getGeneralSettings();
           task.perform(myProject, myEmbeddersManager,
@@ -155,6 +157,10 @@ public class MavenProjectsProcessor {
         }
         finally {
           activity.finished();
+          long duration = System.currentTimeMillis() - startTime;
+          if (duration > 10) {
+            LOG.info("[maven import] " + StringUtil.getShortName(task.getClass()) + " took " + duration + "ms");
+          }
         }
 
         synchronized (myQueue) {
