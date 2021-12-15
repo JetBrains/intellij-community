@@ -254,7 +254,7 @@ public class FlattenStatementsHelper {
                   tailexprlst = ((SynchronizedStatement)stat).getHeadexprentList();
                   break;
                 case Statement.TYPE_SWITCH:
-                  tailexprlst = ((SwitchStatement)stat).getHeadexprentList();
+                  tailexprlst = ((SwitchStatement)stat).getHeadExprentList();
                   break;
                 case Statement.TYPE_IF:
                   tailexprlst = ((IfStatement)stat).getHeadexprentList();
