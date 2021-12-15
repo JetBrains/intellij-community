@@ -179,8 +179,8 @@ message Message {
 
     message CommitAndDownloadStatistics {
       required string commit = 1;
-      required int64 decompression_speed = 2;
-      required int64 deletion_speed = 3;
+      optional int64 decompression_speed = 2;
+      optional int64 deletion_speed = 3;
     }
 
     required Type type = 1;

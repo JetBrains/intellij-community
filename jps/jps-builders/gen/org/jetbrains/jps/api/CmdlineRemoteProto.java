@@ -12053,23 +12053,23 @@ public final class CmdlineRemoteProto {
             getCommitBytes();
 
         /**
-         * <code>required int64 decompression_speed = 2;</code>
+         * <code>optional int64 decompression_speed = 2;</code>
          * @return Whether the decompressionSpeed field is set.
          */
         boolean hasDecompressionSpeed();
         /**
-         * <code>required int64 decompression_speed = 2;</code>
+         * <code>optional int64 decompression_speed = 2;</code>
          * @return The decompressionSpeed.
          */
         long getDecompressionSpeed();
 
         /**
-         * <code>required int64 deletion_speed = 3;</code>
+         * <code>optional int64 deletion_speed = 3;</code>
          * @return Whether the deletionSpeed field is set.
          */
         boolean hasDeletionSpeed();
         /**
-         * <code>required int64 deletion_speed = 3;</code>
+         * <code>optional int64 deletion_speed = 3;</code>
          * @return The deletionSpeed.
          */
         long getDeletionSpeed();
@@ -12143,7 +12143,7 @@ public final class CmdlineRemoteProto {
         public static final int DECOMPRESSION_SPEED_FIELD_NUMBER = 2;
         private long decompressionSpeed_;
         /**
-         * <code>required int64 decompression_speed = 2;</code>
+         * <code>optional int64 decompression_speed = 2;</code>
          * @return Whether the decompressionSpeed field is set.
          */
         @java.lang.Override
@@ -12151,7 +12151,7 @@ public final class CmdlineRemoteProto {
           return ((bitField0_ & 0x00000002) != 0);
         }
         /**
-         * <code>required int64 decompression_speed = 2;</code>
+         * <code>optional int64 decompression_speed = 2;</code>
          * @return The decompressionSpeed.
          */
         @java.lang.Override
@@ -12159,7 +12159,7 @@ public final class CmdlineRemoteProto {
           return decompressionSpeed_;
         }
         /**
-         * <code>required int64 decompression_speed = 2;</code>
+         * <code>optional int64 decompression_speed = 2;</code>
          * @param value The decompressionSpeed to set.
          */
         private void setDecompressionSpeed(long value) {
@@ -12167,7 +12167,7 @@ public final class CmdlineRemoteProto {
           decompressionSpeed_ = value;
         }
         /**
-         * <code>required int64 decompression_speed = 2;</code>
+         * <code>optional int64 decompression_speed = 2;</code>
          */
         private void clearDecompressionSpeed() {
           bitField0_ = (bitField0_ & ~0x00000002);
@@ -12177,7 +12177,7 @@ public final class CmdlineRemoteProto {
         public static final int DELETION_SPEED_FIELD_NUMBER = 3;
         private long deletionSpeed_;
         /**
-         * <code>required int64 deletion_speed = 3;</code>
+         * <code>optional int64 deletion_speed = 3;</code>
          * @return Whether the deletionSpeed field is set.
          */
         @java.lang.Override
@@ -12185,7 +12185,7 @@ public final class CmdlineRemoteProto {
           return ((bitField0_ & 0x00000004) != 0);
         }
         /**
-         * <code>required int64 deletion_speed = 3;</code>
+         * <code>optional int64 deletion_speed = 3;</code>
          * @return The deletionSpeed.
          */
         @java.lang.Override
@@ -12193,7 +12193,7 @@ public final class CmdlineRemoteProto {
           return deletionSpeed_;
         }
         /**
-         * <code>required int64 deletion_speed = 3;</code>
+         * <code>optional int64 deletion_speed = 3;</code>
          * @param value The deletionSpeed to set.
          */
         private void setDeletionSpeed(long value) {
@@ -12201,7 +12201,7 @@ public final class CmdlineRemoteProto {
           deletionSpeed_ = value;
         }
         /**
-         * <code>required int64 deletion_speed = 3;</code>
+         * <code>optional int64 deletion_speed = 3;</code>
          */
         private void clearDeletionSpeed() {
           bitField0_ = (bitField0_ & ~0x00000004);
@@ -12361,7 +12361,7 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>required int64 decompression_speed = 2;</code>
+           * <code>optional int64 decompression_speed = 2;</code>
            * @return Whether the decompressionSpeed field is set.
            */
           @java.lang.Override
@@ -12369,7 +12369,7 @@ public final class CmdlineRemoteProto {
             return instance.hasDecompressionSpeed();
           }
           /**
-           * <code>required int64 decompression_speed = 2;</code>
+           * <code>optional int64 decompression_speed = 2;</code>
            * @return The decompressionSpeed.
            */
           @java.lang.Override
@@ -12377,7 +12377,7 @@ public final class CmdlineRemoteProto {
             return instance.getDecompressionSpeed();
           }
           /**
-           * <code>required int64 decompression_speed = 2;</code>
+           * <code>optional int64 decompression_speed = 2;</code>
            * @param value The decompressionSpeed to set.
            * @return This builder for chaining.
            */
@@ -12387,7 +12387,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required int64 decompression_speed = 2;</code>
+           * <code>optional int64 decompression_speed = 2;</code>
            * @return This builder for chaining.
            */
           public Builder clearDecompressionSpeed() {
@@ -12397,7 +12397,7 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>required int64 deletion_speed = 3;</code>
+           * <code>optional int64 deletion_speed = 3;</code>
            * @return Whether the deletionSpeed field is set.
            */
           @java.lang.Override
@@ -12405,7 +12405,7 @@ public final class CmdlineRemoteProto {
             return instance.hasDeletionSpeed();
           }
           /**
-           * <code>required int64 deletion_speed = 3;</code>
+           * <code>optional int64 deletion_speed = 3;</code>
            * @return The deletionSpeed.
            */
           @java.lang.Override
@@ -12413,7 +12413,7 @@ public final class CmdlineRemoteProto {
             return instance.getDeletionSpeed();
           }
           /**
-           * <code>required int64 deletion_speed = 3;</code>
+           * <code>optional int64 deletion_speed = 3;</code>
            * @param value The deletionSpeed to set.
            * @return This builder for chaining.
            */
@@ -12423,7 +12423,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required int64 deletion_speed = 3;</code>
+           * <code>optional int64 deletion_speed = 3;</code>
            * @return This builder for chaining.
            */
           public Builder clearDeletionSpeed() {
@@ -12455,8 +12455,8 @@ public final class CmdlineRemoteProto {
                   "deletionSpeed_",
                 };
                 java.lang.String info =
-                    "\u0001\u0003\u0000\u0001\u0001\u0003\u0003\u0000\u0000\u0003\u0001\u1508\u0000\u0002" +
-                    "\u1502\u0001\u0003\u1502\u0002";
+                    "\u0001\u0003\u0000\u0001\u0001\u0003\u0003\u0000\u0000\u0001\u0001\u1508\u0000\u0002" +
+                    "\u1002\u0001\u0003\u1002\u0002";
                 return newMessageInfo(DEFAULT_INSTANCE, info, objects);
             }
             // fall through

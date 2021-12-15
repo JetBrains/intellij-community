@@ -97,7 +97,7 @@ public class JpsServerConnectionUtil {
           LOG.info("Time spent to decompress file " + fileName + " " + decompressionTime + "ms");
         } else {
           // We reuse decompression value because it measures only once
-          decompressionTime = previousSystemStats.getDecompressionTimeBytesPesSec();
+          decompressionTime = previousSystemStats.getDecompressionSpeedBytesPesSec();
         }
         start = System.currentTimeMillis();
         FileUtil.delete(downloadedFile);

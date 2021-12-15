@@ -11,7 +11,7 @@ public class JpsCacheLoadingStats {
 
   public static void saveApproximateDeletionSpeed(long deletionSpeed) {
     if (deletionSpeed == 0) {
-      LOG.info("Deletion speed hash default value and will be skipped");
+      LOG.info("Deletion speed has default value and will be skipped");
       return;
     }
     PropertiesComponent.getInstance().setValue(APPROXIMATE_DELETION_SPEED, String.valueOf(deletionSpeed));
@@ -26,7 +26,7 @@ public class JpsCacheLoadingStats {
 
   public static void saveApproximateDecompressionSpeed(long decompressionSpeed) {
     if (decompressionSpeed == 0) {
-      LOG.info("Decompression speed hash default value and will be skipped");
+      LOG.info("Decompression speed has default value and will be skipped");
       return;
     }
     PropertiesComponent.getInstance().setValue(APPROXIMATE_DECOMPRESSION_SPEED, String.valueOf(decompressionSpeed));

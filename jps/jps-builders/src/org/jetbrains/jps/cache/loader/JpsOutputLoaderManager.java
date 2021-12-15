@@ -209,18 +209,6 @@ public class JpsOutputLoaderManager implements Disposable {
       projectModulesCount = buildTimeAndProjectModulesCount.second;
     }
 
-    double magicCoefficient = 1.3;
-    int approximateSizeToDelete = projectModulesCount * PROJECT_MODULE_SIZE_DISK_BYTES;
-    int approximateDownloadSize = projectModulesCount * PROJECT_MODULE_DOWNLOAD_SIZE_BYTES + AVERAGE_CACHE_SIZE_BYTES;
-    long expectedDownloadTimeSec = approximateDownloadSize / systemOpsStatistic.getConnectionSpeedBytesPerSec();
-    long expectedDecompressionTimeSec = approximateDownloadSize / systemOpsStatistic.getDecompressionTimeBytesPesSec();
-    long expectedDeleteTimeSec = approximateSizeToDelete / systemOpsStatistic.getDeletionTimeBytesPerSec();
-    long expectedTimeOfWorkSec = (long)(expectedDeleteTimeSec * magicCoefficient) + expectedDownloadTimeSec + expectedDecompressionTimeSec;
-    LOG.info("Expected download size: " + StringUtil.formatFileSize(approximateDownloadSize) + ". Expected download time: " + expectedDownloadTimeSec + "sec. " +
-             "Expected decompression time: " + expectedDecompressionTimeSec + "sec. " +
-             "Expected size to delete: " + StringUtil.formatFileSize(approximateDownloadSize) + ". Expected delete time: " + expectedDeleteTimeSec + "sec. " +
-             "Total time of working: " + expectedTimeOfWorkSec + "sec.");
-
     if (approximateBuildTime == 0 && commitsCountBetweenCompilation > COMMITS_COUNT_THRESHOLD) {
       LOG.info("Can't calculate approximate project build time, but there are " + commitsCountBetweenCompilation + " not compiled " +
                "and it seems that it will be faster to download caches.");
@@ -230,7 +218,37 @@ public class JpsOutputLoaderManager implements Disposable {
       LOG.info("Can't calculate approximate project build time");
       return false;
     }
-    return expectedTimeOfWorkSec * 1000 < approximateBuildTime;
+    return calculateApproximateDownloadTimeMs(systemOpsStatistic, projectModulesCount) < approximateBuildTime;
+  }
+
+  private static long calculateApproximateDownloadTimeMs(SystemOpsStatistic systemOpsStatistic, int projectModulesCount) {
+    double magicCoefficient = 1.3;
+    long decompressionSpeed;
+    if (JpsCacheLoadingSystemStats.getDecompressionSpeedBytesPesSec() > 0) {
+      decompressionSpeed = JpsCacheLoadingSystemStats.getDecompressionSpeedBytesPesSec();
+      LOG.info("Using previously saved statistic about decompression speed: " + decompressionSpeed);
+    } else {
+      decompressionSpeed = systemOpsStatistic.getDecompressionSpeedBytesPesSec();
+    }
+    long deletionSpeed;
+    if (JpsCacheLoadingSystemStats.getDeletionSpeedBytesPerSec() > 0) {
+      deletionSpeed = JpsCacheLoadingSystemStats.getDeletionSpeedBytesPerSec();
+      LOG.info("Using previously saved statistic about deletion speed: " + deletionSpeed);
+    } else {
+      deletionSpeed = systemOpsStatistic.getDeletionSpeedBytesPerSec();
+    }
+
+    int approximateSizeToDelete = projectModulesCount * PROJECT_MODULE_SIZE_DISK_BYTES;
+    int approximateDownloadSize = projectModulesCount * PROJECT_MODULE_DOWNLOAD_SIZE_BYTES + AVERAGE_CACHE_SIZE_BYTES;
+    long expectedDownloadTimeSec = approximateDownloadSize / systemOpsStatistic.getConnectionSpeedBytesPerSec();
+    long expectedDecompressionTimeSec = approximateDownloadSize / decompressionSpeed;
+    long expectedDeleteTimeSec = approximateSizeToDelete / deletionSpeed;
+    long expectedTimeOfWorkSec = (long)(expectedDeleteTimeSec * magicCoefficient) + expectedDownloadTimeSec + expectedDecompressionTimeSec;
+    LOG.info("Expected download size: " + StringUtil.formatFileSize(approximateDownloadSize) + ". Expected download time: " + expectedDownloadTimeSec + "sec. " +
+             "Expected decompression time: " + expectedDecompressionTimeSec + "sec. " +
+             "Expected size to delete: " + StringUtil.formatFileSize(approximateDownloadSize) + ". Expected delete time: " + expectedDeleteTimeSec + "sec. " +
+             "Total time of working: " + expectedTimeOfWorkSec + "sec.");
+    return expectedTimeOfWorkSec * 1000;
   }
 
   private void startLoadingForCommit(@NotNull String commitId) {

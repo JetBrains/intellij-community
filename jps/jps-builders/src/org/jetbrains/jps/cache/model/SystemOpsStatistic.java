@@ -2,25 +2,25 @@
 package org.jetbrains.jps.cache.model;
 
 public class SystemOpsStatistic {
-  private final long deletionTimeBytesPerSec;
+  private final long deletionSpeedBytesPerSec;
   private final long connectionSpeedBytesPerSec;
-  private final long decompressionTimeBytesPesSec;
+  private final long decompressionSpeedBytesPesSec;
 
   public SystemOpsStatistic(long connectionSpeed, long decompressionTime, long deletionTime, long fileSizeInBytes) {
     this.connectionSpeedBytesPerSec = fileSizeInBytes / connectionSpeed * 1000;
-    this.deletionTimeBytesPerSec = fileSizeInBytes / deletionTime * 1000;
-    this.decompressionTimeBytesPesSec = fileSizeInBytes / decompressionTime * 1000;
+    this.deletionSpeedBytesPerSec = fileSizeInBytes / deletionTime * 1000;
+    this.decompressionSpeedBytesPesSec = fileSizeInBytes / decompressionTime * 1000;
   }
 
-  public long getDeletionTimeBytesPerSec() {
-    return deletionTimeBytesPerSec;
+  public long getDeletionSpeedBytesPerSec() {
+    return deletionSpeedBytesPerSec;
   }
 
   public long getConnectionSpeedBytesPerSec() {
     return connectionSpeedBytesPerSec;
   }
 
-  public long getDecompressionTimeBytesPesSec() {
-    return decompressionTimeBytesPesSec;
+  public long getDecompressionSpeedBytesPesSec() {
+    return decompressionSpeedBytesPesSec;
   }
 }
