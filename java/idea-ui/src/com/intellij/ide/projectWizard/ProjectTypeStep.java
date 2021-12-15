@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
 import com.intellij.platform.ProjectTemplatesFactory;
@@ -489,29 +490,33 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   private boolean showCustomOptions(@NotNull ModuleBuilder builder) {
     String card = builder.getBuilderId();
 
-    ModuleWizardStep customStep;
-    if (!myCustomSteps.containsKey(card)) {
-      ModuleWizardStep step = builder.getCustomOptionsStep(myContext, this);
+    ModuleWizardStep step = myCustomSteps.get(card);
+    if (step == null) {
+      step = builder.getCustomOptionsStep(myContext, this);
       if (isNewWizard() && builder instanceof TemplateModuleBuilder) {
         step = new ProjectSettingsStep(myContext);
         myContext.setProjectBuilder(builder);
         NewProjectWizardCollector.logCustomTemplateSelected(myContext);
       }
+
       if (step == null) return false;
+
       myContext.setProjectBuilder(builder);
       step.updateStep();
-      myCustomSteps.put(card, step);
       myOptionsPanel.add(step.getComponent(), card);
-      customStep = step;
-    } else {
-      customStep = myCustomSteps.get(card);
+
+      myCustomSteps.put(card, step);
+    }
+
+    var preferredFocusedComponent = step.getPreferredFocusedComponent();
+    if (preferredFocusedComponent != null) {
+      requestFocusTo(preferredFocusedComponent);
     }
 
     try {
-      if (customStep != null) {
-        customStep._init();
-      }
-    } catch (Throwable e) {
+      step._init();
+    }
+    catch (Throwable e) {
       LOG.error(e);
     }
 
@@ -520,6 +525,13 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
     showCard(card);
     return true;
+  }
+
+  private static void requestFocusTo(@NotNull JComponent component) {
+    UiNotifyConnector.doWhenFirstShown(component, () -> {
+      final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(component);
+      focusManager.requestFocus(component, false);
+    });
   }
 
   @TestOnly
