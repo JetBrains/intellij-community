@@ -6,7 +6,9 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import kotlin.math.round
 
-abstract class SearchEverywhereElementFeaturesProvider(private val supportedTab: Class<out SearchEverywhereContributor<*>>) {
+abstract class SearchEverywhereElementFeaturesProvider(private val supportedTabName: String) {
+  constructor(supportedTab: Class<out SearchEverywhereContributor<*>>) : this(supportedTab.simpleName)
+
   companion object {
     val EP_NAME: ExtensionPointName<SearchEverywhereElementFeaturesProvider>
       = ExtensionPointName.create("com.intellij.searcheverywhere.ml.searchEverywhereElementFeaturesProvider")
@@ -35,7 +37,7 @@ abstract class SearchEverywhereElementFeaturesProvider(private val supportedTab:
    * Returns true if the Search Everywhere tab is supported by the feature provider.
    */
   fun isTabSupported(tabId: String): Boolean {
-    return supportedTab.simpleName == tabId
+    return supportedTabName == tabId
   }
 
   abstract fun getElementFeatures(element: Any,
