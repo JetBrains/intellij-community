@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.commit
 
 import com.intellij.openapi.Disposable
@@ -19,11 +19,6 @@ import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
 import javax.swing.KeyStroke.getKeyStroke
-
-private val CTRL_ENTER = KeyboardShortcut(getKeyStroke(VK_ENTER, CTRL_DOWN_MASK), null)
-private val META_ENTER = KeyboardShortcut(getKeyStroke(VK_ENTER, META_DOWN_MASK), null)
-private val DEFAULT_COMMIT_ACTION_SHORTCUT: ShortcutSet =
-  if (isMac) CustomShortcutSet(CTRL_ENTER, META_ENTER) else CustomShortcutSet(CTRL_ENTER)
 
 private fun JBOptionButton.getBottomInset(): Int =
   border?.getBorderInsets(this)?.bottom
@@ -109,5 +104,12 @@ class CommitActionsPanel : BorderLayoutPanel(), CommitActionsUi {
     }
 
     override fun actionPerformed(e: AnActionEvent) = commitButton.showPopup()
+  }
+
+  companion object {
+    private val CTRL_ENTER = KeyboardShortcut(getKeyStroke(VK_ENTER, CTRL_DOWN_MASK), null)
+    private val META_ENTER = KeyboardShortcut(getKeyStroke(VK_ENTER, META_DOWN_MASK), null)
+    val DEFAULT_COMMIT_ACTION_SHORTCUT: ShortcutSet =
+      if (isMac) CustomShortcutSet(CTRL_ENTER, META_ENTER) else CustomShortcutSet(CTRL_ENTER)
   }
 }
