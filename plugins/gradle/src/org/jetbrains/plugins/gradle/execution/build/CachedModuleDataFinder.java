@@ -53,6 +53,13 @@ public class CachedModuleDataFinder {
     return moduleData != null ? new GradleModuleData(moduleData) : null;
   }
 
+  public static @Nullable DataNode<? extends ModuleData> findModuleData(@NotNull Project project, @NotNull String modulePath) {
+    var projectNode = ExternalSystemApiUtil.findProjectData(project, GradleConstants.SYSTEM_ID, modulePath);
+    if (projectNode == null) return null;
+
+    return getInstance(project).findModuleData(projectNode, modulePath);
+  }
+
   @Nullable
   private DataNode<? extends ModuleData> findModuleData(final DataNode<ProjectData> projectNode, final String projectPath) {
     DataNode<? extends ModuleData> cachedNode = getCache().get(projectPath);
