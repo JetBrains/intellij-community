@@ -19,10 +19,11 @@ sealed interface DocumentationResult {
     @JvmOverloads
     fun documentation(
       html: @Nls String,
+      locationHtml: String? = null,
       anchor: String? = null,
       imageResolver: DocumentationImageResolver? = null,
     ): DocumentationResult {
-      return DocumentationData(html, anchor, externalUrl = null, linkUrls = emptyList(), imageResolver)
+      return DocumentationData(html, locationHtml, anchor, externalUrl = null, linkUrls = emptyList(), imageResolver)
     }
 
     /**
@@ -35,9 +36,10 @@ sealed interface DocumentationResult {
       html: @Nls String,
       anchor: String? = null,
       externalUrl: String,
+      locationHtml: String? = null,
       imageResolver: DocumentationImageResolver? = null,
     ): DocumentationResult {
-      return DocumentationData(html, anchor, externalUrl, linkUrls = emptyList(), imageResolver)
+      return DocumentationData(html, locationHtml, anchor, externalUrl, linkUrls = emptyList(), imageResolver)
     }
 
     /**
