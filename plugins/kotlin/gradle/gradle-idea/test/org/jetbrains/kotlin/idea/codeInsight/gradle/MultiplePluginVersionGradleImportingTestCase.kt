@@ -11,10 +11,7 @@ import com.intellij.openapi.rd.attach
 import com.intellij.openapi.vfs.VirtualFile
 import org.gradle.util.GradleVersion
 import org.jetbrains.kotlin.gradle.ProjectInfo
-import org.jetbrains.kotlin.util.compareTo
-import org.jetbrains.kotlin.util.matches
-import org.jetbrains.kotlin.util.parseKotlinVersion
-import org.jetbrains.kotlin.util.parseKotlinVersionRequirement
+import org.jetbrains.kotlin.util.*
 import org.jetbrains.plugins.gradle.tooling.util.VersionMatcher
 import org.junit.Assume.assumeTrue
 import org.junit.Rule
@@ -54,6 +51,11 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
 
     override fun setUp() {
+        if (kotlinPluginVersionString == masterKotlinPluginVersion && IS_UNDER_TEAMCITY) {
+           assertTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
+        } else if  (kotlinPluginVersionString == masterKotlinPluginVersion) {
+           assumeTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
+        }
         super.setUp()
         setupSystemProperties()
     }
@@ -84,7 +86,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     }
 
     companion object {
-        val masterKotlinPluginVersion: String = "1.6.20-dev-6372"
+        val masterKotlinPluginVersion: String = System.getenv("KOTLIN_GRADLE_PLUGIN_VERSION") ?: "1.5.255-SNAPSHOT"
 
         @JvmStatic
         @Suppress("ACCIDENTAL_OVERRIDE")
