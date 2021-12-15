@@ -10,10 +10,7 @@ import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLooku
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrCastExpressionPostfixTemplate
-import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrForeachPostfixTemplate
-import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrNewExpressionPostfixTemplate
-import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.GrParenthesizedExpressionPostfixTemplate
+import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.*
 
 class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
 
@@ -87,6 +84,14 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
   }
 
   void testNoNew() {
-    doNoPopupTest "1.", "new", GrNewExpressionPostfixTemplate
+    doNoPopupTest "1.<caret>", "new", GrNewExpressionPostfixTemplate
+  }
+
+  void testNn() {
+    doAutoPopupTest "foo().<caret>", "nn", "if (foo() != null) {\n    \n}", GrIfNotNullExpressionPostfixTemplate
+  }
+
+  void testNotnull() {
+    doAutoPopupTest "foo().<caret>", "notnull", "if (foo() != null) {\n    \n}", GrIfNotNullExpressionPostfixTemplate
   }
 }

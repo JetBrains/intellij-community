@@ -38,20 +38,26 @@ object GroovyPostfixTemplateUtils {
     }
   }
 
-  private fun getGenericExpressionSelector(condition: Condition<in PsiElement>) = object : PostfixTemplateExpressionSelectorBase(condition) {
+  private fun getGenericExpressionSelector(onlyLast : Boolean = false, condition: Condition<in PsiElement> = Conditions.alwaysTrue()) = object : PostfixTemplateExpressionSelectorBase(condition) {
 
     override fun getNonFilteredExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> {
       val actualOffset = max(offset - 1, 0)
       val file = PsiDocumentManager.getInstance(context.project).getPsiFile(document) ?: return emptyList()
-      return PsiTreeUtil
-               .findElementOfClassAtOffset(file, actualOffset, GrExpression::class.java, false)
-               ?.parentsOfType<GrExpression>(true)
-               ?.toList() ?: emptyList()
+      val expressions = PsiTreeUtil
+        .findElementOfClassAtOffset(file, actualOffset, GrExpression::class.java, false)
+        ?.parentsOfType<GrExpression>(true) ?: emptySequence()
+      if (onlyLast) {
+        return listOfNotNull(expressions.last())
+      } else {
+        return expressions.toList()
+      }
     }
 
   }
 
-  val EXPRESSION_SELECTOR = getGenericExpressionSelector(Conditions.alwaysTrue())
+  val EXPRESSION_SELECTOR = getGenericExpressionSelector()
+
+  val TOP_EXPRESSION_SELECTOR = getGenericExpressionSelector(true)
 
   val CONSTRUCTOR_SELECTOR = getGenericExpressionSelector { element ->
     element is GrMethodCallExpression || (element is GrReferenceExpression && element.resolve() is PsiClass)
