@@ -2,7 +2,6 @@
 package org.intellij.plugins.markdown.lang.psi.impl
 
 import com.intellij.lang.ASTNode
-import com.intellij.model.psi.PsiExternalReferenceHost
 import com.intellij.navigation.ColoredItemPresentation
 import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.editor.colors.TextAttributesKey
@@ -11,17 +10,15 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import com.intellij.psi.util.elementType
-import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
-import org.intellij.plugins.markdown.lang.stubs.MarkdownStubBasedPsiElementBase
-import org.intellij.plugins.markdown.lang.stubs.MarkdownStubElement
 import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElement
 import org.intellij.plugins.markdown.lang.stubs.impl.MarkdownHeaderStubElementType
 import org.intellij.plugins.markdown.structureView.MarkdownStructureColors
 import javax.swing.Icon
 
-open class MarkdownHeader: MarkdownStubBasedPsiElementBase<MarkdownStubElement<*>>, PsiExternalReferenceHost {
+@Suppress("DEPRECATION")
+class MarkdownHeader: MarkdownHeaderImpl {
   constructor(node: ASTNode): super(node)
   constructor(stub: MarkdownHeaderStubElement, type: MarkdownHeaderStubElementType): super(stub, type)
 
@@ -29,11 +26,11 @@ open class MarkdownHeader: MarkdownStubBasedPsiElementBase<MarkdownStubElement<*
     get() = calculateHeaderLevel()
 
   override fun accept(visitor: PsiElementVisitor) {
-    if (visitor is MarkdownElementVisitor) {
-      visitor.visitHeader(this)
-      return
+    @Suppress("DEPRECATION")
+    when (visitor) {
+      is MarkdownElementVisitor -> visitor.visitHeader(this)
+      else -> super.accept(visitor)
     }
-    super.accept(visitor)
   }
 
   override fun getPresentation(): ItemPresentation {
@@ -69,18 +66,5 @@ open class MarkdownHeader: MarkdownStubBasedPsiElementBase<MarkdownStubElement<*
     }
     val contentHolder = findChildByType<PsiElement>(MarkdownTokenTypeSets.INLINE_HOLDING_ELEMENT_TYPES) ?: return null
     return StringUtil.trim(contentHolder.text)
-  }
-
-  private fun calculateHeaderLevel(): Int {
-    val type = node.elementType
-    return when {
-      MarkdownTokenTypeSets.HEADER_LEVEL_1_SET.contains(type) -> 1
-      MarkdownTokenTypeSets.HEADER_LEVEL_2_SET.contains(type) -> 2
-      type == MarkdownElementTypes.ATX_3 -> 3
-      type == MarkdownElementTypes.ATX_4 -> 4
-      type == MarkdownElementTypes.ATX_5 -> 5
-      type == MarkdownElementTypes.ATX_6 -> 6
-      else -> throw IllegalStateException("Type should be one of header types")
-    }
   }
 }

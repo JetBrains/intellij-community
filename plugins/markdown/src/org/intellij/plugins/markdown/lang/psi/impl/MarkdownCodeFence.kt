@@ -5,31 +5,24 @@ import com.intellij.navigation.ItemPresentation
 import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.psi.*
-import com.intellij.psi.impl.source.tree.CompositePsiElement
 import com.intellij.psi.tree.IElementType
 import com.intellij.util.IncorrectOperationException
-import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils.getContent
-import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils.getEmptyRange
-import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils.getIndent
-import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils.isAbleToAcceptInjections
-import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
+import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
-import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
 import org.intellij.plugins.markdown.structureView.MarkdownBasePresentation
 
-open class MarkdownCodeFence(elementType: IElementType): CompositePsiElement(elementType), PsiLanguageInjectionHost, MarkdownPsiElement {
+@Suppress("DEPRECATION")
+class MarkdownCodeFence(elementType: IElementType): MarkdownCodeFenceImpl(elementType) {
   override fun accept(visitor: PsiElementVisitor) {
+    @Suppress("DEPRECATION")
     when (visitor) {
       is MarkdownElementVisitor -> visitor.visitCodeFence(this)
       else -> super.accept(visitor)
     }
   }
 
-  open val fenceLanguage: String?
-    get() = findPsiChildByType(MarkdownTokenTypes.FENCE_LANG)?.text
-
-  override fun getPresentation(): ItemPresentation? {
+  override fun getPresentation(): ItemPresentation {
     return object: MarkdownBasePresentation() {
       override fun getPresentableText(): String? {
         return when {
@@ -41,7 +34,8 @@ open class MarkdownCodeFence(elementType: IElementType): CompositePsiElement(ele
       override fun getLocationString(): String? {
         if (!isValid) return null
         val sb = StringBuilder()
-        val elements = getContent(this@MarkdownCodeFence, false) ?: return ""
+        @Suppress("DEPRECATION")
+        val elements = MarkdownCodeFenceUtils.getContent(this@MarkdownCodeFence, false) ?: return ""
         for (element in elements) {
           if (sb.isNotEmpty()) {
             sb.append("\\n")
@@ -57,7 +51,8 @@ open class MarkdownCodeFence(elementType: IElementType): CompositePsiElement(ele
   }
 
   override fun isValidHost(): Boolean {
-    return isAbleToAcceptInjections(this)
+    @Suppress("DEPRECATION")
+    return MarkdownCodeFenceUtils.isAbleToAcceptInjections(this)
   }
 
   override fun updateText(text: String): PsiLanguageInjectionHost? {
@@ -68,7 +63,8 @@ open class MarkdownCodeFence(elementType: IElementType): CompositePsiElement(ele
     //Note that in this text escaper getStartOffsetInParent() refers to offset in host
     return object: LiteralTextEscaper<PsiLanguageInjectionHost?>(this) {
       override fun decode(rangeInsideHost: TextRange, outChars: StringBuilder): Boolean {
-        val elements = getContent(myHost as MarkdownCodeFence, false) ?: return true
+        @Suppress("DEPRECATION")
+        val elements = MarkdownCodeFenceUtils.getContent(myHost as MarkdownCodeFenceImpl, false) ?: return true
         for (element in elements) {
           val intersected = rangeInsideHost.intersection(element.textRangeInParent) ?: continue
           outChars.append(intersected.substring(myHost.text))
@@ -77,7 +73,8 @@ open class MarkdownCodeFence(elementType: IElementType): CompositePsiElement(ele
       }
 
       override fun getOffsetInHost(offsetInDecoded: Int, rangeInsideHost: TextRange): Int {
-        val elements = getContent(myHost as MarkdownCodeFence, false) ?: return -1
+        @Suppress("DEPRECATION")
+        val elements = MarkdownCodeFenceUtils.getContent(myHost as MarkdownCodeFenceImpl, false) ?: return -1
         var cur = 0
         for (element in elements) {
           val intersected = rangeInsideHost.intersection(element.textRangeInParent)
@@ -104,7 +101,8 @@ open class MarkdownCodeFence(elementType: IElementType): CompositePsiElement(ele
       }
 
       override fun getRelevantTextRange(): TextRange {
-        val elements = getContent(myHost as MarkdownCodeFence, true) ?: return getEmptyRange(myHost)
+        @Suppress("DEPRECATION")
+        val elements = MarkdownCodeFenceUtils.getContent(myHost as MarkdownCodeFenceImpl, true) ?: return MarkdownCodeFenceUtils.getEmptyRange(myHost)
         val first = elements[0]
         val last = elements[elements.size - 1]
         return TextRange.create(first.startOffsetInParent, last.startOffsetInParent + last.textLength)
@@ -113,8 +111,7 @@ open class MarkdownCodeFence(elementType: IElementType): CompositePsiElement(ele
       override fun isOneLine(): Boolean = false
     }
   }
-
-  class Manipulator: AbstractElementManipulator<MarkdownCodeFence?>() {
+  internal class Manipulator: AbstractElementManipulator<MarkdownCodeFence>() {
     @Throws(IncorrectOperationException::class)
     override fun handleContentChange(element: MarkdownCodeFence, range: TextRange, content: String): MarkdownCodeFence? {
       var actualContent = content
@@ -122,7 +119,7 @@ open class MarkdownCodeFence(elementType: IElementType): CompositePsiElement(ele
         val textElement = MarkdownPsiElementFactory.createTextElement(element.project, actualContent)
         return if (textElement is MarkdownCodeFence) element.replace(textElement) as MarkdownCodeFence else null
       }
-      val indent = getIndent(element)
+      val indent = MarkdownCodeFenceUtils.getIndent(element)
       if (indent != null && indent.isNotEmpty()) {
         actualContent = StringUtil.splitByLinesKeepSeparators(actualContent).joinToString(separator = "") { indent + it }
         if (StringUtil.endsWithLineBreak(actualContent)) {

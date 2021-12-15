@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.plugins.markdown.lang.psi.impl
 
-import com.intellij.extapi.psi.ASTWrapperPsiElement
 import com.intellij.lang.ASTNode
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.AbstractElementManipulator
@@ -11,10 +10,11 @@ import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.util.IncorrectOperationException
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
-import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElement
 
-open class MarkdownLinkDestination(node: ASTNode): ASTWrapperPsiElement(node), MarkdownPsiElement {
+@Suppress("DEPRECATION")
+class MarkdownLinkDestination(node: ASTNode): MarkdownLinkDestinationImpl(node) {
   override fun accept(visitor: PsiElementVisitor) {
+    @Suppress("DEPRECATION")
     when (visitor) {
       is MarkdownElementVisitor -> visitor.visitLinkDestination(this)
       else -> super.accept(visitor)
@@ -25,9 +25,9 @@ open class MarkdownLinkDestination(node: ASTNode): ASTWrapperPsiElement(node), M
     return ReferenceProvidersRegistry.getReferencesFromProviders(this)
   }
 
-  class Manipulator: AbstractElementManipulator<MarkdownLinkDestination>() {
+  internal class Manipulator: AbstractElementManipulator<MarkdownLinkDestination>() {
     @Throws(IncorrectOperationException::class)
-    override fun handleContentChange(element: MarkdownLinkDestination, range: TextRange, newContent: String): MarkdownLinkDestination? {
+    override fun handleContentChange(element: MarkdownLinkDestination, range: TextRange, newContent: String): MarkdownLinkDestination {
       when (val child = element.firstChild) {
         is LeafPsiElement -> child.replaceWithText(range.replace(child.text, newContent))
         else -> throw IncorrectOperationException("Bad child")

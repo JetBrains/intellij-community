@@ -11,8 +11,9 @@ import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.elementType
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.MarkdownAstUtils.parents
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
 import org.intellij.plugins.markdown.util.hasType
 
@@ -35,7 +36,8 @@ object MarkdownCodeFenceUtils {
    * @return non-empty list of elements or null
    */
   @JvmStatic
-  fun getContent(host: MarkdownCodeFence, withWhitespaces: Boolean): List<PsiElement>? {
+  @Deprecated("Use getContent(MarkdownCodeFence) instead.")
+  fun getContent(host: MarkdownCodeFenceImpl, withWhitespaces: Boolean): List<PsiElement>? {
     var elements: List<PsiElement> = host.children.filter {
       (it !is OuterLanguageElement
        && (it.node.elementType == MarkdownTokenTypes.CODE_FENCE_CONTENT
@@ -58,6 +60,12 @@ object MarkdownCodeFenceUtils {
     return elements.takeIf { it.isNotEmpty() }
   }
 
+  @JvmStatic
+  fun getContent(host: MarkdownCodeFence, withWhitespaces: Boolean): List<PsiElement>? {
+    @Suppress("DEPRECATION")
+    return getContent(host as MarkdownCodeFenceImpl, withWhitespaces)
+  }
+
   /**
    * Check that code fence is reasonably formatted to accept injections
    *
@@ -65,7 +73,8 @@ object MarkdownCodeFenceUtils {
    * one line (even empty) of text.
    */
   @JvmStatic
-  fun isAbleToAcceptInjections(host: MarkdownCodeFence): Boolean {
+  @Deprecated("Use isAbleToAcceptInjections(MarkdownCodeFence) instead.")
+  fun isAbleToAcceptInjections(host: MarkdownCodeFenceImpl): Boolean {
     if (host.children.all { !it.hasType(MarkdownTokenTypes.CODE_FENCE_END) }
         || host.children.all { !it.hasType(MarkdownTokenTypes.CODE_FENCE_START) }) {
       return false
@@ -76,6 +85,12 @@ object MarkdownCodeFenceUtils {
     return newlines >= 2
   }
 
+  @JvmStatic
+  fun isAbleToAcceptInjections(host: MarkdownCodeFence): Boolean {
+    @Suppress("DEPRECATION")
+    return isAbleToAcceptInjections(host as MarkdownCodeFenceImpl)
+  }
+
   /**
    * Get valid empty range (in terms of Injection) for this code fence.
    *
@@ -83,11 +98,17 @@ object MarkdownCodeFenceUtils {
    * returns null
    */
   @JvmStatic
-  fun getEmptyRange(host: MarkdownCodeFence): TextRange {
+  @Deprecated("Use getEmptyRange(MarkdownCodeFence) instead.")
+  fun getEmptyRange(host: MarkdownCodeFenceImpl): TextRange {
     val start = host.children.find { it.hasType(MarkdownTokenTypes.FENCE_LANG) }
                 ?: host.children.find { it.hasType(MarkdownTokenTypes.CODE_FENCE_START) }
 
     return TextRange.from(start!!.startOffsetInParent + start.textLength + 1, 0)
+  }
+
+  fun getEmptyRange(host: MarkdownCodeFence): TextRange {
+    @Suppress("DEPRECATION")
+    return getEmptyRange(host as MarkdownCodeFenceImpl)
   }
 
   /**
