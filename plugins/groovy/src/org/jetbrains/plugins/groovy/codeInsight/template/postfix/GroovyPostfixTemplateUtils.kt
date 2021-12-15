@@ -38,7 +38,7 @@ object GroovyPostfixTemplateUtils {
     }
   }
 
-  private fun getGenericExpressionSelector(onlyLast : Boolean = false, condition: Condition<in PsiElement> = Conditions.alwaysTrue()) = object : PostfixTemplateExpressionSelectorBase(condition) {
+  fun getGenericExpressionSelector(onlyLast : Boolean = false, condition: Condition<in PsiElement> = Conditions.alwaysTrue()) = object : PostfixTemplateExpressionSelectorBase(condition) {
 
     override fun getNonFilteredExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> {
       val actualOffset = max(offset - 1, 0)
