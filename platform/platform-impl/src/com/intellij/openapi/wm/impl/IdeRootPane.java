@@ -261,7 +261,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   private @Nullable ToolbarHolder getToolbarHolderDelegate() {
     UISettings settings = UISettings.getShadowInstance();
-    if (ExperimentalUI.isNewToolbar() && !MainToolbarKt.isSeparateToolbarShown(settings)) {
+    if (ExperimentalUI.isNewToolbar() && MainToolbarKt.isToolbarInHeader(settings)) {
       return (ToolbarHolder)myCustomFrameTitlePane;
     }
 
@@ -341,7 +341,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private void updateToolbarVisibility() {
     UISettings uiSettings = UISettings.getShadowInstance();
     if (myToolbar != null) {
-      boolean visible = ((ExperimentalUI.isNewToolbar() && MainToolbarKt.isSeparateToolbarShown(uiSettings))
+      boolean visible = ((ExperimentalUI.isNewToolbar() && !MainToolbarKt.isToolbarInHeader(uiSettings))
                          || (!ExperimentalUI.isNewToolbar() && uiSettings.getShowMainToolbar()))
                         && !uiSettings.getPresentationMode();
       myToolbar.setVisible(visible);

@@ -104,6 +104,6 @@ private class VisibleComponentsPool {
   }
 }
 
-internal fun isSeparateToolbarShown(settings : UISettings) : Boolean {
-  return !SystemInfo.isWindows || settings.separateMainMenu
+internal fun isToolbarInHeader(settings : UISettings) : Boolean {
+  return SystemInfo.isWindows && !settings.separateMainMenu
 }

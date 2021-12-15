@@ -16,7 +16,7 @@ import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.AbstractMenuFrameHeader
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbar
-import com.intellij.openapi.wm.impl.headertoolbar.isSeparateToolbarShown
+import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.ui.IconManager
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
@@ -132,7 +132,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
   }
 
   private fun updateLayout(settings: UISettings) {
-    myMode = if (isSeparateToolbarShown(settings)) ShowMode.MENU else ShowMode.TOOLBAR
+    myMode = if (isToolbarInHeader(settings)) ShowMode.TOOLBAR else ShowMode.MENU
     val layout = myHeaderContent.layout as CardLayout
     layout.show(myHeaderContent, myMode.name)
   }
