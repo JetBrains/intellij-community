@@ -49,13 +49,9 @@ private class KotlinLocalModuleIdentifierReflectionImpl(
 ) : KotlinLocalModuleIdentifierReflection,
     KotlinModuleIdentifierReflection by KotlinModuleIdentifierReflectionImpl(instance) {
 
-    override val buildId: String? by lazy {
-        instance.callReflective("getBuildId", parameters(), returnType<String>(), logger)
-    }
+    override val buildId: String? by lazy { instance.callReflectiveGetter("getBuildId", logger) }
 
-    override val projectId: String? by lazy {
-        instance.callReflective("getProjectId", parameters(), returnType<String>(), logger)
-    }
+    override val projectId: String? by lazy { instance.callReflectiveGetter("getProjectId", logger) }
 }
 
 private class KotlinMavenModuleIdentifierReflectionImpl(
@@ -63,11 +59,7 @@ private class KotlinMavenModuleIdentifierReflectionImpl(
 ) : KotlinMavenModuleIdentifierReflection,
     KotlinModuleIdentifierReflection by KotlinModuleIdentifierReflectionImpl(instance) {
 
-    override val group: String? by lazy {
-        instance.callReflective("getGroup", parameters(), returnType<String>(), logger)
-    }
+    override val group: String? by lazy { instance.callReflectiveGetter("getGroup", logger) }
 
-    override val name: String? by lazy {
-        instance.callReflective("getName", parameters(), returnType<String>(), logger)
-    }
+    override val name: String? by lazy { instance.callReflectiveGetter("getName", logger) }
 }

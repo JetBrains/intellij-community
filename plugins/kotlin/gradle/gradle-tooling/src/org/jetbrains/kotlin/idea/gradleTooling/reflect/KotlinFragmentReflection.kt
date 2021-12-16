@@ -19,19 +19,13 @@ sealed interface KotlinFragmentReflection {
 private class KotlinFragmentReflectionImpl(
     private val instance: Any
 ) : KotlinFragmentReflection {
-    override val fragmentName: String? by lazy {
-        instance.callReflective("getFragmentName", parameters(), returnType<String>(), logger)
-    }
+    override val fragmentName: String? by lazy { instance.callReflectiveGetter("getFragmentName", logger) }
 
     override val containingModule: KotlinModuleReflection? by lazy {
-        instance.callReflective("getContainingModule", parameters(), returnType<Any>(), logger)?.let { module ->
-            KotlinModuleReflection(module)
-        }
+        instance.callReflectiveAnyGetter("getContainingModule", logger)?.let { module -> KotlinModuleReflection(module) }
     }
 
-    override val kotlinSourceSourceRoots: SourceDirectorySet? by lazy {
-        instance.callReflective("getKotlinSourceRoots", parameters(), returnType<SourceDirectorySet>(), logger)
-    }
+    override val kotlinSourceSourceRoots: SourceDirectorySet? by lazy { instance.callReflectiveGetter("getKotlinSourceRoots", logger) }
 
     override val directRefinesDependencies: List<KotlinFragmentReflection>? by lazy {
         instance.callReflective("getDirectRefinesDependencies", parameters(), returnType<Iterable<Any>>(), logger)?.let { fragments ->
@@ -40,7 +34,7 @@ private class KotlinFragmentReflectionImpl(
     }
 
     override val languageSettings: KotlinLanguageSettingsReflection? by lazy {
-        instance.callReflective("getLanguageSettings", parameters(), returnType<Any>(), logger)?.let { languageSettings ->
+        instance.callReflectiveAnyGetter("getLanguageSettings", logger)?.let { languageSettings ->
             KotlinLanguageSettingsReflection(languageSettings)
         }
     }

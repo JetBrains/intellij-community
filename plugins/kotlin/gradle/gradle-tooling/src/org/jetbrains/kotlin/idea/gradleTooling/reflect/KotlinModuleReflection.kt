@@ -15,32 +15,27 @@ interface KotlinModuleReflection {
 }
 
 private class KotlinModuleReflectionImpl(private val instance: Any) : KotlinModuleReflection {
-    override val name: String? by lazy {
-        instance.callReflective("getName", parameters(), returnType<String>(), logger)
-    }
+    override val name: String? by lazy { instance.callReflectiveGetter("getName", logger) }
 
     override val moduleClassifier: String? by lazy {
         instance.callReflective("getModuleClassifier", parameters(), returnType<String?>(), logger)
     }
 
     override val moduleIdentifier: KotlinModuleIdentifierReflection? by lazy {
-        instance.callReflective("getModuleIdentifier", parameters(), returnType<Any>(), logger)?.let { moduleIdentifier ->
+        instance.callReflectiveAnyGetter("getModuleIdentifier", logger)?.let { moduleIdentifier ->
             KotlinModuleIdentifierReflection(moduleIdentifier)
         }
     }
 
     override val fragments: List<KotlinFragmentReflection>? by lazy {
-        instance.callReflective("getFragments", parameters(), returnType<Iterable<Any>>(), logger)?.let { fragments ->
-            fragments.map { fragment -> KotlinFragmentReflection(fragment) }
-        }
+        val fragments: Iterable<Any>? = instance.callReflectiveGetter("getFragments", logger)
+        fragments?.map { fragment -> KotlinFragmentReflection(fragment) }
     }
 
     override val variants: List<KotlinVariantReflection>? by lazy {
-        instance.callReflective("getVariants", parameters(), returnType<Iterable<Any>>(), logger)?.let { variants ->
-            variants.map { variant -> KotlinVariantReflection(variant) }
-        }
+        val variants: Iterable<Any>? = instance.callReflectiveGetter("getVariants", logger)
+        variants?.map { variant -> KotlinVariantReflection(variant) }
     }
-
 
     companion object {
         val logger = ReflectionLogger(KotlinModuleReflection::class.java)

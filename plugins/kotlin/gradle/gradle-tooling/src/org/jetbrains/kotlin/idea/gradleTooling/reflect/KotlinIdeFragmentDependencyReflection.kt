@@ -40,25 +40,11 @@ interface KotlinIdeMavenBinaryFragmentDependencyReflection : KotlinIdeFragmentDe
 private class KotlinIdeLocalSourceFragmentDependencyReflectionImpl(private val instance: Any) :
     KotlinIdeLocalSourceFragmentDependencyReflection {
 
-    override val buildId: BuildIdentifier? by lazy {
-        instance.callReflective("getBuildId", parameters(), returnType<BuildIdentifier>(), logger)
-    }
-
-    override val projectPath: String? by lazy {
-        instance.callReflective("getProjectPath", parameters(), returnType<String>(), logger)
-    }
-
-    override val projectName: String? by lazy {
-        instance.callReflective("getProjectName", parameters(), returnType<String>(), logger)
-    }
-
-    override val kotlinModuleName: String? by lazy {
-        instance.callReflective("getKotlinModuleName", parameters(), returnType<String>(), logger)
-    }
-
-    override val kotlinFragmentName: String? by lazy {
-        instance.callReflective("getKotlinFragmentName", parameters(), returnType<String>(), logger)
-    }
+    override val buildId: BuildIdentifier? by lazy { instance.callReflectiveGetter("getBuildId", logger) }
+    override val projectPath: String? by lazy { instance.callReflectiveGetter("getProjectPath", logger) }
+    override val projectName: String? by lazy { instance.callReflectiveGetter("getProjectName", logger) }
+    override val kotlinModuleName: String? by lazy { instance.callReflectiveGetter("getKotlinModuleName", logger) }
+    override val kotlinFragmentName: String? by lazy { instance.callReflectiveGetter("getKotlinFragmentName", logger) }
 
     companion object {
         val logger = ReflectionLogger(KotlinIdeLocalSourceFragmentDependencyReflection::class.java)
@@ -67,16 +53,9 @@ private class KotlinIdeLocalSourceFragmentDependencyReflectionImpl(private val i
 
 private class KotlinIdeMavenBinaryFragmentDependencyReflectionImpl(private val instance: Any) :
     KotlinIdeMavenBinaryFragmentDependencyReflection {
-    override val mavenGroup: String? by lazy {
-        instance.callReflective("getMavenGroup", parameters(), returnType<String>(), logger)
-    }
-
-    override val mavenModule: String? by lazy {
-        instance.callReflective("getMavenModule", parameters(), returnType<String>(), logger)
-    }
-    override val version: String? by lazy {
-        instance.callReflective("getVersion", parameters(), returnType<String>(), logger)
-    }
+    override val mavenGroup: String? by lazy { instance.callReflectiveGetter("getMavenGroup", logger) }
+    override val mavenModule: String? by lazy { instance.callReflectiveGetter("getMavenModule", logger) }
+    override val version: String? by lazy { instance.callReflectiveGetter("getVersion", logger) }
     override val kotlinModuleName: String? by lazy {
         instance.callReflective("getKotlinModuleName", parameters(), returnType<String?>(), logger)
     }

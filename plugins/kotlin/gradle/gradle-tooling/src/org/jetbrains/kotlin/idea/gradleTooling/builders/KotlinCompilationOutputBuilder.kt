@@ -8,7 +8,7 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationOutput
 object KotlinCompilationOutputBuilder : KotlinModelComponentBuilderBase<KotlinCompilationOutputReflection, KotlinCompilationOutput> {
     override fun buildComponent(origin: KotlinCompilationOutputReflection): KotlinCompilationOutput? {
         return KotlinCompilationOutputImpl(
-            classesDirs = origin.classesDirs ?: return null,
+            classesDirs = origin.classesDirs?.toSet() ?: return null,
             resourcesDir = origin.resourcesDir,
             effectiveClassesDir = null,
         )

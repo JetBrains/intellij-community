@@ -115,3 +115,9 @@ internal inline fun <reified T> Any.callReflective(
 
     return returnValue as T
 }
+
+internal fun Any.callReflectiveAnyGetter(methodName: String, logger: ReflectionLogger): Any? =
+    callReflective(methodName, parameters(), returnType<Any>(), logger)
+
+internal inline fun <reified T> Any.callReflectiveGetter(methodName: String, logger: ReflectionLogger): T? =
+    callReflective(methodName, parameters(), returnType<T>(), logger)

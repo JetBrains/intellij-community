@@ -29,7 +29,7 @@ class CallReflectiveTest {
         class Tested(val myProperty: String)
 
         val instance = Tested("abc")
-        assertEquals("abc", instance.callReflective("getMyProperty", parameters(), returnType<String>(), logger))
+        assertEquals("abc", instance.callReflectiveGetter("getMyProperty", logger))
     }
 
     @Test
@@ -37,7 +37,7 @@ class CallReflectiveTest {
         class Tested(val myProperty: String)
 
         val instance = Tested("abc")
-        assertNull(instance.callReflective("getWrongPropertyName", parameters(), returnType<String>(), logger))
+        assertNull(instance.callReflectiveGetter("getWrongPropertyName", logger))
         assertEquals(1, logger.messages.size)
     }
 
