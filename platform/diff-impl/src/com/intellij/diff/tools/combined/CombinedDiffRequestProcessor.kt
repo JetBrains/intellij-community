@@ -10,6 +10,7 @@ import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings.Companion.getSetti
 import com.intellij.diff.impl.ui.DifferencesLabel
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool
+import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy
@@ -51,10 +52,23 @@ open class CombinedDiffRequestProcessor(project: Project?,
       e.presentation.isVisible = false
     }
   }
+
   private val nextFileAction = object : MyNextChangeAction() {
     override fun update(e: AnActionEvent) {
       super.update(e)
       e.presentation.isVisible = false
+    }
+  }
+
+  private val prevDifferenceAction = object : MyPrevDifferenceAction() {
+    override fun getDifferenceIterable(e: AnActionEvent): PrevNextDifferenceIterable? {
+      return viewer?.scrollSupport?.currentPrevNextIterable ?: super.getDifferenceIterable(e)
+    }
+  }
+
+  private val nextDifferenceAction = object : MyNextDifferenceAction() {
+    override fun getDifferenceIterable(e: AnActionEvent): PrevNextDifferenceIterable? {
+      return viewer?.scrollSupport?.currentPrevNextIterable ?: super.getDifferenceIterable(e)
     }
   }
 
@@ -64,7 +78,7 @@ open class CombinedDiffRequestProcessor(project: Project?,
 
   override fun getNavigationActions(): List<AnAction> {
     val goToChangeAction = createGoToChangeAction()
-    return listOfNotNull(MyPrevDifferenceAction(), MyNextDifferenceAction(), MyDifferencesLabel(goToChangeAction),
+    return listOfNotNull(prevDifferenceAction, nextDifferenceAction, MyDifferencesLabel(goToChangeAction),
                          openInEditorAction, prevFileAction, nextFileAction)
   }
   final override fun isNavigationEnabled(): Boolean = requestProducer.getFilesSize() > 0
