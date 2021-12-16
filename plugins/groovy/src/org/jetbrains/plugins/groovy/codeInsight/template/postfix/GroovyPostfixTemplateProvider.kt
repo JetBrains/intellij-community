@@ -31,6 +31,7 @@ class GroovyPostfixTemplateProvider : PostfixTemplateProvider {
 }
 
 private fun getBuiltinTemplates(groovyPostfixTemplateProvider: GroovyPostfixTemplateProvider): Set<PostfixTemplate> = setOf(
+  GrArgPostfixTemplate(groovyPostfixTemplateProvider),
   GrParenthesizedExpressionPostfixTemplate(),
   GrCastExpressionPostfixTemplate(groovyPostfixTemplateProvider),
   GrForeachPostfixTemplate("for", groovyPostfixTemplateProvider),

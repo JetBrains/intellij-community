@@ -76,6 +76,10 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
     }
   }
 
+  void testArg() {
+    doAutoPopupTest "foo().<caret>", "arg", "(foo())", GrArgPostfixTemplate
+  }
+
   void testPar() {
     doAutoPopupTest "1.<caret>", "par", "(1)", GrParenthesizedExpressionPostfixTemplate
   }
