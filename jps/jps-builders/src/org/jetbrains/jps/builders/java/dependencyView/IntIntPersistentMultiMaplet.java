@@ -1,33 +1,31 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.builders.java.dependencyView;
 
-import com.intellij.openapi.util.Ref;
 import com.intellij.util.containers.SLRUCache;
 import com.intellij.util.io.*;
-import gnu.trove.TIntHashSet;
-import gnu.trove.TIntObjectProcedure;
+import it.unimi.dsi.fastutil.ints.IntIterator;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.storage.BuildDataCorruptedException;
 
 import java.io.*;
+import java.util.function.ObjIntConsumer;
 
-/**
- * @author: db
- */
-public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
-  private static final TIntHashSet NULL_COLLECTION = new TIntHashSet();
+public final class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
+  private static final IntSet NULL_COLLECTION = new IntOpenHashSet();
   private static final int CACHE_SIZE = 128;
-  private final PersistentHashMap<Integer, TIntHashSet> myMap;
-  private final SLRUCache<Integer, TIntHashSet> myCache;
+  private final PersistentHashMap<Integer, IntSet> myMap;
+  private final SLRUCache<Integer, IntSet> myCache;
 
   public IntIntPersistentMultiMaplet(final File file, final KeyDescriptor<Integer> keyExternalizer) throws IOException {
     myMap = new PersistentHashMap<>(file, keyExternalizer, new IntSetExternalizer());
-    myCache = new SLRUCache<Integer, TIntHashSet>(CACHE_SIZE, CACHE_SIZE) {
+    myCache = new SLRUCache<Integer, IntSet>(CACHE_SIZE, CACHE_SIZE) {
       @NotNull
       @Override
-      public TIntHashSet createValue(Integer key) {
+      public IntSet createValue(Integer key) {
         try {
-          final TIntHashSet collection = myMap.get(key);
+          final IntSet collection = myMap.get(key);
           return collection == null? NULL_COLLECTION : collection;
         }
         catch (IOException e) {
@@ -48,13 +46,13 @@ public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   }
 
   @Override
-  public TIntHashSet get(final int key) {
-    final TIntHashSet collection = myCache.get(key);
+  public IntSet get(final int key) {
+    final IntSet collection = myCache.get(key);
     return collection == NULL_COLLECTION? null : collection;
   }
 
   @Override
-  public void replace(int key, TIntHashSet value) {
+  public void replace(int key, IntSet value) {
     try {
       myCache.remove(key);
       if (value == null || value.isEmpty()) {
@@ -70,26 +68,16 @@ public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   }
 
   @Override
-  public void put(final int key, final TIntHashSet value) {
+  public void put(final int key, final IntSet value) {
     try {
       myCache.remove(key);
       myMap.appendData(key, new AppendablePersistentMap.ValueDataAppender() {
         @Override
         public void append(@NotNull final DataOutput out) throws IOException {
-          final Ref<IOException> exRef = new Ref<>();
-          value.forEach(value1 -> {
-            try {
-              DataInputOutputUtil.writeINT(out, value1);
-            }
-            catch (IOException e) {
-              exRef.set(e);
-              return false;
-            }
-            return true;
-          });
-          final IOException exception = exRef.get();
-          if (exception != null) {
-            throw exception;
+          IntIterator iterator = value.iterator();
+          while (iterator.hasNext()) {
+            int value1 = iterator.nextInt();
+            DataInputOutputUtil.writeINT(out, value1);
           }
         }
       });
@@ -116,12 +104,12 @@ public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   }
 
   @Override
-  public void removeAll(int key, TIntHashSet values) {
+  public void removeAll(int key, IntSet values) {
     try {
-      final TIntHashSet collection = myCache.get(key);
+      final IntSet collection = myCache.get(key);
 
       if (collection != NULL_COLLECTION) {
-        if (collection.removeAll(values.toArray())) {
+        if (collection.removeAll(values)) {
           myCache.remove(key);
           if (collection.isEmpty()) {
             myMap.remove(key);
@@ -140,7 +128,7 @@ public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   @Override
   public void removeFrom(final int key, final int value) {
     try {
-      final TIntHashSet collection = myCache.get(key);
+      final IntSet collection = myCache.get(key);
       if (collection != NULL_COLLECTION) {
         if (collection.remove(value)) {
           myCache.remove(key);
@@ -171,24 +159,12 @@ public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
 
   @Override
   public void putAll(IntIntMultiMaplet m) {
-    m.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-      @Override
-      public boolean execute(int key, TIntHashSet value) {
-        put(key, value);
-        return true;
-      }
-    });
+    m.forEachEntry((integers, value) -> put(value, integers));
   }
 
   @Override
   public void replaceAll(IntIntMultiMaplet m) {
-    m.forEachEntry(new TIntObjectProcedure<TIntHashSet>() {
-      @Override
-      public boolean execute(int key, TIntHashSet value) {
-        replace(key, value);
-        return true;
-      }
-    });
+    m.forEachEntry((integers, value) -> replace(value, integers));
   }
 
   @Override
@@ -215,15 +191,16 @@ public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
   }
 
   @Override
-  public void forEachEntry(final TIntObjectProcedure<TIntHashSet> procedure) {
+  public void forEachEntry(ObjIntConsumer<? super IntSet> procedure) {
     try {
       myMap.processKeysWithExistingMapping(key -> {
         try {
-          return procedure.execute(key, myMap.get(key));
+          procedure.accept(myMap.get(key), key);
         }
         catch (IOException e) {
           throw new BuildDataCorruptedException(e);
         }
+        return true;
       });
     }
     catch (IOException e) {
@@ -231,29 +208,19 @@ public class IntIntPersistentMultiMaplet extends IntIntMultiMaplet {
     }
   }
 
-  private static class IntSetExternalizer implements DataExternalizer<TIntHashSet> {
+  private static final class IntSetExternalizer implements DataExternalizer<IntSet> {
     @Override
-    public void save(@NotNull final DataOutput out, final TIntHashSet value) throws IOException {
-      final Ref<IOException> exRef = new Ref<>(null);
-      value.forEach(elem -> {
-        try {
-          DataInputOutputUtil.writeINT(out, elem);
-        }
-        catch (IOException e) {
-          exRef.set(e);
-          return false;
-        }
-        return true;
-      });
-      final IOException exception = exRef.get();
-      if (exception != null) {
-        throw exception;
+    public void save(@NotNull final DataOutput out, final IntSet value) throws IOException {
+      IntIterator iterator = value.iterator();
+      while (iterator.hasNext()) {
+        int elem = iterator.nextInt();
+        DataInputOutputUtil.writeINT(out, elem);
       }
     }
 
     @Override
-    public TIntHashSet read(@NotNull final DataInput in) throws IOException {
-      final TIntHashSet result = new TIntHashSet();
+    public IntSet read(@NotNull final DataInput in) throws IOException {
+      final IntSet result = new IntOpenHashSet();
       final DataInputStream stream = (DataInputStream)in;
       while (stream.available() > 0) {
         result.add(DataInputOutputUtil.readINT(in));

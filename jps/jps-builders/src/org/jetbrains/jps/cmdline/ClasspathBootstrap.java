@@ -161,8 +161,12 @@ public final class ClasspathBootstrap {
     cp.add(getResourceFile(JavacReferenceCollector.class));  // jps-javac-extension library
     cp.add(getResourceFile(Appender.class)); // log4j
     cp.add(getResourceFile(SystemInfoRt.class)); // util_rt
-    //noinspection deprecation,UnnecessaryFullyQualifiedName
-    cp.add(getResourceFile(gnu.trove.THashSet.class)); // Trove
+    try {
+      // trove
+      cp.add(getResourceFile(ClasspathBootstrap.class.getClassLoader().loadClass("gnu.trove.THashSet")));
+    }
+    catch (ClassNotFoundException ignore) {
+    }
 
     for (Class<?> aClass : COMMON_REQUIRED_CLASSES) {
       cp.add(getResourceFile(aClass));
