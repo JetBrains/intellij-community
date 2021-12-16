@@ -118,6 +118,25 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         )
     }
 
+    val isHmppEnabledByDefault get() = kotlinPluginVersion.isHmppEnabledByDefault
+
+    fun hmppProperties(): Map<String, String> =
+        if (isHmppEnabledByDefault) {
+            mapOf(
+                "enable_hmpp_flags" to "",
+                "disable_hmpp_flags" to "kotlin.mpp.hierarchicalStructureSupport=false"
+            )
+        } else {
+            mapOf(
+                "enable_hmpp_flags" to """
+                    kotlin.mpp.enableGranularSourceSetsMetadata=true
+                    kotlin.native.enableDependencyPropagation=false
+                    kotlin.mpp.enableHierarchicalCommonization=true
+                """.trimIndent(),
+                "disable_hmpp_flags" to ""
+            )
+        }
+
     protected fun repositories(useKts: Boolean): String {
         val repositories = mutableListOf<String>()
 
@@ -146,6 +165,8 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
         unitedProperties["kotlin_plugin_repositories"] = repositories(false)
         unitedProperties["kts_kotlin_plugin_repositories"] = repositories(true)
+
+        unitedProperties.putAll(hmppProperties())
         return super.configureByFiles(unitedProperties)
     }
 
