@@ -174,4 +174,8 @@ try {
   void testDef() {
     doAutoPopupTestWithoutInvocation "foo().<caret>", "def", GrIntroduceVariablePostfixTemplate
   }
+
+  void testWhile() {
+    doAutoPopupTest "true.<caret>", "while", "while (true) {\n    \n}", GrWhilePostfixTemplate
+  }
 }
