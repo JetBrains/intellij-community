@@ -1,7 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
+import com.intellij.execution.executors.DefaultRunExecutor
+import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager
+import com.intellij.openapi.externalSystem.task.TaskCallback
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil
@@ -27,6 +33,8 @@ import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.junit.Assume
 import org.junit.runners.Parameterized
 import java.io.File
+import java.util.concurrent.CompletableFuture
+import java.util.concurrent.TimeUnit
 
 @Suppress("ACCIDENTAL_OVERRIDE")
 abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
@@ -184,6 +192,42 @@ abstract class KotlinGradleImportingTestCase : GradleImportingTestCase() {
             /* isPreviewMode = */ false,
             /* progressExecutionMode = */ ProgressExecutionMode.MODAL_SYNC
         )
+    }
+
+    protected fun runTaskAndGetErrorOutput(projectPath: String, taskName: String, scriptParameters: String = ""): String {
+        val taskErrOutput = StringBuilder()
+        val stdErrListener = object : ExternalSystemTaskNotificationListenerAdapter() {
+            override fun onTaskOutput(id: ExternalSystemTaskId, text: String, stdOut: Boolean) {
+                if (!stdOut) {
+                    taskErrOutput.append(text)
+                }
+            }
+        }
+        val notificationManager = ExternalSystemProgressNotificationManager.getInstance()
+        notificationManager.addNotificationListener(stdErrListener)
+        try {
+            val settings = ExternalSystemTaskExecutionSettings()
+            settings.externalProjectPath = projectPath
+            settings.taskNames = listOf(taskName)
+            settings.scriptParameters = scriptParameters
+            settings.externalSystemIdString = GradleConstants.SYSTEM_ID.id
+
+            val future = CompletableFuture<String>()
+            ExternalSystemUtil.runTask(settings, DefaultRunExecutor.EXECUTOR_ID, myProject, GradleConstants.SYSTEM_ID,
+                                       object : TaskCallback {
+                                           override fun onSuccess() {
+                                               future.complete(taskErrOutput.toString())
+                                           }
+
+                                           override fun onFailure() {
+                                               future.complete(taskErrOutput.toString())
+                                           }
+                                       }, ProgressExecutionMode.IN_BACKGROUND_ASYNC)
+            return future.get(10, TimeUnit.SECONDS)
+        }
+        finally {
+            notificationManager.removeNotificationListener(stdErrListener)
+        }
     }
 
     companion object {
