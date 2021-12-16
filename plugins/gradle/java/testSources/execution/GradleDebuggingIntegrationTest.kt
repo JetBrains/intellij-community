@@ -175,7 +175,7 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
 
     createProjectSubFile("src/main/java/pack/AClass.java", jvmArgsPrinter.trimIndent())
 
-    createSettingsFile("include 'subproject'")
+    createSettingsFile { include("subproject") }
     createProjectSubDir("subproject")
 
     val argsFileName = "args.txt"
@@ -230,7 +230,7 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
   fun `explicit tasks are debugged for a gradle subproject when called relatively`() {
 
     createProjectSubFile("src/main/java/pack/AClass.java", jvmArgsPrinter.trimIndent())
-    createSettingsFile("include 'subproject'")
+    createSettingsFile { include("subproject") }
     createProjectSubDir("subproject")
 
     val argsFileName = "args.txt"
@@ -330,7 +330,7 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
     val subProjectArgs2File = File(projectPath, "args2.txt")
 
     createSettingsFile {
-      withModule("module")
+      include("module")
     }
     createBuildFile("module/build.gradle") {
       withJavaPlugin()
