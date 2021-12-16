@@ -122,4 +122,12 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
   void testSerr() {
     doAutoPopupTest "foo.<caret>", "serr", "System.err.println(foo)", GrSerrExpressionPostfixTemplate
   }
+
+  void testThrow() {
+    doAutoPopupTest "new IOException().<caret>", "throw", "throw new IOException()", GrThrowExpressionPostfixTemplate
+  }
+
+  void testThrowNotThrowable() {
+    doAutoPopupTest "1.<caret>", "throw", "throw new RuntimeException(1)", GrThrowExpressionPostfixTemplate
+  }
 }

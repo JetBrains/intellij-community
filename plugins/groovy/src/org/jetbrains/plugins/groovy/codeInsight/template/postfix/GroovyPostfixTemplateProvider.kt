@@ -42,4 +42,5 @@ private fun getBuiltinTemplates(groovyPostfixTemplateProvider: GroovyPostfixTemp
   GrReturnExpressionPostfixTemplate(groovyPostfixTemplateProvider),
   GrSoutExpressionPostfixTemplate(groovyPostfixTemplateProvider),
   GrSerrExpressionPostfixTemplate(groovyPostfixTemplateProvider),
+  GrThrowExpressionPostfixTemplate(groovyPostfixTemplateProvider),
 )

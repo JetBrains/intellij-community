@@ -7,13 +7,12 @@ import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro
 import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.GroovyPostfixTemplateProvider
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.GroovyPostfixTemplateUtils
-import org.jetbrains.plugins.groovy.codeInsight.template.postfix.conditions.GrIterablePostfixTemplateExpressionCondition
 
 class GrForeachPostfixTemplate(provider: GroovyPostfixTemplateProvider) :
-  GrPostfixTemplateBase("for", "for (final e in expr)", GroovyPostfixTemplateUtils.getGenericExpressionSelector(true, GrIterablePostfixTemplateExpressionCondition()), provider) {
+  GrPostfixTemplateBase("for", "for (final e in expr)", GroovyPostfixTemplateUtils.getIterableExpressionSelector(), provider) {
 
   override fun getGroovyTemplateString(element: PsiElement): String =
-"""for (final def __NAME__ in __expr__) {
+    """for (final def __NAME__ in __expr__) {
     __END__
 }"""
 

@@ -7,10 +7,8 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Conditions
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiExpression
+import com.intellij.psi.*
+import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.parentsOfType
 import com.siyeh.ig.psiutils.BoolUtils
@@ -20,6 +18,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrMapType
+import org.jetbrains.plugins.groovy.lang.typing.ListLiteralType
 import kotlin.math.max
 
 object GroovyPostfixTemplateUtils {
@@ -68,6 +68,22 @@ object GroovyPostfixTemplateUtils {
 
   fun getMethodLocalTopExpressionSelector() = getGenericExpressionSelector(true) { element ->
     PsiTreeUtil.getParentOfType(element, GrMethod::class.java, GrFunctionalExpression::class.java) != null
+  }
+
+  fun getSubclassExpressionSelector(baseClassFqn: String) = getGenericExpressionSelector(true) { expr ->
+    if (expr !is GrExpression) return@getGenericExpressionSelector false
+    val type = expr.type
+    type == null || InheritanceUtil.isInheritor(type, baseClassFqn)
+  }
+
+  fun getIterableExpressionSelector() = getGenericExpressionSelector(true) { expr ->
+    if (expr !is GrExpression) return@getGenericExpressionSelector false
+    val type = expr.type
+    type == null || // unknown type may be actually iterable in runtime
+    type is GrMapType ||
+    type is ListLiteralType ||
+    type is PsiArrayType ||
+    InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE)
   }
 
   val CONSTRUCTOR_SELECTOR = getGenericExpressionSelector { element ->
