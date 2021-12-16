@@ -1518,10 +1518,17 @@ public final class PluginManagerConfigurable
   private final class MarketplaceSortByAction extends ToggleAction implements DumbAware {
     private final SortBySearchOption myOption;
     private boolean myState;
+    private boolean myVisible;
 
     private MarketplaceSortByAction(@NotNull SortBySearchOption option) {
       super(option.myPresentableNameSupplier);
       myOption = option;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      e.getPresentation().setVisible(myVisible);
     }
 
     @Override
@@ -1538,12 +1545,11 @@ public final class PluginManagerConfigurable
     public void setState(@NotNull SearchQueryParser.Marketplace parser) {
       if (myOption == SortBySearchOption.Relevance) {
         myState = parser.sortBy == null;
-        getTemplatePresentation().setVisible(
-          parser.sortBy == null || !parser.tags.isEmpty() || !parser.vendors.isEmpty() || parser.searchQuery != null
-        );
+        myVisible = parser.sortBy == null || !parser.tags.isEmpty() || !parser.vendors.isEmpty() || parser.searchQuery != null;
       }
       else {
         myState = parser.sortBy != null && myOption.name().equalsIgnoreCase(parser.sortBy);
+        myVisible = true;
       }
     }
 

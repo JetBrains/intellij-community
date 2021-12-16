@@ -22,6 +22,7 @@ internal class StartEditingAction : DumbAwareAction() {
                                              ?: tree.getClientProperty(EditableTree.KEY) as? EditableTree
 
   override fun update(event: AnActionEvent) {
+    event.presentation.isEnabledAndVisible = false
     val tree = event.contextTree ?: return
     event.presentation.isVisible = true
     // enable editing if the selected path is editable
@@ -39,6 +40,5 @@ internal class StartEditingAction : DumbAwareAction() {
 
   init {
     isEnabledInModalContext = true
-    templatePresentation.isEnabledAndVisible = false
   }
 }
