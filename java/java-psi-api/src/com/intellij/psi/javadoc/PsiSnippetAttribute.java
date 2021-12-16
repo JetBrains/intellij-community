@@ -19,6 +19,11 @@ public interface PsiSnippetAttribute extends PsiElement {
   @NotNull PsiElement getNameIdentifier();
 
   /**
+   * @return name of this name-value pair.
+   */
+  @NotNull String getName();
+
+  /**
    * @return value of this name-value pair or null if absent.
    */
   @Nullable PsiElement getValue();
