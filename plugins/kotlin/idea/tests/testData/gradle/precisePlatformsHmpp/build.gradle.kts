@@ -14,8 +14,10 @@ buildscript {
     }
 }
 
-repositories {
-    {{kts_kotlin_plugin_repositories}}
+allprojects {
+    repositories {
+        { { kts_kotlin_plugin_repositories } }
+    }
 }
 
 plugins {
