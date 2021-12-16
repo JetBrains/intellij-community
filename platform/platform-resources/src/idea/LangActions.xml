@@ -1221,6 +1221,7 @@
       <separator/>
       <reference ref="ShowExecutionPoint"/>
       <separator/>
+      <reference ref="EvaluateExpression" />
     </group>
 
     <group id="XDebugger.ToolWindow.LeftToolbar">
