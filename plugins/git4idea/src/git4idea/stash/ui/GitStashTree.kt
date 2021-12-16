@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.Processor
+import com.intellij.util.ui.tree.TreeUtil
 import git4idea.i18n.GitBundle
 import git4idea.repo.GitRepositoryManager
 import git4idea.stash.GitStashTracker
@@ -72,6 +73,10 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
       }
     }
     updateTreeModel(modelBuilder.build())
+
+    if (selectionCount == 0) {
+      TreeUtil.selectFirstNode(this)
+    }
   }
 
   private fun createRootNode(root: VirtualFile): ChangesBrowserNode<*> {
