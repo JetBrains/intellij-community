@@ -169,7 +169,7 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       if (isDisposed()) return;
 
       getComponent().setVisible(true);
-      boolean actionEnabled = state.isActionEnabled() && isEnabledForFile(file);
+      actionEnabled = state.isActionEnabled() && isEnabledForFile(file);
       getComponent().setEnabled(actionEnabled);
       updateComponent(state);
 
