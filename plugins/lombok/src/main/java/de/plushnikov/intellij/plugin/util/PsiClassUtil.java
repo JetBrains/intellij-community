@@ -29,10 +29,6 @@ public final class PsiClassUtil {
   @NotNull
   public static Collection<PsiMethod> collectClassMethodsIntern(@NotNull PsiClass psiClass) {
     if (psiClass instanceof PsiExtensibleClass) {
-      if (psiClass.isRecord()) {
-        return collectRecordMethods((PsiExtensibleClass) psiClass);
-      }
-
       return new ArrayList<>(((PsiExtensibleClass) psiClass).getOwnMethods());
     } else {
       return filterPsiElements(psiClass, PsiMethod.class);
@@ -47,9 +43,7 @@ public final class PsiClassUtil {
    */
   @NotNull
   public static Collection<PsiField> collectClassFieldsIntern(@NotNull PsiClass psiClass) {
-    if (psiClass.isRecord()) {
-      return collectRecordFields(psiClass);
-    } else if (psiClass instanceof PsiExtensibleClass) {
+    if (psiClass instanceof PsiExtensibleClass) {
       return ((PsiExtensibleClass) psiClass).getOwnFields();
     } else {
       return filterPsiElements(psiClass, PsiField.class);
@@ -78,57 +72,6 @@ public final class PsiClassUtil {
 
   private static <T extends PsiElement> Collection<T> filterPsiElements(@NotNull PsiClass psiClass, @NotNull Class<T> desiredClass) {
     return Arrays.stream(psiClass.getChildren()).filter(desiredClass::isInstance).map(desiredClass::cast).collect(Collectors.toList());
-  }
-
-  private static Collection<PsiField> collectRecordFields(@NotNull PsiClass psiClass) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
-    Set<PsiField> fields = Arrays.stream(psiClass.getRecordComponents())
-      .filter(c -> c.getName() != null && c.getTypeElement() != null)
-      .map(c -> {
-        String type = c.getTypeElement().getText();
-        if (type.endsWith("...")) {
-          type = type.substring(0, type.length() - 3) + "[]";
-        }
-        PsiField field = factory.createFieldFromText(String.format("private final %s %s;", type, c.getName()), psiClass);
-        return new LightRecordField(psiClass.getManager(), field, psiClass, c);
-      })
-      .collect(Collectors.toSet());
-
-    fields.addAll(((PsiExtensibleClass) psiClass).getOwnFields());
-    return fields;
-  }
-
-  private static Collection<PsiMethod> collectRecordMethods(@NotNull PsiExtensibleClass psiClass) {
-    PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
-    List<PsiMethod> ownMethods = psiClass.getOwnMethods();
-    PsiRecordComponent[] components = psiClass.getRecordComponents();
-
-    // Getters
-    Set<PsiMethod> methods = Arrays.stream(components)
-      .filter(c -> c.getName() != null && c.getTypeElement() != null)
-      .filter(c -> !ContainerUtil.exists(ownMethods, m -> m.getName().equals(c.getName()) && m.getParameterList().isEmpty()))
-      .map(c -> {
-        String type = c.getTypeElement().getText();
-        if (type.endsWith("...")) {
-          type = type.substring(0, type.length() - 3) + "[]";
-        }
-        PsiMethod method = factory.createMethodFromText("public " + type + " " + c.getName() + "(){ return " + c.getName() + "; }", c.getContainingClass());
-        return new LightRecordMethod(psiClass.getManager(), method, psiClass, c);
-      })
-      .collect(Collectors.toSet());
-
-    // Canonical constructor
-    if (!ContainerUtil.exists(ownMethods, m -> JavaPsiRecordUtil.isCompactConstructor(m) || JavaPsiRecordUtil.isExplicitCanonicalConstructor(m))) {
-      String constructorText = psiClass.getName() + psiClass.getRecordHeader().getText() + "{"
-                  + StringUtil.join(components, c -> "this." + c.getName() + "=" + c.getName() + ";", "\n")
-                  + "}";
-      PsiMethod constructor = factory.createMethodFromText(constructorText, psiClass);
-
-      AccessModifier modifier = psiClass.getModifierList() == null ? AccessModifier.PUBLIC : AccessModifier.fromModifierList(psiClass.getModifierList());
-      constructor.getModifierList().setModifierProperty(modifier.toPsiModifier(), true);
-      methods.add(new LightRecordCanonicalConstructor(constructor, psiClass));
-    }
-    return methods;
   }
 
   @NotNull

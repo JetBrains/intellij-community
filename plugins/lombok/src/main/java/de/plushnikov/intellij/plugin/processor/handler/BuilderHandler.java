@@ -449,6 +449,8 @@ public class BuilderHandler {
     final Stream<BuilderInfo> result;
     if (null != psiClassMethod) {
       result = Arrays.stream(psiClassMethod.getParameterList().getParameters()).map(BuilderInfo::fromPsiParameter);
+    } else if (psiClass.isRecord()) {
+      result = Arrays.stream(psiClass.getRecordComponents()).map(BuilderInfo::fromPsiRecordComponent);
     } else {
       result = PsiClassUtil.collectClassFieldsIntern(psiClass).stream().map(BuilderInfo::fromPsiField)
         .filter(BuilderInfo::useForBuilder);
