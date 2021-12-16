@@ -378,7 +378,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   @Override
   protected JComponent createCenterPanel() {
-    final var searchPanel = new JPanel(new MigLayout("fill, ins 0, hidemode 3", "[grow 0]0[grow 0]0[grow 0]0[grow 0][]", "[grow 100][grow 0]"));
+    final var searchPanel = new JPanel(new MigLayout("fill, ins 0, hidemode 3", "[grow 0]0[grow 0]0[grow 0]0[grow 0][]", "[grow 100]0[grow 0]"));
     searchPanel.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
 
     mySearchEditorPanel = new OnePixelSplitter(false, 1.0f);
