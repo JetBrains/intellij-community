@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -403,22 +404,16 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 }
 
-private class PopupActionGroup(private val actions: Array<AnAction>): ActionGroup() {
+private class PopupActionGroup(private val actions: Array<AnAction>): ActionGroup(), DumbAware {
 
   private val popupState = PopupState.forPopup()
 
   init {
     isPopup = true
+    templatePresentation.isPerformGroup = actions.isNotEmpty()
   }
 
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-    actions
-
-  override fun isDumbAware(): Boolean =
-    true
-
-  override fun canBePerformed(context: DataContext): Boolean =
-    actions.isNotEmpty()
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> = actions
 
   override fun actionPerformed(e: AnActionEvent) {
     if (popupState.isRecentlyHidden) {

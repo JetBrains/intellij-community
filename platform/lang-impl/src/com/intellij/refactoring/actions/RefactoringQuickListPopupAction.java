@@ -79,11 +79,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
       this.delegate = delegate;
       this.actionManager = actionManager;
       getTemplatePresentation().copyFrom(delegate.getTemplatePresentation());
-    }
-
-    @Override
-    public boolean isPopup() {
-      return false;
+      setPopup(false);
     }
 
     @Override
