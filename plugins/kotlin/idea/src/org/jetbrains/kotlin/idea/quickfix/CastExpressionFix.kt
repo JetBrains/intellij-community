@@ -17,12 +17,16 @@ import org.jetbrains.kotlin.resolve.jvm.diagnostics.ErrorsJvm
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.asFlexibleType
+import org.jetbrains.kotlin.types.isDefinitelyNotNullType
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 import org.jetbrains.kotlin.types.typeUtil.makeNullable
 
 class CastExpressionFix(element: KtExpression, type: KotlinType) : KotlinQuickFixAction<KtExpression>(element) {
     private val typePresentation = IdeDescriptorRenderers.SOURCE_CODE_TYPES_WITH_SHORT_NAMES.renderType(type)
-    private val typeSourceCode = IdeDescriptorRenderers.SOURCE_CODE_TYPES.renderType(type)
+    private val typeSourceCode = IdeDescriptorRenderers.SOURCE_CODE_TYPES.renderType(type).let {
+        if (type.isDefinitelyNotNullType) "($it)" else it
+    }
+
     private val upOrDownCast: Boolean = run {
         val expressionType = element.analyze(BodyResolveMode.PARTIAL).getType(element)
         expressionType != null && (type.isSubtypeOf(expressionType) || expressionType.isSubtypeOf(type))
