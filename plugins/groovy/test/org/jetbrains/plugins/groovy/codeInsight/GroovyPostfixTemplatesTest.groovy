@@ -204,10 +204,14 @@ try {
   }
 
   void testFlatMap() {
-    doAutoPopupTest "[1, 2, 3].<caret>", "flatMap", "[1, 2, 3].findMany {}", GrFlatMapPostfixTemplate
+    doAutoPopupTest "[1, 2, 3].<caret>", "flatMap", "[1, 2, 3].collectMany {}", GrFlatMapPostfixTemplate
   }
 
   void testFoldLeft() {
     doAutoPopupTest "[1, 2, 3].<caret>", "foldLeft", "[1, 2, 3].inject() {}", GrFoldLeftPostfixTemplate
+  }
+
+  void testReduce() {
+    doAutoPopupTest "[1, 2, 3].<caret>", "reduce", "[1, 2, 3].inject {}", GrReducePostfixTemplate
   }
 }

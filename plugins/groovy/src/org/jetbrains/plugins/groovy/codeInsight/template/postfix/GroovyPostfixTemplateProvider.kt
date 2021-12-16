@@ -54,5 +54,6 @@ private fun getBuiltinTemplates(groovyPostfixTemplateProvider: GroovyPostfixTemp
   GrAllPostfixTemplate(groovyPostfixTemplateProvider),
   GrFilterPostfixTemplate(groovyPostfixTemplateProvider),
   GrFlatMapPostfixTemplate(groovyPostfixTemplateProvider),
-  GrFoldLeftPostfixTemplate(groovyPostfixTemplateProvider)
+  GrFoldLeftPostfixTemplate(groovyPostfixTemplateProvider),
+  GrReducePostfixTemplate(groovyPostfixTemplateProvider),
 )
