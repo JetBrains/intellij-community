@@ -14,6 +14,8 @@ import com.intellij.openapi.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
+import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilder
+import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import org.junit.Test
 import java.io.File
@@ -319,10 +321,76 @@ class GradleDebuggingIntegrationTest : GradleImportingTestCase() {
       .contains(debugString)
   }
 
+  @Test
+  fun `test debug all tasks with same name`() {
+    createProjectSubFile("src/main/java/pack/AClass.java", jvmArgsPrinter)
+    createProjectSubFile("module/src/main/java/pack/AClass.java", jvmArgsPrinter)
+
+    val subProjectArgs1File = File(projectPath, "args1.txt")
+    val subProjectArgs2File = File(projectPath, "args2.txt")
+
+    createSettingsFile {
+      withModule("module")
+    }
+    createBuildFile("module/build.gradle") {
+      withJavaPlugin()
+      withTask("printArgs", "JavaExec") {
+        assign("classpath", code("rootProject.sourceSets.main.runtimeClasspath"))
+        assign("main", "pack.AClass")
+        call("args", subProjectArgs1File.systemIndependentPath)
+      }
+    }
+    importProject {
+      withJavaPlugin()
+      withTask("printArgs", "JavaExec") {
+        assign("classpath", code("rootProject.sourceSets.main.runtimeClasspath"))
+        assign("main", "pack.AClass")
+        call("args", subProjectArgs2File.systemIndependentPath)
+      }
+    }
+
+    executeRunConfiguration(
+      createEmptyGradleRunConfiguration("myRC").apply {
+        isScriptDebugEnabled = false
+        settings.apply {
+          externalProjectPath = projectPath
+          taskNames = listOf("printArgs")
+          scriptParameters = ""
+        }
+      }
+    )
+
+    assertDebugJvmArgs(":printArgs", subProjectArgs1File)
+    assertDebugJvmArgs(":module:printArgs", subProjectArgs2File)
+  }
+
+  fun createSettingsFile(configure: GradleSettingScriptBuilder.() -> Unit) {
+    createSettingsFile(GradleSettingScriptBuilder.settingsScript("project", configure))
+  }
+
+  fun createBuildFile(relativePath: String, configure: TestGradleBuildScriptBuilder.() -> Unit) {
+    createProjectSubFile(relativePath, buildscript(configure))
+  }
+
   fun importProject(configure: TestGradleBuildScriptBuilder.() -> Unit) {
-    val buildScript = createBuildScriptBuilder()
-    buildScript.configure()
-    importProject(buildScript.generate())
+    importProject(buildscript(configure))
+  }
+
+  fun assertDebugJvmArgs(printArgsTaskName: String, subProjectArgsFile: File, shouldBeDebugged: Boolean = true) {
+    assertThat(subProjectArgsFile)
+      .describedAs("Task '$printArgsTaskName' should be started")
+      .exists()
+      .content()
+      .apply {
+        if (shouldBeDebugged) {
+          describedAs("Task '$printArgsTaskName' should be debugged")
+            .contains(debugString)
+        }
+        else {
+          describedAs("Task '$printArgsTaskName' should not be debugged")
+            .doesNotContain(debugString)
+        }
+      }
   }
 
   private fun executeRunConfiguration(gradleRC: GradleRunConfiguration) {
