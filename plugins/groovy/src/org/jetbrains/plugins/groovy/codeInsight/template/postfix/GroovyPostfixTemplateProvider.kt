@@ -53,4 +53,5 @@ private fun getBuiltinTemplates(groovyPostfixTemplateProvider: GroovyPostfixTemp
   GrNegateBooleanPostfixTemplate("not", groovyPostfixTemplateProvider),
   GrAllPostfixTemplate(groovyPostfixTemplateProvider),
   GrFilterPostfixTemplate(groovyPostfixTemplateProvider),
+  GrFlatMapPostfixTemplate(groovyPostfixTemplateProvider),
 )

@@ -200,6 +200,10 @@ try {
   }
 
   void testFilter() {
-    doAutoPopupTest "[1, 2, 3].<caret>", "filter", "[1, 2, 3].findAll {}", GrAllPostfixTemplate
+    doAutoPopupTest "[1, 2, 3].<caret>", "filter", "[1, 2, 3].findAll {}", GrFilterPostfixTemplate
+  }
+
+  void testFlatMap() {
+    doAutoPopupTest "[1, 2, 3].<caret>", "flatMap", "[1, 2, 3].findMany {}", GrFlatMapPostfixTemplate
   }
 }
