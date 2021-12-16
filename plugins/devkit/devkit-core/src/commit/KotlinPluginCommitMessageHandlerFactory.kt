@@ -22,7 +22,7 @@ class KotlinPluginCommitMessageHandlerFactory : CheckinHandlerFactory() {
     private const val kotlinPluginPath = "plugins/kotlin/"
     private val pathsToIgnore = setOf("/test/", "/testData/")
     private val fileExtensionsNotToTrack = setOf("iml", "md")
-    private val commitMessageRegex = Regex(".*KTIJ-\\d+.*")
+    private val commitMessageRegex = Regex(".*KTIJ-\\d+.*", RegexOption.DOT_MATCHES_ALL /* line breaks matter */)
   }
 
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
