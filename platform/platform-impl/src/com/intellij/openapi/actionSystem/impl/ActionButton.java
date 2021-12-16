@@ -39,16 +39,16 @@ import java.util.Objects;
 import java.util.Set;
 
 public class ActionButton extends JComponent implements ActionButtonComponent, AnActionHolder, Accessible {
-  // Contains actions IDs which descriptions are permitted for displaying in the ActionButton tooltip
+  // Contains action IDs which descriptions are permitted for displaying in the ActionButton tooltip
   @NonNls private static final Set<String> WHITE_LIST = Set.of("ExternalSystem.ProjectRefreshAction", "LoadConfigurationAction");
 
   /**
-   * By default button representing popup action group displays 'dropdown' icon.
-   * This key allows to avoid 'dropdown' icon painting, just put it in ActionButton's presentation or template presentation of ActionGroup like this:
-   * {@code presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, Boolean.TRUE)}
+   * By default, a popup action group button displays 'dropdown' icon.
+   * Use this key to avoid suppress that icon for a presentation or a template presentation like this:
+   * {@code presentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)}.
    */
-
   public static final Key<Boolean> HIDE_DROPDOWN_ICON = Key.create("HIDE_DROPDOWN_ICON");
+
   private JBDimension myMinimumButtonSize;
   private PropertyChangeListener myPresentationListener;
   private Icon myDisabledIcon;
@@ -66,6 +66,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   private boolean myNoIconsInPopup;
   private Insets myInsets;
+  private boolean myManualUpdate;
 
   public ActionButton(@NotNull AnAction action,
                       Presentation presentation,
@@ -172,7 +173,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
   protected void actionPerformed(@NotNull AnActionEvent event) {
     HelpTooltip.hide(this);
-    if (isPopupMenuAction(event, myAction)) {
+    if (isPopupMenuAction(event)) {
       if (!wasPopupJustClosedByButtonClick) {
         showActionGroupPopup((ActionGroup)myAction, event);
       }
@@ -223,11 +224,14 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     };
   }
 
-  private static boolean isPopupMenuAction(AnActionEvent event, AnAction action) {
-    return action instanceof ActionGroup &&
-        !(action instanceof CustomComponentAction) &&
-        ((ActionGroup) action).isPopup() &&
-        !((ActionGroup) action).canBePerformed(event.getDataContext());
+  private boolean isPopupMenuAction(@NotNull AnActionEvent event) {
+    if (!(myAction instanceof ActionGroup)) return false;
+    if (myAction instanceof CustomComponentAction) return false;
+    if (!event.getPresentation().isPopupGroup()) return false;
+    // do not call potentially slow `canBePerformed` for a button managed by a toolbar
+    if (event.getPresentation().isPerformGroup() ||
+        myManualUpdate && ((ActionGroup)myAction).canBePerformed(event.getDataContext())) return false;
+    return true;
   }
 
   @Override
@@ -261,8 +265,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void update() {
+    myManualUpdate = true;
+    // the following code mirrors the ActionUpdater#updateActionReal code
+    boolean wasPopup = myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup(myPlace);
+    myPresentation.setPopupGroup(myAction instanceof ActionGroup && (myPresentation.isPopupGroup() || wasPopup));
     AnActionEvent e = AnActionEvent.createFromInputEvent(null, myPlace, myPresentation, getDataContext(), false, true);
     ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), myAction, e, false);
+    ActionUpdater.assertActionGroupPopupStateIsNotChanged(myAction, myPlace, wasPopup, myPresentation);
     updateToolTipText();
     updateIcon();
   }
@@ -395,7 +404,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   protected boolean shallPaintDownArrow() {
-    if (!(myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup())) return false;
+    if (!(myAction instanceof ActionGroup)) return false;
+    if (!myPresentation.isPopupGroup()) return false;
     if (Boolean.TRUE == myAction.getTemplatePresentation().getClientProperty(HIDE_DROPDOWN_ICON)) return false;
     if (Boolean.TRUE == myPresentation.getClientProperty(HIDE_DROPDOWN_ICON)) return false;
     return true;

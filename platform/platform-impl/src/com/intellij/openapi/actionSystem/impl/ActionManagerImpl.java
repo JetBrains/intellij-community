@@ -623,7 +623,7 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
                                       module.getPluginId()));
       }
 
-      Presentation presentation = new Presentation();
+      Presentation presentation = Presentation.newTemplatePresentation();
       presentation.setText(text);
       if (bundle == null) {
         presentation.setDescription(descriptionValue);

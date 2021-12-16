@@ -207,23 +207,13 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
-  public PopupStep<?> onChosen(PopupFactoryImpl.ActionItem actionChoice, boolean finalChoice, int eventModifiers) {
-    if (!actionChoice.isEnabled()) return FINAL_CHOICE;
-    final AnAction action = actionChoice.getAction();
-    final DataContext dataContext = myContext.get();
-    if (action instanceof ActionGroup && (!finalChoice || !((ActionGroup)action).canBePerformed(dataContext))) {
+  public PopupStep<?> onChosen(@NotNull PopupFactoryImpl.ActionItem item, boolean finalChoice, int eventModifiers) {
+    if (!item.isEnabled()) return FINAL_CHOICE;
+    AnAction action = item.getAction();
+    if (action instanceof ActionGroup && (!finalChoice || !item.isPerformGroup())) {
       return createActionsStep(
-        (ActionGroup)action,
-        dataContext,
-        myEnableMnemonics,
-        true,
-        myShowDisabledActions,
-        null,
-        false, false,
-        myContext,
-        myActionPlace,
-        myPreselectActionCondition, -1,
-        myPresentationFactory);
+        (ActionGroup)action, myContext.get(), myEnableMnemonics, true, myShowDisabledActions, null,
+        false, false, myContext, myActionPlace, myPreselectActionCondition, -1, myPresentationFactory);
     }
     else {
       myFinalRunnable = () -> performAction(action, eventModifiers);
@@ -232,11 +222,9 @@ public class ActionPopupStep implements ListPopupStepEx<PopupFactoryImpl.ActionI
   }
 
   @Override
-  public boolean isFinal(PopupFactoryImpl.ActionItem value) {
-    if (!value.isEnabled()) return true;
-    final AnAction action = value.getAction();
-    final DataContext dataContext = myContext.get();
-    return !(action instanceof ActionGroup) || ((ActionGroup)action).canBePerformed(dataContext);
+  public boolean isFinal(@NotNull PopupFactoryImpl.ActionItem item) {
+    if (!item.isEnabled()) return true;
+    return !(item.getAction() instanceof ActionGroup) || item.isPerformGroup();
   }
 
   public void performAction(@NotNull AnAction action, int modifiers) {
