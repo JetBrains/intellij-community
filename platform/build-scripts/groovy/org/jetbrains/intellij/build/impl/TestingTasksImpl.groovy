@@ -364,7 +364,9 @@ class TestingTasksImpl extends TestingTasks {
     else {
       context.messages.info("Starting ${(testGroups == null ? "all tests" : "test from groups '${testGroups}'")} from classpath of module '$mainModule'")
     }
-    context.messages.info("Runtime: ${runtimeExecutablePath()}")
+    String runtime = runtimeExecutablePath()
+    context.messages.info("Runtime: $runtime")
+    BuildHelper.runProcess(context, List.of(runtime, "-version"))
     context.messages.info("Runtime options: $allJvmArgs")
     context.messages.info("System properties: $allSystemProperties")
     context.messages.info("Bootstrap classpath: $bootstrapClasspath")
