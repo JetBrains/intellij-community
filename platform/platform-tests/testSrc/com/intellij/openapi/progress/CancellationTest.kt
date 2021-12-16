@@ -1,22 +1,24 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
-import com.intellij.testFramework.ApplicationRule
-import com.intellij.util.concurrency.AppExecutorUtil
+import com.intellij.testFramework.ApplicationExtension
 import com.intellij.util.concurrency.Semaphore
-import junit.framework.TestCase.*
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import org.junit.ClassRule
-import org.junit.Test
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
+import org.junit.jupiter.api.extension.RegisterExtension
 
 class CancellationTest {
 
   companion object {
 
-    @ClassRule
+    @RegisterExtension
     @JvmField
-    val application: ApplicationRule = ApplicationRule()
+    val applicationExtension = ApplicationExtension()
   }
 
   @Test
@@ -30,44 +32,37 @@ class CancellationTest {
   }
 
   @Test
-  fun `current coroutine job`(): Unit = runBlocking {
-    assertNull(Cancellation.currentJob())
-    withJob { currentJob ->
-      assertSame(currentJob, Cancellation.currentJob())
-    }
-    assertNull(Cancellation.currentJob())
-  }
-
-  @Test
-  fun `job cancellation`() {
+  fun `checkCanceled delegates to job`(): Unit = runBlocking {
     val pm = ProgressManager.getInstance()
     val lock = Semaphore(1)
-    val job = Job()
     val cancelled = Semaphore(1)
-    val future = AppExecutorUtil.getAppExecutorService().submit {
-      withJob(job) {
+    val job = launch(Dispatchers.IO) {
+      assertNull(Cancellation.currentJob())
+      withJob { currentJob ->
+        assertSame(currentJob, Cancellation.currentJob())
+        assertDoesNotThrow {
+          ProgressManager.checkCanceled()
+        }
         ProgressManager.checkCanceled()
         lock.up()
         cancelled.timeoutWaitUp()
-        assertCheckCanceledThrows()
-        pm.executeNonCancelableSection {
+        assertThrows<JobCanceledException> {
           ProgressManager.checkCanceled()
         }
-        assertCheckCanceledThrows()
+        pm.executeNonCancelableSection {
+          assertDoesNotThrow {
+            ProgressManager.checkCanceled()
+          }
+        }
+        assertThrows<JobCanceledException> {
+          ProgressManager.checkCanceled()
+        }
       }
+      assertNull(Cancellation.currentJob())
     }
     lock.timeoutWaitUp()
     job.cancel()
     cancelled.up()
-    waitAssertCompletedNormally(future)
-  }
-
-  private fun assertCheckCanceledThrows() {
-    try {
-      ProgressManager.checkCanceled()
-      fail()
-    }
-    catch (e: JobCanceledException) {
-    }
+    job.timeoutJoin()
   }
 }
