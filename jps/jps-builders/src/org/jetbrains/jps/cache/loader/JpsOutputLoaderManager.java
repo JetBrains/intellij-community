@@ -170,6 +170,12 @@ public class JpsOutputLoaderManager implements Disposable {
       if (latestBuiltCommitFound && !commitToDownload.isEmpty()) break;
     }
 
+    if (commitsCountBetweenCompilation == 0) {
+      String message = JpsBuildBundle.message("notification.content.no.commits.since.latest.compilation");
+      LOG.warn(message);
+      myNettyClient.sendDescriptionStatusMessage(message);
+      return null;
+    }
     if (!availableCommitsForRemote.contains(commitToDownload)) {
       String message = JpsBuildBundle.message("notification.content.not.found.any.caches.for.latest.commits.in.branch");
       LOG.warn(message);
@@ -178,15 +184,15 @@ public class JpsOutputLoaderManager implements Disposable {
     }
     LOG.info("Commits count between latest success compilation and current commit: " + commitsCountBetweenCompilation +
              ". Detected commit to download: " + commitToDownload);
-    if (!isDownloadQuickerThanLocalBuild(buildRunner, commitsCountBetweenCompilation, scopes)) {
-      String message = JpsBuildBundle.message("notification.content.local.build.is.quicker");
-      LOG.warn(message);
+    if (commitToDownload.equals(latestDownloadedCommit)) {
+      String message = JpsBuildBundle.message("notification.content.system.contains.up.to.date.caches");
+      LOG.info(message);
       myNettyClient.sendDescriptionStatusMessage(message);
       return null;
     }
-    if (commitToDownload.equals(latestDownloadedCommit) && !isForceUpdate) {
-      String message = JpsBuildBundle.message("notification.content.system.contains.up.to.date.caches");
-      LOG.info(message);
+    if (!isDownloadQuickerThanLocalBuild(buildRunner, commitsCountBetweenCompilation, scopes)) {
+      String message = JpsBuildBundle.message("notification.content.local.build.is.quicker");
+      LOG.warn(message);
       myNettyClient.sendDescriptionStatusMessage(message);
       return null;
     }
@@ -211,7 +217,7 @@ public class JpsOutputLoaderManager implements Disposable {
 
     if (approximateBuildTime == 0 && commitsCountBetweenCompilation > COMMITS_COUNT_THRESHOLD) {
       LOG.info("Can't calculate approximate project build time, but there are " + commitsCountBetweenCompilation + " not compiled " +
-               "and it seems that it will be faster to download caches.");
+               "commits and it seems that it will be faster to download caches.");
       return true;
     }
     if (approximateBuildTime == 0) {
