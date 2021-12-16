@@ -69,7 +69,7 @@ final class BundledRuntime {
   // contract: returns a directory, where only one subdirectory is available: 'jbr', which contains specified JBR
   @NotNull
   Path extract(String prefix, OsFamily os, JvmArchitecture arch = JvmArchitecture.x64) {
-    Path targetDir = Path.of(context.paths.communityHome, "build", "download", "${prefix}${os.jbrArchiveSuffix}_$arch")
+    Path targetDir = Path.of(context.paths.communityHome, "build", "download", "${prefix}${build}-${os.jbrArchiveSuffix}-$arch")
     def jbrDir = targetDir.resolve("jbr")
 
     Path archive = findArchiveImpl(prefix, os, build, arch, context.options, context.paths)
