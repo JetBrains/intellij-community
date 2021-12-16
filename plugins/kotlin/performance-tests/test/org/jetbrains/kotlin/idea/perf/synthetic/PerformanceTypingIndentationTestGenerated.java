@@ -940,6 +940,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                     runTest("../idea/tests/testData/indentationOnNewline/multilineString/spaces/DontAddMarginWhenItIsUnused.after.kt");
                 }
 
+                @TestMetadata("DontAddMarginWhenItIsUnusedWithEmptyPrevious.after.kt")
+                public void testDontAddMarginWhenItIsUnusedWithEmptyPrevious() throws Exception {
+                    runTest("../idea/tests/testData/indentationOnNewline/multilineString/spaces/DontAddMarginWhenItIsUnusedWithEmptyPrevious.after.kt");
+                }
+
                 @TestMetadata("DontAddTrimCallWhenAlreadyMultiline.after.kt")
                 public void testDontAddTrimCallWhenAlreadyMultiline() throws Exception {
                     runTest("../idea/tests/testData/indentationOnNewline/multilineString/spaces/DontAddTrimCallWhenAlreadyMultiline.after.kt");
@@ -998,6 +1003,11 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
                 @TestMetadata("EnterInInjectedFragment.after.kt")
                 public void testEnterInInjectedFragment() throws Exception {
                     runTest("../idea/tests/testData/indentationOnNewline/multilineString/spaces/EnterInInjectedFragment.after.kt");
+                }
+
+                @TestMetadata("EnterInLineWithMarginOnNotMargedLine.after.kt")
+                public void testEnterInLineWithMarginOnNotMargedLine() throws Exception {
+                    runTest("../idea/tests/testData/indentationOnNewline/multilineString/spaces/EnterInLineWithMarginOnNotMargedLine.after.kt");
                 }
 
                 @TestMetadata("EnterInMethodCallMargin.after.kt")

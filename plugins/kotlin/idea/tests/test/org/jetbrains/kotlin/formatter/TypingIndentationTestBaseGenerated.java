@@ -983,6 +983,11 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                         runTest("testData/indentationOnNewline/multilineString/spaces/DontAddMarginWhenItIsUnused.after.kt");
                     }
 
+                    @TestMetadata("DontAddMarginWhenItIsUnusedWithEmptyPrevious.after.kt")
+                    public void testDontAddMarginWhenItIsUnusedWithEmptyPrevious() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/DontAddMarginWhenItIsUnusedWithEmptyPrevious.after.kt");
+                    }
+
                     @TestMetadata("DontAddTrimCallWhenAlreadyMultiline.after.kt")
                     public void testDontAddTrimCallWhenAlreadyMultiline() throws Exception {
                         runTest("testData/indentationOnNewline/multilineString/spaces/DontAddTrimCallWhenAlreadyMultiline.after.kt");
@@ -1043,6 +1048,11 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                         runTest("testData/indentationOnNewline/multilineString/spaces/EnterInInjectedFragment.after.kt");
                     }
 
+                    @TestMetadata("EnterInLineWithMarginOnNotMargedLine.after.kt")
+                    public void testEnterInLineWithMarginOnNotMargedLine() throws Exception {
+                        runTest("testData/indentationOnNewline/multilineString/spaces/EnterInLineWithMarginOnNotMargedLine.after.kt");
+                    }
+
                     @TestMetadata("EnterInMethodCallMargin.after.kt")
                     public void testEnterInMethodCallMargin() throws Exception {
                         runTest("testData/indentationOnNewline/multilineString/spaces/EnterInMethodCallMargin.after.kt");
@@ -1062,6 +1072,14 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                     public void testEnterInsideBraces() throws Exception {
                         runTest("testData/indentationOnNewline/multilineString/spaces/EnterInsideBraces.after.kt");
                     }
+                }
+
+                @RunWith(JUnit3RunnerWithInners.class)
+                @TestMetadata("testData/indentationOnNewline/multilineString/spaces")
+                public static class TestBucket002 extends AbstractTypingIndentationTestBase {
+                    private void runTest(String testDataFilePath) throws Exception {
+                        KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+                    }
 
                     @TestMetadata("EnterInsideBraces1.after.kt")
                     public void testEnterInsideBraces1() throws Exception {
@@ -1071,14 +1089,6 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
                     @TestMetadata("EnterInsideBraces2.after.kt")
                     public void testEnterInsideBraces2() throws Exception {
                         runTest("testData/indentationOnNewline/multilineString/spaces/EnterInsideBraces2.after.kt");
-                    }
-                }
-
-                @RunWith(JUnit3RunnerWithInners.class)
-                @TestMetadata("testData/indentationOnNewline/multilineString/spaces")
-                public static class TestBucket002 extends AbstractTypingIndentationTestBase {
-                    private void runTest(String testDataFilePath) throws Exception {
-                        KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                     }
 
                     @TestMetadata("EnterInsideTextMargin.after.kt")

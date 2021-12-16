@@ -61,7 +61,6 @@ import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractCommonDecompiled
 import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractCommonDecompiledTextTest
 import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractJsDecompiledTextFromJsMetadataTest
 import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractJvmDecompiledTextTest
-import org.jetbrains.kotlin.idea.editor.AbstractMultiLineStringIndentTest
 import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandlerTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
@@ -539,10 +538,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
         testClass<AbstractBackspaceHandlerTest> {
             model("editor/backspaceHandler")
-        }
-
-        testClass<AbstractMultiLineStringIndentTest> {
-            model("editor/enterHandler/multilineString")
         }
 
         testClass<AbstractQuickDocProviderTest> {
