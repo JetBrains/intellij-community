@@ -4,7 +4,8 @@ package com.intellij.psi.impl.search;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.text.StringSearcher;
-import gnu.trove.TIntArrayList;
+import it.unimi.dsi.fastutil.ints.IntArrayList;
+import it.unimi.dsi.fastutil.ints.IntList;
 import junit.framework.TestCase;
 
 public class LowLevelSearchUtilTest extends TestCase {
@@ -40,12 +41,12 @@ public class LowLevelSearchUtilTest extends TestCase {
 
   public void testProcessTextOccurrencesNeverScansBeyondStartEndOffsetIfNeverAskedTo() {
     StringSearcher searcher = new StringSearcher("xxx", true, true);
-    TIntArrayList found = new TIntArrayList(new int[]{-1});
+    IntList found = new IntArrayList(new int[]{-1});
     CharSequence text = StringUtil.repeat("xxx z ", 1000000);
 
     PlatformTestUtil.startPerformanceTest("processTextOccurrences", 100, ()-> {
       for (int i=0; i<10000; i++) {
-        found.remove(0);
+        found.removeInt(0);
         int startOffset = text.length() / 2 + i % 20;
         int endOffset = startOffset + 8;
         boolean success = LowLevelSearchUtil.processTexts(text, startOffset, endOffset, searcher, offset -> {

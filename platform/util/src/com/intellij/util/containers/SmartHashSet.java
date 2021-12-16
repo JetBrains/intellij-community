@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.util.ArrayUtil;
@@ -11,7 +11,7 @@ import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 /**
- * Hash set which is fast when contains one or zero elements (avoids to calculate hash codes and call equals whenever possible).
+ * Hash set which is fast when contains one or zero elements (avoids calculating hash codes and call equals whenever possible).
  * For other sizes it delegates to THashSet.
  * Null keys are NOT PERMITTED.
  */
