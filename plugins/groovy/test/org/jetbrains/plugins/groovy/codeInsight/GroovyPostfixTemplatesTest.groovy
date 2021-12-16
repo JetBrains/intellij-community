@@ -130,4 +130,23 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
   void testThrowNotThrowable() {
     doAutoPopupTest "1.<caret>", "throw", "throw new RuntimeException(1)", GrThrowExpressionPostfixTemplate
   }
+
+  void testTry() {
+    doAutoPopupTest "foo().<caret>", "try", "try {\n    foo()\n} catch (Exception e) {\n    \n}", GrTryPostfixTemplate
+  }
+
+  void testTryWithExceptions() {
+    doAutoPopupTest """\
+def foo() throws IOException, IndexOutOfBoundsException {}
+
+foo().<caret>\
+""", "try", """\
+def foo() throws IOException, IndexOutOfBoundsException {}
+
+try {
+    foo()
+} catch (IOException | IndexOutOfBoundsException e) {
+    
+}""", GrTryPostfixTemplate
+  }
 }
