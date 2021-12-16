@@ -9,6 +9,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -215,6 +216,11 @@ class PythonOnboardingTour :
   }
 
   private fun prepareFeedbackData(project: Project, lessonEndInfo: LessonEndInfo) {
+    val configPropertyName = "ift.pycharm.onboarding.feedback.proposed"
+    if (PropertiesComponent.getInstance().getBoolean(configPropertyName, false)) {
+      return
+    }
+
     val primaryLanguage = module.primaryLanguage
     if (primaryLanguage == null) {
       thisLogger().error("Onboarding lesson has no language support for some magical reason")
@@ -264,6 +270,10 @@ class PythonOnboardingTour :
       override val possibleTechnicalIssues: Map<String, @Nls String> = mapOf(
         "interpreter_issues" to PythonLessonsBundle.message("python.onboarding.option.interpreter.issues")
       )
+
+      override fun feedbackHasBeenProposed() {
+        PropertiesComponent.getInstance().setValue(configPropertyName, true, false)
+      }
     }
   }
 
