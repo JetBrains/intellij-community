@@ -23,7 +23,8 @@ import java.util.List;
 import java.util.jar.Attributes;
 import java.util.jar.Manifest;
 
-import static com.intellij.testFramework.assertions.Assertions.assertThat;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public final class ArtifactsTestUtil {
   public static String printToString(PackagingElement element, int level) {
@@ -47,7 +48,7 @@ public final class ArtifactsTestUtil {
   }
 
   public static void assertLayout(PackagingElement element, String expected) {
-    assertThat(printToString(element, 0)).isEqualTo(adjustMultiLine(expected));
+    assertEquals(adjustMultiLine(expected), printToString(element, 0));
   }
 
   private static String adjustMultiLine(String expected) {
@@ -72,11 +73,11 @@ public final class ArtifactsTestUtil {
   }
 
   public static void assertOutputPath(Project project, String artifactName, String expected) {
-    assertThat(findArtifact(project, artifactName).getOutputPath()).isEqualTo(expected);
+    assertEquals(expected, findArtifact(project, artifactName).getOutputPath());
   }
 
   public static void assertOutputFileName(Project project, String artifactName, String expected) {
-    assertThat(findArtifact(project, artifactName).getRootElement().getName()).isEqualTo(expected);
+    assertEquals(expected, findArtifact(project, artifactName).getRootElement().getName());
   }
 
   public static void setOutput(final Project project, final String artifactName, final String outputPath) {
@@ -99,7 +100,7 @@ public final class ArtifactsTestUtil {
   public static Artifact findArtifact(Project project, String artifactName) {
     final ArtifactManager manager = ArtifactManager.getInstance(project);
     final Artifact artifact = manager.findArtifact(artifactName);
-    assertThat(artifact).describedAs("'" + artifactName + "' artifact not found").isNotNull();
+    assertNotNull("'" + artifactName + "' artifact not found", artifact);
     return artifact;
   }
 
@@ -114,9 +115,9 @@ public final class ArtifactsTestUtil {
                                      ArtifactType type,
                                      @Nullable String mainClass, @Nullable String classpath) {
     final VirtualFile file = ManifestFileUtil.findManifestFile(rootElement, context, type);
-    assertThat(file).isNotNull();
+    assertNotNull(file);
     final Manifest manifest = ManifestFileUtil.readManifest(file);
-    assertThat(manifest.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS)).isEqualTo(mainClass);
-    assertThat(manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH)).isEqualTo(classpath);
+    assertEquals(mainClass, manifest.getMainAttributes().getValue(Attributes.Name.MAIN_CLASS));
+    assertEquals(classpath, manifest.getMainAttributes().getValue(Attributes.Name.CLASS_PATH));
   }
 }
