@@ -190,4 +190,8 @@ try {
   void testNot() {
     doAutoPopupTest "true.<caret>", "not", "!true", GrNegateBooleanPostfixTemplate
   }
+
+  void testMap() {
+    doAutoPopupTest "[1, 2, 3].<caret>", "map", "[1, 2, 3].collect {}", GrMapPostfixTemplate
+  }
 }
