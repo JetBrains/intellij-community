@@ -12,8 +12,8 @@ import org.jetbrains.kotlin.asJava.classes.AbstractUltraLightScriptLoadingTest
 import org.jetbrains.kotlin.checkers.*
 import org.jetbrains.kotlin.copyright.AbstractUpdateKotlinCopyrightTest
 import org.jetbrains.kotlin.findUsages.*
-import org.jetbrains.kotlin.formatter.AbstractFormatterTest
 import org.jetbrains.kotlin.formatter.AbstractEnterHandlerTest
+import org.jetbrains.kotlin.formatter.AbstractFormatterTest
 import org.jetbrains.kotlin.idea.AbstractExpressionSelectionTest
 import org.jetbrains.kotlin.idea.AbstractSmartSelectionTest
 import org.jetbrains.kotlin.idea.AbstractWorkSelectionTest
@@ -62,6 +62,7 @@ import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractCommonDecompiled
 import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractJsDecompiledTextFromJsMetadataTest
 import org.jetbrains.kotlin.idea.decompiler.textBuilder.AbstractJvmDecompiledTextTest
 import org.jetbrains.kotlin.idea.editor.backspaceHandler.AbstractBackspaceHandlerTest
+import org.jetbrains.kotlin.idea.editor.commenter.AbstractKotlinCommenterTest
 import org.jetbrains.kotlin.idea.editor.quickDoc.AbstractQuickDocProviderTest
 import org.jetbrains.kotlin.idea.externalAnnotations.AbstractExternalAnnotationTest
 import org.jetbrains.kotlin.idea.folding.AbstractKotlinFoldingTest
@@ -799,6 +800,10 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         testClass<AbstractEnterHandlerTest> {
             model("editor/enterHandler", pattern = """^([^.]+)\.after\.kt.*$""".toRegex(), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
             model("editor/enterHandler", pattern = """^([^.]+)\.after\.inv\.kt.*$""".toRegex(), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
+        }
+
+        testClass<AbstractKotlinCommenterTest> {
+            model("editor/commenter", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractStubBuilderTest> {
