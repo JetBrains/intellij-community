@@ -2,11 +2,11 @@
 package org.jetbrains.idea.maven;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.compiler.CompilerTestUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -90,7 +90,7 @@ public abstract class MavenImportingTestCase extends MavenTestCase {
       () -> WriteAction.runAndWait(() -> JavaAwareProjectJdkTableImpl.removeInternalJdkInTests()),
       () -> TestDialogManager.setTestDialog(TestDialog.DEFAULT),
       () -> removeFromLocalRepository("test"),
-      () -> ExternalSystemTestCase.deleteBuildSystemDirectory(myProject),
+      () -> CompilerTestUtil.deleteBuildSystemDirectory(myProject),
       () -> {
         myProjectsManager = null;
         myProjectsTree = null;
