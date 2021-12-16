@@ -23,7 +23,7 @@ public class JavaFullClassNameIndex extends AbstractStubIndex<CharSequence, PsiC
 
   @Override
   public int getVersion() {
-    return 2;
+    return 1;
   }
 
   @Override

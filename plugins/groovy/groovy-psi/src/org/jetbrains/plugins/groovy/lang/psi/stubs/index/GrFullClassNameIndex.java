@@ -45,6 +45,6 @@ public class GrFullClassNameIndex extends AbstractStubIndex<CharSequence, PsiCla
 
   @Override
   public int getVersion() {
-    return GrStubUtils.GR_STUB_VERSION + 2;
+    return 1 + GrStubUtils.GR_STUB_VERSION;
   }
 }
