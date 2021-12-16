@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.externalSystem.test
 
-import com.intellij.externalSystem.JavaProjectData
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
@@ -9,7 +8,6 @@ import com.intellij.openapi.externalSystem.model.project.*
 import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
 import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.roots.DependencyScope
-import com.intellij.pom.java.LanguageLevel
 import java.util.*
 
 fun project(name: String = "project",
@@ -47,7 +45,7 @@ abstract class AbstractNode<DataType : Any?>(val type: String) : Node {
     return null
   }
 
-  protected fun <T : Node> initChild(node: T, init: T.() -> Unit): T {
+  internal fun <T : Node> initChild(node: T, init: T.() -> Unit): T {
     (node as AbstractNode<*>).systemId = this.systemId
     (node as AbstractNode<*>).parent = this
     children.add(node)
@@ -107,15 +105,6 @@ class Project : NamedNode<ProjectData>("project") {
       this.moduleFileDirectoryPath = moduleFilePath ?: projectPath
       this.externalProjectPath = externalProjectPath
       init.invoke(this)
-    }
-
-  fun javaProject(compileOutputPath: String,
-                  languageLevel: LanguageLevel? = null,
-                  targetBytecodeVersion: String? = null) =
-    initChild(JavaProject()) {
-      this.compileOutputPath = compileOutputPath
-      this.languageLevel = languageLevel
-      this.targetBytecodeVersion = targetBytecodeVersion
     }
 
   override fun createDataNode(parentData: Any?): DataNode<ProjectData> {
@@ -238,31 +227,6 @@ class ModuleDependency : NamedNode<ModuleDependencyData>("moduleDependency") {
   }
 }
 
-class JavaProject : AbstractNode<JavaProjectData>("javaProject") {
-  var compileOutputPath: String
-    get() = props["compileOutputPath"]!!
-    set(value) {
-      props["compileOutputPath"] = value
-    }
-  var languageLevel: LanguageLevel?
-    get() = props["languageLevel"]?.run { LanguageLevel.valueOf(this) }
-    set(value) {
-      if (value == null) props.remove("languageLevel")
-      else props["languageLevel"] = value.name
-    }
-  var targetBytecodeVersion: String?
-    get() = props["targetBytecodeVersion"]
-    set(value) {
-      if (value == null) props.remove("targetBytecodeVersion")
-      else props["targetBytecodeVersion"] = value
-    }
-
-  override fun createDataNode(parentData: Any?): DataNode<JavaProjectData> {
-    val javaProjectData = JavaProjectData(systemId, compileOutputPath, languageLevel, targetBytecodeVersion)
-    return DataNode(JavaProjectData.KEY, javaProjectData, null)
-  }
-}
-
 class OtherNode<T : Any>(private val key: com.intellij.openapi.externalSystem.model.Key<T>,
                          private val model: T) : AbstractNode<T>(key.dataType) {
   override fun createDataNode(parentData: Any?): DataNode<T> {
@@ -273,8 +237,7 @@ class OtherNode<T : Any>(private val key: com.intellij.openapi.externalSystem.mo
 fun <DataType : Any?> AbstractNode<DataType>.toDataNode(parentData: Any? = null): DataNode<DataType> {
   val dataNode = createDataNode(parentData)
   for (child in children) {
-    val node = child as AbstractNode<*>
-    dataNode.addChild(node.toDataNode(dataNode.data))
+    dataNode.addChild(child.toDataNode(dataNode.data))
   }
   return dataNode
 }
