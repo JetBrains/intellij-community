@@ -70,11 +70,15 @@ object GroovyPostfixTemplateUtils {
     PsiTreeUtil.getParentOfType(element, GrMethod::class.java, GrFunctionalExpression::class.java) != null
   }
 
-  fun getBooleanExpressionSelector() = getGenericExpressionSelector(true) {expr ->
-    if (expr !is GrExpression) return@getGenericExpressionSelector false
+  private fun booleanTypeCondition(expr: PsiElement) : Boolean {
+    if (expr !is GrExpression) return false
     val type = expr.type
-    type == null || type == PsiType.BOOLEAN || type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)
+    return type == null || type == PsiType.BOOLEAN || type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)
   }
+
+  fun getTopBooleanExpressionSelector() = getGenericExpressionSelector(true, this::booleanTypeCondition)
+
+  fun getBooleanExpressionSelector() = getGenericExpressionSelector(false, this::booleanTypeCondition)
 
   fun getSubclassExpressionSelector(baseClassFqn: String) = getGenericExpressionSelector(true) { expr ->
     if (expr !is GrExpression) return@getGenericExpressionSelector false

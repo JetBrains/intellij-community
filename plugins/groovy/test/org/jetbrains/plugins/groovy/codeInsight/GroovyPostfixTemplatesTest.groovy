@@ -178,4 +178,8 @@ try {
   void testWhile() {
     doAutoPopupTest "true.<caret>", "while", "while (true) {\n    \n}", GrWhilePostfixTemplate
   }
+
+  void testNot() {
+    doAutoPopupTest "true.<caret>", "not", "!true", GrNegateBooleanPostfixTemplate
+  }
 }

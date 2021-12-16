@@ -6,7 +6,7 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.GroovyPostfixTemplateUtils
 
 class GrWhilePostfixTemplate(provider: PostfixTemplateProvider) :
-  GrPostfixTemplateBase("while", "while (expr)", GroovyPostfixTemplateUtils.getBooleanExpressionSelector(), provider) {
+  GrPostfixTemplateBase("while", "while (expr)", GroovyPostfixTemplateUtils.getTopBooleanExpressionSelector(), provider) {
 
   override fun getGroovyTemplateString(element: PsiElement): String
   = """while (__expr__) {
