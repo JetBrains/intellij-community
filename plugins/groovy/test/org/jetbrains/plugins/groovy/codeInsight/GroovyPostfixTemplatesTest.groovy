@@ -194,4 +194,8 @@ try {
   void testMap() {
     doAutoPopupTest "[1, 2, 3].<caret>", "map", "[1, 2, 3].collect {}", GrMapPostfixTemplate
   }
+
+  void testAll() {
+    doAutoPopupTest "[1, 2, 3].<caret>", "all", "[1, 2, 3].every {}", GrAllPostfixTemplate
+  }
 }

@@ -51,4 +51,5 @@ private fun getBuiltinTemplates(groovyPostfixTemplateProvider: GroovyPostfixTemp
   GrIntroduceVariablePostfixTemplate("def", groovyPostfixTemplateProvider),
   GrWhilePostfixTemplate(groovyPostfixTemplateProvider),
   GrNegateBooleanPostfixTemplate("not", groovyPostfixTemplateProvider),
+  GrAllPostfixTemplate(groovyPostfixTemplateProvider),
 )
