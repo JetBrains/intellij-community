@@ -30,17 +30,19 @@ private class KotlinLanguageSettingsReflectionImpl(private val instance: Any) : 
     }
 
     override val progressiveMode: Boolean? by lazy {
-        instance.callReflective("getProgressiveMode", parameters(), returnType<Boolean>(), logger)
+        instance.callReflectiveGetter("getProgressiveMode", logger)
     }
 
     override val enabledLanguageFeatures: Set<String>? by lazy {
-        instance.callReflective("getEnabledLanguageFeatures", parameters(), returnType<Iterable<String>>(), logger)?.toSet()
+        val enabledLanguageFeatures: Iterable<String>? = instance.callReflectiveGetter("getEnabledLanguageFeatures", logger)
+        enabledLanguageFeatures?.toSet()
     }
 
     override val optInAnnotationsInUse: Set<String>? by lazy {
         val getterName = if (instance::class.memberProperties.any { it.name == "optInAnnotationsInUse" }) "getOptInAnnotationsInUse"
         else "getExperimentalAnnotationsInUse"
-        instance.callReflective(getterName, parameters(), returnType<Iterable<String>>(), logger)?.toSet()
+        val annotationsInUse: Iterable<String>? = instance.callReflectiveGetter(getterName, logger)
+        annotationsInUse?.toSet()
     }
 
     override val compilerPluginArguments: List<String>? by lazy {
@@ -52,7 +54,8 @@ private class KotlinLanguageSettingsReflectionImpl(private val instance: Any) : 
     }
 
     override val freeCompilerArgs: List<String>? by lazy {
-        instance.callReflective("getFreeCompilerArgs", parameters(), returnType<Iterable<String>>(), logger)?.toList()
+        val freeCompilerArgs: Iterable<String>? = instance.callReflectiveGetter("getFreeCompilerArgs", logger)
+        freeCompilerArgs?.toList()
     }
 
     companion object {

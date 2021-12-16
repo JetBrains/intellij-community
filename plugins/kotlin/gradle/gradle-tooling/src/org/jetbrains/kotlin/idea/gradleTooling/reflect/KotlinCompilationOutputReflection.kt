@@ -9,18 +9,13 @@ fun KotlinCompilationOutputReflection(compilationOutputs: Any): KotlinCompilatio
     KotlinCompilationOutputReflectionImpl(compilationOutputs)
 
 interface KotlinCompilationOutputReflection {
-    val classesDirs: Set<File>?
+    val classesDirs: Iterable<File>?
     val resourcesDir: File?
 }
 
 private class KotlinCompilationOutputReflectionImpl(private val instance: Any) : KotlinCompilationOutputReflection {
-    override val classesDirs: Set<File>? by lazy {
-        instance.callReflective("getClassesDirs", parameters(), returnType<Iterable<File>>(), logger)?.toSet()
-    }
-
-    override val resourcesDir: File? by lazy {
-        instance.callReflective("getResourcesDir", parameters(), returnType<File>(), logger)
-    }
+    override val classesDirs: Iterable<File>? by lazy { instance.callReflectiveGetter("getClassesDirs", logger) }
+    override val resourcesDir: File? by lazy { instance.callReflectiveGetter("getResourcesDir", logger) }
 
     companion object {
         val logger = ReflectionLogger(KotlinCompilationOutputReflection::class.java)

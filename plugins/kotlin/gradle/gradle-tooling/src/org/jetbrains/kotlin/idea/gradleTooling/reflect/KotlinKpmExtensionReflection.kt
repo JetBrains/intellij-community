@@ -17,18 +17,17 @@ private class KotlinKpmExtensionReflectionImpl(
 ) : KotlinKpmExtensionReflection {
 
     override val coreLibrariesVersion: String? by lazy {
-        instance.callReflective("getCoreLibrariesVersion", parameters(), returnType<String>(), logger)
+        instance.callReflectiveGetter("getCoreLibrariesVersion", logger)
     }
 
     override val explicitApiCliOption: String? by lazy {
         instance.callReflective("getExplicitApi", parameters(), returnType<Any?>(), logger)
-            ?.callReflective("getCliOption", parameters(), returnType<String>(), logger)
+            ?.callReflectiveGetter("getCliOption", logger)
     }
 
     override val modules: List<KotlinModuleReflection>? by lazy {
-        instance.callReflective("getModules", parameters(), returnType<Iterable<Any>>(), logger)?.let { modules ->
-            modules.map { module -> KotlinModuleReflection(module) }
-        }
+        val modules: Iterable<Any>? = instance.callReflectiveGetter("getModules", logger)
+        modules?.map { module -> KotlinModuleReflection(module) }
     }
 
     companion object {
