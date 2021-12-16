@@ -10,7 +10,7 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import javax.swing.DefaultComboBoxModel
+import com.intellij.util.ui.accessibility.ScreenReader
 
 
 abstract class AbstractNewProjectWizardMultiStepBase(
@@ -27,8 +27,8 @@ abstract class AbstractNewProjectWizardMultiStepBase(
   override fun setupUI(builder: Panel) {
     with(builder) {
       row(label) {
-        if (steps.size > 6) {
-          comboBox(DefaultComboBoxModel(steps.map { it.key }.toTypedArray()))
+        if (steps.size > 6 || ScreenReader.isActive()) {
+          comboBox(steps.map { it.key })
             .bindItem(stepProperty)
         }
         else {

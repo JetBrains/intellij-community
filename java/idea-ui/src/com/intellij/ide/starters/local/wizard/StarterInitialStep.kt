@@ -156,20 +156,20 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
 
       if (starterSettings.languages.size > 1) {
         row(JavaStartersBundle.message("title.project.language.label")) {
-          buttonSelector(starterSettings.languages, languageProperty) { it.title }
+          segmentedButton(starterSettings.languages, languageProperty) { it.title }
         }.largeGapAfter()
       }
 
       if (starterSettings.projectTypes.isNotEmpty()) {
         val messages = starterSettings.customizedMessages
         row(messages?.projectTypeLabel ?: JavaStartersBundle.message("title.project.build.system.label")) {
-          buttonSelector(starterSettings.projectTypes, projectTypeProperty) { it?.title ?: "" }
+          segmentedButton(starterSettings.projectTypes, projectTypeProperty) { it?.title ?: "" }
         }.largeGapAfter()
       }
 
       if (starterSettings.testFrameworks.isNotEmpty()) {
         row(JavaStartersBundle.message("title.project.test.framework.label")) {
-          buttonSelector(starterSettings.testFrameworks, testFrameworkProperty) { it?.title ?: "" }
+          segmentedButton(starterSettings.testFrameworks, testFrameworkProperty) { it?.title ?: "" }
         }.largeGapAfter()
       }
 
