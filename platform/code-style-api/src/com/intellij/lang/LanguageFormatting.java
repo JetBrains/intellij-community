@@ -7,6 +7,7 @@ import com.intellij.formatting.FormattingModelBuilder;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.ExternalFormatProcessor;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -46,5 +47,16 @@ public final class LanguageFormatting extends LanguageExtension<FormattingModelB
       }
     }
     return null;
+  }
+
+  /**
+   * Checks if automatic reformat is allowed for the given context element using {@link LanguageFormattingRestriction} extensions.
+   *
+   * @param context The element to check.
+   *
+   * @return True if formatting is allowed, false otherwise.
+   */
+  public boolean isAutoFormatAllowed(@NotNull PsiElement context) {
+    return ContainerUtil.and(LanguageFormattingRestriction.EP_NAME.getExtensionList(), each -> each.isAutoFormatAllowed(context));
   }
 }
