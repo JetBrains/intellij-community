@@ -1376,7 +1376,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // check that method "getter" returns unique strings across all file types
   private static void checkUnique(@NotNull FileTypeWithDescriptor newFtd,
-                                  @NotNull Map<String, FileTypeWithDescriptor> names,
+                                  @NotNull Map<? super String, FileTypeWithDescriptor> names,
                                   @NotNull String getterName,
                                   @NotNull Function<? super FileType, String> nameExtractor) {
     FileType newFileType = newFtd.fileType;
