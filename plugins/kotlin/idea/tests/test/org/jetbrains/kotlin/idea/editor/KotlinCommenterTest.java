@@ -21,30 +21,12 @@ import static org.jetbrains.kotlin.idea.test.TestUtilsKt.IDEA_TEST_DATA_DIR;
 public class KotlinCommenterTest extends KotlinLightCodeInsightTestCase {
     private static final File BASE_DIR = new File(IDEA_TEST_DATA_DIR, "editor/commenter");
 
-    public void testGenerateDocComment() throws Exception {
-        doNewLineTypingTest();
-    }
-
-    public void testNewLineInComment() throws Exception {
-        doNewLineTypingTest();
-    }
-
-    public void testNewLineInTag() throws Exception {
-        doNewLineTypingTest();
-    }
-
     public void testNotFirstColumnWithSpace() throws Exception {
         doLineCommentTest();
     }
 
     public void testNotFirstColumnWithoutSpace() throws Exception {
         doLineCommentTest();
-    }
-
-    private void doNewLineTypingTest() throws Exception {
-        configure();
-        EditorTestUtil.performTypingAction(getEditor(), '\n');
-        check();
     }
 
     private void doLineCommentTest() throws Exception {

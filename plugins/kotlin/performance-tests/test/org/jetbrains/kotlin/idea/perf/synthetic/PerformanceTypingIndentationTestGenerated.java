@@ -108,6 +108,59 @@ public abstract class PerformanceTypingIndentationTestGenerated extends Abstract
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("../idea/tests/testData/editor/enterHandler/commenter")
+        public static class Commenter extends AbstractPerformanceTypingIndentationTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("AfterLineComment.after.kt")
+            public void testAfterLineComment() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/AfterLineComment.after.kt");
+            }
+
+            @TestMetadata("GenerateBlockComment.after.kt")
+            public void testGenerateBlockComment() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/GenerateBlockComment.after.kt");
+            }
+
+            @TestMetadata("GenerateDocComment.after.kt")
+            public void testGenerateDocComment() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/GenerateDocComment.after.kt");
+            }
+
+            @TestMetadata("InBlockComment.after.kt")
+            public void testInBlockComment() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/InBlockComment.after.kt");
+            }
+
+            @TestMetadata("InBlockCommentBeforeText.after.kt")
+            public void testInBlockCommentBeforeText() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/InBlockCommentBeforeText.after.kt");
+            }
+
+            @TestMetadata("InDocComment.after.kt")
+            public void testInDocComment() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/InDocComment.after.kt");
+            }
+
+            @TestMetadata("InDocCommentBeforeText.after.kt")
+            public void testInDocCommentBeforeText() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/InDocCommentBeforeText.after.kt");
+            }
+
+            @TestMetadata("InLineComment.after.kt")
+            public void testInLineComment() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/InLineComment.after.kt");
+            }
+
+            @TestMetadata("InTag.after.kt")
+            public void testInTag() throws Exception {
+                runTest("../idea/tests/testData/editor/enterHandler/commenter/InTag.after.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("../idea/tests/testData/editor/enterHandler/controlFlowConstructions")
         public static class ControlFlowConstructions extends AbstractPerformanceTypingIndentationTest {
             private void runTest(String testDataFilePath) throws Exception {
