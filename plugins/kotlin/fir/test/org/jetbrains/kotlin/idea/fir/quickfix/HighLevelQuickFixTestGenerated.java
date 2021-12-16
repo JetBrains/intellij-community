@@ -2519,6 +2519,16 @@ public abstract class HighLevelQuickFixTestGenerated extends AbstractHighLevelQu
             runTest("../idea/tests/testData/quickfix/typeMismatch/casts/typeMismatch4.kt");
         }
 
+        @TestMetadata("typeMismatchDefNonNullable1.kt")
+        public void testTypeMismatchDefNonNullable1() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/casts/typeMismatchDefNonNullable1.kt");
+        }
+
+        @TestMetadata("typeMismatchDefNonNullable2.kt")
+        public void testTypeMismatchDefNonNullable2() throws Exception {
+            runTest("../idea/tests/testData/quickfix/typeMismatch/casts/typeMismatchDefNonNullable2.kt");
+        }
+
         @TestMetadata("typeMismatchLongNameRuntime.kt")
         public void testTypeMismatchLongNameRuntime() throws Exception {
             runTest("../idea/tests/testData/quickfix/typeMismatch/casts/typeMismatchLongNameRuntime.kt");
