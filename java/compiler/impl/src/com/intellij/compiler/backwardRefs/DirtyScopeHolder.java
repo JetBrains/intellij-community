@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.ProjectTopics;
@@ -37,7 +37,6 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
-import gnu.trove.THashSet;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +44,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.BiConsumer;
 
-public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileListener {
+public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileListener {
   private final Project myProject;
   private final Set<FileType> myFileTypes;
   private final ProjectFileIndex myProjectFileIndex;
@@ -183,7 +182,7 @@ public class DirtyScopeHolder extends UserDataHolderBase implements AsyncFileLis
   Set<Module> getAllDirtyModules() {
     final Set<Module> dirtyModules;
     synchronized (myLock) {
-      dirtyModules = new THashSet<>(myVFSChangedModules);
+      dirtyModules = new HashSet<>(myVFSChangedModules);
     }
     for (Document document : myFileDocManager.getUnsavedDocuments()) {
       final VirtualFile file = myFileDocManager.getFile(document);
