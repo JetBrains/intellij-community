@@ -6,6 +6,7 @@ import com.intellij.ide.bookmark.BookmarkBundle.message
 import com.intellij.ide.bookmark.BookmarkOccurrence
 import com.intellij.ide.bookmark.BookmarksListProviderService
 import com.intellij.ide.bookmark.ui.tree.BookmarkNode
+import com.intellij.ide.bookmark.ui.tree.FolderNode
 import com.intellij.ide.projectView.ProjectViewNode
 import com.intellij.ide.util.treeView.AbstractTreeNode
 import com.intellij.openapi.actionSystem.ex.ActionUtil
@@ -14,7 +15,15 @@ import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.ui.SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES
 import com.intellij.util.ui.StatusText
+import com.intellij.util.ui.tree.TreeUtil
 import java.awt.Component
+import javax.swing.tree.TreePath
+
+internal val TreePath.asAbstractTreeNode
+  get() = TreeUtil.getAbstractTreeNode(this)
+
+internal val TreePath.findFolderNode
+  get() = TreeUtil.findObjectInPath(this, FolderNode::class.java)
 
 internal val AbstractTreeNode<*>.bookmarkOccurrence
   get() = (this as? BookmarkNode<*>)?.run { bookmarkGroup?.let { BookmarkOccurrence(it, value) } }
