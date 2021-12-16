@@ -295,7 +295,9 @@ fun disposeApplicationAndCheckForLeaks() {
 
     l.catchAndStoreExceptions {
       try {
-        LeakHunter.checkNonDefaultProjectLeak()
+        if (ApplicationManager.getApplication() != null) {
+          LeakHunter.checkNonDefaultProjectLeak()
+        }
       }
       catch (e: AssertionError) {
         publishHeapDump("leakedProjects")
