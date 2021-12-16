@@ -11,9 +11,9 @@ import com.intellij.ide.bookmark.ui.tree.VirtualFileVisitor
 import com.intellij.ide.dnd.DnDSupport
 import com.intellij.ide.dnd.aware.DnDAwareTree
 import com.intellij.ide.ui.UISettings
-import com.intellij.ide.ui.customization.CustomizationUtil
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
+import com.intellij.openapi.actionSystem.LangDataKeys
 import com.intellij.openapi.actionSystem.PlatformDataKeys
 import com.intellij.openapi.actionSystem.ToggleOptionAction.Option
 import com.intellij.openapi.application.ApplicationManager
@@ -55,6 +55,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   private val treeExpander = DefaultTreeExpander(tree)
   private val panel = BorderLayoutPanel()
   private val updater = FolderNodeUpdater(this)
+  private val ideView = IdeViewForBookmarksView(this)
 
   val selectedNode
     get() = TreeUtil.getAbstractTreeNode(TreeUtil.getSelectedPathIfOne(tree))
@@ -85,6 +86,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
   override fun dispose() = preview.close()
 
   override fun getData(dataId: String): Any? = when {
+    LangDataKeys.IDE_VIEW.`is`(dataId) -> ideView
     PlatformDataKeys.TREE_EXPANDER.`is`(dataId) -> treeExpander
     PlatformDataKeys.SELECTED_ITEMS.`is`(dataId) -> selectedNodes?.toArray(emptyArray<Any>())
     PlatformDataKeys.SELECTED_ITEM.`is`(dataId) -> selectedNodes?.firstOrNull()
@@ -223,7 +225,7 @@ class BookmarksView(val project: Project, showToolbar: Boolean?)
     TreeUtil.promiseSelectFirstLeaf(tree)
     EditSourceOnEnterKeyHandler.install(tree)
     EditSourceOnDoubleClickHandler.install(tree)
-    CustomizationUtil.installPopupHandler(tree, "Bookmarks.ToolWindow.PopupMenu", "popup@BookmarksView")
+    ContextMenuActionGroup(tree)
 
     project.messageBus.connect(this).subscribe(BookmarksListener.TOPIC, object : BookmarksListener {
       override fun groupsSorted() {
