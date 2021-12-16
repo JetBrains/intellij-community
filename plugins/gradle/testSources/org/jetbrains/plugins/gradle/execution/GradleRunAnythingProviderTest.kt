@@ -97,8 +97,8 @@ class GradleRunAnythingProviderTest : GradleRunAnythingProviderTestCase() {
     createProjectSubFile("module/build.gradle", createBuildScriptBuilder().withTask("taskM").generate())
     createProjectSubFile("composite/build.gradle", createBuildScriptBuilder().withTask("taskC").generate())
     createProjectSubFile("composite/module/build.gradle", createBuildScriptBuilder().withTask("taskCM").generate())
-    createProjectSubFile("settings.gradle", GradleSettingScriptBuilder("project").withModule("module").withBuild("composite").generate())
-    createProjectSubFile("composite/settings.gradle", GradleSettingScriptBuilder("composite").withModule("module").generate())
+    createProjectSubFile("settings.gradle", GradleSettingScriptBuilder("project").include("module").includeBuild("composite").generate())
+    createProjectSubFile("composite/settings.gradle", GradleSettingScriptBuilder("composite").include("module").generate())
     importProject()
     withVariantsFor("") {
       assertCollection(it, getGradleOptions())

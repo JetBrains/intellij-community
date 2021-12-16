@@ -11,15 +11,15 @@ class GradleSettingScriptBuilder(projectName: String) {
 
   fun generate() = builder.toString()
 
-  fun withModule(name: String) = apply {
+  fun include(name: String) = apply {
     builder.add("include '$name'")
   }
 
-  fun withFlat(name: String) = apply {
+  fun includeFlat(name: String) = apply {
     builder.add("includeFlat '$name'")
   }
 
-  fun withBuild(name: String) = apply {
+  fun includeBuild(name: String) = apply {
     builder.add("includeBuild '$name'")
   }
 
