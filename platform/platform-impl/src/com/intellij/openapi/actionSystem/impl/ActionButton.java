@@ -540,7 +540,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   protected class AccessibleActionButton extends JComponent.AccessibleJComponent implements AccessibleAction {
-    AccessibleActionButton() {
+    protected AccessibleActionButton() {
     }
 
     @Override
@@ -588,6 +588,11 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     @Override
     public AccessibleStateSet getAccessibleStateSet() {
       AccessibleStateSet var1 = super.getAccessibleStateSet();
+      setCustomAccessibleStateSet(var1);
+      return var1;
+    }
+
+    protected void setCustomAccessibleStateSet(@NotNull AccessibleStateSet accessibleStateSet) {
       int state = getPopState();
 
       // TODO: Not sure what the "POPPED" state represents
@@ -596,17 +601,15 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       //}
 
       if (state == ActionButtonComponent.PUSHED) {
-        var1.add(AccessibleState.PRESSED);
+        accessibleStateSet.add(AccessibleState.PRESSED);
       }
       if (state == ActionButtonComponent.SELECTED) {
-        var1.add(AccessibleState.CHECKED);
+        accessibleStateSet.add(AccessibleState.CHECKED);
       }
 
       if (isFocusOwner()) {
-        var1.add(AccessibleState.FOCUSED);
+        accessibleStateSet.add(AccessibleState.FOCUSED);
       }
-
-      return var1;
     }
 
     @Override
