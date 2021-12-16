@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.editor.richcopy.HtmlSyntaxInfoUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsMethodImpl
 import com.intellij.psi.util.PsiTreeUtil
@@ -64,6 +65,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.getSuperClassNotAny
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.utils.addToStdlib.constant
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.function.Consumer
 
 class HtmlClassifierNamePolicy(val base: ClassifierNamePolicy) : ClassifierNamePolicy {
@@ -295,6 +297,14 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
             with(createHighlightingManager(project = null)) {
                 this@appendHighlighted.appendHighlighted(value, attributesBuilder())
             }
+        }
+
+        private fun highlight(
+            value: String,
+            attributesBuilder: KotlinIdeDescriptorRendererHighlightingManager<KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes>.()
+            -> KotlinIdeDescriptorRendererHighlightingManager.Companion.Attributes
+        ): String {
+            return StringBuilder().apply { appendHighlighted(value, attributesBuilder) }.toString()
         }
 
         private fun StringBuilder.appendCodeSnippetHighlightedByLexer(project: Project, codeSnippet: String) {
@@ -542,6 +552,12 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
                         }
                     }
                 }
+
+                getContainerInfo(ktElement)?.toString()?.takeIf { it.isNotBlank() }?.let { info ->
+                    containerInfo {
+                        append(info)
+                    }
+                }
             }
         }
 
@@ -590,6 +606,54 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider() {
                     append(SECTION_END)
                 }
             }
+        }
+
+        private fun getContainerInfo(element: PsiElement?): HtmlChunk? {
+            if (element !is KtExpression) return null
+
+            val resolutionFacade = element.getResolutionFacade()
+            val context = element.analyze(resolutionFacade, BodyResolveMode.PARTIAL)
+            val descriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, element] ?: return null
+            if (DescriptorUtils.isLocal(descriptor)) return null
+
+            val containingDeclaration = descriptor.containingDeclaration
+            if (containingDeclaration == null) return null
+
+            val fqNameSection = containingDeclaration.fqNameSafe
+                .takeUnless { it.isRoot }
+                ?.let {
+                    @Nls val link = StringBuilder().apply {
+                        val highlighted =
+                            if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) highlight(it.asString()) { asClassName }
+                            else it.asString()
+                        DocumentationManagerUtil.createHyperlink(this, it.asString(), highlighted, false, false)
+                    }
+                    HtmlChunk.fragment(
+                        HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/classKotlin.svg"),
+                        HtmlChunk.nbsp(),
+                        HtmlChunk.raw(link.toString()),
+                        HtmlChunk.br()
+                    )
+                }
+                ?: HtmlChunk.empty()
+
+            val fileNameSection = descriptor
+                .safeAs<DeclarationDescriptorWithSource>()
+                ?.source
+                ?.containingFile
+                ?.name
+                ?.takeIf { containingDeclaration is PackageFragmentDescriptor }
+                ?.let {
+                    HtmlChunk.fragment(
+                        HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"),
+                        HtmlChunk.nbsp(),
+                        HtmlChunk.text(it),
+                        HtmlChunk.br()
+                    )
+                }
+                ?: HtmlChunk.empty()
+
+            return HtmlChunk.fragment(fqNameSection, fileNameSection)
         }
 
         private fun String.htmlEscape(): String = HtmlEscapers.htmlEscaper().escape(this)

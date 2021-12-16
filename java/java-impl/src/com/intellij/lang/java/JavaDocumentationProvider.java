@@ -15,10 +15,8 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LanguageCommenters;
-import com.intellij.lang.documentation.CodeDocumentationProvider;
-import com.intellij.lang.documentation.CompositeDocumentationProvider;
-import com.intellij.lang.documentation.DocumentationSettings;
-import com.intellij.lang.documentation.ExternalDocumentationProvider;
+import com.intellij.lang.documentation.*;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -33,6 +31,7 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -45,6 +44,7 @@ import com.intellij.psi.impl.source.javadoc.PsiDocParamRef;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.scope.conflictResolvers.JavaMethodsConflictResolver;
 import com.intellij.psi.util.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.Url;
@@ -141,16 +141,6 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       substitutor = ((PsiReferenceExpression)originalElement).advancedResolve(true).getSubstitutor();
     }
     return substitutor;
-  }
-
-  private static String generateLink(PsiElement element, String label, boolean plainLink, boolean isRenderedDoc) {
-    String refText = JavaDocUtil.getReferenceText(element.getProject(), element);
-    if (refText != null) {
-      StringBuilder linkBuilder = new StringBuilder();
-      DocumentationManagerUtil.createHyperlink(linkBuilder, element, refText, label, plainLink, isRenderedDoc);
-      return linkBuilder.toString();
-    }
-    return null;
   }
 
   @Override
@@ -536,6 +526,13 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       }
     }
     else if (commentOwner instanceof PsiClass) {
+      if (((PsiClass)commentOwner).isRecord()) {
+        for (PsiRecordComponent component : ((PsiClass)commentOwner).getRecordComponents()) {
+          builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, commentOwner.getContainingFile(), commenter));
+          builder.append(component.getName());
+          builder.append(LINE_SEPARATOR);
+        }
+      }
       final PsiTypeParameterList typeParameterList = ((PsiClass)commentOwner).getTypeParameterList();
       if (typeParameterList != null) {
         createTypeParamsListComment(builder, commenter, typeParameterList);
@@ -690,6 +687,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   @Override
   public void collectDocComments(@NotNull PsiFile file, @NotNull Consumer<? super @NotNull PsiDocCommentBase> sink) {
     if (!(file instanceof PsiJavaFile)) return;
+    if (file instanceof PsiCompiledElement) return;
     String fileName = file.getName();
     if (PsiPackage.PACKAGE_INFO_FILE.equals(fileName)) {
       PsiPackageStatement packageStatement = ((PsiJavaFile)file).getPackageStatement();
@@ -763,6 +761,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   private String getMethodCandidateInfo(PsiMethodCallExpression expr) {
     final PsiResolveHelper rh = JavaPsiFacade.getInstance(expr.getProject()).getResolveHelper();
     final CandidateInfo[] candidates = rh.getReferencedMethodCandidates(expr, true);
+
     final String text = expr.getText();
     if (candidates.length > 0) {
       if (candidates.length == 1) {
@@ -814,9 +813,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       if (aClass != null) {
         urls = findUrlForClass(aClass);
         if (urls != null) {
-          for (int i = 0; i < urls.size(); i++) {
-            urls.set(i, urls.get(i) + "#" + field.getName());
-          }
+          urls.replaceAll(url -> url + "#" + field.getName());
         }
       }
     }
@@ -850,9 +847,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
       return null;
     }
     else {
-      for (int i = 0; i < urls.size(); i++) {
-        urls.set(i, FileUtil.toSystemIndependentName(urls.get(i)));
-      }
+      urls.replaceAll(FileUtil::toSystemIndependentName);
       return urls;
     }
   }
@@ -925,7 +920,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
   }
 
   @Nullable
-  private static List<String> findUrlForVirtualFile(Project project, VirtualFile virtualFile, String relPath) {
+  public static List<String> findUrlForVirtualFile(Project project, VirtualFile virtualFile, String relPath) {
     ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
 
     Module module = fileIndex.getModuleForFile(virtualFile);

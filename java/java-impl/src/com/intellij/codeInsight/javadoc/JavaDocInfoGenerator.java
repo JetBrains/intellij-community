@@ -534,6 +534,11 @@ public class JavaDocInfoGenerator {
       return null;
     }
 
+    HtmlChunk containerInfo = generateContainerInfo(myElement);
+    if (containerInfo != null) {
+      containerInfo.appendTo(buffer);
+    }
+
     if (docURLs != null) {
       if (buffer.length() > 0 && elementHasSourceCode()) {
         LOG.debug("Documentation for " + myElement + " was generated from source code, it wasn't found at following URLs: ", docURLs);
@@ -574,6 +579,63 @@ public class JavaDocInfoGenerator {
     }
 
     return sanitizeHtml(buffer);
+  }
+
+  private @Nullable HtmlChunk generateContainerInfo(@Nullable PsiElement element) {
+    JavaDocHighlightingManager highlightingManager = JavaDocHighlightingManagerImpl.getInstance();
+
+    @NlsSafe String ownerLink = null;
+    String ownerIcon = null;
+
+    if (element instanceof PsiClass) {
+      PsiFile file = element.getContainingFile();
+      if (file instanceof PsiJavaFile) {
+        String packageName = ((PsiJavaFile)file).getPackageName();
+        if (!packageName.isEmpty()) {
+          PsiPackage aPackage = JavaPsiFacade.getInstance(file.getProject()).findPackage(packageName);
+          StringBuilder packageFqnBuilder = new StringBuilder();
+          if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) {
+            appendStyledSpan(packageFqnBuilder, highlightingManager.getClassNameAttributes(), packageName);
+          }
+          else {
+            packageFqnBuilder.append(packageName);
+          }
+          ownerLink = aPackage != null
+                      ? generateLink(aPackage, packageFqnBuilder.toString(), false, false)
+                      : "<code>" + packageFqnBuilder + "</code>";
+          ownerIcon = "AllIcons.Nodes.Package";
+        }
+      }
+    }
+    else if (element instanceof PsiMember) {
+      PsiClass parentClass = ((PsiMember)element).getContainingClass();
+      if (parentClass != null && !PsiUtil.isArrayClass(parentClass)) {
+        String qName = parentClass.getQualifiedName();
+        if (qName != null) {
+          StringBuilder classFqnBuilder = new StringBuilder();
+          if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) {
+            appendStyledSpan(classFqnBuilder, highlightingManager.getClassNameAttributes(), qName);
+          }
+          else {
+            classFqnBuilder.append(qName);
+          }
+          classFqnBuilder.append(generateTypeParameters(parentClass, false));
+          ownerLink = generateLink(parentClass, classFqnBuilder.toString(), false, false);
+          ownerIcon = "AllIcons.Nodes.Class";
+        }
+      }
+    }
+
+    if (ownerLink != null) {
+      return HtmlChunk.div()
+        .setClass("bottom")
+        .children(
+          HtmlChunk.tag("icon").attr("src", ownerIcon),
+          HtmlChunk.nbsp(),
+          HtmlChunk.raw(ownerLink)
+        );
+    }
+    return null;
   }
 
   private boolean elementHasSourceCode() {
@@ -2027,6 +2089,16 @@ public class JavaDocInfoGenerator {
       }
       buffer.append(DocumentationMarkup.SECTION_END);
     }
+  }
+
+  private static @Nullable String generateLink(@NotNull PsiElement element, String label, boolean plainLink, boolean isRenderedDoc) {
+    String refText = JavaDocUtil.getReferenceText(element.getProject(), element);
+    if (refText != null) {
+      StringBuilder linkBuilder = new StringBuilder();
+      DocumentationManagerUtil.createHyperlink(linkBuilder, element, refText, label, plainLink, isRenderedDoc);
+      return linkBuilder.toString();
+    }
+    return null;
   }
 
   private void generateSuperMethodsSection(StringBuilder buffer, PsiMethod method, boolean overrides) {

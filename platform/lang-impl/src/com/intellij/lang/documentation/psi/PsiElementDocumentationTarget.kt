@@ -13,7 +13,6 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.refactoring.suggested.createSmartPointer
 import com.intellij.util.SlowOperations
-import com.intellij.util.castSafelyTo
 import com.intellij.util.concurrency.annotations.RequiresReadLock
 import org.jetbrains.annotations.VisibleForTesting
 import java.util.function.Supplier
@@ -72,13 +71,11 @@ class PsiElementDocumentationTarget private constructor(
   private fun localDoc(provider: DocumentationProvider): DocumentationData? {
     val originalPsi = targetElement.getUserData(DocumentationManager.ORIGINAL_ELEMENT_KEY)?.element
     val doc = provider.generateDoc(targetElement, originalPsi)
-    val locationInfo = provider.getLocationInfo(targetElement)?.toString()
     if (targetElement is PsiFile) {
       val fileDoc = DocumentationManager.generateFileDoc(targetElement, doc == null)
       if (fileDoc != null) {
         return DocumentationData(
           if (doc == null) fileDoc else doc + fileDoc,
-          locationInfo,
           pointer.anchor,
           null,
           emptyList(),
@@ -87,7 +84,7 @@ class PsiElementDocumentationTarget private constructor(
       }
     }
     if (doc != null) {
-      return DocumentationData(doc, locationInfo, pointer.anchor, null, emptyList(), pointer.imageResolver)
+      return DocumentationData(doc, pointer.anchor, null, emptyList(), pointer.imageResolver)
     }
     return null
   }
@@ -121,9 +118,8 @@ class PsiElementDocumentationTarget private constructor(
         ProgressManager.checkCanceled()
         val doc = provider.fetchExternalDocumentation(project, targetElement, listOf(url), false)
                   ?: continue
-        val locationInfo = provider.castSafelyTo<DocumentationProvider>()?.getLocationInfo(targetElement)?.toString()
         LOG.debug("Fetched documentation from $url")
-        return@Supplier DocumentationResult.externalDocumentation(doc, anchor, url, locationInfo, imageResolver)
+        return@Supplier DocumentationResult.externalDocumentation(doc, anchor, url, imageResolver)
       }
       localDoc
     })

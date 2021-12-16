@@ -11,6 +11,8 @@ open class KDocTemplate : Template<StringBuilder> {
 
     val deprecation = Placeholder<StringBuilder>()
 
+    val containerInfo = Placeholder<StringBuilder>()
+
     override fun StringBuilder.apply() {
         append(DEFINITION_START)
         insert(definition)
@@ -23,6 +25,12 @@ open class KDocTemplate : Template<StringBuilder> {
         }
 
         insert(description)
+
+        if (!containerInfo.isEmpty()) {
+            append("<div class='bottom'>")
+            insert(containerInfo)
+            append("</div>")
+        }
     }
 
     sealed class DescriptionBodyTemplate : Template<StringBuilder> {

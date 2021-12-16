@@ -12,7 +12,6 @@ import java.util.function.Supplier
 @VisibleForTesting
 data class DocumentationData internal constructor(
   val html: @Nls String,
-  val locationHtml: String?,
   val anchor: String?,
   val externalUrl: String?,
   val linkUrls: List<String>,

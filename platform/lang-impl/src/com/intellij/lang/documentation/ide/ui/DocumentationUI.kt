@@ -146,7 +146,7 @@ internal class DocumentationUI(
     }
     imageResolver = data.imageResolver
     val presentation = request.presentation
-    val locationChunk = data.locationHtml?.let { HtmlChunk.raw(it) } ?: getDefaultLocationChunk(presentation)
+    val locationChunk = getDefaultLocationChunk(presentation)
     val linkChunk = linkChunk(presentation.presentableText, data)
     val decorated = decorate(data.html, locationChunk, linkChunk)
     val scrollingPosition = data.anchor?.let(ScrollingPosition::Anchor) ?: ScrollingPosition.Reset
