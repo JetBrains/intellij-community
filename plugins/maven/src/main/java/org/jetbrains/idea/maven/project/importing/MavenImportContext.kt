@@ -72,5 +72,6 @@ class MavenImportFinishedContext internal constructor(val context: MavenImported
 sealed class ImportPaths
 class FilesList(val poms: List<VirtualFile>) : ImportPaths(){
   constructor(poms: Array<VirtualFile>) : this(poms.asList())
+  constructor(pom: VirtualFile) : this(listOf(pom))
 }
 class RootPath(val path: VirtualFile) : ImportPaths()

@@ -33,9 +33,8 @@ class MavenImportingManager(val project: Project) {
   fun linkAndImportFile(pom: VirtualFile): Promise<MavenImportFinishedContext> {
     ApplicationManager.getApplication().assertIsDispatchThread()
     val manager = MavenProjectsManager.getInstance(project);
-    val files = ArrayList(MavenProjectsManager.getInstance(project).projectsFiles)
-    files.add(pom)
-    return openProjectAndImport(FilesList(files), manager.importingSettings, manager.generalSettings);
+    val importPath = if(pom.isDirectory) RootPath(pom) else FilesList(pom)
+    return openProjectAndImport(importPath, manager.importingSettings, manager.generalSettings);
   }
 
   fun openProjectAndImport(importPaths: ImportPaths,

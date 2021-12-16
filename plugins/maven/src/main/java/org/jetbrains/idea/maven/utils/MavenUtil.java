@@ -243,7 +243,7 @@ public class MavenUtil {
   }
 
   public static boolean isNoBackgroundMode() {
-    if (shouldRunTasksAsynchronouslyInTests()) {
+    if (shouldRunTasksAsynchronouslyInTests() || Registry.is("maven.new.import")) {
       return false;
     }
     return (ApplicationManager.getApplication().isUnitTestMode()
