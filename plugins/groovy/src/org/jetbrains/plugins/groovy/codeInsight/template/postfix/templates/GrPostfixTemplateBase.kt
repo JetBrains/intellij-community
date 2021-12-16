@@ -14,7 +14,6 @@ abstract class GrPostfixTemplateBase(
 
   final override fun getId(): String = "groovy.postfix.template.$presentableName"
 
-  // overridden for a not-null annotation on the return type and more kotlin-friendly variable escape
   final override fun getTemplateString(element: PsiElement): String = getGroovyTemplateString(element).replace("__", "$")
 
   abstract fun getGroovyTemplateString(element: PsiElement): String

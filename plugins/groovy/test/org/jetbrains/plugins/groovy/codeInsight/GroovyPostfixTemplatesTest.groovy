@@ -10,6 +10,7 @@ import com.intellij.codeInsight.template.postfix.completion.PostfixTemplateLooku
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplatesSettings
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate
 import org.jetbrains.annotations.NotNull
+import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates.*
 
 class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
@@ -32,10 +33,11 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
     super.tearDown()
   }
 
-  private void doAutoPopupTest(@NotNull String baseText,
-                               @NotNull String textToType,
-                               @NotNull String result,
-                               @NotNull Class<? extends PostfixTemplate> expectedClass) {
+  private void doGeneralAutoPopupTest(@NotNull String baseText,
+                                      @NotNull String textToType,
+                                      @Nullable String result,
+                                      @NotNull Class<? extends PostfixTemplate> expectedClass,
+                                      boolean invokeRefactoring) {
     myFixture.configureByText "_.groovy", baseText
     type textToType
     Lookup lookup = myFixture.getLookup()
@@ -44,8 +46,23 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
     assertNotNull item
     assertInstanceOf item, PostfixTemplateLookupElement.class
     assertInstanceOf((item as PostfixTemplateLookupElement).getPostfixTemplate(), expectedClass)
-    type ' '
-    myFixture.checkResult result
+    if (invokeRefactoring) {
+      type ' '
+      myFixture.checkResult result
+    }
+  }
+
+  private void doAutoPopupTest(@NotNull String baseText,
+                               @NotNull String textToType,
+                               @NotNull String result,
+                               @NotNull Class<? extends PostfixTemplate> expectedClass) {
+    doGeneralAutoPopupTest(baseText, textToType, result, expectedClass, true)
+  }
+
+  private void doAutoPopupTestWithoutInvocation(@NotNull String baseText,
+                                                @NotNull String textToType,
+                                                @NotNull Class<? extends PostfixTemplate> expectedClass) {
+    doGeneralAutoPopupTest(baseText, textToType, null, expectedClass, false)
   }
 
   private void doNoPopupTest(@NotNull String baseText, @NotNull String textToType, @NotNull Class<? extends PostfixTemplate> clazz) {
@@ -55,7 +72,7 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
     if (lookup != null) {
       LookupElement item = lookup.getCurrentItem()
       assertNotNull item
-      assertTrue (!(item instanceof PostfixTemplateLookupElement) || !clazz.isInstance(item.postfixTemplate))
+      assertTrue(!(item instanceof PostfixTemplateLookupElement) || !clazz.isInstance(item.postfixTemplate))
     }
   }
 
@@ -148,5 +165,13 @@ try {
 } catch (IOException | IndexOutOfBoundsException e) {
     
 }""", GrTryPostfixTemplate
+  }
+
+  void testVar() {
+    doAutoPopupTestWithoutInvocation "foo().<caret>", "var", GrIntroduceVariablePostfixTemplate
+  }
+
+  void testDef() {
+    doAutoPopupTestWithoutInvocation "foo().<caret>", "def", GrIntroduceVariablePostfixTemplate
   }
 }
