@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.platform.testintegration
 
 import com.intellij.execution.junit.JUnitUtil
@@ -17,7 +17,8 @@ class JUnit3LightTestFramework: AbstractLightTestFramework() {
     override fun detectFramework(namedDeclaration: KtNamedDeclaration): LightTestFrameworkResult {
         if (!hasClass(JUnitUtil.TEST_CASE_CLASS, namedDeclaration) ||
             // @Test is from junit4
-            hasClass(JUnitUtil.TEST_ANNOTATION, namedDeclaration)
+            hasClass(JUnitUtil.TEST_ANNOTATION, namedDeclaration) ||
+            hasClass(JUnitUtil.TEST5_ANNOTATION, namedDeclaration)
         ) return UnsureLightTestFrameworkResult
 
         return internalDetectFramework(namedDeclaration)
