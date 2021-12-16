@@ -3,10 +3,6 @@ package com.intellij.openapi.externalSystem.test;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.util.messages.Topic;
-import org.assertj.core.api.Assertions;
-import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
 
 /**
  * @author Denis Zhdanov
@@ -20,11 +16,5 @@ public final class ExternalSystemTestUtil {
   );
 
   private ExternalSystemTestUtil() {
-  }
-
-  @SuppressWarnings("rawtypes")
-  public static void assertMapsEqual(@NotNull Map expected, @NotNull Map actual) {
-    //noinspection unchecked
-    Assertions.assertThat(actual).containsExactlyInAnyOrderEntriesOf(expected);
   }
 }
