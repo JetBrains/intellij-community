@@ -353,7 +353,8 @@ fun loadDefinitionsFromTemplatesByPaths(
             // TODO: drop class loading here - it should be handled downstream
             // as a compatibility measure, the asm based reading of annotations should be implemented to filter classes before classloading
             val template = loader.loadClass(templateClassName).kotlin
-            val templateClasspathAsFiles = templateClasspath.map(Path::toFile)
+            // do not use `Path::toFile` here as it might break the path format of non-local file system
+            val templateClasspathAsFiles = templateClasspath.map { File(it.toString()) }
             val hostConfiguration = ScriptingHostConfiguration(baseHostConfiguration) {
                 configurationDependencies(JvmDependency(templateClasspathAsFiles))
             }
