@@ -1,14 +1,15 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.ThrowableRunnable;
 import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.VisibleForTesting;
+
+import java.util.concurrent.CancellationException;
 
 @Internal
 public final class Cancellation {
@@ -51,20 +52,22 @@ public final class Cancellation {
     };
   }
 
-  public static <E extends Throwable> void withJob(@NotNull Job job, @NotNull ThrowableRunnable<E> action) throws E {
-    try (AccessToken ignored = withJob(job)) {
-      action.run();
-    }
-    catch (JobCanceledException e) {
-      throw job.getCancellationException();
-    }
-  }
-
-  public static <T, E extends Throwable> T withJob(@NotNull Job job, @NotNull ThrowableComputable<T, E> action) throws E {
+  /**
+   * Installs the given job as {@link Cancellation#currentJob() current}, runs {@code action}, and returns its result.
+   * If the given job becomes cancelled, then {@code ProgressManager#checkCanceled} will throw an instance
+   * of the special {@link ProcessCanceledException} subclass inside the given action,
+   * and this method will throw the original cancellation exception of the job.
+   */
+  public static <T, E extends Throwable> T withJob(
+    @NotNull Job job,
+    @NotNull ThrowableComputable<T, E> action
+  ) throws E, CancellationException {
     try (AccessToken ignored = withJob(job)) {
       return action.compute();
     }
     catch (JobCanceledException e) {
+      // This exception is thrown only from `Cancellation.checkCancelled`.
+      // If it's caught, then the job must've been cancelled.
       throw job.getCancellationException();
     }
   }
