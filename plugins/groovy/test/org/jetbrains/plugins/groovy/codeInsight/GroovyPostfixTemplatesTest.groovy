@@ -114,4 +114,8 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
   void testNoReturn() {
     doNoPopupTest "bar.<caret>", "return", GrReturnExpressionPostfixTemplate
   }
+
+  void testSout() {
+    doAutoPopupTest "foo.<caret>", "sout", "println foo", GrSoutExpressionPostfixTemplate
+  }
 }
