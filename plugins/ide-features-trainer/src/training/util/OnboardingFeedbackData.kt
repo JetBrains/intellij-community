@@ -18,4 +18,6 @@ abstract class OnboardingFeedbackData(val reportTitle: String, // It is ZenDesk 
   abstract val addRowsForUserAgreement: Panel.() -> Unit
 
   abstract val possibleTechnicalIssues: Map<String, @Nls String>
+
+  abstract fun feedbackHasBeenProposed()
 }

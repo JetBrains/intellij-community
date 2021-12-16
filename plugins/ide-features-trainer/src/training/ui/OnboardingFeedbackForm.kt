@@ -56,6 +56,7 @@ private const val SUB_OFFSET = 20
 private const val FEEDBACK_JSON_VERSION = COMMON_FEEDBACK_SYSTEM_INFO_VERSION + 0
 
 fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData: OnboardingFeedbackData) {
+  onboardingFeedbackData.feedbackHasBeenProposed()
   StatisticBase.logOnboardingFeedbackNotification(getFeedbackEntryPlace(project))
   val notification = iftNotificationGroup.createNotification(LearnBundle.message("onboarding.feedback.notification.title"),
                                                              LearnBundle.message("onboarding.feedback.notification.message",
@@ -79,6 +80,7 @@ fun showOnboardingFeedbackNotification(project: Project?, onboardingFeedbackData
 fun showOnboardingLessonFeedbackForm(project: Project?,
                                      onboardingFeedbackData: OnboardingFeedbackData,
                                      openedViaNotification: Boolean): Boolean {
+  onboardingFeedbackData?.feedbackHasBeenProposed()
   val saver = mutableListOf<JsonObjectBuilder.() -> Unit>()
 
   fun feedbackTextArea(fieldName: String, optionalText: @Nls String, width: Int, height: Int): JBScrollPane {
