@@ -33,4 +33,4 @@ fun test() {
 //INFO: <p><a href="psi_element://C"><code style='font-size:96%;'><span style="color:#0000ff;">See <strong>this</strong> class</span></code></a></p>
 //INFO: <p>This is <em>emphasized text</em> but text_with_underscores has to preserve the underscores. Single stars embedded in a word like Embedded*Star have to be preserved as well.</p>
 //INFO: <p>Exclamation marks are also important! Also in <code style='font-size:96%;'><span style=""><span style="">code&#32;blocks!</span></span></code></p>
-//INFO: <p>bt+ : <code style='font-size:96%;'><span style=""><span style="">prefix&#32;`&#32;postfix</span></span></code> backslash: <code style='font-size:96%;'><span style=""><span style="">\</span></span></code></p></div><table class='sections'></table>
+//INFO: <p>bt+ : <code style='font-size:96%;'><span style=""><span style="">prefix&#32;`&#32;postfix</span></span></code> backslash: <code style='font-size:96%;'><span style=""><span style="">\</span></span></code></p></div><table class='sections'></table><div class='bottom'><icon src="/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"/>&nbsp;OnMethodUsageWithMarkdown.kt<br/></div>

@@ -173,68 +173,6 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
         return if (element == null) null else getText(element, originalElement, true)
     }
 
-    override fun getLocationInfo(element: PsiElement?): HtmlChunk? {
-        return when (element) {
-            !is KtExpression -> null
-            else -> runReadAction { doGetLocationInfo(element) }
-        }
-    }
-
-    private fun doGetLocationInfo(element: KtExpression): HtmlChunk? {
-        val baseInfo = getDefaultLocationInfo(element)
-
-        val resolutionFacade = element.getResolutionFacade()
-        val context = element.analyze(resolutionFacade, BodyResolveMode.PARTIAL)
-        val descriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, element] ?: return baseInfo
-
-        if (!DescriptorUtils.isLocal(descriptor)) {
-            val containingDeclaration = descriptor.containingDeclaration
-            if (containingDeclaration == null) return baseInfo
-
-            val fqNameSection = containingDeclaration.fqNameSafe
-                .takeUnless { it.isRoot }
-                ?.let {
-                    @Nls val link = StringBuilder().apply {
-                        val highlighted =
-                            if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) highlight(it.asString()) { asClassName }
-                            else it.asString()
-                        DocumentationManagerUtil.createHyperlink(this, it.asString(), highlighted, false, false)
-                    }
-                    HtmlChunk.fragment(
-                        HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/classKotlin.svg"),
-                        HtmlChunk.nbsp(),
-                        HtmlChunk.raw(link.toString()),
-                        HtmlChunk.br()
-                    )
-                }
-                ?: HtmlChunk.empty()
-
-            val fileNameSection = descriptor
-                .safeAs<DeclarationDescriptorWithSource>()
-                ?.source
-                ?.containingFile
-                ?.name
-                ?.takeIf { containingDeclaration is PackageFragmentDescriptor }
-                ?.let {
-                    HtmlChunk.fragment(
-                        HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"),
-                        HtmlChunk.nbsp(),
-                        HtmlChunk.text(it),
-                        HtmlChunk.br()
-                    )
-                }
-                ?: HtmlChunk.empty()
-
-            return HtmlChunk.fragment(
-                fqNameSection,
-                fileNameSection,
-                baseInfo ?: HtmlChunk.empty()
-            )
-        }
-
-        return baseInfo
-    }
-
     @Nls
     override fun generateDoc(element: PsiElement, originalElement: PsiElement?): String? {
         return getText(element, originalElement, false)
@@ -668,6 +606,12 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                         }
                     }
                 }
+
+                getContainerInfo(ktElement)?.toString()?.takeIf { it.isNotBlank() }?.let { info ->
+                    containerInfo {
+                        append(info)
+                    }
+                }
             }
         }
 
@@ -716,6 +660,54 @@ class KotlinDocumentationProvider : AbstractDocumentationProvider(), ExternalDoc
                     append(SECTION_END)
                 }
             }
+        }
+
+        private fun getContainerInfo(element: PsiElement?): HtmlChunk? {
+            if (element !is KtExpression) return null
+
+            val resolutionFacade = element.getResolutionFacade()
+            val context = element.analyze(resolutionFacade, BodyResolveMode.PARTIAL)
+            val descriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, element] ?: return null
+            if (DescriptorUtils.isLocal(descriptor)) return null
+
+            val containingDeclaration = descriptor.containingDeclaration
+            if (containingDeclaration == null) return null
+
+            val fqNameSection = containingDeclaration.fqNameSafe
+                .takeUnless { it.isRoot }
+                ?.let {
+                    @Nls val link = StringBuilder().apply {
+                        val highlighted =
+                            if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) highlight(it.asString()) { asClassName }
+                            else it.asString()
+                        DocumentationManagerUtil.createHyperlink(this, it.asString(), highlighted, false, false)
+                    }
+                    HtmlChunk.fragment(
+                        HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/classKotlin.svg"),
+                        HtmlChunk.nbsp(),
+                        HtmlChunk.raw(link.toString()),
+                        HtmlChunk.br()
+                    )
+                }
+                ?: HtmlChunk.empty()
+
+            val fileNameSection = descriptor
+                .safeAs<DeclarationDescriptorWithSource>()
+                ?.source
+                ?.containingFile
+                ?.name
+                ?.takeIf { containingDeclaration is PackageFragmentDescriptor }
+                ?.let {
+                    HtmlChunk.fragment(
+                        HtmlChunk.tag("icon").attr("src", "/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"),
+                        HtmlChunk.nbsp(),
+                        HtmlChunk.text(it),
+                        HtmlChunk.br()
+                    )
+                }
+                ?: HtmlChunk.empty()
+
+            return HtmlChunk.fragment(fqNameSection, fileNameSection)
         }
 
         private fun String.htmlEscape(): String = HtmlEscapers.htmlEscaper().escape(this)

@@ -32,4 +32,4 @@ fun test() {
 //INFO: <span style=""><span style="">Third&#32;line</span></span>
 //INFO: </code></pre><p>Text between code blocks.</p>
 //INFO: <pre><code style='font-size:96%;'>
-//INFO: </code></pre><p>Text after code block.</p></div><table class='sections'></table>
+//INFO: </code></pre><p>Text after code block.</p></div><table class='sections'></table><div class='bottom'><icon src="/org/jetbrains/kotlin/idea/icons/kotlin_file.svg"/>&nbsp;OnMethodUsageWithCodeBlock.kt<br/></div>
