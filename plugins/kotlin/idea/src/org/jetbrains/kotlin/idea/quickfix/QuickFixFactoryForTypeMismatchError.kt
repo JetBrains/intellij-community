@@ -5,9 +5,11 @@ package org.jetbrains.kotlin.idea.quickfix
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.psi.util.PsiTreeUtil
+import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isKFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.rendering.DefaultErrorMessages
@@ -19,8 +21,10 @@ import org.jetbrains.kotlin.idea.intentions.reflectToRegularFunctionType
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.approximateWithResolvableType
 import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -33,10 +37,14 @@ import org.jetbrains.kotlin.resolve.calls.util.getValueArgumentForExpression
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
 import org.jetbrains.kotlin.resolve.constants.IntegerValueTypeConstant
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
+import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.TypeProjection
 import org.jetbrains.kotlin.types.TypeUtils
 import org.jetbrains.kotlin.types.TypeUtils.NO_EXPECTED_TYPE
+import org.jetbrains.kotlin.types.isDefinitelyNotNullType
 import org.jetbrains.kotlin.types.typeUtil.*
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 //TODO: should use change signature to deal with cases of multiple overridden descriptors
@@ -146,10 +154,33 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             return qualifiedOrThis
         }
 
-        // We don't want to cast a cast or type-asserted expression:
+        // Check if the type is a definitely non-nullable type (`T & Any`)
+        // or contains a definitely non-nullable type as a type argument (e.g., `Collection<T & Any>`)
+        fun KotlinType.containsDefinitelyNotNullComponent(): Boolean {
+            if (isDefinitelyNotNullType) return true
+            return arguments.any { it.type.containsDefinitelyNotNullComponent() }
+        }
+
+        // Suggest replacing type argument `T` with its expected definitely non-nullable subtype `T & Any`.
+        // Types that contain DNN types as arguments (like `(Mutable)Collection<T & Any>`) are currently not supported.
+        if (diagnosticElement is KtReferenceExpression &&
+            expectedType.isDefinitelyNotNullType &&
+            diagnosticElement.module?.languageVersionSettings?.supportsFeature(LanguageFeature.DefinitelyNonNullableTypes) == true
+        ) {
+            val descriptor = context[BindingContext.REFERENCE_TARGET, diagnosticElement]?.safeAs<DeclarationDescriptorWithSource>()
+            val parameter = descriptor?.psiElement?.safeAs<KtParameter>()
+            val parentParameterList = parameter?.parent as? KtParameterList
+            if (parameter != null && parentParameterList != null) {
+                actions.add(ChangeParameterTypeFix(parameter, expectedType))
+            }
+        }
+
+        // We don't want to cast a cast or type-asserted expression.
+        // We also don't want to cast a potentially nullable type `T` to its definitely non-nullable subtype `T & Any` as it is unsafe.
         if (diagnostic.factory != Errors.SIGNED_CONSTANT_CONVERTED_TO_UNSIGNED &&
             diagnosticElement !is KtBinaryExpressionWithTypeRHS &&
-            diagnosticElement.parent !is KtBinaryExpressionWithTypeRHS
+            diagnosticElement.parent !is KtBinaryExpressionWithTypeRHS &&
+            !expectedType.containsDefinitelyNotNullComponent()
         ) {
             actions.add(CastExpressionFix(diagnosticElement.getTopMostQualifiedForSelectorIfAny(), expectedType))
         }
