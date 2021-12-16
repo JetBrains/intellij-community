@@ -8,8 +8,8 @@ import com.intellij.psi.PsiElement
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.GroovyPostfixTemplateProvider
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.GroovyPostfixTemplateUtils
 
-class GrForeachPostfixTemplate(provider: GroovyPostfixTemplateProvider) :
-  GrPostfixTemplateBase("for", "for (final e in expr)", GroovyPostfixTemplateUtils.getIterableExpressionSelector(), provider) {
+class GrForeachPostfixTemplate(sequence: String, provider: GroovyPostfixTemplateProvider) :
+  GrPostfixTemplateBase(sequence, "for (final e in expr)", GroovyPostfixTemplateUtils.getIterableExpressionSelector(), provider) {
 
   override fun getGroovyTemplateString(element: PsiElement): String =
     """for (final def __NAME__ in __expr__) {

@@ -88,6 +88,10 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
     doAutoPopupTest "[1, 2, 3].<caret>", "for", "for (final def  in [1, 2, 3]) {\n    \n}", GrForeachPostfixTemplate
   }
 
+  void testIter() {
+    doAutoPopupTest "[1, 2, 3].<caret>", "iter", "for (final def  in [1, 2, 3]) {\n    \n}", GrForeachPostfixTemplate
+  }
+
   void testNoForWithNonIterable() {
     doNoPopupTest "1.<caret>", "for", GrForeachPostfixTemplate
   }

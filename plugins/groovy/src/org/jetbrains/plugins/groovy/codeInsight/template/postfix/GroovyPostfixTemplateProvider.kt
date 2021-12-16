@@ -33,7 +33,8 @@ class GroovyPostfixTemplateProvider : PostfixTemplateProvider {
 private fun getBuiltinTemplates(groovyPostfixTemplateProvider: GroovyPostfixTemplateProvider): Set<PostfixTemplate> = setOf(
   GrParenthesizedExpressionPostfixTemplate(),
   GrCastExpressionPostfixTemplate(groovyPostfixTemplateProvider),
-  GrForeachPostfixTemplate(groovyPostfixTemplateProvider),
+  GrForeachPostfixTemplate("for", groovyPostfixTemplateProvider),
+  GrForeachPostfixTemplate("iter", groovyPostfixTemplateProvider),
   GrNewExpressionPostfixTemplate(groovyPostfixTemplateProvider),
   GrIfNotNullExpressionPostfixTemplate(groovyPostfixTemplateProvider, "nn"),
   GrIfNotNullExpressionPostfixTemplate(groovyPostfixTemplateProvider, "notnull"),
