@@ -152,6 +152,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     }
 
     if (myLastLayout != null &&
+        (myIdLabel == null || myIdLabel.isValid()) &&
         myLastLayout.layoutSize.equals(bounds.getSize()) &&
         myLastLayout.contentCount == manager.getContentCount() &&
         ContainerUtil.all(myTabs, Component::isValid)) {

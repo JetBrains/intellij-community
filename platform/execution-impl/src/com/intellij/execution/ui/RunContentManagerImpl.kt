@@ -365,6 +365,7 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
   private fun getOrCreateContentManagerForToolWindow(id: String, executor: Executor): ContentManager {
     val contentManager = getContentManagerByToolWindowId(id)
     if (contentManager != null) {
+      updateToolWindowDecoration(id, executor)
       return contentManager
     }
 
@@ -388,6 +389,18 @@ class RunContentManagerImpl(private val project: Project) : RunContentManager {
       }
     }
     return null
+  }
+
+  private fun updateToolWindowDecoration(id: String, executor: Executor) {
+    if (project.serviceIfCreated<RunDashboardManager>()?.toolWindowId == id) {
+      return
+    }
+
+    getToolWindowManager().getToolWindow(id)?.apply {
+      stripeTitle = executor.actionName
+      setIcon(executor.icon)
+      toolWindowIdToBaseIcon[id] = executor.icon
+    }
   }
 
   private inline fun processToolWindowContentManagers(processor: (ToolWindow, ContentManager) -> Unit) {
