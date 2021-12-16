@@ -5,6 +5,7 @@ import com.intellij.application.options.RegistryManager
 import com.intellij.ide.ui.ExperimentalToolbarSettingsState
 import com.intellij.ide.ui.ToolbarSettings
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.State
@@ -23,6 +24,7 @@ import org.jetbrains.annotations.ApiStatus
   storages = [(Storage(StoragePathMacros.NON_ROAMABLE_FILE))],
 )
 internal class ExperimentalToolbarSettings private constructor() : ToolbarSettings,
+                                                                   UISettingsListener,
                                                                    Disposable {
   companion object {
     private val logger = logger<ExperimentalToolbarSettings>()
@@ -52,7 +54,9 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
     }
 
     Disposer.register(application, this)
+
     newToolbarEnabled.addListener(ToolbarRegistryListener(), this)
+    application.messageBus.connect(this).subscribe(UISettingsListener.TOPIC, this)
   }
 
   override fun getState(): ExperimentalToolbarSettingsState = toolbarState
@@ -75,7 +79,18 @@ internal class ExperimentalToolbarSettings private constructor() : ToolbarSettin
     get() = toolbarState.showNewMainToolbar
     set(value) {
       toolbarState.showNewMainToolbar = value
-      val uiSettingState = UISettings.instance.state
-      uiSettingState.showMainToolbar = !value && uiSettingState.showMainToolbar
+      hideClassicMainToolbarIfVisible()
     }
+
+  override fun uiSettingsChanged(uiSettings: UISettings) {
+    logger.info("Dispatching UI settings change.")
+    hideClassicMainToolbarIfVisible()
+  }
+
+  private fun hideClassicMainToolbarIfVisible() {
+    if (isVisible) {
+      logger.info("Hiding Main Toolbar (Classic) because the new toolbar is visible.")
+      UISettings.instance.showMainToolbar = false
+    }
+  }
 }
