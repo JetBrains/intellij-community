@@ -19,6 +19,7 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.TestFileSystemItem;
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemImportingTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 

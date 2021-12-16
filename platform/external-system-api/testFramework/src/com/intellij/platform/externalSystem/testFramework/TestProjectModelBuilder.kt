@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.openapi.externalSystem.test
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.externalSystem.testFramework
 
 import com.intellij.openapi.externalSystem.model.DataNode
 import com.intellij.openapi.externalSystem.model.ProjectKeys
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.*
-import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
 import com.intellij.openapi.module.ModuleTypeId
 import com.intellij.openapi.roots.DependencyScope
 import java.util.*
@@ -45,7 +45,7 @@ abstract class AbstractNode<DataType : Any?>(val type: String) : Node {
     return null
   }
 
-  internal fun <T : Node> initChild(node: T, init: T.() -> Unit): T {
+  fun <T : Node> initChild(node: T, init: T.() -> Unit): T {
     (node as AbstractNode<*>).systemId = this.systemId
     (node as AbstractNode<*>).parent = this
     children.add(node)

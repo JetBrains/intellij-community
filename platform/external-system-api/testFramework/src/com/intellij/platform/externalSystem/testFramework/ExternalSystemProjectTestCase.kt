@@ -1,4 +1,5 @@
-package com.intellij.openapi.externalSystem.test
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.platform.externalSystem.testFramework
 
 import com.intellij.openapi.externalSystem.ExternalSystemManager
 import com.intellij.openapi.externalSystem.model.DataNode
@@ -9,7 +10,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings
-import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.LocalFileSystem
@@ -35,7 +36,7 @@ abstract class ExternalSystemProjectTestCase : HeavyPlatformTestCase() {
               projectPath: String = this.projectPath,
               systemId: ProjectSystemId = TEST_EXTERNAL_SYSTEM_ID,
               init: Project.() -> Unit): Project {
-    return com.intellij.openapi.externalSystem.test.project(name, projectPath, systemId, init)
+    return com.intellij.platform.externalSystem.testFramework.project(name, projectPath, systemId, init)
   }
 
   protected fun applyProjectModel(vararg projectModels: Project) {

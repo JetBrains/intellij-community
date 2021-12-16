@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
-import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.gradle.textWithoutTags

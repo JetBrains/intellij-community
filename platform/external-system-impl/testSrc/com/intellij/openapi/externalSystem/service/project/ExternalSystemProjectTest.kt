@@ -9,10 +9,10 @@ import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceTyp
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType.*
 import com.intellij.openapi.externalSystem.model.project.LibraryLevel
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
-import com.intellij.openapi.externalSystem.test.ExternalSystemProjectTestCase
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemProjectTestCase
 import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase.collectRootsInside
 import com.intellij.openapi.externalSystem.test.javaProject
-import com.intellij.openapi.externalSystem.test.toDataNode
+import com.intellij.platform.externalSystem.testFramework.toDataNode
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.projectRoots.JavaSdk
