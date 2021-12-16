@@ -106,4 +106,12 @@ class GroovyPostfixTemplatesTest extends JavaCompletionAutoPopupTestCase {
   void testReqnonnull() {
     doAutoPopupTest "foo.<caret>", "reqnonnull", "Objects.requireNonNull(foo)<caret>", GrReqnonnullExpressionPostfixTemplate
   }
+
+  void testReturn() {
+    doAutoPopupTest "def foo() { bar.<caret> }", "return", "def foo() { return bar }", GrReturnExpressionPostfixTemplate
+  }
+
+  void testNoReturn() {
+    doNoPopupTest "bar.<caret>", "return", GrReturnExpressionPostfixTemplate
+  }
 }

@@ -16,8 +16,10 @@ import com.intellij.psi.util.parentsOfType
 import com.siyeh.ig.psiutils.BoolUtils
 import org.jetbrains.plugins.groovy.codeInsight.template.postfix.conditions.GrNullablePostfixTemplateExpressionCondition
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
+import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import kotlin.math.max
 
 object GroovyPostfixTemplateUtils {
@@ -58,9 +60,15 @@ object GroovyPostfixTemplateUtils {
 
   val EXPRESSION_SELECTOR = getGenericExpressionSelector()
 
+  val TOP_EXPRESSION_SELECTOR = getGenericExpressionSelector(true)
+
   fun getNullableTopExpressionSelector() = getGenericExpressionSelector(true, GrNullablePostfixTemplateExpressionCondition())
 
   fun getNullableExpressionSelector() = getGenericExpressionSelector(false, GrNullablePostfixTemplateExpressionCondition())
+
+  fun getMethodLocalTopExpressionSelector() = getGenericExpressionSelector(true) { element ->
+    PsiTreeUtil.getParentOfType(element, GrMethod::class.java, GrFunctionalExpression::class.java) != null
+  }
 
   val CONSTRUCTOR_SELECTOR = getGenericExpressionSelector { element ->
     element is GrMethodCallExpression || (element is GrReferenceExpression && element.resolve() is PsiClass)
