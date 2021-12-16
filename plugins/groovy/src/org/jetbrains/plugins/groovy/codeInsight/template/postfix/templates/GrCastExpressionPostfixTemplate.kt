@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight.template.postfix.templates
 
 import com.intellij.openapi.diagnostic.Logger
@@ -14,7 +14,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperat
 private val LOG: Logger by lazyPub { Logger.getInstance(GrCastExpressionPostfixTemplate::class.java) }
 
 class GrCastExpressionPostfixTemplate(provider: GroovyPostfixTemplateProvider) :
-  GrPostfixTemplateBase("cast", "expr as SomeType", GroovyPostfixTemplateUtils.EXPRESSION_SELECTOR, provider) {
+  GrPostfixTemplateBase("cast", "expr as SomeType", GroovyPostfixTemplateUtils.getExpressionSelector(), provider) {
 
   override fun getGroovyTemplateString(element: PsiElement): String {
     LOG.assertTrue(element is GrExpression)

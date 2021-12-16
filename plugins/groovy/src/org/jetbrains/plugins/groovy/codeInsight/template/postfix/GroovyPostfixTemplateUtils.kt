@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight.template.postfix
 
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateExpressionSelectorBase
@@ -10,9 +10,7 @@ import com.intellij.openapi.util.Conditions
 import com.intellij.psi.*
 import com.intellij.psi.util.InheritanceUtil
 import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.parentsOfType
 import com.siyeh.ig.psiutils.BoolUtils
-import org.jetbrains.plugins.groovy.codeInsight.template.postfix.conditions.GrNullablePostfixTemplateExpressionCondition
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory
 import org.jetbrains.plugins.groovy.lang.psi.api.GrFunctionalExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*
@@ -41,39 +39,45 @@ object GroovyPostfixTemplateUtils {
     }
   }
 
-  fun getGenericExpressionSelector(onlyLast : Boolean = false, condition: Condition<in PsiElement> = Conditions.alwaysTrue()) = object : PostfixTemplateExpressionSelectorBase(condition) {
+  private fun booleanTypeCondition(expr: GrExpression): Boolean {
+    val type = expr.type
+    return type == null || type == PsiType.BOOLEAN || type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)
+  }
+
+  private fun nullableTypeCondition(expr: GrExpression): Boolean = expr.type !is PsiPrimitiveType
+
+  fun getGenericExpressionSelector(onlyLast: Boolean, condition: Condition<in GrExpression>)
+  = object : PostfixTemplateExpressionSelectorBase({ it is GrExpression && condition.value(it) }) {
 
     override fun getNonFilteredExpressions(context: PsiElement, document: Document, offset: Int): List<PsiElement> {
       val actualOffset = max(offset - 1, 0)
       val file = PsiDocumentManager.getInstance(context.project).getPsiFile(document) ?: return emptyList()
-      val expressions = PsiTreeUtil
-        .findElementOfClassAtOffset(file, actualOffset, GrExpression::class.java, false)
-        ?.parentsOfType<GrExpression>(true) ?: emptySequence()
+      var currentElement: PsiElement? = PsiTreeUtil.findElementOfClassAtOffset(file, actualOffset, GrExpression::class.java, false)
+      val expressions = mutableListOf<GrExpression>()
+      while (currentElement is GrExpression) {
+        expressions.add(currentElement)
+        currentElement = currentElement.parent
+      }
       if (onlyLast) {
-        return listOfNotNull(expressions.last())
-      } else {
+        return listOfNotNull(expressions.lastOrNull())
+      }
+      else {
         return expressions.toList()
       }
     }
 
   }
 
-  val EXPRESSION_SELECTOR = getGenericExpressionSelector()
+  fun getExpressionSelector() = getGenericExpressionSelector(true, Conditions.alwaysTrue())
 
-  val TOP_EXPRESSION_SELECTOR = getGenericExpressionSelector(true)
+  fun getTopExpressionSelector() = getGenericExpressionSelector(true, Conditions.alwaysTrue())
 
-  fun getNullableTopExpressionSelector() = getGenericExpressionSelector(true, GrNullablePostfixTemplateExpressionCondition())
+  fun getNullableTopExpressionSelector() = getGenericExpressionSelector(true, this::nullableTypeCondition)
 
-  fun getNullableExpressionSelector() = getGenericExpressionSelector(false, GrNullablePostfixTemplateExpressionCondition())
+  fun getNullableExpressionSelector() = getGenericExpressionSelector(false, this::nullableTypeCondition)
 
   fun getMethodLocalTopExpressionSelector() = getGenericExpressionSelector(true) { element ->
     PsiTreeUtil.getParentOfType(element, GrMethod::class.java, GrFunctionalExpression::class.java) != null
-  }
-
-  private fun booleanTypeCondition(expr: PsiElement) : Boolean {
-    if (expr !is GrExpression) return false
-    val type = expr.type
-    return type == null || type == PsiType.BOOLEAN || type.equalsToText(CommonClassNames.JAVA_LANG_BOOLEAN)
   }
 
   fun getTopBooleanExpressionSelector() = getGenericExpressionSelector(true, this::booleanTypeCondition)
@@ -81,13 +85,11 @@ object GroovyPostfixTemplateUtils {
   fun getBooleanExpressionSelector() = getGenericExpressionSelector(false, this::booleanTypeCondition)
 
   fun getSubclassExpressionSelector(baseClassFqn: String) = getGenericExpressionSelector(true) { expr ->
-    if (expr !is GrExpression) return@getGenericExpressionSelector false
     val type = expr.type
     type == null || InheritanceUtil.isInheritor(type, baseClassFqn)
   }
 
   fun getIterableExpressionSelector() = getGenericExpressionSelector(true) { expr ->
-    if (expr !is GrExpression) return@getGenericExpressionSelector false
     val type = expr.type
     type == null || // unknown type may be actually iterable in runtime
     type is GrMapType ||
@@ -96,8 +98,8 @@ object GroovyPostfixTemplateUtils {
     InheritanceUtil.isInheritor(type, CommonClassNames.JAVA_LANG_ITERABLE)
   }
 
-  val CONSTRUCTOR_SELECTOR = getGenericExpressionSelector { element ->
-    element is GrMethodCallExpression || (element is GrReferenceExpression && element.resolve() is PsiClass)
+  fun getConstructorSelector() = getGenericExpressionSelector(false) { expr ->
+    expr is GrMethodCallExpression || (expr is GrReferenceExpression && expr.resolve() is PsiClass)
   }
 
   fun shouldBeParenthesized(expr: GrExpression): Boolean = when (expr) {
