@@ -198,4 +198,8 @@ try {
   void testAll() {
     doAutoPopupTest "[1, 2, 3].<caret>", "all", "[1, 2, 3].every {}", GrAllPostfixTemplate
   }
+
+  void testFilter() {
+    doAutoPopupTest "[1, 2, 3].<caret>", "filter", "[1, 2, 3].findAll {}", GrAllPostfixTemplate
+  }
 }
