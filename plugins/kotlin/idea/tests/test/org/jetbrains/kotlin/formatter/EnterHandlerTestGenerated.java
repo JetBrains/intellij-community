@@ -17,13 +17,13 @@ import org.junit.runner.RunWith;
 @TestRoot("idea/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingIndentationTestBase {
+public abstract class EnterHandlerTestGenerated extends AbstractEnterHandlerTest {
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/editor/enterHandler")
-    public abstract static class DirectSettings extends AbstractTypingIndentationTestBase {
+    public abstract static class DirectSettings extends AbstractEnterHandlerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/afterUnmatchedBrace")
-        public static class AfterUnmatchedBrace extends AbstractTypingIndentationTestBase {
+        public static class AfterUnmatchedBrace extends AbstractEnterHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -96,7 +96,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/arrayAccess")
-        public static class ArrayAccess extends AbstractTypingIndentationTestBase {
+        public static class ArrayAccess extends AbstractEnterHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -109,10 +109,10 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/controlFlowConstructions")
-        public abstract static class ControlFlowConstructions extends AbstractTypingIndentationTestBase {
+        public abstract static class ControlFlowConstructions extends AbstractEnterHandlerTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler/controlFlowConstructions")
-            public static class TestBucket001 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket001 extends AbstractEnterHandlerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -220,7 +220,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler/controlFlowConstructions")
-            public static class TestBucket002 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket002 extends AbstractEnterHandlerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -328,7 +328,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler/controlFlowConstructions")
-            public static class TestBucket003 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket003 extends AbstractEnterHandlerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -387,7 +387,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/elvis")
-        public static class Elvis extends AbstractTypingIndentationTestBase {
+        public static class Elvis extends AbstractEnterHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -420,7 +420,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/emptyBraces")
-        public static class EmptyBraces extends AbstractTypingIndentationTestBase {
+        public static class EmptyBraces extends AbstractEnterHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -473,10 +473,10 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/emptyParameters")
-        public abstract static class EmptyParameters extends AbstractTypingIndentationTestBase {
+        public abstract static class EmptyParameters extends AbstractEnterHandlerTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler/emptyParameters")
-            public static class TestBucket001 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket001 extends AbstractEnterHandlerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -584,7 +584,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler/emptyParameters")
-            public static class TestBucket002 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket002 extends AbstractEnterHandlerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -692,7 +692,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler/emptyParameters")
-            public static class TestBucket003 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket003 extends AbstractEnterHandlerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -786,7 +786,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/emptyParenthesisInBinaryExpression")
-        public static class EmptyParenthesisInBinaryExpression extends AbstractTypingIndentationTestBase {
+        public static class EmptyParenthesisInBinaryExpression extends AbstractEnterHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -864,7 +864,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/expressionBody")
-        public static class ExpressionBody extends AbstractTypingIndentationTestBase {
+        public static class ExpressionBody extends AbstractEnterHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -962,13 +962,13 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/multilineString")
-        public abstract static class MultilineString extends AbstractTypingIndentationTestBase {
+        public abstract static class MultilineString extends AbstractEnterHandlerTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler/multilineString/spaces")
-            public abstract static class Spaces extends AbstractTypingIndentationTestBase {
+            public abstract static class Spaces extends AbstractEnterHandlerTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/editor/enterHandler/multilineString/spaces")
-                public static class TestBucket001 extends AbstractTypingIndentationTestBase {
+                public static class TestBucket001 extends AbstractEnterHandlerTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                     }
@@ -1076,7 +1076,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/editor/enterHandler/multilineString/spaces")
-                public static class TestBucket002 extends AbstractTypingIndentationTestBase {
+                public static class TestBucket002 extends AbstractEnterHandlerTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                     }
@@ -1175,10 +1175,10 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler/multilineString/withTabs")
-            public abstract static class WithTabs extends AbstractTypingIndentationTestBase {
+            public abstract static class WithTabs extends AbstractEnterHandlerTest {
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/editor/enterHandler/multilineString/withTabs/tabs2")
-                public static class Tabs2 extends AbstractTypingIndentationTestBase {
+                public static class Tabs2 extends AbstractEnterHandlerTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                     }
@@ -1241,7 +1241,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
                 @RunWith(JUnit3RunnerWithInners.class)
                 @TestMetadata("testData/editor/enterHandler/multilineString/withTabs/tabs4")
-                public static class Tabs4 extends AbstractTypingIndentationTestBase {
+                public static class Tabs4 extends AbstractEnterHandlerTest {
                     private void runTest(String testDataFilePath) throws Exception {
                         KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                     }
@@ -1306,7 +1306,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/script")
-        public static class Script extends AbstractTypingIndentationTestBase {
+        public static class Script extends AbstractEnterHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
             }
@@ -1344,10 +1344,10 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/templates")
-        public abstract static class Templates extends AbstractTypingIndentationTestBase {
+        public abstract static class Templates extends AbstractEnterHandlerTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler/templates")
-            public static class TestBucket001 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket001 extends AbstractEnterHandlerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -1455,7 +1455,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler/templates")
-            public static class TestBucket002 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket002 extends AbstractEnterHandlerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -1479,10 +1479,10 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler")
-        public abstract static class Uncategorized extends AbstractTypingIndentationTestBase {
+        public abstract static class Uncategorized extends AbstractEnterHandlerTest {
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler")
-            public static class TestBucket001 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket001 extends AbstractEnterHandlerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -1590,7 +1590,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler")
-            public static class TestBucket002 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket002 extends AbstractEnterHandlerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -1698,7 +1698,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler")
-            public static class TestBucket003 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket003 extends AbstractEnterHandlerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -1806,7 +1806,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
             @RunWith(JUnit3RunnerWithInners.class)
             @TestMetadata("testData/editor/enterHandler")
-            public static class TestBucket004 extends AbstractTypingIndentationTestBase {
+            public static class TestBucket004 extends AbstractEnterHandlerTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doNewlineTest, this, testDataFilePath);
                 }
@@ -1886,10 +1886,10 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/editor/enterHandler")
-    public abstract static class InvertedSettings extends AbstractTypingIndentationTestBase {
+    public abstract static class InvertedSettings extends AbstractEnterHandlerTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/elvis")
-        public static class Elvis extends AbstractTypingIndentationTestBase {
+        public static class Elvis extends AbstractEnterHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -1922,7 +1922,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/emptyParameters")
-        public static class EmptyParameters extends AbstractTypingIndentationTestBase {
+        public static class EmptyParameters extends AbstractEnterHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -1970,7 +1970,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/emptyParenthesisInBinaryExpression")
-        public static class EmptyParenthesisInBinaryExpression extends AbstractTypingIndentationTestBase {
+        public static class EmptyParenthesisInBinaryExpression extends AbstractEnterHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2028,7 +2028,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler/expressionBody")
-        public static class ExpressionBody extends AbstractTypingIndentationTestBase {
+        public static class ExpressionBody extends AbstractEnterHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }
@@ -2126,7 +2126,7 @@ public abstract class TypingIndentationTestBaseGenerated extends AbstractTypingI
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/editor/enterHandler")
-        public static class Uncategorized extends AbstractTypingIndentationTestBase {
+        public static class Uncategorized extends AbstractEnterHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doNewlineTestWithInvert, this, testDataFilePath);
             }

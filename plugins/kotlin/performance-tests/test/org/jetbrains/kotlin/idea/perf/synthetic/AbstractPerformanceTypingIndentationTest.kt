@@ -16,7 +16,7 @@ import java.io.File
 
 
 /**
- * inspired by @see [org.jetbrains.kotlin.formatter.AbstractTypingIndentationTestBase]
+ * inspired by @see [org.jetbrains.kotlin.formatter.AbstractEnterHandlerTest]
  */
 abstract class AbstractPerformanceTypingIndentationTest : KotlinLightPlatformCodeInsightTestCase() {
     companion object {

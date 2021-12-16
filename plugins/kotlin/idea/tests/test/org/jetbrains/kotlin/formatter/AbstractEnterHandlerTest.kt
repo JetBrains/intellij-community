@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.junit.Assert
 import java.io.File
 
-abstract class AbstractTypingIndentationTestBase : KotlinLightPlatformCodeInsightTestCase() {
+abstract class AbstractEnterHandlerTest : KotlinLightPlatformCodeInsightTestCase() {
     private val customLineIndentProvider: LineIndentProvider = KotlinLineIndentProvider()
 
     fun doNewlineTestWithInvert(afterInvFilePath: String) {
