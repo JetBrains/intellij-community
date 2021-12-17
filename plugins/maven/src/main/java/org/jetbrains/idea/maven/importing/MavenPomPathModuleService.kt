@@ -1,41 +1,28 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.importing;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package org.jetbrains.idea.maven.importing
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.module.Module;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.components.BaseState
+import com.intellij.openapi.components.SimplePersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.module.Module
+import org.jetbrains.idea.maven.importing.MavenPomPathModuleService.MavenPomPathState
 
 @State(name = "MavenCustomPomFilePath")
-public class MavenPomPathModuleService implements PersistentStateComponent<MavenPomPathModuleService.MavenPomPathState> {
-  private MavenPomPathState myState = new MavenPomPathState();
-
-  public static MavenPomPathModuleService getInstance(final Module module) {
-    return module.getService(MavenPomPathModuleService.class);
+class MavenPomPathModuleService : SimplePersistentStateComponent<MavenPomPathState>(MavenPomPathState()) {
+  companion object {
+    @JvmStatic
+    fun getInstance(module: Module): MavenPomPathModuleService {
+      return module.getService(MavenPomPathModuleService::class.java)
+    }
   }
 
-  public String getPomFileUrl() {
-    return myState.mavenPomFileUrl;
-  }
+  var pomFileUrl: String?
+    get() = state.mavenPomFileUrl
+    set(value) {
+      state.mavenPomFileUrl = value
+    }
 
-  public void setPomFileUrl(String pomFileUrl) {
-    myState.mavenPomFileUrl = pomFileUrl;
-  }
-
-  @Nullable
-  @Override
-  public MavenPomPathState getState() {
-    return myState;
-  }
-
-  @Override
-  public void loadState(@NotNull MavenPomPathState state) {
-    myState = state;
-  }
-
-  public static class MavenPomPathState {
-    @Nullable
-    public String mavenPomFileUrl;
+  class MavenPomPathState : BaseState() {
+    var mavenPomFileUrl by string()
   }
 }
