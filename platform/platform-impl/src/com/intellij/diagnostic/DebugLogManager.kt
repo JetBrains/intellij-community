@@ -1,12 +1,12 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic
 
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.containers.ContainerUtil
-import org.apache.log4j.Level
-import org.apache.log4j.LogManager
+import java.util.logging.Level
+import java.util.logging.Logger
 
 /**
  * Allows to apply & persist custom log debug categories which can be turned on by user via the [com.intellij.ide.actions.DebugLogConfigureAction].
@@ -39,19 +39,19 @@ class DebugLogManager {
 
   fun clearCategories(categories: List<Category>) {
     categories.forEach {
-      LogManager.getLogger(it.category)?.level = null
+      Logger.getLogger(it.category)?.level = null
     }
   }
 
   fun applyCategories(categories: List<Category>) {
-    applyCategories(categories, DebugLogLevel.DEBUG, Level.DEBUG)
-    applyCategories(categories, DebugLogLevel.TRACE, Level.TRACE)
+    applyCategories(categories, DebugLogLevel.DEBUG, Level.FINE)
+    applyCategories(categories, DebugLogLevel.TRACE, Level.FINER)
   }
 
   private fun applyCategories(categories: List<Category>, level: DebugLogLevel, log4jLevel: Level) {
     val filtered = categories.asSequence().filter { it.level == level }.map { it.category }.toList()
     filtered.forEach {
-      LogManager.getLogger(it)?.level = log4jLevel
+      Logger.getLogger(it)?.level = log4jLevel
     }
     if (filtered.isNotEmpty()) {
       LOG.info("Set ${level.name} for the following categories: ${filtered.joinToString()}")

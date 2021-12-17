@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -10,8 +11,6 @@ import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
 import org.apache.log4j.Level;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.xml.DOMConfigurator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AssumptionViolatedException;
@@ -67,25 +66,14 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   public static boolean reconfigure() {
     try {
-      String customConfigPath = System.getProperty(PathManager.PROPERTY_LOG_CONFIG_FILE);
-      Path logXmlFile = customConfigPath != null
-                        ? Paths.get(customConfigPath)
-                        : Paths.get(PathManager.getHomePath(), "test-log.xml");
-      if (!Files.exists(logXmlFile)) {
-        return false;
-      }
 
       String logDir = getTestLogDir();
-      String text = Files.readString(logXmlFile);
-      text = StringUtil.replace(text, SYSTEM_MACRO, StringUtil.replace(PathManager.getSystemPath(), "\\", "\\\\"));
-      text = StringUtil.replace(text, APPLICATION_MACRO, StringUtil.replace(PathManager.getHomePath(), "\\", "\\\\"));
-      text = StringUtil.replace(text, LOG_DIR_MACRO, StringUtil.replace(logDir, "\\", "\\\\"));
       Files.createDirectories(Paths.get(logDir));
 
-      System.setProperty("log4j.defaultInitOverride", "true");
-      new DOMConfigurator().doConfigure(new StringReader(text), LogManager.getLoggerRepository());
-
       Path logFile = Paths.get(getTestLogDir(), "idea.log");
+      JulLogger.clearHandlers();
+      JulLogger.configureLogFileAndConsole(logFile, false, false, null);
+
       if (Files.exists(logFile) && Files.size(logFile) >= LOG_SIZE_LIMIT) {
         Files.writeString(logFile, "");
       }

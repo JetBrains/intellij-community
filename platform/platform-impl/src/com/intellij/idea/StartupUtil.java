@@ -39,9 +39,6 @@ import com.intellij.util.lang.Java11Shim;
 import com.intellij.util.lang.ZipFilePool;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
-import org.apache.log4j.ConsoleAppender;
-import org.apache.log4j.Level;
-import org.apache.log4j.PatternLayout;
 import org.apache.log4j.helpers.LogLog;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -76,6 +73,8 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
 
 @ApiStatus.Internal
 @SuppressWarnings("LoggerInitializedWithForeignClass")
@@ -644,12 +643,12 @@ public final class StartupUtil {
 
   private static void configureLog4j() {
     Activity activity = StartUpMeasurer.startActivity("console logger configuration");
-    System.setProperty("log4j.defaultInitOverride", "true");  // suppresses Log4j "no appenders" warning
-    @SuppressWarnings("deprecation")
-    org.apache.log4j.Logger root = org.apache.log4j.Logger.getRootLogger();
-    if (!root.getAllAppenders().hasMoreElements()) {
-      root.setLevel(Level.WARN);
-      root.addAppender(new ConsoleAppender(new PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)));
+    java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
+    if (rootLogger.getHandlers().length == 0) {
+      rootLogger.setLevel(Level.WARNING);
+      ConsoleHandler consoleHandler = new ConsoleHandler();
+      consoleHandler.setLevel(Level.WARNING);
+      rootLogger.addHandler(consoleHandler);
     }
     activity.end();
   }
@@ -813,7 +812,7 @@ public final class StartupUtil {
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static Logger setupLogger() {
     try {
-      Logger.setFactory(new LoggerFactory());
+      Logger.setFactory(new JulLoggerFactory());
     }
     catch (Exception e) {
       //noinspection CallToPrintStackTrace
