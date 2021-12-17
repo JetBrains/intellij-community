@@ -890,7 +890,6 @@
 
     <group id="NavBarVcsGroup"/>
     <group id="SegmentedVcsActionsBarGroup"/>
-
     <group id="EditorPopupMenu">
       <reference ref="$Cut"/>
       <reference ref="$Copy"/>
