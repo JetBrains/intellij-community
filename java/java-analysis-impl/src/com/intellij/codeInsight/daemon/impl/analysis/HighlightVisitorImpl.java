@@ -1441,6 +1441,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
         catch (IndexNotReadyException ignored) { }
       }
+      if (!myHolder.hasErrorResults()) {
+        myHolder.add(HighlightUtil.checkVarTypeSelfReferencing((PsiVariable)resolved, expression));
+      }
     }
 
     PsiElement parent = expression.getParent();

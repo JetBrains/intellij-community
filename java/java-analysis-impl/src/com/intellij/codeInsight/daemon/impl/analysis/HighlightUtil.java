@@ -51,8 +51,6 @@ import com.intellij.psi.scope.PatternResolveState;
 import com.intellij.psi.scope.processor.VariablesNotProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
@@ -454,6 +452,19 @@ public final class HighlightUtil {
     return null;
   }
 
+  @Nullable
+  static HighlightInfo checkVarTypeSelfReferencing(PsiVariable resolved, PsiReferenceExpression ref) {
+    if (PsiTreeUtil.isAncestor(resolved.getInitializer(), ref, false)) {
+      PsiTypeElement typeElement = resolved.getTypeElement();
+      if (typeElement != null && typeElement.isInferredType()) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+          .descriptionAndTooltip(JavaErrorBundle.message("lvti.selfReferenced", resolved.getName()))
+          .range(ref).create();
+      }
+    }
+    return null;
+  }
+  
   static HighlightInfo checkVarTypeApplicability(@NotNull PsiVariable variable) {
     PsiTypeElement typeElement = variable.getTypeElement();
     if (typeElement != null && typeElement.isInferredType()) {
@@ -491,21 +502,11 @@ public final class HighlightUtil {
         }
 
         PsiType lType = variable.getType();
-        if (PsiType.NULL.equals(lType)) {
-          boolean isSelfReferencing = ReferencesSearch.search(variable, new LocalSearchScope(initializer)).findFirst() != null;
-          String key = null;
-          if (isSelfReferencing) {
-            key = "lvti.selfReferenced";
-          }
-          else if (SyntaxTraverser.psiTraverser(initializer)
-                     .filter(PsiLiteralExpression.class)
-                     .find(l -> PsiType.NULL.equals(l.getType())) != null) {
-            key = "lvti.null";
-          }
-          if (key != null) {
-            String message = JavaErrorBundle.message(key);
-            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
-          }
+        if (PsiType.NULL.equals(lType) && SyntaxTraverser.psiTraverser(initializer)
+                                            .filter(PsiLiteralExpression.class)
+                                            .find(l -> PsiType.NULL.equals(l.getType())) != null) {
+          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(JavaErrorBundle.message("lvti.null"))
+            .range(typeElement).create();
         }
         if (PsiType.VOID.equals(lType)) {
           String message = JavaErrorBundle.message("lvti.void");
