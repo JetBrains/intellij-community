@@ -1055,10 +1055,10 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static class DropDownAction extends LinkLabel<Void> {
+  public static class DropDownAction extends LinkLabel<Void> {
     Icon myIcon = AllIcons.Ide.Notification.DropTriangle;
 
-    DropDownAction(@NlsContexts.LinkLabel String text, @Nullable LinkListener<Void> listener) {
+    public DropDownAction(@NlsContexts.LinkLabel String text, @Nullable LinkListener<Void> listener) {
       super(text, null, listener);
 
       setHorizontalTextPosition(SwingConstants.LEADING);
@@ -1083,7 +1083,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     }
   }
 
-  private static void showPopup(@NotNull LinkLabel<?> link, @NotNull DefaultActionGroup group) {
+  public static void showPopup(@NotNull LinkLabel<?> link, @NotNull DefaultActionGroup group) {
     if (link.isShowing()) {
       ActionPopupMenu menu = ActionManager.getInstance().createActionPopupMenu(ActionPlaces.UNKNOWN, group);
       menu.getComponent().show(link, JBUIScale.scale(-10), link.getHeight() + JBUIScale.scale(2));

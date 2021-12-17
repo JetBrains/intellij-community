@@ -45,6 +45,7 @@ import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.content.ContentFactory
@@ -54,10 +55,7 @@ import com.intellij.util.ModalityUiUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.Component
-import java.awt.Graphics
+import java.awt.*
 import java.awt.event.*
 import java.util.*
 import java.util.function.Consumer
@@ -732,7 +730,8 @@ private class NotificationComponent(val notification: Notification,
     val actionsSize = actions.size
 
     if (actionsSize > 0) {
-      val actionPanel = JPanel(HorizontalLayout(JBUIScale.scale(16)))
+      val layout = HorizontalLayout(JBUIScale.scale(16))
+      val actionPanel = JPanel(if (!notification.isSuggestionType && actions.size > 1) DropDownActionLayout(layout) else layout)
       actionPanel.isOpaque = false
 
       if (notification.isSuggestionType) {
@@ -753,9 +752,18 @@ private class NotificationComponent(val notification: Notification,
         }
       }
       else {
+        if (actionsSize > 1 && notification.collapseDirection == Notification.CollapseActionsDirection.KEEP_RIGHTMOST) {
+          actionPanel.add(MyDropDownAction(notification))
+        }
+
         for (action in actions) {
           @Suppress("DialogTitleCapitalization")
-          actionPanel.add(LinkLabel<Any>(action.templateText, action.templatePresentation.icon) { link, _ -> runAction(action, link) })
+          actionPanel.add(
+            LinkLabel(action.templateText, action.templatePresentation.icon, { link, _action -> runAction(_action, link) }, action))
+        }
+
+        if (actionsSize > 1 && notification.collapseDirection == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
+          actionPanel.add(MyDropDownAction(notification))
         }
       }
       centerPanel.add(actionPanel)
@@ -959,6 +967,85 @@ private class NotificationComponent(val notification: Notification,
       val cornerRadius = NotificationBalloonRoundShadowBorderProvider.CORNER_RADIUS.get()
       g.fillRoundRect(0, 0, width, height, cornerRadius, cornerRadius)
       config.restore()
+    }
+  }
+}
+
+private class MyDropDownAction(notification: Notification) : NotificationsManagerImpl.DropDownAction(null, null) {
+  var collapseActionsDirection: Notification.CollapseActionsDirection = notification.collapseDirection
+
+  init {
+    setListener(LinkListener { link, _ ->
+      val group = DefaultActionGroup()
+      val layout = link.parent.layout as DropDownActionLayout
+
+      for (action in layout.actions) {
+        if (!action.isVisible) {
+          group.add(action.linkData)
+        }
+      }
+
+      NotificationsManagerImpl.showPopup(link, group)
+    }, null)
+
+    text = notification.dropDownText
+    isVisible = false
+
+    Notification.setDataProvider(notification, this)
+  }
+}
+
+private class DropDownActionLayout(layout: LayoutManager2) : FinalLayoutWrapper(layout) {
+  val actions = ArrayList<LinkLabel<AnAction>>()
+  private lateinit var myDropDownAction: MyDropDownAction
+
+  override fun addLayoutComponent(comp: Component, constraints: Any?) {
+    super.addLayoutComponent(comp, constraints)
+    add(comp)
+  }
+
+  override fun addLayoutComponent(name: String?, comp: Component) {
+    super.addLayoutComponent(name, comp)
+    add(comp)
+  }
+
+  private fun add(component: Component) {
+    if (component is MyDropDownAction) {
+      myDropDownAction = component
+    }
+    else {
+      @Suppress("UNCHECKED_CAST")
+      actions.add(component as LinkLabel<AnAction>)
+    }
+  }
+
+  override fun layoutContainer(parent: Container) {
+    val width = parent.width
+
+    myDropDownAction.isVisible = false
+    for (action in actions) {
+      action.isVisible = true
+    }
+    layout.layoutContainer(parent)
+
+    val keepRightmost = myDropDownAction.collapseActionsDirection == Notification.CollapseActionsDirection.KEEP_RIGHTMOST
+    val collapseStart = if (keepRightmost) 0 else actions.size - 1
+    val collapseDelta = if (keepRightmost) 1 else -1
+    var collapseIndex = collapseStart
+
+    if (parent.preferredSize.width > width) {
+      myDropDownAction.isVisible = true
+      actions[collapseIndex].isVisible = false
+      collapseIndex += collapseDelta
+      actions[collapseIndex].isVisible = false
+      collapseIndex += collapseDelta
+      layout.layoutContainer(parent)
+
+      while (parent.preferredSize.width > width && collapseIndex >= 0 && collapseIndex < actions.size) {
+        actions.get(collapseIndex).isVisible = false
+        collapseIndex += collapseDelta
+        layout.layoutContainer(parent)
+      }
     }
   }
 }
