@@ -522,6 +522,8 @@ private object KotlinResolveDataProvider {
             }
 
             return AnalysisResult.success(trace.bindingContext, moduleDescriptor)
+        } catch (e: InvalidModuleException) {
+            throw ProcessCanceledException(e)
         } catch (e: ProcessCanceledException) {
             throw e
         } catch (e: IndexNotReadyException) {
