@@ -58,8 +58,7 @@ public final class ExperimentalUI {
   }
 
   public static boolean isNewToolbar() {
-    //return isEnabled("ide.experimental.ui.main.toolbar");
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.experimental.ui.main.toolbar");
+    return isEnabled("ide.experimental.ui.main.toolbar");
   }
 
   private static boolean isEnabled(@NonNls @NotNull String key) {
