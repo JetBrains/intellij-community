@@ -13,26 +13,36 @@ import com.intellij.util.PairConsumer
 import com.intellij.util.io.systemIndependentPath
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
+import java.io.File
 import kotlin.io.path.extension
-import kotlin.io.path.isRegularFile
 
 class KotlinPluginCommitMessageHandlerFactory : CheckinHandlerFactory() {
-
-  companion object {
-    private const val kotlinPluginPath = "plugins/kotlin/"
-    private val pathsToIgnore = setOf("/test/", "/testData/")
-    private val fileExtensionsNotToTrack = setOf("iml", "md")
-    private val commitMessageRegex = Regex(".*KTIJ-\\d+.*", RegexOption.DOT_MATCHES_ALL /* line breaks matter */)
-  }
 
   override fun createHandler(panel: CheckinProjectPanel, commitContext: CommitContext): CheckinHandler =
     YouTrackIssueCommitMessageHandler(panel)
 
 
-  private class YouTrackIssueCommitMessageHandler(private val checkinPanel: CheckinProjectPanel) : CheckinHandler() {
+  internal class YouTrackIssueCommitMessageHandler(private val checkinPanel: CheckinProjectPanel) : CheckinHandler() {
 
     companion object {
-      const val HANDLER_ENABLED_KEY = "kotlin.commit.message.validation.enabled"
+      private const val HANDLER_ENABLED_KEY = "kotlin.commit.message.validation.enabled"
+      private const val KOTLIN_PLUGIN_PATH = "plugins/kotlin/"
+      private val pathsToIgnore = setOf("/test/", "/testData/", "/fleet/plugins/kotlin/")
+      private val fileExtensionsNotToTrack = setOf("iml", "md")
+      private val commitMessageRegex = Regex(".*KTIJ-\\d+.*", RegexOption.DOT_MATCHES_ALL /* line breaks matter */)
+
+      internal fun selectedFilesBelongToKotlinIdePlugin(files: Collection<File>): Boolean {
+        return files.asSequence()
+          .map { file -> file.toPath() }
+          .any { path ->
+            val siPath = path.systemIndependentPath
+            path.extension !in fileExtensionsNotToTrack
+            && siPath.contains(KOTLIN_PLUGIN_PATH)
+            && pathsToIgnore.none { siPath.contains(it) }
+          }
+      }
+
+      internal fun commitMessageIsCorrect(message: String): Boolean = message.matches(commitMessageRegex)
     }
 
     private val project = checkinPanel.project
@@ -52,7 +62,7 @@ class KotlinPluginCommitMessageHandlerFactory : CheckinHandlerFactory() {
 
       if (!messageHandlerEnabled
         || !commitMessageShouldBeChecked()
-        || checkinPanel.commitMessage.matches(commitMessageRegex)
+        || commitMessageIsCorrect(checkinPanel.commitMessage)
       ) {
         return ReturnResult.COMMIT // as is
       }
@@ -73,18 +83,6 @@ class KotlinPluginCommitMessageHandlerFactory : CheckinHandlerFactory() {
     }
 
     private fun commitMessageShouldBeChecked(): Boolean =
-      PsiUtil.isIdeaProject(project) && selectedFilesBelongToKotlinIdePlugin()
-
-    private fun selectedFilesBelongToKotlinIdePlugin(): Boolean {
-      return checkinPanel.files.asSequence()
-        .map { file -> file.toPath() }
-        .any { path ->
-          val siPath = path.systemIndependentPath
-          path.isRegularFile()
-            && path.extension !in fileExtensionsNotToTrack
-            && siPath.contains(kotlinPluginPath)
-            && pathsToIgnore.none { siPath.contains(it) }
-        }
-    }
+      PsiUtil.isIdeaProject(project) && selectedFilesBelongToKotlinIdePlugin(checkinPanel.files)
   }
 }
