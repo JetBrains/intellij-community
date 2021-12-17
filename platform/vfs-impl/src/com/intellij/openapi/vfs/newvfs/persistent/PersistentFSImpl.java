@@ -169,11 +169,11 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
   }
 
   // return actual children
-  private static @NotNull List<? extends ChildInfo> persistAllChildren(@NotNull VirtualFile file, int id) {
-    final NewVirtualFileSystem fs = replaceWithNativeFS(getDelegate(file));
+  private static @NotNull List<? extends ChildInfo> persistAllChildren(@NotNull VirtualFile dir, int id) {
+    final NewVirtualFileSystem fs = replaceWithNativeFS(getDelegate(dir));
     Map<String, ChildInfo> justCreated = new HashMap<>();
-    String[] delegateNames = VfsUtil.filterNames(fs.list(file));
-    ListResult saved = FSRecords.update(file, id, current -> {
+    String[] delegateNames = VfsUtil.filterNames(fs.list(dir));
+    ListResult saved = FSRecords.update(dir, id, current -> {
       List<? extends ChildInfo> currentChildren = current.children;
       if (delegateNames.length == 0 && !currentChildren.isEmpty()) {
         return current;
@@ -181,28 +181,29 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
       // preserve current children which match delegateNames (to have stable id)
       // (on case-insensitive system replace those from current with case-changes ones from delegateNames preserving the id)
       // add those from delegateNames which are absent from current
-      Set<String> toAddNames = CollectionFactory.createFilePathSet(delegateNames, file.isCaseSensitive());
+      boolean caseSensitive = dir.isCaseSensitive();
+      Set<String> toAddNames = CollectionFactory.createFilePathSet(delegateNames, caseSensitive);
       for (ChildInfo currentChild : currentChildren) {
         toAddNames.remove(currentChild.getName().toString());
       }
 
       List<ChildInfo> toAddChildren = new ArrayList<>(toAddNames.size());
       if (fs instanceof BatchingFileSystem) {
-        Map<String, FileAttributes> map = ((BatchingFileSystem)fs).listWithAttributes(file, toAddNames);
+        Map<String, FileAttributes> map = ((BatchingFileSystem)fs).listWithAttributes(dir, toAddNames);
         for (Map.Entry<String, FileAttributes> entry : map.entrySet()) {
           String newName = entry.getKey();
-          Pair<@NotNull FileAttributes, String> childData = getChildData(fs, file, newName, entry.getValue(), null);
+          Pair<@NotNull FileAttributes, String> childData = getChildData(fs, dir, newName, entry.getValue(), null);
           if (childData != null) {
-            ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(file, id, name, childData, fs, null));
+            ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(dir, id, name, childData, fs, null));
             toAddChildren.add(newChild);
           }
         }
       }
       else {
         for (String newName : toAddNames) {
-          Pair<@NotNull FileAttributes, String> childData = getChildData(fs, file, newName, null, null);
+          Pair<@NotNull FileAttributes, String> childData = getChildData(fs, dir, newName, null, null);
           if (childData != null) {
-            ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(file, id, name, childData, fs, null));
+            ChildInfo newChild = justCreated.computeIfAbsent(newName, name -> makeChildRecord(dir, id, name, childData, fs, null));
             toAddChildren.add(newChild);
           }
         }
@@ -210,7 +211,7 @@ public final class PersistentFSImpl extends PersistentFS implements Disposable {
 
       // some clients (e.g. RefreshWorker) expect subsequent list() calls to return equal arrays
       toAddChildren.sort(ChildInfo.BY_ID);
-      return current.merge(toAddChildren, file.isCaseSensitive());
+      return current.merge(toAddChildren, caseSensitive);
     });
 
     setChildrenCached(id);
