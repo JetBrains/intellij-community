@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.KonanArtifactModelImpl
 import org.jetbrains.kotlin.idea.gradleTooling.KonanRunConfigurationModelImpl
 import org.jetbrains.kotlin.idea.gradleTooling.MultiplatformModelImportingContext
 import org.jetbrains.kotlin.idea.gradleTooling.get
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KonanArtifactReflection
 import org.jetbrains.kotlin.idea.projectModel.KonanArtifactModel
 import org.jetbrains.kotlin.idea.projectModel.KonanRunConfigurationModel
 import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
@@ -15,42 +16,18 @@ import java.io.File
 
 object KonanArtifactModelBuilder : KotlinMultiplatformComponentBuilder<KonanArtifactModel> {
     override fun buildComponent(origin: Any, importingContext: MultiplatformModelImportingContext): KonanArtifactModel? {
-        val executableName = origin["getBaseName"] as? String ?: ""
-        val linkTask = origin["getLinkTask"] as? Task ?: return null
-        val runConfiguration = KonanRunConfigurationModelImpl(origin["getRunTask"] as? Exec)
+        val konanArtifactReflection = KonanArtifactReflection(origin)
+        val executableName = konanArtifactReflection.executableName ?: ""
+        val outputKind = konanArtifactReflection.outputKindType ?: return null
+        val konanTargetName = konanArtifactReflection.konanTargetName ?: error("No arch target found")
+        val outputFile = konanArtifactReflection.outputFile ?: return null
+        val compilationTargetName = konanArtifactReflection.compilationTargetName ?: return null
+        val isTests = konanArtifactReflection.isTests ?: return null
+        val freeCompilerArgs = konanArtifactReflection.freeCompilerArgs.orEmpty().toTypedArray()
+        val linkTaskPath = konanArtifactReflection.linkTaskPath ?: return null
+        val runConfiguration = KonanRunConfigurationModelImpl(konanArtifactReflection.runTask)
         val exportDependencies = KonanArtifactDependenciesBuilder.buildComponent(origin, importingContext)
-        return buildArtifact(
-            executableName,
-            linkTask,
-            runConfiguration,
-            exportDependencies.map { importingContext.dependencyMapper.getId(it) }.distinct().toTypedArray()
-        )
-    }
-
-    private object KonanArtifactDependenciesBuilder : KotlinMultiplatformDependenciesBuilder() {
-        override val configurationNameAccessor: String = "getExportConfigurationName"
-        override val scope: String = "COMPILE"
-    }
-
-    private fun buildArtifact(
-        executableName: String,
-        linkTask: Task,
-        runConfiguration: KonanRunConfigurationModel,
-        exportDependencies: Array<KotlinDependencyId>
-    ): KonanArtifactModel? {
-        val outputKind = linkTask["getOutputKind"]["name"] as? String ?: return null
-        val konanTargetName = linkTask["getTarget"] as? String ?: error("No arch target found")
-        val outputFile = (linkTask["getOutputFile"] as? Provider<*>)?.orNull as? File ?: return null
-        val compilation = if (linkTask["getCompilation"] is Provider<*>)
-            (linkTask["getCompilation"] as Provider<*>).get()
-        else
-            linkTask["getCompilation"]
-        val compilationTarget = compilation["getTarget"]
-        val compilationTargetName = compilationTarget["getName"] as? String ?: return null
-        val isTests = linkTask["getProcessTests"] as? Boolean ?: return null
-
-        @Suppress("UNCHECKED_CAST")
-        val freeCompilerArgs = (linkTask["getKotlinOptions"]["getFreeCompilerArgs"] as? List<String>).orEmpty().toTypedArray()
+            .map { importingContext.dependencyMapper.getId(it) }.distinct().toTypedArray()
 
         return KonanArtifactModelImpl(
             compilationTargetName,
@@ -58,11 +35,16 @@ object KonanArtifactModelBuilder : KotlinMultiplatformComponentBuilder<KonanArti
             outputKind,
             konanTargetName,
             outputFile,
-            linkTask.path,
+            linkTaskPath,
             runConfiguration,
             isTests,
             freeCompilerArgs,
             exportDependencies
         )
+    }
+
+    private object KonanArtifactDependenciesBuilder : KotlinMultiplatformDependenciesBuilder() {
+        override val configurationNameAccessor: String = "getExportConfigurationName"
+        override val scope: String = "COMPILE"
     }
 }

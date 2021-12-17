@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModel.Companion.NO
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CACHE_MAPPER_BRANCHING
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinSourceSetProtoBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.builders.KotlinTargetBuilder
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinTargetReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_MAIN_SOURCE_SET_NAME
 import org.jetbrains.kotlin.idea.projectModel.KotlinSourceSet.Companion.COMMON_TEST_SOURCE_SET_NAME
@@ -141,7 +142,9 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
         importingContext: MultiplatformModelImportingContext,
         projectTargets: Collection<Named>
     ): Collection<KotlinTarget> {
-        return projectTargets.mapNotNull { KotlinTargetBuilder.buildComponent(it, importingContext) }
+        return projectTargets.mapNotNull {
+            KotlinTargetBuilder.buildComponent(it, importingContext)
+        }
     }
 
     private fun computeSourceSetsDeferredInfo(importingContext: MultiplatformModelImportingContext) {

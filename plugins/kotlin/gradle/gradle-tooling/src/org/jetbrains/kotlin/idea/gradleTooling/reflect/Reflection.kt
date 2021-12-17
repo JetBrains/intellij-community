@@ -76,7 +76,7 @@ internal inline fun <reified T> Any.callReflective(
     val parameterClasses = parameters.map { parameter ->
         /* Ensure using the object representation for primitive types, when marked nullable */
         if (parameter.typeToken.isMarkedNullable) parameter.typeToken.kotlinClass.javaObjectType
-        else parameter.typeToken.kotlinClass.javaPrimitiveType?: parameter.typeToken.kotlinClass.java
+        else parameter.typeToken.kotlinClass.javaPrimitiveType ?: parameter.typeToken.kotlinClass.java
     }
 
     val method = try {
