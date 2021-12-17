@@ -376,7 +376,7 @@ class MavenDependencyModificator(private val myProject: Project) : ExternalDepen
   }
 
   //for faster testing
-  internal fun declaredDependencies(file: VirtualFile): List<DeclaredDependency>? {
+  fun declaredDependencies(file: VirtualFile): List<DeclaredDependency>? {
     return ReadAction.compute<List<DeclaredDependency>?, Throwable> {
       val model = MavenDomUtil.getMavenDomProjectModel(myProject, file) ?: return@compute null
       model.dependencies.dependencies.map { mavenDomDependency ->

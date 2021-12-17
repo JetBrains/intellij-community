@@ -16,7 +16,7 @@
 package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.roots.ProjectRootManager
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 

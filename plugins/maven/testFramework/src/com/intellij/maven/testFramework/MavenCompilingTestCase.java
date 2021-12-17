@@ -1,5 +1,5 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.compiler;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.maven.testFramework;
 
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.compiler.impl.ModuleCompileScope;
@@ -20,7 +20,6 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.io.TestFileSystemBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
 
 import java.io.File;
 import java.io.IOException;

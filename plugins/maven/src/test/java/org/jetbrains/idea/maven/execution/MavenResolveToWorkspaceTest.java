@@ -19,7 +19,7 @@ import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.artifactResolver.common.MavenModuleMap;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.junit.Test;

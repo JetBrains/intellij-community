@@ -1,9 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.compatibility;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.maven.testFramework;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.util.io.HttpRequests;
 import org.apache.maven.wrapper.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -11,7 +10,6 @@ import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent;
 import org.jetbrains.idea.maven.server.MavenServerManager;
 
 import java.io.File;
-import java.net.MalformedURLException;
 import java.net.URI;
 import java.util.List;
 import java.util.stream.Collectors;

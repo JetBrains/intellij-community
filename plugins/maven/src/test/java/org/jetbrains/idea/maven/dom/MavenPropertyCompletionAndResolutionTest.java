@@ -3,6 +3,7 @@ package org.jetbrains.idea.maven.dom;
 
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.lang.properties.IProperty;
+import com.intellij.maven.testFramework.MavenDomTestCase;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;

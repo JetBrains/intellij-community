@@ -10,8 +10,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import junit.framework.TestCase
-import org.jetbrains.idea.maven.MavenImportingTestCase
-import org.jetbrains.idea.maven.importing.xml.MavenBuildFileBuilder
+import com.intellij.maven.testFramework.MavenImportingTestCase
+import com.intellij.maven.testFramework.xml.MavenBuildFileBuilder
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.project.actions.AddFileAsMavenProjectAction

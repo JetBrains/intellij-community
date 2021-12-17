@@ -6,10 +6,8 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestUtil
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
-import org.jetbrains.idea.maven.project.importing.MavenImportFinishedContext
-import org.jetbrains.idea.maven.project.importing.MavenImportingManager
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager.Companion.getInstance
 import org.jetbrains.idea.maven.server.MavenServerManager
 import org.jetbrains.idea.maven.wizards.MavenOpenProjectProvider

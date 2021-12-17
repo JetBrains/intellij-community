@@ -15,7 +15,7 @@
  */
 package org.jetbrains.idea.maven.compiler;
 
-import com.intellij.compiler.server.BuildManager;
+import com.intellij.maven.testFramework.MavenCompilingTestCase;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;

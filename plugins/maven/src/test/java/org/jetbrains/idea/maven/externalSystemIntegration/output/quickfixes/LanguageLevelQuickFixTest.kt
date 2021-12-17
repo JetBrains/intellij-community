@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes
 
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.RunAll
-import org.jetbrains.idea.maven.dom.MavenDomTestCase
+import com.intellij.maven.testFramework.MavenDomTestCase
 import org.jetbrains.idea.maven.model.MavenId
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test

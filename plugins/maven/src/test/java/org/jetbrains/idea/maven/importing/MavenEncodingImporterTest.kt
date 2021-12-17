@@ -3,8 +3,7 @@ package org.jetbrains.idea.maven.importing
 
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager
 import junit.framework.TestCase
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase
-import org.jetbrains.idea.maven.project.MavenProject
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase
 import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.junit.Test
 import java.nio.charset.StandardCharsets

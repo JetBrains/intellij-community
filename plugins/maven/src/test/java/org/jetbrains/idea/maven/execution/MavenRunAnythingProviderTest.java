@@ -10,7 +10,7 @@ import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.junit.Test;
 

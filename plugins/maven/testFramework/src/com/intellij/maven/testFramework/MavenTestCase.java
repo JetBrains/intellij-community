@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.maven.testFramework;
 
 import com.intellij.execution.wsl.WSLDistribution;
 import com.intellij.execution.wsl.WslDistributionManager;
@@ -31,6 +31,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.CollectionFactory;
 import com.intellij.util.containers.ContainerUtil;
+import junit.framework.TestCase;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -51,8 +52,6 @@ import java.nio.file.Paths;
 import java.util.List;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-
-import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class MavenTestCase extends UsefulTestCase {
   protected static final String MAVEN_COMPILER_PROPERTIES = "<properties>\n" +
@@ -558,7 +557,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected static <T> void assertUnorderedElementsAreEqual(@NotNull Collection<T> actual, @NotNull Collection<T> expected) {
-    assertThat(actual).hasSameElementsAs(expected);
+    assertSameElements(actual, expected);
   }
 
   protected static void assertUnorderedPathsAreEqual(Collection<String> actual, Collection<String> expected) {

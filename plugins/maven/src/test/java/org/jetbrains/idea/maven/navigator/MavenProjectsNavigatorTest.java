@@ -16,8 +16,7 @@
 package org.jetbrains.idea.maven.navigator;
 
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
-import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.jetbrains.idea.maven.project.importing.FilesList;
 import org.jetbrains.idea.maven.project.importing.MavenImportFlow;
 import org.jetbrains.idea.maven.project.importing.MavenInitialImportContext;

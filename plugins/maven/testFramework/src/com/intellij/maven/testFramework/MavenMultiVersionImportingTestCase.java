@@ -1,10 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.maven.testFramework;
 
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.compatibility.MavenWrapperTestFixture;
 import org.junit.After;
 import org.junit.Assume;
 import org.junit.Before;

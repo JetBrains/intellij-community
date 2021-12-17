@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.maven.dom;
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.maven.testFramework;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.TargetElementUtil;
@@ -40,7 +40,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import org.jetbrains.idea.maven.dom.MavenDomElement;
+import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.converters.MavenDependencyCompletionUtil;
 import org.jetbrains.idea.maven.dom.inspections.MavenModelInspection;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;

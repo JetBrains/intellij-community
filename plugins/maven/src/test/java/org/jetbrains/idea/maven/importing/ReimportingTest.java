@@ -17,7 +17,7 @@ import com.intellij.util.io.DirectoryContentSpecKt;
 import kotlin.Unit;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.maven.MavenMultiVersionImportingTestCase;
+import com.intellij.maven.testFramework.MavenMultiVersionImportingTestCase;
 import org.junit.Test;
 
 import java.io.File;

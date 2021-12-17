@@ -12,7 +12,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.project.importing.MavenImportingManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 
-internal class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
+class MavenOpenProjectProvider : AbstractOpenProjectProvider() {
   override val systemId: ProjectSystemId = MavenUtil.SYSTEM_ID
 
   val builder: MavenProjectBuilder
