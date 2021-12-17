@@ -7956,6 +7956,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantCompanionReference/javaGetter2.kt");
         }
 
+        @TestMetadata("javaGetter3.kt")
+        public void testJavaGetter3() throws Exception {
+            runTest("testData/inspectionsLocal/redundantCompanionReference/javaGetter3.kt");
+        }
+
         @TestMetadata("javaSetter.kt")
         public void testJavaSetter() throws Exception {
             runTest("testData/inspectionsLocal/redundantCompanionReference/javaSetter.kt");
