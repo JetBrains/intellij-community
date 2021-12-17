@@ -137,3 +137,7 @@ fun loggedError(canThrow: Semaphore): Throwable {
   }
   return throwable
 }
+
+internal fun withIndicator(indicator: ProgressIndicator, action: () -> Unit) {
+  ProgressManager.getInstance().runProcess(action, indicator)
+}
