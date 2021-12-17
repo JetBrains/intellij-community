@@ -33,7 +33,7 @@ fun <T> Row.buttonSelector(options: Collection<T>, property: GraphProperty<T>, r
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun <T> Row.segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): SegmentedButtonToolbar {
   val actionGroup = DefaultActionGroup(options.map { SegmentedButtonAction(it, property, renderer(it)) })
-  val toolbar = SegmentedButtonToolbar(actionGroup, true, SpacingConfiguration.createIntelliJSpacingConfiguration())
+  val toolbar = SegmentedButtonToolbar(actionGroup, SpacingConfiguration.createIntelliJSpacingConfiguration())
   toolbar.targetComponent = null // any data context is supported, suppress warning
   component(toolbar)
   return toolbar

@@ -2,8 +2,6 @@
 package com.intellij.internal.ui.uiDslTestAction
 
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
@@ -53,7 +51,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     result.addTab("Comments", JScrollPane(createCommentsPanel()))
     result.addTab("Text MaxLine", createTextMaxLinePanel())
     result.addTab("Groups", JScrollPane(GroupsPanel().panel))
-    result.addTab("Segmented Button", createSegmentedButton())
+    result.addTab("Segmented Button", SegmentedButtonPanel().panel)
     result.addTab("Visible/Enabled", createVisibleEnabled())
     result.addTab("Cells With Sub-Panels", createCellsWithPanels())
     result.addTab("Placeholder", PlaceholderPanel(myDisposable).panel)
@@ -92,38 +90,6 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     val disposable = Disposer.newDisposable()
     result.registerValidators(disposable)
     Disposer.register(myDisposable, disposable)
-
-    return result
-  }
-
-  fun createSegmentedButton(): JPanel {
-    val buttons = listOf("Button 1", "Button 2", "Button Last")
-    val propertyGraph = PropertyGraph()
-    val property = propertyGraph.graphProperty { "" }
-    val rows = mutableMapOf<String, Row>()
-    val result = panel {
-      row("Segmented Button") {
-        segmentedButton(buttons, property, { s -> s })
-      }
-
-      rows[buttons[0]] = row(buttons[0]) {
-        textField()
-      }
-      rows[buttons[1]] = row(buttons[1]) {
-        checkBox("checkBox")
-      }
-      rows[buttons[2]] = row(buttons[2]) {
-        button("button") {}
-      }
-    }
-
-    property.afterChange {
-      for ((key, row) in rows) {
-        row.visible(key == it)
-      }
-    }
-
-    property.set(buttons[1])
 
     return result
   }
