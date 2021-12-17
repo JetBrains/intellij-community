@@ -14,11 +14,11 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
 import org.jetbrains.kotlin.idea.caches.project.ScriptModuleInfo
 import org.jetbrains.kotlin.idea.caches.project.getNullableModuleInfo
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.formatter.kotlinCustomSettings
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.references.*
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.idea.util.getResolutionScope
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.name.FqName
@@ -153,7 +153,7 @@ class KotlinImportOptimizer : ImportOptimizer {
             if (element is KtLabelReferenceExpression) return
 
             val references = element.references.ifEmpty { return }
-            val bindingContext = element.analyze(BodyResolveMode.PARTIAL)
+            val bindingContext = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
             val isResolved = hasResolvedDescriptor(element, bindingContext)
 
             for (reference in references) {

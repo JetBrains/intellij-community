@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.platform.tooling
 import org.jetbrains.kotlin.idea.project.platform
-import org.jetbrains.kotlin.idea.roots.isUnderKotlinSourceRootTypes
+import org.jetbrains.kotlin.idea.util.isUnderKotlinSourceRootTypes
 import org.jetbrains.kotlin.idea.util.projectStructure.module
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
@@ -81,7 +81,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
 
         if (!targetPlatform.providesRunnableTests()) return null
 
-        if (!isUnderKotlinSourceRootTypes(declaration.containingFile)) return null
+        if (!declaration.isUnderKotlinSourceRootTypes()) return null
 
         val icon = targetPlatform.idePlatformKind.tooling.getTestIcon(declaration) {
             declaration.resolveToDescriptorIfAny()

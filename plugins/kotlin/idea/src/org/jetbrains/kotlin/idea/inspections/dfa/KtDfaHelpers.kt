@@ -24,6 +24,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.project.builtIns
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
@@ -199,7 +200,7 @@ internal fun KtExpression.getKotlinType(): KotlinType? {
             }
         }
     }
-    return analyze(BodyResolveMode.PARTIAL).getType(this)
+    return safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL).getType(this)
 }
 
 /**
