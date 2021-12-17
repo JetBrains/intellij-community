@@ -18,6 +18,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.touchbar.Touchbar;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
@@ -36,6 +37,7 @@ import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
 import java.util.List;
 import java.util.*;
+import java.util.function.Supplier;
 
 public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(AbstractWizard.class);
@@ -117,7 +119,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     JPanel panel = new JPanel(new BorderLayout());
     int inset = isNewWizard() ? 15 : 0;
     panel.setBorder(isNewWizard()
-                      ? BorderFactory.createEmptyBorder(4, inset, 4, inset)
+                    ? BorderFactory.createEmptyBorder(4, inset, 4, inset)
                     : BorderFactory.createEmptyBorder(8, inset, 0, inset));
 
     JPanel buttonPanel = new JPanel();
@@ -493,22 +495,28 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
 
     updateButtons();
 
-    JComponent component = mySteps.get(getCurrentStep()).getPreferredFocusedComponent();
-    requestFocusTo(component != null ? component : myNextButton);
+    requestFocusToPreferredFocusedComponent();
   }
 
-  private static void requestFocusTo(final JComponent component) {
-    UiNotifyConnector.doWhenFirstShown(component, () -> {
-      final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(component);
-      focusManager.requestFocus(component, false);
-    });
-  }
-
-  @Nullable
   @Override
-  public JComponent getPreferredFocusedComponent() {
-    JComponent component = getCurrentStepObject().getPreferredFocusedComponent();
-    return component == null ? super.getPreferredFocusedComponent() : component;
+  public @Nullable JComponent getPreferredFocusedComponent() {
+    var step = getCurrentStepObject();
+    var component = ObjectUtils.doIfNotNull(step, it -> it.getPreferredFocusedComponent());
+    return ObjectUtils.chooseNotNull(component, myNextButton);
+  }
+
+  public void requestFocusToPreferredFocusedComponent() {
+    requestFocusTo(this::getPreferredFocusedComponent);
+  }
+
+  public void requestFocusTo(@NotNull Supplier<? extends @Nullable JComponent> supplier) {
+    UiNotifyConnector.doWhenFirstShown(myContentPanel, () -> {
+      var component = supplier.get();
+      if (component != null) {
+        var focusManager = IdeFocusManager.findInstanceByComponent(component);
+        focusManager.requestFocus(component, false);
+      }
+    });
   }
 
   protected boolean canGoNext() {

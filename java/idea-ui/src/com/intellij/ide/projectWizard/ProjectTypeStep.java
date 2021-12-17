@@ -35,7 +35,6 @@ import com.intellij.openapi.ui.popup.ListItemDescriptorAdapter;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.platform.ProjectTemplate;
 import com.intellij.platform.ProjectTemplateEP;
 import com.intellij.platform.ProjectTemplatesFactory;
@@ -50,6 +49,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
@@ -508,11 +508,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       myCustomSteps.put(card, step);
     }
 
-    var preferredFocusedComponent = step.getPreferredFocusedComponent();
-    if (preferredFocusedComponent != null) {
-      requestFocusTo(preferredFocusedComponent);
-    }
-
     try {
       step._init();
     }
@@ -524,14 +519,10 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     NewProjectWizardCollector.logScreen(myContext, 1);
 
     showCard(card);
-    return true;
-  }
 
-  private static void requestFocusTo(@NotNull JComponent component) {
-    UiNotifyConnector.doWhenFirstShown(component, () -> {
-      final IdeFocusManager focusManager = IdeFocusManager.findInstanceByComponent(component);
-      focusManager.requestFocus(component, false);
-    });
+    myWizard.requestFocusToPreferredFocusedComponent();
+
+    return true;
   }
 
   @TestOnly
@@ -630,7 +621,9 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    return myProjectTypeList;
+    var step = getCustomStep();
+    var component = ObjectUtils.doIfNotNull(step, it -> it.getPreferredFocusedComponent());
+    return ObjectUtils.chooseNotNull(component, myProjectTypeList);
   }
 
   @Override
