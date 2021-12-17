@@ -23,6 +23,7 @@ import org.cef.callback.CefContextMenuParams;
 import org.cef.callback.CefMenuModel;
 import org.cef.callback.CefNativeAdapter;
 import org.cef.handler.*;
+import org.cef.network.CefCookieManager;
 import org.cef.network.CefRequest;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -349,6 +350,10 @@ public abstract class JBCefBrowserBase implements JBCefDisposable {
   @NotNull
   public final JBCefClient getJBCefClient() {
     return myCefClient;
+  }
+
+  public static @NotNull JBCefCookieManager getGlobalJBCefCookieManager() {
+    return new JBCefCookieManager(CefCookieManager.getGlobalManager());
   }
 
   @NotNull
