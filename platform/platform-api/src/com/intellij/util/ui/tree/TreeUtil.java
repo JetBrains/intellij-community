@@ -1372,7 +1372,7 @@ public final class TreeUtil {
    * @param predicate a predicate that validates selected paths
    * @return an array with all selected paths if all of them are valid
    */
-  public static @NotNull TreePath @Nullable [] getSelectedPathsIfAll(@Nullable JTree tree, @NotNull Predicate<? super TreePath> predicate) {
+  public static TreePath @Nullable [] getSelectedPathsIfAll(@Nullable JTree tree, @NotNull Predicate<? super TreePath> predicate) {
     TreePath[] paths = tree == null ? null : tree.getSelectionPaths();
     if (paths == null || paths.length == 0) return null;
     for (TreePath path : paths) if (path == null || !predicate.test(path)) return null;
