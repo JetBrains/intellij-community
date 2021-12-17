@@ -37,7 +37,7 @@ class StartUpPerformanceReporter : StartupActivity, StartUpPerformanceService {
   init {
     val app = ApplicationManager.getApplication()
     if (app.isUnitTestMode || app.isHeadlessEnvironment) {
-      throw ExtensionNotApplicableException.INSTANCE
+      throw ExtensionNotApplicableException.create()
     }
   }
 

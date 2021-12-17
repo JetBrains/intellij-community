@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins
 
 import com.intellij.application.options.RegistryManager
@@ -48,7 +48,7 @@ class DynamicPluginEnabler : SimplePersistentStateComponent<DynamicPluginEnabler
     internal class EnableDisablePluginsActivity : StartupActivity {
 
       private val dynamicPluginEnabler = PluginEnabler.getInstance() as? DynamicPluginEnabler
-                                         ?: throw ExtensionNotApplicableException.INSTANCE
+                                         ?: throw ExtensionNotApplicableException.create()
 
       override fun runActivity(project: Project) {
         val tracker = dynamicPluginEnabler.getPluginTracker(project)

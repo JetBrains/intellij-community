@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.scopeView;
 
 import com.intellij.icons.AllIcons;
@@ -70,7 +70,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   private static Project checkApplicability(@NotNull Project project) {
     // TODO: make a proper extension point here
     if (PlatformUtils.isPyCharmEducational() || PlatformUtils.isRider()) {
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     }
     return project;
   }
