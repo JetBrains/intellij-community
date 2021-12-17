@@ -1,6 +1,7 @@
 // "Initialize with constructor parameter" "false"
 // ACTION: Add getter
 // ACTION: Add initializer
+// ACTION: Apply all 'Add modifier' fixes in file
 // ACTION: Convert member to extension
 // ACTION: Convert property to function
 // ACTION: Introduce backing property
