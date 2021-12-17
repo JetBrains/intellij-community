@@ -67,6 +67,8 @@ class ProjectIndexesWarmup : ApplicationStarter {
       println(e.message)
       exitProcess(2)
     }
+
+    println("IDE Warm-up finished. Exiting the application...")
     ApplicationManager.getApplication().exit(false, true, false)
   }
 
