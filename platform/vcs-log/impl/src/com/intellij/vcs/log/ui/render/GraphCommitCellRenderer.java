@@ -167,7 +167,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     @NotNull private final VcsLogGraphTable myGraphTable;
     @NotNull private final GraphCellPainter myPainter;
     @NotNull private final IssueLinkRenderer myIssueLinkRenderer;
-    @NotNull private final LabelPainter myReferencePainter;
+    @NotNull private final VcsLogLabelPainter myReferencePainter;
 
     @NotNull protected GraphImage myGraphImage = new GraphImage(ImageUtil.createImage(1, 1, BufferedImage.TYPE_INT_ARGB), 0);
     @NotNull private Font myFont;
@@ -181,7 +181,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
       myPainter = painter;
       myGraphTable = table;
 
-      myReferencePainter = new LabelPainter(data, table, iconCache);
+      myReferencePainter = new VcsLogLabelPainter(data, table, iconCache);
       myIssueLinkRenderer = new IssueLinkRenderer(data.getProject(), this);
       setCellState(new BorderlessTableCellState());
 
@@ -326,7 +326,7 @@ public class GraphCommitCellRenderer extends TypeSafeTableCellRenderer<GraphComm
     }
 
     @NotNull
-    public LabelPainter getReferencePainter() {
+    public VcsLogLabelPainter getReferencePainter() {
       return myReferencePainter;
     }
 

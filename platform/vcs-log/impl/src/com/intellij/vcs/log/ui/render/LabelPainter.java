@@ -8,7 +8,6 @@ import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.CurrentBranchComponent;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.scale.JBUIScale;
@@ -18,9 +17,6 @@ import com.intellij.util.ui.JBValue;
 import com.intellij.util.ui.JBValue.JBValueGroup;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.RefGroup;
-import com.intellij.vcs.log.VcsLogRefManager;
-import com.intellij.vcs.log.VcsRef;
-import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.util.VcsLogUiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +43,6 @@ public class LabelPainter {
   private static final String SEPARATOR = "/";
   private static final JBColor TEXT_COLOR = CurrentBranchComponent.TEXT_COLOR;
 
-  @NotNull private final VcsLogData myLogData;
   @NotNull private final JComponent myComponent;
   @NotNull private final LabelIconCache myIconCache;
 
@@ -59,38 +54,24 @@ public class LabelPainter {
   @NotNull private Color myForeground = UIUtil.getTableForeground();
 
   private boolean myCompact;
-  private boolean myShowTagNames;
   private boolean myLeftAligned;
 
-  public LabelPainter(@NotNull VcsLogData data,
-                      @NotNull JComponent component,
+  public LabelPainter(@NotNull JComponent component,
                       @NotNull LabelIconCache iconCache) {
-    myLogData = data;
     myComponent = component;
     myIconCache = iconCache;
   }
 
-  @Nullable
-  public static VcsLogRefManager getRefManager(@NotNull VcsLogData logData, @NotNull Collection<? extends VcsRef> references) {
-    if (references.isEmpty()) return null;
-
-    VirtualFile root = Objects.requireNonNull(ContainerUtil.getFirstItem(references)).getRoot();
-    return logData.getLogProvider(root).getReferenceManager();
-  }
-
-  public void customizePainter(@NotNull Collection<? extends VcsRef> references,
-                               @NotNull Color background,
+  public void customizePainter(@NotNull Color background,
                                @NotNull Color foreground,
                                boolean isSelected,
-                               int availableWidth) {
+                               int availableWidth,
+                               @NotNull List<RefGroup> refGroups) {
     myBackground = background;
     myForeground = isSelected ? foreground : TEXT_COLOR;
 
     FontMetrics metrics = myComponent.getFontMetrics(getReferenceFont());
     myHeight = metrics.getHeight() + TOP_TEXT_PADDING.get() + BOTTOM_TEXT_PADDING.get();
-
-    VcsLogRefManager manager = getRefManager(myLogData, references);
-    List<RefGroup> refGroups = manager == null ? ContainerUtil.emptyList() : manager.groupForTable(references, myCompact, myShowTagNames);
 
     myGreyBackground = calculateGreyBackground(refGroups, background, isSelected, myCompact);
     Pair<List<Pair<String, LabelIcon>>, Integer> presentation =
@@ -355,10 +336,6 @@ public class LabelPainter {
 
   public boolean isCompact() {
     return myCompact;
-  }
-
-  public void setShowTagNames(boolean showTagNames) {
-    myShowTagNames = showTagNames;
   }
 
   public void setCompact(boolean compact) {
