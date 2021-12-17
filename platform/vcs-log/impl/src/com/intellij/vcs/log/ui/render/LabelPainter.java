@@ -46,10 +46,10 @@ public class LabelPainter {
   @NotNull private final JComponent myComponent;
   @NotNull private final LabelIconCache myIconCache;
 
-  @NotNull private List<Pair<String, LabelIcon>> myLabels = new ArrayList<>();
+  @NotNull protected List<Pair<String, LabelIcon>> myLabels = new ArrayList<>();
   private int myHeight = JBUIScale.scale(22);
   private int myWidth = 0;
-  @NotNull private Color myBackground = UIUtil.getTableBackground();
+  @NotNull protected Color myBackground = UIUtil.getTableBackground();
   @Nullable private Color myGreyBackground = null;
   @NotNull private Color myForeground = UIUtil.getTableForeground();
 
