@@ -217,15 +217,6 @@ public class MavenUtil {
     }
   }
 
-  public static void runDumbAware(@NotNull Project project, @NotNull Runnable r) {
-    if (DumbService.isDumbAware(r)) {
-      r.run();
-    }
-    else {
-      DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(r, project));
-    }
-  }
-
   public static void runWhenInitialized(@NotNull Project project, @NotNull Runnable runnable) {
     if (project.isDisposed()) return;
 
@@ -234,12 +225,7 @@ public class MavenUtil {
       return;
     }
 
-    if (!project.isInitialized()) {
-      StartupManager.getInstance(project).runAfterOpened(runnable);
-      return;
-    }
-
-    runDumbAware(project, runnable);
+    StartupManager.getInstance(project).runAfterOpened(runnable);
   }
 
   public static boolean isNoBackgroundMode() {
