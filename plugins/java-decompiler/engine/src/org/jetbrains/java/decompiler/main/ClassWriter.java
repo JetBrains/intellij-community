@@ -510,7 +510,7 @@ public class ClassWriter {
       Set<String> qualifiedNested = node.nested.stream()
         .map(nestedNode -> nestedNode.classStruct.qualifiedName)
         .collect(Collectors.toSet());
-      boolean allSubClassesAreNested = Set.copyOf(permittedSubclassQualifiedNames).equals(qualifiedNested);
+      boolean allSubClassesAreNested = qualifiedNested.containsAll(permittedSubclassQualifiedNames);
       if (!allSubClassesAreNested) { // only generate permits lists for non-nested classes
         buffer.append("permits ");
         for (int i = 0; i < permittedSubclassQualifiedNames.size(); i++) {

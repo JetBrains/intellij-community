@@ -161,6 +161,7 @@ public class SingleClassesTest {
   @Test public void testRootWithClassOuter() { doTest("sealed/RootWithClassOuter",
     "sealed/ClassExtends", "sealed/ClassNonSealed", "sealed/ClassNonSealedExtendsImplements");
   }
+  @Test public void testRootWithClassOuterUnresolvable() { doTest("sealed/RootWithClassOuter"); }
   @Test public void testRootWithInterfaceOuter() { doTest("sealed/RootWithInterfaceOuter",
     "sealed/ClassImplements", "sealed/InterfaceNonSealed", "sealed/ClassNonSealedExtendsImplements");
   }
