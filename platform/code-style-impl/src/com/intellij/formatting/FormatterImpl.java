@@ -746,9 +746,9 @@ public class FormatterImpl extends FormatterEx
   }
 
   @Override
-  @NotNull
+  @Nullable
   public FormattingModelBuilder wrapForVirtualFormatting(@NotNull PsiElement context,
-                                                         @NotNull FormattingModelBuilder originalModel) {
+                                                         @Nullable FormattingModelBuilder originalModel) {
     return VirtualFormattingImplKt.wrapForVirtualFormatting(context, originalModel);
   }
 }

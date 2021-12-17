@@ -67,7 +67,8 @@ fun isEligibleForVirtualFormatting(element: PsiElement): Boolean {
   return element.virtualFormattingListener != null
 }
 
-fun wrapForVirtualFormatting(element: PsiElement, builder: FormattingModelBuilder): FormattingModelBuilder {
+fun wrapForVirtualFormatting(element: PsiElement, builder: FormattingModelBuilder?): FormattingModelBuilder? {
+  builder ?: return null
   val listener = element.virtualFormattingListener ?: return builder
   val file = element.containingFile ?: return builder
   return VirtualFormattingModelBuilder(builder, file, listener)

@@ -26,8 +26,8 @@ public interface Formatter extends IndentFactory, WrapFactory, AlignmentFactory,
   boolean isEligibleForVirtualFormatting(@NotNull PsiElement context);
 
   @ApiStatus.Internal
-  @NotNull
-  FormattingModelBuilder wrapForVirtualFormatting(@NotNull PsiElement context, @NotNull FormattingModelBuilder originalModel);
+  @Nullable
+  FormattingModelBuilder wrapForVirtualFormatting(@NotNull PsiElement context, @Nullable FormattingModelBuilder originalModel);
 
 }
 
