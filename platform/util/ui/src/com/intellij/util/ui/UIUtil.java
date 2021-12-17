@@ -120,21 +120,24 @@ public final class UIUtil {
   }
 
   public static void setCustomTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, java.util.function.Consumer<? super Runnable> onDispose) {
+    if (SystemInfoRt.isMac && (Registry.is("ide.experimental.ui", false) || Registry.is("ide.experimental.ui.main.toolbar", false))) {
+      setCustomTitleForToolbar(window, rootPane, onDispose);
+      return;
+    }
+
+    if (SystemInfoRt.isMac && Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
+      setTransparentTitleBar(window, rootPane, onDispose);
+      return;
+    }
+  }
+
+  public static void setTransparentTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, java.util.function.Consumer<? super Runnable> onDispose) {
     if (!SystemInfoRt.isMac || !Registry.is("ide.mac.transparentTitleBarAppearance", false)) {
       return;
     }
 
     JBInsets topWindowInset =  JBUI.insetsTop(getTransparentTitleBarHeight(rootPane));
-
-    rootPane.putClientProperty("apple.awt.fullWindowContent", true);
-    rootPane.putClientProperty("apple.awt.transparentTitleBar", true);
-
-    // Use standard properties starting jdk 17
-    //if (Runtime.version().feature() >= 17) {
-      //rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
-    //}
-
-    AbstractBorder customDecorationBorder = new AbstractBorder() {
+    AbstractBorder customBorder = new AbstractBorder() {
       @Override
       public Insets getBorderInsets(Component c) {
         return topWindowInset;
@@ -166,7 +169,51 @@ public final class UIUtil {
         }
       }
     };
-    rootPane.setBorder(customDecorationBorder);
+    doSetCustomTitleBar(window, rootPane, onDispose, customBorder);
+  }
+
+  public static void setCustomTitleForToolbar(@NotNull Window window, @NotNull JRootPane rootPane, java.util.function.Consumer<? super Runnable> onDispose) {
+    if (!SystemInfoRt.isMac || (!Registry.is("ide.experimental.ui", false)
+                                && !Registry.is("ide.experimental.ui.main.toolbar", false))) {
+      return;
+    }
+    JBInsets topWindowInset =  JBUI.insetsTop(getTransparentTitleBarHeight(rootPane));
+    AbstractBorder customBorder = new AbstractBorder() {
+      @Override
+      public Insets getBorderInsets(Component c) {
+        return topWindowInset;
+      }
+
+      @Override
+      public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
+        Graphics2D graphics = (Graphics2D)g.create();
+        try {
+          Rectangle headerRectangle = new Rectangle(0, 0, c.getWidth(), topWindowInset.top);
+          Color color = UIManager.getColor("MainToolbar.background");
+          graphics.setColor(color != null ? color : getPanelBackground());
+          graphics.fill(headerRectangle);
+        }
+        finally {
+          graphics.dispose();
+        }
+      }
+    };
+    rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
+    doSetCustomTitleBar(window, rootPane, onDispose, customBorder);
+  }
+
+  private static void doSetCustomTitleBar(@NotNull Window window, @NotNull JRootPane rootPane, java.util.function.Consumer<? super Runnable> onDispose,
+                                          @NotNull Border customBorder) {
+
+    rootPane.putClientProperty("apple.awt.fullWindowContent", true);
+    rootPane.putClientProperty("apple.awt.transparentTitleBar", true);
+
+    // Use standard properties starting jdk 17
+    //if (Runtime.version().feature() >= 17) {
+      //rootPane.putClientProperty("apple.awt.windowTitleVisible", false);
+    //}
+
+    rootPane.setBorder(customBorder);
 
     WindowAdapter windowAdapter = new WindowAdapter() {
       @Override

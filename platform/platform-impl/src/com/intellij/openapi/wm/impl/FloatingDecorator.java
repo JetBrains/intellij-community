@@ -112,7 +112,7 @@ public final class FloatingDecorator extends JDialog implements FloatingDecorato
   @Override
   public void show(){
     UIUtil.decorateWindowHeader(rootPane);
-    UIUtil.setCustomTitleBar(this, rootPane, runnable -> Disposer.register(myDisposable, () -> runnable.run()));
+    UIUtil.setTransparentTitleBar(this, rootPane, runnable -> Disposer.register(myDisposable, () -> runnable.run()));
     boolean isActive = myInfo.isActiveOnStart();
     setFocusableWindowState(isActive);
 

@@ -105,7 +105,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
 
     UIUtil.decorateWindowHeader((frame as RootPaneContainer).rootPane)
     if (frame is JFrame) {
-      UIUtil.setCustomTitleBar(frame, frame.rootPane) { runnable ->
+      UIUtil.setTransparentTitleBar(frame, frame.rootPane) { runnable ->
         Disposer.register(this, Disposable { runnable.run() })
       }
     }

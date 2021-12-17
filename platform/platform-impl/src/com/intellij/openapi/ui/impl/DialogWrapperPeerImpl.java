@@ -384,7 +384,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     Window window = getWindow();
     if (window instanceof JDialog && !((JDialog)window).isUndecorated() && rootPane != null) {
-      UIUtil.setCustomTitleBar(window, rootPane, runnable -> Disposer.register(myWrapper.getDisposable(), () -> runnable.run()));
+      UIUtil.setTransparentTitleBar(window, rootPane, runnable -> Disposer.register(myWrapper.getDisposable(), () -> runnable.run()));
     }
 
     Container contentPane = getContentPane();

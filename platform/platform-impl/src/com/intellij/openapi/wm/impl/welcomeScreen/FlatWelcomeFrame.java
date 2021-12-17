@@ -159,7 +159,7 @@ public class FlatWelcomeFrame extends JFrame implements IdeFrame, Disposable, Ac
     Disposer.register(app, this);
 
     UIUtil.decorateWindowHeader(getRootPane());
-    UIUtil.setCustomTitleBar(this, getRootPane(), runnable -> Disposer.register(this, () -> runnable.run()));
+    UIUtil.setTransparentTitleBar(this, getRootPane(), runnable -> Disposer.register(this, () -> runnable.run()));
 
     app.invokeLater(
       () -> ((NotificationsManagerImpl)NotificationsManager.getNotificationsManager()).dispatchEarlyNotifications(),
