@@ -9,6 +9,8 @@ import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.buildCachedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.buildSerializedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinCompilationOutputReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinCompilationReflection
+import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinNativeCompileReflection
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationOutput
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
@@ -18,23 +20,21 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
     KotlinMultiplatformComponentBuilder<KotlinCompilation> {
 
     override fun buildComponent(origin: Any, importingContext: MultiplatformModelImportingContext): KotlinCompilationImpl? {
-        val gradleCompilation = origin as Named
+        val kotlinCompilationReflection = KotlinCompilationReflection(origin)
+        origin as Named
 
         @Suppress("UNCHECKED_CAST")
-        val kotlinGradleSourceSets = (gradleCompilation["getKotlinSourceSets"] as? Collection<Named>) ?: return null
+        val kotlinGradleSourceSets = kotlinCompilationReflection.kotlinGradleSourceSets ?: return null
         val kotlinSourceSets = kotlinGradleSourceSets.mapNotNull { importingContext.sourceSetByName(it.name) }
-        val compileKotlinTask = gradleCompilation.getCompileKotlinTaskName(importingContext.project) ?: return null
+        val compileKotlinTask = kotlinCompilationReflection.compileKotlinTaskName
+            ?.let { importingContext.project.tasks.findByName(it) }
+            ?: return null
 
-        val output = buildCompilationOutput(gradleCompilation, compileKotlinTask) ?: return null
-        val dependencies = buildCompilationDependencies(importingContext, gradleCompilation, classifier)
+        val output = kotlinCompilationReflection.compilationOutput?.let { buildCompilationOutput(it, compileKotlinTask) } ?: return null
+        val dependencies = buildCompilationDependencies(importingContext, origin, classifier)
         val kotlinTaskProperties = getKotlinTaskProperties(compileKotlinTask, classifier)
 
-        // Get konanTarget (for native compilations only).
-        val konanTarget = gradleCompilation["getKonanTarget"]?.let { konanTarget ->
-            konanTarget["getName"] as? String
-        }
-
-        val nativeExtensions = konanTarget?.let(::KotlinNativeCompilationExtensionsImpl)
+        val nativeExtensions = kotlinCompilationReflection.konanTargetName?.let(::KotlinNativeCompilationExtensionsImpl)
 
         val allSourceSets = kotlinSourceSets
             .flatMap { sourceSet -> importingContext.resolveAllDependsOnSourceSets(sourceSet) }
@@ -47,7 +47,7 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
 
         @Suppress("DEPRECATION_ERROR")
         return KotlinCompilationImpl(
-            name = gradleCompilation.name,
+            name = origin.name,
             allSourceSets = allSourceSets,
             declaredSourceSets = if (platform == KotlinPlatform.ANDROID) allSourceSets else kotlinSourceSets,
             dependencies = dependencies.map { importingContext.dependencyMapper.getId(it) }.distinct().toTypedArray(),
@@ -90,15 +90,11 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
         }
 
         private fun buildCompilationOutput(
-            gradleCompilation: Named,
+            kotlinCompilationOutputReflection: KotlinCompilationOutputReflection,
             compileKotlinTask: Task
         ): KotlinCompilationOutput? {
-            val gradleOutput = gradleCompilation["getOutput"] ?: return null
-            val compilationOutputBase = KotlinCompilationOutputBuilder.buildComponent(KotlinCompilationOutputReflection(gradleOutput)) ?: return null
-            @Suppress("UNCHECKED_CAST") val destinationDir = compileKotlinTask["getDestinationDir"] as? File
-            //TODO: Hack for KotlinNativeCompile
-                ?: (compileKotlinTask["getOutputFile"] as? Property<File>)?.orNull?.parentFile
-                ?: return null
+            val compilationOutputBase = KotlinCompilationOutputBuilder.buildComponent(kotlinCompilationOutputReflection) ?: return null
+            val destinationDir = KotlinNativeCompileReflection(compileKotlinTask).destinationDir
             return KotlinCompilationOutputImpl(compilationOutputBase.classesDirs, destinationDir, compilationOutputBase.resourcesDir)
         }
 
