@@ -14,7 +14,6 @@ import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.components.impl.stores.UnknownMacroNotification
 import com.intellij.openapi.diagnostic.*
 import com.intellij.openapi.extensions.PluginId
-import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.JDOMUtil
@@ -106,21 +105,21 @@ abstract class ComponentStoreImpl : IComponentStore {
             return
           }
 
-          val info = createComponentInfo(component, null, serviceDescriptor)
-          initComponent(info = info, changedStorages = null, reloadData = ThreeState.NO)
+          val componentInfo = createComponentInfo(component, null, serviceDescriptor)
+          initComponent(info = componentInfo, changedStorages = null, reloadData = ThreeState.NO)
         }
         else {
           componentName = stateSpec.name
+          val componentInfo = createComponentInfo(component = component, stateSpec = stateSpec, serviceDescriptor = serviceDescriptor)
           // still must be added to component list to support explicit save later
-          val info = doAddComponent(componentName, component, stateSpec, serviceDescriptor)
-
           if (!stateSpec.allowLoadInTests && !(loadPolicy == StateLoadPolicy.LOAD || (loadPolicy == StateLoadPolicy.LOAD_ONLY_DEFAULT && stateSpec.defaultStateAsResource))) {
             component.noStateLoaded()
             component.initializeComponent()
+            registerComponent(name = componentName, info = componentInfo)
             return
           }
 
-          if (initComponent(info, changedStorages = null, reloadData = ThreeState.NO) && serviceDescriptor != null) {
+          if (initComponent(componentInfo, changedStorages = null, reloadData = ThreeState.NO) && serviceDescriptor != null) {
             // if not service, so, component manager will check it later for all components
             project?.let {
               val app = ApplicationManager.getApplication()
@@ -129,17 +128,25 @@ abstract class ComponentStoreImpl : IComponentStore {
               }
             }
           }
+          registerComponent(name = componentName, info = componentInfo)
         }
         component.initializeComponent()
       }
       else if (loadPolicy == StateLoadPolicy.LOAD && component is com.intellij.openapi.util.JDOMExternalizable) {
         componentName = getComponentName(component)
-        initJdomExternalizable(component, componentName)
+        val componentInfo = createComponentInfo(component = component, stateSpec = null, serviceDescriptor = null)
+        val element = storageManager.getOldStorage(component, componentName, StateStorageOperation.READ)
+                        ?.getState(component, componentName, Element::class.java, null, false)
+        if (element != null) {
+          component.readExternal(element)
+        }
+        registerComponent(name = componentName, info = componentInfo)
       }
     }
     catch (e: Exception) {
       if (e is ControlFlowException) throw e
-      LOG.error(PluginException("Cannot init component state (componentName=$componentName, componentClass=${component.javaClass.simpleName})", e, pluginId))
+      LOG.error(PluginException("Cannot init component state " +
+                                "(componentName=$componentName, componentClass=${component.javaClass.simpleName})", e, pluginId))
     }
   }
 
@@ -155,7 +162,8 @@ abstract class ComponentStoreImpl : IComponentStore {
 
   final override fun initPersistencePlainComponent(component: Any, key: String) {
     val stateSpec = StateAnnotation(key, FileStorageAnnotation(StoragePathMacros.WORKSPACE_FILE, false))
-    doAddComponent(stateSpec.name, PersistenceStateAdapter(component), stateSpec, serviceDescriptor = null)
+    registerComponent(name = stateSpec.name,
+                      info = createComponentInfo(PersistenceStateAdapter(component), stateSpec, serviceDescriptor = null))
   }
 
   override suspend fun save(forceSavingAllSettings: Boolean) {
@@ -340,23 +348,15 @@ abstract class ComponentStoreImpl : IComponentStore {
     sessionProducer.setState(info.component, effectiveComponentName, state)
   }
 
-  private fun initJdomExternalizable(@Suppress("DEPRECATION") component: com.intellij.openapi.util.JDOMExternalizable, componentName: String) {
-    doAddComponent(componentName, component, stateSpec = null, serviceDescriptor = null)
-    val element = storageManager.getOldStorage(component, componentName, StateStorageOperation.READ)
-                    ?.getState(component, componentName, Element::class.java, null, false)
-                    ?: return
-    component.readExternal(element)
-  }
-
-  private fun doAddComponent(name: String, component: Any, stateSpec: State?, serviceDescriptor: ServiceDescriptor?): ComponentInfo {
-    val newInfo = createComponentInfo(component, stateSpec, serviceDescriptor)
-    val existing = components.put(name, newInfo)
-    if (existing != null && existing.component !== component) {
-      components.put(name, existing)
-      LOG.error("Conflicting component name '$name': ${existing.component.javaClass} and ${component.javaClass} (componentManager=${storageManager.componentManager})")
+  private fun registerComponent(name: String, info: ComponentInfo): ComponentInfo {
+    val existing = components.putIfAbsent(name, info)
+    if (existing != null && existing.component !== info.component) {
+      LOG.error("Conflicting component name '$name': ${existing.component.javaClass} and ${info.component.javaClass} (componentManager=${storageManager.componentManager})")
       return existing
     }
-    return newInfo
+    else {
+      return info
+    }
   }
 
   private fun initComponent(info: ComponentInfo, changedStorages: Set<StateStorage>?, reloadData: ThreeState): Boolean {
