@@ -27,7 +27,7 @@ import org.jetbrains.annotations.Nls
  *
  * @param stash stash codename (e.g. stash@{1})
  */
-class StashInfo(val root: VirtualFile, val hash: Hash, val parentHashes: List<Hash>,
+class StashInfo(val root: VirtualFile, val hash: Hash, val parentHashes: List<Hash>, val authorTime: Long,
                 val stash: @NlsSafe String, val branch: @NlsSafe String?, val message: @NlsSafe @Nls String) {
   val text: @Nls String // The formatted text representation
 
