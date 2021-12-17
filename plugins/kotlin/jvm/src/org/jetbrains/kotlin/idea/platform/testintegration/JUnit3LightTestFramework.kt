@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.KtSuperTypeCallEntry
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
-import org.jetbrains.kotlin.psi.psiUtil.isPublic
 
 class JUnit3LightTestFramework: AbstractLightTestFramework() {
 
@@ -29,8 +28,7 @@ class JUnit3LightTestFramework: AbstractLightTestFramework() {
             isPrivate() ||
                     isAnnotation() ||
                     // no super class and no methods
-                    superTypeListEntries.filterIsInstance<KtSuperTypeCallEntry>().isEmpty() &&
-                    declarations.filterIsInstance<KtNamedFunction>().none { it.isPublic }
+                    superTypeListEntries.filterIsInstance<KtSuperTypeCallEntry>().isEmpty()
         }
 
     override fun isAUnitTestClass(namedDeclaration: KtClassOrObject): Boolean? {
