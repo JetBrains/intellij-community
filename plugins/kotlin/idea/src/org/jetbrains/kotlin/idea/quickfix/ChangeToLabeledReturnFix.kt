@@ -53,6 +53,7 @@ class ChangeToLabeledReturnFix(
                     val callee = call?.calleeExpression as? KtReferenceExpression ?: break
                     if (!InlineUtil.isInline(bindingContext[BindingContext.REFERENCE_TARGET, callee])) break
                 }
+                if (parent is KtClassOrObject) break
             }
             return result
         }
