@@ -891,6 +891,20 @@
     <group id="NavBarVcsGroup"/>
     <group id="SegmentedVcsActionsBarGroup"/>
 
+    <group id="EditorTabsEntryPoint" popup="true" icon="AllIcons.Actions.More">
+      <reference id="RecentFiles"/>
+      <reference id="RecentLocations"/>
+      <separator/>
+      <reference id="CloseAllEditors"/>
+      <reference id="ReopenClosedTab"/>
+      <separator/>
+      <reference id="Unsplit"/>
+      <reference id="UnsplitAll"/>
+      <reference id="ChangeSplitOrientation"/>
+      <separator/>
+      <reference id="ConfigureEditorTabs"/>
+    </group>
+
     <group id="EditorPopupMenu">
       <reference ref="$Cut"/>
       <reference ref="$Copy"/>
