@@ -86,6 +86,7 @@ class KotlinTestRunLineMarkerContributor : RunLineMarkerContributor() {
         val icon = targetPlatform.idePlatformKind.tooling.getTestIcon(declaration) {
             declaration.resolveToDescriptorIfAny()
         } ?: return null
-        return Info(icon, Function { KotlinBundle.message("highlighter.tool.tip.text.run.test") }, *ExecutorAction.getActions())
+        
+        return Info(icon, Function { KotlinBundle.message("highlighter.tool.tip.text.run.test") }, *ExecutorAction.getActions(1))
     }
 }

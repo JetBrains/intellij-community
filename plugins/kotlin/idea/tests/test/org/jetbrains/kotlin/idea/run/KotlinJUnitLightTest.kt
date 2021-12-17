@@ -5,6 +5,7 @@ import com.intellij.execution.PsiLocation
 import com.intellij.execution.RunManager.Companion.getInstance
 import com.intellij.execution.RunnerAndConfigurationSettings
 import com.intellij.execution.actions.ConfigurationContext
+import com.intellij.execution.configurations.JavaRunConfigurationModule
 import com.intellij.execution.executors.DefaultRunExecutor
 import com.intellij.execution.impl.RunManagerImpl
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl
@@ -14,12 +15,17 @@ import com.intellij.execution.junit2.ui.properties.JUnitConsoleProperties
 import com.intellij.execution.lineMarker.RunLineMarkerProvider
 import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
+import com.intellij.openapi.actionSystem.AnAction
+import com.intellij.openapi.application.impl.NonBlockingReadActionImpl
+import com.intellij.openapi.editor.markup.GutterIconRenderer
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.search.GlobalSearchScope
+import com.intellij.testFramework.TestActionEvent
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
 import com.intellij.util.ThreeState
+import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.idea.junit.JunitKotlinTestFrameworkProvider
 import org.junit.Assert
 
@@ -173,6 +179,54 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
             "method should be suggested to run, but $testObject was used instead"
         }
     }
+
+    fun testTestClassWithMain() {
+        doTestClassWithMain(null)
+    }
+
+    fun testTestClassWithMainTestConfigurationExists() {
+        doTestClassWithMain {
+            val manager = getInstance(project)
+            val test = KotlinRunConfiguration("ATestKt", JavaRunConfigurationModule(project, true), KotlinRunConfigurationType.instance)
+            test.runClass = "ATestKt"
+            val settings = RunnerAndConfigurationSettingsImpl((manager as RunManagerImpl), test)
+            manager.addConfiguration(settings)
+            tempSettings.add(settings)
+        }
+    }
+    
+    private fun doTestClassWithMain(setupExisting: Runnable?) {
+        myFixture.configureByText(
+            "ATest.kt", """import org.junit.Test
+class AT<caret>est {
+    @Test fun t(){}
+}
+fun main(args: Array<String>) {}
+"""
+        )
+        setupExisting?.run()
+        val marks = myFixture.findGuttersAtCaret()
+        assertEquals(1, marks.size)
+        val mark = marks[0] as GutterIconRenderer
+        val group = mark.popupMenuActions
+        assertNotNull(group)
+        val event = TestActionEvent()
+        val list = ContainerUtil.findAll(group!!.getChildren(event)) { action: AnAction ->
+            val actionEvent = TestActionEvent()
+            action.update(actionEvent)
+            val text = actionEvent.presentation.text
+            text != null && text.startsWith("Run '") && text.endsWith("'")
+        }
+        assertEquals(list.toString(), 1, list.size)
+        list[0].update(event)
+        assertEquals("Run 'ATest'", event.presentation.text)
+        myFixture.testAction(list[0])
+        NonBlockingReadActionImpl.waitForAsyncTaskCompletion()
+        val selectedConfiguration = getInstance(project).selectedConfiguration
+        tempSettings.add(selectedConfiguration!!)
+        assertEquals("ATest", selectedConfiguration.name)
+    }
+
 
     fun testStackTraceParserAcceptsJavaStacktrace() {
         myFixture.configureByText("tests.kt",
