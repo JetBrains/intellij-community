@@ -26,6 +26,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("annotationOnClass")
+        public void testAnnotationOnClass() throws Exception {
+            runTest("testData/multiModuleQuickFix/accessibilityChecker/annotationOnClass/");
+        }
+
         @TestMetadata("classPrimaryConstructor")
         public void testClassPrimaryConstructor() throws Exception {
             runTest("testData/multiModuleQuickFix/accessibilityChecker/classPrimaryConstructor/");
@@ -520,6 +525,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
         @TestMetadata("class")
         public void testClass() throws Exception {
             runTest("testData/multiModuleQuickFix/createExpect/class/");
+        }
+
+        @TestMetadata("classWithAnnotation")
+        public void testClassWithAnnotation() throws Exception {
+            runTest("testData/multiModuleQuickFix/createExpect/classWithAnnotation/");
         }
 
         @TestMetadata("classWithSuperClassAndTypeParameter")
