@@ -15,6 +15,7 @@ import com.intellij.execution.lineMarker.RunLineMarkerProvider
 import com.intellij.execution.testframework.JavaTestLocator
 import com.intellij.execution.testframework.sm.runner.SMTestProxy
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
+import com.intellij.openapi.util.io.FileUtil
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
@@ -36,8 +37,10 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
     
     override fun setUp() {
         super.setUp()
-        myFixture.addClass("package org.junit; public @interface Test {}")
         myFixture.addClass("package junit.framework; public class TestCase {}")
+        myFixture.addClass("package org.junit; public @interface Test {}")
+        myFixture.addClass("package org.junit.jupiter.api; public @interface Test {}")
+        myFixture.addClass("package org.junit.jupiter.api; public @interface Nested {}")
     }
 
     fun testAvailableInsideAnonymous() {
@@ -77,7 +80,24 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
         assertEquals(ThreeState.YES, RunLineMarkerProvider.hadAnythingRunnable(myFixture.file.virtualFile))
     }
 
-    private fun doTestMethodConfiguration(fileText: String) {
+    fun testBackticksInNames() {
+        doTestMethodConfiguration(
+            """
+            import org.junit.jupiter.api.Test
+            import org.junit.jupiter.api.Nested
+            class `tests with spaces` {
+                  class `nested with spaces` {
+                      @Test
+                      fun `with spaces`() {
+                          <caret>
+                      }
+                  }
+            }
+            """
+        )
+    }
+
+    private fun doTestMethodConfiguration(fileText: String, checkConfiguration: Boolean = true) {
         val file = myFixture.configureByText(
             "tests.kt", fileText.trimIndent()
         )!!
@@ -90,17 +110,23 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
         Assert.assertEquals(1, contexts!!.size)
         val fromContext = contexts[0]
         assert(fromContext.configuration is JUnitConfiguration)
-        val testObject = (fromContext.configuration as JUnitConfiguration).persistentData.TEST_OBJECT
+        val configuration = fromContext.configuration as JUnitConfiguration
+        val testObject = configuration.persistentData.TEST_OBJECT
         assert(testObject == JUnitConfiguration.TEST_METHOD) {
             "method should be suggested to run, but $testObject was used instead"
         }
 
         Assert.assertNotNull(JunitKotlinTestFrameworkProvider.getJavaTestEntity(element, checkMethod = true))
+        if (checkConfiguration) {
+            configuration.workingDirectory = FileUtil.getTempDirectory()
+            configuration.checkConfiguration()
+        }
     }
 
 
     fun testPatternConfiguration() {
-        doTestMethodConfiguration("""
+        doTestMethodConfiguration(
+            """
             import junit.framework.TestCase
             abstract class Test : TestCase() {
               fun te<caret>st1() {}
@@ -109,7 +135,8 @@ class KotlinJUnitLightTest : LightJavaCodeInsightFixtureTestCase() {
               class TestX : Test()
               class TestY : Test()
             }
-        """)
+        """, false
+        )
     }
 
     fun testIsConfiguredPattern() {
