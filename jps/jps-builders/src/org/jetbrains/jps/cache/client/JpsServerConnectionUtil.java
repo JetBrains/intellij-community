@@ -89,21 +89,23 @@ public class JpsServerConnectionUtil {
           LOG.info("Speed of connection to S3: " + StringUtil.formatFileSize(bytesPerSecond) + "/s; " + formatInternetSpeed(bytesPerSecond * 8));
         }
 
-        long decompressionTime;
+        long decompressionSpeedBytesPesSec;
         if (previousSystemStats == null) {
           start = System.currentTimeMillis();
           ZipUtil.extract(downloadedFile, FileUtil.createTempDirectory("decompress", ".tmp"), null);
-          decompressionTime = System.currentTimeMillis() - start;
+          long decompressionTime = System.currentTimeMillis() - start;
+          decompressionSpeedBytesPesSec = fileSize / decompressionTime * 1000;
           LOG.info("Time spent to decompress file " + fileName + " " + decompressionTime + "ms");
         } else {
           // We reuse decompression value because it measures only once
-          decompressionTime = previousSystemStats.getDecompressionSpeedBytesPesSec();
+          decompressionSpeedBytesPesSec = previousSystemStats.getDecompressionSpeedBytesPesSec();
         }
         start = System.currentTimeMillis();
         FileUtil.delete(downloadedFile);
         long deletionTime = System.currentTimeMillis() - start;
+        long deletionSpeedBytesPerSec = fileSize / deletionTime * 1000 ;
         LOG.info("Time spent to delete file " + fileName + " " + deletionTime + "ms");
-        return new SystemOpsStatistic(downloadTime, decompressionTime, deletionTime, fileSize);
+        return new SystemOpsStatistic(bytesPerSecond, decompressionSpeedBytesPesSec, deletionSpeedBytesPerSec);
       } else {
         String errorText = StreamUtil.readText(new InputStreamReader(responseEntity.getContent(), StandardCharsets.UTF_8));
         LOG.warn("Request: " + url + " Error: " + response.getStatusLine().getStatusCode() + " body: " + errorText);
