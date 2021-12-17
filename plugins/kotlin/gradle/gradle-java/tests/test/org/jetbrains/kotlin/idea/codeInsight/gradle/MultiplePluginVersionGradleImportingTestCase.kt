@@ -79,7 +79,7 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
     companion object {
         val masterKotlinPluginVersion: String = "1.6.20-dev-6372"
-        const val kotlinAndGradleParametersName: String = "{index}: Gradle-{0}, KotlinGradlePlugin-{1}"
+        const val kotlinAndGradleParametersName: String = "Gradle-{0}, KotlinGradlePlugin-{1}"
         private val safePushParams: Collection<Array<Any>> = listOf(arrayOf("6.8.2", "master"))
 
         @JvmStatic
