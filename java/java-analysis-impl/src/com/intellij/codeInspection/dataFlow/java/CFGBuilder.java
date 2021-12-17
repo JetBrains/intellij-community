@@ -632,6 +632,21 @@ public class CFGBuilder {
   }
 
   /**
+   * Add only CallInstruction without any contract
+   * <p>
+   * Stack before: ... qualifier arg1 ... argN
+   * <p>
+   * Stack after: ... method result
+   *
+   * @param call call to add
+   * @return this builder
+   */
+  public CFGBuilder simpleCall(PsiMethodCallExpression call) {
+    add(new MethodCallInstruction(call, null, List.of()));
+    return this;
+  }
+
+  /**
    * Generate instructions to perform binary numeric operation on stack operands
    * <p>
    * Stack before: ... operand1 operand2

@@ -36,6 +36,11 @@ public class MapUpdateInliner implements CallInliner {
       builder
         .pushExpression(qualifier) // stack: .. qualifier
         .pushExpression(key) // stack: .. qualifier; key
+        .boxUnbox(key, ExpectedTypeUtils.findExpectedType(key, false))
+        .splice(2, 1, 0, 1, 0) // stack: .. qualifier; key; qualifier; key
+        .pushUnknown() // stack: .. qualifier; key; qualifier; key; unknown
+        .simpleCall(call) // stack: .. qualifier; key; call() result
+        .pop() // stack: .. qualifier; key;
         .evaluateFunction(function);
       String name = Objects.requireNonNull(call.getMethodExpression().getReferenceName());
       switch (name) {
@@ -64,11 +69,15 @@ public class MapUpdateInliner implements CallInliner {
       PsiExpression value = args[1];
       PsiExpression function = args[2];
       builder
-        .pushExpression(qualifier) // stack: .. qualifier
-        .pushExpression(key) // stack: .. qualifier; key
-        .pop() // stack: .. qualifier
-        .pushExpression(value) // stack: .. qualifier; value
+        .pushExpression(qualifier) // stack: .. qualifier;
+        .pushExpression(key) // stack: .. qualifier; key;
+        .boxUnbox(key, ExpectedTypeUtils.findExpectedType(key, false))
+        .pushExpression(value) // stack: .. qualifier; key; value;
         .boxUnbox(value, ExpectedTypeUtils.findExpectedType(value, false))
+        .splice(3, 2, 0, 2, 1, 0) // stack: .. qualifier; value; qualifier; key; value;
+        .pushUnknown() // stack: .. qualifier; value; qualifier; key; value; unknown;
+        .simpleCall(call) // stack: .. qualifier; value; call() result
+        .pop() // stack: .. qualifier; value;
         .evaluateFunction(function)
         .pushUnknown() // stack: .. qualifier; value; get() result
         .ifNotNull() // stack: .. qualifier; value

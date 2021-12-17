@@ -48,6 +48,31 @@ public class MutabilityJdk9 {
     Collections.singletonList(a).<warning descr="Immutable object is modified">add</warning>(b); //singleton should not be modified
   }
 
+  void testMapMerge() {
+    Map<String, Integer> map = Map.of("a", 1, "b", 2, "c", 3, "d", 4, "e", 5);
+    map.<warning descr="Immutable object is modified">merge</warning>("a", 1, (x, y)->y);
+  }
+
+  void testMapOfEntriesMerge() {
+    Map<String, Integer> map = Map.ofEntries(Map.entry("x", 1), Map.entry("y", 2));
+    map.<warning descr="Immutable object is modified">merge</warning>("a", 1, (x, y)->y);
+  }
+
+  void testMapCompute() {
+    Map<String, Integer> map = Map.of("a", 1, "b", 2, "c", 3, "d", 4, "e", 5);
+    map.<warning descr="Immutable object is modified">compute</warning>("a", (x, y)->y);
+  }
+
+  void testMapComputeIfPresent() {
+    Map<String, Integer> map = Map.of("a", 1, "b", 2, "c", 3, "d", 4, "e", 5);
+    map.<warning descr="Immutable object is modified">computeIfPresent</warning>("a", (x, y)->y);
+  }
+
+  void testMapComputeIfAbsent() {
+    Map<String, Integer> map = Map.of("a", 1, "b", 2, "c", 3, "d", 4, "e", 5);
+    map.<warning descr="Immutable object is modified">computeIfAbsent</warning>("a", x->1);
+  }
+
   void testVarArg(String[] str) {
     List<String> list = List.of(str);
     if(str.length > 2) {
