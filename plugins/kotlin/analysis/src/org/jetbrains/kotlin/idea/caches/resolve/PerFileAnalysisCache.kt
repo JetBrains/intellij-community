@@ -125,7 +125,11 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
             } else null
 
             // step 3: perform analyze of analyzableParent as nothing has been cached yet
-            val result = analyze(analyzableParent, null, localCallback)
+            val result = try {
+              analyze(analyzableParent, null, localCallback)
+            } catch (e: InvalidModuleException) {
+                throw ProcessCanceledException(e)
+            }
 
             // some diagnostics could be not handled with a callback - send out the rest
             callback?.let { c ->
@@ -279,6 +283,8 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
         } catch (e: ProcessCanceledException) {
             throw e
         } catch (e: IndexNotReadyException) {
+            throw e
+        } catch (e: InvalidModuleException) {
             throw e
         } catch (e: Throwable) {
             DiagnosticUtils.throwIfRunningOnServer(e)
@@ -524,6 +530,8 @@ private object KotlinResolveDataProvider {
             }
 
             return AnalysisResult.success(trace.bindingContext, moduleDescriptor)
+        } catch (e: InvalidModuleException) {
+            throw e
         } catch (e: ProcessCanceledException) {
             throw e
         } catch (e: IndexNotReadyException) {
