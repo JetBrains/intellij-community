@@ -13,7 +13,6 @@ import com.intellij.diff.tools.fragmented.UnifiedDiffTool
 import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
-import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
@@ -100,14 +99,10 @@ open class CombinedDiffRequestProcessor(project: Project?,
 
   final override fun goToNextChange(fromDifferences: Boolean) {
     goToChange(fromDifferences, true)
-
-    updateRequest(false, if (fromDifferences) ScrollToPolicy.FIRST_CHANGE else null) //needed to apply myIterationState = IterationState.NONE; (press again to go to next/previous file)
   }
 
   final override fun goToPrevChange(fromDifferences: Boolean) {
     goToChange(fromDifferences, false)
-
-    updateRequest(false, if (fromDifferences) ScrollToPolicy.LAST_CHANGE else null) //needed to apply myIterationState = IterationState.NONE; (press again to go to next/previous file)
   }
 
   private fun goToChange(fromDifferences: Boolean, next: Boolean) {
