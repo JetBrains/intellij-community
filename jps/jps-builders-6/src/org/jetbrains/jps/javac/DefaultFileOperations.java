@@ -194,7 +194,7 @@ final class DefaultFileOperations implements FileOperations {
   }
 
   @Nullable
-  protected Iterable<File> listFiles(File file) throws IOException {
+  private static Iterable<File> listFiles(File file) throws IOException {
     final File[] files = file.listFiles();
     return files != null? Arrays.asList(files) : null;
   }

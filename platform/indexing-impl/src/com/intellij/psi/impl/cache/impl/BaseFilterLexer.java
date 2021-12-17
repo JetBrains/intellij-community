@@ -87,7 +87,7 @@ public abstract class BaseFilterLexer extends DelegateLexer implements IdTableBu
         while (matcher.find()) {
           ProgressManager.checkCanceled();
           int start = matcher.start();
-          if (start != matcher.end() && todoScanningState.myOccurrences.indexOf(start) == -1) {
+          if (start != matcher.end() && !todoScanningState.myOccurrences.contains(start)) {
             consumer.incTodoOccurrence(todoScanningState.myPatterns[i]);
             todoScanningState.myOccurrences.add(start);
           }

@@ -144,7 +144,7 @@ public final class JavaCompletionSorting {
       @Override
       public Boolean weigh(@NotNull LookupElement element, @NotNull WeighingContext context) {
         PsiElement psi = element.getPsiElement();
-        return psi instanceof PsiMethod && previousChainCalls.getInt((PsiMethod)psi) == 1;
+        return psi instanceof PsiMethod && previousChainCalls.getInt(psi) == 1;
       }
     };
   }
