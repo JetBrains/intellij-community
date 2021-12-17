@@ -50,6 +50,7 @@ import com.intellij.util.SmartList;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.HttpRequests;
+import one.util.streamex.EntryStream;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -545,40 +546,40 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
                                                                  CodeDocumentationAwareCommenter commenter,
                                                                  PsiMethod psiMethod) {
     final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
-    final Map<String, String> param2Description = new HashMap<>();
+    final Map<Integer, String> index2Description = new HashMap<>();
     final PsiMethod[] superMethods = psiMethod.findSuperMethods();
 
     for (PsiMethod superMethod : superMethods) {
       final PsiDocComment comment = superMethod.getDocComment();
       if (comment != null) {
+        final Map<String, Integer> paramName2Index =
+          EntryStream.of(superMethod.getParameterList().getParameters()).mapValues(PsiParameter::getName).invert().toMap();
         final PsiDocTag[] params = comment.findTagsByName("param");
         for (PsiDocTag param : params) {
           final PsiElement[] dataElements = param.getDataElements();
           String paramName = null;
+          int endOffset = 0;
           for (PsiElement dataElement : dataElements) {
             if (dataElement instanceof PsiDocParamRef) {
               //noinspection ConstantConditions
               paramName = dataElement.getReference().getCanonicalText();
+              endOffset = dataElement.getTextRangeInParent().getEndOffset();
               break;
             }
           }
-          if (paramName != null) {
-            param2Description.put(paramName, param.getText());
+          if (paramName != null && paramName2Index.containsKey(paramName)) {
+            index2Description.put(paramName2Index.get(paramName), param.getText().substring(endOffset));
           }
         }
       }
     }
 
-    for (PsiParameter parameter : parameters) {
-      String description = param2Description.get(parameter.getName());
+    for (int i = 0; i < parameters.length; i++) {
+      String description = index2Description.get(i);
+      builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, psiMethod.getContainingFile(), commenter));
+      builder.append(parameters[i].getName());
       if (description != null) {
-        builder.append(CodeDocumentationUtil.createDocCommentLine("", psiMethod.getContainingFile(), commenter));
-        if (description.indexOf('\n') > -1) description = description.substring(0, description.lastIndexOf('\n'));
-        builder.append(description);
-      }
-      else {
-        builder.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, psiMethod.getContainingFile(), commenter));
-        builder.append(parameter.getName());
+        builder.append(description.replaceFirst("(\\s*\\*)?\\s*$", ""));
       }
       builder.append(LINE_SEPARATOR);
     }
