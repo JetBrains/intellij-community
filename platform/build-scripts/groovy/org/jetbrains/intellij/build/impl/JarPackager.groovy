@@ -60,13 +60,6 @@ final class JarPackager {
   private final Map<JpsLibrary, ProjectLibraryData> libToMetadata = new HashMap<>()
 
   static {
-    // kotlinx- and kotlin-reflect libs to one kotlinx.jar
-    EXTRA_MERGE_RULES.put("kotlinx.jar", new Predicate<String>() {
-      @Override
-      boolean test(String name) {
-        return name.startsWith("kotlinx-") || name == "kotlin-reflect"
-      }
-    })
     EXTRA_MERGE_RULES.put("groovy.jar", new Predicate<String>() {
       @Override
       boolean test(String name) {
@@ -104,15 +97,15 @@ final class JarPackager {
         "http-client",
         "commons-codec",
         "commons-logging",
-        "commons-lang3"
+        "commons-lang3",
+        "kotlin-stdlib-jdk8"
       )
 
       @Override
       boolean test(String name) {
-        return libsThatUsedInJps.contains(name)
+        return libsThatUsedInJps.contains(name) || name.startsWith("kotlinx-") || name == "kotlin-reflect"
       }
-    }
-    )
+    })
   }
 
   static Collection<DistributionFileEntry> pack(Map<String, List<String>> actualModuleJars,
