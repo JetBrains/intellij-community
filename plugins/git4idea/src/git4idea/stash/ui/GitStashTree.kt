@@ -34,6 +34,7 @@ import git4idea.stash.GitStashTrackerListener
 import git4idea.stash.ui.GitStashUi.Companion.GIT_STASH_UI_PLACE
 import git4idea.ui.StashInfo
 import git4idea.ui.StashInfo.Companion.branchName
+import git4idea.ui.StashInfo.Companion.subject
 import java.awt.Color
 import java.awt.Component
 import java.awt.Graphics
@@ -135,14 +136,9 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
 
   class StashInfoChangesBrowserNode(private val stash: StashInfo) : ChangesBrowserNode<StashInfo>(stash) {
     override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
-      renderer.append(stash.stash, SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES)
-      renderer.append(": ")
-      stash.branch?.let {
-        renderer.append(it, SimpleTextAttributes.REGULAR_ITALIC_ATTRIBUTES)
-        renderer.append(": ")
-      }
-      renderer.append(stash.message)
+      renderer.append(stash.subject)
       renderer.toolTipText = GitBundle.message("stash.created.on.date.at.time.tooltip",
+                                               stash.stash,
                                                DateFormatUtil.formatDate(stash.authorTime),
                                                DateFormatUtil.formatTime(stash.authorTime))
     }

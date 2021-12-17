@@ -6,7 +6,9 @@ import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.openapi.util.text.HtmlChunk
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.Hash
+import com.intellij.vcs.log.util.VcsLogUtil
 import org.jetbrains.annotations.Nls
+import java.util.regex.Pattern
 
 /**
  * Information about one stash.
@@ -30,6 +32,11 @@ class StashInfo(val root: VirtualFile, val hash: Hash, val parentHashes: List<Ha
   override fun toString() = text
 
   companion object {
+    val StashInfo.subject: @NlsSafe String
+      get() {
+        return Pattern.compile("^" + VcsLogUtil.HASH_REGEX.pattern()).matcher(message).replaceFirst("").trim()
+      }
+
     val StashInfo.branchName: @NlsSafe String?
       get() {
         if (branch == null || branch.endsWith("(no branch)")) return null
