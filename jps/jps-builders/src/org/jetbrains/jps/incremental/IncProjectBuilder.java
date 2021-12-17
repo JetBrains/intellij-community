@@ -307,6 +307,7 @@ public final class IncProjectBuilder {
       }
     };
     final BuildTargetIndex targetIndex = projectDescriptor.getBuildTargetIndex();
+    List<BuildTarget<?>> affectedTarget = new ArrayList<>();
     for (BuildTarget<?> target : targetIndex.getAllTargets()) {
       if (!targetIndex.isDummy(target)) {
         final long avgTimeToBuild = targetsState.getAverageBuildTime(target.getTargetType());
@@ -315,10 +316,12 @@ public final class IncProjectBuilder {
           // 2. need to check isAffected() since some targets (like artifacts) may be unaffected even for rebuild
           if (targetsState.getTargetConfiguration(target).isTargetDirty(projectDescriptor) && isAffected.test(target)) {
             estimatedBuildTime += avgTimeToBuild;
+            affectedTarget.add(target);
           }
         }
       }
     }
+    LOG.info("Affected build targets count: " + affectedTarget.size());
     return estimatedBuildTime;
   }
 
