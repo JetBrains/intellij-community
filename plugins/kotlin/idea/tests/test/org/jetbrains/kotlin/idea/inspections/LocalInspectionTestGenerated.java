@@ -8663,6 +8663,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("explicitType.kt")
+        public void testExplicitType() throws Exception {
+            runTest("testData/inspectionsLocal/redundantLambdaArrow/explicitType.kt");
+        }
+
         @TestMetadata("forEach.kt")
         public void testForEach() throws Exception {
             runTest("testData/inspectionsLocal/redundantLambdaArrow/forEach.kt");
