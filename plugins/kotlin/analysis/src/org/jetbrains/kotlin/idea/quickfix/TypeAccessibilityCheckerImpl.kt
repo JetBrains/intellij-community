@@ -6,6 +6,7 @@ import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.idea.caches.project.isTestModule
 import org.jetbrains.kotlin.idea.caches.project.toDescriptor
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
@@ -27,7 +28,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 class TypeAccessibilityCheckerImpl(
     override val project: Project,
     override val targetModule: Module,
-    override var existingTypeNames: Collection<String> = emptyList()
+    override var existingTypeNames: Set<String> = emptySet()
 ) : TypeAccessibilityChecker {
     private val scope by lazy { GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(targetModule, targetModule.isTestModule) }
     private var builtInsModule: ModuleDescriptor? = targetModule.toDescriptor()
@@ -52,7 +53,7 @@ class TypeAccessibilityCheckerImpl(
 
     override fun checkAccessibility(type: KotlinType): Boolean = incorrectTypesInSequence(type.collectAllTypes(), true).isEmpty()
 
-    override fun <R> runInContext(fqNames: Collection<String>, block: TypeAccessibilityChecker.() -> R): R {
+    override fun <R> runInContext(fqNames: Set<String>, block: TypeAccessibilityChecker.() -> R): R {
         val oldValue = existingTypeNames
         existingTypeNames = fqNames
         return block().also { existingTypeNames = oldValue }
@@ -62,10 +63,12 @@ class TypeAccessibilityCheckerImpl(
         sequence: Sequence<FqName?>,
         lazy: Boolean = true
     ): List<FqName?> {
-        return if (lazy) {
-            for (fqName in sequence) if (!fqName.canFindClassInModule()) return listOf(fqName)
-            emptyList()
-        } else sequence.filter { !it.canFindClassInModule() }.toList()
+        val uniqueSequence = sequence.distinct().filter { !it.canFindClassInModule() }
+        return when {
+            uniqueSequence.none() -> emptyList()
+            lazy -> listOf(uniqueSequence.first())
+            else -> uniqueSequence.toList()
+        }
     }
 
     private fun incorrectTypesInDescriptor(descriptor: DeclarationDescriptor, lazy: Boolean) =
@@ -81,33 +84,44 @@ class TypeAccessibilityCheckerImpl(
     }
 }
 
-private tailrec fun DeclarationDescriptor.additionalClasses(existingClasses: Collection<String> = emptySet()): Collection<String> =
+private tailrec fun DeclarationDescriptor.additionalClasses(existingClasses: Set<String> = emptySet()): Set<String> =
     when (this) {
         is ClassifierDescriptorWithTypeParameters -> {
             val myParameters = existingClasses + declaredTypeParameters.map { it.fqNameOrNull()?.asString() ?: return emptySet() }
             val containingDeclaration = containingDeclaration
             if (isInner) containingDeclaration.additionalClasses(myParameters) else myParameters
         }
-        is CallableDescriptor -> containingDeclaration.additionalClasses(existingClasses + typeParameters.map {
-            it.fqNameOrNull()?.asString() ?: return emptySet()
-        })
+
+        is CallableDescriptor -> containingDeclaration.additionalClasses(
+            existingClasses = existingClasses + typeParameters.map { it.fqNameOrNull()?.asString() ?: return emptySet() }
+        )
+
         else ->
             existingClasses
     }
 
 private fun DeclarationDescriptor.collectAllTypes(): Sequence<FqName?> {
-    return when (this) {
-        is ClassConstructorDescriptor -> valueParameters.asSequence().map(ValueParameterDescriptor::getType)
-            .flatMap(KotlinType::collectAllTypes)
-        is ClassDescriptor -> if (isInlineClass()) unsubstitutedPrimaryConstructor?.collectAllTypes().orEmpty() else {
-            emptySequence()
-        } + declaredTypeParameters.asSequence().flatMap(DeclarationDescriptor::collectAllTypes) + sequenceOf(fqNameOrNull())
+    val annotations = annotations.asSequence().map(AnnotationDescriptor::type).flatMap(KotlinType::collectAllTypes)
+    return annotations + when (this) {
+        is ClassConstructorDescriptor -> valueParameters.asSequence().flatMap(DeclarationDescriptor::collectAllTypes)
+        is ClassDescriptor -> {
+            val primaryConstructorTypes = if (isInlineClass())
+                unsubstitutedPrimaryConstructor?.collectAllTypes().orEmpty()
+            else
+                emptySequence()
+
+            primaryConstructorTypes +
+                    declaredTypeParameters.asSequence().flatMap(DeclarationDescriptor::collectAllTypes) +
+                    sequenceOf(fqNameOrNull())
+        }
+
         is CallableDescriptor -> {
             val returnType = returnType ?: return sequenceOf(null)
             returnType.collectAllTypes() +
-                    explicitParameters.map(ParameterDescriptor::getType).flatMap(KotlinType::collectAllTypes) +
+                    explicitParameters.asSequence().flatMap(DeclarationDescriptor::collectAllTypes) +
                     typeParameters.asSequence().flatMap(DeclarationDescriptor::collectAllTypes)
         }
+
         is TypeParameterDescriptor -> {
             val upperBounds = upperBounds
             val singleUpperBound = upperBounds.singleOrNull()
@@ -118,6 +132,7 @@ private fun DeclarationDescriptor.collectAllTypes(): Sequence<FqName?> {
                     if (extendBoundText == null || extendBoundText == "Any?") sequenceOf(singleUpperBound.fqName)
                     else sequenceOf(null)
                 }
+
                 upperBounds.isEmpty() -> sequenceOf(fqNameOrNull())
                 else -> upperBounds.asSequence().flatMap(KotlinType::collectAllTypes)
             }
@@ -126,10 +141,14 @@ private fun DeclarationDescriptor.collectAllTypes(): Sequence<FqName?> {
     }
 }
 
-private fun KotlinType.collectAllTypes(): Sequence<FqName?> = if (isError) sequenceOf(null)
-else sequenceOf(fqName) + arguments.asSequence()
-    .map(TypeProjection::getType)
-    .flatMap(KotlinType::collectAllTypes)
+private fun KotlinType.collectAllTypes(): Sequence<FqName?> =
+    if (isError) {
+        sequenceOf(null)
+    } else {
+        sequenceOf(fqName) +
+                arguments.asSequence().map(TypeProjection::getType).flatMap(KotlinType::collectAllTypes) +
+                annotations.asSequence().map(AnnotationDescriptor::type).flatMap(KotlinType::collectAllTypes)
+    }
 
 private val CallableDescriptor.explicitParameters: Sequence<ParameterDescriptor>
     get() = valueParameters.asSequence() + dispatchReceiverParameter?.let {
