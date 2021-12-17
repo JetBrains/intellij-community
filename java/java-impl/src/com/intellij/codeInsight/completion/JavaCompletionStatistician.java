@@ -38,12 +38,16 @@ public class JavaCompletionStatistician extends CompletionStatistician{
   public StatisticsInfo serialize(@NotNull final LookupElement element, @NotNull final CompletionLocation location) {
     Object o = element.getObject();
 
-    if (o instanceof PsiLocalVariable || o instanceof PsiParameter || 
-        o instanceof PsiThisExpression || o instanceof PsiKeyword || 
+    if (o instanceof PsiLocalVariable || o instanceof PsiParameter ||
+        o instanceof PsiThisExpression || o instanceof PsiKeyword ||
         element.getUserData(JavaCompletionUtil.SUPER_METHOD_PARAMETERS) != null ||
         FunctionalExpressionCompletionProvider.isFunExprItem(element) ||
         element.as(StreamConversion.StreamMethodInvocation.class) != null) {
       return StatisticsInfo.EMPTY;
+    }
+
+    if (o instanceof CustomStatisticsInfoProvider) {
+      return ((CustomStatisticsInfoProvider)o).getStatisticsInfo();
     }
 
     if (!(o instanceof PsiMember)) {
@@ -61,7 +65,7 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     if (firstInfo != null && isInEnumAnnotationParameter(position, firstInfo)) {
       return StatisticsInfo.EMPTY;
     }
-    
+
     if (o instanceof PsiClass) {
       return getClassInfo((PsiClass)o, position, firstInfo);
     }
@@ -107,5 +111,15 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     }
 
     return new StatisticsInfo(contextPrefix, JavaStatisticsManager.getMemberUseKey2(member));
+  }
+
+  /**
+   * An interface for LookupElement objects that provide custom StatisticsInfo
+   */
+  public interface CustomStatisticsInfoProvider {
+    /**
+     * @return a statistics info for the current object; null if the statistics should not be collected for this item.
+     */
+    @Nullable StatisticsInfo getStatisticsInfo();
   }
 }
