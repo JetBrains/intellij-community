@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger
 import com.intellij.debugger.SourcePosition
 import com.intellij.debugger.engine.DebugProcess
 import com.intellij.debugger.requests.ClassPrepareRequestor
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.runReadAction
 import com.intellij.psi.JavaPsiFacade
 import com.sun.jdi.ReferenceType
@@ -39,9 +40,10 @@ fun computeComposableSingletonsClassName(file: KtFile): String {
     return filePackageName.asString() + classNameSuffix
 }
 
-fun SourcePosition.isInsideProjectWithCompose(): Boolean {
-    return JavaPsiFacade.getInstance(file.project).findPackage("androidx.compose") != null
-}
+fun SourcePosition.isInsideProjectWithCompose(): Boolean =
+    ReadAction.nonBlocking<Boolean> {
+        JavaPsiFacade.getInstance(file.project).findPackage("androidx.compose") != null
+    }.executeSynchronously()
 
 fun getComposableSingletonsClasses(debugProcess: DebugProcess, file: KtFile): List<ReferenceType> {
     val vm = debugProcess.virtualMachineProxy
