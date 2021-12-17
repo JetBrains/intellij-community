@@ -3035,6 +3035,16 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/changeToLabeledReturn/nullForNonnullType2.kt");
         }
 
+        @TestMetadata("returnNotAllowedInClass.kt")
+        public void testReturnNotAllowedInClass() throws Exception {
+            runTest("testData/quickfix/changeToLabeledReturn/returnNotAllowedInClass.kt");
+        }
+
+        @TestMetadata("returnNotAllowedInObject.kt")
+        public void testReturnNotAllowedInObject() throws Exception {
+            runTest("testData/quickfix/changeToLabeledReturn/returnNotAllowedInObject.kt");
+        }
+
         @TestMetadata("typeMismatch.kt")
         public void testTypeMismatch() throws Exception {
             runTest("testData/quickfix/changeToLabeledReturn/typeMismatch.kt");
