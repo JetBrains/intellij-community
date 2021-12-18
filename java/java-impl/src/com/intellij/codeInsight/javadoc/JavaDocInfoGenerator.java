@@ -1658,10 +1658,17 @@ public class JavaDocInfoGenerator {
   }
 
   private static boolean isCodeBlock(PsiInlineDocTag tag) {
-    PsiElement prevSibling = tag.getPrevSibling();
-    return CODE_TAG.equals(tag.getName())
-           && (prevSibling instanceof PsiDocToken)
-           && StringUtil.endsWithIgnoreCase(StringUtil.trim(prevSibling.getText()), "<pre>");
+    if (!CODE_TAG.equals(tag.getName())) return false;
+
+    ASTNode prevNode = tag.getNode().getTreePrev();
+    while (prevNode != null) {
+      String text = prevNode.getText();
+      if (prevNode.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA && StringUtil.endsWithIgnoreCase(StringUtil.trim(text), "<pre>")) {
+        return true;
+      }
+      prevNode = prevNode.getTreePrev();
+    }
+    return false;
   }
 
   private void generateCodeValue(PsiInlineDocTag tag, StringBuilder buffer) {
@@ -1674,13 +1681,15 @@ public class JavaDocInfoGenerator {
       buffer.setLength(lastNonWhite + 1);
     }
 
+    final int offset = isCodeBlock ? getCodeTagOffset(tag) : 0;
+
     buffer.append("<code style='font-size:");
     buffer.append(DocumentationSettings.getMonospaceFontSizeCorrection(isRendered()));
     buffer.append("%;'>");
     int pos = buffer.length();
 
     StringBuilder codeSnippetBuilder = new StringBuilder();
-    generateLiteralValue(codeSnippetBuilder, tag, true);
+    generateLiteralValue(codeSnippetBuilder, tag, !isCodeBlock && getInlineCodeHighlightingMode() == InlineCodeHighlightingMode.NO_HIGHLIGHTING);
     String codeSnippet = codeSnippetBuilder.toString();
     if (isCodeBlock) {
       codeSnippet = StringsKt.trimIndent(codeSnippet);
@@ -1707,7 +1716,7 @@ public class JavaDocInfoGenerator {
     if (isCodeBlock) {
       // indent code block
       codeSnippet = Arrays.stream(codeSnippet.contains(BR_TAG) ? codeSnippet.split(BR_TAG) : codeSnippet.split("\n"))
-        .map(it -> "  " + it)
+        .map(it -> " ".repeat(offset + 1) + it)
         .collect(Collectors.joining(BR_TAG));
     }
     else {
@@ -1718,6 +1727,13 @@ public class JavaDocInfoGenerator {
     buffer.append(codeSnippet);
     buffer.append("</code>");
     if (buffer.charAt(pos) == '\n') buffer.insert(pos, ' '); // line break immediately after opening tag is ignored by JEditorPane
+  }
+
+  private static int getCodeTagOffset(@NotNull PsiInlineDocTag tag) {
+    final PsiElement sibling = tag.getPrevSibling();
+    if (sibling == null || !sibling.getText().isBlank()) return 0;
+
+    return sibling.getTextLength();
   }
 
   private void generateLiteralValue(StringBuilder buffer, PsiDocTag tag, boolean doEscaping) {
