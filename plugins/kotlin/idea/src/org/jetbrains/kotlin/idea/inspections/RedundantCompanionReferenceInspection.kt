@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -21,10 +22,7 @@ import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.load.java.descriptors.JavaMethodDescriptor
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClass
-import org.jetbrains.kotlin.psi.psiUtil.getQualifiedElementSelector
-import org.jetbrains.kotlin.psi.psiUtil.getReceiverExpression
-import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.FakeCallableDescriptorForObject
@@ -73,6 +71,11 @@ class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
             context[BindingContext.DECLARATION_TO_DESCRIPTOR, containingClass] as? ClassDescriptor ?: return false
         if (containingClassDescriptor.hasSameNameMemberAs(selectorExpression, context)) return false
 
+        val parentCallableDeclarations = parent.parents.takeWhile { it !is KtClassOrObject }.filterIsInstance<KtCallableDeclaration>()
+        if (parentCallableDeclarations.any { it.extensionClassDescriptor(context).hasSameNameMemberAs(selectorExpression, context) }) {
+            return false
+        }
+
         (reference as? KtSimpleNameExpression)?.getReceiverExpression()?.getQualifiedElementSelector()
             ?.mainReference?.resolveToDescriptors(context)?.firstOrNull()
             ?.let { if (it != containingClassDescriptor) return false }
@@ -98,7 +101,14 @@ class RedundantCompanionReferenceInspection : AbstractKotlinInspection() {
         return descriptor == null || descriptor is ConstructorDescriptor || descriptor is FakeCallableDescriptorForObject
     }
 
-    private fun ClassDescriptor.hasSameNameMemberAs(expression: KtExpression?, context: BindingContext): Boolean {
+    private fun KtCallableDeclaration.extensionClassDescriptor(context: BindingContext): ClassDescriptor? {
+        if (receiverTypeReference == null) return null
+        val callableDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, this] as? CallableDescriptor ?: return null
+        return callableDescriptor.extensionReceiverParameter?.type?.constructor?.declarationDescriptor as? ClassDescriptor
+    }
+
+    private fun ClassDescriptor?.hasSameNameMemberAs(expression: KtExpression?, context: BindingContext): Boolean {
+        if (this == null) return false
         when (val descriptor = expression?.getResolvedCall(context)?.resultingDescriptor) {
             is PropertyDescriptor -> {
                 val name = descriptor.name

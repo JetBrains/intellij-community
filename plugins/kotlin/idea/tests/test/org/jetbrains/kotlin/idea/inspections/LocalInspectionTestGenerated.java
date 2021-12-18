@@ -8051,6 +8051,16 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameGlobalVariable.kt");
         }
 
+        @TestMetadata("sameNameInExtensionAndCompanion.kt")
+        public void testSameNameInExtensionAndCompanion() throws Exception {
+            runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameInExtensionAndCompanion.kt");
+        }
+
+        @TestMetadata("sameNameInExtensionAndCompanion2.kt")
+        public void testSameNameInExtensionAndCompanion2() throws Exception {
+            runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameInExtensionAndCompanion2.kt");
+        }
+
         @TestMetadata("sameNameLocalFunction.kt")
         public void testSameNameLocalFunction() throws Exception {
             runTest("testData/inspectionsLocal/redundantCompanionReference/sameNameLocalFunction.kt");
