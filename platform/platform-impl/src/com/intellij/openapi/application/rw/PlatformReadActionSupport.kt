@@ -27,7 +27,7 @@ internal class PlatformReadActionSupport : ReadActionSupport {
 
   override fun <X, E : Throwable> computeCancellable(action: ThrowableComputable<X, E>): X {
     return executeCancellable { currentJob ->
-      computeCancellableInternal(currentJob) {
+      cancellableReadActionInternal(currentJob) {
         action.compute()
       }
     }

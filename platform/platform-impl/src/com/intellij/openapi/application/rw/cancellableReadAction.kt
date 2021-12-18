@@ -7,15 +7,9 @@ import com.intellij.openapi.progress.executeWithChildJob
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils.runActionAndCancelBeforeWrite
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.job
 import kotlin.coroutines.cancellation.CancellationException
-import kotlin.coroutines.coroutineContext
 
-internal suspend fun <X> computeCancellableInternal(action: () -> X): X {
-  return computeCancellableInternal(coroutineContext.job, action)
-}
-
-internal fun <X> computeCancellableInternal(currentJob: Job, action: () -> X): X {
+internal fun <X> cancellableReadActionInternal(currentJob: Job, action: () -> X): X {
   return try {
     executeWithChildJob(currentJob) { readJob ->
       var resultRef: Value<X>? = null
