@@ -104,7 +104,7 @@ public class PluginModuleBuilder extends JavaModuleBuilder {
 
   @Override
   public int getWeight() {
-    return 0;
+    return IJ_PLUGIN_WEIGHT;
   }
 
   @Override
