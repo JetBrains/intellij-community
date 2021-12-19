@@ -82,6 +82,11 @@ public abstract class JsOptimizeImportsTestGenerated extends AbstractJsOptimizeI
                     runTest("testData/editor/optimizeImports/common/ArrayAccessExpression.kt");
                 }
 
+                @TestMetadata("BacktickSort.kt")
+                public void testBacktickSort() throws Exception {
+                    runTest("testData/editor/optimizeImports/common/BacktickSort.kt");
+                }
+
                 @TestMetadata("ClassMemberImported.kt")
                 public void testClassMemberImported() throws Exception {
                     runTest("testData/editor/optimizeImports/common/ClassMemberImported.kt");
