@@ -10,12 +10,14 @@ import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.JpsPathVariablesConfiguration;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
+import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import java.io.File;
 import java.io.IOException;
@@ -48,7 +50,9 @@ public class JpsProjectUtils {
         model.getProject().getLibraryCollection().getLibraries().size() + " libraries in " +
         (System.currentTimeMillis() - startTime) + " ms");
 
-    addSdk(model, "corretto-11", System.getProperty("java.home"));
+    String sdkName = "current-java-home-sdk";
+    addSdk(model, sdkName, System.getProperty("java.home"));
+    JpsSdkTableSerializer.setSdkReference(model.getProject().getSdkReferencesTable(), sdkName, JpsJavaSdkType.INSTANCE);
 
     return model;
   }
