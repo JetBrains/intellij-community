@@ -27,6 +27,7 @@ public class JpsBootstrapMain {
 
   private static final String COMMUNITY_HOME_ENV = "JPS_BOOTSTRAP_COMMUNITY_HOME";
   private static final String JPS_BOOTSTRAP_WORK_DIR_ENV = "JPS_BOOTSTRAP_WORK_DIR";
+  private static final String JPS_BOOTSTRAP_VERBOSE = "JPS_BOOTSTRAP_VERBOSE";
 
   private static final String ARG_HELP = "help";
   private static final String ARG_VERBOSE = "verbose";
@@ -78,7 +79,8 @@ public class JpsBootstrapMain {
     moduleNameToRun = freeArgs.get(0);
     classNameToRun = freeArgs.get(1);
 
-    JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(ARG_VERBOSE));
+    String verboseEnv = System.getenv(JPS_BOOTSTRAP_VERBOSE);
+    JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(ARG_VERBOSE) || (verboseEnv != null && toBooleanChecked(verboseEnv)));
 
     String communityHomeString = System.getenv(COMMUNITY_HOME_ENV);
     if (communityHomeString == null) fatal("Please set " + COMMUNITY_HOME_ENV + " environment variable");
