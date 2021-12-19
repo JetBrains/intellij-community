@@ -57,7 +57,7 @@ class SuppressByCommentOutAction extends SuppressIntentionAction {
         prefixFound = true;
       }
     }
-    String commentText = "//" + prefix + nonNlsCommentPattern;
+    String commentText = "//" + prefix + nonNlsCommentPattern.replace("\\", "");
     if (prefixFound) {
       PsiComment newcom = JavaPsiFacade.getElementFactory(project).createCommentFromText(commentText, element);
       comment.replace(newcom);
