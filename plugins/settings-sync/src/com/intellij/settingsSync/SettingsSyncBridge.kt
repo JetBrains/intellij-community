@@ -50,7 +50,7 @@ internal class SettingsSyncBridge(private val application: Application,
       processSettingsChangeEvent(event)
     }
     val snap = settingsLog.getCurrentSnapshot()
-    // todo only after changes from server or merges
+    // todo send event only after changes from server or merges
     application.messageBus.syncPublisher(SETTINGS_LOGGED_TOPIC).settingsLogged(SettingsLoggedEvent(snap, true, true, emptySet()))
   }
 

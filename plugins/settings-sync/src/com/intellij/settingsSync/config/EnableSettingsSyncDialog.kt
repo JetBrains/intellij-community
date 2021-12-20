@@ -10,7 +10,7 @@ import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
 
-class EnableSettingsSyncDialog(parent: JComponent, val settingsFound: Boolean) : DialogWrapper(parent, false) {
+internal class EnableSettingsSyncDialog(parent: JComponent, val settingsFound: Boolean) : DialogWrapper(parent, false) {
 
   private lateinit var configPanel : DialogPanel
 

@@ -20,7 +20,7 @@ private const val SETTINGS_SYNC_ENABLED_PROPERTY = "idea.settings.sync.enabled"
 internal fun isSettingsSyncEnabled() : Boolean =
   SystemProperties.getBooleanProperty(SETTINGS_SYNC_ENABLED_PROPERTY, false)
 
-class SettingsSyncFacade {
+internal class SettingsSyncFacade {
   internal val updateChecker: SettingsSyncUpdateChecker get() = getMain().controls.updateChecker
 
   internal fun pushSettingsToServer() {
