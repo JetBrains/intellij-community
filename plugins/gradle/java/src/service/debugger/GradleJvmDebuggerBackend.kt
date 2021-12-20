@@ -35,54 +35,91 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
     import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerHelper
     
     def getCurrentProject() {
-      def currentPath = gradle.startParameter.currentDir.path
-      def currentProject = rootProject.allprojects
-        .find { it.projectDir.path == currentPath }
-        ?: project
-      logger.debug("Current project: ${'$'}{currentProject}")
-      return currentProject
+        def currentPath = gradle.startParameter.currentDir.path
+        return rootProject.allprojects.find { it.projectDir.path == currentPath }
     }
     
-    def getStartTasksNames() {
-      def startTaskNames = gradle.startParameter.taskNames
-      if (startTaskNames.isEmpty()) {
+
+    static def removePrefix(def string, def prefix) {
+        if (string.startsWith(prefix)) {
+            return string.minus(prefix)
+        }
+        return null
+    }
+    
+    static def getRelativeTaskPath(def project, def task) {
+        def taskPath = task.path
+        def projectPath = project?.path
+        if (projectPath == null) return null
+        def path = removePrefix(taskPath, projectPath)
+        if (path == null) return null
+        return removePrefix(path, ":") ?: path
+    }
+    
+    static def getPossibleTaskNames(def project, def task) {
+        def relativeTaskPath = getRelativeTaskPath(project, task)
+        if (relativeTaskPath == null) {
+            [task.path]
+        } else {
+            [task.name, task.path, relativeTaskPath]
+        }
+    }
+    
+    static def isMatchedTask(def project, def task, def matchers) {
+        def possibleNames = getPossibleTaskNames(project, task)
+        if (matchers.any { it in possibleNames }) {
+            return "MATCHED"
+        }
+        if (possibleNames.any { matchers.any { matcher -> it.startsWith(matcher) } }) {
+            return "PARTIALLY MATCHED"
+        }
+        return "NOT MATCHED"
+    }
+    
+    def filterStartTasks(def tasks) {
         def currentProject = getCurrentProject()
-        startTaskNames = currentProject.defaultTasks
-      }
-      logger.debug("Start Tasks Names: ${'$'}{startTaskNames}")
-      return startTaskNames
-    }
+        logger.debug("Current Project: ${'$'}{currentProject}")
     
-    def isMatched(def task, def matcher) {
-     return task.name == matcher || 
-            task.path == matcher || 
-            task.name.startsWith(matcher) || 
-            task.path.startsWith(matcher)
+        def startTaskNames = gradle.startParameter.taskNames
+        if (startTaskNames.isEmpty()) {
+            startTaskNames = (currentProject ?: project).defaultTasks
+        }
+        logger.debug("Start Tasks Names: ${'$'}{startTaskNames}")
+    
+        def tasksMatchStatus = tasks.collect { [it, isMatchedTask(currentProject, it, startTaskNames)] }
+        def matchedTasks = tasksMatchStatus.findAll { it[1] == "MATCHED" }.collect { it[0] }
+        if (matchedTasks.isEmpty()) {
+            matchedTasks = tasksMatchStatus.findAll { it[1] == "PARTIALLY MATCHED" }.collect { it[0] }
+        }
+        logger.debug("Matched tasks: ${'$'}{matchedTasks}")
+        return matchedTasks
     }
     
     gradle.taskGraph.whenReady { taskGraph ->
-      def debugAllIsEnabled = Boolean.valueOf(System.properties["idea.gradle.debug.all"])
-      def startTaskNames = debugAllIsEnabled ? [] : getStartTasksNames()
-      logger.debug("idea.gradle.debug.all is ${'$'}{debugAllIsEnabled}")
-      
-      taskGraph.allTasks.each { Task task ->
-        if (task instanceof Test) {
-          task.maxParallelForks = 1
-          task.forkEvery = 0
+        //noinspection GroovyAssignabilityCheck
+        def debugAllIsEnabled = Boolean.valueOf(System.properties["idea.gradle.debug.all"])
+        logger.debug("idea.gradle.debug.all is ${'$'}{debugAllIsEnabled}")
+
+        taskGraph.allTasks.each { Task task ->
+            if (task instanceof Test) {
+                task.maxParallelForks = 1
+                task.forkEvery = 0
+            }
         }
-        if (task instanceof JavaForkOptions && (debugAllIsEnabled || startTaskNames.any { isMatched(task, it) })) {
-          def moduleDir = task.project.projectDir.path
-          task.doFirst {
-            def debugPort = ForkedDebuggerHelper.setupDebugger('${id()}', task.path, '$parameters', moduleDir)
-            def jvmArgs = task.jvmArgs.findAll{!it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp')}
-            jvmArgs << ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + ForkedDebuggerHelper.addrFromProperty +':' + debugPort
-            task.jvmArgs = jvmArgs
-          }
-          task.doLast {
-              ForkedDebuggerHelper.signalizeFinish('${id()}', task.path)
-          }
+        def jvmTasks = taskGraph.allTasks.findAll { task -> task instanceof JavaForkOptions }
+        def matchedTasks = debugAllIsEnabled ? jvmTasks : filterStartTasks(jvmTasks)
+        matchedTasks.each { task ->
+            def moduleDir = task.project.projectDir.path
+            task.doFirst {
+                def debugPort = ForkedDebuggerHelper.setupDebugger('${id()}', task.path, '$parameters', moduleDir)
+                def jvmArgs = task.jvmArgs.findAll { !it?.startsWith('-agentlib:jdwp') && !it?.startsWith('-Xrunjdwp') }
+                jvmArgs << ForkedDebuggerHelper.JVM_DEBUG_SETUP_PREFIX + ForkedDebuggerHelper.addrFromProperty + ':' + debugPort
+                task.jvmArgs = jvmArgs
+            }
+            task.doLast {
+                ForkedDebuggerHelper.signalizeFinish('${id()}', task.path)
+            }
         }
-      }
     }
     """.trimIndent().split("\n")
 }
