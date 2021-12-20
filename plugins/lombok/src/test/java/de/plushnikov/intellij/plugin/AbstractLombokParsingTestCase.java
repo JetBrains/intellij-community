@@ -156,12 +156,22 @@ public abstract class AbstractLombokParsingTestCase extends AbstractLombokLightC
 
     for (String modifier : PsiModifier.MODIFIERS) {
       boolean haveSameModifiers = afterModifierList.hasModifierProperty(modifier) == beforeModifierList.hasModifierProperty(modifier);
-      final PsiMethod afterModifierListParentMethod = PsiTreeUtil.getParentOfType(afterModifierList, PsiMethod.class);
-      final PsiClass afterModifierListParentClass = PsiTreeUtil.getParentOfType(afterModifierList, PsiClass.class);
-      assertTrue(modifier +
-                 " Modifier is not equal for " +
-                 (null == afterModifierListParentMethod ? afterModifierListParentClass.getName() : afterModifierListParentMethod.getText()),
-                 haveSameModifiers);
+      if (!haveSameModifiers) {
+        final PsiMethod afterModifierListParentMethod = PsiTreeUtil.getContextOfType(afterModifierList, PsiMethod.class);
+        final PsiMethod afterModifierListParentField = PsiTreeUtil.getContextOfType(afterModifierList, PsiMethod.class);
+        final PsiClass afterModifierListParentClass = PsiTreeUtil.getContextOfType(afterModifierList, PsiClass.class);
+        final String target;
+        if (afterModifierListParentMethod != null) {
+          target = afterModifierListParentMethod.getText();
+        }
+        else if (afterModifierListParentField != null) {
+          target = afterModifierListParentField.getName();
+        }
+        else {
+          target = afterModifierListParentClass.getName();
+        }
+        fail(modifier + " Modifier is not equal for " + target);
+      }
     }
 
     compareAnnotations(beforeModifierList, afterModifierList);
