@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.events.EventFields.String
 import com.intellij.internal.statistic.eventLog.events.EventFields.StringValidatedByRegexp
 import com.intellij.internal.statistic.eventLog.events.EventFields.Version
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
+import com.intellij.internal.statistic.service.fus.collectors.AllowedDuringStartupCollector
 import com.intellij.openapi.util.SystemInfo
 import org.jetbrains.annotations.ApiStatus
 import java.io.IOException
@@ -17,7 +18,7 @@ import java.time.OffsetDateTime
 import java.util.*
 import kotlin.streams.asSequence
 
-internal class OsDataCollector : ApplicationUsagesCollector() {
+internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStartupCollector {
   private val OS_NAMES = listOf("Windows", "Mac", "Linux", "FreeBSD", "Solaris", "Other")
 
   private val LOCALES = listOf(
