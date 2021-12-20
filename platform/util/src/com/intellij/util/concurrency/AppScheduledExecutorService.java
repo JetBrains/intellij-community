@@ -1,10 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.JobFutureTask;
-import com.intellij.openapi.progress.JobRunnable;
+import com.intellij.openapi.progress.ContextFutureTask;
+import com.intellij.openapi.progress.ContextRunnable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
@@ -144,7 +144,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     @Override
     protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
       if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.cancellation.propagate")) {
-        return JobFutureTask.jobRunnableFuture(callable);
+        return ContextFutureTask.contextRunnableFuture(callable);
       }
       else {
         return super.newTaskFor(callable);
@@ -154,7 +154,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     @Override
     public void execute(@NotNull Runnable command) {
       if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.cancellation.propagate")) {
-        super.execute(JobRunnable.jobRunnable(command));
+        super.execute(ContextRunnable.contextRunnable(command));
       }
       else {
         super.execute(command);

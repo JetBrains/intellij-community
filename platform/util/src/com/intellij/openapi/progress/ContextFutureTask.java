@@ -14,12 +14,12 @@ import static com.intellij.openapi.progress.Cancellation.withJob;
 import static kotlinx.coroutines.CompletableDeferredKt.CompletableDeferred;
 
 @Internal
-public final class JobFutureTask<V> extends FutureTask<V> {
+public final class ContextFutureTask<V> extends FutureTask<V> {
 
   private final @NotNull CompletableDeferred<V> myJob;
 
-  private JobFutureTask(@NotNull CompletableDeferred<V> job, @NotNull Callable<V> callable) {
-    super(jobCallable(job, callable));
+  private ContextFutureTask(@NotNull CompletableDeferred<V> job, @NotNull Callable<V> callable) {
+    super(contextCallable(job, callable));
     myJob = job;
   }
 
@@ -37,15 +37,18 @@ public final class JobFutureTask<V> extends FutureTask<V> {
    * <li>The returned Future cancels its job when it's cancelled.</li>
    * </ul>
    */
-  public static <V> @NotNull RunnableFuture<V> jobRunnableFuture(@NotNull Callable<V> callable) {
-    return new JobFutureTask<>(CompletableDeferred(currentJob()), callable);
+  public static <V> @NotNull RunnableFuture<V> contextRunnableFuture(@NotNull Callable<V> callable) {
+    return new ContextFutureTask<>(CompletableDeferred(currentJob()), callable);
   }
 
   /**
    * Creates a Callable instance, which, when called, associates the calling thread with a job,
    * invokes original callable, and completes the job its result.
    */
-  private static @NotNull <V> Callable<V> jobCallable(@NotNull CompletableDeferred<V> deferred, @NotNull Callable<? extends V> callable) {
+  private static @NotNull <V> Callable<V> contextCallable(
+    @NotNull CompletableDeferred<V> deferred,
+    @NotNull Callable<? extends V> callable
+  ) {
     return () -> {
       try {
         V result = withJob(deferred, callable::call);
