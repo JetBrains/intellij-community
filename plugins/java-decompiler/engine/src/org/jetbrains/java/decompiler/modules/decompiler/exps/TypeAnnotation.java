@@ -1,6 +1,11 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.java.decompiler.struct.StructTypePath;
+
+import java.util.List;
+
 public class TypeAnnotation {
   public static final int CLASS_TYPE_PARAMETER = 0x00;
   public static final int METHOD_TYPE_PARAMETER = 0x01;
@@ -26,12 +31,12 @@ public class TypeAnnotation {
   public static final int TYPE_ARG_METHOD_REF = 0x4B;
 
   private final int target;
-  private final byte[] path;
-  private final AnnotationExprent annotation;
+  private final @NotNull List<StructTypePath> paths;
+  private final @NotNull AnnotationExprent annotation;
 
-  public TypeAnnotation(int target, byte[] path, AnnotationExprent annotation) {
+  public TypeAnnotation(int target, @NotNull List<StructTypePath> paths, @NotNull AnnotationExprent annotation) {
     this.target = target;
-    this.path = path;
+    this.paths = paths;
     this.annotation = annotation;
   }
 
@@ -44,10 +49,10 @@ public class TypeAnnotation {
   }
 
   public boolean isTopLevel() {
-    return path == null;
+    return paths.isEmpty();
   }
 
-  public AnnotationExprent getAnnotation() {
+  public @NotNull AnnotationExprent getAnnotation() {
     return annotation;
   }
 }
