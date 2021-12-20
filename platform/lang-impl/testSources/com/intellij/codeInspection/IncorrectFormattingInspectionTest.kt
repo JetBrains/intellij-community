@@ -16,6 +16,8 @@ class IncorrectFormattingInspectionTest : BasePlatformTestCase() {
   fun testBodyExtraSpace() = doTest(showDetailedWarnings = true)
   fun testBodyExtraLine() = doTest(showDetailedWarnings = true)
 
+  fun testInvalidFile() = doTest()
+
   private fun doTest(showDetailedWarnings: Boolean = false, extension: String = "xml") {
     myFixture.enableInspections(IncorrectFormattingInspection(showDetailedWarnings))
     myFixture.testHighlighting(true, false, true, "${getTestName(true)}.$extension")

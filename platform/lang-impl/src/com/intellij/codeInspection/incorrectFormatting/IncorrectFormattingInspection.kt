@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ui.InspectionOptionsPanel
 import com.intellij.formatting.virtualFormattingListener
 import com.intellij.lang.LangBundle
+import com.intellij.lang.LanguageFormatting
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.util.Key
@@ -30,10 +31,13 @@ class IncorrectFormattingInspection(
     // Skip files we are not able to fix
     if (!file.isWritable) return null
 
-    // TODO compare with kotlin's implementation
     val virtualFile = file.virtualFile ?: return null
     val fileIndex = ProjectRootManager.getInstance(file.project).fileIndex
     if (!fileIndex.isInSource(virtualFile)) return null
+
+    if (!LanguageFormatting.INSTANCE.isAutoFormatAllowed(file)) {
+      return null
+    }
 
     val document = PsiDocumentManager.getInstance(file.project).getDocument(file) ?: return null
     val changeCollector = ChangeCollectingListener(file, document.text)
