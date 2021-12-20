@@ -12,10 +12,7 @@ import com.intellij.codeInspection.dataFlow.types.DfReferenceType
 import com.intellij.codeInspection.dataFlow.types.DfType
 import com.intellij.codeInspection.dataFlow.types.DfTypes
 import com.intellij.codeInspection.dataFlow.value.RelationType
-import com.intellij.psi.CommonClassNames
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiPrimitiveType
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
@@ -111,7 +108,7 @@ private fun KotlinType.toDfTypeNotNullable(context: KtElement): DfType {
                     else -> {
                         val psiClass =
                             JavaPsiFacade.getInstance(context.project).findClass(typeFqName, context.resolveScope) ?: return DfType.TOP
-                        if (descriptor.kind == ClassKind.OBJECT) {
+                        if (descriptor.kind == ClassKind.OBJECT && psiClass.hasModifierProperty(PsiModifier.FINAL)) {
                             TypeConstraints.singleton(psiClass)
                         } else {
                             TypeConstraints.exactClass(psiClass).instanceOf()
