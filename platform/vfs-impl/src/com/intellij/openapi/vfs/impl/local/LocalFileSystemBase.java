@@ -412,11 +412,15 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
       }
     }
 
+    long l = file.getLength();
+    if (l >= FileUtilRt.LARGE_FOR_CONTENT_LOADING) throw new FileTooBigException(file.getPath());
+    int length = (int)l;
+    if (length < 0) throw new IOException("Invalid file length: " + length + ", " + file);
+    return loadFileContent(ioFile, length);
+  }
+
+  protected static byte @NotNull [] loadFileContent(@NotNull File ioFile, int length) throws IOException {
     try (InputStream stream = new FileInputStream(ioFile)) {
-      long l = file.getLength();
-      if (l >= FileUtilRt.LARGE_FOR_CONTENT_LOADING) throw new FileTooBigException(file.getPath());
-      int length = (int)l;
-      if (length < 0) throw new IOException("Invalid file length: " + length + ", " + file);
       // io_util.c#readBytes allocates custom native stack buffer for io operation with malloc if io request > 8K
       // so let's do buffered requests with buffer size 8192 that will use stack allocated buffer
       return loadBytes(length <= 8192 ? stream : new BufferedInputStream(stream), length);
