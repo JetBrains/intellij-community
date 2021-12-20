@@ -105,6 +105,7 @@ public class GeneralModuleTypeForIdea extends GeneralModuleType {
                                                                                               public void afterActionPerformed(@NotNull AnAction action,
                                                                                                                                @NotNull AnActionEvent event,
                                                                                                                                @NotNull AnActionResult result) {
+                                                                                                tooltip.gotIt();
                                                                                                 Disposer.dispose(tooltip);
                                                                                               }
                                                                                             });
