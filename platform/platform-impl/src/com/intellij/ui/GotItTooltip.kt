@@ -418,9 +418,7 @@ class GotItTooltip(@NonNls val id: String,
     return balloon
   }
 
-  fun gotIt() {
-    gotIt("$PROPERTY_PREFIX.$id")
-  }
+  fun gotIt() = gotIt("$PROPERTY_PREFIX.$id")
 
   private fun scheduleNext(tooltip: GotItTooltip, show: () -> Unit) {
     nextToShow = tooltip
