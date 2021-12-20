@@ -10,6 +10,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.util.ui.JBInsets
@@ -44,6 +45,11 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
         repaint()
       }
     })
+
+    val actionLeft = DumbAwareAction.create { moveSelection(-1) }
+    actionLeft.registerCustomShortcutSet(ActionManager.getInstance().getAction("SegmentedButton-left").shortcutSet, this)
+    val actionRight = DumbAwareAction.create { moveSelection(1) }
+    actionRight.registerCustomShortcutSet(ActionManager.getInstance().getAction("SegmentedButton-right").shortcutSet, this)
   }
 
   override fun setEnabled(enabled: Boolean) {
@@ -94,6 +100,19 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
     // In such case SegmentedButtonToolbar will keep narrow width for preferred size because of ActionToolbar.WRAP_LAYOUT_POLICY
     updateActionsImmediately(true)
   }
+
+  private fun moveSelection(step: Int) {
+    if (components.isEmpty()) {
+      return
+    }
+
+    val selectedIndex = components.indexOfFirst { (it as? SegmentedButton)?.isSelected == true }
+    val newSelectedIndex = if (selectedIndex < 0) 0 else (selectedIndex + step).coerceIn(0, components.size - 1)
+    if (selectedIndex != newSelectedIndex) {
+      (components.getOrNull(selectedIndex) as? SegmentedButton)?.isSelected = false
+      (components[newSelectedIndex] as? SegmentedButton)?.click()
+    }
+  }
 }
 
 @ApiStatus.Experimental
@@ -135,6 +154,10 @@ private class SegmentedButton(
     val preferredSize = super.getPreferredSize()
     return Dimension(preferredSize.width + spacingConfiguration.segmentedButtonHorizontalGap * 2,
                      preferredSize.height + spacingConfiguration.segmentedButtonVerticalGap * 2)
+  }
+
+  fun setSelected(selected: Boolean) {
+    Toggleable.setSelected(myPresentation, selected)
   }
 }
 
