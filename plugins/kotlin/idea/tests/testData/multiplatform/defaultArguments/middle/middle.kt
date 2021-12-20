@@ -2,17 +2,17 @@ package sample
 
 import sample.A.Companion.companionExtensionFunction
 
-actual class <!LINE_MARKER("descr='Has declaration in common module'")!>A<!> {
-    actual fun <!LINE_MARKER("descr='Has declaration in common module'")!>memberFunction<!>(x: Int, y: String) = Unit
-    actual companion <!LINE_MARKER("descr='Has declaration in common module'")!>object<!> {
-        actual fun <!LINE_MARKER("descr='Has declaration in common module'")!>companionFunction<!>(x: Int, y: String) = Unit
-        actual fun String.<!LINE_MARKER("descr='Has declaration in common module'")!>companionExtensionFunction<!>(x: Int, y: String) = Unit
+actual class <!LINE_MARKER("descr='Has expects in top module'")!>A<!> {
+    actual fun <!LINE_MARKER("descr='Has expects in top module'")!>memberFunction<!>(x: Int, y: String) = Unit
+    actual companion <!LINE_MARKER("descr='Has expects in top module'")!>object<!> {
+        actual fun <!LINE_MARKER("descr='Has expects in top module'")!>companionFunction<!>(x: Int, y: String) = Unit
+        actual fun String.<!LINE_MARKER("descr='Has expects in top module'")!>companionExtensionFunction<!>(x: Int, y: String) = Unit
     }
 }
 
-actual fun <!LINE_MARKER("descr='Has declaration in common module'")!>topLevelFunction<!>(x: Int, y: String) = Unit
+actual fun <!LINE_MARKER("descr='Has expects in top module'")!>topLevelFunction<!>(x: Int, y: String) = Unit
 
-actual fun String.<!LINE_MARKER("descr='Has declaration in common module'")!>topLevelExtensionFunction<!>(x: Int, y: String) = Unit
+actual fun String.<!LINE_MARKER("descr='Has expects in top module'")!>topLevelExtensionFunction<!>(x: Int, y: String) = Unit
 
 fun testMiddle() {
     A().memberFunction(<!NO_VALUE_FOR_PARAMETER!>)<!>

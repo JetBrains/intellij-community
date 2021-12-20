@@ -7,8 +7,7 @@ import com.intellij.openapi.util.NlsContexts
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.caches.project.ModuleSourceInfo
-import org.jetbrains.kotlin.idea.caches.project.implementedDescriptors
-import org.jetbrains.kotlin.idea.caches.project.implementingDescriptors
+import org.jetbrains.kotlin.idea.caches.project.allImplementingDescriptors
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToParameterDescriptorIfAny
 import org.jetbrains.kotlin.idea.core.toDescriptor
@@ -24,16 +23,21 @@ import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
-import org.jetbrains.kotlin.resolve.multiplatform.ExpectActualCompatibility
-import org.jetbrains.kotlin.resolve.multiplatform.ExpectedActualResolver
-import org.jetbrains.kotlin.resolve.multiplatform.onlyFromThisModule
+import org.jetbrains.kotlin.resolve.multiplatform.*
 
-fun MemberDescriptor.expectedDescriptors() =
-    (module.implementedDescriptors + module)
-        .mapNotNull { it.declarationOf(this) }
+fun MemberDescriptor.expectedDescriptors(): List<DeclarationDescriptor> {
+    val expectedCompatibilityMap = ExpectedActualResolver.findExpectedForActual(this)
+        ?: return emptyList()
+
+    return expectedCompatibilityMap[ExpectActualCompatibility.Compatible]
+        ?: expectedCompatibilityMap.values.flatten()
+}
+
 
 // TODO: Sort out the cases with multiple expected descriptors
-fun MemberDescriptor.expectedDescriptor() = expectedDescriptors().firstOrNull()
+fun MemberDescriptor.expectedDescriptor(): DeclarationDescriptor? {
+    return expectedDescriptors().firstOrNull()
+}
 
 fun KtDeclaration.expectedDeclarationIfAny(): KtDeclaration? {
     val expectedDescriptor = (toDescriptor() as? MemberDescriptor)?.expectedDescriptor() ?: return null
@@ -69,25 +73,17 @@ fun KtParameter.liftToExpected(): KtParameter? {
     return DescriptorToSourceUtils.descriptorToDeclaration(expectedDescriptor) as? KtParameter
 }
 
-fun ModuleDescriptor.hasDeclarationOf(descriptor: MemberDescriptor) = declarationOf(descriptor) != null
-
-private fun ModuleDescriptor.declarationOf(descriptor: MemberDescriptor): DeclarationDescriptor? =
-    with(ExpectedActualResolver) {
-        val expectedCompatibilityMap = findExpectedForActual(descriptor, onlyFromThisModule(this@declarationOf))
-        expectedCompatibilityMap?.get(ExpectActualCompatibility.Compatible)?.firstOrNull()
-            ?: expectedCompatibilityMap?.values?.flatten()?.firstOrNull()
-    }
-
 fun ModuleDescriptor.hasActualsFor(descriptor: MemberDescriptor) =
-    actualsFor(descriptor).isNotEmpty()
+    descriptor.findActualInModule(this).isNotEmpty()
 
-fun ModuleDescriptor.actualsFor(descriptor: MemberDescriptor, checkCompatible: Boolean = false): List<DeclarationDescriptor> =
-    with(ExpectedActualResolver) {
-        if (checkCompatible) {
-            descriptor.findCompatibleActualForExpected(this@actualsFor)
-        } else {
-            descriptor.findAnyActualForExpected(this@actualsFor)
-        }
+private fun MemberDescriptor.findActualInModule(
+    module: ModuleDescriptor,
+    checkCompatible: Boolean = false
+): List<DeclarationDescriptor> =
+    if (checkCompatible) {
+        findCompatibleActualsForExpected(module, onlyFromThisModule(module))
+    } else {
+        findAnyActualsForExpected(module, onlyFromThisModule(module))
     }.filter { (it as? MemberDescriptor)?.isEffectivelyActual() == true }
 
 private fun MemberDescriptor.isEffectivelyActual(checkConstructor: Boolean = true): Boolean =
@@ -102,8 +98,7 @@ private fun MemberDescriptor.isEnumEntryInActual() =
 fun DeclarationDescriptor.actualsForExpected(): Collection<DeclarationDescriptor> {
     if (this is MemberDescriptor) {
         if (!this.isExpect) return emptyList()
-
-        return (module.implementingDescriptors + module).flatMap { it.actualsFor(this) }
+        return (module.allImplementingDescriptors + module).flatMap { module -> this.findActualInModule(module) }
     }
 
     if (this is ValueParameterDescriptor) {

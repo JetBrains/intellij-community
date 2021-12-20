@@ -2,12 +2,12 @@
 
 package sample
 
-expect interface <!LINE_MARKER("descr='Has actuals in common'"), LINE_MARKER("descr='Is subclassed by B [common-1] B [jvm]  Click or press ... to navigate'")!>A<!> {
-    fun <!LINE_MARKER("descr='Has actuals in common'")!>common_1_A<!>()
+expect interface <!LINE_MARKER("descr='Has actuals in common-2 module'"), LINE_MARKER("descr='Is subclassed by B [common-1] B [jvm]  Click or press ... to navigate'")!>A<!> {
+    fun <!LINE_MARKER("descr='Has actuals in common-2 module'")!>common_1_A<!>()
 }
 
-expect interface B : A {
-    fun common_1_B()
+expect interface <!LINE_MARKER("descr='Has actuals in jvm module'")!>B<!> : A {
+    fun <!LINE_MARKER("descr='Has actuals in jvm module'")!>common_1_B<!>()
 }
 
 typealias A_Common_1_Alias = A

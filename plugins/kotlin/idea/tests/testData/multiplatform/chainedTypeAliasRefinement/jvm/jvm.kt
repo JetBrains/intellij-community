@@ -1,4 +1,4 @@
-actual typealias <!LINE_MARKER("descr='Has declaration in common module'")!>JvmJs<!> = Long
+actual typealias <!LINE_MARKER("descr='Has expects in jvmJs module'")!>JvmJs<!> = Long
 
 fun jvmTest(arg: Common) {
     takeCommon(arg)
