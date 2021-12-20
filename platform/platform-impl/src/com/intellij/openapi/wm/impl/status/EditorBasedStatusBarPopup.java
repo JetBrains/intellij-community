@@ -52,7 +52,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   private final PopupState<JBPopup> myPopupState = PopupState.forPopup();
   private final JPanel myComponent;
   private final boolean myWriteableFileRequired;
-  protected volatile boolean actionEnabled;
+  protected boolean actionEnabled;
   private final Alarm update;
   // store editor here to avoid expensive and EDT-only getSelectedEditor() retrievals
   private volatile Reference<Editor> myEditor = new WeakReference<>(null);
