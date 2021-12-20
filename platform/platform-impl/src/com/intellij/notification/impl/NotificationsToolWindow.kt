@@ -639,7 +639,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
 
 private class NotificationComponent(val notification: Notification,
                                     timeComponents: ArrayList<JLabel>,
-                                    val singleSelectionHandler: SingleTextSelectionHandler) : JPanel(BorderLayout(JBUI.scale(7), 0)) {
+                                    val singleSelectionHandler: SingleTextSelectionHandler) : JPanel() {
 
   companion object {
     val BG_COLOR = UIUtil.getListBackground()
@@ -664,6 +664,31 @@ private class NotificationComponent(val notification: Notification,
     isOpaque = true
     background = BG_COLOR
     border = JBUI.Borders.empty(10, 10, 10, 0)
+
+    layout = object : BorderLayout(JBUI.scale(7), 0) {
+      private var myEastComponent: Component? = null
+
+      override fun addLayoutComponent(name: String?, comp: Component) {
+        if (EAST == name) {
+          myEastComponent = comp
+        }
+        else {
+          super.addLayoutComponent(name, comp)
+        }
+      }
+
+      override fun layoutContainer(target: Container) {
+        super.layoutContainer(target)
+        if (myEastComponent != null && myEastComponent!!.isVisible) {
+          val insets = target.insets
+          val height = target.height - insets.bottom - insets.top
+          val component = myEastComponent!!
+          component.setSize(component.width, height)
+          val d = component.preferredSize
+          component.setBounds(target.width - insets.right - d.width, insets.top, d.width, height)
+        }
+      }
+    }
 
     val iconPanel = JPanel(BorderLayout())
     iconPanel.isOpaque = false
@@ -827,6 +852,7 @@ private class NotificationComponent(val notification: Notification,
       panel.isOpaque = false
       panel.add(button, BorderLayout.NORTH)
       add(panel, BorderLayout.EAST)
+      setComponentZOrder(panel, 0)
     }
     else {
       val timeComponent = JBLabel(DateFormatUtil.formatPrettyDateTime(notification.timestamp))
