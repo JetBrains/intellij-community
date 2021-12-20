@@ -100,9 +100,6 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
           return ImportWeight.CLASS_ON_DEMAND_NESTED;
         }
 
-        // check if anything from the same package is already imported in the file:
-        //    people are likely to refer to the same subsystem as they're already working
-        if (containsImport(importedNames, packageName)) return ImportWeight.CLASS_HAS_SAME_PACKAGE_IMPORT;
         final PsiPackage placePackage = PLACE_PACKAGE.getValue(location);
         if (placePackage != null) {
           Module elementModule = ModuleUtilCore.findModuleForPsiElement(element);
@@ -110,6 +107,9 @@ public class ExplicitlyImportedWeigher extends ProximityWeigher {
             return topLevel ? ImportWeight.CLASS_DECLARED_IN_SAME_PACKAGE_TOP_LEVEL : ImportWeight.CLASS_DECLARED_IN_SAME_PACKAGE_NESTED;
           }
         }
+        // check if anything from the same package is already imported in the file:
+        //    people are likely to refer to the same subsystem as they're already working
+        if (containsImport(importedNames, packageName)) return ImportWeight.CLASS_HAS_SAME_PACKAGE_IMPORT;
       }
       return ImportWeight.UNKNOWN;
     }
