@@ -1,7 +1,6 @@
 package com.intellij.settingsSync
 
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
-import org.eclipse.jgit.lib.ObjectId
 
 /**
  * Records changes in the settings, merges changes made locally and remotely.
@@ -12,19 +11,26 @@ internal interface SettingsLog {
    * Records the current local state of the settings.
    */
   @RequiresBackgroundThread
-  fun recordLocalState(snapshot: SettingsSnapshot): ObjectId? // todo don't expose library type to API
+  fun applyLocalState(snapshot: SettingsSnapshot)
 
   /**
-   * Merges the state of the settings received from the server.
+   * Records the state of the settings received from the server.
    *
    * returns true if merge has happened, false in case of fast-forward
-   * todo improve the return value type API
    */
-  fun pull(snapshot: SettingsSnapshot): Boolean
-
   @RequiresBackgroundThread
-  fun getCurrentSnapshot(): SettingsSnapshot
+  fun applyRemoteState(snapshot: SettingsSnapshot): Boolean //todo improve the return value type API
 
+  /**
+   * Returns the current state of the settings as it is now from the SettingsLog point of view,
+   * i.e. the state after all completed apply and merge operations.
+   */
+  @RequiresBackgroundThread
+  fun collectCurrentSnapshot(): SettingsSnapshot
+
+  /**
+   * Tells the SettingsLog that the settings have been pushed successfully, to let the SettingsLog update its state accordingly.
+   */
   fun pushedSuccessfully()
 
 }

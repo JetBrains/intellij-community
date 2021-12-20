@@ -13,7 +13,6 @@ import com.intellij.util.io.*
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeResult.MergeStatus.*
 import org.eclipse.jgit.lib.Constants
-import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
@@ -94,14 +93,12 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   }
 
   @RequiresBackgroundThread
-  override fun recordLocalState(snapshot: SettingsSnapshot): ObjectId {
+  override fun applyLocalState(snapshot: SettingsSnapshot) {
     if (snapshot.fileStates.isEmpty()) { // todo move upwards?
       LOG.error("Don't record empty settings snapshot")
-      return repository.headCommit()
     }
 
-    val master = applySnapshotAndCommit(snapshot)
-    return master
+    applySnapshotAndCommit(snapshot)
   }
 
   private fun applySnapshotAndCommit(snapshot: SettingsSnapshot): RevCommit {
@@ -126,7 +123,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     remoteBranch = repository.headCommit()
   }
 
-  override fun pull(snapshot: SettingsSnapshot): Boolean { // todo improve return result API
+  override fun applyRemoteState(snapshot: SettingsSnapshot): Boolean { // todo improve return result API
     repository // make sure the repository is initialized // todo remove these dumb getters
 
     // todo check repository consistency before each operation: that we're on master, than rb is deleted, that there're no uncommitted changes
@@ -175,7 +172,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     repository.close()   // todo synchronize
   }
 
-  override fun getCurrentSnapshot(): SettingsSnapshot {   // todo check if there are uncommitted changes (should be none)
+  override fun collectCurrentSnapshot(): SettingsSnapshot {   // todo check if there are uncommitted changes (should be none)
     repository // make sure the repository is initialized
 
     val files = settingsSyncStorage.toFile().walkTopDown()
