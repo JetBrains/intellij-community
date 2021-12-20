@@ -103,7 +103,6 @@ public class SingleClassesTest {
   @Test public void testConstructorReference() { doTest("pkg/TestConstructorReference"); }
   @Test public void testMemberAnnotations() { doTest("pkg/TestMemberAnnotations"); }
   @Test public void testMoreAnnotations() { doTest("pkg/MoreAnnotations"); }
-  @Test public void testTypeAnnotations() { doTest("pkg/TypeAnnotations"); }
   @Test public void testStaticNameClash() { doTest("pkg/TestStaticNameClash"); }
   @Test public void testExtendingSubclass() { doTest("pkg/TestExtendingSubclass"); }
   @Test public void testSyntheticAccess() { doTest("pkg/TestSyntheticAccess"); }
@@ -178,6 +177,9 @@ public class SingleClassesTest {
     "sealed/RootWithInterfaceOuter", "sealed/ClassImplements", "sealed/ClassNonSealedExtendsImplements");
   }
   @Test public void testRootWithModule() { doTest("sealed/foo/RootWithModule", "sealed/bar/BarClassExtends");}
+  @Test public void testArrayTypeAnnotations() { doTest("typeAnnotations/ArrayTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D");
+  }
   @Test public void testInheritanceChainCycle() { doTest("pkg/TestInheritanceChainCycle"); }
   @Test public void testDynamicConstantPoolEntry() { doTest("java11/TestDynamicConstantPoolEntry"); }
 

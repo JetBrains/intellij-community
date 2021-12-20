@@ -279,7 +279,7 @@ public class ClassWriter {
   }
 
   public static void packageInfoToJava(StructClass cl, TextBuffer buffer) {
-    appendAnnotations(buffer, 0, cl, -1);
+    appendAnnotations(buffer, 0, 0, cl, -1);
 
     int index = cl.qualifiedName.lastIndexOf('/');
     String packageName = cl.qualifiedName.substring(0, index).replace('/', '.');
@@ -287,7 +287,7 @@ public class ClassWriter {
   }
 
   public static void moduleInfoToJava(StructClass cl, TextBuffer buffer) {
-    appendAnnotations(buffer, 0, cl, -1);
+    appendAnnotations(buffer, 0, 0, cl, -1);
 
     StructModuleAttribute moduleAttribute = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
 
@@ -409,7 +409,7 @@ public class ClassWriter {
       appendComment(buffer, "synthetic class", indent);
     }
 
-    appendAnnotations(buffer, indent, cl, -1);
+    appendAnnotations(buffer, 0, indent, cl, -1);
 
     buffer.appendIndent(indent);
 
@@ -557,7 +557,10 @@ public class ClassWriter {
       appendComment(buffer, "synthetic field", indent);
     }
 
-    appendAnnotations(buffer, indent, fd, TypeAnnotation.FIELD);
+    Map.Entry<VarType, GenericFieldDescriptor> fieldTypeData = getFieldTypeData(fd);
+    VarType fieldType = fieldTypeData.getKey();
+
+    appendAnnotations(buffer, fieldType.arrayDim, indent, fd, TypeAnnotation.FIELD);
 
     buffer.appendIndent(indent);
 
@@ -565,16 +568,18 @@ public class ClassWriter {
       appendModifiers(buffer, fd.getAccessFlags(), FIELD_ALLOWED, isInterface, FIELD_EXCLUDED);
     }
 
-    Map.Entry<VarType, GenericFieldDescriptor> fieldTypeData = getFieldTypeData(fd);
-    VarType fieldType = fieldTypeData.getKey();
     GenericFieldDescriptor descriptor = fieldTypeData.getValue();
+
+    final StructTypeAnnotationAttribute[] typeAnnotationAttributes = Arrays.stream(TYPE_ANNOTATION_ATTRIBUTES)
+      .map(attribute -> (StructTypeAnnotationAttribute)fd.getAttribute(attribute))
+      .toArray(StructTypeAnnotationAttribute[]::new);
 
     if (!isEnum) {
       if (descriptor != null) {
         buffer.append(GenericMain.getGenericCastTypeName(descriptor.type));
       }
       else {
-        buffer.append(ExprProcessor.getCastTypeName(fieldType));
+        buffer.append(ExprProcessor.getCastTypeName(fieldType, typeAnnotationAttributes));
       }
       buffer.append(' ');
     }
@@ -623,7 +628,7 @@ public class ClassWriter {
   }
 
   private static void recordComponentToJava(StructRecordComponent cd, TextBuffer buffer, boolean varArgComponent) {
-    appendAnnotations(buffer, -1, cd, TypeAnnotation.FIELD);
+    appendAnnotations(buffer, 0, -1, cd, TypeAnnotation.FIELD);
 
     Map.Entry<VarType, GenericFieldDescriptor> fieldTypeData = getFieldTypeData(cd);
     VarType fieldType = fieldTypeData.getKey();
@@ -800,7 +805,7 @@ public class ClassWriter {
         appendComment(buffer, "bridge method", indent);
       }
 
-      appendAnnotations(buffer, indent, mt, TypeAnnotation.METHOD_RETURN_TYPE);
+      appendAnnotations(buffer, 0, indent, mt, TypeAnnotation.METHOD_RETURN_TYPE);
 
       buffer.appendIndent(indent);
 
@@ -1134,7 +1139,7 @@ public class ClassWriter {
   private static final StructGeneralAttribute.Key<?>[] TYPE_ANNOTATION_ATTRIBUTES = {
     StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS, StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS};
 
-  private static void appendAnnotations(TextBuffer buffer, int indent, StructMember mb, int targetType) {
+  private static void appendAnnotations(TextBuffer buffer, int dims, int indent, StructMember mb, int targetType) {
     Set<String> filter = new HashSet<>();
 
     for (StructGeneralAttribute.Key<?> key : ANNOTATION_ATTRIBUTES) {
@@ -1154,7 +1159,7 @@ public class ClassWriter {
       }
     }
 
-    appendTypeAnnotations(buffer, indent, mb, targetType, -1, filter);
+    appendTypeAnnotations(buffer, dims, indent, mb, targetType, -1, filter);
   }
 
   private static void appendParameterAnnotations(TextBuffer buffer, StructMethod mt, int param) {
@@ -1174,15 +1179,15 @@ public class ClassWriter {
       }
     }
 
-    appendTypeAnnotations(buffer, -1, mt, TypeAnnotation.METHOD_PARAMETER, param, filter);
+    appendTypeAnnotations(buffer, 0, -1, mt, TypeAnnotation.METHOD_PARAMETER, param, filter);
   }
 
-  private static void appendTypeAnnotations(TextBuffer buffer, int indent, StructMember mb, int targetType, int index, Set<String> filter) {
+  private static void appendTypeAnnotations(TextBuffer buffer, int dims, int indent, StructMember mb, int targetType, int index, Set<String> filter) {
     for (StructGeneralAttribute.Key<?> key : TYPE_ANNOTATION_ATTRIBUTES) {
       StructTypeAnnotationAttribute attribute = (StructTypeAnnotationAttribute)mb.getAttribute(key);
       if (attribute != null) {
         for (TypeAnnotation annotation : attribute.getAnnotations()) {
-          if (annotation.isTopLevel() && annotation.getTargetType() == targetType && (index < 0 || annotation.getIndex() == index)) {
+          if (annotation.isTopLevel(dims) && annotation.getTargetType() == targetType && (index < 0 || annotation.getIndex() == index)) {
             String text = annotation.getAnnotation().toJava(indent, BytecodeMappingTracer.DUMMY).toString();
             if (!filter.contains(text)) {
               buffer.append(text);

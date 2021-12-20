@@ -31,6 +31,7 @@ public class TypeAnnotation {
   public static final int TYPE_ARG_METHOD_REF = 0x4B;
 
   private final int target;
+
   private final @NotNull List<StructTypePath> paths;
   private final @NotNull AnnotationExprent annotation;
 
@@ -48,11 +49,19 @@ public class TypeAnnotation {
     return target & 0x0FFFF;
   }
 
-  public boolean isTopLevel() {
-    return paths.isEmpty();
+  /**
+   * @param dims The amount of dimensions if the annotated type is an array type, 0 otherwise.
+   * @return Whether the type annotations is top level.
+   */
+  public boolean isTopLevel(int dims) {
+    return (dims == 0 && paths.isEmpty()) || (dims == paths.size());
   }
 
   public @NotNull AnnotationExprent getAnnotation() {
     return annotation;
+  }
+
+  public @NotNull List<StructTypePath> getPaths() {
+    return paths;
   }
 }

@@ -17,6 +17,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.attr.StructBootstrapMethodsAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
+import org.jetbrains.java.decompiler.struct.attr.StructTypeAnnotationAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
@@ -24,7 +25,6 @@ import org.jetbrains.java.decompiler.struct.consts.PrimitiveConstant;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
-import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.*;
 
@@ -678,14 +678,28 @@ public class ExprProcessor implements CodeConstants {
     throw new RuntimeException("invalid type");
   }
 
-  public static String getCastTypeName(VarType type) {
-    return getCastTypeName(type, true);
+  public static String getCastTypeName(VarType type, StructTypeAnnotationAttribute... attributes) {
+    return getCastTypeName(type, true, attributes);
   }
 
-  public static String getCastTypeName(VarType type, boolean getShort) {
-    StringBuilder s = new StringBuilder(getTypeName(type, getShort));
-    TextUtil.append(s, "[]", type.arrayDim);
-    return s.toString();
+  public static String getCastTypeName(VarType type, boolean getShort, StructTypeAnnotationAttribute... attributes) {
+    StringBuilder sb = new StringBuilder(getTypeName(type, getShort));
+    for (int i = 0; i < type.arrayDim; i++) {
+      for (StructTypeAnnotationAttribute attribute : attributes) {
+        if (attribute != null) {
+          for (TypeAnnotation annotation : attribute.getAnnotations()) {
+            if (i == annotation.getPaths().size()) {
+              String text = annotation.getAnnotation().toJava(0, BytecodeMappingTracer.DUMMY).toString();
+              sb.append(' ');
+              sb.append(text);
+              sb.append(' ');
+            }
+          }
+        }
+      }
+      sb.append("[]");
+    }
+    return sb.toString();
   }
 
   public static PrimitiveExpressionList getExpressionData(VarExprent var) {
