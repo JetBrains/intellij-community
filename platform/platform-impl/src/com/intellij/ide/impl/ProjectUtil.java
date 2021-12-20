@@ -320,6 +320,9 @@ public final class ProjectUtil extends ProjectUtilCore {
     return project;
   }
 
+  @ApiStatus.Internal
+  public static Boolean omitProcessorChoosingDialog = false;
+
   private static @Nullable Project chooseProcessorAndOpen(@NotNull List<? extends ProjectOpenProcessor> processors,
                                                           @NotNull VirtualFile virtualFile,
                                                           @NotNull OpenProjectTask options) {
@@ -330,6 +333,10 @@ public final class ProjectUtil extends ProjectUtilCore {
     else {
       processors.removeIf(it -> it instanceof PlatformProjectOpenProcessor);
       if (processors.size() == 1) {
+        processor = processors.get(0);
+      }
+      else if (omitProcessorChoosingDialog) {
+        LOG.warn("Omitting project processor dialog. Selecting the first one");
         processor = processors.get(0);
       }
       else {
@@ -360,7 +367,11 @@ public final class ProjectUtil extends ProjectUtilCore {
     }
     else {
       processors.removeIf(it -> it instanceof PlatformProjectOpenProcessor);
-      if (processors.size() == 1) {
+      if (processors.size() == 1 || omitProcessorChoosingDialog) {
+        processorFuture = CompletableFuture.completedFuture(processors.get(0));
+      }
+      else if (omitProcessorChoosingDialog) {
+        LOG.warn("Omitting project processor dialog. Selecting the first one");
         processorFuture = CompletableFuture.completedFuture(processors.get(0));
       }
       else {
