@@ -1,7 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.extensions.PluginId;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,20 +33,15 @@ public interface ConfigImportSettings {
     return true;
   }
 
-  /**
-   * @return true if bundled plugins should be downloaded from the plugin repository if they are missing
-   * in the current installation when importing settings from another product
-   */
-  default boolean shouldImportBundledPlugins() {
+  default boolean shouldImportPluginsFromOtherIde() {
     return false;
   }
 
   /**
-   * Determines whether bundled plugin from other product should be imported if bundled plugins importing enabled or not.
-   *
-   * @return true if plugin should be imported
+   * Allows to edit lists of plugins that are about to be migrated or downloaded during import
    */
-  default boolean shouldImport(@NotNull PluginId id, @Nullable String category) {
-    return true;
-  }
+  default void processPluginsToMigrate(@NotNull Path newConfigDir,
+                                       @NotNull Path oldConfigDir,
+                                       @NotNull List<IdeaPluginDescriptor> pluginsToMigrate,
+                                       @NotNull List<IdeaPluginDescriptor> pluginsToDownload) { }
 }
