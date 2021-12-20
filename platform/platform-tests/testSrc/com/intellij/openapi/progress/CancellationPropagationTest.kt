@@ -264,18 +264,4 @@ class CancellationPropagationTest : BasePlatformTestCase() {
     val loggedError = loggedError(canThrow)
     assertSame(t, loggedError)
   }
-
-  @Test
-  fun `unhandled manual JCE from execute`() {
-    val jce = JobCanceledException()
-    val canThrow = Semaphore(1)
-    withRootJob {
-      service.execute {
-        canThrow.timeoutWaitUp()
-        throw jce
-      }
-    }
-    val loggedError = loggedError(canThrow) as IllegalStateException
-    assertSame(jce, loggedError.cause)
-  }
 }

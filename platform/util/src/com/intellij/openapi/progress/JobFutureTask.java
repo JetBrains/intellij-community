@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
-import com.intellij.openapi.application.AccessToken;
 import kotlinx.coroutines.CompletableDeferred;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -48,13 +47,10 @@ public final class JobFutureTask<V> extends FutureTask<V> {
    */
   private static @NotNull <V> Callable<V> jobCallable(@NotNull CompletableDeferred<V> deferred, @NotNull Callable<? extends V> callable) {
     return () -> {
-      try (AccessToken ignored = withJob(deferred)) {
-        V result = callable.call();
+      try {
+        V result = withJob(deferred, callable::call);
         deferred.complete(result);
         return result;
-      }
-      catch (JobCanceledException e) {
-        throw deferred.getCancellationException();
       }
       catch (Throwable e) {
         deferred.completeExceptionally(e);

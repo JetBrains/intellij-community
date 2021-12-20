@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
-import com.intellij.openapi.application.AccessToken;
 import kotlinx.coroutines.CompletableDeferred;
 import kotlinx.coroutines.CompletableJob;
 import kotlinx.coroutines.JobKt;
@@ -27,14 +26,12 @@ public final class JobRunnable implements Runnable {
 
   @Override
   public void run() {
-    try (AccessToken ignored = withJob(myJob)) {
-      myRunnable.run();
+    try {
+      withJob(myJob, () -> {
+        myRunnable.run();
+        return null;
+      });
       myJob.complete();
-    }
-    catch (JobCanceledException e) {
-      if (!myJob.isCancelled()) {
-        throw new IllegalStateException("JobCanceledException must be thrown by ProgressManager.checkCanceled()", e);
-      }
     }
     catch (CancellationException e) {
       myJob.completeExceptionally(e);
