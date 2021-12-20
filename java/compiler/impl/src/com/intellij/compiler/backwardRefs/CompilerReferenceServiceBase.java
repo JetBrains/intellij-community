@@ -40,6 +40,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.util.Function;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
@@ -48,6 +49,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntCollection;
 import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -460,6 +462,17 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     @Nullable CompilerRef provide(@NotNull NameEnumerator nameEnumerator) throws IOException;
   }
 
+  /**
+   * @deprecated use {@link #getDirectInheritorsNames(CompilerRefProvider)}
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
+  @Deprecated
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
+  public @NotNull SearchId @Nullable [] getDirectInheritorsNames(@NotNull Function<? super @NotNull NameEnumerator, ? extends @Nullable CompilerRef> compilerRefFunction) {
+    return getDirectInheritorsNames((CompilerRefProvider) nameEnumerator -> compilerRefFunction.fun(nameEnumerator));
+  }
+
+  @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public @NotNull SearchId @Nullable [] getDirectInheritorsNames(@NotNull CompilerRefProvider compilerRefFunction) {
     if (!myReadDataLock.tryLock()) return null;
     try {
