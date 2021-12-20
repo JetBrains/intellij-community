@@ -178,6 +178,11 @@ public class FE1LegacyUastTypesTestGenerated extends AbstractFE1LegacyUastTypesT
         runTest("testData/InnerNonFixedTypeVariable.kt");
     }
 
+    @TestMetadata("LambdaExpressionFunctionalInterfaceType.kt")
+    public void testLambdaExpressionFunctionalInterfaceType() throws Exception {
+        runTest("testData/LambdaExpressionFunctionalInterfaceType.kt");
+    }
+
     @TestMetadata("LambdaParameters.kt")
     public void testLambdaParameters() throws Exception {
         runTest("testData/LambdaParameters.kt");
