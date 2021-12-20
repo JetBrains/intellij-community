@@ -482,7 +482,6 @@ final class ActionUpdater {
         return Collections.emptyList();
       }
       if (isPopup) {
-        presentation.setPerformGroup(presentation.isPerformGroup() || canBePerformed(actionGroup, strategy));
         boolean canBePerformed = presentation.isPerformGroup();
         boolean performOnly = canBePerformed && (
           !hasVisible || Boolean.TRUE.equals(presentation.getClientProperty(ActionMenu.SUPPRESS_SUBMENU)) ||
@@ -606,6 +605,9 @@ final class ActionUpdater {
 
     Presentation presentation = strategy.update.fun(action);
     if (presentation != null) {
+      presentation.setPerformGroup(
+        action instanceof ActionGroup && presentation.isPopupGroup() &&
+        (presentation.isPerformGroup() || canBePerformed((ActionGroup)action, strategy)));
       myUpdatedPresentations.put(action, presentation);
     }
     return presentation;
