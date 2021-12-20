@@ -23,6 +23,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.io.keyStorage.AppendableObjectStorage;
 import com.intellij.util.io.keyStorage.AppendableStorageBackedByResizableMappedFile;
 import com.intellij.util.io.keyStorage.InlinedKeyStorage;
@@ -573,6 +574,10 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
   }
 
   protected void markCorrupted() {
+    if (IndexDebugProperties.IS_UNIT_TEST_MODE) {
+      dumpKeysOnCorruption();
+    }
+
     lockStorageWrite();
     try {
       if (!myCorrupted) {
@@ -590,6 +595,9 @@ public abstract class PersistentEnumeratorBase<Data> implements DataEnumeratorEx
     finally {
       unlockStorageWrite();
     }
+  }
+
+  protected void dumpKeysOnCorruption() {
   }
 
   protected boolean trySelfHeal() {
