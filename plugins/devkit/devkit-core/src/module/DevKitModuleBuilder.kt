@@ -16,10 +16,13 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
 import com.intellij.openapi.util.Key
+import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
 import com.intellij.pom.java.LanguageLevel
+import com.intellij.ui.HyperlinkLabel
 import com.intellij.ui.layout.*
 import com.intellij.util.lang.JavaVersion
+import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevKitFileTemplatesFactory
 import java.util.function.Supplier
@@ -129,11 +132,24 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
     }
 
     override fun addFieldsAfter(layout: LayoutBuilder) {
-      // todo Help links
-
-      // [1] How to build plugin for JetBrains IDEs: https://plugins.jetbrains.com/docs/intellij/intellij-platform.html
-      // [2] GitHub template: https://github.com/JetBrains/intellij-platform-plugin-template
+      layout.titledRow(DevKitBundle.message("module.builder.resources.title")) {
+        row {
+          hyperLink(DevKitBundle.message("module.builder.how.to.link"),
+                    "https://plugins.jetbrains.com/docs/intellij/intellij-platform.html")
+        }
+        row {
+          hyperLink(DevKitBundle.message("module.builder.github.template.link"),
+                    "https://github.com/JetBrains/intellij-platform-plugin-template")
+        }
+      }
     }
+  }
+
+  private fun Row.hyperLink(@Nls title: String, @NlsSafe url: String) {
+    val hyperlinkLabel = HyperlinkLabel(title)
+    hyperlinkLabel.setHyperlinkTarget(url)
+    hyperlinkLabel.toolTipText = url
+    this.component(hyperlinkLabel)
   }
 
   private enum class PluginType(
