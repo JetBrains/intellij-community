@@ -96,7 +96,7 @@ class BunchFileCheckInHandlerFactory : CheckinHandlerFactory() {
                 forgottenFiles.map { it.relativeTo(projectBasePath) }
             } ?: forgottenFiles
 
-            var filePaths = paths.map(Path::pathString).sorted()
+            var filePaths = paths.map { it.pathString }.sorted()
             if (filePaths.size > 15) {
                 filePaths = filePaths.take(15) + "..."
             }
