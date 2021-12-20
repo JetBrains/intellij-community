@@ -453,27 +453,21 @@ public final class HighlightUtil {
   }
 
   @Nullable
-  static HighlightInfo checkVarTypeSelfReferencing(PsiVariable resolved, PsiReferenceExpression ref) {
-    if (PsiTreeUtil.isAncestor(resolved.getInitializer(), ref, false)) {
-      PsiTypeElement typeElement = resolved.getTypeElement();
-      if (typeElement != null && typeElement.isInferredType()) {
-        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
-          .descriptionAndTooltip(JavaErrorBundle.message("lvti.selfReferenced", resolved.getName()))
-          .range(ref).create();
-      }
+  static HighlightInfo checkVarTypeSelfReferencing(PsiLocalVariable resolved, PsiReferenceExpression ref) {
+    if (PsiTreeUtil.isAncestor(resolved.getInitializer(), ref, false) && resolved.getTypeElement().isInferredType()) {
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+        .descriptionAndTooltip(JavaErrorBundle.message("lvti.selfReferenced", resolved.getName()))
+        .range(ref).create();
     }
     return null;
   }
   
   static HighlightInfo checkVarTypeApplicability(@NotNull PsiVariable variable) {
-    PsiTypeElement typeElement = variable.getTypeElement();
-    if (typeElement != null && typeElement.isInferredType()) {
-      if (variable instanceof PsiLocalVariable) {
-        PsiElement parent = variable.getParent();
-        if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
-          String message = JavaErrorBundle.message("lvti.compound");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(variable).create();
-        }
+    if (variable instanceof PsiLocalVariable && variable.getTypeElement().isInferredType()) {
+      PsiElement parent = variable.getParent();
+      if (parent instanceof PsiDeclarationStatement && ((PsiDeclarationStatement)parent).getDeclaredElements().length > 1) {
+        String message = JavaErrorBundle.message("lvti.compound");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(variable).create();
       }
     }
     return null;
@@ -496,7 +490,7 @@ public final class HighlightUtil {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
         }
 
-        if (isArray(variable)) {
+        if (isArrayDeclaration(variable)) {
           String message = JavaErrorBundle.message("lvti.array");
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
         }
@@ -513,7 +507,7 @@ public final class HighlightUtil {
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
         }
       }
-      else if (variable instanceof PsiParameter && variable.getParent() instanceof PsiParameterList && isArray(variable)) {
+      else if (variable instanceof PsiParameter && variable.getParent() instanceof PsiParameterList && isArrayDeclaration(variable)) {
         String message = JavaErrorBundle.message("lvti.array");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
       }
@@ -522,7 +516,7 @@ public final class HighlightUtil {
     return null;
   }
 
-  private static boolean isArray(@NotNull PsiVariable variable) {
+  private static boolean isArrayDeclaration(@NotNull PsiVariable variable) {
     // Java-style 'var' arrays are prohibited by the parser; for C-style ones, looking for a bracket is enough
     return ContainerUtil.or(variable.getChildren(), e -> PsiUtil.isJavaToken(e, JavaTokenType.LBRACKET));
   }
