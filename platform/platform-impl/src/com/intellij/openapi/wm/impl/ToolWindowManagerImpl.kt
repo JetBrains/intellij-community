@@ -397,11 +397,14 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
     connection.subscribe(ToolWindowManagerListener.TOPIC, dispatcher.multicaster)
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, object : FileEditorManagerListener {
       override fun fileClosed(source: FileEditorManager, file: VirtualFile) {
-        focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
-          if (!FileEditorManager.getInstance(project).hasOpenFiles()) {
-            focusToolWindowByDefault()
-          }
-        })
+        ApplicationManager.getApplication().invokeLater(
+          {
+            focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
+              if (!FileEditorManager.getInstance(project).hasOpenFiles()) {
+                focusToolWindowByDefault()
+              }
+            })
+          })
       }
     })
 
