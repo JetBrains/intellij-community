@@ -3,6 +3,8 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.actions.VcsFacade;
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
+import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -190,6 +192,12 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     if (ProjectScope.getLibrariesScope(project).contains(virtualFile) && !fileIndex.isInContent(virtualFile)) return false;
 
     return !SingleRootFileViewProvider.isTooLargeForIntelligence(virtualFile);
+  }
+
+  @Override
+  public boolean runEssentialHighlightingOnly(@NotNull PsiElement psiRoot) {
+    return getHighlightingSettingForRoot(psiRoot) == FileHighlightingSetting.ESSENTIAL
+           && !((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(psiRoot.getProject())).isRestartToCompleteEssentialHighlightingRequested();
   }
 
   public int countRoots(@NotNull FileHighlightingSetting setting) {

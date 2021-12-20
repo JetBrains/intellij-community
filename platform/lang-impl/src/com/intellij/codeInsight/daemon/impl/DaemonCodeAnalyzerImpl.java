@@ -74,6 +74,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   private static final Logger LOG = Logger.getInstance(DaemonCodeAnalyzerImpl.class);
 
   private static final Key<List<HighlightInfo>> FILE_LEVEL_HIGHLIGHTS = Key.create("FILE_LEVEL_HIGHLIGHTS");
+  private static final @NotNull Key<Boolean> COMPLETE_ESSENTIAL_HIGHLIGHTING_KEY = Key.create("COMPLETE_ESSENTIAL_HIGHLIGHTING");
   private final Project myProject;
   private final DaemonCodeAnalyzerSettings mySettings;
   @NotNull private final PsiDocumentManager myPsiDocumentManager;
@@ -104,6 +105,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
   // May be later than the actual ScheduledFuture sitting in the myAlarm queue.
   // When it's so happens that future is started sooner than myScheduledUpdateStart, it will re-schedule itself for later.
   private long myScheduledUpdateTimestamp; // guarded by this
+  volatile private boolean completeEssentialHighlightingRequested;
 
   public DaemonCodeAnalyzerImpl(@NotNull Project project) {
     // DependencyValidationManagerImpl adds scope listener, so, we need to force service creation
@@ -157,6 +159,10 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
 
   synchronized void clearProgressIndicator() {
     HighlightingSessionImpl.clearProgressIndicator(myUpdateProgress);
+  }
+
+  public boolean isCompleteEssentialHighlightingSession() {
+    return myUpdateProgress.getUserData(COMPLETE_ESSENTIAL_HIGHLIGHTING_KEY) == Boolean.TRUE;
   }
 
   @NotNull
@@ -931,6 +937,9 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     progress.setModalityProgress(null);
     progress.start();
     myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonStarting(fileEditors);
+    if (isRestartToCompleteEssentialHighlightingRequested()) {
+      progress.putUserData(COMPLETE_ESSENTIAL_HIGHLIGHTING_KEY, true);
+    }
     myUpdateProgress = progress;
     return progress;
   }
@@ -951,6 +960,7 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
         myProject.getMessageBus().syncPublisher(DAEMON_EVENT_TOPIC).daemonFinished(myFileEditors);
         myFileEditors.clear();
         HighlightingSessionImpl.clearProgressIndicator(this);
+        ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(myProject)).completeEssentialHighlightingRequested = false;
       }
       return wasStopped;
     }
@@ -1046,4 +1056,12 @@ public final class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzerEx implement
     }
   }
 
+  // tell the next restarted highlighting that it should start all inspections/external annotators/etc
+  void restartToCompleteEssentialHighlighting() {
+    restart();
+    completeEssentialHighlightingRequested = true;
+  }
+  public boolean isRestartToCompleteEssentialHighlightingRequested() {
+    return completeEssentialHighlightingRequested;
+  }
 }

@@ -46,7 +46,7 @@ public class DefaultHighlightInfoProcessor extends HighlightInfoProcessor {
         MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
 
         EditorColorsScheme scheme = session.getColorsScheme();
-        UpdateHighlightersUtil.setHighlightersInRange(project, document, priorityIntersection, scheme, infoCopy, (MarkupModelEx)markupModel, groupId);
+        UpdateHighlightersUtil.setHighlightersInRange(project, psiFile, document, priorityIntersection, scheme, infoCopy, (MarkupModelEx)markupModel, groupId);
       }
       if (editor != null && !editor.isDisposed()) {
         // usability: show auto import popup as soon as possible

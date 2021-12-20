@@ -7,6 +7,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.diff.util.DiffUserDataKeys;
 import com.intellij.icons.AllIcons;
@@ -152,8 +153,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     private HeavyProcessLatch.Type heavyProcessType;
     private boolean fullInspect = true;  // by default, full inspect mode is expected
 
-    public DaemonCodeAnalyzerStatus() { }
-
     @Override
     public String toString() {
       String s = "DS: finished=" + errorAnalyzingFinished
@@ -162,42 +161,43 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         s += String.format("(%s %2.0f%% %b)", passStatus.getPresentableName(), passStatus.getProgress() * 100, passStatus.isFinished());
       }
       s += "; error counts: " + errorCounts.length + ": " + new IntArrayList(errorCounts);
+      if (reasonWhyDisabled != null) {
+        s += "; reasonWhyDisabled="+reasonWhyDisabled;
+      }
+      if (reasonWhySuspended != null) {
+        s += "; reasonWhySuspended"+reasonWhySuspended;
+      }
       return s;
     }
   }
 
   protected @NotNull DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(@NotNull SeverityRegistrar severityRegistrar) {
     DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
+    status.errorAnalyzingFinished = true;
     PsiFile psiFile = getPsiFile();
     if (psiFile == null) {
       status.reasonWhyDisabled = DaemonBundle.message("process.title.no.file");
-      status.errorAnalyzingFinished = true;
       return status;
     }
     if (myProject.isDisposed()) {
       status.reasonWhyDisabled = DaemonBundle.message("process.title.project.is.disposed");
-      status.errorAnalyzingFinished = true;
       return status;
     }
     if (!myDaemonCodeAnalyzer.isHighlightingAvailable(psiFile)) {
       if (!psiFile.isPhysical()) {
         status.reasonWhyDisabled = DaemonBundle.message("process.title.file.is.generated");
-        status.errorAnalyzingFinished = true;
         return status;
       }
       if (psiFile instanceof PsiCompiledElement) {
         status.reasonWhyDisabled = DaemonBundle.message("process.title.file.is.decompiled");
-        status.errorAnalyzingFinished = true;
         return status;
       }
       final FileType fileType = psiFile.getFileType();
       if (fileType.isBinary()) {
         status.reasonWhyDisabled = DaemonBundle.message("process.title.file.is.binary");
-        status.errorAnalyzingFinished = true;
         return status;
       }
       status.reasonWhyDisabled = DaemonBundle.message("process.title.highlighting.is.disabled.for.this.file");
-      status.errorAnalyzingFinished = true;
       return status;
     }
 
@@ -218,7 +218,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
     if (!shouldHighlight) {
       status.reasonWhyDisabled = DaemonBundle.message("process.title.highlighting.level.is.none");
-      status.errorAnalyzingFinished = true;
       return status;
     }
 
@@ -232,7 +231,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         status.reasonWhySuspended = op.getDisplayName();
         status.heavyProcessType = op.getType();
       }
-      status.errorAnalyzingFinished = true;
       return status;
     }
 
@@ -241,8 +239,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
                                          p -> !StringUtil.isEmpty(p.getPresentableName()) && p.getProgress() >= 0);
 
     status.errorAnalyzingFinished = myDaemonCodeAnalyzer.isAllAnalysisFinished(psiFile);
-    status.reasonWhySuspended =
-      myDaemonCodeAnalyzer.isUpdateByTimerEnabled() ? null : DaemonBundle.message("process.title.highlighting.is.paused.temporarily");
+    if (!myDaemonCodeAnalyzer.isUpdateByTimerEnabled()) {
+      status.reasonWhySuspended = DaemonBundle.message("process.title.highlighting.is.paused.temporarily");
+    }
     fillDaemonCodeAnalyzerErrorsStatus(status, severityRegistrar);
 
     return status;
@@ -274,8 +273,13 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         title = DaemonBundle.message("shallow.analysis.completed");
         details = DaemonBundle.message("shallow.analysis.completed.details");
       }
+      else if (getPsiFile() != null
+               && HighlightingSettingsPerFile.getInstance(myProject).getHighlightingSettingForRoot(getPsiFile()) == FileHighlightingSetting.ESSENTIAL) {
+        title = DaemonBundle.message("essential.analysis.completed");
+        details = DaemonBundle.message("essential.analysis.completed.details");
+      }
       else {
-        title = "";
+        title = DaemonBundle.message("no.errors.or.warnings.found");
         details = "";
       }
     }
@@ -331,7 +335,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
           withTextStatus(UtilBundle.message("heavyProcess.type.indexing")).
           withAnalyzingType(AnalyzingType.SUSPENDED) :
         new AnalyzerStatus(status.fullInspect ? AllIcons.General.InspectionsOK : AllIcons.General.InspectionsOKEmpty,
-                           DaemonBundle.message("no.errors.or.warnings.found"), details, this::createUIController);
+                           title, details, this::createUIController);
     }
 
     return new AnalyzerStatus(AllIcons.General.InspectionsEye, title, details, this::createUIController).
@@ -377,7 +381,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         HighlightingLevelManager hlManager = HighlightingLevelManager.getInstance(getProject());
         for (Language language : viewProvider.getLanguages()) {
           PsiFile psiRoot = viewProvider.getPsi(language);
-          result.add(new LanguageHighlightLevel(language.getID(), getHighlightLevel(hlManager.shouldHighlight(psiRoot), hlManager.shouldInspect(psiRoot))));
+          FileHighlightingSetting setting = HighlightingSettingsPerFile.getInstance(getProject()).getHighlightingSettingForRoot(psiRoot);
+          InspectionsLevel inspectionsLevel = FileHighlightingSetting.toInspectionsLevel(setting);
+          result.add(new LanguageHighlightLevel(language.getID(), inspectionsLevel));
         }
       }
       return result;
@@ -402,15 +408,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         Language language = Language.findLanguageByID(level.getLangID());
         if (language != null) {
           PsiElement root = viewProvider.getPsi(language);
-          if (level.getLevel() == InspectionsLevel.NONE) {
-            HighlightLevelUtil.forceRootHighlighting(root, FileHighlightingSetting.SKIP_HIGHLIGHTING);
-          }
-          else if (level.getLevel() == InspectionsLevel.SYNTAX) {
-            HighlightLevelUtil.forceRootHighlighting(root, FileHighlightingSetting.SKIP_INSPECTION);
-          }
-          else {
-            HighlightLevelUtil.forceRootHighlighting(root, FileHighlightingSetting.FORCE_HIGHLIGHTING);
-          }
+          FileHighlightingSetting setting = FileHighlightingSetting.fromInspectionsLevel(level.getLevel());
+          HighlightLevelUtil.forceRootHighlighting(root, setting);
 
           myLevelList.replaceAll(l -> l.getLangID().equals(level.getLangID()) ? level : l);
 
@@ -485,12 +484,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
       panel.apply();
     }
     catch (ConfigurationException ignored) {}
-  }
-
-  private static @NotNull InspectionsLevel getHighlightLevel(boolean highlight, boolean inspect) {
-    if (!highlight && !inspect) return InspectionsLevel.NONE;
-    if (highlight && !inspect) return InspectionsLevel.SYNTAX;
-    return InspectionsLevel.ALL;
   }
 
   public class DefaultUIController extends AbstractUIController {
