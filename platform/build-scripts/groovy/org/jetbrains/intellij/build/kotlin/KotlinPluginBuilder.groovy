@@ -215,7 +215,7 @@ final class KotlinPluginBuilder {
       withModule("kotlin.jps-plugin", "jps/kotlin-jps-plugin.jar")
 
       String kotlincKotlinCompiler = "kotlinc.kotlin-compiler"
-      withProjectLibrary(kotlincKotlinCompiler, ProjectLibraryData.PackMode.STANDALONE_SEPARATE)
+      withProjectLibrary(kotlincKotlinCompiler, ProjectLibraryData.PackMode.STANDALONE_MERGED)
 
       withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
         @Override
@@ -239,13 +239,13 @@ final class KotlinPluginBuilder {
       withModule("kotlin.jps-common", "kotlin-jps-common.jar")
       withModule("kotlin.common", "kotlin-common.jar")
 
-      withProjectLibrary("kotlinc.kotlin-reflect", ProjectLibraryData.PackMode.STANDALONE_MERGED)
-      withProjectLibrary("kotlinc.kotlin-stdlib", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary("kotlinc.kotlin-reflect", "kotlinc-lib.jar")
+      withProjectLibrary("kotlinc.kotlin-stdlib", "kotlinc-lib.jar")
       //noinspection SpellCheckingInspection
-      withProjectLibrary("javaslang")
-      withProjectLibrary("kotlinx-collections-immutable-jvm")
-      withProjectLibrary("javax-inject")
-      withProjectLibrary("kotlinx-coroutines-jdk8")
+      withProjectLibrary("javaslang", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary("kotlinx-collections-immutable-jvm", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary("javax-inject", ProjectLibraryData.PackMode.STANDALONE_MERGED)
+      withProjectLibrary("kotlinx-coroutines-jdk8", "kotlinc-lib.jar")
       withProjectLibrary("completion-ranking-kotlin")
 
       withGeneratedResources(new BiConsumer<Path, BuildContext>() {

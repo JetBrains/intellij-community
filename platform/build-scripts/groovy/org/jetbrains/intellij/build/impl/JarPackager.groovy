@@ -41,7 +41,7 @@ import static org.jetbrains.intellij.build.impl.ProjectLibraryData.PackMode
 
 @CompileStatic
 final class JarPackager {
-  private final List<JarDescriptor> jarDescriptors = new ArrayList<>()
+  private final Map<Path, JarDescriptor> jarDescriptors = new LinkedHashMap<>()
   private final BuildContext context
   private final Collection<DistributionFileEntry> projectStructureMapping = new ConcurrentLinkedQueue<DistributionFileEntry>()
   private final BuildHelper buildHelper
@@ -156,21 +156,19 @@ final class JarPackager {
     Map<JpsLibrary, List<Path>> libraryToMerge = packager.packLibraries(actualModuleJars, outputDir, layout, copiedFiles, extraLibSources)
 
     boolean isRootDir = context.paths.distAllDir == outputDir.parent
-    List libSources
     if (isRootDir) {
       for (Map.Entry<String, Predicate<String>> rule : EXTRA_MERGE_RULES.entrySet() ) {
         packager.mergeLibsByPredicate(rule.key, libraryToMerge, outputDir, rule.value)
       }
 
-      if (libraryToMerge.isEmpty()) {
-        libSources = null
-      }
-      else {
-        libSources = packager.filesToSourceWithMappings(outputDir.resolve(BaseLayout.APP_JAR), libraryToMerge)
+      if (!libraryToMerge.isEmpty()) {
+        packager.filesToSourceWithMappings(outputDir.resolve(BaseLayout.APP_JAR), libraryToMerge)
       }
     }
     else if (!libraryToMerge.isEmpty()) {
-      throw new IllegalStateException("Libraries were not merged: " + libraryToMerge)
+      String mainJarName = ((PluginLayout)layout).mainJarName
+      assert actualModuleJars.containsKey(mainJarName)
+      packager.filesToSourceWithMappings(outputDir.resolve(mainJarName), libraryToMerge)
     }
 
     // must be concurrent - buildJars executed in parallel
@@ -179,30 +177,33 @@ final class JarPackager {
     for (Map.Entry<String, List<String>> entry in actualModuleJars.entrySet()) {
       String jarPath = entry.key
       Path jarFile = outputDir.resolve(entry.key)
-      List sourceList = new ArrayList()
-      if (libSources != null && (!isRootDir || jarPath == BaseLayout.APP_JAR)) {
-        sourceList.addAll(libSources)
-        libSources = null
+      List<String> modules = entry.value
+      JarDescriptor descriptor = packager.jarDescriptors.computeIfAbsent(jarFile, { new JarDescriptor(jarFile, new ArrayList()) })
+      if (descriptor.includedModules.isEmpty()) {
+        descriptor.includedModules = new ArrayList<>(modules)
       }
-
+      else {
+        descriptor.includedModules.addAll(modules)
+      }
+      List sourceList = descriptor.sources
       List extra = extraLibSources.get(entry.key)
       if (extra != null) {
         sourceList.addAll(extra)
       }
 
-      packager.jarDescriptors.add(packager.packModuleOutputAndUnpackedProjectLibraries(entry.value,
-                                                                                       jarPath,
-                                                                                       jarFile,
-                                                                                       moduleOutputPatcher,
-                                                                                       layout,
-                                                                                       moduleNameToSize,
-                                                                                       sourceList))
+      packager.packModuleOutputAndUnpackedProjectLibraries(modules,
+                                                           jarPath,
+                                                           jarFile,
+                                                           moduleOutputPatcher,
+                                                           layout,
+                                                           moduleNameToSize,
+                                                           sourceList)
     }
 
     List<Triple<Path, String, List<?>>> entries = new ArrayList<>(packager.jarDescriptors.size())
 
     boolean isReorderingEnabled = !context.options.buildStepsToSkip.contains(BuildOptions.GENERATE_JAR_ORDER_STEP)
-    for (JarDescriptor descriptor : packager.jarDescriptors) {
+    for (JarDescriptor descriptor : packager.jarDescriptors.values()) {
       String pathInClassLog = ""
       if (isReorderingEnabled) {
         if (isRootDir) {
@@ -219,7 +220,7 @@ final class JarPackager {
     }
     packager.buildHelper.buildJars.accept(entries, dryRun)
 
-    for (JarDescriptor item : packager.jarDescriptors) {
+    for (JarDescriptor item : packager.jarDescriptors.values()) {
       for (String moduleName : item.includedModules) {
         Integer size = moduleNameToSize.get(moduleName)
         if (size == null) {
@@ -251,31 +252,27 @@ final class JarPackager {
       return
     }
 
-    Path uberJarFile = outputDir.resolve(jarName)
-    jarDescriptors.add(new JarDescriptor(uberJarFile, filesToSourceWithMappings(uberJarFile, result)))
+    filesToSourceWithMappings(outputDir.resolve(jarName), result)
   }
 
-  private List filesToSourceWithMappings(Path uberJarFile, Map<JpsLibrary, List<Path>> libraryToMerge) {
-    List sources = new ArrayList()
+  private void filesToSourceWithMappings(Path uberJarFile, Map<JpsLibrary, List<Path>> libraryToMerge) {
+    List sources = getJarDescriptorSources(uberJarFile)
     for (Map.Entry<JpsLibrary, List<Path>> entry : libraryToMerge.entrySet()) {
       filesToSourceWithMapping(sources, entry.value, entry.key, uberJarFile)
     }
-    sources.sort(null)
-    return sources
   }
-
 
   static Path getSearchableOptionsDir(BuildContext buildContext) {
     return buildContext.paths.tempDir.resolve("searchableOptionsResult")
   }
 
-  private JarDescriptor packModuleOutputAndUnpackedProjectLibraries(Collection<String> modules,
-                                                                    String jarPath,
-                                                                    Path jarFile,
-                                                                    ModuleOutputPatcher moduleOutputPatcher,
-                                                                    BaseLayout layout,
-                                                                    Map<String, Integer> moduleNameToSize,
-                                                                    List sourceList) {
+  private void packModuleOutputAndUnpackedProjectLibraries(Collection<String> modules,
+                                                           String jarPath,
+                                                           Path jarFile,
+                                                           ModuleOutputPatcher moduleOutputPatcher,
+                                                           BaseLayout layout,
+                                                           Map<String, Integer> moduleNameToSize,
+                                                           List sourceList) {
     MethodHandle addModuleSources = buildHelper.addModuleSources
     Path searchableOptionsDir = getSearchableOptionsDir(context)
 
@@ -309,7 +306,6 @@ final class JarPackager {
         }))
       }
     }
-    return new JarDescriptor(jarFile, sourceList, modules)
   }
 
   @CompileStatic
@@ -318,18 +314,11 @@ final class JarPackager {
   static final class JarDescriptor {
     final Path jarFile
     final List sources
-    final Collection<String> includedModules
-
-    JarDescriptor(Path jarFile, List sources, Collection<String> includedModules) {
-      this.jarFile = jarFile
-      this.sources = sources
-      this.includedModules = includedModules
-    }
+    Collection<String> includedModules = Collections.<String>emptyList()
 
     JarDescriptor(Path jarFile, List sources) {
       this.jarFile = jarFile
       this.sources = sources
-      this.includedModules = Collections.<String>emptyList()
     }
   }
 
@@ -341,19 +330,25 @@ final class JarPackager {
     Map<JpsLibrary, List<Path>> toMerge = new HashMap<JpsLibrary, List<Path>>()
     Predicate<String> isLibraryMergeable = buildHelper.isLibraryMergeable
 
-    for (ProjectLibraryData libraryData in layout.includedProjectLibraries) {
+
+    Iterator<ProjectLibraryData> projectLibIterator = layout.includedProjectLibraries.isEmpty()
+      ? Collections.<ProjectLibraryData> emptyIterator()
+      : layout.includedProjectLibraries.stream().sorted(new Comparator<ProjectLibraryData>() {
+      @SuppressWarnings("ChangeToOperator")
+      @Override
+      int compare(ProjectLibraryData o1, ProjectLibraryData o2) {
+        int r = (o1.outPath ?: "").compareTo(o2.outPath ?: "")
+        return r == 0 ? o1.libraryName.compareTo(o2.libraryName) : r
+      }
+    }).iterator()
+    while (projectLibIterator.hasNext()) {
+      ProjectLibraryData libraryData = projectLibIterator.next()
       JpsLibrary library = context.project.libraryCollection.findLibrary(libraryData.libraryName)
       if (library == null) {
         throw new IllegalArgumentException("Cannot find library ${libraryData.libraryName} in the project")
       }
 
       libToMetadata.put(library, libraryData)
-
-      Path libOutputDir = outputDir
-      String relativePath = libraryData.relativeOutputPath
-      if (relativePath != null && !relativePath.isEmpty()) {
-        libOutputDir = outputDir.resolve(relativePath)
-      }
 
       String libName = library.name
       List<Path> files = getLibraryFiles(library, copiedFiles, false)
@@ -367,17 +362,33 @@ final class JarPackager {
       if (packMode == PackMode.MERGED) {
         toMerge.put(library, files)
       }
-      else if (packMode == PackMode.STANDALONE_MERGED) {
-        String fileName = libNameToMergedJarFileName(libName)
-        addLibrary(library, libOutputDir.resolve(fileName), files)
-      }
       else {
-        for (Path file : files) {
-          String fileName = file.fileName.toString()
-          if (packMode == PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME) {
-            fileName = removeVersionFromJar(fileName)
+        Path libOutputDir = outputDir
+        String outPath = libraryData.outPath
+        String customOutFilename = null
+        if (outPath != null && !outPath.isEmpty()) {
+          if (outPath.contains(".")) {
+            assert !outPath.contains("/")
+            customOutFilename = outPath
           }
-          addLibrary(library, libOutputDir.resolve(fileName), List.of(file))
+          else {
+            libOutputDir = outputDir.resolve(outPath)
+          }
+        }
+
+        if (packMode == PackMode.STANDALONE_MERGED) {
+          String fileName = customOutFilename ?: libNameToMergedJarFileName(libName)
+          addLibrary(library, libOutputDir.resolve(fileName), files)
+        }
+        else {
+          assert customOutFilename == null
+          for (Path file : files) {
+            String fileName = file.fileName.toString()
+            if (packMode == PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME) {
+              fileName = removeVersionFromJar(fileName)
+            }
+            addLibrary(library, libOutputDir.resolve(fileName), List.of(file))
+          }
         }
       }
     }
@@ -508,7 +519,7 @@ final class JarPackager {
     return FileUtil.sanitizeFileName(libName.toLowerCase(), false) + ".jar"
   }
 
-  private filesToSourceWithMapping(List to, List<Path> files, JpsLibrary library, Path targetFile) {
+  private void filesToSourceWithMapping(List to, List<Path> files, JpsLibrary library, Path targetFile) {
     JpsElementReference<? extends JpsCompositeElement> parentReference = library.createReference().getParentReference()
     boolean isModuleLibrary = parentReference instanceof JpsModuleReference
     BiFunction<Path, IntConsumer, ?> createZipSource = buildHelper.createZipSource
@@ -539,8 +550,10 @@ final class JarPackager {
   }
 
   private void addLibrary(JpsLibrary library, Path targetFile, List<Path> files) {
-    List sources = new ArrayList()
-    filesToSourceWithMapping(sources, files, library, targetFile)
-    jarDescriptors.add(new JarDescriptor(targetFile, sources))
+    filesToSourceWithMapping(getJarDescriptorSources(targetFile), files, library, targetFile)
+  }
+
+  private List getJarDescriptorSources(Path targetFile) {
+    return jarDescriptors.computeIfAbsent(targetFile, { new JarDescriptor(targetFile, new ArrayList()) }).sources
   }
 }

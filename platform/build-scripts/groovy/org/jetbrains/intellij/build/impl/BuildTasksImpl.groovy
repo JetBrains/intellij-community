@@ -693,7 +693,7 @@ idea.fatal.error.notification=disabled
     checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars")
     checkModules(layout.moduleExcludes.keySet(), "productProperties.productLayout.moduleExcludes")
     checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
-    checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
+    checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar", buildContext)
     nonTrivialPlugins.each { plugin ->
       checkBaseLayout(plugin, "'$plugin.mainModule' plugin")
     }
@@ -704,7 +704,7 @@ idea.fatal.error.notification=disabled
     checkArtifacts(layout.includedArtifacts.keySet(), "includedArtifacts in $description")
     checkModules(layout.resourcePaths.collect { it.moduleName }, "resourcePaths in $description")
     checkModules(layout.moduleExcludes.keySet(), "moduleExcludes in $description")
-    checkProjectLibraries(layout.includedProjectLibraries.collect { it.libraryName }, "includedProjectLibraries in $description")
+    checkProjectLibraries(layout.includedProjectLibraries.collect { it.libraryName }, "includedProjectLibraries in $description", buildContext)
     for (data in layout.includedModuleLibraries) {
       checkModules([data.moduleName], "includedModuleLibraries in $description")
       if (buildContext.findRequiredModule(data.moduleName).libraryCollection.libraries.find { LayoutBuilder.getLibraryName(it) == data.libraryName } == null) {
@@ -720,7 +720,7 @@ idea.fatal.error.notification=disabled
         }
       }
     }
-    checkProjectLibraries(layout.projectLibrariesToUnpack.values(), "projectLibrariesToUnpack in $description")
+    checkProjectLibraries(layout.projectLibrariesToUnpack.values(), "projectLibrariesToUnpack in $description", buildContext)
     checkModules(layout.modulesWithExcludedModuleLibraries, "modulesWithExcludedModuleLibraries in $description")
   }
 
@@ -742,10 +742,10 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  private void checkProjectLibraries(Collection<String> names, String fieldName) {
-    def unknownLibraries = names.findAll {buildContext.project.libraryCollection.findLibrary(it) == null}
+  private static void checkProjectLibraries(Collection<String> names, String fieldName, BuildContext context) {
+    Collection<String> unknownLibraries = names.findAll { context.project.libraryCollection.findLibrary(it) == null}
     if (!unknownLibraries.empty) {
-      buildContext.messages.error("The following libraries from $fieldName aren't found in the project: $unknownLibraries")
+      context.messages.error("The following libraries from $fieldName aren't found in the project: $unknownLibraries")
     }
   }
 
