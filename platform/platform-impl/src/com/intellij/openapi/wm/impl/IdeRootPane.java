@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.accessibility.AccessibilityUtils;
@@ -127,7 +127,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     glassPane.setVisible(false);
     setBorder(UIManager.getBorder("Window.border"));
 
-    UIUtil.setCustomTitleBar(frame, this, runnable -> {
+    ToolbarUtil.setCustomTitleBar(frame, this, runnable -> {
       Disposer.register(parentDisposable, runnable::run);
     });
 
