@@ -11,6 +11,8 @@ import org.jetbrains.annotations.VisibleForTesting;
 
 import java.util.concurrent.CancellationException;
 
+import static kotlinx.coroutines.JobKt.ensureActive;
+
 @Internal
 public final class Cancellation {
 
@@ -29,8 +31,14 @@ public final class Cancellation {
   }
 
   public static void checkCancelled() {
-    if (isCancelled()) {
-      throw new JobCanceledException();
+    Job currentJob = currentJob();
+    if (currentJob != null) {
+      try {
+        ensureActive(currentJob);
+      }
+      catch (CancellationException e) {
+        throw new JobCanceledException(e);
+      }
     }
   }
 
@@ -68,7 +76,10 @@ public final class Cancellation {
     catch (JobCanceledException e) {
       // This exception is thrown only from `Cancellation.checkCancelled`.
       // If it's caught, then the job must've been cancelled.
-      throw job.getCancellationException();
+      if (!job.isCancelled()) {
+        throw new IllegalStateException("JobCanceledException must be thrown by ProgressManager.checkCanceled()", e);
+      }
+      throw e.getCause();
     }
   }
 }
