@@ -2,6 +2,7 @@
 package com.intellij.ide.wizard
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.util.resettableLazy
 
 abstract class AbstractNewProjectWizardMultiStep<S : NewProjectWizardStep>(
   parent: NewProjectWizardStep,
@@ -10,7 +11,7 @@ abstract class AbstractNewProjectWizardMultiStep<S : NewProjectWizardStep>(
 
   protected abstract val self: S
 
-  override val steps by lazy {
+  override val steps = resettableLazy {
     epName.extensionList
       .filter { it.isEnabled(context) }
       .associateTo(LinkedHashMap()) { it.name to it.createStep(self) }

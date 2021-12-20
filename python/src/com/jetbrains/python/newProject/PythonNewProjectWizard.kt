@@ -18,6 +18,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.util.ResettableLazy
+import com.intellij.util.resettableLazy
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
@@ -150,7 +152,7 @@ class PythonSdkStep<P>(parent: P)
 
   override val label: String = PyBundle.message("python.sdk.new.project.environment")
 
-  override val steps: Map<String, NewProjectWizardStep> by lazy {
+  override val steps: ResettableLazy<Map<String, NewProjectWizardStep>> = resettableLazy {
     val existingSdkPanel = PyAddExistingSdkPanel(null, null, existingSdks(context), projectPath.toString(), null)
     mapOf(
       "New" to NewEnvironmentStep(this),
@@ -190,7 +192,7 @@ private class NewEnvironmentStep<P>(parent: P)
 
   override val label: String = PyBundle.message("python.sdk.new.project.environment.type")
 
-  override val steps: Map<String, NewProjectWizardStep> by lazy {
+  override val steps: ResettableLazy<Map<String, NewProjectWizardStep>> = resettableLazy {
     val sdks = existingSdks(context)
     val newProjectPath = projectPath.toString()
     val basePanels = listOf(
@@ -209,7 +211,7 @@ private class NewEnvironmentStep<P>(parent: P)
   override fun setupUI(builder: Panel) {
     super.setupUI(builder)
     val preferred = PySdkSettings.instance.preferredEnvironmentType
-    step = if (preferred != null && preferred in steps.keys) preferred else steps.keys.first()
+    step = if (preferred != null && preferred in steps.value.keys) preferred else steps.value.keys.first()
   }
 
   override fun setupProject(project: Project) {
