@@ -159,16 +159,12 @@ public class BaseCompletionLookupArranger extends LookupArranger implements Comp
   @Override
   public void addElement(LookupElement element, LookupElementPresentation presentation) {
     boolean shouldSkip = shouldSkip(element);
+    presentation.freeze();
+    element.putUserData(DEFAULT_PRESENTATION, presentation);
+    CompletionSorterImpl sorter = obtainSorter(element);
+    ProcessingContext context = createContext();
     synchronized (this) {
-      presentation.freeze();
-      element.putUserData(DEFAULT_PRESENTATION, presentation);
-
-      CompletionSorterImpl sorter = obtainSorter(element);
-      Classifier<LookupElement> classifier = myClassifiers.get(sorter);
-      if (classifier == null) {
-        myClassifiers.put(sorter, classifier = sorter.buildClassifier(new EmptyClassifier()));
-      }
-      ProcessingContext context = createContext();
+      Classifier<LookupElement> classifier = myClassifiers.computeIfAbsent(sorter, s -> s.buildClassifier(new EmptyClassifier()));
       classifier.addElement(element, context);
 
       if (shouldSkip) {
