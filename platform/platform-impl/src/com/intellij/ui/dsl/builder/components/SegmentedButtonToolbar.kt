@@ -186,7 +186,7 @@ private fun paintBorder(g: Graphics2D, r: Rectangle) {
   g.fill(border)
 }
 
-private class SegmentedButtonBorder : Border {
+class SegmentedButtonBorder : Border {
 
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
     val g2 = g.create() as Graphics2D
