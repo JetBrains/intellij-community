@@ -1977,7 +1977,7 @@ public abstract class DialogWrapper {
       Color color = info.warning ? MessageType.WARNING.getTitleForeground() : UIUtil.getErrorForeground();
       htmlBuilder
         .append(
-          HtmlChunk.text(info.message)
+          HtmlChunk.raw(info.message)
             .wrapWith("left")
             .wrapWith(HtmlChunk.font(ColorUtil.toHex(color)))
         )
