@@ -169,16 +169,6 @@ class ModuleInfo(val module: Module, private val projectInfo: ProjectInfo) {
         checkReport("Additional arguments", arguments, actualArguments)
     }
 
-    @Deprecated(
-        "This assertion might be unsafe. " +
-                "Please use 'noLibraryDependency(Regex)' or " +
-                "calls to 'assertExhaustiveDependencyList' instead!",
-        ReplaceWith("noLibraryDependency(Regex.fromLiteral(libraryNameLiteral))")
-    )
-    fun noLibraryDependency(libraryNameLiteral: String, scope: DependencyScope) {
-        noLibraryDependency(Regex.fromLiteral(libraryNameLiteral))
-    }
-
     fun noLibraryDependency(libraryNameRegex: Regex) {
         val libraryEntries = rootModel.orderEntries.filterIsInstance<LibraryOrderEntry>()
             .filter { it.libraryName?.matches(libraryNameRegex) == true }
