@@ -383,9 +383,9 @@ public final class Presentation implements Cloneable {
    */
   public void setEnabled(boolean enabled) {
     assertNotTemplatePresentation();
-    boolean oldVisible = BitUtil.isSet(myFlags, IS_ENABLED);
+    boolean oldEnabled = BitUtil.isSet(myFlags, IS_ENABLED);
     myFlags = BitUtil.set(myFlags, IS_ENABLED, enabled);
-    fireBooleanPropertyChange(PROP_ENABLED, oldVisible, enabled);
+    fireBooleanPropertyChange(PROP_ENABLED, oldEnabled, enabled);
   }
 
   public void setEnabledAndVisible(boolean enabled) {
@@ -443,6 +443,7 @@ public final class Presentation implements Cloneable {
                         boolean forceNullComponent,
                         boolean allFlags) {
     if (presentation == this) return;
+    boolean oldEnabled = isEnabled(), oldVisible = isVisible();
     if (allFlags) {
       myFlags = BitUtil.set(presentation.myFlags, IS_TEMPLATE, isTemplate());
     }
@@ -450,6 +451,9 @@ public final class Presentation implements Cloneable {
       myFlags = BitUtil.set(myFlags, IS_ENABLED, BitUtil.isSet(presentation.myFlags, IS_ENABLED));
       myFlags = BitUtil.set(myFlags, IS_VISIBLE, BitUtil.isSet(presentation.myFlags, IS_VISIBLE));
     }
+    fireBooleanPropertyChange(PROP_ENABLED, oldEnabled, isEnabled());
+    fireBooleanPropertyChange(PROP_VISIBLE, oldVisible, isVisible());
+
     setTextWithMnemonic(presentation.getTextWithPossibleMnemonic());
     setDescription(presentation.myDescriptionSupplier);
     setIcon(presentation.getIcon());
