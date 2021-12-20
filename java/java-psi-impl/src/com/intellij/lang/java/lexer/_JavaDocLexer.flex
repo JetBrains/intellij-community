@@ -46,9 +46,6 @@ import com.intellij.psi.tree.IElementType;
 %state INLINE_TAG_NAME
 %state CODE_TAG
 %state CODE_TAG_SPACE
-%state INDEX_TAG_DOC_SPACE
-%state INDEX_TAG_COMMENT_DATA
-%state INDEX_COMMENT_DATA
 %state SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON
 %state SNIPPET_TAG_BODY_DATA
 %state SNIPPET_ATTRIBUTE_VALUE_DOUBLE_QUOTES
@@ -107,7 +104,6 @@ INLINE_TAG_IDENTIFIER=[^\ \t\f\n\r\}]+
 
 <INLINE_TAG_NAME> "@code" { yybegin(CODE_TAG_SPACE); return myTokenTypes.tagName(); }
 <INLINE_TAG_NAME> "@literal" { yybegin(CODE_TAG_SPACE); return myTokenTypes.tagName(); }
-<INLINE_TAG_NAME> "@index" { yybegin(INDEX_TAG_DOC_SPACE); return myTokenTypes.tagName(); }
 <INLINE_TAG_NAME> "@snippet" { yybegin(SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON); return myTokenTypes.tagName(); }
 <INLINE_TAG_NAME> "@"{INLINE_TAG_IDENTIFIER} { yybegin(TAG_DOC_SPACE); return myTokenTypes.tagName(); }
 <COMMENT_DATA_START, COMMENT_DATA, TAG_DOC_SPACE, DOC_TAG_VALUE, CODE_TAG, CODE_TAG_SPACE, SNIPPET_ATTRIBUTE_VALUE_DOUBLE_QUOTES,
@@ -116,17 +112,6 @@ SNIPPET_ATTRIBUTE_VALUE_SINGLE_QUOTES, SNIPPET_TAG_COMMENT_DATA_UNTIL_COLON> "}"
 <COMMENT_DATA_START, COMMENT_DATA, DOC_TAG_VALUE> . { yybegin(COMMENT_DATA); return myTokenTypes.commentData(); }
 <CODE_TAG, CODE_TAG_SPACE> . { yybegin(CODE_TAG); return myTokenTypes.commentData(); }
 <COMMENT_DATA_START> "@"{TAG_IDENTIFIER} { yybegin(TAG_DOC_SPACE); return myTokenTypes.tagName(); }
-
-<INDEX_TAG_DOC_SPACE> {WHITE_DOC_SPACE_CHAR}+ {
-  if (checkAhead('\"')) yybegin(INDEX_TAG_COMMENT_DATA);
-  else yybegin(DOC_TAG_VALUE);
-  return myTokenTypes.space();
-}
-<INDEX_TAG_COMMENT_DATA> \" { yybegin(INDEX_COMMENT_DATA); return myTokenTypes.tagValueQuote(); }
-<INDEX_COMMENT_DATA> [^\n\"]+ { return myTokenTypes.tagValueToken(); }
-<INDEX_COMMENT_DATA> {WHITE_DOC_SPACE_CHAR}+ { return myTokenTypes.space(); }
-<INDEX_COMMENT_DATA> "*"+ { return myTokenTypes.commentLeadingAsterisks(); }
-<INDEX_COMMENT_DATA> \" { yybegin(COMMENT_DATA); return myTokenTypes.tagValueQuote(); }
 
 <SNIPPET_ATTRIBUTE_VALUE_DOUBLE_QUOTES> {
       {WHITE_DOC_SPACE_CHAR}+ { return myTokenTypes.space(); }

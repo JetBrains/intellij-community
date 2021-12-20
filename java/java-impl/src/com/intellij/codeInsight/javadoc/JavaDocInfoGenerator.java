@@ -1644,17 +1644,57 @@ public class JavaDocInfoGenerator {
   @Contract(mutates = "param1")
   private static void generateIndexValue(@NotNull StringBuilder buffer, @NotNull PsiInlineDocTag tag) {
     final PsiDocTagValue indexTagValue = PsiTreeUtil.findChildOfType(tag, PsiDocTagValue.class);
-    if (indexTagValue == null) return;
-
-    final ASTNode[] valuesTokens = indexTagValue.getNode().getChildren(TokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_TOKEN));
-    if (valuesTokens.length == 0) return;
-
-    final StringJoiner indexValue = new StringJoiner(" ");
-    for (ASTNode token : valuesTokens) {
-      indexValue.add(token.getText());
+    if (indexTagValue != null) {
+      buffer.append(indexTagValue.getText());
+      return;
     }
 
-    buffer.append(indexValue);
+    // probably the index value is inside double quotes, so let's extract it
+    final PsiElement[] elements = tag.getDataElements();
+    final int first = getFirstIndexOfElementWithQuote(elements);
+    if (first == -1) return;
+
+    final PsiElement indexValueStart = elements[first];
+    final String indexValueText = indexValueStart.getText();
+    final int quoteBeginIdx = indexValueText.indexOf('"');
+    final int quoteEndIdx = indexValueText.lastIndexOf('"');
+    if (quoteBeginIdx != quoteEndIdx) {
+      buffer.append(indexValueText, quoteBeginIdx + 1, quoteEndIdx);
+      return;
+    }
+
+    buffer.append(indexValueText, quoteBeginIdx + 1, indexValueText.length());
+
+    for (int i = first + 1, length = elements.length; i < length; i++) {
+      final PsiElement element = elements[i];
+      if (element instanceof PsiWhiteSpace) continue;
+      if (element instanceof PsiDocToken && ((PsiDocToken)element).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) continue;
+
+      buffer.append(' ');
+
+      final String text = element.getText();
+      final int indexOfQuote = text.indexOf('"');
+      final int until = indexOfQuote == -1 ? text.length() : indexOfQuote;
+      buffer.append(text, 0, until);
+
+      if (indexOfQuote != -1) {
+        return;
+      }
+    }
+  }
+
+  @Contract(pure = true)
+  private static int getFirstIndexOfElementWithQuote(PsiElement[] elements) {
+    for (int i = 0, length = elements.length; i < length; i++) {
+      final PsiElement e = elements[i];
+      if (e instanceof PsiWhiteSpace) continue;
+      if (e instanceof PsiDocToken && ((PsiDocToken)e).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) continue;
+
+      if (e.textContains('"')) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   private static boolean isCodeBlock(PsiInlineDocTag tag) {
