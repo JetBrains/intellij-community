@@ -115,7 +115,7 @@ public final class WitherFieldProcessor extends AbstractFieldProcessor {
   }
 
   public boolean validConstructor(@NotNull PsiClass psiClass, @NotNull ProblemBuilder builder) {
-    if (PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.ALL_ARGS_CONSTRUCTOR, LombokClassNames.VALUE, LombokClassNames.BUILDER)) {
+    if (psiClass.isRecord() || PsiAnnotationSearchUtil.isAnnotatedWith(psiClass, LombokClassNames.ALL_ARGS_CONSTRUCTOR, LombokClassNames.VALUE, LombokClassNames.BUILDER)) {
       return true;
     }
 

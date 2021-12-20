@@ -1,6 +1,8 @@
 package de.plushnikov.intellij.plugin.processor.field;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.light.LightRecordField;
+import com.intellij.psi.impl.source.PsiExtensibleClass;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import de.plushnikov.intellij.plugin.LombokBundle;
@@ -18,10 +20,8 @@ import de.plushnikov.intellij.plugin.util.PsiClassUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 /**
@@ -46,7 +46,8 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
   @Override
   public List<? super PsiElement> process(@NotNull PsiClass psiClass, @Nullable String nameHint) {
     List<? super PsiElement> result = new ArrayList<>();
-    for (PsiField psiField : PsiClassUtil.collectClassFieldsIntern(psiClass)) {
+    Collection<PsiField> fields = psiClass.isRecord() ? collectRecordFields(psiClass) : PsiClassUtil.collectClassFieldsIntern(psiClass);
+    for (PsiField psiField : fields) {
       PsiAnnotation psiAnnotation = PsiAnnotationSearchUtil.findAnnotation(psiField, getSupportedAnnotationClasses());
       if (null != psiAnnotation) {
         if (possibleToGenerateElementNamed(nameHint, psiClass, psiAnnotation, psiField)
@@ -157,5 +158,23 @@ public abstract class AbstractFieldProcessor extends AbstractProcessor implement
       }
     }
     return true;
+  }
+
+  private static Collection<PsiField> collectRecordFields(@NotNull PsiClass psiClass) {
+    PsiElementFactory factory = JavaPsiFacade.getInstance(psiClass.getProject()).getElementFactory();
+    Set<PsiField> fields = Arrays.stream(psiClass.getRecordComponents())
+      .filter(c -> c.getName() != null && c.getTypeElement() != null)
+      .map(c -> {
+        String type = c.getTypeElement().getText();
+        if (type.endsWith("...")) {
+          type = type.substring(0, type.length() - 3) + "[]";
+        }
+        PsiField field = factory.createFieldFromText(String.format("private final %s %s;", type, c.getName()), psiClass);
+        return new LightRecordField(psiClass.getManager(), field, psiClass, c);
+      })
+      .collect(Collectors.toSet());
+
+    fields.addAll(((PsiExtensibleClass) psiClass).getOwnFields());
+    return fields;
   }
 }
