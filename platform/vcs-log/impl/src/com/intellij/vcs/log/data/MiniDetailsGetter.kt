@@ -58,8 +58,7 @@ class MiniDetailsGetter internal constructor(project: Project,
     val taskNumber = currentTaskIndex++
     toLoad.forEach(IntConsumer { cacheCommit(it, taskNumber) })
     loader.queue(TaskDescriptor(toLoad))
-    // now it is in the cache as "Loading Details" (cacheCommit puts it there)
-    return cache.getIfPresent(commit)!!
+    return cache.getIfPresent(commit) ?: createPlaceholderCommit(commit, taskNumber)
   }
 
   override fun getCommitDataIfAvailable(commit: Int): VcsCommitMetadata? {
