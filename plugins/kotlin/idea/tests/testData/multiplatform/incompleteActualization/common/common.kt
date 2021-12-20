@@ -1,4 +1,4 @@
 package foo
 
-expect class <!NO_ACTUAL_FOR_EXPECT!>ExpectInCommonActualInJsOnly<!>
-expect class <!NO_ACTUAL_FOR_EXPECT!>ExpectInCommonActualInJvmOnly<!>
+expect class <!LINE_MARKER("descr='Has actuals in js module'"), NO_ACTUAL_FOR_EXPECT!>ExpectInCommonActualInJsOnly<!>
+expect class <!LINE_MARKER("descr='Has actuals in jvm module'"), NO_ACTUAL_FOR_EXPECT!>ExpectInCommonActualInJvmOnly<!>

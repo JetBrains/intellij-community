@@ -1,4 +1,4 @@
-actual typealias <!LINE_MARKER("descr='Has declaration in common module'")!>Expect<!> = String
+actual typealias <!LINE_MARKER("descr='Has expects in common module'")!>Expect<!> = String
 
 interface Derived : Base {
     override fun <!LINE_MARKER("descr='Overrides function in 'Base''")!>expectInReturnType<!>(): Expect

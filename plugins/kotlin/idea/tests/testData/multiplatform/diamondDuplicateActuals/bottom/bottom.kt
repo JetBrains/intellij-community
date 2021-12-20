@@ -1,7 +1,7 @@
 package sample
 
-actual class A {
-    actual fun foo(): Int = 45
+actual class <!LINE_MARKER("descr='Has expects in top module'")!>A<!> {
+    actual fun <!LINE_MARKER("descr='Has expects in top module'")!>foo<!>(): Int = 45
     fun fromBottom(): Int = 0
 }
 
