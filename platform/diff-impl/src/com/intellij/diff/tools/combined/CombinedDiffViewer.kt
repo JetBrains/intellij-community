@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
@@ -21,11 +21,11 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.DataKey
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
+import com.intellij.openapi.editor.ex.EditorEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
 import com.intellij.openapi.ui.VerticalFlowLayout
 import com.intellij.openapi.util.Disposer
@@ -42,9 +42,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
 
-var COMBINED_DIFF_VIEWER = DataKey.create<CombinedDiffViewer>("combined_diff_viewer")
-
-class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Boolean) : FrameDiffTool.DiffViewer, DataProvider {
+class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Boolean) : DiffViewer, DataProvider {
   private val project = context.project
 
   internal val contentPanel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false))
@@ -82,6 +80,7 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
     }
 
     val diffBlock = diffBlockFactory.createBlock(content, needBorder)
+    Disposer.register(diffBlock, viewer)
     Disposer.register(this, diffBlock)
 
     contentPanel.add(diffBlock.component)
@@ -223,7 +222,7 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
   }
 }
 
-internal val FrameDiffTool.DiffViewer.editor: Editor?
+internal val DiffViewer.editor: EditorEx?
   get() = when (this) {
     is OnesideTextDiffViewer -> editor
     is TwosideTextDiffViewer -> currentEditor
@@ -231,7 +230,7 @@ internal val FrameDiffTool.DiffViewer.editor: Editor?
     else -> null
   }
 
-internal val FrameDiffTool.DiffViewer.editors: List<Editor>
+internal val DiffViewer.editors: List<EditorEx>
   get() = when (this) {
     is OnesideTextDiffViewer -> editors
     is TwosideTextDiffViewer -> editors
@@ -239,7 +238,7 @@ internal val FrameDiffTool.DiffViewer.editors: List<Editor>
     else -> emptyList()
   }
 
-internal val FrameDiffTool.DiffViewer?.isEditorBased: Boolean
+internal val DiffViewer?.isEditorBased: Boolean
   get() = this is DiffViewerBase &&
           this !is OnesideBinaryDiffViewer &&  //TODO simplify, introduce ability to distinguish editor and non-editor based DiffViewer
           this !is ThreesideBinaryDiffViewer &&
