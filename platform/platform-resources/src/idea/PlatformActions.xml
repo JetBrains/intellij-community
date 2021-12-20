@@ -117,10 +117,6 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
-    <group id="CollapsiblePanelActions">
-      <action id="CollapsiblePanel-toggle" class="com.intellij.ui.CollapsiblePanelActions$Toggle"/>
-    </group>
-
     <group id="PopupMenuActions">
       <action id="PopupMenu-selectPrevious" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorUp"/>
       <action id="PopupMenu-selectNext" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorDown"/>
@@ -176,6 +172,10 @@
             class="com.intellij.ui.ExpandableActions$Collapse"/>
     <action id="ExpandExpandableComponent" icon="AllIcons.General.ExpandComponentHover"
             class="com.intellij.ui.ExpandableActions$Expand"/>
+
+    <action id="CollapsiblePanel-toggle" class="com.intellij.openapi.actionSystem.EmptyAction">
+      <keyboard-shortcut keymap="$default" first-keystroke="SPACE"/>
+    </action>
 
     <action id="ContextHelp" class="com.intellij.ide.actions.ContextHelpAction"/>
     <action id="ShowPopupMenu" class="com.intellij.ide.actions.ShowPopupMenuAction"/>
