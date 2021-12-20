@@ -2,8 +2,7 @@
 package com.intellij.lang;
 
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.SyntaxTraverser;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class InvalidPsiAutoFormatRestriction implements LanguageFormattingRestriction {
@@ -19,6 +18,6 @@ public class InvalidPsiAutoFormatRestriction implements LanguageFormattingRestri
 
 
   private static boolean containsValidPsi(@NotNull PsiElement context) {
-    return SyntaxTraverser.psiTraverser(context).filter(PsiErrorElement.class).first() == null;
+    return !PsiTreeUtil.hasErrorElements(context);
   }
 }
