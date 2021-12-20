@@ -1856,6 +1856,9 @@ public final class PluginManagerConfigurable
   public void openMarketplaceTab(@NotNull String option) {
     myLaterSearchQuery = option;
     myShowMarketplaceTab = true;
+    updateSelectionTab(MARKETPLACE_TAB);
+    myMarketplaceTab.clearSearchPanel(option);
+    myMarketplaceTab.showSearchPanel(option);
   }
 
   private final class InstallFromDiskAction extends DumbAwareAction {

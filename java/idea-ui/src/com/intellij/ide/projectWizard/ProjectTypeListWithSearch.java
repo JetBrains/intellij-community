@@ -69,9 +69,9 @@ public class ProjectTypeListWithSearch<T> extends JPanel {
     emptyText.appendSecondaryText(IdeBundle.message("plugins.configurable.search.in.marketplace"),
                                   SimpleTextAttributes.LINK_PLAIN_ATTRIBUTES,
                                   e -> {
-                                    ShowSettingsUtil.getInstance().showSettingsDialog(
+                                    ShowSettingsUtil.getInstance().editConfigurable(
                                       ProjectManager.getInstance().getDefaultProject(),
-                                      PluginManagerConfigurable.class,
+                                      new PluginManagerConfigurable(),
                                       configurable -> configurable.openMarketplaceTab(searchTextField.getText()));
                                   });
   }
