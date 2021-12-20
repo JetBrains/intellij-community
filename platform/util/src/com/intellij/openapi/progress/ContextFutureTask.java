@@ -1,6 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
+import com.intellij.openapi.application.AccessToken;
+import com.intellij.openapi.application.ThreadContext;
+import kotlin.coroutines.CoroutineContext;
 import kotlinx.coroutines.CompletableDeferred;
 import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
@@ -9,7 +12,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.FutureTask;
 import java.util.concurrent.RunnableFuture;
 
-import static com.intellij.openapi.progress.Cancellation.currentJob;
 import static com.intellij.openapi.progress.Cancellation.withJob;
 import static kotlinx.coroutines.CompletableDeferredKt.CompletableDeferred;
 
@@ -19,7 +21,7 @@ public final class ContextFutureTask<V> extends FutureTask<V> {
   private final @NotNull CompletableDeferred<V> myJob;
 
   private ContextFutureTask(@NotNull CompletableDeferred<V> job, @NotNull Callable<V> callable) {
-    super(contextCallable(job, callable));
+    super(callable);
     myJob = job;
   }
 
@@ -30,15 +32,17 @@ public final class ContextFutureTask<V> extends FutureTask<V> {
   }
 
   /**
-   * Creates a RunnableFuture instance with a job.
+   * Creates a RunnableFuture instance with a context.
    * <ul>
-   * <li>The job becomes a child of the current thread job, or a root job if there is no current job.</li>
-   * <li>The job becomes the current job inside the callable.</li>
-   * <li>The returned Future cancels its job when it's cancelled.</li>
+   * <li>The context job becomes a child of the current thread job, or a root job if there is no current job.</li>
+   * <li>The context job becomes the current job inside the callable.</li>
+   * <li>The returned Future cancels its context job when it's cancelled.</li>
    * </ul>
    */
-  public static <V> @NotNull RunnableFuture<V> contextRunnableFuture(@NotNull Callable<V> callable) {
-    return new ContextFutureTask<>(CompletableDeferred(currentJob()), callable);
+  public static <V> @NotNull RunnableFuture<V> contextRunnableFuture(@NotNull Callable<? extends V> callable) {
+    CoroutineContext currentThreadContext = ThreadContext.currentThreadContext();
+    CompletableDeferred<V> deferred = CompletableDeferred(Cancellation.contextJob(currentThreadContext));
+    return new ContextFutureTask<>(deferred, contextCallable(currentThreadContext, deferred, callable));
   }
 
   /**
@@ -46,11 +50,12 @@ public final class ContextFutureTask<V> extends FutureTask<V> {
    * invokes original callable, and completes the job its result.
    */
   private static @NotNull <V> Callable<V> contextCallable(
+    @NotNull CoroutineContext parentContext,
     @NotNull CompletableDeferred<V> deferred,
     @NotNull Callable<? extends V> callable
   ) {
     return () -> {
-      try {
+      try (AccessToken ignored = ThreadContext.resetThreadContext(parentContext)) {
         V result = withJob(deferred, callable::call);
         deferred.complete(result);
         return result;
