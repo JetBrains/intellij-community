@@ -31,7 +31,7 @@ class CancellationPropagationTest : BasePlatformTestCase() {
 
   @Rule
   @JvmField
-  val initRegistryKeyRule = RegistryKeyRule("ide.cancellation.propagate", true)
+  val initRegistryKeyRule = RegistryKeyRule("ide.propagate.context", true)
 
   private val service = AppExecutorUtil.getAppExecutorService()
   private val scheduledService = AppExecutorUtil.getAppScheduledExecutorService()

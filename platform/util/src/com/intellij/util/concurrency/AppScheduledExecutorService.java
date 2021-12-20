@@ -143,7 +143,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
 
     @Override
     protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-      if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.cancellation.propagate")) {
+      if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.propagate.context")) {
         return ContextFutureTask.contextRunnableFuture(callable);
       }
       else {
@@ -153,7 +153,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
 
     @Override
     public void execute(@NotNull Runnable command) {
-      if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.cancellation.propagate")) {
+      if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.propagate.context")) {
         super.execute(ContextRunnable.contextRunnable(command));
       }
       else {
