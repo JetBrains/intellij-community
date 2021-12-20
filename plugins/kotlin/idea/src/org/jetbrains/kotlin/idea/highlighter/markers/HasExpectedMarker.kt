@@ -6,21 +6,19 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.descriptors.MemberDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.project.implementedDescriptors
-import org.jetbrains.kotlin.idea.caches.resolve.findModuleDescriptor
 import org.jetbrains.kotlin.idea.core.toDescriptor
+import org.jetbrains.kotlin.idea.util.expectedDescriptors
 import org.jetbrains.kotlin.idea.util.expectedDeclarationIfAny
-import org.jetbrains.kotlin.idea.util.hasDeclarationOf
 import org.jetbrains.kotlin.psi.KtDeclaration
 
 fun getExpectedDeclarationTooltip(declaration: KtDeclaration): String? {
     val descriptor = declaration.toDescriptor() as? MemberDescriptor ?: return null
-    val platformModuleDescriptor = declaration.containingKtFile.findModuleDescriptor()
+    val expectDescriptors = descriptor.expectedDescriptors()
+    val modulesString = getModulesStringForExpectActualMarkerTooltip(expectDescriptors) ?: return null
 
-    val commonModuleDescriptors = platformModuleDescriptor.implementedDescriptors
-    if (!commonModuleDescriptors.any { it.hasDeclarationOf(descriptor) }) return null
-
-    return KotlinBundle.message("highlighter.tool.tip.has.declaration.in.common.module")
+    return KotlinBundle.message(
+        "highlighter.tool.tip.has.expect.declaration.in", modulesString
+    )
 }
 
 fun KtDeclaration.allNavigatableExpectedDeclarations(): List<KtDeclaration> =

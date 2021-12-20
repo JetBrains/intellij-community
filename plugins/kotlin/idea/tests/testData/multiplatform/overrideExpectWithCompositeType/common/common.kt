@@ -1,4 +1,4 @@
-expect class <!LINE_MARKER("descr='Has actuals in JVM'")!>Expect<!>
+expect class <!LINE_MARKER("descr='Has actuals in jvm module'")!>Expect<!>
 
 class Box<out T>(val x: T)
 

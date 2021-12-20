@@ -1,4 +1,4 @@
 package foo
 
-actual class ExpectInCommonActualInJvmOnly
-actual class <!LINE_MARKER("descr='Has declaration in common module'")!>ExpectInMiddleActualInJvmOnly<!>
+actual class <!LINE_MARKER("descr='Has expects in common module'")!>ExpectInCommonActualInJvmOnly<!>
+actual class <!LINE_MARKER("descr='Has expects in jvmAndJs module'")!>ExpectInMiddleActualInJvmOnly<!>
