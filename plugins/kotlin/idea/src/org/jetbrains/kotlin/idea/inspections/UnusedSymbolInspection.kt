@@ -586,6 +586,7 @@ class UnusedSymbolInspection : AbstractKotlinInspection() {
         if (descriptor !is MemberDescriptor) return false
         val commonModuleDescriptor = declaration.containingKtFile.findModuleDescriptor()
 
+        // TODO: Check if 'allImplementingDescriptors' should be used instead!
         return commonModuleDescriptor.implementingDescriptors.any { it.hasActualsFor(descriptor) } ||
                 commonModuleDescriptor.hasActualsFor(descriptor)
     }

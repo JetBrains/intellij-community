@@ -2,17 +2,17 @@ package sample
 
 import sample.A.Companion.companionExtensionFunction
 
-expect class <!LINE_MARKER("descr='Has actuals in common'")!>A<!>() {
-    fun <!LINE_MARKER("descr='Has actuals in common'")!>memberFunction<!>(x: Int, y: String = "ok")
-    companion <!LINE_MARKER("descr='Has actuals in common'")!>object<!> {
-        fun <!LINE_MARKER("descr='Has actuals in common'")!>companionFunction<!>(x: Int, y: String = "ok")
-        fun String.<!LINE_MARKER("descr='Has actuals in common'")!>companionExtensionFunction<!>(x: Int, y: String = "ok")
+expect class <!LINE_MARKER("descr='Has actuals in middle module'")!>A<!>() {
+    fun <!LINE_MARKER("descr='Has actuals in middle module'")!>memberFunction<!>(x: Int, y: String = "ok")
+    companion <!LINE_MARKER("descr='Has actuals in middle module'")!>object<!> {
+        fun <!LINE_MARKER("descr='Has actuals in middle module'")!>companionFunction<!>(x: Int, y: String = "ok")
+        fun String.<!LINE_MARKER("descr='Has actuals in middle module'")!>companionExtensionFunction<!>(x: Int, y: String = "ok")
     }
 }
 
-expect fun <!LINE_MARKER("descr='Has actuals in common'")!>topLevelFunction<!>(x: Int, y: String = "ok")
+expect fun <!LINE_MARKER("descr='Has actuals in middle module'")!>topLevelFunction<!>(x: Int, y: String = "ok")
 
-expect fun String.<!LINE_MARKER("descr='Has actuals in common'")!>topLevelExtensionFunction<!>(x: Int, y: String = "ok")
+expect fun String.<!LINE_MARKER("descr='Has actuals in middle module'")!>topLevelExtensionFunction<!>(x: Int, y: String = "ok")
 
 fun test() {
     A().memberFunction(<!NO_VALUE_FOR_PARAMETER!>)<!>

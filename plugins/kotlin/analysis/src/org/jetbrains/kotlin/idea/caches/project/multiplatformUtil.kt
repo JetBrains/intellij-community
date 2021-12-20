@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.konan.NativePlatform
 import org.jetbrains.kotlin.platform.konan.NativePlatformUnspecifiedTarget
+import org.jetbrains.kotlin.types.typeUtil.closure
 
 val Module.isNewMPPModule: Boolean
     get() = facetSettings?.mppVersion.isNewMPP ||
@@ -157,6 +158,9 @@ val ModuleDescriptor.implementingDescriptors: List<ModuleDescriptor>
         val implementingModuleInfos = moduleSourceInfo.module.implementingModules.mapNotNull { it.toInfo(moduleSourceInfo.sourceType) }
         return implementingModuleInfos.mapNotNull { it.toDescriptor() }
     }
+
+val ModuleDescriptor.allImplementingDescriptors: Collection<ModuleDescriptor>
+    get() = implementingDescriptors.closure(true) { it.implementingDescriptors }
 
 fun Module.toInfo(type: SourceType): ModuleSourceInfo? = when (type) {
     PRODUCTION -> productionSourceInfo()
