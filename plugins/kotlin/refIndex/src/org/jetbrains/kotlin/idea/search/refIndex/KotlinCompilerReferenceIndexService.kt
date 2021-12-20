@@ -331,7 +331,9 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         .orEmpty()
 
     private fun getDirectJavaSubtypesOf(compilerRefProvider: (NameEnumerator) -> CompilerRef?): Sequence<FqNameWrapper> =
-        compilerReferenceServiceBase?.getDirectInheritorsNames(compilerRefProvider)
+        compilerReferenceServiceBase?.getDirectInheritorsNames(
+            CompilerReferenceServiceBase.CompilerRefProvider { compilerRefProvider(it) }
+        )
             ?.asSequence()
             ?.mapNotNull(FqNameWrapper.Companion::createFromSearchId)
             .orEmpty()
