@@ -165,7 +165,8 @@ fun isUsageOfDescriptor(descriptor: DeclarationDescriptor, element: KtElement, c
     fun isUsageOfDescriptorInResolvedCall(resolvedCall: ResolvedCall<*>): Boolean {
         // As receiver of call
         if (resolvedCall.dispatchReceiver.getThisReceiverOwner(context) == descriptor ||
-            resolvedCall.extensionReceiver.getThisReceiverOwner(context) == descriptor
+            resolvedCall.extensionReceiver.getThisReceiverOwner(context) == descriptor ||
+            resolvedCall.contextReceivers.any { it.getThisReceiverOwner(context) == descriptor }
         ) {
             return true
         }
