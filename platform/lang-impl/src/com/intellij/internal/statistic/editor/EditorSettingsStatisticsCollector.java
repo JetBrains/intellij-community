@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -182,7 +183,7 @@ final class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector
     Boolean value = valueFunction.apply(settingsBean);
     Boolean defaultValue = valueFunction.apply(defaultSettingsBean);
     if (!Comparing.equal(value, defaultValue)) {
-      List<EventPair<?>> values = Arrays.asList(pairs);
+      List<EventPair<?>> values = new ArrayList<>(Arrays.asList(pairs));
       values.add(SETTING_ID.with(setting));
       values.add(EventFields.Enabled.with(value));
       set.add(SETTING.metric(values));
