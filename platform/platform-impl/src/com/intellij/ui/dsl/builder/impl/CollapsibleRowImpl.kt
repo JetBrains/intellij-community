@@ -2,6 +2,8 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.CollapsiblePanelActions
+import com.intellij.ui.Expandable
 import com.intellij.ui.dsl.builder.CollapsibleRow
 import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.Panel
@@ -9,8 +11,10 @@ import com.intellij.ui.dsl.builder.RowLayout
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import org.jetbrains.annotations.ApiStatus
-import java.awt.event.KeyAdapter
+import java.awt.event.ActionEvent
 import java.awt.event.KeyEvent
+import javax.swing.AbstractAction
+import javax.swing.KeyStroke
 import javax.swing.border.EmptyBorder
 
 @ApiStatus.Internal
@@ -31,13 +35,26 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
       collapsibleTitledSeparator.putClientProperty(DslComponentProperty.VISUAL_PADDINGS,
                                                    Gaps(top = it.top, left = it.left, bottom = it.bottom))
     }
-    collapsibleTitledSeparator.label.addKeyListener(object : KeyAdapter() {
-      override fun keyTyped(e: KeyEvent?) {
-        if (e?.keyChar == ' ') {
-          expanded = !expanded
-        }
+
+    collapsibleTitledSeparator.label.putClientProperty(Expandable::class.java, object : Expandable {
+      override fun expand() {
+        expanded = true
+      }
+      override fun collapse() {
+        expanded = false
+      }
+      override fun isExpanded(): Boolean {
+        return expanded
       }
     })
+
+    collapsibleTitledSeparator.label.inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), CollapsiblePanelActions.Toggle.ID)
+    collapsibleTitledSeparator.label.actionMap.put(CollapsiblePanelActions.Toggle.ID, object : AbstractAction() {
+      override fun actionPerformed(e: ActionEvent?) {
+        expanded = !expanded
+      }
+    })
+
     val collapsibleTitledSeparator = this.collapsibleTitledSeparator
     panel {
       row {

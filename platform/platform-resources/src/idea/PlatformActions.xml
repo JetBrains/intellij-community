@@ -117,6 +117,10 @@
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
 
+    <group id="CollapsiblePanelActions">
+      <action id="CollapsiblePanel-toggle" class="com.intellij.ui.CollapsiblePanelActions$Toggle"/>
+    </group>
+
     <group id="PopupMenuActions">
       <action id="PopupMenu-selectPrevious" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorUp"/>
       <action id="PopupMenu-selectNext" class="com.intellij.openapi.actionSystem.EmptyAction" use-shortcut-of="EditorDown"/>
