@@ -240,6 +240,8 @@ final class PlatformModules {
       "intellij.platform.collaborationTools",
       "intellij.platform.collaborationTools.auth",
 
+      "intellij.platform.markdown.utils",
+
       "intellij.platform.icons",
       "intellij.platform.resources",
       "intellij.platform.resources.en",
