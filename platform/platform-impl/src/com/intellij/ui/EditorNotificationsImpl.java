@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ProjectTopics;
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
@@ -179,11 +178,11 @@ public final class EditorNotificationsImpl extends EditorNotifications {
 
     if (component != null) {
       if (component instanceof EditorNotificationPanel) {
-        ((EditorNotificationPanel)component).setProviderKey(key);
+        ((EditorNotificationPanel)component).setProvider(provider);
         ((EditorNotificationPanel)component).setProject(myProject);
       }
-      EditorNotificationPanelCollector.logShown(myProject, key.toString(), PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
 
+      EditorNotificationUsagesCollectorKt.logNotificationShown(myProject, provider);
       FileEditorManager.getInstance(myProject).addTopComponent(editor, component);
     }
 
@@ -191,11 +190,11 @@ public final class EditorNotificationsImpl extends EditorNotifications {
   }
 
   @Override
-  public void logNotificationActionInvocation(@Nullable Key<?> providerKey, @Nullable Class<?> runnableClass) {
-    if (providerKey == null || runnableClass == null) return;
-
-    EditorNotificationPanelCollector.logActionInvoked(myProject, providerKey.toString(), runnableClass,
-                                                      PluginInfoDetectorKt.getPluginInfo(runnableClass));
+  public void logNotificationActionInvocation(@NotNull EditorNotificationProvider<?> provider,
+                                              @NotNull Class<?> runnableClass) {
+    EditorNotificationUsagesCollectorKt.logHandlerInvoked(myProject,
+                                                          provider,
+                                                          runnableClass);
   }
 
   @Override

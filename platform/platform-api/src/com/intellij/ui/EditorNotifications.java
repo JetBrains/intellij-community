@@ -1,11 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
@@ -30,7 +29,8 @@ public abstract class EditorNotifications {
     }
 
     @Override
-    public void logNotificationActionInvocation(@Nullable Key<?> providerKey, @Nullable Class<?> runnableClass) {
+    public void logNotificationActionInvocation(@NotNull EditorNotificationProvider<?> provider,
+                                                @NotNull Class<?> runnableClass) {
     }
   };
 
@@ -76,7 +76,8 @@ public abstract class EditorNotifications {
   public abstract void updateAllNotifications();
 
   @ApiStatus.Internal
-  public abstract void logNotificationActionInvocation(@Nullable Key<?> providerKey, @Nullable Class<?> runnableClass);
+  public abstract void logNotificationActionInvocation(@NotNull EditorNotificationProvider<?> provider,
+                                                       @NotNull Class<?> runnableClass);
 
   public static void updateAll() {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();

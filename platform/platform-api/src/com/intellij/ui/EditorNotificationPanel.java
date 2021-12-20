@@ -57,7 +57,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   protected final @Nullable Color myBackgroundColor;
   protected final @NotNull ColorKey myBackgroundColorKey;
 
-  private @Nullable Key<?> myProviderKey;
+  private @Nullable EditorNotificationProvider<?> myProvider;
   private @Nullable Project myProject;
 
   public EditorNotificationPanel(@Nullable Color backgroundColor) {
@@ -158,8 +158,16 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     myProject = project;
   }
 
+  /**
+   * @deprecated Please use either {@link #setProvider(EditorNotificationProvider)} or a constuctor.
+   */
+  @Deprecated
   public void setProviderKey(@Nullable Key<?> key) {
-    myProviderKey = key;
+  }
+
+  @ApiStatus.Internal
+  public void setProvider(@Nullable EditorNotificationProvider<?> provider) {
+    myProvider = provider;
   }
 
   public static Color getToolbarBackground() {
@@ -274,8 +282,8 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   }
 
   private void logNotificationActionInvocation(@NotNull Object handlerClass) {
-    if (myProject != null) {
-      EditorNotifications.getInstance(myProject).logNotificationActionInvocation(myProviderKey, handlerClass.getClass());
+    if (myProject != null && myProvider != null) {
+      EditorNotifications.getInstance(myProject).logNotificationActionInvocation(myProvider, handlerClass.getClass());
     }
   }
 
