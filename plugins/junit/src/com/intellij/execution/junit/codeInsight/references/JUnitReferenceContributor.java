@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit.codeInsight.references;
 
 import com.intellij.patterns.InitialPatternCondition;
@@ -63,7 +63,7 @@ final class JUnitReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(getEnumSourceNamesPattern(), new PsiReferenceProvider() {
       @Override
       public PsiReference @NotNull [] getReferencesByElement(@NotNull PsiElement element, @NotNull final ProcessingContext context) {
-        return new EnumSourceReference[] {new EnumSourceReference((PsiLiteral)element)};
+        return new EnumSourceReference[] {new EnumSourceReference((PsiLanguageInjectionHost)element)};
       }
     });
     registrar.registerReferenceProvider(getElementPattern(JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_CSV_FILE_SOURCE, "resources"), new PsiReferenceProvider() {
