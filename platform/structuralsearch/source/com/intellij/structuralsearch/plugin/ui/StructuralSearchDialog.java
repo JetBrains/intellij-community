@@ -20,7 +20,6 @@ import com.intellij.notification.NotificationGroupManager;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
@@ -78,12 +77,13 @@ import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
+import com.intellij.util.TriConsumer;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.textCompletion.TextCompletionUtil;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TextTransferable;
 import net.miginfocom.swing.MigLayout;
 import org.jdom.JDOMException;
@@ -455,85 +455,55 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     return centerPanel;
   }
 
-  private JComponent createReplacePanel() {
-    final ToolbarLabel replacementTemplateLabel = new ToolbarLabel(SSRBundle.message("replacement.template.label"));
-    final DefaultActionGroup labelGroup = new DefaultActionGroup(new Spacer(), replacementTemplateLabel);
-    final ActionManager actionManager = ActionManager.getInstance();
-    final ActionToolbar labelToolbar = actionManager.createActionToolbar("StructuralReplaceDialog", labelGroup, true);
-    labelToolbar.setTargetComponent(null);
+  private @NotNull JComponent createReplacePanel() {
+    final JBLabel replacementTemplateLabel = new JBLabel(SSRBundle.message("replacement.template.label"));
 
-    final CheckboxAction shortenFqn = new CheckboxAction(SSRBundle.message("shorten.fully.qualified.names.checkbox")) {
-
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        super.update(e);
-        final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
-        e.getPresentation().setEnabledAndVisible(profile != null && profile.supportsShortenFQNames());
-      }
-
-      @Override
-      public boolean isSelected(@NotNull AnActionEvent e) {
-        if (!myReplace) return false;
-        return myConfiguration.getReplaceOptions().isToShortenFQN();
-      }
-
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myConfiguration.getReplaceOptions().setToShortenFQN(state);
-      }
+    final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
+    final TriConsumer<JBCheckBox, Boolean, Boolean> initReplaceCheckbox = (checkBox, enabledAndVisible, selected) -> {
+      checkBox.setOpaque(false);
+      checkBox.setEnabled(enabledAndVisible); checkBox.setVisible(enabledAndVisible);
+      checkBox.setSelected(selected);
     };
-    final CheckboxAction staticImport = new CheckboxAction(SSRBundle.message("use.static.import.checkbox")) {
 
-      @Override
-      public void update(@NotNull AnActionEvent e) {
-        super.update(e);
-        final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
-        e.getPresentation().setEnabledAndVisible(profile != null && profile.supportsUseStaticImports());
-      }
+    final JBCheckBox shortenFqn = new JBCheckBox(SSRBundle.message("shorten.fully.qualified.names.checkbox"));
+    initReplaceCheckbox.accept(shortenFqn,
+                               profile != null && profile.supportsShortenFQNames(),
+                               myReplace && myConfiguration.getReplaceOptions().isToShortenFQN());
+    shortenFqn.addActionListener(e -> {
+      myConfiguration.getReplaceOptions().setToShortenFQN(shortenFqn.isSelected());
+    });
 
-      @Override
-      public boolean isSelected(@NotNull AnActionEvent e) {
-        if (!myReplace) return false;
-        return myConfiguration.getReplaceOptions().isToUseStaticImport();
-      }
+    final JBCheckBox staticImport = new JBCheckBox(SSRBundle.message("use.static.import.checkbox"));
+    initReplaceCheckbox.accept(staticImport,
+                               profile != null && profile.supportsUseStaticImports(),
+                               myReplace && myConfiguration.getReplaceOptions().isToUseStaticImport());
+    staticImport.addActionListener(e -> {
+      myConfiguration.getReplaceOptions().setToUseStaticImport(staticImport.isSelected());
+    });
 
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myConfiguration.getReplaceOptions().setToUseStaticImport(state);
-      }
-    };
-    final CheckboxAction reformat = new CheckboxAction(SSRBundle.message("reformat.checkbox")) {
-      @Override
-      public boolean isSelected(@NotNull AnActionEvent e) {
-        if (!myReplace) return false;
-        return myConfiguration.getReplaceOptions().isToReformatAccordingToStyle();
-      }
-
-      @Override
-      public void setSelected(@NotNull AnActionEvent e, boolean state) {
-        myConfiguration.getReplaceOptions().setToReformatAccordingToStyle(state);
-      }
-    };
-    final DefaultActionGroup replacementActionGroup = new DefaultActionGroup(shortenFqn, staticImport, reformat);
-    final ActionToolbar replacementToolbar = actionManager.createActionToolbar("StructuralSearchDialog", replacementActionGroup, true);
-    replacementToolbar.setTargetComponent(null);
-    replacementToolbar.getComponent().setBorder(JBUI.Borders.empty());
-    replacementToolbar.getComponent().setOpaque(false);
+    final JBCheckBox reformat = new JBCheckBox(SSRBundle.message("reformat.checkbox"));
+    reformat.setOpaque(false);
+    reformat.setSelected(myReplace && myConfiguration.getReplaceOptions().isToReformatAccordingToStyle());
+    reformat.addActionListener(e -> {
+      myConfiguration.getReplaceOptions().setToReformatAccordingToStyle(reformat.isSelected());
+    });
 
     final OnePixelSplitter replaceEditorPanel = new OnePixelSplitter(false, 1.0f);
     replaceEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
     myReplaceCriteriaEdit = createEditor(true);
     replaceEditorPanel.setFirstComponent(myReplaceCriteriaEdit);
 
-    final JPanel wrapper = new JPanel(new MigLayout("ins 0, fill", "", "[grow 100]0[grow 0]"));
+    final JPanel wrapper = new JPanel(new MigLayout("ins 0, fill, hidemode 3", "[grow 0]0[grow 0]0[grow 0][]", "[grow 100]8[grow 0]8"));
     final Color color = UIManager.getColor("Borders.ContrastBorderColor");
     wrapper.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
     wrapper.setBorder(IdeBorderFactory.createBorder(color));
-    wrapper.add(replaceEditorPanel, "grow 100, wrap");
-    wrapper.add(replacementToolbar.getComponent(), "gap 8 8 8 8");
+    wrapper.add(replaceEditorPanel, "grow 100, span, wrap");
+    wrapper.add(shortenFqn, "grow 0, gapleft 8, gapright 10");
+    wrapper.add(staticImport, "gapright 10");
+    wrapper.add(reformat, "");
 
     final JPanel replacePanel = new JPanel(new MigLayout("ins 0, fill", "", "[grow 0]4[grow 100]"));
-    replacePanel.add(labelToolbar.getComponent(), "wrap");
+    replacePanel.add(replacementTemplateLabel, "gap 22 0 5 5, wrap");
     replacePanel.add(wrapper, "grow 100");
     return replacePanel;
   }
