@@ -4,7 +4,6 @@ package com.intellij.ui.layout
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.util.NlsContexts
-import com.intellij.ui.HideableTitledSeparator
 import com.intellij.ui.components.Label
 import com.intellij.ui.components.noteComponent
 import org.jetbrains.annotations.ApiStatus
@@ -71,17 +70,12 @@ interface RowBuilder : BaseBuilder {
   fun blockRow(init: Row.() -> Unit): Row
 
   /**
-   * Creates row with a hideable decorator.
+   * Creates row with hideable decorator.
    * It allows to hide some information under the titled decorator
    */
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated("Use Kotlin UI DSL Version 2")
   fun hideableRow(@NlsContexts.Separator title: String, incrementsIndent: Boolean = true, init: Row.() -> Unit): Row
-
-  /**
-   * Creates row with a hideable decorator. This allows hiding information under the titled decorator.
-   */
-  fun hideableRow(titledSeparator: HideableTitledSeparator, incrementsIndent: Boolean = true, init: Row.() -> Unit): Row
 
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   @Deprecated("Use Kotlin UI DSL Version 2")
