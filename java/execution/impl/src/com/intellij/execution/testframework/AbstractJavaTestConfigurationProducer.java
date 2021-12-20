@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -149,7 +149,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
         }
       }
       else {
-        psiElement = PsiTreeUtil.getParentOfType(psiElement, PsiMember.class, false);
+        psiElement = PsiTreeUtil.getNonStrictParentOfType(psiElement, PsiMember.class, PsiClassOwner.class);
         if (psiElement instanceof PsiClassOwner) {
           final PsiClass[] classes = ((PsiClassOwner)psiElement).getClasses();
           for (PsiClass aClass : classes) {

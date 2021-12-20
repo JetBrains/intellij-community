@@ -71,7 +71,7 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
     ): Boolean {
         if (DumbService.getInstance(context.project).isDumb) return false
 
-        if (!isAvailableInMpp(context)) {
+        if (getInstance(PatternConfigurationProducer::class.java).isMultipleElementsSelected(context) || !isAvailableInMpp(context)) {
             return false
         }
 
