@@ -18,7 +18,7 @@ import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.installAndE
 import java.util.*
 import java.util.function.BiConsumer
 
-internal class LanguagePluginDetectionStartupActivity : StartupActivity.Background {
+private class LanguagePluginDetectionStartupActivity : StartupActivity.Background {
   override fun runActivity(project: Project) {
     val application = ApplicationManagerEx.getApplicationEx()
     if (application.isUnitTestMode || application.isHeadlessEnvironment) {
