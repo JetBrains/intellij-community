@@ -3,13 +3,13 @@
     <fileType.fileViewProviderFactory filetype="kotlin_builtins" implementationClass="com.intellij.psi.ClassFileViewProviderFactory"/>
     <filetype.stubBuilder filetype="kotlin_builtins" implementationClass="com.intellij.psi.impl.compiled.ClassFileStubBuilder"/>
     <filetype.decompiler filetype="kotlin_builtins" implementationClass="com.intellij.psi.impl.compiled.ClassFileDecompiler"/>
-    <applicationService serviceInterface="org.jetbrains.kotlin.idea.caches.FileAttributeService"
+    <applicationService serviceInterface="org.jetbrains.kotlin.analysis.decompiler.stub.file.FileAttributeService"
                         serviceImplementation="org.jetbrains.kotlin.idea.caches.FileAttributeServiceImpl"/>
 
     <postStartupActivity implementation="org.jetbrains.kotlin.idea.caches.project.VfsCodeBlockModificationListener"/>
 
     <!-- since 192 use light service @Service instead of this declaration -->
-    <applicationService serviceImplementation="org.jetbrains.kotlin.idea.caches.IDEKotlinBinaryClassCache"/>
+    <applicationService serviceImplementation="org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache"/>
 
     <applicationService serviceImplementation="org.jetbrains.kotlin.load.kotlin.KotlinBinaryClassCache"/>
 
@@ -17,7 +17,7 @@
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.project.LibraryModificationTracker"/>
     <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.PerModulePackageCacheService"/>
-    <projectService serviceImplementation="org.jetbrains.kotlin.idea.caches.lightClasses.ClsJavaStubByVirtualFileCache"/>
+    <projectService serviceImplementation="org.jetbrains.kotlin.analysis.decompiled.light.classes.ClsJavaStubByVirtualFileCache"/>
 
     <projectService
             serviceInterface="org.jetbrains.kotlin.analyzer.KotlinModificationTrackerService"
