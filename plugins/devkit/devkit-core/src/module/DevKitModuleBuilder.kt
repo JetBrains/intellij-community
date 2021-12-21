@@ -3,6 +3,7 @@ package org.jetbrains.idea.devkit.module
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.plugins.PluginManager
 import com.intellij.ide.starters.local.*
 import com.intellij.ide.starters.local.gradle.GradleResourcesProvider
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
@@ -10,6 +11,7 @@ import com.intellij.ide.starters.shared.*
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
@@ -150,14 +152,19 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
     }
 
     override fun addFieldsAfter(layout: LayoutBuilder) {
-      layout.titledRow(DevKitBundle.message("module.builder.resources.title")) {
-        row {
-          hyperLink(DevKitBundle.message("module.builder.how.to.link"),
-                    "https://plugins.jetbrains.com/docs/intellij/intellij-platform.html")
-        }
-        row {
-          hyperLink(DevKitBundle.message("module.builder.github.template.link"),
-                    "https://github.com/JetBrains/intellij-platform-plugin-template")
+      layout.row {
+        hyperLink(DevKitBundle.message("module.builder.how.to.link"),
+                  "https://plugins.jetbrains.com/docs/intellij/intellij-platform.html")
+      }
+      layout.row {
+        hyperLink(DevKitBundle.message("module.builder.github.template.link"),
+                  "https://github.com/JetBrains/intellij-platform-plugin-template")
+      }
+
+      if (PluginManager.isPluginInstalled(PluginId.findId("org.intellij.scala"))) {
+        layout.row {
+          hyperLink(DevKitBundle.message("module.builder.scala.github.template.link"),
+                    "https://github.com/JetBrains/sbt-idea-plugin")
         }
       }
     }
