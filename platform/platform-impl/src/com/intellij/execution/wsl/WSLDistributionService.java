@@ -2,10 +2,7 @@
 package com.intellij.execution.wsl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.components.State;
-import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.*;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
@@ -13,8 +10,6 @@ import com.intellij.util.xmlb.annotations.Tag;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
-
-import static com.intellij.openapi.util.NullableLazyValue.atomicLazyNullable;
 
 /**
  * Service responsible for keeping list of distributions in the external file, available for user modifications.
@@ -27,6 +22,7 @@ import static com.intellij.openapi.util.NullableLazyValue.atomicLazyNullable;
   name = "WslDistributionsService",
   storages = @Storage(value = "wsl.distributions.xml", roamingType = RoamingType.DISABLED)
 )
+@Service(Service.Level.APP)
 final class WSLDistributionService implements PersistentStateComponent<WSLDistributionService> {
   /**
    * Current service implementation version is necessary for future migrations: fields additions and so on.
@@ -72,7 +68,7 @@ final class WSLDistributionService implements PersistentStateComponent<WSLDistri
    * It can't be put to {@link #loadState(WSLDistributionService)} or {@link #noStateLoaded()} because of serialization implementations
    * details
    */
-  private final NullableLazyValue<Boolean> myDefaultsApplier = atomicLazyNullable(() -> {
+  private final NullableLazyValue<Boolean> myDefaultsApplier = NullableLazyValue.atomicLazyNullable(() -> {
     myDescriptors.addAll(DEFAULT_DESCRIPTORS);
     myVersion = CURRENT_VERSION;
     return true;
