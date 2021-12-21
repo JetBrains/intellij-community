@@ -17,8 +17,10 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.components.SegmentedButtonBorder
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.layout.*
 import com.intellij.util.ResettableLazy
 import com.intellij.util.ui.accessibility.ScreenReader
 import javax.swing.JComponent
@@ -35,6 +37,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
   protected open val additionalSteps: ResettableLazy<List<AnAction>>? = null
 
   val stepProperty = propertyGraph.graphProperty { "" }
+    .apply { bindWithStorage("NEW_PROJECT_WIZARD_STEP-${this@AbstractNewProjectWizardMultiStepBase.javaClass.name}") }
   var step by stepProperty
 
   private lateinit var stepsPanel: Placeholder
@@ -77,7 +80,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
           panelBuilder.setVisible(panel, key == step)
         }
       }
-      step = steps.value.keys.first()
+      step = stepProperty.get()
     }
   }
 
