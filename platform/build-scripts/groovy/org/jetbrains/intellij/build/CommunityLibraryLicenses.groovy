@@ -780,7 +780,6 @@ final class CommunityLibraryLicenses {
     jetbrainsLibrary("kotlinc.kotlin-gradle-statistics"),
     jetbrainsLibrary("kotlinc.kotlin-jps-common"),
     jetbrainsLibrary("kotlinc.kotlin-reflect"),
-    jetbrainsLibrary("kotlinc.kotlin-script-util"),
     jetbrainsLibrary("kotlinc.kotlin-scripting-compiler"),
     jetbrainsLibrary("kotlinc.kotlin-stdlib"),
     jetbrainsLibrary("kotlinc.kotlinx-serialization-compiler-plugin"),
