@@ -1,5 +1,6 @@
 package com.intellij.jps.cache;
 
+import com.intellij.jps.cache.client.JpsServerAuthExtension;
 import com.intellij.jps.cache.loader.JpsOutputLoaderManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.vcs.log.Hash;
@@ -26,7 +27,7 @@ public class JpsCachesProjectStateListener implements GitRepositoryChangeListene
     previousCommitId = currentRevision;
     LOG.info("Remote repository commit changed to " + currentRevision);
     JpsOutputLoaderManager outputLoaderManager = JpsOutputLoaderManager.getInstance(repository.getProject());
-    //OneTwo.checkAuthenticatedInBackgroundThread(outputLoaderManager, repository.getProject(),
-    //                                            () -> outputLoaderManager.notifyAboutNearestCache());
+    JpsServerAuthExtension.checkAuthenticatedInBackgroundThread(outputLoaderManager, repository.getProject(),
+                                                                () -> outputLoaderManager.notifyAboutNearestCache());
   }
 }
