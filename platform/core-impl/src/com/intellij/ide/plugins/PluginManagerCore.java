@@ -376,7 +376,10 @@ public final class PluginManagerCore {
   }
 
   public static boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
-    return CORE_ID.equals(plugin.getPluginId()) || SPECIAL_IDEA_PLUGIN_ID.equals(plugin.getPluginId()) || isDevelopedByJetBrains(plugin.getVendor());
+    return CORE_ID.equals(plugin.getPluginId()) ||
+           SPECIAL_IDEA_PLUGIN_ID.equals(plugin.getPluginId()) ||
+           isDevelopedByJetBrains(plugin.getVendor()) ||
+           isDevelopedByJetBrains(plugin.getOrganization());
   }
 
   public static boolean isDevelopedByJetBrains(@Nullable String vendorString) {
