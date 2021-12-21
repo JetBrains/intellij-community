@@ -1,1 +1,1 @@
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
