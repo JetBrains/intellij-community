@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.uploader
 
 import com.google.gson.Gson
@@ -91,9 +91,9 @@ object EventLogExternalUploader {
 
     val tempDir = getOrCreateTempDir()
     val uploader = findUploader()
-    val libs = findLibsByPrefixes("kotlin-stdlib", "commons-logging")
 
-    val libPaths = libs.map { it.path }.toMutableList()
+    val libPaths = ArrayList<String>()
+    libPaths.add(findLibraryByClass(kotlin.coroutines.Continuation::class.java)) // add kotlin-std to classpath
     libPaths.add(findLibraryByClass(NotNull::class.java))
     libPaths.add(findLibraryByClass(org.apache.log4j.Logger::class.java))
     libPaths.add(findLibraryByClass(Gson::class.java))
