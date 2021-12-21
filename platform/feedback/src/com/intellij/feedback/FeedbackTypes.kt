@@ -106,6 +106,8 @@ enum class FeedbackTypes {
       }
     )
     notification.notify(project)
-    updateStateAfterNotificationShowed()
+    if (!forTest) {
+      updateStateAfterNotificationShowed()
+    }
   }
 }

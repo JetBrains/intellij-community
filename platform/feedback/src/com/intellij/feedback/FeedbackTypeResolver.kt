@@ -17,7 +17,7 @@ object FeedbackTypeResolver {
     private set
 
   fun checkActivity(project: Project?) {
-    if (Duration.between(LocalDateTime.now(), lastActivityTime).toMinutes() >= MIN_INACTIVE_TIME) {
+    if (Duration.between(lastActivityTime, LocalDateTime.now()).toMinutes() >= MIN_INACTIVE_TIME) {
       showFeedbackNotification(project)
     }
     lastActivityTime = LocalDateTime.now()
