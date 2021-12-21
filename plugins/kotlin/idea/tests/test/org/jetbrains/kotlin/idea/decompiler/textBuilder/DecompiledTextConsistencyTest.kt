@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.decompiler.textBuilder
 
 import com.intellij.testFramework.fixtures.LightJavaCodeInsightFixtureTestCase
+import org.jetbrains.kotlin.analysis.decompiler.psi.ResolverForDecompiler
+import org.jetbrains.kotlin.analysis.decompiler.psi.text.buildDecompiledTextForClassFile
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
@@ -11,7 +13,6 @@ import org.jetbrains.kotlin.descriptors.MemberDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.fileClasses.JvmFileClassUtil
 import org.jetbrains.kotlin.idea.caches.resolve.IDEPackagePartProvider
-import org.jetbrains.kotlin.idea.decompiler.classFile.buildDecompiledTextForClassFile
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.idea.test.PluginTestCaseBase
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation

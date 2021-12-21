@@ -11,10 +11,10 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.analyzer.ModuleInfo
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
-import org.jetbrains.kotlin.idea.caches.lightClasses.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.idea.core.isInTestSourceContentKotlinAware
 import org.jetbrains.kotlin.idea.core.script.ScriptRelatedModuleNameFile
 import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager

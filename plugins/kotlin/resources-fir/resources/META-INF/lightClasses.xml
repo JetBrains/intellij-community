@@ -7,5 +7,9 @@
 
     <projectService serviceInterface="org.jetbrains.kotlin.asJava.LightClassGenerationSupport"
                     serviceImplementation="org.jetbrains.kotlin.idea.asJava.FirLightClassGenerationSupport"/>
+
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher"
+            serviceImplementation="org.jetbrains.kotlin.analysis.decompiled.light.classes.fe10.KotlinDeclarationInCompiledFileSearcherFE10Impl"/>
   </extensions>
 </idea-plugin>
