@@ -23,6 +23,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.VersionComparatorUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
+import kotlin.KotlinVersion;
 import kotlin.collections.ArraysKt;
 import kotlin.collections.CollectionsKt;
 import kotlin.jvm.functions.Function0;
@@ -34,9 +35,11 @@ import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.kotlin.cli.common.arguments.*;
 import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.idea.KotlinBundle;
+import org.jetbrains.kotlin.idea.KotlinVersionVerbose;
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService;
 import org.jetbrains.kotlin.idea.facet.DescriptionListCellRenderer;
 import org.jetbrains.kotlin.idea.facet.KotlinFacet;
+import org.jetbrains.kotlin.idea.jps.SetupKotlinJpsPluginBeforeCompileTask;
 import org.jetbrains.kotlin.idea.roots.RootUtilsKt;
 import org.jetbrains.kotlin.idea.util.CidrUtil;
 import org.jetbrains.kotlin.idea.util.application.ApplicationUtilsKt;
@@ -54,8 +57,6 @@ import java.util.*;
 import java.util.function.Consumer;
 
 public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Disposable {
-    private final static String KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath";
-
     private static final Map<String, @NlsSafe String> moduleKindDescriptions = new LinkedHashMap<>();
     private static final Map<String, @NlsSafe String> sourceMapSourceEmbeddingDescriptions = new LinkedHashMap<>();
     private static final int MAX_WARNING_SIZE = 75;
@@ -383,13 +384,20 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                     }
                     JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
                                     KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID,
-                                    KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID))
+                                    SetupKotlinJpsPluginBeforeCompileTask.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID))
                             .onProcessed(jpsClassPathVersions -> {
                                 if (jpsClassPathVersions == null) {
                                     onFinish.accept(null);
                                     return;
                                 }
-                                onFinish.accept(ContainerUtil.intersection(distVersions, jpsClassPathVersions));
+                                KotlinVersion min = SetupKotlinJpsPluginBeforeCompileTask.getJpsMinimumSupportedVersion();
+                                List<String> versions = ContainerUtil.filter(
+                                        ContainerUtil.intersection(distVersions, jpsClassPathVersions),
+                                        it -> {
+                                            KotlinVersionVerbose parsedVersion = KotlinVersionVerbose.parse(it);
+                                            return parsedVersion != null && parsedVersion.getPlainVersion().compareTo(min) >= 0;
+                                        });
+                                onFinish.accept(versions);
                             });
                 });
     }

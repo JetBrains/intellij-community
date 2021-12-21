@@ -2,23 +2,13 @@
 package org.jetbrains.kotlin.idea.jps
 
 import com.intellij.compiler.server.BuildProcessParametersProvider
-import com.intellij.openapi.application.PathManager
-import org.jetbrains.kotlin.idea.KotlinFileType
-import kotlin.reflect.full.IllegalCallableAccessException
+import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 
-/**
- * Test - [org.jetbrains.kotlin.idea.KotlinJpsClasspathProviderTest]
- */
-class KotlinJpsClasspathProvider : BuildProcessParametersProvider() {
-    override fun getClassPath(): List<String?> {
-        return listOf(
-            // kotlin-reflect.jar
-            PathManager.getJarPathForClass(IllegalCallableAccessException::class.java),
-
-            // kotlin-plugin.jar (aka kotlin-compiler-for-ide.jar)
-            // TODO: note it has to be compiler-components-for-jps.jar rather than kotlin-compiler-for-ide.jar
-            //  as kotlin-compiler-for-ide.jar includes kotlin-jps-common.jar as well (+maybe smth else)
-            PathManager.getJarPathForClass(KotlinFileType::class.java),
-        )
-    }
+class KotlinJpsClasspathProvider(private val project: Project) : BuildProcessParametersProvider() {
+    override fun getClassPath(): List<String> =
+        SetupKotlinJpsPluginBeforeCompileTask
+            .getKotlinJpsClasspathLocation(KotlinJpsPluginSettings.getInstance(project).settings.version).takeIf { it.exists() }
+            ?.let { listOf(it.canonicalPath) }
+            ?: emptyList()
 }
