@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder.impl
 
-import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.Expandable
@@ -45,9 +45,8 @@ internal class CollapsibleRowImpl(dialogPanelConfig: DialogPanelConfig,
       }
     })
 
-    val shortcutSet = ActionManager.getInstance().getAction("CollapsiblePanel-toggle").shortcutSet
     val action = DumbAwareAction.create { expanded = !expanded }
-    action.registerCustomShortcutSet(shortcutSet, collapsibleTitledSeparator.label)
+    action.registerCustomShortcutSet(ActionUtil.getShortcutSet("CollapsiblePanel-toggle"), collapsibleTitledSeparator.label)
 
     val collapsibleTitledSeparator = this.collapsibleTitledSeparator
     panel {
