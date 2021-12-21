@@ -127,18 +127,30 @@ public class UnnecessaryModifierInspection extends BaseInspection implements Cle
       if (containingClass == null) {
         return;
       }
-      if (!containingClass.isInterface()) {
-        return;
+      if (containingClass.isInterface()) {
+        final PsiModifierList modifierList = field.getModifierList();
+        final List<PsiKeyword> modifiers = PsiTreeUtil.getChildrenOfTypeAsList(modifierList, PsiKeyword.class);
+        for (PsiKeyword modifier : modifiers) {
+          final IElementType tokenType = modifier.getTokenType();
+          if (JavaTokenType.PUBLIC_KEYWORD == tokenType ||
+              JavaTokenType.STATIC_KEYWORD == tokenType ||
+              JavaTokenType.FINAL_KEYWORD == tokenType) {
+            registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                          InspectionGadgetsBundle.message("unnecessary.interface.field.modifier.problem.descriptor"));
+          }
+        }
       }
-      final PsiModifierList modifierList = field.getModifierList();
-      final List<PsiKeyword> modifiers = PsiTreeUtil.getChildrenOfTypeAsList(modifierList, PsiKeyword.class);
-      for (PsiKeyword modifier : modifiers) {
-        final IElementType tokenType = modifier.getTokenType();
-        if (JavaTokenType.PUBLIC_KEYWORD == tokenType ||
-            JavaTokenType.STATIC_KEYWORD == tokenType ||
-            JavaTokenType.FINAL_KEYWORD == tokenType) {
-          registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                        InspectionGadgetsBundle.message("unnecessary.interface.field.modifier.problem.descriptor"));
+      else {
+        // transient on interface field is a compile error
+        if (field.hasModifierProperty(PsiModifier.STATIC) && field.hasModifierProperty(PsiModifier.TRANSIENT)) {
+          final PsiModifierList modifierList = field.getModifierList();
+          final List<PsiKeyword> modifiers = PsiTreeUtil.getChildrenOfTypeAsList(modifierList, PsiKeyword.class);
+          for (PsiKeyword modifier : modifiers) {
+            if (JavaTokenType.TRANSIENT_KEYWORD == modifier.getTokenType()) {
+              registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                            InspectionGadgetsBundle.message("unnecessary.transient.modifier.problem.descriptor"));
+            }
+          }
         }
       }
     }

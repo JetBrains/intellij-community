@@ -21,3 +21,6 @@ interface Next {
 
     <warning descr="Modifier 'public' is redundant for inner classes of interfaces">public</warning> final class Sub extends Inner {}
 }
+class X {
+  static <warning descr="Modifier 'transient' is redundant for a 'static' field">transient</warning> String s;
+}
