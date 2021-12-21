@@ -11,6 +11,7 @@ import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.components.Service;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -50,6 +51,9 @@ import static com.intellij.project.ProjectKt.getProjectStoreDirectory;
 
 @Service(Service.Level.PROJECT)
 public final class SpellCheckerManager implements Disposable {
+  private static final ExtensionPointName<BundledDictionaryProvider> BUNDLED_EP_NAME =
+    new ExtensionPointName<>("com.intellij.spellchecker.bundledDictionaryProvider");
+
   private static final Logger LOG = Logger.getInstance(SpellCheckerManager.class);
 
   private static final int MAX_METRICS = 1;
@@ -84,7 +88,7 @@ public final class SpellCheckerManager implements Disposable {
     myProjectDictionaryPath = projectStoreDir == null ? "" : projectStoreDir.getPath() + File.separator + PROJECT_DICTIONARY_PATH;
     myAppDictionaryPath = getOptionsPath() + File.separator + CACHED_DICTIONARY_FILE;
     LocalFileSystem.getInstance().addVirtualFileListener(customDictFileListener);
-    BundledDictionaryProvider.EP_NAME.addChangeListener(this::fillEngineDictionary, this);
+    BUNDLED_EP_NAME.addChangeListener(this::fillEngineDictionary, this);
     RuntimeDictionaryProvider.EP_NAME.addChangeListener(this::fillEngineDictionary, this);
     CustomDictionaryProvider.EP_NAME.addChangeListener(this::fillEngineDictionary, this);
   }
@@ -101,7 +105,7 @@ public final class SpellCheckerManager implements Disposable {
   }
 
   public void updateBundledDictionaries(@NotNull List<String> removedDictionaries) {
-    for (BundledDictionaryProvider provider : BundledDictionaryProvider.EP_NAME.getExtensionList()) {
+    for (BundledDictionaryProvider provider : BUNDLED_EP_NAME.getExtensionList()) {
       for (String dictionary : provider.getBundledDictionaries()) {
         if (!mySpellChecker.isDictionaryLoad(dictionary)) {
           loadBundledDictionary(provider, dictionary);
@@ -169,7 +173,7 @@ public final class SpellCheckerManager implements Disposable {
   }
 
   private void loadBundledDictionaries() {
-    for (BundledDictionaryProvider provider : BundledDictionaryProvider.EP_NAME.getExtensionList()) {
+    for (BundledDictionaryProvider provider : BUNDLED_EP_NAME.getExtensionList()) {
       for (String dictionary : provider.getBundledDictionaries()) {
         loadBundledDictionary(provider, dictionary);
       }
@@ -297,7 +301,7 @@ public final class SpellCheckerManager implements Disposable {
 
   public static @NotNull List<String> getBundledDictionaries() {
     final ArrayList<String> dictionaries = new ArrayList<>();
-    for (BundledDictionaryProvider provider : BundledDictionaryProvider.EP_NAME.getExtensionList()) {
+    for (BundledDictionaryProvider provider : BUNDLED_EP_NAME.getExtensionList()) {
       ContainerUtil.addAll(dictionaries, provider.getBundledDictionaries());
     }
     return dictionaries;
