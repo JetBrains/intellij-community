@@ -192,11 +192,14 @@ public class JpsOutputLoaderManager {
     }
 
     Pair<Long, Integer> buildTimeAndProjectModulesCount = estimateProjectBuildTime(buildRunner, scopes);
-    int projectModulesCount = DEFAULT_PROJECT_MODULES_COUNT;
-    long approximateBuildTime = 0;
+    int projectModulesCount;
+    long approximateBuildTime;
     if (buildTimeAndProjectModulesCount != null) {
       approximateBuildTime = buildTimeAndProjectModulesCount.first;
       projectModulesCount = buildTimeAndProjectModulesCount.second;
+    } else {
+      LOG.info("Rebuild or unexpected behaviour at build time calculation. Local build will be executed");
+      return false;
     }
 
     if (approximateBuildTime == 0 && commitsCountBetweenCompilation > COMMITS_COUNT_THRESHOLD) {
@@ -397,8 +400,8 @@ public class JpsOutputLoaderManager {
                                                                        compilationScope);
       BuildTargetsState targetsState = projectDescriptor.getTargetsState();
       if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(compilationScope)) {
-        estimatedBuildTime = targetsState.getLastSuccessfulRebuildDuration();
-        LOG.info("Project rebuild enabled, use latest successful rebuild time: " + StringUtil.formatDuration(estimatedBuildTime));
+        LOG.info("Project rebuild enabled, caches will not be download");
+        return null;
       }
       Map<BuildTargetType<?>, Long> buildTargetTypeStatistic = new HashMap<>();
       for (BuildTargetType<?> type : TargetTypeRegistry.getInstance().getTargetTypes()) {
