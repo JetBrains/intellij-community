@@ -1,7 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
+import com.intellij.diagnostic.LoadingState
+import com.intellij.diagnostic.StartUpMeasurer
 import com.intellij.diagnostic.ThreadDumper
 import com.intellij.ide.IdeEventQueue
 import com.intellij.ide.plugins.PluginManagerCore
@@ -70,6 +72,7 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
 
     preloadServiceFuture.get(40, TimeUnit.SECONDS)
     ForkJoinTask.invokeAll(callAppInitialized(app))
+    StartUpMeasurer.setCurrentState(LoadingState.APP_STARTED)
 
     (PersistentFS.getInstance() as PersistentFSImpl).cleanPersistedContents()
   }
