@@ -10,7 +10,7 @@ UBlockExpression -> UCallExpression (kind = UastCallKind(name='method_call'), ar
     }
 
 }: A
-UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> PsiClass:Unit: Unit
+UTypeReferenceExpression (name = kotlin.Unit) -> USimpleNameReferenceExpression (identifier = Unit) -> Decompiled_Class: Unit
 UTypeReferenceExpression (name = A) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A {
 
     operator fun invoke(){
