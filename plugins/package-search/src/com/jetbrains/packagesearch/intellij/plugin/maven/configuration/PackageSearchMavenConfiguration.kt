@@ -17,6 +17,8 @@ internal class PackageSearchMavenConfiguration : BaseState(), PersistentStateCom
 
     companion object {
 
+        const val DEFAULT_MAVEN_SCOPE = "compile"
+
         @JvmStatic
         fun getInstance(project: Project) = project.service<PackageSearchMavenConfiguration>()
     }
@@ -28,9 +30,9 @@ internal class PackageSearchMavenConfiguration : BaseState(), PersistentStateCom
     }
 
     @get:OptionTag("MAVEN_SCOPES_DEFAULT")
-    var defaultMavenScope by string("compile")
+    var defaultMavenScope by string(DEFAULT_MAVEN_SCOPE)
 
-    fun determineDefaultMavenScope() = if (!defaultMavenScope.isNullOrEmpty()) defaultMavenScope!! else "compile"
+    fun determineDefaultMavenScope() = if (!defaultMavenScope.isNullOrEmpty()) defaultMavenScope!! else DEFAULT_MAVEN_SCOPE
 
-    fun getMavenScopes() = listOf("compile", "provided", "runtime", "test", "system", "import")
+    fun getMavenScopes() = listOf(DEFAULT_MAVEN_SCOPE, "provided", "runtime", "test", "system", "import")
 }
