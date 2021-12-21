@@ -8,13 +8,16 @@ import com.intellij.ide.starters.local.gradle.GradleResourcesProvider
 import com.intellij.ide.starters.local.wizard.StarterInitialStep
 import com.intellij.ide.starters.shared.*
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
+import com.intellij.ide.util.projectWizard.ProjectWizardUtil
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.projectRoots.SdkTypeId
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider
+import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.Strings
@@ -25,6 +28,7 @@ import com.intellij.util.lang.JavaVersion
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.DevKitFileTemplatesFactory
+import org.jetbrains.idea.devkit.projectRoots.IdeaJdk
 import java.util.function.Supplier
 import javax.swing.Icon
 
@@ -61,6 +65,16 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
 
   override fun createOptionsStep(contextProvider: StarterContextProvider): StarterInitialStep {
     return DevKitInitialStep(contextProvider)
+  }
+
+  override fun isSuitableSdkType(sdkType: SdkTypeId?): Boolean {
+    val pluginType = starterContext.getUserData(PLUGIN_TYPE_KEY) ?: PluginType.PLUGIN
+
+    if (pluginType == PluginType.PLUGIN) {
+      return super.isSuitableSdkType(sdkType)
+    }
+
+    return sdkType == IdeaJdk.getInstance()
   }
 
   override fun setupModule(module: Module) {
@@ -121,13 +135,17 @@ class DevKitModuleBuilder : StarterModuleBuilder() {
 
       starterContext.putUserData(PLUGIN_TYPE_KEY, PluginType.PLUGIN)
 
-      typeProperty.afterPropagation {
-        val pluginType = typeProperty.get()
+      typeProperty.afterChange { pluginType ->
         starterContext.putUserData(PLUGIN_TYPE_KEY, pluginType)
 
         languageRow.visible = pluginType == PluginType.PLUGIN
         groupRow.visible = pluginType == PluginType.PLUGIN
         artifactRow.visible = pluginType == PluginType.PLUGIN
+
+        // Theme / Plugin projects require different SDK type
+        sdkComboBox.selectedJdk = null
+        sdkComboBox.reloadModel()
+        ProjectWizardUtil.preselectJdkForNewModule(wizardContext.project, null, sdkComboBox, Condition(::isSuitableSdkType))
       }
     }
 

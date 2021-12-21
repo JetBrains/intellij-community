@@ -17,6 +17,7 @@ import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.gr
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.map
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ui.configuration.JdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
 import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.roots.ui.configuration.validateJavaVersion
@@ -59,7 +60,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
   private val locationProperty: GraphProperty<String> = propertyGraph.graphProperty(::suggestLocationByName)
   private val groupIdProperty: GraphProperty<String> = propertyGraph.graphProperty { starterContext.group }
   private val artifactIdProperty: GraphProperty<String> = propertyGraph.graphProperty { entityName }
-  private val sdkProperty: GraphProperty<Sdk?> = propertyGraph.graphProperty { null }
+  protected val sdkProperty: GraphProperty<Sdk?> = propertyGraph.graphProperty { null }
 
   private val projectTypeProperty: GraphProperty<StarterProjectType?> = propertyGraph.graphProperty { starterContext.projectType }
   private val languageProperty: GraphProperty<StarterLanguage> = propertyGraph.graphProperty { starterContext.language }
@@ -75,6 +76,7 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
   private val contentPanel: DialogPanel by lazy { createComponent() }
 
   private val sdkModel: ProjectSdksModel = ProjectSdksModel()
+  protected lateinit var sdkComboBox: JdkComboBox
 
   protected lateinit var languageRow: Row
   protected lateinit var groupRow: Row
@@ -196,8 +198,9 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
       }.largeGapAfter()
 
       row(JavaStartersBundle.message("title.project.sdk.label")) {
-        sdkComboBox(sdkModel, sdkProperty, wizardContext.project, moduleBuilder)
+        sdkComboBox = sdkComboBox(sdkModel, sdkProperty, wizardContext.project, moduleBuilder)
           .growPolicy(GrowPolicy.SHORT_TEXT)
+          .component
       }.largeGapAfter()
 
       if (starterSettings.isExampleCodeProvided) {
