@@ -367,7 +367,7 @@ public final class ProjectUtil extends ProjectUtilCore {
     }
     else {
       processors.removeIf(it -> it instanceof PlatformProjectOpenProcessor);
-      if (processors.size() == 1 || omitProcessorChoosingDialog) {
+      if (processors.size() == 1) {
         processorFuture = CompletableFuture.completedFuture(processors.get(0));
       }
       else if (omitProcessorChoosingDialog) {
