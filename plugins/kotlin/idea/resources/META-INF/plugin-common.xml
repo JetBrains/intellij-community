@@ -296,6 +296,10 @@
     <projectService serviceInterface="org.jetbrains.kotlin.caches.resolve.KotlinCacheService"
                     serviceImplementation="org.jetbrains.kotlin.idea.caches.resolve.KotlinCacheServiceImpl"/>
 
+    <applicationService
+            serviceInterface="org.jetbrains.kotlin.analysis.decompiled.light.classes.origin.KotlinDeclarationInCompiledFileSearcher"
+            serviceImplementation="org.jetbrains.kotlin.analysis.decompiled.light.classes.fe10.KotlinDeclarationInCompiledFileSearcherFE10Impl"/>
+
 
     <errorHandler implementation="org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter"/>
 
@@ -577,9 +581,9 @@
 
 
 
-    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.idea.decompiler.classFile.KotlinClassFileDecompiler"/>
+    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinClassFileDecompiler"/>
+    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInDecompiler"/>
     <psi.classFileDecompiler implementation="org.jetbrains.kotlin.idea.decompiler.js.KotlinJavaScriptMetaFileDecompiler"/>
-    <psi.classFileDecompiler implementation="org.jetbrains.kotlin.idea.decompiler.builtIns.KotlinBuiltInDecompiler"/>
 
     <attachSourcesProvider implementation="org.jetbrains.kotlin.idea.actions.DecompileKotlinToJavaActionProvider"/>
 

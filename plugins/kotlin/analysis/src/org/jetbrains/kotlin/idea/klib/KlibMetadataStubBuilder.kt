@@ -8,8 +8,8 @@ import com.intellij.psi.compiled.ClsStubBuilder
 import com.intellij.psi.impl.compiled.ClassFileStubBuilder
 import com.intellij.psi.stubs.PsiFileStub
 import com.intellij.util.indexing.FileContent
-import org.jetbrains.kotlin.idea.decompiler.stubBuilder.createIncompatibleAbiVersionFileStub
-import org.jetbrains.kotlin.idea.decompiler.textBuilder.defaultDecompilerRendererOptions
+import org.jetbrains.kotlin.analysis.decompiler.psi.text.defaultDecompilerRendererOptions
+import org.jetbrains.kotlin.analysis.decompiler.stub.createIncompatibleAbiVersionFileStub
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
 import org.jetbrains.kotlin.serialization.SerializerExtensionProtocol
 import org.jetbrains.kotlin.serialization.js.DynamicTypeDeserializer

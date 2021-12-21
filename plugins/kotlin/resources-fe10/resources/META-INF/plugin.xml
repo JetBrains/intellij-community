@@ -275,7 +275,7 @@ The Kotlin plugin provides language support in IntelliJ IDEA and Android Studio.
               extensions="kjsm"/>
 
     <fileType name="kotlin_builtins"
-              implementationClass="org.jetbrains.kotlin.idea.decompiler.builtIns.KotlinBuiltInFileType"
+              implementationClass="org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType"
               fieldName="INSTANCE"
               extensions="kotlin_builtins;kotlin_metadata"/>
 

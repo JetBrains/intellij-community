@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.decompiler
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
-import org.jetbrains.kotlin.idea.caches.IDEKotlinBinaryClassCache
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.idea.decompiler.textBuilder.findTestLibraryRoot
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
@@ -12,9 +12,9 @@ import org.jetbrains.kotlin.name.ClassId
 import org.junit.Assert
 
 abstract class AbstractInternalCompiledClassesTest : KotlinLightCodeInsightFixtureTestCase() {
-    private fun isFileWithHeader(predicate: (IDEKotlinBinaryClassCache.KotlinBinaryClassHeaderData, ClassId) -> Boolean): VirtualFile.() -> Boolean =
+    private fun isFileWithHeader(predicate: (ClsKotlinBinaryClassCache.KotlinBinaryClassHeaderData, ClassId) -> Boolean): VirtualFile.() -> Boolean =
         {
-            val info = IDEKotlinBinaryClassCache.getInstance().getKotlinBinaryClassHeaderData(this)
+            val info = ClsKotlinBinaryClassCache.getInstance().getKotlinBinaryClassHeaderData(this)
             info != null && predicate(info, info.classId)
         }
 

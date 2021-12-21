@@ -3,8 +3,8 @@
 package org.jetbrains.kotlin.idea.decompiler.js
 
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.decompiler.common.FileWithMetadata
-import org.jetbrains.kotlin.idea.decompiler.common.KotlinMetadataDecompiler
+import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinMetadataDecompiler
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinMetadataStubBuilder
 import org.jetbrains.kotlin.metadata.ProtoBuf
 import org.jetbrains.kotlin.metadata.js.JsProtoBuf
 import org.jetbrains.kotlin.psi.stubs.KotlinStubVersions
@@ -17,17 +17,17 @@ class KotlinJavaScriptMetaFileDecompiler : KotlinMetadataDecompiler<JsMetadataVe
     KotlinJavaScriptMetaFileType, { JsSerializerProtocol }, DynamicTypeDeserializer,
     { JsMetadataVersion.INSTANCE }, { JsMetadataVersion.INVALID_VERSION }, KotlinStubVersions.JS_STUB_VERSION
 ) {
-    override fun readFile(bytes: ByteArray, file: VirtualFile): FileWithMetadata? {
+    override fun readFile(bytes: ByteArray, file: VirtualFile): KotlinMetadataStubBuilder.FileWithMetadata? {
         val stream = ByteArrayInputStream(bytes)
 
         val version = JsMetadataVersion.readFrom(stream)
         if (!version.isCompatible()) {
-            return FileWithMetadata.Incompatible(version)
+            return KotlinMetadataStubBuilder.FileWithMetadata.Incompatible(version)
         }
 
         JsProtoBuf.Header.parseDelimitedFrom(stream)
 
         val proto = ProtoBuf.PackageFragment.parseFrom(stream, JsSerializerProtocol.extensionRegistry)
-        return FileWithMetadata.Compatible(proto, version, JsSerializerProtocol)
+        return KotlinMetadataStubBuilder.FileWithMetadata.Compatible(proto, version, JsSerializerProtocol)
     }
 }
