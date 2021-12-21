@@ -5,9 +5,9 @@ package org.jetbrains.kotlin.idea.decompiler.textBuilder
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import com.intellij.testFramework.LightProjectDescriptor
+import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
+import org.jetbrains.kotlin.analysis.decompiler.psi.text.INCOMPATIBLE_ABI_VERSION_GENERAL_COMMENT
 import org.jetbrains.kotlin.idea.decompiler.AbstractInternalCompiledClassesTest
-import org.jetbrains.kotlin.idea.decompiler.classFile.KtClsFile
-import org.jetbrains.kotlin.idea.decompiler.common.INCOMPATIBLE_ABI_VERSION_GENERAL_COMMENT
 import org.jetbrains.kotlin.idea.decompiler.stubBuilder.findClassFileByName
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor

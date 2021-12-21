@@ -4,8 +4,8 @@ package org.jetbrains.kotlin.idea.decompiler.stubBuilder
 
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.indexing.FileContentImpl
-import org.jetbrains.kotlin.idea.decompiler.classFile.KotlinClsStubBuilder
-import org.jetbrains.kotlin.idea.decompiler.classFile.buildDecompiledTextForClassFile
+import org.jetbrains.kotlin.analysis.decompiler.psi.text.buildDecompiledTextForClassFile
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinClsStubBuilder
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
 import org.jetbrains.kotlin.load.kotlin.VirtualFileFinder

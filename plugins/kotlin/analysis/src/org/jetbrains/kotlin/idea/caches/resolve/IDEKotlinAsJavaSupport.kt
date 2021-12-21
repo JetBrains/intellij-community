@@ -3,24 +3,20 @@
 package org.jetbrains.kotlin.idea.caches.resolve
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
-import com.intellij.psi.impl.compiled.ClsClassImpl
-import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.SmartList
+import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory
+import org.jetbrains.kotlin.analysis.decompiled.light.classes.DecompiledLightClassesFactory.getLightClassForDecompiledClassOrObject
+import org.jetbrains.kotlin.analysis.decompiled.light.classes.KtLightClassForDecompiledDeclaration
+import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtClsFile
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
-import org.jetbrains.kotlin.asJava.builder.ClsWrapperStubPsiFactory
 import org.jetbrains.kotlin.asJava.classes.*
 import org.jetbrains.kotlin.config.JvmAnalysisFlags
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
-import org.jetbrains.kotlin.idea.caches.lightClasses.ClsJavaStubByVirtualFileCache
-import org.jetbrains.kotlin.idea.caches.lightClasses.KtLightClassForDecompiledDeclaration
 import org.jetbrains.kotlin.idea.caches.lightClasses.platformMutabilityWrapper
 import org.jetbrains.kotlin.idea.caches.project.*
 import org.jetbrains.kotlin.idea.caches.project.IdeaModuleInfo
-import org.jetbrains.kotlin.idea.decompiler.classFile.KtClsFile
 import org.jetbrains.kotlin.idea.decompiler.navigation.SourceNavigationHelper
 import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.project.platform
@@ -34,7 +30,6 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.scopes.MemberScope
-import org.jetbrains.kotlin.utils.checkWithAttachment
 
 open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport() {
     private val psiManager: PsiManager = PsiManager.getInstance(project)
@@ -145,7 +140,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
                         languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode)
                     )
                 ProjectRootsUtil.isLibraryClassFile(project, virtualFile) ->
-                    return getLightClassForDecompiledClassOrObject(classOrObject)
+                    return getLightClassForDecompiledClassOrObject(classOrObject, project)
                 ProjectRootsUtil.isLibrarySourceFile(project, virtualFile) ->
                     return guardedRun {
                         SourceNavigationHelper.getOriginalClass(classOrObject) as? KtLightClass
@@ -199,7 +194,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
         return facadeKtFiles.mapNotNull { facadeKtFile ->
             if (facadeKtFile is KtClsFile) {
                 val partClassFile = facadeKtFile.virtualFile.parent.findChild(partClassFileShortName) ?: return@mapNotNull null
-                val javaClsClass = createClsJavaClassFromVirtualFile(facadeKtFile, partClassFile, null) ?: return@mapNotNull null
+                val javaClsClass = DecompiledLightClassesFactory.createClsJavaClassFromVirtualFile(facadeKtFile, partClassFile, null, project) ?: return@mapNotNull null
                 KtLightClassForDecompiledDeclaration(javaClsClass, javaClsClass.parent, facadeKtFile, null)
             } else {
                 // TODO should we build light classes for parts from source?
@@ -227,7 +222,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
         }
 
         facadeFiles.filterIsInstance<KtClsFile>().mapNotNullTo(this) {
-            createLightClassForDecompiledKotlinFile(it)
+            DecompiledLightClassesFactory.createLightClassForDecompiledKotlinFile(it, project)
         }
     }
 
@@ -256,99 +251,7 @@ open class IDEKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSu
     // the actual of order of files that resolver receives is controlled by *findFilesForFacade* method
     private fun Collection<KtFile>.platformSourcesFirst() = sortedByDescending { it.platform.isJvm() }
 
-    private fun getLightClassForDecompiledClassOrObject(decompiledClassOrObject: KtClassOrObject): KtLightClassForDecompiledDeclaration? {
-        if (decompiledClassOrObject is KtEnumEntry) {
-            return null
-        }
-        val containingKtFile = decompiledClassOrObject.containingFile as? KtClsFile ?: return null
-        val rootLightClassForDecompiledFile = createLightClassForDecompiledKotlinFile(containingKtFile) ?: return null
 
-        return findCorrespondingLightClass(decompiledClassOrObject, rootLightClassForDecompiledFile)
-    }
-
-    private fun findCorrespondingLightClass(
-        decompiledClassOrObject: KtClassOrObject,
-        rootLightClassForDecompiledFile: KtLightClassForDecompiledDeclaration
-    ): KtLightClassForDecompiledDeclaration? {
-        val relativeFqName = getClassRelativeName(decompiledClassOrObject) ?: return null
-        val iterator = relativeFqName.pathSegments().iterator()
-        val base = iterator.next()
-
-        // In case class files have been obfuscated (i.e., SomeClass belongs to a.class file), just ignore them
-        if (rootLightClassForDecompiledFile.name != base.asString()) return null
-
-        var current: KtLightClassForDecompiledDeclaration = rootLightClassForDecompiledFile
-        while (iterator.hasNext()) {
-            val name = iterator.next()
-            val innerClass = current.findInnerClassByName(name.asString(), false)
-            checkWithAttachment(
-                innerClass != null,
-                { "Could not find corresponding inner/nested class " + relativeFqName + " in class " + decompiledClassOrObject.fqName + "\nFile: " + decompiledClassOrObject.containingKtFile.virtualFile.name },
-                {
-                    it.withPsiAttachment("decompiledClassOrObject", decompiledClassOrObject)
-                    it.withAttachment("fileClass", decompiledClassOrObject.containingFile::class)
-                    it.withPsiAttachment("file", decompiledClassOrObject.containingFile)
-                    it.withPsiAttachment("root", rootLightClassForDecompiledFile)
-                },
-            )
-
-            current = innerClass as KtLightClassForDecompiledDeclaration
-        }
-        return current
-    }
-
-    private fun getClassRelativeName(decompiledClassOrObject: KtClassOrObject): FqName? {
-        val name = decompiledClassOrObject.nameAsName ?: return null
-        val parent = PsiTreeUtil.getParentOfType(
-            decompiledClassOrObject,
-            KtClassOrObject::class.java,
-            true
-        )
-        if (parent == null) {
-            assert(decompiledClassOrObject.isTopLevel())
-            return FqName.topLevel(name)
-        }
-        return getClassRelativeName(parent)?.child(name)
-    }
-
-    private fun createLightClassForDecompiledKotlinFile(file: KtClsFile): KtLightClassForDecompiledDeclaration? {
-        val virtualFile = file.virtualFile ?: return null
-
-        val classOrObject = file.declarations.filterIsInstance<KtClassOrObject>().singleOrNull()
-
-        val javaClsClass = createClsJavaClassFromVirtualFile(
-            file, virtualFile,
-            correspondingClassOrObject = classOrObject
-        ) ?: return null
-
-        return KtLightClassForDecompiledDeclaration(javaClsClass, javaClsClass.parent, file, classOrObject)
-    }
-
-    private fun createClsJavaClassFromVirtualFile(
-        mirrorFile: KtFile,
-        classFile: VirtualFile,
-        correspondingClassOrObject: KtClassOrObject?
-    ): ClsClassImpl? {
-        val javaFileStub = ClsJavaStubByVirtualFileCache.getInstance(project).get(classFile) ?: return null
-        javaFileStub.psiFactory = ClsWrapperStubPsiFactory.INSTANCE
-        val manager = PsiManager.getInstance(mirrorFile.project)
-        val fakeFile = object : ClsFileImpl(ClassFileViewProvider(manager, classFile)) {
-            override fun getNavigationElement(): PsiElement {
-                if (correspondingClassOrObject != null) {
-                    return correspondingClassOrObject.navigationElement.containingFile
-                }
-                return super.getNavigationElement()
-            }
-
-            override fun getStub() = javaFileStub
-
-            override fun getMirror() = mirrorFile
-
-            override fun isPhysical() = false
-        }
-        javaFileStub.psi = fakeFile
-        return fakeFile.classes.single() as ClsClassImpl
-    }
 }
 
 internal fun PsiElement.getModuleInfoPreferringJvmPlatform(): IdeaModuleInfo {

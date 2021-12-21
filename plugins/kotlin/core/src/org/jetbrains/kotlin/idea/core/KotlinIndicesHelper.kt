@@ -10,10 +10,10 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.psi.stubs.StringStubIndexExtension
 import com.intellij.util.Processor
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.idea.FrontendInternals
-import org.jetbrains.kotlin.idea.caches.IDEKotlinBinaryClassCache
 import org.jetbrains.kotlin.idea.caches.KotlinShortNamesCache
 import org.jetbrains.kotlin.idea.caches.resolve.resolveImportReference
 import org.jetbrains.kotlin.idea.caches.resolve.util.getJavaMemberDescriptor
@@ -595,7 +595,7 @@ class KotlinIndicesHelper(
                 KotlinExceptionWithAttachments("KtElement not inside KtFile ($ktFile, is valid: ${ktFile.isValid})")
                     .withAttachment("file", ktFile)
                     .withAttachment("virtualFile", containingFile.virtualFile)
-                    .withAttachment("compiledFile", IDEKotlinBinaryClassCache.getInstance().isKotlinJvmCompiledFile(containingFile.virtualFile))
+                    .withAttachment("compiledFile", ClsKotlinBinaryClassCache.getInstance().isKotlinJvmCompiledFile(containingFile.virtualFile))
                     .withAttachment("element", this)
                     .withAttachment("type", javaClass)
                     .withPsiAttachment("file.kt", ktFile)
