@@ -158,6 +158,24 @@ class Outer {
     checkResult()
   }
 
+  void testElseIf() throws Throwable {
+    configure()
+    startTemplate("else-if", "Java")
+    checkResult()
+  }
+
+  void testElseIf2() throws Throwable {
+    configure()
+    startTemplate("else-if", "Java")
+    checkResult()
+  }
+
+  void testElseIf3() throws Throwable {
+    configure()
+    startTemplate("else-if", "Java")
+    checkResult()
+  }
+
   void testIter() throws Throwable {
     configure()
     startTemplate("iter", "Java")
