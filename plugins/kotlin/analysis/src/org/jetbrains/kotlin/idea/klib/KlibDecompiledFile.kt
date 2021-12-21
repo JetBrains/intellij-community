@@ -3,9 +3,9 @@
 package org.jetbrains.kotlin.idea.klib
 
 import com.intellij.openapi.vfs.VirtualFile
-import org.jetbrains.kotlin.idea.decompiler.KotlinDecompiledFileViewProvider
-import org.jetbrains.kotlin.idea.decompiler.KtDecompiledFile
-import org.jetbrains.kotlin.idea.decompiler.textBuilder.DecompiledText
+import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinDecompiledFileViewProvider
+import org.jetbrains.kotlin.analysis.decompiler.psi.file.KtDecompiledFile
+import org.jetbrains.kotlin.analysis.decompiler.psi.text.DecompiledText
 
 class KlibDecompiledFile(
     provider: KotlinDecompiledFileViewProvider,

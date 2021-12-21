@@ -23,7 +23,6 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener;
 import org.jetbrains.kotlin.idea.caches.trackers.PureKotlinCodeBlockModificationListener;
-import org.jetbrains.kotlin.idea.stubindex.KotlinFileStubForIde;
 import org.jetbrains.kotlin.idea.stubindex.KotlinFunctionShortNameIndex;
 import org.jetbrains.kotlin.idea.test.AstAccessControl;
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndMultiplatformStdlibDescriptor;
@@ -31,6 +30,7 @@ import org.jetbrains.kotlin.idea.test.KotlinLightProjectDescriptor;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.psi.stubs.KotlinClassStub;
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes;
+import org.jetbrains.kotlin.psi.stubs.impl.KotlinFileStubImpl;
 import org.junit.internal.runners.JUnit38ClassRunner;
 import org.junit.runner.RunWith;
 
@@ -105,7 +105,7 @@ public class KotlinStubsTest extends LightJavaCodeInsightFixtureTestCase {
                         @Override
                         public Unit invoke() {
 
-                            KotlinFileStubForIde stub = (KotlinFileStubForIde) ktFile.getStub();
+                            KotlinFileStubImpl stub = (KotlinFileStubImpl) ktFile.getStub();
                             assertNotNull(stub);
 
                             assertEquals("kotlin.collections.UArraysKt", stub.getFacadeFqName().asString());
