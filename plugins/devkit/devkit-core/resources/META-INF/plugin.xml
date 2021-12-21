@@ -25,7 +25,7 @@
   <resource-bundle>messages.DevKitBundle</resource-bundle>
 
   <extensions defaultExtensionNs="com.intellij">
-    <checkinHandlerFactory implementation="org.jetbrains.idea.devkit.commit.KotlinPluginCommitMessageHandlerFactory"/>
+    <prePushHandler implementation="org.jetbrains.idea.devkit.commit.KotlinPluginPrePushHandler"/>
     <virtualFileSystem key="testdata" implementationClass="org.jetbrains.idea.devkit.testAssistant.vfs.TestDataGroupFileSystem"/>
     <editorTabTitleProvider implementation="org.jetbrains.idea.devkit.testAssistant.TestDataGroupEditorTabTitleProvider"/>
     <highlightingPassFactory implementation="org.jetbrains.idea.devkit.testAssistant.TestDataHighlightingPassFactory"/>

@@ -1,17 +1,18 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.devkit.commit
 
-import org.jetbrains.idea.devkit.commit.KotlinPluginCommitMessageHandlerFactory.YouTrackIssueCommitMessageHandler
+import com.intellij.mock.MockVirtualFile
+import com.intellij.openapi.vfs.VirtualFile
 import org.junit.Test
 import org.junit.experimental.runners.Enclosed
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
 import org.junit.runners.Parameterized.Parameter
-import java.io.File
 import java.nio.file.Paths
+import kotlin.io.path.pathString
 
 @RunWith(Enclosed::class)
-class KotlinYouTrackIssueCommitMessageHandlerTest {
+class KotlinPluginPrePushHandlerTest {
 
   @RunWith(Parameterized::class)
   class FilesBelongToPlugin {
@@ -65,7 +66,7 @@ class KotlinYouTrackIssueCommitMessageHandlerTest {
     @Test
     fun testThatChecksForFileSet() {
       val filesSet = files.map { fileAt(it.first, it.second) }
-      assert(YouTrackIssueCommitMessageHandler.selectedFilesBelongToKotlinIdePlugin(filesSet)) {
+      assert(KotlinPluginPrePushHandler.containKotlinPluginSources(filesSet)) {
         "The following set of files doesn't trigger the check: $filesSet"
       }
     }
@@ -110,7 +111,7 @@ class KotlinYouTrackIssueCommitMessageHandlerTest {
     @Test
     fun testThatIgnoresFileSet() {
       val filesSet = files.map { fileAt(it.first, it.second) }
-      assert(!YouTrackIssueCommitMessageHandler.selectedFilesBelongToKotlinIdePlugin(filesSet)) {
+      assert(!KotlinPluginPrePushHandler.containKotlinPluginSources(filesSet)) {
         "The following set of files triggered the check: $filesSet"
       }
     }
@@ -191,7 +192,7 @@ class KotlinYouTrackIssueCommitMessageHandlerTest {
 
     @Test
     fun testThatCommitMessageIsValid() {
-      assert(YouTrackIssueCommitMessageHandler.commitMessageIsCorrect(commitMessage)) {
+      assert(KotlinPluginPrePushHandler.commitMessageIsCorrect(commitMessage)) {
         "The following commit message was considered invalid: $commitMessage"
       }
     }
@@ -257,7 +258,7 @@ class KotlinYouTrackIssueCommitMessageHandlerTest {
 
     @Test
     fun testThatCommitMessageIsValid() {
-      assert(!YouTrackIssueCommitMessageHandler.commitMessageIsCorrect(commitMessage)) {
+      assert(!KotlinPluginPrePushHandler.commitMessageIsCorrect(commitMessage)) {
         "The following commit message was considered as valid: $commitMessage"
       }
     }
@@ -265,12 +266,13 @@ class KotlinYouTrackIssueCommitMessageHandlerTest {
 }
 
 
-val tempDir: String = System.getProperty("java.io.tmpdir")
-const val ULTIMATE_KOTLIN_PLUGIN = "plugins/kotlin/package/"
-const val COMMUNITY_KOTLIN_PLUGIN = "community/plugins/kotlin/package/"
-const val FLEET_KOTLIN_PLUGIN = "fleet/plugins/kotlin/package/"
+private val tempDir: String = System.getProperty("java.io.tmpdir")
+private const val ULTIMATE_KOTLIN_PLUGIN = "plugins/kotlin/package/"
+private const val COMMUNITY_KOTLIN_PLUGIN = "community/plugins/kotlin/package/"
+private const val FLEET_KOTLIN_PLUGIN = "fleet/plugins/kotlin/package/"
 
 
-private fun fileAt(dirPath: String, fileName: String): File {
-  return Paths.get(tempDir, *dirPath.split("/").toTypedArray(), fileName).toFile()
+private fun fileAt(dirPath: String, fileName: String): VirtualFile {
+  val path: String =  Paths.get(tempDir, *dirPath.split("/").toTypedArray(), fileName).pathString
+  return MockVirtualFile(path)
 }
