@@ -135,6 +135,7 @@ class IndexDiagnosticTest : JavaCodeInsightFixtureTestCase() {
             JsonDuration(456),
             JsonDuration(789),
             JsonDuration(222),
+            roots = listOf("<project root>"),
             scannedFiles = listOf(
               JsonScanningStatistics.JsonScannedFile(
                 path = PortableFilePath.RelativePath(PortableFilePath.ProjectRoot, "src/a.java"),

@@ -448,6 +448,7 @@ public class UnindexedFilesUpdater extends DumbModeTask {
       SubTaskProgressIndicator subTaskIndicator = concurrentTasksProgressManager.createSubTaskIndicator(1);
       List<VirtualFile> files = new ArrayList<>();
       ScanningStatistics scanningStatistics = new ScanningStatistics(provider.getDebugName());
+      scanningStatistics.setProviderRoots(provider, project);
       providerToFiles.put(provider, files);
       IndexableSetOrigin origin = provider.getOrigin();
       List<IndexableFileScanner.@NotNull IndexableFileVisitor> fileScannerVisitors =

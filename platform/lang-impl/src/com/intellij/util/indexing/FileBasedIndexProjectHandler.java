@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.diagnostic.PerformanceWatcher;
@@ -140,6 +140,7 @@ public final class FileBasedIndexProjectHandler {
         scanningStatistics.setNumberOfScannedFiles(files.size());
         scanningStatistics.setNumberOfFilesForIndexing(files.size());
         scanningStatistics.setScanningTime(refreshedFilesCalcDuration);
+        scanningStatistics.setNoRootsForRefresh();
         projectIndexingHistory.addScanningStatistics(scanningStatistics);
         projectIndexingHistory.addProviderStatistics(fileSet.statistics);
 
