@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl
 import com.intellij.openapi.help.HelpManager
 import com.intellij.openapi.keymap.KeyMapBundle
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.options.BoundSearchableConfigurable
@@ -45,10 +46,9 @@ import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.UIUtil
 import java.awt.RenderingHints
 import java.awt.Window
-import javax.swing.DefaultComboBoxModel
-import javax.swing.JComponent
-import javax.swing.JLabel
-import javax.swing.JList
+import java.awt.event.InputEvent
+import java.awt.event.KeyEvent
+import javax.swing.*
 
 private val settings: UISettings
   get() = UISettings.instance
@@ -188,6 +188,11 @@ internal class AppearanceConfigurable : BoundSearchableConfigurable(message("tit
             .enabled(!isOverridden)
 
           comment(message("support.screen.readers.comment"))
+
+          val mask = if (SystemInfo.isMac) InputEvent.META_MASK else InputEvent.CTRL_MASK
+          val ctrlTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, mask))
+          val ctrlShiftTab = KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_TAB, mask + InputEvent.SHIFT_MASK))
+          rowComment(message("support.screen.readers.tab", ctrlTab, ctrlShiftTab))
         }
 
         row {
