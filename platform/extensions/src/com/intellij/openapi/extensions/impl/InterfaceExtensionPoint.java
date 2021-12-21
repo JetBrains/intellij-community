@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
@@ -26,16 +26,17 @@ public final class InterfaceExtensionPoint<T> extends ExtensionPointImpl<T> {
                                                    @NotNull PluginDescriptor pluginDescriptor,
                                                    @NotNull ComponentManager componentManager) {
     // see comment in readExtensions WHY element maybe created for interface extension point adapter
-    descriptor.element = null;
+    // we cannot nullify element as part of readExtensions - in readExtensions not yet clear is it bean or interface extension
+    if (!descriptor.hasExtraAttributes && descriptor.element != null && descriptor.element.children.isEmpty()) {
+      descriptor.element = null;
+    }
     String implementationClassName = descriptor.implementation;
     if (implementationClassName == null) {
       throw componentManager.createError("Attribute \"implementation\" is not specified for \"" + getName() + "\" extension",
                                          pluginDescriptor.getPluginId());
     }
 
-    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor,
-                                                                     descriptor.orderId, descriptor.order,
-                                                                     null,
+    return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(implementationClassName, pluginDescriptor, descriptor,
                                                                      InterfaceExtensionImplementationClassResolver.INSTANCE);
   }
 

@@ -1,11 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
-import com.intellij.openapi.extensions.ExtensionNotApplicableException;
-import com.intellij.openapi.extensions.LoadingOrder;
-import com.intellij.openapi.extensions.PluginAware;
-import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.extensions.*;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.XmlElement;
 import com.intellij.util.xmlb.XmlSerializer;
@@ -102,11 +99,9 @@ class XmlExtensionAdapter extends ExtensionComponentAdapter {
   static final class SimpleConstructorInjectionAdapter extends XmlExtensionAdapter {
     SimpleConstructorInjectionAdapter(@NotNull String implementationClassName,
                                       @NotNull PluginDescriptor pluginDescriptor,
-                                      @Nullable String orderId,
-                                      @NotNull LoadingOrder order,
-                                      @Nullable XmlElement extensionElement,
+                                      @NotNull ExtensionDescriptor descriptor,
                                       @NotNull ImplementationClassResolver implementationClassResolver) {
-      super(implementationClassName, pluginDescriptor, orderId, order, extensionElement, implementationClassResolver);
+      super(implementationClassName, pluginDescriptor, descriptor.orderId, descriptor.order, descriptor.element, implementationClassResolver);
     }
 
     @Override

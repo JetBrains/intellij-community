@@ -114,7 +114,7 @@
     <projectService serviceImplementation="com.intellij.codeInsight.navigation.CtrlMouseHandler" preload="await"/>
     <projectService serviceImplementation="com.intellij.psi.search.scope.packageSet.UpdatingScopeOnProjectStructureChangeListener"
                     preload="await"/>
-    <startupActivity implementation="com.intellij.codeInsight.actions.ReaderModeEditorSettingsListener"/>
+    <postStartupActivity implementation="com.intellij.codeInsight.actions.ReaderModeEditorSettingsListener"/>
 
     <projectService serviceImplementation="com.intellij.facet.impl.pointers.FacetPointersManagerImpl"
                     serviceInterface="com.intellij.facet.pointers.FacetPointersManager"/>

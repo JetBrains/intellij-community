@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.actions
 
 import com.intellij.codeInsight.actions.ReaderModeProvider.ReaderMode
@@ -15,28 +15,28 @@ import com.intellij.openapi.roots.FileIndexFacade
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 
+@Service(Service.Level.PROJECT)
 @State(name = "ReaderModeSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 class ReaderModeSettings : PersistentStateComponentWithModificationTracker<ReaderModeSettings.State> {
   companion object {
-    private var EP_READER_MODE_PROVIDER = ExtensionPointName<ReaderModeProvider>("com.intellij.readerModeProvider")
-    private var EP_READER_MODE_MATCHER = ExtensionPointName<ReaderModeMatcher>("com.intellij.readerModeMatcher")
+    private val EP_READER_MODE_PROVIDER = ExtensionPointName<ReaderModeProvider>("com.intellij.readerModeProvider")
+    private val EP_READER_MODE_MATCHER = ExtensionPointName<ReaderModeMatcher>("com.intellij.readerModeMatcher")
 
-    @JvmStatic
-    fun instance(project: Project): ReaderModeSettings {
-      return project.getService(ReaderModeSettings::class.java)
-    }
+    fun getInstance(project: Project): ReaderModeSettings = project.getService(ReaderModeSettings::class.java)
 
     fun applyReaderMode(project: Project,
-                        editor: Editor?,
-                        file: VirtualFile?,
-                        fileIsOpenAlready: Boolean = false,
-                        forceUpdate: Boolean = false) {
-      if (editor == null || file == null || PsiManager.getInstance(project).findFile(file) == null) return
+                                 editor: Editor?,
+                                 file: VirtualFile?,
+                                 fileIsOpenAlready: Boolean = false,
+                                 forceUpdate: Boolean = false) {
+      if (editor == null || file == null || PsiManager.getInstance(project).findFile(file) == null) {
+        return
+      }
 
       val matchMode = matchMode(project, file, editor)
       if (matchMode || forceUpdate) {
-        EP_READER_MODE_PROVIDER.extensions().forEach {
-          it.applyModeChanged(project, editor, instance(project).enabled && matchMode, fileIsOpenAlready)
+        for (provider in EP_READER_MODE_PROVIDER.extensionList) {
+          provider.applyModeChanged(project, editor, getInstance(project).enabled && matchMode, fileIsOpenAlready)
         }
       }
     }
@@ -44,12 +44,12 @@ class ReaderModeSettings : PersistentStateComponentWithModificationTracker<Reade
     @JvmStatic
     fun matchModeForStats(project: Project, file: VirtualFile): Boolean {
       val editor = (FileEditorManager.getInstance(project).getSelectedEditor(file) as? TextEditor)?.editor
-      return instance(project).enabled && matchMode(project, file, editor)
+      return getInstance(project).enabled && matchMode(project, file, editor)
     }
 
     fun matchMode(project: Project?, file: VirtualFile?, editor: Editor? = null): Boolean {
       if (project == null || file == null) return false
-      return matchMode(project, file, editor, instance(project).mode)
+      return matchMode(project, file, editor, getInstance(project).mode)
     }
 
     private fun matchMode(project: Project, file: VirtualFile, editor: Editor?, mode: ReaderMode): Boolean {

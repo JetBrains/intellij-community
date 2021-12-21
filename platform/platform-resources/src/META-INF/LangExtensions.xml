@@ -262,8 +262,6 @@
     <applicationService serviceInterface="com.intellij.ide.util.scopeChooser.ScopeIdMapper"
                         serviceImplementation="com.intellij.ide.util.scopeChooser.ScopeIdMapperImpl"/>
 
-    <projectService serviceImplementation="com.intellij.codeInsight.actions.ReaderModeSettings"/>
-
     <projectConfigurable groupId="editor"
                          id="editor.reader.mode" key="title.reader.mode"
                          bundle="messages.LangBundle"

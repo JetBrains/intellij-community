@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
@@ -1531,15 +1531,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
   @Override
   public FileEditor @NotNull [] getAllEditors() {
     List<FileEditor> result = new ArrayList<>();
-    myOpenedEditors.forEach(composite -> ContainerUtil.addAll(result, composite.myEditors));
+    myOpenedEditors.forEach(composite -> Collections.addAll(result, composite.myEditors));
     return result.toArray(FileEditor.EMPTY_ARRAY);
   }
-
 
   public @NotNull List<JComponent> getTopComponents(@NotNull FileEditor editor) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     EditorComposite composite = getEditorComposite(editor);
-    return composite != null ? composite.getTopComponents(editor) : Collections.emptyList();
+    return composite == null ? Collections.emptyList() : composite.getTopComponents(editor);
   }
 
   @Override

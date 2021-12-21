@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.editor.ex;
 
 import com.intellij.accessibility.AccessibilityUtils;
@@ -124,7 +124,8 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   @State(
     name = "OsSpecificEditorSettings",
     storages = @Storage(value = "editor.os-specific.xml", roamingType = RoamingType.PER_OS),
-    category = SettingsCategory.CODE)
+    category = SettingsCategory.CODE
+  )
   public static final class OsSpecificState implements PersistentStateComponent<OsSpecificState> {
     public CaretStopOptions CARET_STOP_OPTIONS = new CaretStopOptions();
 

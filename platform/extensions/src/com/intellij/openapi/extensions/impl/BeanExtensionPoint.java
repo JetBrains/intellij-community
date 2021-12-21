@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.components.ComponentManager;
@@ -30,9 +30,7 @@ public final class BeanExtensionPoint<T> extends ExtensionPointImpl<T> implement
                                                    @NotNull PluginDescriptor pluginDescriptor,
                                                    @NotNull ComponentManager componentManager) {
     if (componentManager.isInjectionForExtensionSupported()) {
-      return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, descriptor.orderId,
-                                                                       descriptor.order,
-                                                                       descriptor.element, this);
+      return new XmlExtensionAdapter.SimpleConstructorInjectionAdapter(getClassName(), pluginDescriptor, descriptor, this);
     }
     else {
       return new XmlExtensionAdapter(getClassName(), pluginDescriptor, descriptor.orderId, descriptor.order, descriptor.element, this);
