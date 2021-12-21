@@ -1,7 +1,9 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.javaDoc;
 
+import com.intellij.codeInspection.CommonQuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.reference.RefJavaUtil;
 import com.intellij.java.JavaBundle;
 import com.intellij.lang.ASTNode;
@@ -39,6 +41,7 @@ public final class JavadocHighlightUtil {
     JavaDocLocalInspection inspection();
 
     void problem(@NotNull PsiElement toHighlight, @NotNull @Nls String message, @Nullable LocalQuickFix fix);
+    void problemWithFixes(@NotNull PsiElement toHighlight, @NotNull @Nls String message, LocalQuickFix@NotNull [] fixes);
     void eolProblem(@NotNull PsiElement toHighlight, @NotNull @Nls String message, @Nullable LocalQuickFix fix);
 
     LocalQuickFix addJavadocFix(@NotNull PsiElement nameIdentifier);
@@ -241,7 +244,15 @@ public final class JavadocHighlightUtil {
     if (nameElement != null) {
       String key = tagInfo == null ? "inspection.javadoc.problem.wrong.tag" : "inspection.javadoc.problem.disallowed.tag";
       LocalQuickFix fix = tagInfo == null ? holder.registerTagFix(tagName) : holder.removeTagFix(tagName);
-      holder.problem(nameElement, JavaBundle.message(key, "<code>" + tagName + "</code>"), fix);
+      final LocalQuickFix[] fixes;
+      if (tagInfo != null) {
+        fixes = new LocalQuickFix[]{ fix };
+      }
+      else {
+        final String nameElementText = nameElement.getText();
+        fixes = new LocalQuickFix[]{ fix, new EncloseWithCodeFix(nameElementText), new EscapeAtQuickFix(nameElementText) };
+      }
+      holder.problemWithFixes(nameElement, JavaBundle.message(key, "<code>" + tagName + "</code>"), fixes);
     }
 
     return false;
@@ -519,5 +530,88 @@ public final class JavadocHighlightUtil {
     }
 
     return false;
+  }
+
+  private static abstract class AbstractUnknownTagFix implements LocalQuickFix {
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      final PsiElement element = descriptor.getPsiElement();
+      if (element == null) return;
+
+      final PsiElement enclosingTag = element.getParent();
+      if (enclosingTag == null) return;
+
+      final PsiElement javadoc = enclosingTag.getParent();
+      if (javadoc == null) return;
+
+      final PsiDocComment donorJavadoc = createDonorJavadoc(element);
+      final PsiElement codeTag = extractElement(donorJavadoc);
+      if (codeTag == null) return;
+
+      for (var e = enclosingTag.getFirstChild(); e != element && e != null; e = e.getNextSibling()) {
+        javadoc.addBefore(e, enclosingTag);
+      }
+      javadoc.addBefore(codeTag, enclosingTag);
+      for (var e = element.getNextSibling(); e != null; e = e.getNextSibling()) {
+        javadoc.addBefore(e, enclosingTag);
+      }
+      final PsiElement sibling = enclosingTag.getNextSibling();
+      if (sibling != null && sibling.getNode().getElementType() == TokenType.WHITE_SPACE) {
+        javadoc.addBefore(sibling, enclosingTag);
+      }
+      enclosingTag.delete();
+    }
+
+    protected abstract @NotNull PsiDocComment createDonorJavadoc(@NotNull PsiElement element);
+    protected abstract @Nullable PsiElement extractElement(@Nullable PsiDocComment donorJavadoc);
+  }
+
+  private static class EncloseWithCodeFix extends AbstractUnknownTagFix {
+    private final String myName;
+
+    private EncloseWithCodeFix(String name) {
+      myName = name;
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", myName, "{@code " + myName + "}");
+    }
+
+    @Override
+    protected @NotNull PsiDocComment createDonorJavadoc(@NotNull PsiElement element) {
+      final PsiElementFactory instance = PsiElementFactory.getInstance(element.getProject());
+      return instance.createDocCommentFromText(String.format("/** {@code %s} */", element.getText()));
+    }
+
+    @Override
+    protected @Nullable PsiElement extractElement(@Nullable PsiDocComment donorJavadoc) {
+      return PsiTreeUtil.findChildOfType(donorJavadoc, PsiInlineDocTag.class);
+    }
+  }
+
+  private static class EscapeAtQuickFix extends AbstractUnknownTagFix {
+    private final String myName;
+
+    private EscapeAtQuickFix(String name) {
+      myName = name;
+    }
+
+    @Override
+    public @NotNull String getFamilyName() {
+      return CommonQuickFixBundle.message("fix.replace.x.with.y", myName, "&#064;" + myName.substring(1));
+    }
+
+    @Override
+    protected @NotNull PsiDocComment createDonorJavadoc(@NotNull PsiElement element) {
+      final PsiElementFactory instance = PsiElementFactory.getInstance(element.getProject());
+      return instance.createDocCommentFromText("/** &#064;" + element.getText().substring(1) + " */");
+    }
+
+    @Override
+    protected @Nullable PsiElement extractElement(@Nullable PsiDocComment donorJavadoc) {
+      if (donorJavadoc == null) return null;
+      return donorJavadoc.getChildren()[2];
+    }
   }
 }

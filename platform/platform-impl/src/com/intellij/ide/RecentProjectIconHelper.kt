@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide
 
 import com.intellij.openapi.diagnostic.logger
@@ -25,9 +25,11 @@ import java.awt.Graphics
 import java.awt.Graphics2D
 import java.awt.image.BufferedImage
 import java.net.MalformedURLException
+import java.nio.file.InvalidPathException
 import java.nio.file.Path
-import java.nio.file.Paths
+import java.util.*
 import javax.swing.Icon
+import kotlin.collections.HashMap
 import kotlin.io.path.extension
 import kotlin.io.path.nameWithoutExtension
 import kotlin.math.max
@@ -49,25 +51,27 @@ internal class RecentProjectIconHelper {
       return path.parent.resolve("$ideaDir/$ideaDir.$fileNameWithoutExt/$ideaDir")
     }
 
-    fun getDotIdeaPath(path: String) = getDotIdeaPath(Paths.get(path))
+    fun getDotIdeaPath(path: String): Path? = try {
+      getDotIdeaPath(Path.of(path))
+    }
+    catch (e: InvalidPathException) {
+      null
+    }
 
     @JvmStatic
     fun createIcon(file: Path): Icon? {
       try {
-        if ("svg" == file.extension.toLowerCase()) {
+        if ("svg" == file.extension.lowercase(Locale.ENGLISH)) {
           return IconDeferrer.getInstance().defer(EmptyIcon.create(projectIconSize()), Pair(file.toAbsolutePath(), StartupUiUtil.isUnderDarcula())) {
-            val icon = IconLoader.findIcon(file.toUri().toURL(), false)
-            if (icon != null) {
-              if (icon is ScaleContextAware) {
-                icon.updateScaleContext(ScaleContext.create())
-              }
+            val icon = IconLoader.findIcon(file.toUri().toURL(), false) ?: return@defer null
 
-              val iconSize = max(icon.iconWidth, icon.iconHeight)
-              if (iconSize == projectIconSize()) return@defer icon
-              return@defer IconUtil.scale(icon, null, projectIconSize().toFloat() / iconSize)
+            if (icon is ScaleContextAware) {
+              icon.updateScaleContext(ScaleContext.create())
             }
 
-            icon
+            val iconSize = max(icon.iconWidth, icon.iconHeight)
+            if (iconSize == projectIconSize()) return@defer icon
+            return@defer IconUtil.scale(icon, null, projectIconSize().toFloat() / iconSize)
           }
         }
         val image = ImageLoader.loadFromUrl(file.toUri().toURL()) ?: return null
@@ -111,14 +115,11 @@ internal class RecentProjectIconHelper {
         .take(2)
         .map { word -> word.firstOrNull { !it.isWhitespace() } ?: "" }
         .joinToString("")
-        .toUpperCase()
+        .uppercase(Locale.getDefault())
 
     private fun calculateIcon(path: @SystemIndependent String, isDark: Boolean): Icon? {
-      val lookup = if (isDark) listOf("icon_dark.svg", "icon.svg", "icon_dark.png", "icon.png")
-      else listOf("icon.svg", "icon.png")
-      val iconName = lookup.firstOrNull { getDotIdeaPath(path).resolve(it).exists() } ?: return null
-
-      val file = getDotIdeaPath(path).resolve(iconName)
+      val lookup = if (isDark) sequenceOf("icon_dark.svg", "icon.svg", "icon_dark.png", "icon.png") else sequenceOf("icon.svg", "icon.png")
+      val file = lookup.map { getDotIdeaPath(path)?.resolve(it) }.filterNotNull().firstOrNull { it.exists() } ?: return null
 
       val fileInfo = file.basicAttributesIfExists() ?: return null
       val timestamp = fileInfo.lastModifiedTime().toMillis()

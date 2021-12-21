@@ -46,7 +46,7 @@ abstract class BoundCompositeConfigurable<T : UnnamedConfigurable>(
   }
 
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated("Use Kotlin UI DSL 2.0", ReplaceWith("appendDslConfigurable"))
+  @Deprecated("Use Kotlin UI DSL Version 2", ReplaceWith("appendDslConfigurable"))
   protected fun RowBuilder.appendDslConfigurableRow(configurable: UnnamedConfigurable) {
     if (configurable is UiDslConfigurable) {
       val builder = this

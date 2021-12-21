@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.impl;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -855,6 +855,11 @@ public abstract class DiffRequestProcessor implements Disposable {
     public MyNextDifferenceAction() {
     }
 
+    @Nullable
+    protected PrevNextDifferenceIterable getDifferenceIterable(@NotNull AnActionEvent e) {
+      return e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
@@ -862,7 +867,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
-      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
+      PrevNextDifferenceIterable iterable = getDifferenceIterable(e);
       if (iterable != null && iterable.canGoNext()) {
         e.getPresentation().setEnabled(true);
         return;
@@ -878,7 +883,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
+      PrevNextDifferenceIterable iterable = getDifferenceIterable(e);
       if (iterable != null && iterable.canGoNext()) {
         iterable.goNext();
         myIterationState = IterationState.NONE;
@@ -902,6 +907,11 @@ public abstract class DiffRequestProcessor implements Disposable {
     public MyPrevDifferenceAction() {
     }
 
+    @Nullable
+    protected PrevNextDifferenceIterable getDifferenceIterable(@NotNull AnActionEvent e) {
+      return e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
+    }
+
     @Override
     public void update(@NotNull AnActionEvent e) {
       if (DiffUtil.isFromShortcut(e)) {
@@ -909,7 +919,7 @@ public abstract class DiffRequestProcessor implements Disposable {
         return;
       }
 
-      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
+      PrevNextDifferenceIterable iterable = getDifferenceIterable(e);
       if (iterable != null && iterable.canGoPrev()) {
         e.getPresentation().setEnabled(true);
         return;
@@ -925,7 +935,7 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     @Override
     public void actionPerformed(@NotNull AnActionEvent e) {
-      PrevNextDifferenceIterable iterable = e.getData(DiffDataKeys.PREV_NEXT_DIFFERENCE_ITERABLE);
+      PrevNextDifferenceIterable iterable = getDifferenceIterable(e);
       if (iterable != null && iterable.canGoPrev()) {
         iterable.goPrev();
         myIterationState = IterationState.NONE;

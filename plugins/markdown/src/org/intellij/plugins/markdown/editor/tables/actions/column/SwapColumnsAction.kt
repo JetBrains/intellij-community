@@ -9,10 +9,10 @@ import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.swapCe
 import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsIndices
 import org.intellij.plugins.markdown.editor.tables.TableUtils.getColumnCells
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 
 internal abstract class SwapColumnsAction(private val swapWithLeftColumn: Boolean): ColumnBasedTableAction() {
-  override fun performAction(editor: Editor, table: MarkdownTableImpl, columnIndex: Int) {
+  override fun performAction(editor: Editor, table: MarkdownTable, columnIndex: Int) {
     runWriteAction {
       val otherColumnIndex = findOtherColumnIndex(table, columnIndex)
       requireNotNull(otherColumnIndex)
@@ -29,7 +29,7 @@ internal abstract class SwapColumnsAction(private val swapWithLeftColumn: Boolea
     }
   }
 
-  private fun findOtherColumnIndex(table: MarkdownTableImpl, columnIndex: Int): Int? {
+  private fun findOtherColumnIndex(table: MarkdownTable, columnIndex: Int): Int? {
     val indices = table.columnsIndices
     return when {
       swapWithLeftColumn && columnIndex - 1 >= 0 -> columnIndex - 1
@@ -38,7 +38,7 @@ internal abstract class SwapColumnsAction(private val swapWithLeftColumn: Boolea
     }
   }
 
-  override fun update(event: AnActionEvent, table: MarkdownTableImpl?, columnIndex: Int?) {
+  override fun update(event: AnActionEvent, table: MarkdownTable?, columnIndex: Int?) {
     super.update(event, table, columnIndex)
     if (table != null && columnIndex != null) {
       event.presentation.isEnabled = findOtherColumnIndex(table, columnIndex) != null

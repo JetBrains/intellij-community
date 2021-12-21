@@ -27,7 +27,7 @@ import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.fileActions.utils.MarkdownFileEditorUtils
-import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
+import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
@@ -100,7 +100,7 @@ internal class CommandRunnerExtension(val panel: MarkdownHtmlPanel,
   }
 
   fun processCodeBlock(codeFenceRawContent: String, language: String): String {
-    val lang = LanguageGuesser.guessLanguageForInjection(language)
+    val lang = CodeFenceLanguageGuesser.guessLanguageForInjection(language)
     val runner = MarkdownRunner.EP_NAME.extensionList.firstOrNull {
       it.isApplicable(lang)
     }

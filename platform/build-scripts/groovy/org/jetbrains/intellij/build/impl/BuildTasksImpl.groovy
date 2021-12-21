@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
-import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.text.Formats
 import com.intellij.openapi.util.text.Strings
 import com.intellij.util.lang.CompoundRuntimeException
@@ -191,22 +190,24 @@ final class BuildTasksImpl extends BuildTasks {
   /**
    * Build a list with modules that the IDE will provide for plugins.
    */
-  private static void buildProvidedModuleList(BuildContext buildContext, Path targetFile, @NotNull Collection<String> modules) {
-    buildContext.executeStep(spanBuilder("build provided module list").setAttribute("size", modules.size()),
-                             BuildOptions.PROVIDED_MODULES_LIST_STEP, new Runnable() {
-      @Override
-      void run() {
-        buildContext.messages.debug("Building provided module list for the following modules: $modules")
-        Files.deleteIfExists(targetFile)
-        // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
-        BuildHelper.runApplicationStarter(buildContext, buildContext.paths.tempDir.resolve("builtinModules"), modules,
-                                          List.of("listBundledPlugins", targetFile.toString()))
-        if (Files.notExists(targetFile)) {
-          buildContext.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
+  private static void buildProvidedModuleList(BuildContext context, Path targetFile, @NotNull Collection<String> modules) {
+    context.executeStep(
+      spanBuilder("build provided module list")
+        .setAttribute(AttributeKey.stringArrayKey("modules"), List.copyOf(modules)),
+      BuildOptions.PROVIDED_MODULES_LIST_STEP,
+      new Runnable() {
+        @Override
+        void run() {
+          Files.deleteIfExists(targetFile)
+          // start the product in headless mode using com.intellij.ide.plugins.BundledPluginsLister
+          BuildHelper.runApplicationStarter(context, context.paths.tempDir.resolve("builtinModules"), modules,
+                                            List.of("listBundledPlugins", targetFile.toString()))
+          if (Files.notExists(targetFile)) {
+            context.messages.error("Failed to build provided modules list: $targetFile doesn't exist")
+          }
+          context.notifyArtifactWasBuilt(targetFile)
         }
-        buildContext.notifyArtifactWasBuilt(targetFile)
-      }
-    })
+      })
   }
 
   private Path patchIdeaPropertiesFile() {
@@ -310,8 +311,8 @@ idea.fatal.error.notification=disabled
 
   @NotNull
   private static BuildTaskRunnable createDistributionForOsTask(@NotNull OsFamily os,
-                                                                     @NotNull Map<OsFamily, Path> result,
-                                                                     @NotNull Function<BuildContext, OsSpecificDistributionBuilder> factory) {
+                                                               @NotNull Map<OsFamily, Path> result,
+                                                               @NotNull Function<BuildContext, OsSpecificDistributionBuilder> factory) {
     return BuildTaskRunnable.task(os.osId, new Consumer<BuildContext>() {
       @Override
       void accept(BuildContext context) {
@@ -340,36 +341,40 @@ idea.fatal.error.notification=disabled
   @Override
   void compileModulesFromProduct() {
     checkProductProperties()
-    compileModulesForDistribution()
+    compileModulesForDistribution(buildContext)
   }
 
-  private DistributionJARsBuilder compileModulesForDistribution() {
-    ProductModulesLayout productLayout = buildContext.productProperties.productLayout
-    Collection<String> moduleNames = DistributionJARsBuilder.getModulesToCompile(buildContext)
-    MavenArtifactsProperties mavenArtifacts = buildContext.productProperties.mavenArtifacts
+  private DistributionJARsBuilder compileModulesForDistribution(BuildContext context) {
+    Set<PluginLayout> pluginsToPublish = DistributionJARsBuilder
+      .getPluginsByModules(context, context.productProperties.productLayout.pluginModulesToPublish)
+    compileModulesForDistribution(pluginsToPublish, context)
+  }
+
+  private DistributionJARsBuilder compileModulesForDistribution(Set<PluginLayout> pluginsToPublish, BuildContext context) {
+    ProductProperties productProperties = context.productProperties
+    ProductModulesLayout productLayout = productProperties.productLayout
+    Collection<String> moduleNames = DistributionJARsBuilder.getModulesToCompile(context)
+    MavenArtifactsProperties mavenArtifacts = productProperties.mavenArtifacts
 
     Set<String> toCompile = new LinkedHashSet<>()
     toCompile.addAll(moduleNames)
-    toCompile.addAll(buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: Collections.<String>emptyList())
+    toCompile.addAll(context.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: Collections.<String>emptyList())
     toCompile.addAll(productLayout.mainModules)
     toCompile.addAll(mavenArtifacts.additionalModules)
     toCompile.addAll(mavenArtifacts.proprietaryModules)
-    toCompile.addAll(buildContext.productProperties.modulesToCompileTests)
+    toCompile.addAll(productProperties.modulesToCompileTests)
     compileModules(toCompile)
 
-    def pluginsToPublish = new LinkedHashSet<>(
-      DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish))
-
-    if (buildContext.shouldBuildDistributions()) {
-      Path providedModulesFile = buildContext.paths.artifactDir.resolve("${buildContext.applicationInfo.productCode}-builtinModules.json")
-      buildProvidedModuleList(buildContext, providedModulesFile, moduleNames)
-      if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
-        if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-          PluginsCollector collector = new PluginsCollector(buildContext)
-          pluginsToPublish.addAll(collector.collectCompatiblePluginsToPublish(providedModulesFile.toString()))
+    if (context.shouldBuildDistributions()) {
+      Path providedModulesFile = context.paths.artifactDir.resolve("${context.applicationInfo.productCode}-builtinModules.json")
+      buildProvidedModuleList(context, providedModulesFile, moduleNames)
+      if (productProperties.productLayout.buildAllCompatiblePlugins) {
+        if (context.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
+          context.messages.info("Skipping collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
         }
         else {
-          buildContext.messages.info("Skipping collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
+          pluginsToPublish = new LinkedHashSet<>(pluginsToPublish)
+          pluginsToPublish.addAll(PluginsCollector.collectCompatiblePluginsToPublish(providedModulesFile, context))
         }
       }
     }
@@ -414,10 +419,12 @@ idea.fatal.error.notification=disabled
     setupBundledMaven()
 
     logFreeDiskSpace("before compilation")
-    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution()
-    logFreeDiskSpace("after compilation")
 
-    ForkJoinTask<?> setupJetBrainsRuntimeTask = context.shouldBuildDistributions() ? createSetupJbreTask()?.fork() : null
+    Set<PluginLayout> pluginsToPublish = DistributionJARsBuilder
+      .getPluginsByModules(context, context.productProperties.productLayout.pluginModulesToPublish)
+
+    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(buildContext)
+    logFreeDiskSpace("after compilation")
 
     MavenArtifactsProperties mavenArtifacts = context.productProperties.mavenArtifacts
     if (mavenArtifacts.forIdeModules || !mavenArtifacts.additionalModules.isEmpty() || !mavenArtifacts.proprietaryModules.isEmpty()) {
@@ -453,7 +460,7 @@ idea.fatal.error.notification=disabled
           Span.current().addEvent("skip building product distributions because " +
                                   "\"intellij.build.target.os\" property is set to \"$BuildOptions.OS_NONE\"")
           DistributionJARsBuilder.buildSearchableOptions(context, distributionJARsBuilder.getModulesForPluginsToPublish())
-          distributionJARsBuilder.createBuildNonBundledPluginsTask(true, null, context)?.fork()?.join()
+          distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish, true, null, context)?.fork()?.join()
         }
         return null
       }
@@ -461,7 +468,6 @@ idea.fatal.error.notification=disabled
 
     if (context.shouldBuildDistributions()) {
       layoutShared(context)
-      setupJetBrainsRuntimeTask?.join()
 
       Path propertiesFile = patchIdeaPropertiesFile()
       Map<OsFamily, Path> distDirs = Collections.synchronizedMap(new HashMap<OsFamily, Path>(3))
@@ -518,7 +524,7 @@ idea.fatal.error.notification=disabled
                   "-Pintellij.build.output=${context.paths.buildOutputRoot}/toolbox-lite-gen",
                 ]
 
-                context.gradle.runWithModularRuntime('Run Toolbox LiteGen', liteGenArgs)
+                context.gradle.run('Run Toolbox LiteGen', liteGenArgs)
               }
             }
           })
@@ -550,44 +556,12 @@ idea.fatal.error.notification=disabled
     Set<PluginLayout> pluginsToPublish = DistributionJARsBuilder.getPluginsByModules(buildContext, mainPluginModules)
     DistributionJARsBuilder distributionJARsBuilder = compilePlatformAndPluginModules(pluginsToPublish)
     DistributionJARsBuilder.buildSearchableOptions(buildContext, distributionJARsBuilder.getModulesForPluginsToPublish())
-    distributionJARsBuilder.createBuildNonBundledPluginsTask(true, null, buildContext)?.fork()?.join()
+    distributionJARsBuilder.createBuildNonBundledPluginsTask(pluginsToPublish, true, null, buildContext)?.fork()?.join()
   }
 
   @Override
   void generateProjectStructureMapping(File targetFile) {
     new DistributionJARsBuilder(buildContext).generateProjectStructureMapping(targetFile.toPath(), buildContext)
-  }
-
-  @Nullable
-  private ForkJoinTask<?> createSetupJbreTask(String targetArch = null) {
-    String message = "downloading JetBrains Runtime"
-    return BuildHelper.getInstance(buildContext).createSkippableTask(
-      spanBuilder(message).setAttribute("targetArch", targetArch),
-      BuildOptions.RUNTIME_DOWNLOADING_STEP,
-      buildContext,
-      new Runnable() {
-        @Override
-        void run() {
-          logFreeDiskSpace("before downloading runtime")
-          String[] args = [
-            "setupJbre", "-Dintellij.build.target.os=$buildContext.options.targetOS",
-            "-Dintellij.build.bundled.jre.version=$buildContext.options.bundledRuntimeVersion"
-          ]
-          if (targetArch != null) {
-            args += "-Dintellij.build.target.arch=" + targetArch
-          }
-          String prefix = System.getProperty("intellij.build.bundled.jre.prefix")
-          if (prefix != null) {
-            args += "-Dintellij.build.bundled.jre.prefix=" + prefix
-          }
-          if (buildContext.options.bundledRuntimeBuild != null) {
-            args += "-Dintellij.build.bundled.jre.build=" + buildContext.options.bundledRuntimeBuild
-          }
-          buildContext.gradle.run(message, args)
-          logFreeDiskSpace("after downloading runtime")
-        }
-      }
-    )
   }
 
   private void setupBundledMaven() {
@@ -719,7 +693,7 @@ idea.fatal.error.notification=disabled
     checkModules(layout.additionalPlatformJars.values(), "productProperties.productLayout.additionalPlatformJars")
     checkModules(layout.moduleExcludes.keySet(), "productProperties.productLayout.moduleExcludes")
     checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
-    checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
+    checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar", buildContext)
     nonTrivialPlugins.each { plugin ->
       checkBaseLayout(plugin, "'$plugin.mainModule' plugin")
     }
@@ -730,7 +704,7 @@ idea.fatal.error.notification=disabled
     checkArtifacts(layout.includedArtifacts.keySet(), "includedArtifacts in $description")
     checkModules(layout.resourcePaths.collect { it.moduleName }, "resourcePaths in $description")
     checkModules(layout.moduleExcludes.keySet(), "moduleExcludes in $description")
-    checkProjectLibraries(layout.includedProjectLibraries.collect { it.libraryName }, "includedProjectLibraries in $description")
+    checkProjectLibraries(layout.includedProjectLibraries.collect { it.libraryName }, "includedProjectLibraries in $description", buildContext)
     for (data in layout.includedModuleLibraries) {
       checkModules([data.moduleName], "includedModuleLibraries in $description")
       if (buildContext.findRequiredModule(data.moduleName).libraryCollection.libraries.find { LayoutBuilder.getLibraryName(it) == data.libraryName } == null) {
@@ -746,7 +720,7 @@ idea.fatal.error.notification=disabled
         }
       }
     }
-    checkProjectLibraries(layout.projectLibrariesToUnpack.values(), "projectLibrariesToUnpack in $description")
+    checkProjectLibraries(layout.projectLibrariesToUnpack.values(), "projectLibrariesToUnpack in $description", buildContext)
     checkModules(layout.modulesWithExcludedModuleLibraries, "modulesWithExcludedModuleLibraries in $description")
   }
 
@@ -768,10 +742,10 @@ idea.fatal.error.notification=disabled
     }
   }
 
-  private void checkProjectLibraries(Collection<String> names, String fieldName) {
-    def unknownLibraries = names.findAll {buildContext.project.libraryCollection.findLibrary(it) == null}
+  private static void checkProjectLibraries(Collection<String> names, String fieldName, BuildContext context) {
+    Collection<String> unknownLibraries = names.findAll { context.project.libraryCollection.findLibrary(it) == null}
     if (!unknownLibraries.empty) {
-      buildContext.messages.error("The following libraries from $fieldName aren't found in the project: $unknownLibraries")
+      context.messages.error("The following libraries from $fieldName aren't found in the project: $unknownLibraries")
     }
   }
 
@@ -964,34 +938,27 @@ idea.fatal.error.notification=disabled
   void runTestBuild() {
     checkProductProperties()
     setupBundledMaven()
-    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution()
+    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(buildContext)
     distributionJARsBuilder.buildJARs(buildContext)
     layoutShared(buildContext)
     Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
     if (checkerConfig != null) {
-      new ClassVersionChecker(checkerConfig).checkVersions(buildContext, buildContext.paths.distAllDir)
+      ClassVersionChecker.checkVersions(checkerConfig, buildContext, buildContext.paths.distAllDir)
     }
   }
 
   @Override
   void buildUnpackedDistribution(@NotNull Path targetDirectory, boolean includeBinAndRuntime) {
     BuildContext buildContext = buildContext
+    def currentOs = OsFamily.currentOs
+
     buildContext.paths.distAllDir = targetDirectory.toAbsolutePath().normalize()
-    OsFamily currentOs = SystemInfoRt.isWindows ? OsFamily.WINDOWS :
-                         SystemInfoRt.isMac ? OsFamily.MACOS :
-                         SystemInfoRt.isLinux ? OsFamily.LINUX : null
-    if (currentOs == null) {
-      buildContext.messages.error("Update from source isn't supported for '$SystemInfoRt.OS_NAME'")
-    }
     buildContext.options.targetOS = currentOs.osId
     buildContext.options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
 
     setupBundledMaven()
-    compileModulesForDistribution().buildJARs(buildContext, true)
+    compileModulesForDistribution(buildContext).buildJARs(buildContext, true)
     JvmArchitecture arch = CpuArch.isArm64() ? JvmArchitecture.aarch64 : JvmArchitecture.x64
-    if (includeBinAndRuntime) {
-      createSetupJbreTask(arch.name()).fork().join()
-    }
     layoutShared(buildContext)
 
     if (includeBinAndRuntime) {
@@ -1009,7 +976,7 @@ idea.fatal.error.notification=disabled
           break
       }
       builder.copyFilesForOsDistribution(targetDirectory, arch)
-      buildContext.bundledJreManager.extractJreTo(currentOs, targetDirectory.resolve("jbr"), arch)
+      buildContext.bundledRuntime.extractTo(BundledRuntime.getProductPrefix(buildContext), currentOs, targetDirectory.resolve("jbr"), arch)
 
       List<String> executableFilesPatterns = builder.generateExecutableFilesPatterns(true)
       updateExecutablePermissions(targetDirectory, executableFilesPatterns)

@@ -8,7 +8,7 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 import org.intellij.plugins.markdown.editor.tables.TableUtils
 import org.intellij.plugins.markdown.editor.tables.actions.TableActionKeys
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 
 /**
  * Base class for actions operating on a single column.
@@ -46,15 +46,15 @@ internal abstract class ColumnBasedTableAction: AnAction() {
     update(event, table, columnIndex)
   }
 
-  protected abstract fun performAction(editor: Editor, table: MarkdownTableImpl, columnIndex: Int)
+  protected abstract fun performAction(editor: Editor, table: MarkdownTable, columnIndex: Int)
 
-  protected open fun update(event: AnActionEvent, table: MarkdownTableImpl?, columnIndex: Int?) = Unit
+  protected open fun update(event: AnActionEvent, table: MarkdownTable?, columnIndex: Int?) = Unit
 
-  private fun findTableAndIndex(event: AnActionEvent, file: PsiFile, editor: Editor): Pair<MarkdownTableImpl?, Int?> {
+  private fun findTableAndIndex(event: AnActionEvent, file: PsiFile, editor: Editor): Pair<MarkdownTable?, Int?> {
     return findTableAndIndex(event, file, editor, ::findTable, ::findColumnIndex)
   }
 
-  protected open fun findTable(file: PsiFile, editor: Editor): MarkdownTableImpl? {
+  protected open fun findTable(file: PsiFile, editor: Editor): MarkdownTable? {
     return TableUtils.findTable(file, editor.caretModel.currentCaret.offset)
   }
 
@@ -67,10 +67,10 @@ internal abstract class ColumnBasedTableAction: AnAction() {
       event: AnActionEvent,
       file: PsiFile,
       editor: Editor,
-      tableGetter: (PsiFile, Editor) -> MarkdownTableImpl?,
+      tableGetter: (PsiFile, Editor) -> MarkdownTable?,
       columnIndexGetter: (PsiFile, Editor) -> Int?
-    ): Pair<MarkdownTableImpl?, Int?> {
-      val tableFromEvent = event.getData(TableActionKeys.ELEMENT)?.get() as? MarkdownTableImpl
+    ): Pair<MarkdownTable?, Int?> {
+      val tableFromEvent = event.getData(TableActionKeys.ELEMENT)?.get() as? MarkdownTable
       val indexFromEvent = event.getData(TableActionKeys.COLUMN_INDEX)
       if (tableFromEvent != null && indexFromEvent != null) {
         return tableFromEvent to indexFromEvent
@@ -80,7 +80,7 @@ internal abstract class ColumnBasedTableAction: AnAction() {
       return table to index
     }
 
-    fun findTableAndIndex(event: AnActionEvent, file: PsiFile, editor: Editor): Pair<MarkdownTableImpl?, Int?> {
+    fun findTableAndIndex(event: AnActionEvent, file: PsiFile, editor: Editor): Pair<MarkdownTable?, Int?> {
       return findTableAndIndex(
         event,
         file,

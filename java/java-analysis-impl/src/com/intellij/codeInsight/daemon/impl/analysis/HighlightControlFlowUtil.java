@@ -25,6 +25,7 @@ import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,8 +86,23 @@ public final class HighlightControlFlowUtil {
     try {
       AllVariablesControlFlowPolicy policy = AllVariablesControlFlowPolicy.getInstance();
       final ControlFlow controlFlow = ControlFlowFactory.getControlFlow(codeBlock, policy, ControlFlowOptions.NO_CONST_EVALUATE);
-      final PsiElement unreachableStatement = ControlFlowUtil.getUnreachableStatement(controlFlow);
+      PsiElement unreachableStatement = ControlFlowUtil.getUnreachableStatement(controlFlow);
       if (unreachableStatement != null) {
+        if (unreachableStatement instanceof PsiCodeBlock && unreachableStatement.getParent() instanceof PsiBlockStatement) {
+          unreachableStatement = unreachableStatement.getParent();
+        }
+        if (unreachableStatement instanceof PsiStatement) {
+          PsiElement parent = unreachableStatement.getParent();
+          if (parent instanceof PsiWhileStatement || parent instanceof PsiForStatement) {
+            PsiExpression condition = ((PsiConditionalLoopStatement)parent).getCondition();
+            if (Boolean.FALSE.equals(ExpressionUtils.computeConstantExpression(condition))) {
+              HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(condition)
+                .descriptionAndTooltip(JavaErrorBundle.message("unreachable.statement.false.condition")).create();
+              QuickFixAction.registerQuickFixAction(info, QUICK_FIX_FACTORY.createSimplifyBooleanFix(condition, false));
+              return info;
+            }
+          }
+        }
         String description = JavaErrorBundle.message("unreachable.statement");
         PsiElement keyword = null;
         if (unreachableStatement instanceof PsiIfStatement ||
@@ -135,7 +151,7 @@ public final class HighlightControlFlowUtil {
       return false;
     }
     else {
-      // instance field should be initialized at the end of the each constructor
+      // instance field should be initialized at the end of each constructor
       final PsiMethod[] constructors = aClass.getConstructors();
 
       if (constructors.length == 0) return false;
@@ -301,7 +317,7 @@ public final class HighlightControlFlowUtil {
 
       topBlock = FileTypeUtils.isInServerPageFile(scope) && scope instanceof PsiFile ? scope : PsiUtil.getTopLevelEnclosingCodeBlock(expression, scope);
       if (variable instanceof PsiField) {
-        // non final field already initialized with default value
+        // non-final field already initialized with default value
         if (!ignoreFinality && !variable.hasModifierProperty(PsiModifier.FINAL)) return null;
         // final field may be initialized in ctor or class initializer only
         // if we're inside non-ctr method, skip it

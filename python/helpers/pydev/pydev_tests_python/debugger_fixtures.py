@@ -1,7 +1,6 @@
 from contextlib import contextmanager
 import os
 import threading
-import time
 
 import pytest
 

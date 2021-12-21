@@ -4,6 +4,12 @@
   <property name="idea.lib" value="${project.home}/lib"/>
   <property environment="env"/>
 
+  <!-- Universal workaround for "VerifyError: Illegal type at constant pool entry" -->
+  <!-- https://issues.apache.org/jira/browse/GROOVY-8930 -->
+  <script language="javascript">
+    java.lang.System.setProperty('groovy.target.bytecode', '1.8');
+  </script>
+
   <xmlproperty file="${build.dir}/../.idea/libraries/jps_build_script_dependencies_bootstrap.xml" prefix="jps.bootstrap.library.xml"/>
   <loadresource property="jps.bootstrap.library.version">
     <propertyresource name="jps.bootstrap.library.xml.component.library.properties(maven-id)"/>

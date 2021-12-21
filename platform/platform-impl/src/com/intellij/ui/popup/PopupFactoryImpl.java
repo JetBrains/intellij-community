@@ -658,6 +658,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
     private final Character myMnemonicChar;
     private final boolean myMnemonicsEnabled;
     private final boolean myIsEnabled;
+    private final boolean myIsPerformGroup;
     private final Icon myIcon;
     private final Icon mySelectedIcon;
     private final boolean myPrependWithSeparator;
@@ -673,6 +674,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                @Nullable @NlsContexts.DetailedDescription String description,
                @Nullable @NlsContexts.DetailedDescription String tooltip,
                boolean enabled,
+               boolean performingGroup,
                @Nullable Icon icon,
                @Nullable Icon selectedIcon,
                final boolean prependWithSeparator,
@@ -683,6 +685,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
       myMnemonicChar = mnemonicChar;
       myMnemonicsEnabled = mnemonicsEnabled;
       myIsEnabled = enabled;
+      myIsPerformGroup = performingGroup;
       myIcon = icon;
       mySelectedIcon = selectedIcon;
       myPrependWithSeparator = prependWithSeparator;
@@ -733,6 +736,8 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     public boolean isEnabled() { return myIsEnabled; }
+
+    public boolean isPerformGroup() { return myIsPerformGroup; }
 
     public @NlsContexts.DetailedDescription String getDescription() {
       return myDescription == null ? myTooltip : myDescription;

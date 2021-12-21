@@ -160,7 +160,7 @@ public final class IrreducibleCFGDeobfuscator {
 
     int res;
 
-    if (statement.type == Statement.TYPE_BASICBLOCK) {
+    if (statement.type == Statement.TYPE_BASIC_BLOCK) {
       res = ((BasicBlockStatement)statement).getBlock().getSeq().length();
     }
     else {

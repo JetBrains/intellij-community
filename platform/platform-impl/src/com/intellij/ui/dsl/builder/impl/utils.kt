@@ -6,8 +6,10 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
+import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
+import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.*
 import javax.swing.text.JTextComponent
@@ -20,7 +22,14 @@ internal enum class DslComponentPropertyInternal {
   /**
    * Removes standard bottom gap from label
    */
-  LABEL_NO_BOTTOM_GAP
+  LABEL_NO_BOTTOM_GAP,
+
+  /**
+   * A mark that component is a cell label, see [Cell.label]
+   *
+   * Value: true
+   */
+  CELL_LABEL
 }
 
 /**
@@ -37,7 +46,8 @@ private val ALLOWED_LABEL_COMPONENTS = listOf(
   JComboBox::class,
   JSlider::class,
   JSpinner::class,
-  JTextComponent::class
+  JTextComponent::class,
+  SegmentedButtonToolbar::class
 )
 
 internal val JComponent.origin: JComponent

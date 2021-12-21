@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.core.script.ucache
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.io.exists
 import java.nio.file.Path
 
 /**
@@ -15,7 +16,7 @@ class SdkId private constructor(val homeDirectory: String?) {
         val default = SdkId(null as String?)
 
         operator fun invoke(homeDirectory: Path?): SdkId {
-            if (homeDirectory == null) return default
+            if (homeDirectory == null || !homeDirectory.exists()) return default
             val canonicalPath = FileUtil.toSystemIndependentName(homeDirectory.toRealPath().toString())
             return SdkId(canonicalPath)
         }

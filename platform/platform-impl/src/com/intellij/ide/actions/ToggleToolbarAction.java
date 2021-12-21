@@ -201,8 +201,16 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
 
     OptionsGroup(ToolWindow toolWindow) {
       getTemplatePresentation().setText(IdeBundle.message("group.view.options"));
-      setPopup(true);
       myToolWindow = toolWindow;
+    }
+
+    @Override
+    public void update(@NotNull AnActionEvent e) {
+      super.update(e);
+      if (e.getPresentation().isVisible()) {
+        int trimmedSize = ActionGroupUtil.getVisibleActions(this, e).take(4).size();
+        e.getPresentation().setPopupGroup(trimmedSize > 3);
+      }
     }
 
     @Override
@@ -233,7 +241,6 @@ public final class ToggleToolbarAction extends ToggleAction implements DumbAware
         }
       }
       boolean popup = ContainerUtil.count(result, it -> !(it instanceof Separator)) > 3;
-      setPopup(popup);
       if (!popup && !result.isEmpty()) result.add(Separator.getInstance());
       return result.toArray(AnAction.EMPTY_ARRAY);
     }

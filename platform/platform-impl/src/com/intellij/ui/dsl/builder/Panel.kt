@@ -7,7 +7,6 @@ import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
-import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import java.awt.Color
 import javax.swing.JLabel
@@ -17,7 +16,6 @@ import javax.swing.JLabel
  */
 val EMPTY_LABEL = String()
 
-@ApiStatus.Experimental
 interface Panel : CellBase<Panel> {
 
   override fun visible(isVisible: Boolean): Panel

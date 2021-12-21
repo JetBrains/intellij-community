@@ -19,7 +19,6 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.event.ItemEvent
-import java.util.*
 import javax.swing.DefaultComboBoxModel
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -69,7 +68,7 @@ class RepositoryUrlCloneDialogExtension : VcsCloneDialogExtension {
         }
       }
       val insets = UIUtil.PANEL_REGULAR_INSETS
-      northPanel.border = JBUI.Borders.empty(insets.top, insets.left, 0, insets.right)
+      northPanel.border = JBUI.Borders.empty(insets)
       mainPanel.add(northPanel, BorderLayout.NORTH)
       mainPanel.add(centerPanel, BorderLayout.CENTER)
 

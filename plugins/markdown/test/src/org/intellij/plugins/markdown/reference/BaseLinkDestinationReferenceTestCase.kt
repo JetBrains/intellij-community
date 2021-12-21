@@ -9,7 +9,7 @@ import com.intellij.psi.util.PsiUtilCore
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import junit.framework.TestCase
 import org.intellij.plugins.markdown.lang.MarkdownFileType
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.junit.Assert.assertNotEquals
 import java.nio.file.Path
 
@@ -57,7 +57,7 @@ abstract class BaseLinkDestinationReferenceTestCase : BasePlatformTestCase() {
 
   protected fun testIsReferenceToHeader(filePath: Path, headerName: String) =
     testReferenceToFile(filePath) { reference, file ->
-      val header = assertInstanceOf(reference.convertToNonNullWithAssert().resolve(), MarkdownHeaderImpl::class.java)
+      val header = assertInstanceOf(reference.convertToNonNullWithAssert().resolve(), MarkdownHeader::class.java)
       assertTrue(myFixture.psiManager.areElementsEquivalent(file, header.containingFile))
       assertEquals(headerName, header.name)
     }

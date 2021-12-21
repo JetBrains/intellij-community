@@ -31,6 +31,8 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
 
   var numberOfIndexedFiles: Int = 0
 
+  var listOfFilesFullyIndexedByExtensions = arrayListOf<String>()
+
   var numberOfFilesFullyIndexedByExtensions: Int = 0
 
   var numberOfTooLargeForIndexingFiles: Int = 0
@@ -69,6 +71,7 @@ class IndexingJobStatistics(private val project: Project, val fileSetName: Strin
     numberOfIndexedFiles++
     if (fileStatistics.wasFullyIndexedByExtensions) {
       numberOfFilesFullyIndexedByExtensions++
+      listOfFilesFullyIndexedByExtensions.add(file.toString())
     }
     processingTimeInAllThreads += processingTime
     contentLoadingTimeInAllThreads += contentLoadingTime

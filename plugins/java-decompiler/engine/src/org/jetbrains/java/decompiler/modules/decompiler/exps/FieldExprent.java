@@ -17,12 +17,12 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class FieldExprent extends Exprent {
@@ -158,11 +158,11 @@ public class FieldExprent extends Exprent {
     if (!(o instanceof FieldExprent)) return false;
 
     FieldExprent ft = (FieldExprent)o;
-    return InterpreterUtil.equalObjects(name, ft.getName()) &&
-           InterpreterUtil.equalObjects(classname, ft.getClassname()) &&
+    return Objects.equals(name, ft.getName()) &&
+           Objects.equals(classname, ft.getClassname()) &&
            isStatic == ft.isStatic() &&
-           InterpreterUtil.equalObjects(instance, ft.getInstance()) &&
-           InterpreterUtil.equalObjects(descriptor, ft.getDescriptor());
+           Objects.equals(instance, ft.getInstance()) &&
+           Objects.equals(descriptor, ft.getDescriptor());
   }
 
   public String getClassname() {

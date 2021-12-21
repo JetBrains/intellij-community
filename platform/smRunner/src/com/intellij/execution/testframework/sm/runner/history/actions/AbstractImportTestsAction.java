@@ -8,7 +8,6 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
-import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.testframework.sm.SmRunnerBundle;
 import com.intellij.execution.testframework.sm.runner.SMRunnerConsolePropertiesProvider;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
@@ -105,19 +104,16 @@ public abstract class AbstractImportTestsAction extends AnAction {
                                Long executionId,
                                Executor executor) {
     try {
-      final ImportRunProfile profile = new ImportRunProfile(file, project);
-      ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.create(project, executor, profile);
-      ExecutionTarget target = profile.getTarget();
-      if (target != null) {
-        builder = builder.target(target);
-      }
+      final ImportRunProfile profile = new ImportRunProfile(file, project, executor);
+      Executor defaultExecutor = DefaultRunExecutor.getRunExecutorInstance();
+      //runner should be default to be able to execute ImportProfile, thus it's required to pass defaultExecutor
+      ExecutionEnvironmentBuilder builder = ExecutionEnvironmentBuilder.create(project, defaultExecutor, profile);
+      //to correct icon in com.intellij.execution.runners.FakeRerunAction (appended in RunTab), let's set executor here
+      builder.executor(executor);
+
+      builder.target(profile.getTarget());
       if (executionId != null) {
-        builder = builder.executionId(executionId);
-      }
-      final RunConfiguration initialConfiguration = profile.getInitialConfiguration();
-      final ProgramRunner runner = initialConfiguration != null ? ProgramRunner.getRunner(executor.getId(), initialConfiguration) : null;
-      if (runner != null) {
-        builder.runner(runner);
+        builder.executionId(executionId);
       }
       builder.buildAndExecute();
     }
@@ -147,10 +143,16 @@ public abstract class AbstractImportTestsAction extends AnAction {
     private RunConfiguration myConfiguration;
     private boolean myImported;
     private String myTargetId;
+    private final Executor myExecutor;
 
     public ImportRunProfile(VirtualFile file, Project project) {
+      this(file, project, DefaultRunExecutor.getRunExecutorInstance());
+    }
+
+    public ImportRunProfile(VirtualFile file, Project project, Executor executor) {
       myFile = file;
       myProject = project;
+      myExecutor = executor;
       class TerminateParsingException extends SAXException { }
       try (InputStream inputStream = new BufferedInputStream(new FileInputStream(VfsUtilCore.virtualToIoFile(myFile)))) {
         SAXParserFactory factory = SAXParserFactory.newDefaultInstance();
@@ -253,6 +255,10 @@ public abstract class AbstractImportTestsAction extends AnAction {
       }
       if (myConfiguration != null) {
         try {
+          if (!executor.equals(myExecutor)) { //restart initial configuration with predefined executor
+            ExecutionEnvironmentBuilder.create(myExecutor, myConfiguration).target(getTarget()).buildAndExecute();
+            return null;
+          }
           return myConfiguration.getState(executor, environment);
         }
         catch (Throwable e) {

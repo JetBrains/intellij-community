@@ -13,7 +13,7 @@ import org.intellij.plugins.markdown.editor.lists.ListRenumberUtils.renumberInBu
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentRange
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /**
@@ -48,7 +48,7 @@ internal class MarkdownListItemCreatingTypedHandlerDelegate : TypedHandlerDelega
       return Result.CONTINUE
     }
 
-    element.parentOfType<MarkdownListImpl>()!!.renumberInBulk(document, recursive = false, restart = false)
+    element.parentOfType<MarkdownList>()!!.renumberInBulk(document, recursive = false, restart = false)
     PsiDocumentManager.getInstance(project).commitDocument(document)
     caret.moveToOffset(file.findElementAt(caret.offset - 1)?.endOffset ?: caret.offset)
     return Result.STOP

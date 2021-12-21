@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -32,6 +32,8 @@ import com.intellij.ui.switcher.QuickActionProvider;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.animation.AlphaAnimationContext;
+import com.intellij.util.animation.AlphaAnimated;
+import com.intellij.util.animation.ShowHideAnimator;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
@@ -56,7 +58,7 @@ import java.util.concurrent.TimeUnit;
 
 import static com.intellij.util.IJSwingUtilities.getFocusedComponentInWindowOrSelf;
 
-public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickActionProvider {
+public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickActionProvider, AlphaAnimated {
   private static final Logger LOG = Logger.getInstance(ActionToolbarImpl.class);
 
   private static final Set<ActionToolbarImpl> ourToolbars = new LinkedHashSet<>();
@@ -157,10 +159,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private boolean myShowSeparatorTitles;
   private Image myCachedImage;
 
-  private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(composite -> {
-    super.setVisible(composite != null);
-    if (isShowing()) repaint();
-  });
+  private final AlphaAnimationContext myAlphaContext = new AlphaAnimationContext(this);
 
   private final EventDispatcher<ActionToolbarListener> myListeners = EventDispatcher.create(ActionToolbarListener.class);
 
@@ -296,13 +295,17 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @Override
+  public @NotNull ShowHideAnimator getAlphaAnimator() {
+    return myAlphaContext.getAnimator();
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    myAlphaContext.paint(g, () -> super.paint(g));
+  }
+
+  @Override
   protected void paintComponent(final Graphics g) {
-    if (g instanceof Graphics2D) {
-      Graphics2D g2d = (Graphics2D)g;
-      AlphaComposite composite = myAlphaContext.getComposite();
-      if (composite == null) return; // do not paint a completely transparent component
-      g2d.setComposite(composite);
-    }
     if (myCachedImage != null) {
       UIUtil.drawImage(g, myCachedImage, 0, 0, null);
       return;
@@ -1113,16 +1116,6 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   @Override
-  public void setVisible(boolean visible) {
-    if (ExperimentalUI.isNewUI()) {
-      myAlphaContext.setVisible(visible);
-    }
-    else {
-      super.setVisible(visible);
-    }
-  }
-
-  @Override
   public void setOrientation(@MagicConstant(intValues = {SwingConstants.HORIZONTAL, SwingConstants.VERTICAL}) int orientation) {
     if (SwingConstants.HORIZONTAL != orientation && SwingConstants.VERTICAL != orientation) {
       throw new IllegalArgumentException("wrong orientation: " + orientation);
@@ -1686,7 +1679,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       setOpaque(false);
     }
     else {
-      setBorder(JBUI.Borders.empty(2));
+      Insets i = myOrientation == SwingConstants.VERTICAL ? UIManager.getInsets("ToolBar.verticalToolbarInsets")
+                                                          : UIManager.getInsets("ToolBar.horizontalToolbarInsets");
+      if (i != null) {
+        setBorder(JBUI.Borders.empty(i.top, i.left, i.bottom, i.right));
+      } else {
+        setBorder(JBUI.Borders.empty(2));
+      }
+
       setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : DEFAULT_MINIMUM_BUTTON_SIZE);
       setOpaque(true);
       setLayoutPolicy(AUTO_LAYOUT_POLICY);

@@ -155,6 +155,12 @@ class CompilationPartsUtil {
           // Skip empty directories
           continue
         }
+
+        if (context.findModule(module.name) == null) {
+          messages.warning("Skipping module output from missing in project module: ${module.name}")
+          continue
+        }
+
         String name = "${subroot.name}/${module.name}".toString()
         PackAndUploadContext ctx = new PackAndUploadContext(module, name, "$zipsLocation/${name}.jar".toString())
         contexts.add(ctx)

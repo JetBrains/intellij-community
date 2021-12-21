@@ -86,7 +86,6 @@ enum class BottomGap {
   MEDIUM
 }
 
-@ApiStatus.Experimental
 @LayoutDslMarker
 interface Row {
 

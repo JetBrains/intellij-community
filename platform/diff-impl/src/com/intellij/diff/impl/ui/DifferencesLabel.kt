@@ -1,9 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.impl.ui
 
-import com.intellij.diff.tools.fragmented.UnifiedDiffViewer
-import com.intellij.diff.tools.simple.SimpleDiffViewer
-import com.intellij.diff.tools.util.base.DiffViewerBase
+import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.ActionToolbar
 import com.intellij.openapi.actionSystem.AnAction
@@ -14,6 +12,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.diff.DiffBundle.message
 import com.intellij.openapi.util.text.HtmlBuilder
 import com.intellij.ui.HyperlinkAdapter
+import com.intellij.util.ThreeState
 import org.jetbrains.annotations.Nls
 import java.awt.Component
 import javax.swing.event.HyperlinkEvent
@@ -66,7 +65,7 @@ abstract class DifferencesLabel(private val goToChangeAction: AnAction?, private
     val differencesMessage = buildDifferencesStatusMessage()
     val filesCountMessage = buildFilesCountStatusMessage(differencesMessage)
 
-    return differencesMessage.orEmpty() + filesCountMessage.orEmpty()
+    return differencesMessage + filesCountMessage.orEmpty()
   }
 
   private fun buildFilesCountStatusMessage(differencesStatus: @Nls String?): @Nls String? {
@@ -81,19 +80,14 @@ abstract class DifferencesLabel(private val goToChangeAction: AnAction?, private
     }
   }
 
-  private fun buildDifferencesStatusMessage(): @Nls String? {
-    val currentViewer = getCurrentViewer() ?: return null
-    val differenceStatusMessage = when (currentViewer) {
-      is UnifiedDiffViewer -> currentViewer.statusMessage
-      is SimpleDiffViewer -> currentViewer.statusMessage
-      else -> null
-    }
-    if (differenceStatusMessage.isNullOrBlank()) return null
-
-    return "${getCurrentDifferencePosition()}" + '/' + differenceStatusMessage
+  private fun buildDifferencesStatusMessage(): @Nls String {
+    return DiffUtil.getStatusText(getTotalDifferences(), 0, ThreeState.UNSURE)
   }
 
-  abstract fun getCurrentViewer(): DiffViewerBase?
+  abstract fun getTotalDifferences(): Int
   abstract fun getFileCount(): Int
-  abstract fun getCurrentDifferencePosition(): Int
+
+  interface DifferencesCounter {
+    fun getTotalDifferences(): Int
+  }
 }

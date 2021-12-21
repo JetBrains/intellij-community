@@ -3,7 +3,7 @@ package org.jetbrains.kotlin.idea.maven
 
 import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
-import org.jetbrains.idea.maven.MavenImportingTestCase
+import com.intellij.maven.testFramework.MavenImportingTestCase
 import org.jetbrains.kotlin.config.ResourceKotlinRootType
 import org.jetbrains.kotlin.config.SourceKotlinRootType
 import org.jetbrains.kotlin.config.TestResourceKotlinRootType

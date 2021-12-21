@@ -100,27 +100,21 @@ final class WindowsDistributionBuilder extends OsSpecificDistributionBuilder {
 
     ForkJoinTask<Path> zipPathTask = null
     String exePath = null
-    Path jreDir = buildContext.bundledJreManager.extractJre(OsFamily.WINDOWS, JvmArchitecture.x64)
-    if (jreDir != null) {
-      Path vcRtDll = jreDir.resolve("jbr/bin/msvcp140.dll")
-      try {
-        BuildHelper.copyFileToDir(vcRtDll, winDistPath.resolve("bin"))
-      }
-      catch (NoSuchFileException ignore) {
-        buildContext.messages.error(
-          "VS C++ Runtime DLL (${vcRtDll.fileName}) not found in ${vcRtDll.parent}.\n" +
-          "If JBR uses a newer version, please correct the path in this code and update Windows Launcher build configuration.\n" +
-          "If DLL was relocated to another place, please correct the path in this code.")
-      }
+    Path jreDir = buildContext.bundledRuntime.extract(BundledRuntime.getProductPrefix(buildContext), OsFamily.WINDOWS, JvmArchitecture.x64)
+
+    Path vcRtDll = jreDir.resolve("jbr/bin/msvcp140.dll")
+    if (!Files.exists(vcRtDll)) {
+      buildContext.messages.error(
+        "VS C++ Runtime DLL (${vcRtDll.fileName}) not found in ${vcRtDll.parent}.\n" +
+        "If JBR uses a newer version, please correct the path in this code and update Windows Launcher build configuration.\n" +
+        "If DLL was relocated to another place, please correct the path in this code.")
     }
+
+    BuildHelper.copyFileToDir(vcRtDll, winDistPath.resolve("bin"))
 
     if (customizer.buildZipArchive) {
       List<Path> jreDirectoryPaths
       if (customizer.zipArchiveWithBundledJre) {
-        if (jreDir == null) {
-          buildContext.messages.error("Bundled jre is not found, but it's required for .win.zip")
-        }
-
         jreDirectoryPaths = List.of(jreDir)
       }
       else {

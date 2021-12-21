@@ -28,6 +28,8 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import org.apache.commons.cli.Option;
+import org.gradle.api.logging.LogLevel;
+import org.gradle.internal.logging.LoggingConfigurationBuildOptions;
 import org.gradle.process.internal.JvmOptions;
 import org.gradle.tooling.*;
 import org.gradle.tooling.events.OperationType;
@@ -36,6 +38,7 @@ import org.gradle.tooling.model.UnsupportedMethodException;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.ApiStatus;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.execution.cmd.GradleCommandLineOptionsProvider;
@@ -43,7 +46,6 @@ import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext;
 import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -374,15 +376,7 @@ public class GradleExecutionHelper {
       settings.withArgument(GradleConstants.OFFLINE_MODE_CMD_OPTION);
     }
 
-    final Application application = ApplicationManager.getApplication();
-    if (application != null && application.isUnitTestMode()) {
-      var arguments = settings.getArguments();
-      var options = GradleCommandLineOptionsProvider.LOGGING_OPTIONS.getOptions();
-      var optionsNames = GradleCommandLineOptionsProvider.getAllOptionsNames(options);
-      if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))) {
-        settings.withArgument("--info");
-      }
-    }
+    setupLogging(settings, buildEnvironment);
 
     List<String> filteredArgs = new ArrayList<>();
     if (!settings.getArguments().isEmpty()) {
@@ -446,6 +440,52 @@ public class GradleExecutionHelper {
     InputStream inputStream = settings.getUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY);
     if (inputStream != null) {
       operation.setStandardInput(inputStream);
+    }
+  }
+
+  private static void setupLogging(@NotNull GradleExecutionSettings settings,
+                                   @Nullable BuildEnvironment buildEnvironment) {
+    var arguments = settings.getArguments();
+    var options = GradleCommandLineOptionsProvider.LOGGING_OPTIONS.getOptions();
+    var optionsNames = GradleCommandLineOptionsProvider.getAllOptionsNames(options);
+
+    // workaround for https://github.com/gradle/gradle/issues/19340
+    // when using TAPI, user-defined log level option in gradle.properties is ignored by Gradle.
+    // try to read this file manually and apply log level explicitly
+    if (buildEnvironment == null) {
+      return;
+    }
+    File gradlePropsFile = new File(buildEnvironment.getBuildIdentifier().getRootDir(), "gradle.properties");
+    if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it)) &&
+        gradlePropsFile.exists()) {
+      try (FileInputStream fis = new FileInputStream(gradlePropsFile)) {
+        Properties gradleProps = new Properties();
+        gradleProps.load(fis);
+        @NonNls String gradleLogLevel = gradleProps.getProperty(LoggingConfigurationBuildOptions.LogLevelOption.GRADLE_PROPERTY);
+        if (gradleLogLevel != null) {
+          try {
+            LogLevel logLevel = LogLevel.valueOf(gradleLogLevel.toUpperCase());
+            switch(logLevel) {
+              case DEBUG: settings.withArgument("-d"); break;
+              case INFO: settings.withArgument("-i"); break;
+              case WARN: settings.withArgument("-w"); break;
+              case QUIET: settings.withArgument("-q"); break;
+            }
+          } catch (IllegalArgumentException var4) {
+            LOG.warn("org.gradle.logging.level must be one of quiet, warn, lifecycle, info, or debug");
+          }
+        }
+      } catch (IOException e) {
+        LOG.debug("Failed to load gradle.properties file", e);
+      }
+    }
+
+    // Default logging level for integration tests
+    final Application application = ApplicationManager.getApplication();
+    if (application != null && application.isUnitTestMode()) {
+      if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))) {
+        settings.withArgument("--info");
+      }
     }
   }
 

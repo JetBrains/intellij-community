@@ -21,9 +21,11 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NlsContexts.StatusBarText;
 import com.intellij.openapi.util.NlsContexts.Tooltip;
+import com.intellij.openapi.util.NlsSafe;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.openapi.util.text.StringUtil;
@@ -63,8 +65,8 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
 
   private final AtomicReference<Pair<VirtualFile, Boolean>> mySuppressInfoRef = new AtomicReference<>();
 
-  private VirtualFile myLastUpdatedFile;
-  private WidgetState mySchemaWidgetState;
+  private volatile VirtualFile myLastUpdatedFile;
+  private volatile WidgetState mySchemaWidgetState;
   private ProgressIndicator myCurrentProgress;
 
   JsonSchemaStatusWidget(@NotNull Project project) {
@@ -132,7 +134,54 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   @Override
   public void update(@Nullable Runnable finishUpdate) {
     mySuppressInfoRef.set(null);
-    super.update(finishUpdate);
+
+    if (getUpdateAlarm().isDisposed()) return;
+    VirtualFile file = getSelectedFile();
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      scheduleComponentUpdate(file, finishUpdate);
+    }
+    else {
+      ReadAction.nonBlocking(() -> scheduleComponentUpdate(file, finishUpdate))
+        .expireWith(getUpdateAlarm())
+        .withDocumentsCommitted(myProject)
+        .coalesceBy(this, file)
+        .submit(AppExecutorUtil.getAppExecutorService());
+    }
+  }
+
+  private void scheduleComponentUpdate(VirtualFile file, @Nullable Runnable finishUpdate) {
+    WidgetState state = getWidgetState(file);
+    getUpdateAlarm().cancelAllRequests();
+    getUpdateAlarm().addRequest(() -> {
+      if (state == WidgetState.NO_CHANGE) {
+        return;
+      }
+
+      if (state == WidgetState.NO_CHANGE_MAKE_VISIBLE) {
+        getComponent().setVisible(true);
+        return;
+      }
+
+      if (state == WidgetState.HIDDEN) {
+        getComponent().setVisible(false);
+        return;
+      }
+      if (isDisposed()) return;
+
+      getComponent().setVisible(true);
+      actionEnabled = state.isActionEnabled() && isEnabledForFile(file);
+      getComponent().setEnabled(actionEnabled);
+      updateComponent(state);
+
+      if (myStatusBar != null && !getComponent().isValid()) {
+        myStatusBar.updateWidget(ID());
+      }
+
+      if (finishUpdate != null) {
+        finishUpdate.run();
+      }
+      afterVisibleUpdate(state);
+    }, 200, ModalityState.any());
   }
 
   private static WidgetStatus getWidgetStatus(@NotNull Project project, @NotNull VirtualFile file) {

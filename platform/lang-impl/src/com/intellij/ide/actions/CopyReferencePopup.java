@@ -3,6 +3,8 @@ package com.intellij.ide.actions;
 
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
+import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,13 +30,16 @@ import static com.intellij.openapi.actionSystem.CommonDataKeys.*;
 import static com.intellij.openapi.actionSystem.LangDataKeys.PSI_ELEMENT_ARRAY;
 import static com.intellij.util.ui.UIUtil.DEFAULT_HGAP;
 
-public class CopyReferencePopup extends NonTrivialActionGroup implements AlwaysPerformingActionGroup {
+public class CopyReferencePopup extends NonTrivialActionGroup {
   private static final Logger LOG = Logger.getInstance(CopyReferencePopup.class);
   private static final int DEFAULT_WIDTH = JBUIScale.scale(500);
 
   @Override
-  public boolean canBePerformed(@NotNull DataContext context) {
-    return true;
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    e.getPresentation().setPerformGroup(true);
+    e.getPresentation().putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true);
+    e.getPresentation().putClientProperty(ActionMenu.SUPPRESS_SUBMENU, true);
   }
 
   @Override

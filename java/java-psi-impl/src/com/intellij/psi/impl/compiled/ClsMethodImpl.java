@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.compiled;
 
 import com.intellij.navigation.ItemPresentation;
@@ -6,7 +6,6 @@ import com.intellij.navigation.ItemPresentationProviders;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.ElementPresentationUtil;
@@ -34,6 +33,9 @@ import javax.swing.*;
 import java.util.List;
 import java.util.Objects;
 
+import static com.intellij.openapi.util.NotNullLazyValue.atomicLazy;
+import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
+
 public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAnnotationMethod {
   private final NotNullLazyValue<PsiTypeElement> myReturnType;
   private final NullableLazyValue<PsiAnnotationMemberValue> myDefaultValue;
@@ -41,17 +43,11 @@ public class ClsMethodImpl extends ClsMemberImpl<PsiMethodStub> implements PsiAn
   public ClsMethodImpl(final PsiMethodStub stub) {
     super(stub);
 
-    myReturnType = isConstructor() ? null : NotNullLazyValue.atomicLazy(() -> {
-      return new ClsTypeElementImpl(ClsMethodImpl.this, getStub().getReturnTypeText());
-    });
+    myReturnType = isConstructor() ? null : atomicLazy(() -> new ClsTypeElementImpl(this, getStub().getReturnTypeText()));
 
-    final String text = getStub().getDefaultValueText();
-    myDefaultValue = StringUtil.isEmptyOrSpaces(text) ? null : new VolatileNullableLazyValue<PsiAnnotationMemberValue>() {
-      @Override
-      protected PsiAnnotationMemberValue compute() {
-        return ClsParsingUtil.createMemberValueFromText(text, getManager(), ClsMethodImpl.this);
-      }
-    };
+    String text = getStub().getDefaultValueText();
+    myDefaultValue =
+      StringUtil.isEmptyOrSpaces(text) ? null : volatileLazyNullable(() -> ClsParsingUtil.createMemberValueFromText(text, getManager(), this));
   }
 
   @Override

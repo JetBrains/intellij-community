@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.impl
 
-import com.intellij.openapi.progress.checkCanceled
-import com.intellij.openapi.progress.coroutineSuspender
+import com.intellij.openapi.progress.*
 import com.intellij.testFramework.LightPlatformTestCase
 import com.intellij.util.ConcurrencyUtil
 import kotlinx.coroutines.*
@@ -23,13 +22,10 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
         }
       }
     }
-    withTimeout(1000) {
-      started.acquire() // all coroutines are started
-    }
+    started.timeoutAcquire() // all coroutines are started
     letBackgroundThreadsSuspend()
-    withTimeout(1000) {
-      job.cancelAndJoin()
-    }
+    job.cancel()
+    job.timeoutJoin()
   }
 
   fun `test resume paused coroutines`(): Unit = runBlocking {
@@ -48,9 +44,7 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
         }
       }.awaitAll().sum()
     }
-    withTimeout(1000) {
-      started.acquire() // all coroutines are started
-    }
+    started.timeoutAcquire() // all coroutines are started
     suspender.pause() // pause suspender before next checkCanceled
     repeat(count) {
       paused.release() // let coroutines pause in next checkCanceled
@@ -60,9 +54,7 @@ class CoroutineSuspenderTest : LightPlatformTestCase() {
     assertSize(count, children)
     assertFalse(children.any { it.isCompleted })
     suspender.resume()
-    withTimeout(1000) {
-      assertEquals(55, result.await())
-    }
+    assertEquals(55, result.timeoutAwait())
   }
 
   private suspend fun letBackgroundThreadsSuspend(): Unit = delay(ConcurrencyUtil.DEFAULT_TIMEOUT_MS)

@@ -46,6 +46,11 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
 
 
     override fun setUp() {
+        if (kotlinPluginVersionString == masterKotlinPluginVersion && IS_UNDER_TEAMCITY) {
+            assertTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
+        } else if (kotlinPluginVersionString == masterKotlinPluginVersion) {
+            assumeTrue("Master version of Kotlin Gradle Plugin is not found in local maven repo", localKotlinGradlePluginExists())
+        }
         super.setUp()
         setupSystemProperties()
     }
@@ -76,8 +81,8 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
     }
 
     companion object {
-        val masterKotlinPluginVersion: String = "1.6.20-dev-6372"
-        const val kotlinAndGradleParametersName: String = "{index}: Gradle-{0}, KotlinGradlePlugin-{1}"
+        val masterKotlinPluginVersion: String = System.getenv("KOTLIN_GRADLE_PLUGIN_VERSION") ?: LAST_SNAPSHOT.toString()
+        const val kotlinAndGradleParametersName: String = "Gradle-{0}, KotlinGradlePlugin-{1}"
         private val safePushParams: Collection<Array<Any>> = listOf(arrayOf("7.2", "master"))
 
         @JvmStatic
@@ -104,11 +109,31 @@ abstract class MultiplePluginVersionGradleImportingTestCase : KotlinGradleImport
         "build_tools_version" to "28.0.3",
     )
 
+    val isHmppEnabledByDefault get() = kotlinPluginVersion.isHmppEnabledByDefault
+
+    fun hmppProperties(): Map<String, String> =
+        if (isHmppEnabledByDefault) {
+            mapOf(
+                "enable_hmpp_flags" to "",
+                "disable_hmpp_flags" to "kotlin.mpp.hierarchicalStructureSupport=false"
+            )
+        } else {
+            mapOf(
+                "enable_hmpp_flags" to """
+                    kotlin.mpp.enableGranularSourceSetsMetadata=true
+                    kotlin.native.enableDependencyPropagation=false
+                    kotlin.mpp.enableHierarchicalCommonization=true
+                """.trimIndent(),
+                "disable_hmpp_flags" to ""
+            )
+        }
+
     protected fun repositories(useKts: Boolean): String = GradleKotlinTestUtils.listRepositories(useKts, gradleVersion)
 
     override val defaultProperties: Map<String, String>
         get() = super.defaultProperties.toMutableMap().apply {
             putAll(androidProperties())
+            putAll(hmppProperties())
             put("kotlin_plugin_version", kotlinPluginVersionString)
             put("kotlin_plugin_repositories", repositories(false))
             put("kts_kotlin_plugin_repositories", repositories(true))

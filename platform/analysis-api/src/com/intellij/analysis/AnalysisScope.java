@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.analysis;
 
@@ -64,7 +64,7 @@ public class AnalysisScope {
   @Type protected int myType;
 
   private Set<? extends VirtualFile> myVFiles;  // initial files and directories the scope is configured on
-  private Set<? extends VirtualFile> myFilesSet; // set of files (not directories) this scope consists of. calculated in initFilesSet()
+  private VirtualFileSet myFilesSet; // set of files (not directories) this scope consists of. calculated in getFilesSet()
 
   private boolean myIncludeTestSource = true;
   private boolean myAnalyzeInjectedCode = true;
@@ -143,14 +143,17 @@ public class AnalysisScope {
   }
 
   public void setSearchInLibraries(boolean searchInLibraries) {
+    LOG.assertTrue(myFilesSet == null, "don't modify AnalysisScope after it has been used");
     mySearchInLibraries = searchInLibraries;
   }
 
   public void setIncludeTestSource(boolean includeTestSource) {
+    LOG.assertTrue(myFilesSet == null, "don't modify AnalysisScope after it has been used");
     myIncludeTestSource = includeTestSource;
   }
 
   public void setAnalyzeInjectedCode(boolean analyzeInjectedCode) {
+    LOG.assertTrue(myFilesSet == null, "don't modify AnalysisScope after it has been used");
     myAnalyzeInjectedCode = analyzeInjectedCode;
   }
 
@@ -208,7 +211,7 @@ public class AnalysisScope {
   }
 
   @NotNull
-  protected Set<VirtualFile> createFilesSet() {
+  protected VirtualFileSet createFilesSet() {
     VirtualFileSet fileSet = VfsUtilCore.createCompactVirtualFileSet();
     switch (myType) {
       case FILE:
@@ -279,8 +282,11 @@ public class AnalysisScope {
   }
 
   public boolean accept(@NotNull Processor<? super VirtualFile> processor) {
+    if (myFilesSet != null) {
+      return myFilesSet.process(processor);
+    }
     if (myType == VIRTUAL_FILES) {
-      return ((VirtualFileSet)getFileSet()).process(file -> isFilteredOut(file) || processor.process(file));
+      return getFileSet().process(file -> isFilteredOut(file) || processor.process(file));
     }
     FileIndex projectFileIndex = ProjectRootManager.getInstance(myProject).getFileIndex();
     if (myScope instanceof GlobalSearchScope) {
@@ -328,8 +334,8 @@ public class AnalysisScope {
   }
 
   @NotNull
-  private Collection<? extends VirtualFile> getFileSet() {
-    Set<? extends VirtualFile> fileSet = myFilesSet;
+  private VirtualFileSet getFileSet() {
+    VirtualFileSet fileSet = myFilesSet;
     if (fileSet == null) {
       myFilesSet = fileSet = createFilesSet();
     }
@@ -401,6 +407,7 @@ public class AnalysisScope {
       case MODULES:
         return myModules.contains(module);
       case CUSTOM:
+        if (module.isDisposed()) return false;
         for (VirtualFile file : ModuleRootManager.getInstance(module).getSourceRoots()) {
           if (myScope.contains(file)) return true;
         }

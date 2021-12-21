@@ -2,8 +2,6 @@
 package com.intellij.ide.plugins
 
 import com.intellij.openapi.util.createNonCoalescingXmlStreamReader
-import com.intellij.platform.util.plugins.DataLoader
-import com.intellij.platform.util.plugins.LocalFsDataLoader
 import com.intellij.util.lang.UrlClassLoader
 import org.codehaus.stax2.XMLStreamReader2
 import java.nio.file.Files

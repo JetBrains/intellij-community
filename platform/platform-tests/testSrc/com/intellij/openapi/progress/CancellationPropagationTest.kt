@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.testFramework.RegistryKeyRule
@@ -80,7 +80,7 @@ class CancellationPropagationTest : BasePlatformTestCase() {
           assertCurrentJob(parent = child)
         }
       }
-    }.waitJoin()
+    }.timeoutJoinBlocking()
 
     failureTrace?.let {
       throw it
@@ -96,14 +96,14 @@ class CancellationPropagationTest : BasePlatformTestCase() {
     val rootJob = withRootJob {
       childFuture1 = service.submit {
         childFuture2 = service.submit { // execute -> submit
-          childFuture1Set.waitUp()
+          childFuture1Set.timeoutWaitUp()
           waitAssertCompletedNormally(childFuture1) // key point: the future is done, but the Job is not
         }
         childFuture2Set.up()
       }
       childFuture1Set.up()
     }
-    childFuture2Set.waitUp()
+    childFuture2Set.timeoutWaitUp()
     waitAssertCompletedNormally(childFuture2)
     waitAssertCompletedNormally(rootJob)
   }
@@ -124,12 +124,12 @@ class CancellationPropagationTest : BasePlatformTestCase() {
       }
       lock.up()
     }
-    lock.waitUp()
+    lock.timeoutWaitUp()
 
     waitAssertCompletedNormally(childFuture)
     rootJob.cancel()
     waitAssertCompletedWithCancellation(grandChildFuture)
-    rootJob.waitJoin()
+    rootJob.timeoutJoinBlocking()
   }
 
   @Test
@@ -144,7 +144,7 @@ class CancellationPropagationTest : BasePlatformTestCase() {
       childFuture = service.submit {
         service.execute {
           lock.up()
-          rootCancelled.waitUp()
+          rootCancelled.timeoutWaitUp()
           wasCancelled = Cancellation.isCancelled()
           finished.up()
           ProgressManager.checkCanceled()
@@ -152,14 +152,14 @@ class CancellationPropagationTest : BasePlatformTestCase() {
       }
       lock.up()
     }
-    lock.waitUp()
+    lock.timeoutWaitUp()
 
     waitAssertCompletedNormally(childFuture)
     rootJob.cancel()
     rootCancelled.up()
-    finished.waitUp()
+    finished.timeoutWaitUp()
     assertTrue(wasCancelled)
-    rootJob.waitJoin()
+    rootJob.timeoutJoinBlocking()
   }
 
   @Test
@@ -171,7 +171,7 @@ class CancellationPropagationTest : BasePlatformTestCase() {
     val rootJob = withRootJob {
       f = service.submit {
         lock.up()
-        cancelled.waitUp()
+        cancelled.timeoutWaitUp()
         try {
           ProgressManager.checkCanceled()
           fail()
@@ -182,11 +182,11 @@ class CancellationPropagationTest : BasePlatformTestCase() {
       }
       lock.up()
     }
-    lock.waitUp()
+    lock.timeoutWaitUp()
     f.cancel(false)
     cancelled.up()
-    pce.waitUp()
-    rootJob.waitJoin()
+    pce.timeoutWaitUp()
+    rootJob.timeoutJoinBlocking()
   }
 
   @Test
@@ -200,17 +200,17 @@ class CancellationPropagationTest : BasePlatformTestCase() {
     val rootJob = withRootJob {
       childFuture1 = service.submit {
         lock.up()
-        childFuture1CanThrow.waitUp()
+        childFuture1CanThrow.timeoutWaitUp()
         throw CancellationException()
       }
       childFuture2 = service.submit {
         lock.up()
-        childFuture2CanFinish.waitUp()
+        childFuture2CanFinish.timeoutWaitUp()
         ProgressManager.checkCanceled()
       }
       lock.up()
     }
-    lock.waitUp()
+    lock.timeoutWaitUp()
 
     childFuture1CanThrow.up()
     waitAssertCompletedWithCancellation(childFuture1)
@@ -232,17 +232,17 @@ class CancellationPropagationTest : BasePlatformTestCase() {
     val rootJob = withRootJob {
       childFuture1 = service.submit {
         lock.up()
-        childFuture1CanThrow.waitUp()
+        childFuture1CanThrow.timeoutWaitUp()
         throw E()
       }
       childFuture2 = service.submit {
         lock.up()
-        childFuture2CanFinish.waitUp()
+        childFuture2CanFinish.timeoutWaitUp()
         ProgressManager.checkCanceled()
       }
       lock.up()
     }
-    lock.waitUp()
+    lock.timeoutWaitUp()
 
     childFuture1CanThrow.up()
     waitAssertCompletedWith(childFuture1, E::class)
@@ -257,7 +257,7 @@ class CancellationPropagationTest : BasePlatformTestCase() {
     val canThrow = Semaphore(1)
     withRootJob {
       service.execute {
-        canThrow.waitUp()
+        canThrow.timeoutWaitUp()
         throw t
       }
     }
@@ -271,7 +271,7 @@ class CancellationPropagationTest : BasePlatformTestCase() {
     val canThrow = Semaphore(1)
     withRootJob {
       service.execute {
-        canThrow.waitUp()
+        canThrow.timeoutWaitUp()
         throw jce
       }
     }

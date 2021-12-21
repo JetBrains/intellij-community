@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.lang.documentation.ide.ui
 
 import com.intellij.codeInsight.CodeInsightBundle
 import com.intellij.codeInsight.documentation.*
-import com.intellij.codeInsight.documentation.DocumentationManager.*
+import com.intellij.codeInsight.documentation.DocumentationManager.SELECTED_QUICK_DOC_TEXT
+import com.intellij.codeInsight.documentation.DocumentationManager.decorate
 import com.intellij.ide.DataManager
 import com.intellij.lang.documentation.DocumentationData
 import com.intellij.lang.documentation.DocumentationImageResolver
@@ -12,6 +13,7 @@ import com.intellij.lang.documentation.ide.actions.PRIMARY_GROUP_ID
 import com.intellij.lang.documentation.ide.actions.registerBackForwardActions
 import com.intellij.lang.documentation.ide.impl.DocumentationBrowser
 import com.intellij.lang.documentation.impl.DocumentationRequest
+import com.intellij.navigation.TargetPresentation
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.application.EDT
@@ -145,7 +147,15 @@ internal class DocumentationUI(
     }
     imageResolver = data.imageResolver
     val presentation = request.presentation
-    val locationChunk = presentation.locationText?.let { locationText ->
+    val locationChunk = getDefaultLocationChunk(presentation)
+    val linkChunk = linkChunk(presentation.presentableText, data)
+    val decorated = decorate(data.html, locationChunk, linkChunk)
+    val scrollingPosition = data.anchor?.let(ScrollingPosition::Anchor) ?: ScrollingPosition.Reset
+    update(decorated, scrollingPosition)
+  }
+
+  private fun getDefaultLocationChunk(presentation: TargetPresentation): HtmlChunk? {
+    return presentation.locationText?.let { locationText ->
       presentation.locationIcon?.let { locationIcon ->
         val iconKey = registerIcon(locationIcon)
         HtmlChunk.fragment(
@@ -155,10 +165,6 @@ internal class DocumentationUI(
         )
       } ?: HtmlChunk.text(locationText)
     }
-    val linkChunk = getLink(presentation.presentableText, data.externalUrl)
-    val decorated = decorate(data.html, locationChunk, linkChunk)
-    val scrollingPosition = data.anchor?.let(ScrollingPosition::Anchor) ?: ScrollingPosition.Reset
-    update(decorated, scrollingPosition)
   }
 
   private fun registerIcon(icon: Icon): String {

@@ -19,7 +19,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownFileType
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
@@ -45,7 +45,7 @@ class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
       return false
     }
     val element = file?.findElementAt(editor?.caretModel?.offset ?: return false) ?: return false
-    return PsiTreeUtil.getParentOfType(element, MarkdownCodeFenceImpl::class.java) != null
+    return PsiTreeUtil.getParentOfType(element, MarkdownCodeFence::class.java) != null
   }
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
@@ -73,7 +73,7 @@ class MarkdownCodeFenceErrorHighlightingIntention : IntentionAction {
     override fun shouldHighlightErrorElement(element: PsiErrorElement): Boolean {
       val injectedLanguageManager = InjectedLanguageManager.getInstance(element.project)
       if (injectedLanguageManager.getTopLevelFile(element).fileType == MarkdownFileType.INSTANCE
-          && injectedLanguageManager.getInjectionHost(element) is MarkdownCodeFenceImpl) {
+          && injectedLanguageManager.getInjectionHost(element) is MarkdownCodeFence) {
         return !MarkdownSettings.getInstance(element.project).hideErrorsInCodeBlocks
       }
 

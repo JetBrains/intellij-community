@@ -58,21 +58,21 @@ if errorlevel 1 goto fail
 
 :continueWithJvm
 
+endlocal & set _JVM_TARGET_DIR=%JVM_TARGET_DIR%
+
 set JAVA_HOME=
-for /d %%d in ("%JVM_TARGET_DIR%"*) do if exist "%%d\bin\java.exe" set JAVA_HOME=%%d
+for /d %%d in ("%_JVM_TARGET_DIR%"*) do if exist "%%d\bin\java.exe" set JAVA_HOME=%%d
 if not exist "%JAVA_HOME%\bin\java.exe" (
   echo Unable to find java.exe under %JVM_TARGET_DIR%
   goto fail
 )
 
-:continueWithJavaHome
+echo Using JVM at %JAVA_HOME%
 
-endlocal
-
-"%JAVA_HOME%\bin\java.exe" -Daether.connector.resumeDownloads=false -jar "%JPS_BOOTSTRAP_COMMUNITY_HOME%lib\ant\lib\ant-launcher.jar" "-Dbuild.dir=%JPS_BOOTSTRAP_WORK_DIR%." -f "%JPS_BOOTSTRAP_DIR%jps-bootstrap-classpath.xml"
+"%JAVA_HOME%\bin\java.exe" -ea -Daether.connector.resumeDownloads=false -jar "%JPS_BOOTSTRAP_COMMUNITY_HOME%lib\ant\lib\ant-launcher.jar" "-Dbuild.dir=%JPS_BOOTSTRAP_WORK_DIR%." -f "%JPS_BOOTSTRAP_DIR%jps-bootstrap-classpath.xml"
 if errorlevel 1 goto fail
 
-"%JAVA_HOME%\bin\java.exe" -Xmx2g -Djava.awt.headless=true -classpath "%JPS_BOOTSTRAP_WORK_DIR%jps-bootstrap.out.lib\*" org.jetbrains.jpsBootstrap.JpsBootstrapMain %*
+"%JAVA_HOME%\bin\java.exe" -ea -Xmx2g -Djava.awt.headless=true -classpath "%JPS_BOOTSTRAP_WORK_DIR%jps-bootstrap.out.lib\*" org.jetbrains.jpsBootstrap.JpsBootstrapMain %*
 exit /B %ERRORLEVEL%
 
 :fail

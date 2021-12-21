@@ -24,6 +24,8 @@ import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 public final class AddAntBuildFile extends AnAction {
@@ -39,7 +41,7 @@ public final class AddAntBuildFile extends AnAction {
     }
     final AntConfiguration antConfiguration = AntConfiguration.getInstance(project);
 
-    final Set<VirtualFile> files = Set.of(contextFiles);
+    final Set<VirtualFile> files = new HashSet<>(List.of(contextFiles));
     for (AntBuildFile buildFile : antConfiguration.getBuildFileList()) {
       VirtualFile virtualFile = buildFile.getVirtualFile();
       if (virtualFile != null) {

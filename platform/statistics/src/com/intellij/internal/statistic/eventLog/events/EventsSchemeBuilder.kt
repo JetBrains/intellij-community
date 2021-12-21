@@ -45,6 +45,10 @@ object EventsSchemeBuilder {
         if (field is StringEventField.ValidatedByInlineRegexp) {
           validateRegexp(field.regexp)
         }
+        if (field is RegexpIntEventField) {
+          validateRegexp(field.regexp)
+        }
+
         hashSetOf(FieldDescriptor(fieldName, field.validationRule.toHashSet()))
       }
     }

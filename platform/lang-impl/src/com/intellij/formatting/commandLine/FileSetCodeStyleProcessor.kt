@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
+import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.util.LocalTimeCounter
@@ -153,13 +154,22 @@ class FileSetFormatValidator(
     }
   }
 
-  private fun createPsiCopy(originalFile: VirtualFile, originalContent: String) = PsiFileFactory.getInstance(project).createFileFromText(
-    "a." + originalFile.fileType.defaultExtension,
-    originalFile.fileType,
-    originalContent,
-    LocalTimeCounter.currentTime(),
-    false
-  )
+  private fun createPsiCopy(originalFile: VirtualFile, originalContent: String): PsiFile {
+    val psiCopy = PsiFileFactory.getInstance(project).createFileFromText(
+      "a." + originalFile.fileType.defaultExtension,
+      originalFile.fileType,
+      originalContent,
+      LocalTimeCounter.currentTime(),
+      false
+    )
+
+    val originalPsi = PsiManager.getInstance(project).findFile(originalFile)
+    if (originalPsi != null) {
+        psiCopy.putUserData(PsiFileFactory.ORIGINAL_FILE, originalPsi)
+    }
+
+    return psiCopy
+  }
 
 }
 

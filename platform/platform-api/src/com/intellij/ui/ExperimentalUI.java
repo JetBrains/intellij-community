@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.ide.ui.LafManager;
@@ -58,8 +58,7 @@ public final class ExperimentalUI {
   }
 
   public static boolean isNewToolbar() {
-    //return isEnabled("ide.experimental.ui.main.toolbar");
-    return EarlyAccessRegistryManager.INSTANCE.getBoolean("ide.experimental.ui.main.toolbar");
+    return isEnabled("ide.experimental.ui.main.toolbar");
   }
 
   private static boolean isEnabled(@NonNls @NotNull String key) {
@@ -126,13 +125,18 @@ public final class ExperimentalUI {
     paths.put("toolwindows/toolWindowCommit.svg", "/expui/toolwindow/commit.svg");
     paths.put("icons/toolWindowDatabase.svg", "/expui/toolwindow/database.svg");
     paths.put("toolwindows/toolWindowDebugger.svg", "/expui/toolwindow/debug.svg");
+    paths.put("toolwindows/toolWindowModuleDependencies.svg", "/expui/toolwindow/dependencies.svg");
     paths.put("toolwindows/documentation.svg", "/expui/toolwindow/documentation.svg");
+    paths.put("icons/toolWindowEndpoints.svg", "/expui/toolwindow/endpoints.svg");
     paths.put("icons/toolWindowGradle.svg", "/expui/toolwindow/gradle.svg");
     paths.put("toolwindows/toolWindowHierarchy.svg", "/expui/toolwindow/hierarchy.svg");
+    paths.put("img/featureTrainerToolWindow.svg", "/expui/toolwindow/learn.svg");
     paths.put("images/toolWindowMaven.svg", "/expui/toolwindow/maven.svg");
     paths.put("toolwindows/toolWindowProblems.svg", "/expui/toolwindow/problems.svg");
+    paths.put("toolwindows/toolWindowProblemsEmpty.svg", "/expui/toolwindow/problems.svg");
     paths.put("toolwindows/toolWindowProfiler.svg", "/expui/toolwindow/profiler.svg");
     paths.put("toolwindows/toolWindowProject.svg", "/expui/toolwindow/project.svg");
+    paths.put("org/jetbrains/plugins/github/pullRequestsToolWindow.svg", "/expui/toolwindow/pullRequests.svg");
     paths.put("toolwindows/toolWindowRun.svg", "/expui/toolwindow/run.svg");
     paths.put("toolwindows/toolWindowServices.svg", "/expui/toolwindow/services.svg");
     paths.put("toolwindows/toolWindowStructure.svg", "/expui/toolwindow/structure.svg");

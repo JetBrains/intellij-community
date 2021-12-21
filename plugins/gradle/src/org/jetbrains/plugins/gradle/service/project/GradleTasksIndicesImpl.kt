@@ -4,10 +4,10 @@ package org.jetbrains.plugins.gradle.service.project
 import com.intellij.openapi.externalSystem.model.project.ModuleData
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.gradle.execution.build.CachedModuleDataFinder
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import org.jetbrains.plugins.gradle.util.GradleTaskData
-import org.jetbrains.plugins.gradle.util.GradleUtil
 import org.jetbrains.plugins.gradle.util.getGradleTasks
 
 class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices {
@@ -18,7 +18,7 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
   }
 
   private fun getGradleModulePath(externalProjectPath: String, modulePath: String): String? {
-    val moduleNode = GradleUtil.findGradleModuleData(project, modulePath)
+    val moduleNode = CachedModuleDataFinder.findModuleData(project, modulePath)
     return when {
       moduleNode == null -> null
       externalProjectPath == modulePath -> ""

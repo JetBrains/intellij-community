@@ -13,24 +13,24 @@ import org.intellij.plugins.markdown.editor.lists.ListUtils.normalizedMarker
 import org.intellij.plugins.markdown.editor.lists.ListUtils.sublists
 import org.intellij.plugins.markdown.editor.lists.Replacement.Companion.replaceAllInBulk
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownList
 
 internal object ListRenumberUtils {
-  fun MarkdownListImpl.renumberInBulk(document: Document, recursive: Boolean, restart: Boolean) {
+  fun MarkdownList.renumberInBulk(document: Document, recursive: Boolean, restart: Boolean) {
     val replacementList = renumber(document, recursive, restart)
     runWriteAction {
       replacementList.replaceAllInBulk(document)
     }
   }
 
-  fun MarkdownListImpl.renumber(document: Document, recursive: Boolean, restart: Boolean): List<Replacement> {
+  fun MarkdownList.renumber(document: Document, recursive: Boolean, restart: Boolean): List<Replacement> {
     val line = document.getLineNumber(this.startOffset)
     val firstIndent = document.getLineIndentSpaces(line, containingFile)!!.length
     return renumberingReplacements(this, ListItemIndentInfo(firstIndent, 0), document, containingFile, recursive, restart).toList()
   }
 
 
-  private fun renumberingReplacements(list: MarkdownListImpl,
+  private fun renumberingReplacements(list: MarkdownList,
                                       listIndentInfo: ListItemIndentInfo,
                                       document: Document,
                                       file: PsiFile,

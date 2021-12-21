@@ -38,7 +38,7 @@ abstract class AbstractHierarchyWithLibTest : AbstractHierarchyTest() {
     }
 
     private fun findTargetJavaClass(targetClass: String): PsiClass {
-        return JavaFullClassNameIndex.getInstance().get(targetClass.hashCode(), project, GlobalSearchScope.allScope(project)).find {
+        return JavaFullClassNameIndex.getInstance().get(targetClass, project, GlobalSearchScope.allScope(project)).find {
             it.qualifiedName == targetClass
         } ?: error("Could not find java class: $targetClass")
     }

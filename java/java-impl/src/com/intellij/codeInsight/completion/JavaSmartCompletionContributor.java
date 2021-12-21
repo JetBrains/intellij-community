@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.*;
@@ -19,7 +19,7 @@ import com.intellij.psi.util.proximity.ReferenceListWeigher;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
-import gnu.trove.TObjectHashingStrategy;
+import it.unimi.dsi.fastutil.Hash;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,18 +31,21 @@ import java.util.Set;
 import static com.intellij.patterns.PlatformPatterns.psiElement;
 import static com.intellij.patterns.StandardPatterns.or;
 
-/**
- * @author peter
- */
 public final class JavaSmartCompletionContributor {
-  static final TObjectHashingStrategy<ExpectedTypeInfo> EXPECTED_TYPE_INFO_STRATEGY = new TObjectHashingStrategy<>() {
+  static final Hash.Strategy<ExpectedTypeInfo> EXPECTED_TYPE_INFO_STRATEGY = new Hash.Strategy<>() {
     @Override
-    public int computeHashCode(ExpectedTypeInfo object) {
-      return object.getType().hashCode();
+    public int hashCode(ExpectedTypeInfo object) {
+      return object == null ? 0 : object.getType().hashCode();
     }
 
     @Override
     public boolean equals(ExpectedTypeInfo o1, ExpectedTypeInfo o2) {
+      if (o1 == o2) {
+        return true;
+      }
+      if (o1 == null || o2 == null) {
+        return false;
+      }
       return o1.getType().equals(o2.getType());
     }
   };

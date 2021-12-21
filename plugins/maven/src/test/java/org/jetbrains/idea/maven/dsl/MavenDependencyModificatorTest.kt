@@ -3,7 +3,7 @@ package org.jetbrains.idea.maven.dsl
 
 import com.intellij.buildsystem.model.DeclaredDependency
 import junit.framework.TestCase
-import org.jetbrains.idea.maven.MavenTestCase
+import com.intellij.maven.testFramework.MavenTestCase
 import org.junit.Test
 
 class MavenDependencyModificatorTest : MavenTestCase() {

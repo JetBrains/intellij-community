@@ -2,72 +2,35 @@
 package com.intellij.coverage;
 
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiClass;
-import com.intellij.rt.coverage.instrumentation.SourceLineCounter;
-import org.jetbrains.coverage.gnu.trove.TIntObjectHashMap;
+import com.intellij.rt.coverage.data.ClassData;
+import com.intellij.rt.coverage.data.LineData;
+import com.intellij.rt.coverage.data.ProjectData;
+import com.intellij.rt.coverage.instrumentation.SaveHook;
+import com.intellij.rt.coverage.util.ClassNameUtil;
 import org.jetbrains.coverage.org.objectweb.asm.ClassReader;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public final class SourceLineCounterUtil {
-  public static boolean collectNonCoveredClassInfo(final PackageAnnotator.ClassCoverageInfo classCoverageInfo, byte[] content,
-                                                   final boolean excludeLines, final boolean ignoreEmptyPrivateConstructors,
-                                                   final boolean ignoreGeneratedDefaultConstructor, PsiClass psiClass) {
-    if (content == null) return false;
-    ClassReader reader = new ClassReader(content, 0, content.length);
-
-    SourceLineCounter counter = new SourceLineCounter(null, excludeLines, null, ignoreEmptyPrivateConstructors);
-    reader.accept(counter, ClassReader.SKIP_FRAMES);
-    Set<String> descriptions = new HashSet<>();
-    TIntObjectHashMap<String> lines = counter.getSourceLines();
-    Ref<Boolean> isDefaultConstructorGenerated = new Ref<>();
-    lines.forEachEntry((line, description) -> {
-      if (isDefaultConstructorGenerated.isNull() &&
-          ignoreGeneratedDefaultConstructor &&
-          PackageAnnotator.isDefaultConstructor(description)) {
-        isDefaultConstructorGenerated.set(PackageAnnotator.isGeneratedDefaultConstructor(psiClass, description));
-      }
-      if (!isDefaultConstructorGenerated.isNull() &&
-          isDefaultConstructorGenerated.get() &&
-          PackageAnnotator.isDefaultConstructor(description)) {
-        return true;
-      }
-      classCoverageInfo.totalLineCount++;
-      descriptions.add(description);
-      return true;
-    });
-
-    classCoverageInfo.totalMethodCount += descriptions.size();
-    classCoverageInfo.totalBranchCount += counter.getTotalBranches();
-
-    if (!counter.isInterface()) {
-      classCoverageInfo.totalClassCount = 1;
-    }
-
-    return !counter.isInterface();
-  }
 
   public static void collectSrcLinesForUntouchedFiles(final List<? super Integer> uncoveredLines,
                                                       byte[] content,
-                                                      final boolean excludeLines,
+                                                      final boolean isSampling,
                                                       final Project project) {
     final ClassReader reader = new ClassReader(content);
-    final SourceLineCounter collector = new SourceLineCounter(null, excludeLines, null, JavaCoverageOptionsProvider.getInstance(project).ignoreEmptyPrivateConstructors());
-    reader.accept(collector, 0);
-
-    String qualifiedName = reader.getClassName();
-    Condition<String> includeDescriptionCondition = description -> !JavaCoverageOptionsProvider.getInstance(project).isGeneratedConstructor(qualifiedName, description);
-    TIntObjectHashMap<String> lines = collector.getSourceLines();
-    lines.forEachEntry((line, description) -> {
-      if (includeDescriptionCondition.value(description)) {
-        line--;
-        uncoveredLines.add(line);
+    final String qualifiedName = ClassNameUtil.convertToFQName(reader.getClassName());
+    final ProjectData projectData = new ProjectData();
+    final boolean ignoreEmptyPrivateConstructors = JavaCoverageOptionsProvider.getInstance(project).ignoreEmptyPrivateConstructors();
+    SaveHook.appendUnloadedClass(projectData, qualifiedName, reader, isSampling, false, ignoreEmptyPrivateConstructors);
+    final ClassData classData = projectData.getClassData(qualifiedName);
+    if (classData == null || classData.getLines() == null) return;
+    final LineData[] lines = (LineData[])classData.getLines();
+    for (LineData line : lines) {
+      if (line == null) continue;
+      final String description = line.getMethodSignature();
+      if (!JavaCoverageOptionsProvider.getInstance(project).isGeneratedConstructor(qualifiedName, description)) {
+        uncoveredLines.add(line.getLineNumber() - 1);
       }
-      return true;
-    });
+    }
   }
 }

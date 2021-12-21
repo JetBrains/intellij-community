@@ -1,0 +1,31 @@
+package patterns;
+
+public class TestInstanceof {
+   void typePattern(Object str) {
+      if (str instanceof String s) {// 6
+         System.out.println(s);// 7
+      } else {
+         System.out.println("no");// 9
+      }
+
+   }// 11
+}
+
+class 'patterns/TestInstanceof' {
+   method 'typePattern (Ljava/lang/Object;)V' {
+      3      4
+      6      4
+      e      5
+      12      5
+      18      7
+      1b      7
+      1d      7
+      20      10
+   }
+}
+
+Lines mapping:
+6 <-> 5
+7 <-> 6
+9 <-> 8
+11 <-> 11

@@ -2,7 +2,7 @@
 
 package org.jetbrains.kotlin.idea.codeInsight.gradle
 
-import com.intellij.openapi.externalSystem.test.ExternalSystemTestCase
+import com.intellij.platform.externalSystem.testFramework.ExternalSystemTestCase
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.runInEdtAndWait
 import org.jetbrains.kotlin.gradle.textWithoutTags
@@ -15,7 +15,7 @@ import org.jetbrains.plugins.gradle.execution.test.runner.TestMethodGradleConfig
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 
-class GradleTestRunConfigurationCustomTest : KotlinGradleImportingTestCase() {
+class GradleTestRunConfigurationCustomTest16 : KotlinGradleImportingTestCase() {
     @Test
     @TargetVersions("4.7+")
     fun testPreferredConfigurations() {

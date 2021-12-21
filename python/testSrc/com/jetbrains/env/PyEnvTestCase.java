@@ -2,7 +2,6 @@
 package com.jetbrains.env;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
@@ -10,7 +9,6 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import com.jetbrains.LoggingRule;
 import com.jetbrains.TestEnv;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -126,21 +124,7 @@ public abstract class PyEnvTestCase {
     }
   }
 
-  protected void invokeTestRunnable(@NotNull final Runnable runnable) {
-    if (runInWriteAction()) {
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ApplicationManager.getApplication().runWriteAction(runnable));
-    }
-    else {
-      runnable.run();
-    }
-  }
-
-
   protected boolean runInDispatchThread() {
-    return false;
-  }
-
-  protected boolean runInWriteAction() {
     return false;
   }
 

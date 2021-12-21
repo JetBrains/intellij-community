@@ -17,6 +17,7 @@ internal class StartEditingAction : DumbAwareAction() {
                                                 ?: table.getClientProperty(EditableTable.KEY) as? EditableTable
 
   override fun update(event: AnActionEvent) {
+    event.presentation.isEnabledAndVisible = false
     val table = event.contextTable ?: return
     event.presentation.isVisible = true
     // enable editing if the selected cell is editable
@@ -35,6 +36,5 @@ internal class StartEditingAction : DumbAwareAction() {
 
   init {
     isEnabledInModalContext = true
-    templatePresentation.isEnabledAndVisible = false
   }
 }

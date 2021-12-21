@@ -7,28 +7,28 @@ import com.intellij.psi.util.parents
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImageImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownImage
 import org.intellij.plugins.markdown.util.hasType
 
-internal class ConfigureMarkdownImageLineMarkerProvider : ConfigureImageLineMarkerProviderBase<MarkdownImageImpl>() {
+internal class ConfigureMarkdownImageLineMarkerProvider : ConfigureImageLineMarkerProviderBase<MarkdownImage>() {
   override fun obtainPathText(element: PsiElement): String? {
     val image = obtainOuterElement(element) ?: return null
     return image.linkDestination?.text
   }
 
   override fun obtainLeafElement(element: PsiElement): PsiElement? {
-    val outer = MarkdownImageImpl.getByLeadingExclamationMark(element)
+    val outer = MarkdownImage.getByLeadingExclamationMark(element)
     return element.takeIf { outer != null }
   }
 
-  override fun obtainOuterElement(element: PsiElement): MarkdownImageImpl? {
+  override fun obtainOuterElement(element: PsiElement): MarkdownImage? {
     return when (element) {
-      is MarkdownImageImpl -> element
-      else -> MarkdownImageImpl.getByLeadingExclamationMark(element)
+      is MarkdownImage -> element
+      else -> MarkdownImage.getByLeadingExclamationMark(element)
     }
   }
 
-  override fun createDialog(element: MarkdownImageImpl): ConfigureImageDialog? {
+  override fun createDialog(element: MarkdownImage): ConfigureImageDialog? {
     val image = obtainOuterElement(element) ?: return null
     return ConfigureImageDialog(
       image.project,

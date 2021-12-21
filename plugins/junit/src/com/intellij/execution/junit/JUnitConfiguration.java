@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit;
 
@@ -19,7 +19,6 @@ import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.target.LanguageRuntimeType;
 import com.intellij.execution.target.TargetEnvironmentAwareRunProfile;
 import com.intellij.execution.target.TargetEnvironmentConfiguration;
-import com.intellij.execution.target.TargetEnvironmentConfigurations;
 import com.intellij.execution.target.java.JavaLanguageRuntimeConfiguration;
 import com.intellij.execution.target.java.JavaLanguageRuntimeType;
 import com.intellij.execution.testframework.TestRunnerBundle;
@@ -426,7 +425,10 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     if (patternsElement != null) {
       final LinkedHashSet<String> tests = new LinkedHashSet<>();
       for (Element patternElement : patternsElement.getChildren(PATTERN_EL_NAME)) {
-        tests.add(patternElement.getAttributeValue(TEST_CLASS_ATT_NAME));
+        String value = patternElement.getAttributeValue(TEST_CLASS_ATT_NAME);
+        if (value != null) {
+          tests.add(value);
+        }
       }
       myData.setPatterns(tests);
     }
@@ -571,15 +573,15 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
   public void bePatternConfiguration(List<PsiClass> classes, PsiMethod method) {
     myData.TEST_OBJECT = TEST_PATTERN;
     final LinkedHashSet<String> patterns = new LinkedHashSet<>();
-    final String methodSufiix;
+    final String methodSuffix;
     if (method != null) {
       myData.METHOD_NAME = Data.getMethodPresentation(method);
-      methodSufiix = "," + myData.METHOD_NAME;
+      methodSuffix = "," + myData.METHOD_NAME;
     } else {
-      methodSufiix = "";
+      methodSuffix = "";
     }
     for (PsiClass pattern : classes) {
-      patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + methodSufiix);
+      patterns.add(JavaExecutionUtil.getRuntimeQualifiedName(pattern) + methodSuffix);
     }
     myData.setPatterns(patterns);
     final Module module = RunConfigurationProducer.getInstance(PatternConfigurationProducer.class).findModule(this, getConfigurationModule()
@@ -784,11 +786,12 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
     }
 
     public static @NlsSafe String getMethodPresentation(PsiMethod method) {
-      if (!method.getParameterList().isEmpty() && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
-        return method.getName() + "(" + ClassUtil.getVMParametersMethodSignature(method) + ")";
+      String methodName = method.getName();
+      if ((!method.getParameterList().isEmpty() || methodName.contains("(") || methodName.contains(")")) && MetaAnnotationUtil.isMetaAnnotated(method, JUnitUtil.TEST5_ANNOTATIONS)) {
+        return methodName + "(" + ClassUtil.getVMParametersMethodSignature(method) + ")";
       }
       else {
-        return method.getName();
+        return methodName;
       }
     }
 

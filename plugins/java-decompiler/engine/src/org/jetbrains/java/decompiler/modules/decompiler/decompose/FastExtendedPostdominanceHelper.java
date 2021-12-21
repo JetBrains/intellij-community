@@ -5,7 +5,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.util.*;
 import java.util.Map.Entry;
@@ -235,7 +234,7 @@ public class FastExtendedPostdominanceHelper {
           if (mapSets.containsKey(sucedge.getDestination().id)) {
             FastFixedSet<Integer> setReachability = mapSets.get(node.id);
 
-            if (!InterpreterUtil.equalObjects(setReachability, mapSupportPoints.get(node.id))) {
+            if (!Objects.equals(setReachability, mapSupportPoints.get(node.id))) {
               mapSupportPoints.put(node.id, setReachability);
               return true;
             }

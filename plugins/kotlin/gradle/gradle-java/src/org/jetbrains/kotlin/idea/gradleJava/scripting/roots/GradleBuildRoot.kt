@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.gradleJava.scripting.roots
 
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.io.exists
 import org.jetbrains.kotlin.idea.core.script.scriptingDebugLog
 import org.jetbrains.kotlin.idea.core.script.ucache.ScriptClassRootsBuilder
 import org.jetbrains.kotlin.idea.gradle.scripting.LastModifiedFiles
@@ -12,7 +13,7 @@ import org.jetbrains.kotlin.idea.gradleJava.scripting.importing.KotlinDslScriptM
 import org.jetbrains.kotlin.scripting.definitions.ScriptDefinition
 import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings
-import java.io.File
+import java.nio.file.Path
 import java.util.concurrent.atomic.AtomicReference
 
 /**
@@ -92,12 +93,10 @@ class Imported(
     override val projectRoots: Collection<String>
         get() = data.projectRoots
 
-    val javaHome = data.javaHome?.takeIf { it.isNotBlank() }?.let { File(it) }
+    val javaHome = data.javaHome?.takeIf { it.isNotBlank() }?.let { Path.of(it) }?.takeIf { it.exists() }
 
     fun collectConfigurations(builder: ScriptClassRootsBuilder) {
-        if (javaHome != null) {
-            builder.sdks.addSdk(javaHome.toPath())
-        }
+        javaHome?.let { builder.sdks.addSdk(it) }
 
         val definitions = GradleScriptDefinitionsContributor.getDefinitions(builder.project, pathPrefix, data.gradleHome, data.javaHome)
         if (definitions == null) {

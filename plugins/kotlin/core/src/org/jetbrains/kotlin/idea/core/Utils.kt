@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.resolve.getDataFlowValueFactory
 import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.util.getImplicitReceiversWithInstanceToExpression
 import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.parentOrNull
 import org.jetbrains.kotlin.psi.*
@@ -196,7 +197,7 @@ fun isEnumCompanionPropertyWithEntryConflict(element: PsiElement, expectedName: 
 }
 
 fun KtCallExpression.receiverValue(): ReceiverValue? {
-    val resolvedCall = getResolvedCall(analyze(BodyResolveMode.PARTIAL)) ?: return null
+    val resolvedCall = getResolvedCall(safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)) ?: return null
     return resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver
 }
 

@@ -12,6 +12,6 @@ class AsmVersionForJpsBuildTest : TestCase() {
         val field = RecordComponentVisitor::class.java.getDeclaredField("api").also { it.trySetAccessible() }
         val asmVersionForBundledCompiler = field.getInt(AbstractClassBuilder.EMPTY_RECORD_VISITOR)
 
-        assertEquals(Opcodes.ASM8, asmVersionForBundledCompiler)
+        assertEquals(Opcodes.ASM9, asmVersionForBundledCompiler)
     }
 }

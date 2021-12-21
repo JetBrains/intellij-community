@@ -41,21 +41,21 @@ public final class MarkdownPsiElementFactory {
 
 
   @NotNull
-  public static MarkdownCodeFenceImpl createCodeFence(@NotNull Project project, @Nullable String language, @NotNull String text) {
+  public static MarkdownCodeFence createCodeFence(@NotNull Project project, @Nullable String language, @NotNull String text) {
     return createCodeFence(project, language, text, null);
   }
 
 
   @NotNull
-  public static MarkdownCodeFenceImpl createCodeFence(@NotNull Project project,
-                                                      @Nullable String language,
-                                                      @NotNull String text,
-                                                      @Nullable String indent) {
+  public static MarkdownCodeFence createCodeFence(@NotNull Project project,
+                                                  @Nullable String language,
+                                                  @NotNull String text,
+                                                  @Nullable String indent) {
     text = StringUtil.isEmpty(text) ? "" : "\n" + text;
     String content = "```" + StringUtil.notNullize(language) + text + "\n" + StringUtil.notNullize(indent) + "```";
     final MarkdownFile file = createFile(project, content);
 
-    return (MarkdownCodeFenceImpl)file.getFirstChild().getFirstChild();
+    return (MarkdownCodeFence)file.getFirstChild().getFirstChild();
   }
 
   @NotNull
@@ -90,13 +90,13 @@ public final class MarkdownPsiElementFactory {
   }
 
   @NotNull
-  public static MarkdownHeaderImpl createSetext(@NotNull Project project, @NotNull String text, @NotNull String symbol, int count) {
-    return (MarkdownHeaderImpl)createFile(project, text + "\n" + StringUtil.repeat(symbol, count)).getFirstChild().getFirstChild();
+  public static MarkdownHeader createSetext(@NotNull Project project, @NotNull String text, @NotNull String symbol, int count) {
+    return (MarkdownHeader)createFile(project, text + "\n" + StringUtil.repeat(symbol, count)).getFirstChild().getFirstChild();
   }
 
   @NotNull
-  public static MarkdownHeaderImpl createHeader(@NotNull Project project, @NotNull String text, int level) {
-    return (MarkdownHeaderImpl)createFile(project, StringUtil.repeat("#", level) + " " + text).getFirstChild().getFirstChild();
+  public static MarkdownHeader createHeader(@NotNull Project project, @NotNull String text, int level) {
+    return (MarkdownHeader)createFile(project, StringUtil.repeat("#", level) + " " + text).getFirstChild().getFirstChild();
   }
 
   @NotNull
@@ -131,10 +131,10 @@ public final class MarkdownPsiElementFactory {
     PsiElement linkReferenceElement = createFile(project, linkReference).getFirstChild();
 
     PsiElement ref = linkReferenceElement.getFirstChild();
-    assert ref instanceof MarkdownParagraphImpl;
+    assert ref instanceof MarkdownParagraph;
 
     PsiElement declaration = linkReferenceElement.getLastChild();
-    assert declaration instanceof MarkdownParagraphImpl || declaration instanceof MarkdownLinkDefinitionImpl;
+    assert declaration instanceof MarkdownParagraph || declaration instanceof MarkdownLinkDefinition;
 
     return Pair.create(ref, declaration);
   }
@@ -160,18 +160,18 @@ public final class MarkdownPsiElementFactory {
 
   @ApiStatus.Experimental
   @NotNull
-  public static Pair<MarkdownTableCellImpl, PsiElement> createTableCell(@NotNull Project project, @NotNull String text) {
+  public static Pair<MarkdownTableCell, PsiElement> createTableCell(@NotNull Project project, @NotNull String text) {
     final var content = "|" + text + "|\n|----|";
     final var file = createFile(project, content);
     final var contentElement = file.findElementAt(1);
-    final var cell = Objects.requireNonNull(PsiTreeUtil.getParentOfType(contentElement, MarkdownTableCellImpl.class));
+    final var cell = Objects.requireNonNull(PsiTreeUtil.getParentOfType(contentElement, MarkdownTableCell.class));
     final var separator = cell.getNextSibling();
     return new Pair<>(cell, separator);
   }
 
   @NotNull
-  private static MarkdownTableImpl findTable(@NotNull PsiElement element) {
-    return Objects.requireNonNull(PsiTreeUtil.getParentOfType(element, MarkdownTableImpl.class));
+  private static MarkdownTable findTable(@NotNull PsiElement element) {
+    return Objects.requireNonNull(PsiTreeUtil.getParentOfType(element, MarkdownTable.class));
   }
 
   @ApiStatus.Experimental
@@ -184,7 +184,7 @@ public final class MarkdownPsiElementFactory {
 
   @ApiStatus.Experimental
   @NotNull
-  public static MarkdownTableRowImpl createTableRow(@NotNull Project project, @NotNull Collection<String> contents) {
+  public static MarkdownTableRow createTableRow(@NotNull Project project, @NotNull Collection<String> contents) {
     final var builder = new StringBuilder();
     builder.append('|');
     //noinspection StringRepeatCanBeUsed
@@ -213,8 +213,8 @@ public final class MarkdownPsiElementFactory {
     final var file = createFile(project, builder.toString());
     final var element = Objects.requireNonNull(file.findElementAt(0));
     final var row = Objects.requireNonNull(findTable(element).getLastChild().getPrevSibling().getPrevSibling());
-    if (row instanceof MarkdownTableRowImpl) {
-      return (MarkdownTableRowImpl)row;
+    if (row instanceof MarkdownTableRow) {
+      return (MarkdownTableRow)row;
     } else {
       throw new IllegalStateException("Failed to find row element");
     }
@@ -222,13 +222,13 @@ public final class MarkdownPsiElementFactory {
 
   @ApiStatus.Experimental
   @NotNull
-  public static MarkdownTableRowImpl createTableEmptyRow(@NotNull Project project, @NotNull Collection<Integer> widths) {
+  public static MarkdownTableRow createTableEmptyRow(@NotNull Project project, @NotNull Collection<Integer> widths) {
     final var contents = ContainerUtil.map(widths, width -> " ".repeat(width));
     return createTableRow(project, contents);
   }
 
   @ApiStatus.Experimental
-  public static @NotNull PsiElement createBlockquoteArrow(@NotNull Project project) {
+  public static @NotNull PsiElement createBlockQuoteArrow(@NotNull Project project) {
     final var contents = "> ";
     final var file = createFile(project, contents);
     return Objects.requireNonNull(file.findElementAt(1));

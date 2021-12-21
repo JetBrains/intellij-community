@@ -8,16 +8,16 @@ import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.DropDownLink
+import com.intellij.ui.components.JBTextField
 import com.intellij.util.ui.tree.TreeModelAdapter
 import java.awt.ItemSelectable
 import java.awt.event.*
-import javax.swing.InputMap
-import javax.swing.JComponent
-import javax.swing.JTree
-import javax.swing.KeyStroke
+import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.text.JTextComponent
+import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
+import javax.swing.tree.TreePath
 
 
 fun JTextComponent.isTextUnderMouse(e: MouseEvent): Boolean {
@@ -128,3 +128,26 @@ fun JComponent.whenMousePressed(listener: (MouseEvent) -> Unit) {
     }
   })
 }
+
+fun <T> ListModel<T>.asSequence() = sequence<T> {
+  for (i in 0 until size) {
+    yield(getElementAt(i))
+  }
+}
+
+fun TreeModel.asSequence(): Sequence<DefaultMutableTreeNode> {
+  val root = root ?: return emptySequence()
+  return (root as DefaultMutableTreeNode)
+    .depthFirstEnumeration()
+    .asSequence()
+    .map { it as DefaultMutableTreeNode }
+}
+
+fun TreeModel.getTreePath(userObject: Any?): TreePath? =
+  asSequence()
+    .filter { it.userObject == userObject }
+    .firstOrNull()
+    ?.let { TreePath(it.path) }
+
+val TextFieldWithBrowseButton.emptyText
+  get() = (textField as JBTextField).emptyText

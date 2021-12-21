@@ -2,9 +2,7 @@
 package com.intellij.ui.dsl.gridLayout
 
 import com.intellij.ui.dsl.checkNonNegative
-import org.jetbrains.annotations.ApiStatus
 
-@ApiStatus.Experimental
 data class HorizontalGaps(val left: Int = 0, val right: Int = 0) {
   companion object {
     val EMPTY = HorizontalGaps()

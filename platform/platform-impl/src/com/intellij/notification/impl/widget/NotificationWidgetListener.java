@@ -3,14 +3,10 @@ package com.intellij.notification.impl.widget;
 
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.notification.EventLog;
-import com.intellij.notification.EventLogListener;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationType;
+import com.intellij.notification.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.StatusBarWidgetFactory;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -80,7 +76,7 @@ final class NotificationWidgetListener implements UISettingsListener, ToolWindow
   }
 
   private static void updateToolWindowNotificationsIcon(@NotNull Project project) {
-    if (Registry.is("ide.notification.action.center", false)) {
+    if (ActionCenter.isEnabled()) {
       return;
     }
     ToolWindow eventLog = EventLog.getEventLog(project);

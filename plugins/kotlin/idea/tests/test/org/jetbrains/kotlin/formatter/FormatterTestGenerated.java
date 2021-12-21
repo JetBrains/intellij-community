@@ -916,14 +916,14 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                     runTest("testData/formatter/FunctionalType.after.kt");
                 }
 
+                @TestMetadata("GetterAfterOneLinePropertyWithAnnotation.after.kt")
+                public void testGetterAfterOneLinePropertyWithAnnotation() throws Exception {
+                    runTest("testData/formatter/GetterAfterOneLinePropertyWithAnnotation.after.kt");
+                }
+
                 @TestMetadata("GetterAndSetter.after.kt")
                 public void testGetterAndSetter() throws Exception {
                     runTest("testData/formatter/GetterAndSetter.after.kt");
-                }
-
-                @TestMetadata("If.after.kt")
-                public void testIf() throws Exception {
-                    runTest("testData/formatter/If.after.kt");
                 }
             }
 
@@ -932,6 +932,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             public static class TestBucket005 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("If.after.kt")
+                public void testIf() throws Exception {
+                    runTest("testData/formatter/If.after.kt");
                 }
 
                 @TestMetadata("IfClosingParen.after.kt")
@@ -1028,11 +1033,6 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 public void testLoopParameterWithExplicitType() throws Exception {
                     runTest("testData/formatter/LoopParameterWithExplicitType.after.kt");
                 }
-
-                @TestMetadata("MethodAnnotationWrapping.after.kt")
-                public void testMethodAnnotationWrapping() throws Exception {
-                    runTest("testData/formatter/MethodAnnotationWrapping.after.kt");
-                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
@@ -1040,6 +1040,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             public static class TestBucket006 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("MethodAnnotationWrapping.after.kt")
+                public void testMethodAnnotationWrapping() throws Exception {
+                    runTest("testData/formatter/MethodAnnotationWrapping.after.kt");
                 }
 
                 @TestMetadata("MethodCall.after.kt")
@@ -1136,11 +1141,6 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 public void testParameterDocComments() throws Exception {
                     runTest("testData/formatter/ParameterDocComments.after.kt");
                 }
-
-                @TestMetadata("Parameters.after.kt")
-                public void testParameters() throws Exception {
-                    runTest("testData/formatter/Parameters.after.kt");
-                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
@@ -1148,6 +1148,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             public static class TestBucket007 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("Parameters.after.kt")
+                public void testParameters() throws Exception {
+                    runTest("testData/formatter/Parameters.after.kt");
                 }
 
                 @TestMetadata("PrimaryConstructor.after.kt")
@@ -1244,11 +1249,6 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 public void testSpaceAroundDotInUserReference() throws Exception {
                     runTest("testData/formatter/SpaceAroundDotInUserReference.after.kt");
                 }
-
-                @TestMetadata("SpaceAroundExtendColon.after.kt")
-                public void testSpaceAroundExtendColon() throws Exception {
-                    runTest("testData/formatter/SpaceAroundExtendColon.after.kt");
-                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
@@ -1256,6 +1256,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             public static class TestBucket008 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("SpaceAroundExtendColon.after.kt")
+                public void testSpaceAroundExtendColon() throws Exception {
+                    runTest("testData/formatter/SpaceAroundExtendColon.after.kt");
                 }
 
                 @TestMetadata("SpaceAroundExtendColonInObjects.after.kt")
@@ -1352,11 +1357,6 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
                 public void testUnnecessarySpacesInParametersLists() throws Exception {
                     runTest("testData/formatter/UnnecessarySpacesInParametersLists.after.kt");
                 }
-
-                @TestMetadata("ValVarSpaces.after.kt")
-                public void testValVarSpaces() throws Exception {
-                    runTest("testData/formatter/ValVarSpaces.after.kt");
-                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
@@ -1364,6 +1364,11 @@ public abstract class FormatterTestGenerated extends AbstractFormatterTest {
             public static class TestBucket009 extends AbstractFormatterTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("ValVarSpaces.after.kt")
+                public void testValVarSpaces() throws Exception {
+                    runTest("testData/formatter/ValVarSpaces.after.kt");
                 }
 
                 @TestMetadata("When.after.kt")

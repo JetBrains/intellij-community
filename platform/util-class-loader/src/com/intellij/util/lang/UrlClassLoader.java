@@ -186,7 +186,7 @@ public class UrlClassLoader extends ClassLoader implements ClassPath.ClassDataCo
     return Collections.unmodifiableList(files);
   }
 
-  public final boolean hasLoadedClass(String name) {
+  public boolean hasLoadedClass(String name) {
     Class<?> aClass = findLoadedClass(name);
     return aClass != null && aClass.getClassLoader() == this;
   }

@@ -26,7 +26,7 @@ class NewEmptyProjectBuilder : AbstractNewProjectWizardBuilder() {
 
     override fun setupProject(project: Project) {
       val moduleType = ModuleTypeManager.getInstance().findByID(GeneralModuleType.TYPE_ID)
-      moduleType?.createModuleBuilder()?.commit(project)
+      moduleType.createModuleBuilder().commit(project)
     }
   }
 }

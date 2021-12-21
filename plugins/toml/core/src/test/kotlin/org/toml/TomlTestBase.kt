@@ -15,7 +15,7 @@ abstract class TomlTestBase : BasePlatformTestCase() {
 
     @Suppress("TestFunctionName")
     protected fun InlineFile(@Language("TOML") text: String, name: String = "example.toml") {
-        myFixture.configureByText(name, text)
+        myFixture.configureByText(name, text.trimIndent())
     }
 
     protected fun checkByText(

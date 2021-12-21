@@ -6,7 +6,6 @@ import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.impl.analysis.DaemonTooltipsUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightingLevelManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -113,10 +112,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
   @Override
   protected void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
-    if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(getFile())) {
-      return;
-    }
-    @NotNull List<? extends LocalInspectionToolWrapper> toolWrappers = getInspectionTools(myProfileWrapper);
+    List<? extends LocalInspectionToolWrapper> toolWrappers = getInspectionTools(myProfileWrapper);
     if (toolWrappers.isEmpty()) {
       return;
     }
@@ -137,7 +133,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                                                  afterInsideProcessedCallback,
                                                                                  afterOutsideProcessedCallback);
     ProgressManager.checkCanceled();
-
     myInfos = createHighlightsFromContexts(contexts);
   }
 

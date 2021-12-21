@@ -27,7 +27,7 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
     override fun testDataDirName(): String = "hmppImportAndHighlighting"
     override fun clearTextFromMarkup(text: String): String = clearTextFromDiagnosticMarkup(text)
 
-    class MultiModulesHmpp : HmppImportAndHighlightingTests() {
+    class TestBucket1322 : HmppImportAndHighlightingTests() {
         @Test
         @PluginTargetVersions(pluginVersion = "1.5.0+")
         fun testMultiModulesHmpp() {
@@ -477,9 +477,17 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
 
             checkHighligthingOnAllModules()
         }
+
+        @Test
+        @PluginTargetVersions(pluginVersion = "1.5.30+")
+        fun testKt46625SupportedAndUnsupportedPlatform() {
+            configureByFiles()
+            importProject()
+            checkHighligthingOnAllModules()
+        }
     }
 
-    class HmppLibAndConsumer : HmppImportAndHighlightingTests() {
+    class HmppLibAndConsumer25 : HmppImportAndHighlightingTests() {
         @Test
         @PluginTargetVersions(pluginVersion = "1.4.30+")
         fun testHmppLibAndConsumer() {
@@ -865,16 +873,6 @@ abstract class HmppImportAndHighlightingTests : MultiplePluginVersionGradleImpor
                     libraryDependency("Gradle: com.h0tk3y.mpp.demo:lib:jvmAndJsMain:1.0", DependencyScope.COMPILE)
                 }
             }
-        }
-    }
-
-    class Kt46625SupportedAndUnsupportedPlatform : HmppImportAndHighlightingTests() {
-        @Test
-        @PluginTargetVersions(pluginVersion = "1.5.30+")
-        fun testKt46625SupportedAndUnsupportedPlatform() {
-            configureByFiles()
-            importProject()
-            checkHighligthingOnAllModules()
         }
     }
 

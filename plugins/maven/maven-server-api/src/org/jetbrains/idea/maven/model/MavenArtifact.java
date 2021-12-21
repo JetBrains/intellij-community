@@ -167,6 +167,10 @@ public class MavenArtifact implements Serializable, MavenCoordinate {
     return false;
   }
 
+  public boolean isResolvedArtifact() {
+    return myResolved;
+  }
+
   @NotNull
   public File getFile() {
     return myFile;

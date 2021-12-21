@@ -29,10 +29,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
-import java.util.Objects;
-import java.util.Set;
-import java.util.UUID;
+import java.util.*;
 
 public class VcsLogTabsManager {
   private static final Logger LOG = Logger.getInstance(VcsLogTabsManager.class);
@@ -53,9 +50,10 @@ public class VcsLogTabsManager {
       @Override
       public void logCreated(@NotNull VcsLogManager manager) {
         myIsLogDisposing = false;
+        Map<String, VcsLogManager.LogWindowKind> savedTabs = myUiProperties.getTabs();
         ApplicationManager.getApplication().invokeLater(() -> {
           if (LOG.assertTrue(!Disposer.isDisposed(manager), "Attempting to open tabs on disposed VcsLogManager")) {
-            reopenLogTabs(manager);
+            reopenLogTabs(manager, savedTabs);
           }
         }, ModalityState.NON_MODAL, o -> manager != VcsProjectLog.getInstance(project).getLogManager());
       }
@@ -68,8 +66,8 @@ public class VcsLogTabsManager {
   }
 
   @RequiresEdt
-  private void reopenLogTabs(@NotNull VcsLogManager manager) {
-    myUiProperties.getTabs().forEach((id, kind) -> {
+  private void reopenLogTabs(@NotNull VcsLogManager manager, @NotNull Map<String, VcsLogManager.LogWindowKind> tabs) {
+    tabs.forEach((id, kind) -> {
       if (kind == VcsLogManager.LogWindowKind.EDITOR) {
         openEditorLogTab(id, false, null);
       }

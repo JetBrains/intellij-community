@@ -49,8 +49,8 @@ internal class SettingsSyncBridge(private val application: Application,
       val event = pendingEvents.removeAt(0)
       processSettingsChangeEvent(event)
     }
-    val snap = settingsLog.getCurrentSnapshot()
-    // todo only after changes from server or merges
+    val snap = settingsLog.collectCurrentSnapshot()
+    // todo send event only after changes from server or merges
     application.messageBus.syncPublisher(SETTINGS_LOGGED_TOPIC).settingsLogged(SettingsLoggedEvent(snap, true, true, emptySet()))
   }
 
@@ -61,11 +61,11 @@ internal class SettingsSyncBridge(private val application: Application,
     }
 
     if (event.source == ChangeSource.FROM_LOCAL) {
-      settingsLog.recordLocalState(event.snapshot)
+      settingsLog.applyLocalState(event.snapshot)
       push() // todo push only after processing all events, to avoid extra pushes
     }
     else if (event.source == ChangeSource.FROM_SERVER) {
-      val merged = settingsLog.pull(event.snapshot)
+      val merged = settingsLog.applyRemoteState(event.snapshot)
       if (merged) {
         push()
       }

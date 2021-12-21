@@ -27,7 +27,7 @@ import java.util.LinkedHashSet;
 public class MavenProjectProblem implements Serializable {
   //todo: this enum values are write-only now
   public enum ProblemType {
-    SYNTAX, STRUCTURE, DEPENDENCY, PARENT, SETTINGS_OR_PROFILES
+    SYNTAX, STRUCTURE, DEPENDENCY, PARENT, SETTINGS_OR_PROFILES, REPOSITORY_BLOCKED, REPOSITORY
   }
 
   private final boolean myRecoverable;

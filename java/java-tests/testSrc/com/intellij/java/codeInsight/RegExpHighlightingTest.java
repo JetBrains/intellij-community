@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.java.codeInsight;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -214,9 +214,9 @@ public class RegExpHighlightingTest extends LightJavaCodeInsightFixtureTestCase 
   }
 
   public void testOptions() {
-    doTest("(?i)<error descr=\"Dangling metacharacter\">+</error>");
-    doTest("(?i)<error descr=\"Dangling metacharacter\">*</error>");
-    doTest("(?i)<error descr=\"Dangling metacharacter\">{5,6}</error>");
+    doTest("(?i)<error descr=\"Dangling quantifier '+'\">+</error>");
+    doTest("(?i)<error descr=\"Dangling quantifier '*'\">*</error>");
+    doTest("(?i)<error descr=\"Dangling quantifier '{5,6}'\">{5,6}</error>");
   }
 
   public void testLookbehind() {

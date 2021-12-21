@@ -38,7 +38,7 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
     val extensions = extensionsService.extensions
 
     val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures.toMutableList()
-    unknownFeatures.addAll(collectDependencyUnknownFeatures(project, includeIgnored))
+    unknownFeatures.addAll(PluginAdvertiserService.instance.collectDependencyUnknownFeatures(project, includeIgnored))
 
     if (extensions != null && unknownFeatures.isEmpty()) {
       if (includeIgnored) {
@@ -103,16 +103,4 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
         ).mapValues { it.value.filterNotNull().toSet() }
     }
   }
-}
-
-internal fun collectDependencyUnknownFeatures(project: Project, includeIgnored: Boolean = false): Sequence<UnknownFeature> {
-  return DependencyCollectorBean.EP_NAME.extensions.asSequence()
-    .flatMap { dependencyCollectorBean ->
-      dependencyCollectorBean.instance.collectDependencies(project).map { coordinate ->
-        UnknownFeature(DEPENDENCY_SUPPORT_FEATURE,
-                       IdeBundle.message("plugins.advertiser.feature.dependency"),
-                       dependencyCollectorBean.kind + ":" + coordinate, null)
-      }
-    }
-    .filter { includeIgnored || !UnknownFeaturesCollector.getInstance(project).isIgnored(it) }
 }

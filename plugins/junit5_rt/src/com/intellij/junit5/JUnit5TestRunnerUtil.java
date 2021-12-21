@@ -3,11 +3,13 @@ package com.intellij.junit5;
 
 import org.junit.platform.commons.util.AnnotationUtils;
 import org.junit.platform.engine.DiscoverySelector;
-import org.junit.platform.engine.discovery.ClassNameFilter;
-import org.junit.platform.engine.discovery.ClasspathRootSelector;
-import org.junit.platform.engine.discovery.DiscoverySelectors;
-import org.junit.platform.engine.discovery.PackageNameFilter;
+import org.junit.platform.engine.FilterResult;
+import org.junit.platform.engine.TestDescriptor;
+import org.junit.platform.engine.TestSource;
+import org.junit.platform.engine.discovery.*;
+import org.junit.platform.engine.support.descriptor.MethodSource;
 import org.junit.platform.launcher.LauncherDiscoveryRequest;
+import org.junit.platform.launcher.PostDiscoveryFilter;
 import org.junit.platform.launcher.TagFilter;
 import org.junit.platform.launcher.core.LauncherDiscoveryRequestBuilder;
 
@@ -69,19 +71,28 @@ public class JUnit5TestRunnerUtil {
 
           List<DiscoverySelector> selectors = new ArrayList<>();
           while ((line = reader.readLine()) != null) {
-            DiscoverySelector selector = createSelector(line);
+            DiscoverySelector selector = createSelector(line, null);
             if (selector != null) {
               selectors.add(selector);
             }
           }
+          if (hasBrokenSelector(selectors)) {
+            builder.filters(createMethodFilter(new ArrayList<>(selectors)));
+            for (int i = 0; i < selectors.size(); i++) {
+              DiscoverySelector selector = selectors.get(i);
+              if (selector instanceof MethodSelector) {
+                selectors.set(i, DiscoverySelectors.selectClass(((MethodSelector)selector).getClassName()));
+              }
+            }
+          }
           packageNameRef[0] = packageName.length() == 0 ? "<default package>" : packageName;
           if (selectors.isEmpty()) {
-            builder = builder.selectors(DiscoverySelectors.selectPackage(packageName));
+            builder.selectors(DiscoverySelectors.selectPackage(packageName));
           }
           else {
-            builder = builder.selectors(selectors);
+            builder.selectors(selectors);
             if (!packageName.isEmpty()) {
-              builder = builder.filters(PackageNameFilter.includePackageNames(packageName));
+              builder.filters(PackageNameFilter.includePackageNames(packageName));
             }
           }
           if (filters != null && !filters.isEmpty()) {
@@ -96,11 +107,10 @@ public class JUnit5TestRunnerUtil {
                 }
               }
             }
-            builder = builder.filters(ClassNameFilter.includeClassNamePatterns(classNames));
+            builder.filters(ClassNameFilter.includeClassNamePatterns(classNames));
           }
           if (tags != null && !tags.isEmpty()) {
-            builder = builder
-              .filters(TagFilter.includeTags(tags.split(" ")));
+            builder.filters(TagFilter.includeTags(tags.split(" ")));
           }
           return builder.filters(ClassNameFilter.excludeClassNamePatterns("com\\.intellij\\.rt.*", "com\\.intellij\\.junit3.*")).build();
         }
@@ -119,12 +129,69 @@ public class JUnit5TestRunnerUtil {
         builder = builder.configurationParameter("junit.jupiter.conditions.deactivate", disableDisabledCondition);
       }
 
-      DiscoverySelector selector = createSelector(suiteClassNames[0]);
+      DiscoverySelector selector = createSelector(suiteClassNames[0], packageNameRef);
+      if (selector instanceof MethodSelector) {
+        try {
+          ((MethodSelector)selector).getJavaMethod();
+        }
+        catch (Throwable e) {
+          builder.filters(createMethodFilter(Collections.singletonList(selector)));
+          selector = DiscoverySelectors.selectClass(((MethodSelector)selector).getClassName());
+        }
+      }
       assert selector != null : "selector by class name is never null";
       return builder.selectors(selector).build();
     }
 
     return null;
+  }
+
+  private static boolean hasBrokenSelector(List<DiscoverySelector> selectors) {
+    for (DiscoverySelector selector : selectors) {
+      if (selector instanceof MethodSelector) {
+        try {
+          ((MethodSelector)selector).getJavaMethod();
+        }
+        catch (Throwable e) {
+          return true;
+        }
+      }
+    }
+
+    return false;
+  }
+
+  private static PostDiscoveryFilter createMethodFilter(List<DiscoverySelector> selectors) {
+    return new PostDiscoveryFilter() {
+      @Override
+      public FilterResult apply(TestDescriptor descriptor) {
+        return FilterResult.includedIf(shouldRun(descriptor), 
+                                       () -> descriptor.getDisplayName() + " matches", 
+                                       () -> descriptor.getDisplayName() + " doesn't match");
+      }
+
+      private boolean shouldRun(TestDescriptor descriptor) {
+        TestSource source = descriptor.getSource().orElse(null);
+        if (source instanceof MethodSource) {
+          for (DiscoverySelector selector : selectors) {
+            if (selector instanceof MethodSelector &&
+                ((MethodSelector)selector).getClassName().equals(((MethodSource)source).getClassName()) &&
+                ((MethodSelector)selector).getMethodName().equals(((MethodSource)source).getMethodName())) {
+              return true;
+            }
+          }
+          for (DiscoverySelector selector : selectors) {
+            if (selector instanceof ClassSelector && 
+                ((ClassSelector)selector).getClassName().equals(((MethodSource)source).getClassName())) {
+              return true;
+            }
+          }
+          return false;
+        }
+
+        return true;
+      }
+    };
   }
 
   public static String getDisabledConditionValue(String name) {
@@ -205,7 +272,7 @@ public class JUnit5TestRunnerUtil {
    * Unique id is prepended with prefix: @see com.intellij.execution.junit.TestUniqueId#getUniqueIdPresentation()
    * Method contains ','
    */
-  protected static DiscoverySelector createSelector(String line) {
+  protected static DiscoverySelector createSelector(String line, String[] packageNameRef) {
     if (line.startsWith("\u001B")) {
       String uniqueId = line.substring("\u001B".length());
       return DiscoverySelectors.selectUniqueId(uniqueId);
@@ -220,9 +287,16 @@ public class JUnit5TestRunnerUtil {
       }
     }
     else if (line.contains(",")) {
-      return DiscoverySelectors.selectMethod(line.replaceFirst(",", "#"));
+      MethodSelector selector = DiscoverySelectors.selectMethod(line.replaceFirst(",", "#"));
+      if (packageNameRef != null) {
+        packageNameRef[0] = selector.getClassName();
+      }
+      return selector;
     }
     else {
+      if (packageNameRef != null) {
+        packageNameRef[0] = line;
+      }
       return DiscoverySelectors.selectClass(line);
     }
   }

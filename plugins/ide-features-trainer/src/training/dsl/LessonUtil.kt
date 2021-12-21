@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nls
 import training.dsl.LessonUtil.checkExpectedStateOfEditor
 import training.learn.LearnBundle
 import training.learn.LessonsBundle
+import training.learn.course.Lesson
 import training.learn.lesson.LessonManager
 import training.ui.*
 import training.ui.LearningUiUtil.findComponentWithTimeout
@@ -69,6 +70,7 @@ object LessonUtil {
     val helpIdeName: String = ide ?: when (val name = ApplicationNamesInfo.getInstance().productName) {
       "GoLand" -> "go"
       "RubyMine" -> "ruby"
+      "AppCode" -> "objc"
       else -> name.lowercase(Locale.ENGLISH)
     }
     return "https://www.jetbrains.com/help/$helpIdeName/$topic"
@@ -313,6 +315,22 @@ object LessonUtil {
     val isSingleProject = ProjectManager.getInstance().openProjects.size == 1
     return if (isSingleProject) LessonsBundle.message("onboarding.return.to.welcome.remark") else ""
   }
+
+  fun showFeedbackNotification(lesson: Lesson, project: Project) {
+    invokeLater {
+      if (project.isDisposed) {
+        return@invokeLater
+      }
+      lesson.module.primaryLanguage?.let { langSupport ->
+        // exit link will show notification directly and reset this field to null
+        langSupport.onboardingFeedbackData?.let {
+          showOnboardingFeedbackNotification(project, it)
+        }
+        langSupport.onboardingFeedbackData = null
+      }
+    }
+  }
+
 }
 
 fun LessonContext.firstLessonCompletedMessage() {

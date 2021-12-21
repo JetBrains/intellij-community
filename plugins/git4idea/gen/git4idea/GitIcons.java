@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea;
 
 import com.intellij.ui.IconManager;
@@ -14,6 +14,6 @@ public final class GitIcons {
   private static @NotNull Icon load(@NotNull String path, int cacheKey, int flags) {
     return IconManager.getInstance().loadRasterizedIcon(path, GitIcons.class.getClassLoader(), cacheKey, flags);
   }
-  /** 16x16 */ public static final @NotNull Icon Signed = load("icons/signed.svg", 1578917386, 1);
+  /** 16x16 */ public static final @NotNull Icon Signed = load("icons/signed.svg", 260548404, 7);
   /** 16x16 */ public static final @NotNull Icon Verified = load("icons/verified.svg", -1461805388, 2);
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.ide.caches.CachesInvalidator;
@@ -56,7 +56,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.vcs.log.VcsLogProvider.LOG_PROVIDER_EP;
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
 import static com.intellij.vcs.log.util.PersistentUtil.LOG_CACHE;
-import static java.util.Objects.*;
+import static java.util.Objects.requireNonNull;
 
 @Service(Service.Level.PROJECT)
 public final class VcsProjectLog implements Disposable {
@@ -389,7 +389,7 @@ public final class VcsProjectLog implements Disposable {
     InitLogStartupActivity() {
       Application app = ApplicationManager.getApplication();
       if (app.isUnitTestMode() || app.isHeadlessEnvironment()) {
-        throw ExtensionNotApplicableException.INSTANCE;
+        throw ExtensionNotApplicableException.create();
       }
     }
 

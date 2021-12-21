@@ -17,17 +17,19 @@ final class ProjectLocatorImpl extends ProjectLocator {
   @Override
   @Nullable
   public Project guessProjectForFile(@Nullable VirtualFile file) {
+    if (file == null) {
+      return null;
+    }
+
     // StubUpdatingIndex calls this method very often, so, optimized implementation is required
     Project project = ProjectCoreUtil.theOnlyOpenProject();
     if (project != null && !project.isDisposed()) {
       return project;
     }
 
-    if (file != null) {
-      project = getPreferredProject(file);
-      if (project != null) {
-        return project;
-      }
+    project = getPreferredProject(file);
+    if (project != null) {
+      return project;
     }
 
     ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
@@ -38,10 +40,6 @@ final class ProjectLocatorImpl extends ProjectLocator {
     Project[] openProjects = projectManager.getOpenProjects();
     if (openProjects.length == 1) {
       return openProjects[0];
-    }
-
-    if (file == null) {
-      return null;
     }
 
     return ReadAction.compute(() -> {

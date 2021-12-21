@@ -7,7 +7,7 @@ internal class SettingsSyncPusher(private val settingsLog: GitSettingsLog,
 
   // todo notify error only when called explicitly, otherwise just set the status
   internal fun push() {
-    val pushResult = remoteCommunicator.push(settingsLog.getCurrentSnapshot())
+    val pushResult = remoteCommunicator.push(settingsLog.collectCurrentSnapshot())
     when (pushResult) {
       is SettingsSyncPushResult.Success -> {
         settingsLog.pushedSuccessfully()
@@ -16,7 +16,7 @@ internal class SettingsSyncPusher(private val settingsLog: GitSettingsLog,
         val updateResult = remoteCommunicator.receiveUpdates()
         when (updateResult) {
           is UpdateResult.Success -> {
-            settingsLog.pull(updateResult.settingsSnapshot) // todo handle conflicts and another merge
+            settingsLog.applyRemoteState(updateResult.settingsSnapshot) // todo handle conflicts and another merge
             push() // todo push only if pull succeeded
           }
           is UpdateResult.Error -> {

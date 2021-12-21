@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
@@ -41,6 +41,10 @@ final class PluginLayout extends BaseLayout {
   private PluginLayout(@NotNull String mainModule) {
     this.mainModule = mainModule
     mainJarName = "${convertModuleNameToFileName(mainModule)}.jar"
+  }
+
+  String getMainJarName() {
+    return mainJarName
   }
 
   /**

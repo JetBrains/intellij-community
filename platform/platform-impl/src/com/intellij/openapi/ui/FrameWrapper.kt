@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui
 
 import com.intellij.application.options.RegistryManager
@@ -28,10 +28,7 @@ import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.LinuxIdeMenuBar.Companion.doBindAppMenuOfParent
 import com.intellij.openapi.wm.impl.ProjectFrameHelper.appendTitlePart
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.CustomFrameDialogContent
-import com.intellij.ui.AppUIUtil
-import com.intellij.ui.BalloonLayout
-import com.intellij.ui.ComponentUtil
-import com.intellij.ui.FrameState
+import com.intellij.ui.*
 import com.intellij.ui.mac.touchbar.TouchbarSupport
 import com.intellij.util.ui.ImageUtil
 import com.intellij.util.ui.UIUtil
@@ -105,7 +102,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
 
     UIUtil.decorateWindowHeader((frame as RootPaneContainer).rootPane)
     if (frame is JFrame) {
-      UIUtil.setCustomTitleBar(frame, frame.rootPane) { runnable ->
+      ToolbarUtil.setTransparentTitleBar(frame, frame.rootPane) { runnable ->
         Disposer.register(this, Disposable { runnable.run() })
       }
     }
@@ -164,7 +161,7 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       frame.iconImages = images.map { ImageUtil.toBufferedImage(it) }
     }
 
-    if (SystemInfo.isLinux && frame is JFrame && GlobalMenuLinux.isAvailable()) {
+    if (SystemInfoRt.isLinux && frame is JFrame && GlobalMenuLinux.isAvailable()) {
       val parentFrame = WindowManager.getInstance().getFrame(project)
       if (parentFrame != null) {
         doBindAppMenuOfParent(frame, parentFrame)
@@ -182,8 +179,9 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
       loadFrameState(state)
     }
 
-    if (SystemInfo.isMac)
+    if (SystemInfoRt.isMac) {
       TouchbarSupport.showWindowActions(this, frame)
+    }
     frame.isVisible = true
   }
 
@@ -311,8 +309,8 @@ open class FrameWrapper @JvmOverloads constructor(project: Project?,
     init {
       FrameState.setFrameStateListener(this)
       glassPane = IdeGlassPaneImpl(getRootPane(), true)
-      if (SystemInfo.isMac && !(SystemInfo.isMacSystemMenu && java.lang.Boolean.getBoolean("mac.system.menu.singleton"))) {
-        jMenuBar = IdeMenuBar.createMenuBar().setFrame(this);
+      if (SystemInfoRt.isMac && !(SystemInfo.isMacSystemMenu && java.lang.Boolean.getBoolean("mac.system.menu.singleton"))) {
+        jMenuBar = IdeMenuBar.createMenuBar().setFrame(this)
 
       }
       MouseGestureManager.getInstance().add(this)

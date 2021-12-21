@@ -38,8 +38,8 @@ import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.KotlinFileTypeFactoryUtils
 import org.jetbrains.kotlin.idea.core.util.CodeInsightUtils
 import org.jetbrains.kotlin.idea.core.util.getLineStartOffset
+import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedIrBackendLambdaMethodName
 import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.getBorders
-import org.jetbrains.kotlin.idea.debugger.DebuggerUtils.isGeneratedLambdaName
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getElementsAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.breakpoints.getLambdasAtLineIfAny
 import org.jetbrains.kotlin.idea.debugger.stackFrame.InlineStackTraceCalculator
@@ -316,14 +316,14 @@ class KotlinPositionManager(private val myDebugProcess: DebugProcess) : MultiReq
 
     private fun List<KtFunction>.getAppropriateLiteralBasedOnLambdaName(location: Location, lineNumber: Int): KtFunction? {
         val method = location.safeMethod() ?: return null
-        if (!method.name().isGeneratedLambdaName()) {
+        if (!method.name().isGeneratedIrBackendLambdaMethodName()) {
             return null
         }
 
         val lambdas = location.declaringType().methods()
             .filter {
-                it.name().isGeneratedLambdaName() &&
-                DebuggerUtilsEx.locationsOfLine(it, lineNumber + 1).isNotEmpty()
+              it.name().isGeneratedIrBackendLambdaMethodName() &&
+              DebuggerUtilsEx.locationsOfLine(it, lineNumber + 1).isNotEmpty()
             }
 
         return getSamLambdaWithIndex(lambdas.indexOf(method))

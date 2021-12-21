@@ -6,7 +6,6 @@ package org.jetbrains.java.decompiler.modules.decompiler.stats;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.code.InstructionSequence;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
-import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.main.collectors.CounterContainer;
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
@@ -16,6 +15,7 @@ import org.jetbrains.java.decompiler.struct.match.IMatchable;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.util.*;
@@ -32,14 +32,14 @@ public class Statement implements IMatchable {
   public static final int TYPE_IF = 2;
   public static final int TYPE_DO = 5;
   public static final int TYPE_SWITCH = 6;
-  public static final int TYPE_TRYCATCH = 7;
-  public static final int TYPE_BASICBLOCK = 8;
+  public static final int TYPE_TRY_CATCH = 7;
+  public static final int TYPE_BASIC_BLOCK = 8;
   //public static final int TYPE_FINALLY = 9;
-  public static final int TYPE_SYNCRONIZED = 10;
+  public static final int TYPE_SYNCHRONIZED = 10;
   public static final int TYPE_PLACEHOLDER = 11;
-  public static final int TYPE_CATCHALL = 12;
+  public static final int TYPE_CATCH_ALL = 12;
   public static final int TYPE_ROOT = 13;
-  public static final int TYPE_DUMMYEXIT = 14;
+  public static final int TYPE_DUMMY_EXIT = 14;
   public static final int TYPE_SEQUENCE = 15;
 
   public static final int LASTBASICTYPE_IF = 0;
@@ -101,6 +101,10 @@ public class Statement implements IMatchable {
   {
     // set statement id
     id = DecompilerContext.getCounterContainer().getCounterAndIncrement(CounterContainer.STATEMENT_COUNTER);
+  }
+
+  Statement(int type) {
+    this.type = type;
   }
 
   // *****************************************************************************
@@ -378,7 +382,7 @@ public class Statement implements IMatchable {
     }
 
     switch (type) {
-      case TYPE_BASICBLOCK:
+      case TYPE_BASIC_BLOCK:
         BasicBlockStatement bblock = (BasicBlockStatement)this;
         InstructionSequence seq = bblock.getBlock().getSeq();
 
@@ -400,7 +404,7 @@ public class Statement implements IMatchable {
         }
 
         break;
-      case TYPE_SYNCRONIZED:
+      case TYPE_SYNCHRONIZED:
       case TYPE_ROOT:
       case TYPE_GENERAL:
         break;
@@ -766,7 +770,7 @@ public class Statement implements IMatchable {
   }
 
   public BasicBlockStatement getBasichead() {
-    if (type == TYPE_BASICBLOCK) {
+    if (type == TYPE_BASIC_BLOCK) {
       return (BasicBlockStatement)this;
     }
     else {
@@ -788,9 +792,9 @@ public class Statement implements IMatchable {
 
     // FIXME: default switch
 
-    return type == TYPE_BASICBLOCK || (type == TYPE_IF &&
+    return type == TYPE_BASIC_BLOCK || (type == TYPE_IF &&
                                                         ((IfStatement)this).iftype == IfStatement.IFTYPE_IF) ||
-                  (type == TYPE_DO && ((DoStatement)this).getLooptype() != DoStatement.LOOP_DO);
+           (type == TYPE_DO && ((DoStatement)this).getLooptype() != DoStatement.LOOP_DO);
   }
 
 

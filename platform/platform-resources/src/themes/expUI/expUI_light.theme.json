@@ -227,6 +227,8 @@
       "indeterminateEndColor": "Blue6",
       "trackColor": "Grey10"
     },
+    "ToolBar.verticalToolbarInsets": "7,4,7,4",
+    "ToolBar.horizontalToolbarInsets": "4,7,4,7",
 
     "SearchEverywhere": {
       "Tab.selectedBackground": "Blue13",

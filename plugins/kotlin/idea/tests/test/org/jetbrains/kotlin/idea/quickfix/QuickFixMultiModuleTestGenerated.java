@@ -26,6 +26,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
+        @TestMetadata("annotationOnClass")
+        public void testAnnotationOnClass() throws Exception {
+            runTest("testData/multiModuleQuickFix/accessibilityChecker/annotationOnClass/");
+        }
+
         @TestMetadata("classPrimaryConstructor")
         public void testClassPrimaryConstructor() throws Exception {
             runTest("testData/multiModuleQuickFix/accessibilityChecker/classPrimaryConstructor/");
@@ -537,6 +542,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
                 runTest("testData/multiModuleQuickFix/createExpect/class/");
             }
 
+            @TestMetadata("classWithAnnotation")
+            public void testClassWithAnnotation() throws Exception {
+                runTest("testData/multiModuleQuickFix/createExpect/classWithAnnotation/");
+            }
+
             @TestMetadata("classWithSuperClassAndTypeParameter")
             public void testClassWithSuperClassAndTypeParameter() throws Exception {
                 runTest("testData/multiModuleQuickFix/createExpect/classWithSuperClassAndTypeParameter/");
@@ -616,11 +626,6 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             public void testFunction() throws Exception {
                 runTest("testData/multiModuleQuickFix/createExpect/function/");
             }
-
-            @TestMetadata("function2")
-            public void testFunction2() throws Exception {
-                runTest("testData/multiModuleQuickFix/createExpect/function2/");
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -628,6 +633,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
         public static class TestBucket002 extends AbstractQuickFixMultiModuleTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("function2")
+            public void testFunction2() throws Exception {
+                runTest("testData/multiModuleQuickFix/createExpect/function2/");
             }
 
             @TestMetadata("functionInInterface")
@@ -724,11 +734,6 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
             public void testPropertyWithLateinitModifier() throws Exception {
                 runTest("testData/multiModuleQuickFix/createExpect/propertyWithLateinitModifier/");
             }
-
-            @TestMetadata("propertyWithPrivateModifier")
-            public void testPropertyWithPrivateModifier() throws Exception {
-                runTest("testData/multiModuleQuickFix/createExpect/propertyWithPrivateModifier/");
-            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -736,6 +741,11 @@ public abstract class QuickFixMultiModuleTestGenerated extends AbstractQuickFixM
         public static class TestBucket003 extends AbstractQuickFixMultiModuleTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("propertyWithPrivateModifier")
+            public void testPropertyWithPrivateModifier() throws Exception {
+                runTest("testData/multiModuleQuickFix/createExpect/propertyWithPrivateModifier/");
             }
 
             @TestMetadata("sealedClass")

@@ -7,14 +7,14 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
-import com.intellij.util.indexing.impl.ChangeTrackingValueContainer;
-import com.intellij.util.indexing.impl.IndexDebugProperties;
-import com.intellij.util.indexing.impl.IndexStorage;
-import com.intellij.util.indexing.impl.UpdatableValueContainer;
+import com.intellij.util.indexing.impl.*;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
-import java.util.*;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * This storage is needed for indexing yet unsaved data without saving those changes to 'main' backend storage
@@ -23,7 +23,7 @@ import java.util.*;
  */
 public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
   private static final Logger LOG = Logger.getInstance(TransientChangesIndexStorage.class);
-  private final Map<Key, TransientChangeTrackingValueContainer<Value>> myMap = new HashMap<>();
+  private final Map<Key, TransientChangeTrackingValueContainer<Value>> myMap;
   @NotNull
   private final VfsAwareIndexStorage<Key, Value> myBackendStorage;
   private final List<BufferingStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -37,9 +37,10 @@ public class TransientChangesIndexStorage<Key, Value> implements VfsAwareIndexSt
     void memoryStorageCleared();
   }
 
-  public TransientChangesIndexStorage(@NotNull IndexStorage<Key, Value> backend, @NotNull ID<Key, Value> indexId) {
+  public TransientChangesIndexStorage(@NotNull IndexStorage<Key, Value> backend, @NotNull FileBasedIndexExtension<Key, Value> extension) {
     myBackendStorage = (VfsAwareIndexStorage<Key, Value>)backend;
-    myIndexId = indexId;
+    myIndexId = extension.getName();
+    myMap = IndexStorageUtil.createKeyDescriptorHashedMap(extension.getKeyDescriptor());
   }
 
   @NotNull

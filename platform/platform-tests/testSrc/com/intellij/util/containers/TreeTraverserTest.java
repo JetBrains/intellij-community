@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.Comparing;
@@ -10,7 +10,8 @@ import com.intellij.util.Function;
 import com.intellij.util.Functions;
 import com.intellij.util.PairFunction;
 import com.intellij.util.Processor;
-import gnu.trove.TIntHashSet;
+import it.unimi.dsi.fastutil.ints.IntOpenHashSet;
+import it.unimi.dsi.fastutil.ints.IntSet;
 import junit.framework.TestCase;
 import org.jetbrains.annotations.NotNull;
 
@@ -370,11 +371,13 @@ public class TreeTraverserTest extends TestCase {
   public void testStatefulFilterWithSet() {
     Integer base = 5;
     JBIterable<Integer> it = JBIterable.generate(1, INCREMENT).take(10).filter(new JBIterable.SCond<>() {
-      TIntHashSet visited; // MUST NOT be initialized here
+      IntSet visited; // MUST NOT be initialized here
 
       @Override
       public boolean value(Integer integer) {
-        if (visited == null) visited = new TIntHashSet();
+        if (visited == null) {
+          visited = new IntOpenHashSet();
+        }
         return visited.add(integer % base);
       }
     });

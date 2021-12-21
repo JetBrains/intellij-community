@@ -9,7 +9,7 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.editor.tables.TableModificationUtils.hasCorrectBorders
 import org.intellij.plugins.markdown.editor.tables.intentions.FixTableBordersIntention
 import org.intellij.plugins.markdown.lang.psi.MarkdownElementVisitor
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 internal class MarkdownNoTableBordersInspection: LocalInspectionTool() {
@@ -18,7 +18,7 @@ internal class MarkdownNoTableBordersInspection: LocalInspectionTool() {
       return PsiElementVisitor.EMPTY_VISITOR
     }
     return object: MarkdownElementVisitor() {
-      override fun visitTable(table: MarkdownTableImpl) {
+      override fun visitTable(table: MarkdownTable) {
         super.visitTable(table)
         if (!table.hasCorrectBorders()) {
           holder.registerProblem(

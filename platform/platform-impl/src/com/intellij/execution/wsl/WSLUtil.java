@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.ExecutionException;
@@ -36,6 +36,8 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Pattern;
+
+import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
 /**
  * Class for working with WSL after Fall Creators Update
@@ -233,8 +235,7 @@ public final class WSLUtil {
     }
   }
 
-  private static final NullableLazyValue<WSLToolFlags> WSL_TOOL_FLAGS =
-    NullableLazyValue.createValue(() -> getWSLToolFlagsInternal());
+  private static final NullableLazyValue<WSLToolFlags> WSL_TOOL_FLAGS = lazyNullable(() -> getWSLToolFlagsInternal());
 
   public static @Nullable WSLToolFlags getWSLToolFlags() {
     return WSL_TOOL_FLAGS.getValue();

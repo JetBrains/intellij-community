@@ -111,9 +111,27 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
             runTest("testData/keywords/BreakContinue.kt");
         }
 
+        @TestMetadata("BreakPrefixMatching.kt")
+        public void testBreakPrefixMatching() throws Exception {
+            runTest("testData/keywords/BreakPrefixMatching.kt");
+        }
+
         @TestMetadata("BreakWithLabel.kt")
         public void testBreakWithLabel() throws Exception {
             runTest("testData/keywords/BreakWithLabel.kt");
+        }
+
+        @TestMetadata("BreakWithLabelPrefix.kt")
+        public void testBreakWithLabelPrefix() throws Exception {
+            runTest("testData/keywords/BreakWithLabelPrefix.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/keywords")
+    public static class TestBucket002 extends AbstractKeywordCompletionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("CommaExpected.kt")
@@ -125,18 +143,20 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
         public void testCompanionObjectBeforeObject() throws Exception {
             runTest("testData/keywords/CompanionObjectBeforeObject.kt");
         }
-    }
 
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/keywords")
-    public static class TestBucket002 extends AbstractKeywordCompletionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        @TestMetadata("ContinuePrefixMatching.kt")
+        public void testContinuePrefixMatching() throws Exception {
+            runTest("testData/keywords/ContinuePrefixMatching.kt");
         }
 
         @TestMetadata("ContinueWithLabel.kt")
         public void testContinueWithLabel() throws Exception {
             runTest("testData/keywords/ContinueWithLabel.kt");
+        }
+
+        @TestMetadata("ContinueWithLabelPrefix.kt")
+        public void testContinueWithLabelPrefix() throws Exception {
+            runTest("testData/keywords/ContinueWithLabelPrefix.kt");
         }
 
         @TestMetadata("Else1.kt")
@@ -213,6 +233,14 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
         public void testInClassScope() throws Exception {
             runTest("testData/keywords/InClassScope.kt");
         }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/keywords")
+    public static class TestBucket003 extends AbstractKeywordCompletionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
         @TestMetadata("InClassTypeParameters.kt")
         public void testInClassTypeParameters() throws Exception {
@@ -232,14 +260,6 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
         @TestMetadata("InEnumScope1.kt")
         public void testInEnumScope1() throws Exception {
             runTest("testData/keywords/InEnumScope1.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/keywords")
-    public static class TestBucket003 extends AbstractKeywordCompletionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("InEnumScope2.kt")
@@ -321,6 +341,14 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
         public void testInPropertyTypeReference() throws Exception {
             runTest("testData/keywords/InPropertyTypeReference.kt");
         }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/keywords")
+    public static class TestBucket004 extends AbstractKeywordCompletionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
         @TestMetadata("InString.kt")
         public void testInString() throws Exception {
@@ -340,14 +368,6 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
         @TestMetadata("InTypePosition.kt")
         public void testInTypePosition() throws Exception {
             runTest("testData/keywords/InTypePosition.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/keywords")
-    public static class TestBucket004 extends AbstractKeywordCompletionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("LabeledLambdaThis.kt")
@@ -429,6 +449,14 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
         public void testPrefixMatcher() throws Exception {
             runTest("testData/keywords/PrefixMatcher.kt");
         }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/keywords")
+    public static class TestBucket005 extends AbstractKeywordCompletionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
         @TestMetadata("PropertyAccessors.kt")
         public void testPropertyAccessors() throws Exception {
@@ -448,14 +476,6 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
         @TestMetadata("QualifiedThis.kt")
         public void testQualifiedThis() throws Exception {
             runTest("testData/keywords/QualifiedThis.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/keywords")
-    public static class TestBucket005 extends AbstractKeywordCompletionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("QualifiedThisInAccessor.kt")
@@ -493,9 +513,14 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
             runTest("testData/keywords/Return5.kt");
         }
 
-        @TestMetadata("Return6.kt")
-        public void testReturn6() throws Exception {
-            runTest("testData/keywords/Return6.kt");
+        @TestMetadata("Return6_1.kt")
+        public void testReturn6_1() throws Exception {
+            runTest("testData/keywords/Return6_1.kt");
+        }
+
+        @TestMetadata("Return6_2.kt")
+        public void testReturn6_2() throws Exception {
+            runTest("testData/keywords/Return6_2.kt");
         }
 
         @TestMetadata("Return7.kt")
@@ -532,6 +557,14 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
         public void testReturnKeywordName() throws Exception {
             runTest("testData/keywords/ReturnKeywordName.kt");
         }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/keywords")
+    public static class TestBucket006 extends AbstractKeywordCompletionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
         @TestMetadata("ReturnList.kt")
         public void testReturnList() throws Exception {
@@ -553,17 +586,14 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
             runTest("testData/keywords/ReturnNullableBoolean.kt");
         }
 
+        @TestMetadata("ReturnPrefixMatching.kt")
+        public void testReturnPrefixMatching() throws Exception {
+            runTest("testData/keywords/ReturnPrefixMatching.kt");
+        }
+
         @TestMetadata("ReturnSet.kt")
         public void testReturnSet() throws Exception {
             runTest("testData/keywords/ReturnSet.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/keywords")
-    public static class TestBucket006 extends AbstractKeywordCompletionTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("SealedForAlreadySealed.kt")
@@ -635,10 +665,23 @@ public abstract class KeywordCompletionTestGenerated extends AbstractKeywordComp
         public void testSuspendInsideTypeArguments1() throws Exception {
             runTest("testData/keywords/SuspendInsideTypeArguments1.kt");
         }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/keywords")
+    public static class TestBucket007 extends AbstractKeywordCompletionTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
         @TestMetadata("This.kt")
         public void testThis() throws Exception {
             runTest("testData/keywords/This.kt");
+        }
+
+        @TestMetadata("ThisLabelPrefix.kt")
+        public void testThisLabelPrefix() throws Exception {
+            runTest("testData/keywords/ThisLabelPrefix.kt");
         }
 
         @TestMetadata("ThisPrefixMatching.kt")

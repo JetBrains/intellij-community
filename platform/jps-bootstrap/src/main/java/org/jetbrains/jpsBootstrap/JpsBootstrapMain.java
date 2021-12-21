@@ -27,6 +27,7 @@ public class JpsBootstrapMain {
 
   private static final String COMMUNITY_HOME_ENV = "JPS_BOOTSTRAP_COMMUNITY_HOME";
   private static final String JPS_BOOTSTRAP_WORK_DIR_ENV = "JPS_BOOTSTRAP_WORK_DIR";
+  private static final String JPS_BOOTSTRAP_VERBOSE = "JPS_BOOTSTRAP_VERBOSE";
 
   private static final String ARG_HELP = "help";
   private static final String ARG_VERBOSE = "verbose";
@@ -56,6 +57,7 @@ public class JpsBootstrapMain {
   private final String moduleNameToRun;
   private final String classNameToRun;
   private final Path jpsBootstrapWorkDir;
+  private final Path ideaHomePath;
   private final String[] mainArgsToRun;
 
   public JpsBootstrapMain(String[] args) throws IOException {
@@ -77,7 +79,8 @@ public class JpsBootstrapMain {
     moduleNameToRun = freeArgs.get(0);
     classNameToRun = freeArgs.get(1);
 
-    JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(ARG_VERBOSE));
+    String verboseEnv = System.getenv(JPS_BOOTSTRAP_VERBOSE);
+    JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(ARG_VERBOSE) || (verboseEnv != null && toBooleanChecked(verboseEnv)));
 
     String communityHomeString = System.getenv(COMMUNITY_HOME_ENV);
     if (communityHomeString == null) fatal("Please set " + COMMUNITY_HOME_ENV + " environment variable");
@@ -87,13 +90,24 @@ public class JpsBootstrapMain {
     Path communityCheckFile = communityHome.resolve("intellij.idea.community.main.iml");
     if (!Files.exists(communityCheckFile)) fatal(COMMUNITY_HOME_ENV + " is incorrect: " + communityCheckFile + " is missing");
 
-    Path ultimateCheckFile = communityHome.getParent().resolve("intellij.idea.ultimate.main.iml");
-    if (Files.exists(ultimateCheckFile)) {
-      projectHome = communityHome.getParent();
+    Path riderHome = communityHome.getParent().getParent().resolve("Frontend");
+    Path riderCheckFile = riderHome.resolve("Rider.iml");
+
+    Path ultimateHome = communityHome.getParent();
+    Path ultimateCheckFile = ultimateHome.resolve("intellij.idea.ultimate.main.iml");
+
+    if (Files.exists(riderCheckFile)) {
+      projectHome = riderHome;
+      ideaHomePath = ultimateHome;
+    }
+    else if (Files.exists(ultimateCheckFile)) {
+      projectHome = ultimateHome;
+      ideaHomePath = ultimateHome;
     }
     else {
       warn("Ultimate repository is not detected by checking '" + ultimateCheckFile + "', using only community project");
       projectHome = communityHome;
+      ideaHomePath = communityHome;
     }
 
     if (System.getenv(JPS_BOOTSTRAP_WORK_DIR_ENV) != null) {
@@ -143,7 +157,7 @@ public class JpsBootstrapMain {
       info("Downloading project classes from " + manifestJsonUrl);
       ClassesFromCompileInc.downloadProjectClasses(model.getProject(), communityHome);
     } else {
-      ClassesFromJpsBuild.buildModule(module, projectHome, model, jpsBootstrapWorkDir);
+      ClassesFromJpsBuild.buildModule(module, ideaHomePath, model, jpsBootstrapWorkDir);
     }
   }
 

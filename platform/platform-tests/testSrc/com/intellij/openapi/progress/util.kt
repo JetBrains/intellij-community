@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
 import com.intellij.testFramework.LoggedErrorProcessor
@@ -12,8 +12,9 @@ import java.util.concurrent.*
 import java.util.concurrent.CancellationException
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KClass
+import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
-private const val TIMEOUT_MS: Long = 1000
+const val TEST_TIMEOUT_MS: Long = 1000
 
 fun submitTasks(service: ExecutorService, task: () -> Unit) {
   service.execute(task)
@@ -36,25 +37,33 @@ fun neverEndingStory(): Nothing {
 
 fun withRootJob(action: (rootJob: Job) -> Unit): Job {
   return CoroutineScope(Dispatchers.Default).async {
-    withJob {
-      action(coroutineContext.job)
-    }
+    withJob(action)
   }
 }
 
-fun Semaphore.waitUp(): Unit = assertTrue(waitFor(TIMEOUT_MS))
+fun Semaphore.timeoutWaitUp() {
+  assertTrue(waitFor(TEST_TIMEOUT_MS))
+}
 
-fun <X> Future<X>.waitGet(): X = get(TIMEOUT_MS, TimeUnit.MILLISECONDS)
+suspend fun KSemaphore.timeoutAcquire() {
+  withTimeout(TEST_TIMEOUT_MS) {
+    acquire()
+  }
+}
+
+fun <X> Future<X>.timeoutGet(): X {
+  return get(TEST_TIMEOUT_MS, TimeUnit.MILLISECONDS)
+}
 
 fun waitAssertCompletedNormally(future: Future<*>) {
-  future.waitGet()
+  future.timeoutGet()
   assertTrue(future.isDone)
   assertFalse(future.isCancelled)
 }
 
 fun waitAssertCompletedWith(future: Future<*>, clazz: KClass<out Throwable>) {
   try {
-    future.waitGet()
+    future.timeoutGet()
     fail("ExecutionException expected")
   }
   catch (e: ExecutionException) {
@@ -66,19 +75,29 @@ fun waitAssertCompletedWithCancellation(future: Future<*>) {
   waitAssertCompletedWith(future, CancellationException::class)
 }
 
-fun Job.waitJoin(): Unit = runBlocking {
-  join()
-  withTimeout(TIMEOUT_MS) {
+fun Job.timeoutJoinBlocking(): Unit = runBlocking {
+  timeoutJoin()
+}
+
+suspend fun Job.timeoutJoin() {
+  withTimeout(TEST_TIMEOUT_MS) {
+    join()
+  }
+}
+
+suspend fun <T> Deferred<T>.timeoutAwait(): T {
+  return withTimeout(TEST_TIMEOUT_MS) {
+    await()
   }
 }
 
 fun waitAssertCompletedNormally(job: Job) {
-  job.waitJoin()
+  job.timeoutJoinBlocking()
   assertFalse(job.isCancelled)
 }
 
 fun waitAssertCancelled(job: Job) {
-  job.waitJoin()
+  job.timeoutJoinBlocking()
   assertTrue(job.isCancelled)
 }
 
@@ -110,11 +129,15 @@ fun loggedError(canThrow: Semaphore): Throwable {
       }
     }) {
       canThrow.up()
-      gotIt.waitUp()
+      gotIt.timeoutWaitUp()
     }
   }
   finally {
     Thread.setDefaultUncaughtExceptionHandler(savedHandler)
   }
   return throwable
+}
+
+internal fun withIndicator(indicator: ProgressIndicator, action: () -> Unit) {
+  ProgressManager.getInstance().runProcess(action, indicator)
 }

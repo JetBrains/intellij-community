@@ -19,7 +19,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
-import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -256,7 +255,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       updateTabTitles();
 
 
-      MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
+      MavenUtil.runWhenInitialized(myProject, () -> {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
           fireActivated();
           listenForExternalChanges();
@@ -833,17 +832,23 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     myProjectsTree = newTree;
   }
 
+  @ApiStatus.Internal
+  @Nullable
+  public MavenProjectsTree getProjectsTree() {
+    return myProjectsTree;
+  }
+
   private void scheduleUpdateAllProjects(boolean forceImportAndResolve) {
     doScheduleUpdateProjects(null, false, forceImportAndResolve);
   }
 
   @ApiStatus.Internal
   public AsyncPromise<Void> forceUpdateProjects() {
-    return doScheduleUpdateProjects(null, true, true);
+    return (AsyncPromise<Void>)doScheduleUpdateProjects(null, true, true);
   }
 
   public AsyncPromise<Void> forceUpdateProjects(@NotNull Collection<MavenProject> projects) {
-    return doScheduleUpdateProjects(projects, true, true);
+    return (AsyncPromise<Void>)doScheduleUpdateProjects(projects, true, true);
   }
 
   public void forceUpdateAllProjectsOrFindAllAvailablePomFiles() {
@@ -858,13 +863,17 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     doScheduleUpdateProjects(null, true, true);
   }
 
-  private AsyncPromise<Void> doScheduleUpdateProjects(final Collection<MavenProject> projects,
+  private Promise<Void> doScheduleUpdateProjects(final Collection<MavenProject> projects,
                                                       final boolean forceUpdate,
                                                       final boolean forceImportAndResolve) {
+    if (Registry.is("maven.new.import")){
+      return MavenImportingManager.getInstance(myProject)
+        .openProjectAndImport(new FilesList(ContainerUtil.map(projects, MavenProject::getFile)), getImportingSettings(), getGeneralSettings()).then(it -> null);
+    }
     MavenDistributionsCache.getInstance(myProject).cleanCaches();
     MavenWslCache.getInstance().clearCache();
     final AsyncPromise<Void> promise = new AsyncPromise<>();
-    MavenUtil.runWhenInitialized(myProject, (DumbAwareRunnable)() -> {
+    MavenUtil.runWhenInitialized(myProject, () -> {
       if (projects == null) {
         myWatcher.scheduleUpdateAll(forceUpdate, forceImportAndResolve).processed(promise);
       }
@@ -903,7 +912,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   private void completeMavenSyncOnImportCompletion(MavenSyncConsole console) {
     waitForImportCompletion().onProcessed(o -> {
-      MavenUtil.notifyMavenProblems(myProject);
+      MavenResolveResultProcessor.notifyMavenProblems(myProject);
       console.finishImport();
     });
   }
@@ -1156,15 +1165,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       return;
     }
 
-    final Ref<Runnable> wrapper = new Ref<>();
-    wrapper.set(() -> {
-      if (!StartupManagerEx.getInstanceEx(myProject).postStartupActivityPassed()) {
-        myInitializationAlarm.addRequest(wrapper.get(), 1000);
-        return;
-      }
-      runnable.run();
-    });
-    MavenUtil.runWhenInitialized(myProject, wrapper.get());
+    MavenUtil.runWhenInitialized(myProject, runnable);
   }
 
   private void schedulePostImportTasks(List<MavenProjectsProcessorTask> postTasks) {

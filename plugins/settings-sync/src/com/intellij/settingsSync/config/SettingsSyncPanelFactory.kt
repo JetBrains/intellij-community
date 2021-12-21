@@ -15,7 +15,7 @@ import java.awt.BorderLayout
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-object SettingsSyncPanelFactory {
+internal object SettingsSyncPanelFactory {
   fun createPanel(syncLabel: @Nls String): DialogPanel {
     return panel {
       row {

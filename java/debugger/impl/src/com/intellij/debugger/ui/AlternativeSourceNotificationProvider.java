@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.ui;
 
 import com.intellij.debugger.DebuggerManagerEx;
@@ -21,7 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.EditorNotificationPanel;
-import com.intellij.ui.EditorNotifications;
+import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.util.TextWithIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -30,13 +30,12 @@ import com.intellij.xdebugger.frame.XStackFrame;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import com.sun.jdi.Location;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
 
-public final class AlternativeSourceNotificationProvider extends EditorNotifications.Provider<EditorNotificationPanel> {
+public final class AlternativeSourceNotificationProvider implements EditorNotificationProvider<EditorNotificationPanel> {
   private static final Key<EditorNotificationPanel> KEY = Key.create("AlternativeSource");
   private static final Key<Boolean> FILE_PROCESSED_KEY = Key.create("AlternativeSourceCheckDone");
 
@@ -46,11 +45,10 @@ public final class AlternativeSourceNotificationProvider extends EditorNotificat
     return KEY;
   }
 
-  @Nullable
   @Override
-  public EditorNotificationPanel createNotificationPanel(@NotNull VirtualFile file, @NotNull FileEditor fileEditor, @NotNull Project project) {
+  public @NotNull ComponentProvider<EditorNotificationPanel> collectNotificationData(@NotNull Project project, @NotNull VirtualFile file) {
     if (!DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE) {
-      return null;
+      return ComponentProvider.getDummy();
     }
 
     DebuggerSession javaSession = DebuggerManagerEx.getInstanceEx(project).getContext().getDebuggerSession();
@@ -58,29 +56,29 @@ public final class AlternativeSourceNotificationProvider extends EditorNotificat
 
     if (session == null) {
       setFileProcessed(file, false);
-      return null;
+      return ComponentProvider.getDummy();
     }
 
     XSourcePosition position = session.getCurrentPosition();
     if (position == null || !file.equals(position.getFile())) {
       setFileProcessed(file, false);
-      return null;
+      return ComponentProvider.getDummy();
     }
 
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
-    if (psiFile == null) return null;
+    if (psiFile == null) return ComponentProvider.getDummy();
 
-    if (!(psiFile instanceof PsiJavaFile)) return null;
+    if (!(psiFile instanceof PsiJavaFile)) return ComponentProvider.getDummy();
 
     PsiClass[] classes = ((PsiJavaFile)psiFile).getClasses();
-    if (classes.length == 0) return null;
+    if (classes.length == 0) return ComponentProvider.getDummy();
 
     PsiClass baseClass = classes[0];
     String name = baseClass.getQualifiedName();
 
-    if (name == null) return null;
+    if (name == null) return ComponentProvider.getDummy();
 
-    if (DumbService.getInstance(project).isDumb()) return null;
+    if (DumbService.getInstance(project).isDumb()) return ComponentProvider.getDummy();
 
     PsiClass[] altClasses = JavaPsiFacade.getInstance(project).findClasses(name, javaSession.getSearchScope());
     if (altClasses.length == 0) {
@@ -113,9 +111,10 @@ public final class AlternativeSourceNotificationProvider extends EditorNotificat
         }
       }
 
-      return new AlternativeSourceNotificationPanel(elems, baseClass, project, file, fileEditor, locationDeclName);
+      String finalLocationDeclName = locationDeclName;
+      return fileEditor -> new AlternativeSourceNotificationPanel(elems, baseClass, project, file, fileEditor, finalLocationDeclName);
     }
-    return null;
+    return ComponentProvider.getDummy();
   }
 
   private static class ComboBoxClassElement {

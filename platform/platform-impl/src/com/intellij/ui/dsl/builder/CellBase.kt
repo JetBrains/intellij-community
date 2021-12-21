@@ -6,7 +6,6 @@ import com.intellij.ui.dsl.gridLayout.Grid
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
-import org.jetbrains.annotations.ApiStatus
 
 enum class RightGap {
   /**
@@ -23,7 +22,6 @@ enum class RightGap {
 /**
  * Common API for cells
  */
-@ApiStatus.Experimental
 @LayoutDslMarker
 interface CellBase<out T : CellBase<T>> {
 

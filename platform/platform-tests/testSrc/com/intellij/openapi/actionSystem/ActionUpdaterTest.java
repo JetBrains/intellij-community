@@ -61,14 +61,10 @@ public class ActionUpdaterTest extends LightPlatformTestCase {
     }
 
     @Override
-    public boolean canBePerformed(@NotNull DataContext context) {
-      return true;
-    }
-
-    @Override
     public void update(@NotNull AnActionEvent e) {
       e.getPresentation().setVisible(myVisible);
       e.getPresentation().setEnabled(myEnabled);
+      e.getPresentation().setPerformGroup(true);
     }
   }
 }

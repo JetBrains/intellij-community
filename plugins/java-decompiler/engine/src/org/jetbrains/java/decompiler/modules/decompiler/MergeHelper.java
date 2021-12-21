@@ -241,7 +241,7 @@ public final class MergeHelper {
       else {
         switch (parent.type) {
           case Statement.TYPE_ROOT:
-            return endstat.type == Statement.TYPE_DUMMYEXIT;
+            return endstat.type == Statement.TYPE_DUMMY_EXIT;
           case Statement.TYPE_DO:
             return (endstat == parent);
           case Statement.TYPE_SWITCH:

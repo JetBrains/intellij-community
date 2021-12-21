@@ -4,7 +4,6 @@ package org.jetbrains.plugins.gradle.importing
 import com.intellij.openapi.externalSystem.importing.ImportSpecBuilder
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode
 import com.intellij.openapi.externalSystem.service.project.ProjectDataManager
-import com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil.assertMapsEqual
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.util.io.FileUtil.pathsEqual
@@ -297,7 +296,7 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
     assertThat(modelConsumer.projectLoadedModels)
       .haveExactly(receivedQuantity, Condition(projectLoadedPredicate, "project loaded model for '$projectName' at '$buildPath'"))
     val (_, projectLoadedModel) = modelConsumer.projectLoadedModels.find(projectLoadedPredicate::test)!!
-    assertMapsEqual(expectedProjectLoadedModelsMap, projectLoadedModel.map)
+    assertThat(projectLoadedModel.map).containsExactlyInAnyOrderEntriesOf(expectedProjectLoadedModelsMap)
     if (expectedBuildFinishedModelsMap != null) {
       val buildFinishedPredicate = Predicate<Pair<Project, BuildFinishedModel>> {
         val project = it.first
@@ -307,7 +306,7 @@ class GradlePartialImportingTest : BuildViewMessagesImportingTestCase() {
       assertThat(modelConsumer.buildFinishedModels)
         .haveExactly(receivedQuantity, Condition(buildFinishedPredicate, "build finished model for '$projectName' at '$buildPath'"))
       val (_, buildFinishedModel) = modelConsumer.buildFinishedModels.find(buildFinishedPredicate::test)!!
-      assertMapsEqual(expectedBuildFinishedModelsMap, buildFinishedModel.map)
+      assertThat(buildFinishedModel.map).containsExactlyInAnyOrderEntriesOf(expectedBuildFinishedModelsMap)
     }
     else {
       assertEmpty(modelConsumer.buildFinishedModels)

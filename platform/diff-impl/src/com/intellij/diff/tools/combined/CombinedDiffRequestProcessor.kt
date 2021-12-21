@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.*
@@ -10,8 +10,7 @@ import com.intellij.diff.impl.DiffSettingsHolder.DiffSettings.Companion.getSetti
 import com.intellij.diff.impl.ui.DifferencesLabel
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.diff.tools.fragmented.UnifiedDiffTool
-import com.intellij.diff.tools.util.IndexProvider
-import com.intellij.diff.tools.util.base.DiffViewerBase
+import com.intellij.diff.tools.util.PrevNextDifferenceIterable
 import com.intellij.diff.util.DiffUserDataKeys
 import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy
@@ -53,10 +52,23 @@ open class CombinedDiffRequestProcessor(project: Project?,
       e.presentation.isVisible = false
     }
   }
+
   private val nextFileAction = object : MyNextChangeAction() {
     override fun update(e: AnActionEvent) {
       super.update(e)
       e.presentation.isVisible = false
+    }
+  }
+
+  private val prevDifferenceAction = object : MyPrevDifferenceAction() {
+    override fun getDifferenceIterable(e: AnActionEvent): PrevNextDifferenceIterable? {
+      return viewer?.scrollSupport?.currentPrevNextIterable ?: super.getDifferenceIterable(e)
+    }
+  }
+
+  private val nextDifferenceAction = object : MyNextDifferenceAction() {
+    override fun getDifferenceIterable(e: AnActionEvent): PrevNextDifferenceIterable? {
+      return viewer?.scrollSupport?.currentPrevNextIterable ?: super.getDifferenceIterable(e)
     }
   }
 
@@ -66,7 +78,7 @@ open class CombinedDiffRequestProcessor(project: Project?,
 
   override fun getNavigationActions(): List<AnAction> {
     val goToChangeAction = createGoToChangeAction()
-    return listOfNotNull(MyPrevDifferenceAction(), MyNextDifferenceAction(), MyDifferencesLabel(goToChangeAction),
+    return listOfNotNull(prevDifferenceAction, nextDifferenceAction, MyDifferencesLabel(goToChangeAction),
                          openInEditorAction, prevFileAction, nextFileAction)
   }
   final override fun isNavigationEnabled(): Boolean = requestProducer.getFilesSize() > 0
@@ -119,13 +131,17 @@ open class CombinedDiffRequestProcessor(project: Project?,
   private inner class MyDifferencesLabel(goToChangeAction: AnAction?) :
     DifferencesLabel(goToChangeAction, myToolbarWrapper.targetComponent) {
 
-    override fun getCurrentViewer(): DiffViewerBase? = viewer?.getCurrentDiffViewer() as? DiffViewerBase
-
-    override fun getCurrentDifferencePosition(): Int {
-      return ((viewer?.getDifferencesIterable() as? IndexProvider)?.getIndex() ?: 0) + 1
-    }
-
     override fun getFileCount(): Int = requestProducer.getFilesSize()
+    override fun getTotalDifferences(): Int = calculateTotalDifferences()
+
+    private fun calculateTotalDifferences(): Int {
+      val combinedViewer = viewer ?: return 0
+
+      return combinedViewer.diffBlocks
+        .asSequence()
+        .map { it.content.viewer}
+        .sumOf { (it as? DifferencesCounter)?.getTotalDifferences() ?: 1 }
+    }
   }
 
   //

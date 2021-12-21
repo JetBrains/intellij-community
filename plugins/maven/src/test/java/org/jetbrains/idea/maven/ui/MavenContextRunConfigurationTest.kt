@@ -6,7 +6,7 @@ import com.intellij.execution.actions.RunConfigurationProducer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import junit.framework.TestCase
-import org.jetbrains.idea.maven.dom.MavenDomTestCase
+import com.intellij.maven.testFramework.MavenDomTestCase
 import org.jetbrains.idea.maven.execution.MavenConfigurationProducer
 import org.jetbrains.idea.maven.execution.MavenGoalLocation
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration

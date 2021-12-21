@@ -9,12 +9,12 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.siblings
 import org.intellij.plugins.markdown.editor.tables.TableUtils.isHeaderRow
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableImpl
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTable
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 
 internal abstract class SwapRowsAction(private val swapWithAbove: Boolean): RowBasedTableAction(considerSeparatorRow = false) {
-  override fun performAction(editor: Editor, table: MarkdownTableImpl, rowElement: PsiElement) {
-    rowElement as MarkdownTableRowImpl
+  override fun performAction(editor: Editor, table: MarkdownTable, rowElement: PsiElement) {
+    rowElement as MarkdownTableRow
     val otherRow = findOtherRow(rowElement)
     requireNotNull(otherRow)
     runWriteAction {
@@ -26,17 +26,17 @@ internal abstract class SwapRowsAction(private val swapWithAbove: Boolean): RowB
     }
   }
 
-  override fun update(event: AnActionEvent, table: MarkdownTableImpl?, rowElement: PsiElement?) {
+  override fun update(event: AnActionEvent, table: MarkdownTable?, rowElement: PsiElement?) {
     super.update(event, table, rowElement)
-    event.presentation.isEnabled = (rowElement as? MarkdownTableRowImpl)?.let(::findOtherRow) != null
+    event.presentation.isEnabled = (rowElement as? MarkdownTableRow)?.let(::findOtherRow) != null
   }
 
-  private fun findOtherRow(row: MarkdownTableRowImpl): MarkdownTableRowImpl? {
-    return row.siblings(forward = !swapWithAbove, withSelf = false).filterIsInstance<MarkdownTableRowImpl>().find { !it.isHeaderRow }
+  private fun findOtherRow(row: MarkdownTableRow): MarkdownTableRow? {
+    return row.siblings(forward = !swapWithAbove, withSelf = false).filterIsInstance<MarkdownTableRow>().find { !it.isHeaderRow }
   }
 
   override fun findRow(file: PsiFile, editor: Editor): PsiElement? {
-    return super.findRow(file, editor).takeUnless { (it as? MarkdownTableRowImpl)?.isHeaderRow == true }
+    return super.findRow(file, editor).takeUnless { (it as? MarkdownTableRow)?.isHeaderRow == true }
   }
 
   class SwapWithAbove: SwapRowsAction(swapWithAbove = true)

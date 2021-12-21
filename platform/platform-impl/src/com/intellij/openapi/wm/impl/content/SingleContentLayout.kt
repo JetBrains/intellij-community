@@ -18,6 +18,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep
 import com.intellij.openapi.util.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.InternalDecoratorImpl
+import com.intellij.ui.ExperimentalUI
 import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.awt.RelativePoint
@@ -34,7 +35,6 @@ import com.intellij.ui.tabs.impl.TabLabel
 import com.intellij.util.castSafelyTo
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.ui.AbstractLayoutManager
-import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.event.*
@@ -251,7 +251,8 @@ internal class SingleContentLayout(
       }
 
       toolbars[ToolbarType.MAIN]?.component?.apply {
-        bounds = Rectangle(x, 0, mainToolbarWidth, component.height)
+        val height = preferredSize.height
+        bounds = Rectangle(x, (component.height - height) / 2, mainToolbarWidth, height)
         x += mainToolbarWidth
       }
 
@@ -261,17 +262,18 @@ internal class SingleContentLayout(
       }
 
       toolbars[ToolbarType.CLOSE_GROUP]?.component?.apply {
-        bounds = Rectangle(x, 0, contentToolbarWidth, component.height)
+        val height = preferredSize.height
+        bounds = Rectangle(x, (component.height - height) / 2, contentToolbarWidth, height)
         x += contentToolbarWidth
       }
     }
   }
 
   override fun updateIdLabel(label: BaseLabel) {
+    super.updateIdLabel(label)
     if (!isSingleContentView) {
       label.icon = null
       label.toolTipText = null
-      super.updateIdLabel(label)
     }
     else if (myTabs.size == 1) {
       label.icon = myTabs[0].content.icon
@@ -281,12 +283,13 @@ internal class SingleContentLayout(
         title = displayName
       )
       label.toolTipText = displayName
-      label.border = JBUI.Borders.empty(0, 2, 0, 7)
     }
   }
 
   @NlsSafe
-  private fun createProcessName(title: String, prefix: String? = null) = prefix?.let { "$it:" } ?: title
+  private fun createProcessName(title: String, prefix: String? = null) = prefix?.let {
+    if (ExperimentalUI.isNewToolWindowsStripes()) it else "$it:"
+  } ?: title
 
   private inner class TabAdapter(
     val content: Content,
@@ -851,7 +854,10 @@ internal class SingleContentLayout(
         toRemove.forEach {
           it.bounds = Rectangle(0, 0, 0, 0)
         }
-        control?.let { it.bounds = Rectangle(Point(toFitWidth, 0), it.preferredSize) }
+        control?.let {
+          val controlPrefSize = it.preferredSize
+          it.bounds = Rectangle(Point(toFitWidth, (parent.height - controlPrefSize.height) / 2), controlPrefSize)
+        }
       }
     }
 

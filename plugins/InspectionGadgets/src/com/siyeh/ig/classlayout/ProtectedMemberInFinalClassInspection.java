@@ -96,7 +96,7 @@ public class ProtectedMemberInFinalClassInspection extends BaseInspection {
       if (modifierList == null) return;
       final PsiModifierList modifierListCopy = (PsiModifierList)modifierList.copy();
       modifierListCopy.setModifierProperty(PsiModifier.PRIVATE, true);
-      final Query<PsiReference> search = ReferencesSearch.search(member, member.getResolveScope());
+      final Query<PsiReference> search = ReferencesSearch.search(member, member.getUseScope());
       final boolean canBePrivate = search.forEach(reference -> {
         return JavaResolveUtil.isAccessible(member, member.getContainingClass(), modifierListCopy, reference.getElement(), null, null);
       });

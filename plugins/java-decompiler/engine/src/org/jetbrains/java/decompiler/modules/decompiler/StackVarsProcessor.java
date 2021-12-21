@@ -14,7 +14,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionsGraph;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 
 import java.util.*;
@@ -584,8 +583,7 @@ public class StackVarsProcessor {
     }
 
     // compare protected ranges
-    if (!InterpreterUtil.equalObjects(ssau.getMapVersionFirstRange().get(leftpaar),
-                                      ssau.getMapVersionFirstRange().get(usedvar))) {
+    if (!Objects.equals(ssau.getMapVersionFirstRange().get(leftpaar), ssau.getMapVersionFirstRange().get(usedvar))) {
       return false;
     }
 

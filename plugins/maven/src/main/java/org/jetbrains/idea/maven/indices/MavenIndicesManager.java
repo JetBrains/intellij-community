@@ -11,7 +11,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -134,7 +133,7 @@ public final class MavenIndicesManager implements Disposable {
 
     projectsManager.addProjectsTreeListener(new MavenProjectsTree.Listener() {
       @Override
-      public void allProjectsResolved() {
+      public void resolutionCompleted() {
         scheduleUpdateIndicesList(null);
       }
     }, this);
@@ -215,7 +214,6 @@ public final class MavenIndicesManager implements Disposable {
    * @deprecated use {@link MavenArchetypeManager#getArchetypes()}
    */
   @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   public Set<MavenArchetype> getArchetypes() {
     Set<MavenArchetype> result = new HashSet<>(myIndexerWrapper.getArchetypes());
     result.addAll(loadUserArchetypes(getIndicesDir().resolve("UserArchetypes.xml")));

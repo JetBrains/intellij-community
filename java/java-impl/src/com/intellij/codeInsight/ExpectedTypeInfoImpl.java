@@ -1,26 +1,9 @@
-
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.ImportClassFixBase;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.NullableLazyValue;
-import com.intellij.openapi.util.VolatileNullableLazyValue;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.psi.util.PsiUtil;
@@ -29,54 +12,49 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
+import java.util.function.Supplier;
+
+import static com.intellij.openapi.util.NullableLazyValue.volatileLazyNullable;
 
 public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
-  public static final NullableComputable<String> NULL = () -> null;
-  @NotNull
-  private final PsiType type;
-  @NotNull
-  private final PsiType defaultType;
-  private final int kind;
-  @NotNull
-  private final TailType myTailType;
+  public static final Supplier<String> NULL = () -> null;
+
+  private final @NotNull PsiType myType;
+  private final @NotNull PsiType myDefaultType;
+  private final int myKind;
+  private final @NotNull TailType myTailType;
   private final PsiMethod myCalledMethod;
-  @NotNull private final NullableComputable<String> expectedNameComputable;
-  @NotNull private final NullableLazyValue<String> expectedNameLazyValue;
+  private final @NotNull Supplier<String> expectedNameComputable;
+  private final @NotNull NullableLazyValue<String> expectedNameLazyValue;
+
+  public ExpectedTypeInfoImpl(@NotNull PsiType type,
+                              @Type int kind,
+                              @NotNull PsiType defaultType,
+                              @NotNull TailType tailType,
+                              PsiMethod calledMethod,
+                              @NotNull Supplier<String> expectedName) {
+    myType = type;
+    myKind = kind;
+
+    myTailType = tailType;
+    myDefaultType = defaultType;
+    myCalledMethod = calledMethod;
+    expectedNameComputable = expectedName;
+    expectedNameLazyValue = volatileLazyNullable(expectedNameComputable);
+
+    PsiUtil.ensureValidType(type);
+    PsiUtil.ensureValidType(defaultType);
+  }
 
   @Override
   public int getKind() {
-    return kind;
+    return myKind;
   }
 
   @NotNull
   @Override
   public TailType getTailType() {
     return myTailType;
-  }
-
-  public ExpectedTypeInfoImpl(@NotNull PsiType type,
-                              @Type int kind,
-                              @NotNull PsiType defaultType,
-                              @NotNull TailType myTailType,
-                              PsiMethod calledMethod,
-                              @NotNull NullableComputable<String> expectedName) {
-    this.type = type;
-    this.kind = kind;
-
-    this.myTailType = myTailType;
-    this.defaultType = defaultType;
-    myCalledMethod = calledMethod;
-    this.expectedNameComputable = expectedName;
-    expectedNameLazyValue = new VolatileNullableLazyValue<>() {
-      @Nullable
-      @Override
-      protected String compute() {
-        return expectedNameComputable.compute();
-      }
-    };
-
-    PsiUtil.ensureValidType(type);
-    PsiUtil.ensureValidType(defaultType);
   }
 
   @Nullable
@@ -92,13 +70,13 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   @Override
   @NotNull
   public PsiType getType () {
-    return type;
+    return myType;
   }
 
   @Override
   @NotNull
   public PsiType getDefaultType () {
-    return defaultType;
+    return myDefaultType;
   }
 
   public boolean equals(final Object o) {
@@ -107,18 +85,18 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
     final ExpectedTypeInfoImpl that = (ExpectedTypeInfoImpl)o;
 
-    if (kind != that.kind) return false;
-    if (!defaultType.equals(that.defaultType)) return false;
+    if (myKind != that.myKind) return false;
+    if (!myDefaultType.equals(that.myDefaultType)) return false;
     if (!myTailType.equals(that.myTailType)) return false;
-    if (!type.equals(that.type)) return false;
+    if (!myType.equals(that.myType)) return false;
 
     return true;
   }
 
   public int hashCode() {
-    int result = type.hashCode();
-    result = 31 * result + defaultType.hashCode();
-    result = 31 * result + kind;
+    int result = myType.hashCode();
+    result = 31 * result + myDefaultType.hashCode();
+    result = 31 * result + myKind;
     result = 31 * result + myTailType.hashCode();
     return result;
   }
@@ -129,45 +107,45 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
   }
 
   public String toString() {
-    return "ExpectedTypeInfo[type='" + type + "' kind='" + kind + "']";
+    return "ExpectedTypeInfo[type='" + myType + "' kind='" + myKind + "']";
   }
 
   @Override
   public ExpectedTypeInfo @NotNull [] intersect(@NotNull ExpectedTypeInfo info) {
     ExpectedTypeInfoImpl info1 = (ExpectedTypeInfoImpl)info;
 
-    if (kind == TYPE_STRICTLY) {
-      if (info1.kind == TYPE_STRICTLY) {
-        if (info1.type.equals(type)) return new ExpectedTypeInfoImpl[] {this};
+    if (myKind == TYPE_STRICTLY) {
+      if (info1.myKind == TYPE_STRICTLY) {
+        if (info1.myType.equals(myType)) return new ExpectedTypeInfoImpl[] {this};
       }
       else {
         return info1.intersect(this);
       }
     }
-    else if (kind == TYPE_OR_SUBTYPE) {
-      if (info1.kind == TYPE_STRICTLY) {
-        if (type.isAssignableFrom(info1.type)) return new ExpectedTypeInfoImpl[] {info1};
+    else if (myKind == TYPE_OR_SUBTYPE) {
+      if (info1.myKind == TYPE_STRICTLY) {
+        if (myType.isAssignableFrom(info1.myType)) return new ExpectedTypeInfoImpl[] {info1};
       }
-      else if (info1.kind == TYPE_OR_SUBTYPE) {
-        PsiType otherType = info1.type;
-        if (type.isAssignableFrom(otherType)) return new ExpectedTypeInfoImpl[] {info1};
-        else if (otherType.isAssignableFrom(type)) return new ExpectedTypeInfoImpl[] {this};
+      else if (info1.myKind == TYPE_OR_SUBTYPE) {
+        PsiType otherType = info1.myType;
+        if (myType.isAssignableFrom(otherType)) return new ExpectedTypeInfoImpl[] {info1};
+        else if (otherType.isAssignableFrom(myType)) return new ExpectedTypeInfoImpl[] {this};
       }
       else {
         return info1.intersect(this);
       }
     }
-    else if (kind == TYPE_OR_SUPERTYPE) {
-      if (info1.kind == TYPE_STRICTLY) {
-        if (info1.type.isAssignableFrom(type)) return new ExpectedTypeInfoImpl[] {info1};
+    else if (myKind == TYPE_OR_SUPERTYPE) {
+      if (info1.myKind == TYPE_STRICTLY) {
+        if (info1.myType.isAssignableFrom(myType)) return new ExpectedTypeInfoImpl[] {info1};
       }
-      else if (info1.kind == TYPE_OR_SUBTYPE) {
-        if (info1.type.isAssignableFrom(type)) return new ExpectedTypeInfoImpl[] {this};
+      else if (info1.myKind == TYPE_OR_SUBTYPE) {
+        if (info1.myType.isAssignableFrom(myType)) return new ExpectedTypeInfoImpl[] {this};
       }
-      else if (info1.kind == TYPE_OR_SUPERTYPE) {
-        PsiType otherType = info1.type;
-        if (type.isAssignableFrom(otherType)) return new ExpectedTypeInfoImpl[] {this};
-        else if (otherType.isAssignableFrom(type)) return new ExpectedTypeInfoImpl[] {info1};
+      else if (info1.myKind == TYPE_OR_SUPERTYPE) {
+        PsiType otherType = info1.myType;
+        if (myType.isAssignableFrom(otherType)) return new ExpectedTypeInfoImpl[] {this};
+        else if (otherType.isAssignableFrom(myType)) return new ExpectedTypeInfoImpl[] {info1};
       }
       else {
         return info1.intersect(this);
@@ -182,10 +160,10 @@ public class ExpectedTypeInfoImpl implements ExpectedTypeInfo {
 
   @NotNull
   ExpectedTypeInfoImpl fixUnresolvedTypes(@NotNull PsiElement context) {
-    PsiType resolvedType = fixUnresolvedType(context, type);
-    PsiType resolvedDefaultType = fixUnresolvedType(context, defaultType);
-    if (resolvedType != type || resolvedDefaultType != defaultType) {
-      return new ExpectedTypeInfoImpl(resolvedType, kind, resolvedDefaultType, myTailType, myCalledMethod, expectedNameComputable);
+    PsiType resolvedType = fixUnresolvedType(context, myType);
+    PsiType resolvedDefaultType = fixUnresolvedType(context, myDefaultType);
+    if (resolvedType != myType || resolvedDefaultType != myDefaultType) {
+      return new ExpectedTypeInfoImpl(resolvedType, myKind, resolvedDefaultType, myTailType, myCalledMethod, expectedNameComputable);
     }
     return this;
   }

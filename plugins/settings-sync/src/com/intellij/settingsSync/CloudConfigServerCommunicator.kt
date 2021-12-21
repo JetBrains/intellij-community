@@ -21,7 +21,7 @@ private const val END_POINT = "https://stgn.cloudconfig.jetbrains.com/cloudconfi
 
 private const val TIMEOUT = 10000
 
-internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
+  internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
 
   private val client get() = _client.value
   private val _client = lazy {
@@ -32,6 +32,7 @@ internal class CloudConfigServerCommunicator : SettingsSyncRemoteCommunicator {
   private val currentVersionOfFiles = mutableMapOf<String, String>() // todo persist this information
   private val clientVersionContext = VersionContext()
 
+  // todo should be nullable, or null should be handled elsewhere (otherwise CloudConfigFileClientV2() fails)
   private fun createConfiguration(): Configuration? {
     val userId: String = SettingsSyncAuthService.getInstance().getUserData()?.id ?: return null
     return Configuration().connectTimeout(TIMEOUT).readTimeout(TIMEOUT).auth(JbaTokenAuthProvider(userId))

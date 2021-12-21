@@ -10,7 +10,7 @@ import com.intellij.psi.tree.IElementType
 import com.intellij.psi.util.PsiUtilCore
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.util.hasType
 
 class MarkdownHighlightingAnnotator : Annotator {
@@ -43,7 +43,7 @@ class MarkdownHighlightingAnnotator : Annotator {
   }
 
   private fun annotateWithHighlighter(element: PsiElement, holder: AnnotationHolder) {
-    if (element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT) && (element.parent as? MarkdownCodeFenceImpl)?.fenceLanguage != null) {
+    if (element.hasType(MarkdownTokenTypes.CODE_FENCE_CONTENT) && (element.parent as? MarkdownCodeFence)?.fenceLanguage != null) {
       return
     }
     val highlights = syntaxHighlighter.getTokenHighlights(PsiUtilCore.getElementType(element))

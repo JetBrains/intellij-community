@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.bookmark
 
 import com.intellij.ide.bookmark.BookmarkBundle.message
@@ -76,13 +76,9 @@ class BookmarksManagerImpl(val project: Project) : BookmarksManager, PersistentS
 
   override fun loadState(state: ManagerState) {
     remove() // see com.intellij.tasks.context.BookmarkContextProvider
-    if (state.groups.isNotEmpty()) {
-      StartupManager.getInstance(project).runAfterOpened {
-        state.groups.forEach {
-          val group = addOrReuseGroup(it.name, it.isDefault)
-          it.bookmarks.forEach { bookmark -> group.addLater(bookmark, bookmark.type, bookmark.description) }
-        }
-      }
+    state.groups.forEach {
+      val group = addOrReuseGroup(it.name, it.isDefault)
+      it.bookmarks.forEach { bookmark -> group.addLater(bookmark, bookmark.type, bookmark.description) }
     }
   }
 

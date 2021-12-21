@@ -1345,6 +1345,16 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
                 runTest("testData/stepping/custom/smartStepIntoConstructor.kt");
             }
 
+            @TestMetadata("smartStepIntoDeferredLambdas.kt")
+            public void testSmartStepIntoDeferredLambdas() throws Exception {
+                runTest("testData/stepping/custom/smartStepIntoDeferredLambdas.kt");
+            }
+
+            @TestMetadata("smartStepIntoDeferredSamLambdas.kt")
+            public void testSmartStepIntoDeferredSamLambdas() throws Exception {
+                runTest("testData/stepping/custom/smartStepIntoDeferredSamLambdas.kt");
+            }
+
             @TestMetadata("smartStepIntoFunWithDefaultArgs.kt")
             public void testSmartStepIntoFunWithDefaultArgs() throws Exception {
                 runTest("testData/stepping/custom/smartStepIntoFunWithDefaultArgs.kt");
@@ -1424,6 +1434,14 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             public void testSmartStepIntoSubClass() throws Exception {
                 runTest("testData/stepping/custom/smartStepIntoSubClass.kt");
             }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/stepping/custom")
+        public static class TestBucket004 extends AbstractIrKotlinSteppingTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doCustomTest, this, testDataFilePath);
+            }
 
             @TestMetadata("smartStepIntoToLambdaParameter.kt")
             public void testSmartStepIntoToLambdaParameter() throws Exception {
@@ -1433,14 +1451,6 @@ public abstract class IrKotlinSteppingTestGenerated extends AbstractIrKotlinStep
             @TestMetadata("smartStepIntoWithDelegates.kt")
             public void testSmartStepIntoWithDelegates() throws Exception {
                 runTest("testData/stepping/custom/smartStepIntoWithDelegates.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/stepping/custom")
-        public static class TestBucket004 extends AbstractIrKotlinSteppingTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doCustomTest, this, testDataFilePath);
             }
 
             @TestMetadata("smartStepIntoWithOverrides.kt")

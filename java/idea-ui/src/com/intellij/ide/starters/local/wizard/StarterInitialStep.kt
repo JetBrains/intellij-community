@@ -76,6 +76,10 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
 
   private val sdkModel: ProjectSdksModel = ProjectSdksModel()
 
+  protected lateinit var languageRow: Row
+  protected lateinit var groupRow: Row
+  protected lateinit var artifactRow: Row
+
   @Volatile
   private var isDisposed: Boolean = false
 
@@ -156,30 +160,36 @@ open class StarterInitialStep(contextProvider: StarterContextProvider) : ModuleW
 
       if (starterSettings.languages.size > 1) {
         row(JavaStartersBundle.message("title.project.language.label")) {
-          buttonSelector(starterSettings.languages, languageProperty) { it.title }
+          languageRow = this
+
+          segmentedButton(starterSettings.languages, languageProperty) { it.title }
         }.largeGapAfter()
       }
 
       if (starterSettings.projectTypes.isNotEmpty()) {
         val messages = starterSettings.customizedMessages
         row(messages?.projectTypeLabel ?: JavaStartersBundle.message("title.project.build.system.label")) {
-          buttonSelector(starterSettings.projectTypes, projectTypeProperty) { it?.title ?: "" }
+          segmentedButton(starterSettings.projectTypes, projectTypeProperty) { it?.title ?: "" }
         }.largeGapAfter()
       }
 
       if (starterSettings.testFrameworks.isNotEmpty()) {
         row(JavaStartersBundle.message("title.project.test.framework.label")) {
-          buttonSelector(starterSettings.testFrameworks, testFrameworkProperty) { it?.title ?: "" }
+          segmentedButton(starterSettings.testFrameworks, testFrameworkProperty) { it?.title ?: "" }
         }.largeGapAfter()
       }
 
       row(JavaStartersBundle.message("title.project.group.label")) {
+        groupRow = this
+
         textField(groupIdProperty)
           .growPolicy(GrowPolicy.SHORT_TEXT)
           .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_NO_WHITESPACES, CHECK_GROUP_FORMAT, CHECK_NO_RESERVED_WORDS)
       }.largeGapAfter()
 
       row(JavaStartersBundle.message("title.project.artifact.label")) {
+        artifactRow = this
+
         textField(artifactIdProperty)
           .growPolicy(GrowPolicy.SHORT_TEXT)
           .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_NO_WHITESPACES, CHECK_ARTIFACT_SIMPLE_FORMAT, CHECK_NO_RESERVED_WORDS)

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.welcomeScreen;
 
 import com.intellij.icons.AllIcons;
@@ -238,7 +238,7 @@ final class ProjectsTabFactory implements WelcomeTabFactory {
       public void drop(@NotNull DnDEvent event) {
         List<File> files = FileCopyPasteUtil.getFileListFromAttachedObject(event.getAttachedObject());
         if (!files.isEmpty()) {
-          ProjectUtil.tryOpenFileList(null, files, "WelcomeFrame");
+          ProjectUtil.tryOpenFiles(null, ContainerUtil.map((List<? extends File>)files, file -> file.toPath()), "WelcomeFrame");
         }
       }
     };

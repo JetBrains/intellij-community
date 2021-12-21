@@ -8,7 +8,7 @@ import com.intellij.testFramework.TestDataPath
 private const val inspectionPath = "/codeInspection/junit5assertionsconverter"
 
 @TestDataPath("\$CONTENT_ROOT/testData$inspectionPath")
-class KotlinJUnit5AssertionsConverterInspectionTest : JUnit5AssertionsConverterInspectionTestBase() {
+class KotlinJUnit5AssertionsConverterInspectionTest22 : JUnit5AssertionsConverterInspectionTestBase() {
   override fun getBasePath() = KotlinJvmAnalysisTestUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + inspectionPath
 
   fun `test AssertArrayEquals`() {

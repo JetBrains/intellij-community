@@ -1265,7 +1265,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
           if (validChildCount < myChildren.size()) {
             DependencyNode currentValidNode = myChildren.get(validChildCount);
 
-            if (currentValidNode.myArtifact.equals(each.getArtifact())) {
+            if (currentValidNode.myArtifact.equals(each.getArtifact())
+                && currentValidNode.myArtifactNode.getArtifact().isResolvedArtifact() == each.getArtifact().isResolvedArtifact()) {
               if (each.getState() == MavenArtifactState.ADDED) {
                 currentValidNode.updateChildren(each.getDependencies(), mavenProject);
               }
@@ -1305,7 +1306,8 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     private DependencyNode findOrCreateNodeFor(MavenArtifactNode artifact, MavenProject mavenProject, int from) {
       for (int i = from; i < myChildren.size(); i++) {
         DependencyNode node = myChildren.get(i);
-        if (node.myArtifact.equals(artifact.getArtifact())) {
+        if (node.myArtifact.equals(artifact.getArtifact())
+            && node.myArtifactNode.getArtifact().isResolvedArtifact() == artifact.getArtifact().isResolvedArtifact()) {
           return node;
         }
       }

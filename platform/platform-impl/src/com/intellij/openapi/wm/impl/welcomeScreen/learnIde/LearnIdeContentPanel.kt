@@ -102,10 +102,11 @@ class LearnIdeContentPanel(private val parentDisposable: Disposable) : JPanel() 
     interactiveCoursesPanel.layout = BoxLayout(interactiveCoursesPanel, BoxLayout.PAGE_AXIS)
     interactiveCoursesPanel.isOpaque = false
 
-    if (interactiveCoursesExtensions.isNotEmpty()) {
+    val coursesList = interactiveCoursesExtensions.mapNotNull { it.getInteractiveCourseData() }
+    if (coursesList.isNotEmpty()) {
       interactiveCoursesPanel.add(interactiveCoursesHeader)
       var actionButton: JButton? = null
-      for (interactiveCourse in interactiveCoursesExtensions.map { it.getInteractiveCourseData() }) {
+      for (interactiveCourse in coursesList) {
         interactiveCoursesPanel.add(rigid(0, 12))
         val interactiveCoursePanel = InteractiveCoursePanel(interactiveCourse)
         interactiveCoursesPanel.add(interactiveCoursePanel)

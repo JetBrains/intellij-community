@@ -25,33 +25,45 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.util.CachedValueImpl;
+import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.execution.filters.RegexpFilter.*;
+import static java.lang.String.format;
+
 public class GradleConsoleFilterProvider implements ConsoleFilterProvider {
+  /*
+   * `file:line` or `file:line:column`.
+   */
+  @Language("RegExp")
+  private static final @NonNls String EXPRESSION = format("%s:%s(?::%s)?", FILE_PATH_MACROS, LINE_MACROS, COLUMN_MACROS);
+
   @Override
-  public Filter @NotNull [] getDefaultFilters(@NotNull Project project) {
+  public @NotNull Filter @NotNull [] getDefaultFilters(final @NotNull Project project) {
     return new Filter[]{
       new GradleConsoleFilter(project),
-      new RegexpFilter(project, RegexpFilter.FILE_PATH_MACROS + ":" + RegexpFilter.LINE_MACROS) {
-        private final CachedValue<Boolean> myIsGradleProject = new CachedValueImpl<>(
+      new RegexpFilter(project, EXPRESSION) {
+        private final CachedValue<@NotNull Boolean> myIsGradleProject = new CachedValueImpl<>(
           () -> CachedValueProvider.Result.create(isGradleProject(), ProjectRootModificationTracker.getInstance(project)));
 
         @Override
-        public Result applyFilter(@NotNull String line, int entireLength) {
+        public @Nullable Result applyFilter(final @NotNull String line, final int entireLength) {
           if (!OSAgnosticPathUtil.isAbsolute(line)) return null;
-          if (Boolean.FALSE.equals(myIsGradleProject.getValue())) return null;
-          Result result = super.applyFilter(line, entireLength);
+          if (!myIsGradleProject.getValue()) return null;
+          final Result result = super.applyFilter(line, entireLength);
           if (result == null) return null;
-          Pattern pattern = getPattern();
-          Matcher matcher = pattern.matcher(StringUtil.newBombedCharSequence(line, 100));
+          final Pattern pattern = getPattern();
+          final Matcher matcher = pattern.matcher(StringUtil.newBombedCharSequence(line, 100));
           if (!matcher.lookingAt()) return result;
-          int lineStart = entireLength - line.length();
-          int start = lineStart + matcher.start();
-          int end = lineStart + matcher.end();
+          final int lineStart = entireLength - line.length();
+          final int start = lineStart + matcher.start();
+          final int end = lineStart + matcher.end();
           return new Result(start, end, result.getFirstHyperlinkInfo());
         }
 

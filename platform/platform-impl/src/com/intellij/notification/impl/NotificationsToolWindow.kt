@@ -6,8 +6,12 @@ import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.impl.ProjectUtilCore
+import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.notification.ActionCenter
+import com.intellij.notification.EventLog
+import com.intellij.notification.LogModel
 import com.intellij.notification.Notification
 import com.intellij.notification.impl.ui.NotificationsUtil
 import com.intellij.notification.impl.widget.IdeNotificationArea
@@ -29,7 +33,6 @@ import com.intellij.openapi.util.Clock
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
@@ -42,6 +45,7 @@ import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
+import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.HorizontalLayout
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.content.ContentFactory
@@ -51,13 +55,11 @@ import com.intellij.util.ModalityUiUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
-import java.awt.BorderLayout
-import java.awt.Color
-import java.awt.Component
-import java.awt.Graphics
+import java.awt.*
 import java.awt.event.*
 import java.util.*
 import java.util.function.Consumer
+import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.text.JTextComponent
@@ -70,40 +72,91 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
   companion object {
     const val ID = "Notifications"
 
-    val myNotificationList = ArrayList<Notification>()
-    val myToolWindowList = ArrayList<ToolWindow>()
-    val myLock = Object()
-    val ADD_KEY = Key.create<Consumer<Notification>>("callbackInterface")
-    val REMOVE_KEY = Key.create<Consumer<Notification?>>("removeCallbackInterface")
+    internal val myNotificationList = ArrayList<Notification>()
+    internal val myToolWindowList = ArrayList<ToolWindow>()
+    internal val myLock = Object()
+    internal val ADD_KEY = Key.create<Consumer<Notification>>("addCallbackInterface")
+    internal val EXPIRE_KEY = Key.create<Consumer<Notification?>>("expireCallbackInterface")
+    internal val STATE_KEY = Key.create<Supplier<List<Notification>>>("stateCallbackInterface")
+    internal val LIST_KEY = Key.create<Supplier<List<Notification>>>("listCallbackInterface")
 
-    fun remove(notification: Notification?) {
-      iterate { it.accept(notification) }
+    fun expire(notification: Notification?) {
+      iterateExpire { it.accept(notification) }
 
-      synchronized(myLock) {
-        if (notification == null) {
+      if (notification == null) {
+        val notifications = ArrayList<Notification>()
+        synchronized(myLock) {
+          notifications.addAll(myNotificationList)
           myNotificationList.clear()
         }
-        else {
+        for (n in notifications) {
+          n.expire()
+        }
+      }
+      else {
+        synchronized(myLock) {
           myNotificationList.remove(notification)
         }
       }
     }
 
-    fun iterate(callback: (Consumer<Notification?>) -> Unit) {
+    fun getStateNotifications(project: Project): List<Notification> {
+      return getNotifications(project, STATE_KEY) ?: Collections.emptyList()
+    }
+
+    fun getNotifications(project: Project?): List<Notification> {
+      val notifications = getNotifications(project, LIST_KEY)
+      if (notifications == null) {
+        synchronized(myLock) {
+          return ArrayList(myNotificationList)
+        }
+      }
+      return notifications
+    }
+
+    private fun getNotifications(project: Project?, stateKey: Key<Supplier<List<Notification>>>): List<Notification>? {
+      if (project == null) {
+        return null
+      }
+      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ID)
+      if (toolWindow != null && toolWindow.contentManagerIfCreated != null) {
+        return ArrayList(toolWindow.contentManager.getContent(0)!!.getUserData(stateKey)!!.get())
+      }
+      return null
+    }
+
+    private fun iterateExpire(callback: (Consumer<Notification?>) -> Unit) {
       for (project in ProjectUtilCore.getOpenProjects()) {
         val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ID)
-        if (toolWindow != null) {
-          callback.invoke(toolWindow.contentManager.getContent(0)!!.getUserData(REMOVE_KEY)!!)
+        if (toolWindow != null && toolWindow.contentManagerIfCreated != null) {
+          callback.invoke(toolWindow.contentManager.getContent(0)!!.getUserData(EXPIRE_KEY)!!)
         }
       }
     }
   }
 
   override fun isApplicable(project: Project): Boolean {
-    return Registry.`is`("ide.notification.action.center", false)
+    return ActionCenter.isEnabled()
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
+    NotificationContent(project, toolWindow)
+  }
+}
+
+private class NotificationContent(val project: Project,
+                                  val toolWindow: ToolWindow) : Disposable, ToolWindowManagerListener, LafManagerListener {
+  private val myNotifications = ArrayList<Notification>()
+  private val myIconNotifications = ArrayList<Notification>()
+
+  private val suggestions: NotificationGroupComponent
+  private val timeline: NotificationGroupComponent
+
+  private val singleSelectionHandler = SingleTextSelectionHandler()
+
+  private var myVisible = true
+
+  init {
     val panel = JBPanelWithEmptyText(BorderLayout())
     panel.background = NotificationComponent.BG_COLOR
 
@@ -111,120 +164,160 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     @Suppress("DialogTitleCapitalization")
     panel.emptyText.appendLine(IdeBundle.message("notifications.toolwindow.empty.text.second.line"))
 
-    val suggestions = NotificationGroupComponent(panel, true, project)
+    suggestions = NotificationGroupComponent(panel, true, project)
 
-    val timeline = NotificationGroupComponent(panel, false, project)
+    timeline = NotificationGroupComponent(panel, false, project)
 
-    val splitter = object : OnePixelSplitter(true, .5f) {
-      override fun createDivider(): Divider {
-        return object : OnePixelDivider(true, this) {
-          override fun setVisible(aFlag: Boolean) {
-            super.setVisible(aFlag)
-            setResizeEnabled(aFlag)
-            if (!aFlag) {
-              setBounds(0, 0, 0, 0)
-            }
-          }
-        }
-      }
-    }
+    val splitter = MySplitter()
     splitter.firstComponent = suggestions
     splitter.secondComponent = timeline
     panel.add(splitter)
 
-    val singleSelectionHandler = SingleTextSelectionHandler()
-
-    val myNotifications = ArrayList<Notification>()
-
     val content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false)
-    val addConsumer = Consumer<Notification> { notification ->
-      if (notification.isSuggestionType) {
-        suggestions.add(notification, singleSelectionHandler)
-      }
-      else {
-        timeline.add(notification, singleSelectionHandler)
-      }
-      myNotifications.add(notification)
-      updateIcon(toolWindow, myNotifications)
+
+    content.putUserData(NotificationsToolWindowFactory.ADD_KEY, Consumer(::add))
+    content.putUserData(NotificationsToolWindowFactory.EXPIRE_KEY, Consumer(::expire))
+    content.putUserData(NotificationsToolWindowFactory.STATE_KEY, Supplier { myIconNotifications })
+    content.putUserData(NotificationsToolWindowFactory.LIST_KEY, Supplier { myNotifications })
+
+    suggestions.setRemoveCallback(Consumer(::remove))
+    timeline.setClearCallback(::clear)
+
+    Disposer.register(toolWindow.disposable, this)
+
+    val newNotifications = ArrayList<Notification>()
+
+    synchronized(NotificationsToolWindowFactory.myLock) {
+      NotificationsToolWindowFactory.myToolWindowList.add(toolWindow)
+      newNotifications.addAll(NotificationsToolWindowFactory.myNotificationList)
+      NotificationsToolWindowFactory.myNotificationList.clear()
     }
-    content.putUserData(ADD_KEY, addConsumer)
-
-    val removeConsumer = Consumer<Notification?> { notification ->
-      if (notification == null) {
-        myNotifications.clear()
-        suggestions.clear()
-        timeline.clear()
-      }
-      else {
-        if (notification.isSuggestionType) {
-          suggestions.remove(notification)
-        }
-        else {
-          timeline.remove(notification)
-        }
-        myNotifications.remove(notification)
-      }
-      updateIcon(toolWindow, myNotifications)
-    }
-    content.putUserData(REMOVE_KEY, removeConsumer)
-    suggestions.setRemoveCallback(removeConsumer)
-
-    timeline.setClearCallback { notifications: List<Notification> ->
-      myNotifications.removeAll(notifications)
-      updateIcon(toolWindow, myNotifications)
-    }
-
-    synchronized(myLock) {
-      myToolWindowList.add(toolWindow)
-      Disposer.register(toolWindow.disposable, Disposable {
-        synchronized(myLock) {
-          myToolWindowList.remove(toolWindow)
-        }
-      })
-
-      for (notification in myNotificationList) {
-        addConsumer.accept(notification)
-      }
-      myNotificationList.clear()
+    for (notification in newNotifications) {
+      add(notification)
     }
 
     val contentManager = toolWindow.contentManager
     contentManager.addContent(content)
     contentManager.setSelectedContent(content)
 
-    project.messageBus.connect(toolWindow.disposable).subscribe(ToolWindowManagerListener.TOPIC, object : ToolWindowManagerListener {
-      private var myVisible = true
+    project.messageBus.connect(toolWindow.disposable).subscribe(ToolWindowManagerListener.TOPIC, this)
 
-      override fun stateChanged(toolWindowManager: ToolWindowManager) {
-        val visible = toolWindow.isVisible
-        if (myVisible != visible) {
-          myVisible = visible
-          if (visible) {
-            val ideFrame = WindowManager.getInstance().getIdeFrame(project)
-            val balloonLayout = ideFrame!!.balloonLayout as BalloonLayoutImpl
-            balloonLayout.closeAll()
-
-            suggestions.updateComponents()
-            timeline.updateComponents()
-          }
-          else {
-            suggestions.clearNewState()
-            timeline.clearNewState()
-            myNotifications.clear()
-            updateIcon(toolWindow, myNotifications)
-          }
-        }
-      }
-    })
-
-    ApplicationManager.getApplication().messageBus.connect(toolWindow.disposable).subscribe(LafManagerListener.TOPIC, LafManagerListener {
-      suggestions.updateLaf()
-      timeline.updateLaf()
-    })
+    ApplicationManager.getApplication().messageBus.connect(toolWindow.disposable).subscribe(LafManagerListener.TOPIC, this)
   }
 
-  private fun updateIcon(toolWindow: ToolWindow, notifications: List<Notification>) {
-    toolWindow.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(notifications))
+  private fun add(notification: Notification) {
+    if (!NotificationsConfigurationImpl.getSettings(notification.groupId).isShouldLog) {
+      return
+    }
+    if (notification.isSuggestionType) {
+      suggestions.add(notification, singleSelectionHandler)
+    }
+    else {
+      timeline.add(notification, singleSelectionHandler)
+    }
+    myNotifications.add(notification)
+    myIconNotifications.add(notification)
+    setStatusMessage(notification)
+    updateIcon()
+  }
+
+  private fun expire(notification: Notification?) {
+    if (notification == null) {
+      val notifications = ArrayList(myNotifications)
+
+      myNotifications.clear()
+      myIconNotifications.clear()
+      suggestions.clear()
+      timeline.clear()
+      setStatusMessage(null)
+      updateIcon()
+
+      for (n in notifications) {
+        n.expire()
+      }
+    }
+    else {
+      remove(notification)
+    }
+  }
+
+  private fun remove(notification: Notification) {
+    if (notification.isSuggestionType) {
+      suggestions.remove(notification)
+    }
+    else {
+      timeline.remove(notification)
+    }
+    myNotifications.remove(notification)
+    myIconNotifications.remove(notification)
+    setStatusMessage()
+    updateIcon()
+  }
+
+  private fun clear(notifications: List<Notification>) {
+    myNotifications.removeAll(notifications)
+    myIconNotifications.removeAll(notifications)
+    setStatusMessage()
+    updateIcon()
+  }
+
+  override fun stateChanged(toolWindowManager: ToolWindowManager) {
+    val visible = toolWindow.isVisible
+    if (myVisible != visible) {
+      myVisible = visible
+      if (visible) {
+        val ideFrame = WindowManager.getInstance().getIdeFrame(project)
+        val balloonLayout = ideFrame!!.balloonLayout as BalloonLayoutImpl
+        balloonLayout.closeAll()
+
+        suggestions.updateComponents()
+        timeline.updateComponents()
+      }
+      else {
+        suggestions.clearNewState()
+        timeline.clearNewState()
+        myIconNotifications.clear()
+        updateIcon()
+      }
+    }
+  }
+
+  override fun lookAndFeelChanged(source: LafManager) {
+    suggestions.updateLaf()
+    timeline.updateLaf()
+  }
+
+  private fun updateIcon() {
+    toolWindow.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(myIconNotifications))
+    LogModel.fireModelChanged()
+  }
+
+  private fun setStatusMessage() {
+    setStatusMessage(myNotifications.findLast { it.isImportant || it.isImportantSuggestion })
+  }
+
+  private fun setStatusMessage(notification: Notification?) {
+    EventLog.getLogModel(project).setStatusMessage(notification)
+  }
+
+  override fun dispose() {
+    synchronized(NotificationsToolWindowFactory.myLock) {
+      NotificationsToolWindowFactory.myToolWindowList.remove(toolWindow)
+    }
+  }
+}
+
+private class MySplitter : OnePixelSplitter(true, .5f) {
+  override fun createDivider(): Divider {
+    return object : OnePixelDivider(true, this) {
+      override fun setVisible(aFlag: Boolean) {
+        super.setVisible(aFlag)
+        setResizeEnabled(aFlag)
+        if (!aFlag) {
+          setBounds(0, 0, 0, 0)
+        }
+      }
+    }
   }
 }
 
@@ -283,7 +376,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
   private val mySuggestionGotItPanel = JPanel(BorderLayout())
 
   private lateinit var myClearCallback: (List<Notification>) -> Unit
-  private lateinit var myRemoveCallback: Consumer<Notification?>
+  private lateinit var myRemoveCallback: Consumer<Notification>
 
   init {
     background = NotificationComponent.BG_COLOR
@@ -425,7 +518,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     }
   }
 
-  fun setRemoveCallback(callback: Consumer<Notification?>) {
+  fun setRemoveCallback(callback: Consumer<Notification>) {
     myRemoveCallback = callback
   }
 
@@ -546,7 +639,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
 
 private class NotificationComponent(val notification: Notification,
                                     timeComponents: ArrayList<JLabel>,
-                                    val singleSelectionHandler: SingleTextSelectionHandler) : JPanel(BorderLayout(JBUI.scale(7), 0)) {
+                                    val singleSelectionHandler: SingleTextSelectionHandler) : JPanel() {
 
   companion object {
     val BG_COLOR = UIUtil.getListBackground()
@@ -564,13 +657,38 @@ private class NotificationComponent(val notification: Notification,
   private var myMorePopupVisible = false
   private var myRoundColor = BG_COLOR
   private lateinit var myDoNotAskHandler: (Boolean) -> Unit
-  private lateinit var myRemoveCallback: Consumer<Notification?>
+  private lateinit var myRemoveCallback: Consumer<Notification>
   private var myLafUpdater: Runnable? = null
 
   init {
     isOpaque = true
     background = BG_COLOR
     border = JBUI.Borders.empty(10, 10, 10, 0)
+
+    layout = object : BorderLayout(JBUI.scale(7), 0) {
+      private var myEastComponent: Component? = null
+
+      override fun addLayoutComponent(name: String?, comp: Component) {
+        if (EAST == name) {
+          myEastComponent = comp
+        }
+        else {
+          super.addLayoutComponent(name, comp)
+        }
+      }
+
+      override fun layoutContainer(target: Container) {
+        super.layoutContainer(target)
+        if (myEastComponent != null && myEastComponent!!.isVisible) {
+          val insets = target.insets
+          val height = target.height - insets.bottom - insets.top
+          val component = myEastComponent!!
+          component.setSize(component.width, height)
+          val d = component.preferredSize
+          component.setBounds(target.width - insets.right - d.width, insets.top, d.width, height)
+        }
+      }
+    }
 
     val iconPanel = JPanel(BorderLayout())
     iconPanel.isOpaque = false
@@ -637,7 +755,8 @@ private class NotificationComponent(val notification: Notification,
     val actionsSize = actions.size
 
     if (actionsSize > 0) {
-      val actionPanel = JPanel(HorizontalLayout(JBUIScale.scale(16)))
+      val layout = HorizontalLayout(JBUIScale.scale(16))
+      val actionPanel = JPanel(if (!notification.isSuggestionType && actions.size > 1) DropDownActionLayout(layout) else layout)
       actionPanel.isOpaque = false
 
       if (notification.isSuggestionType) {
@@ -658,9 +777,18 @@ private class NotificationComponent(val notification: Notification,
         }
       }
       else {
+        if (actionsSize > 1 && notification.collapseDirection == Notification.CollapseActionsDirection.KEEP_RIGHTMOST) {
+          actionPanel.add(MyDropDownAction(notification))
+        }
+
         for (action in actions) {
           @Suppress("DialogTitleCapitalization")
-          actionPanel.add(LinkLabel<Any>(action.templateText, action.templatePresentation.icon) { link, _ -> runAction(action, link) })
+          actionPanel.add(
+            LinkLabel(action.templateText, action.templatePresentation.icon, { link, _action -> runAction(_action, link) }, action))
+        }
+
+        if (actionsSize > 1 && notification.collapseDirection == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
+          actionPanel.add(MyDropDownAction(notification))
         }
       }
       centerPanel.add(actionPanel)
@@ -724,6 +852,7 @@ private class NotificationComponent(val notification: Notification,
       panel.isOpaque = false
       panel.add(button, BorderLayout.NORTH)
       add(panel, BorderLayout.EAST)
+      setComponentZOrder(panel, 0)
     }
     else {
       val timeComponent = JBLabel(DateFormatUtil.formatPrettyDateTime(notification.timestamp))
@@ -808,7 +937,7 @@ private class NotificationComponent(val notification: Notification,
     myDoNotAskHandler = handler
   }
 
-  fun setRemoveCallback(callback: Consumer<Notification?>) {
+  fun setRemoveCallback(callback: Consumer<Notification>) {
     myRemoveCallback = callback
   }
 
@@ -864,6 +993,85 @@ private class NotificationComponent(val notification: Notification,
       val cornerRadius = NotificationBalloonRoundShadowBorderProvider.CORNER_RADIUS.get()
       g.fillRoundRect(0, 0, width, height, cornerRadius, cornerRadius)
       config.restore()
+    }
+  }
+}
+
+private class MyDropDownAction(notification: Notification) : NotificationsManagerImpl.DropDownAction(null, null) {
+  var collapseActionsDirection: Notification.CollapseActionsDirection = notification.collapseDirection
+
+  init {
+    setListener(LinkListener { link, _ ->
+      val group = DefaultActionGroup()
+      val layout = link.parent.layout as DropDownActionLayout
+
+      for (action in layout.actions) {
+        if (!action.isVisible) {
+          group.add(action.linkData)
+        }
+      }
+
+      NotificationsManagerImpl.showPopup(link, group)
+    }, null)
+
+    text = notification.dropDownText
+    isVisible = false
+
+    Notification.setDataProvider(notification, this)
+  }
+}
+
+private class DropDownActionLayout(layout: LayoutManager2) : FinalLayoutWrapper(layout) {
+  val actions = ArrayList<LinkLabel<AnAction>>()
+  private lateinit var myDropDownAction: MyDropDownAction
+
+  override fun addLayoutComponent(comp: Component, constraints: Any?) {
+    super.addLayoutComponent(comp, constraints)
+    add(comp)
+  }
+
+  override fun addLayoutComponent(name: String?, comp: Component) {
+    super.addLayoutComponent(name, comp)
+    add(comp)
+  }
+
+  private fun add(component: Component) {
+    if (component is MyDropDownAction) {
+      myDropDownAction = component
+    }
+    else {
+      @Suppress("UNCHECKED_CAST")
+      actions.add(component as LinkLabel<AnAction>)
+    }
+  }
+
+  override fun layoutContainer(parent: Container) {
+    val width = parent.width
+
+    myDropDownAction.isVisible = false
+    for (action in actions) {
+      action.isVisible = true
+    }
+    layout.layoutContainer(parent)
+
+    val keepRightmost = myDropDownAction.collapseActionsDirection == Notification.CollapseActionsDirection.KEEP_RIGHTMOST
+    val collapseStart = if (keepRightmost) 0 else actions.size - 1
+    val collapseDelta = if (keepRightmost) 1 else -1
+    var collapseIndex = collapseStart
+
+    if (parent.preferredSize.width > width) {
+      myDropDownAction.isVisible = true
+      actions[collapseIndex].isVisible = false
+      collapseIndex += collapseDelta
+      actions[collapseIndex].isVisible = false
+      collapseIndex += collapseDelta
+      layout.layoutContainer(parent)
+
+      while (parent.preferredSize.width > width && collapseIndex >= 0 && collapseIndex < actions.size) {
+        actions.get(collapseIndex).isVisible = false
+        collapseIndex += collapseDelta
+        layout.layoutContainer(parent)
+      }
     }
   }
 }
@@ -948,8 +1156,18 @@ fun addNotification(project: Project?, notification: Notification) {
   }
   else {
     val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
-    if (toolWindow == null) {
-      addToCache(notification)
+    if (toolWindow == null || toolWindow.contentManagerIfCreated == null) {
+      val notifications = if (toolWindow == null) null else ArrayList<Notification>()
+      synchronized(NotificationsToolWindowFactory.myLock) {
+        NotificationsToolWindowFactory.myNotificationList.add(notification)
+        notifications?.addAll(NotificationsToolWindowFactory.myNotificationList)
+      }
+      EventLog.getLogModel(project).setStatusMessage(notification)
+      if (notifications != null) {
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed, Runnable {
+          toolWindow!!.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(notifications))
+        })
+      }
     }
     else {
       ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed, Runnable {

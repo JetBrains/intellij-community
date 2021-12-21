@@ -48,7 +48,9 @@ internal class LangManager : SimplePersistentStateComponent<LangManager.State>(S
     fun getInstance() = service<LangManager>()
   }
 
-  fun getLearningProjectPath(langSupport: LangSupport): String? = state.languageToProjectMap[langSupport.primaryLanguage]
+  fun getLearningProjectPath(langSupport: LangSupport): String? =
+    if (langSupport.useUserProjects) null
+    else state.languageToProjectMap[langSupport.primaryLanguage]
 
   fun setLearningProjectPath(langSupport: LangSupport, path: String) {
     state.languageToProjectMap[langSupport.primaryLanguage] = path

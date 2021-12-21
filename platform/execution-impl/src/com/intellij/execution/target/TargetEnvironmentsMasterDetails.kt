@@ -285,7 +285,7 @@ class TargetEnvironmentsMasterDetails @JvmOverloads constructor(
     }
 
     override fun update(e: AnActionEvent) {
-      templatePresentation.isEnabled = getSelectedTarget() != null
+      e.presentation.isEnabled = getSelectedTarget() != null
     }
 
     override fun actionPerformed(e: AnActionEvent) {

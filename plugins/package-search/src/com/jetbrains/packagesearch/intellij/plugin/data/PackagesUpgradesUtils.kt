@@ -27,7 +27,7 @@ internal suspend fun computePackageUpgrades(
             val upgradeVersion = PackageVersionUtils.upgradeCandidateVersionOrNull(normalizedPackageVersion, availableVersions)
             if (upgradeVersion != null && upgradeVersion.originalVersion is PackageVersion.Named) {
                 @Suppress("UNCHECKED_CAST") // The if guards us against cast errors
-                updatesByModule.getOrCreate(usageInfo.projectModule.nativeModule) { mutableSetOf() } +=
+                updatesByModule.getOrPut(usageInfo.projectModule.nativeModule) { mutableSetOf() } +=
                     PackagesToUpgrade.PackageUpgradeInfo(
                         installedPackageModel,
                         usageInfo,
@@ -40,8 +40,3 @@ internal suspend fun computePackageUpgrades(
     return PackagesToUpgrade(updatesByModule)
 }
 
-private inline fun <K : Any, V : Any> MutableMap<K, V>.getOrCreate(key: K, crossinline creator: (K) -> V): V =
-    this[key] ?: creator(key).let {
-        this[key] = it
-        return it
-    }

@@ -16,6 +16,9 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.registry.Registry
+import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationListener
+import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager
+import org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsTaskId
 import org.jetbrains.plugins.gradle.service.project.open.createLinkSettings
 import org.jetbrains.plugins.gradle.settings.GradleImportHintService
 import org.jetbrains.plugins.gradle.settings.GradleSettings
@@ -62,13 +65,20 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
     }
     val progressManager = ExternalSystemProgressNotificationManager.getInstance()
     val notificationListener = StateNotificationListener(project)
+
+    val externalAnnotationsNotificationManager = ExternalAnnotationsProgressNotificationManager.getInstance()
+    val externalAnnotationsProgressListener = StateExternalAnnotationNotificationListener()
+
     try {
+      externalAnnotationsNotificationManager.addNotificationListener(externalAnnotationsProgressListener)
       progressManager.addNotificationListener(notificationListener)
       importProjects(project)
       notificationListener.waitForImportEnd()
+      externalAnnotationsProgressListener.waitForResolveExternalAnnotationEnd()
     }
     finally {
       progressManager.removeNotificationListener(notificationListener)
+      externalAnnotationsNotificationManager.removeNotificationListener(externalAnnotationsProgressListener)
     }
   }
 
@@ -121,6 +131,24 @@ class GradleCommandLineProjectConfigurator : CommandLineInspectionProjectConfigu
     return false
   }
 
+  private class StateExternalAnnotationNotificationListener : ExternalAnnotationsProgressNotificationListener {
+    private val externalAnnotationsState = ConcurrentHashMap<ExternalAnnotationsTaskId, CompletableFuture<ExternalAnnotationsTaskId>>()
+
+    override fun onStartResolve(id: ExternalAnnotationsTaskId) {
+      externalAnnotationsState[id] = CompletableFuture()
+      LOG.info("Gradle resolving external annotations started ${id.projectId}")
+    }
+
+    override fun onFinishResolve(id: ExternalAnnotationsTaskId) {
+      val feature = externalAnnotationsState[id] ?: return
+      feature.complete(id)
+      LOG.info("Gradle resolving external annotations completed ${id.projectId}")
+    }
+
+    fun waitForResolveExternalAnnotationEnd() {
+      externalAnnotationsState.values.forEach { it.get() }
+    }
+  }
 
   class StateNotificationListener(private val project: Project) : ExternalSystemTaskNotificationListenerAdapter() {
     private val externalSystemState = ConcurrentHashMap<ExternalSystemTaskId, CompletableFuture<ExternalSystemTaskId>>()

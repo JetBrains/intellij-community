@@ -22,12 +22,12 @@ import org.jetbrains.java.decompiler.struct.gen.generics.GenericMain;
 import org.jetbrains.java.decompiler.struct.match.MatchEngine;
 import org.jetbrains.java.decompiler.struct.match.MatchNode;
 import org.jetbrains.java.decompiler.struct.match.MatchNode.RuleValue;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 import org.jetbrains.java.decompiler.util.TextUtil;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public class VarExprent extends Exprent {
   public static final int STACK_BASE = 10000;
@@ -178,7 +178,7 @@ public class VarExprent extends Exprent {
     VarExprent ve = (VarExprent)o;
     return index == ve.getIndex() &&
            version == ve.getVersion() &&
-           InterpreterUtil.equalObjects(getVarType(), ve.getVarType()); // FIXME: varType comparison redundant?
+           Objects.equals(getVarType(), ve.getVarType()); // FIXME: varType comparison redundant?
   }
 
   public int getIndex() {

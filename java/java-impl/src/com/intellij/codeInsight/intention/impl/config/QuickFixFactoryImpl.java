@@ -1129,4 +1129,9 @@ public final class QuickFixFactoryImpl extends QuickFixFactory {
                                                               @NotNull PsiCaseLabelElement labelElement) {
     return new MoveSwitchBranchUpFix(moveBeforeLabel, labelElement);
   }
+
+  @Override
+  public @NotNull IntentionAction createSimplifyBooleanFix(@NotNull PsiExpression expression, boolean value) {
+    return new SimplifyBooleanExpressionFix(expression, value);
+  }
 }

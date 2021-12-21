@@ -15,7 +15,7 @@ public class GeneralStatement extends Statement {
   // *****************************************************************************
 
   private GeneralStatement() {
-    type = Statement.TYPE_GENERAL;
+    super(Statement.TYPE_GENERAL);
   }
 
   public GeneralStatement(Statement head, Collection<? extends Statement> statements, Statement post) {

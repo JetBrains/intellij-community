@@ -4,7 +4,7 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.settingsSync.SettingsSyncBundle.message
 import org.jetbrains.annotations.Nls
 
-class SettingsSyncPluginsGroup : SettingsSyncSubcategoryGroup {
+internal class SettingsSyncPluginsGroup : SettingsSyncSubcategoryGroup {
   private val storedDescriptors = HashMap<String, SettingsSyncSubcategoryDescriptor>()
 
   override fun getDescriptors(): List<SettingsSyncSubcategoryDescriptor> {

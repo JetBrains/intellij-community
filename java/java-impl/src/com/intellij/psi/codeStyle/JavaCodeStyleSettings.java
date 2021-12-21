@@ -3,7 +3,6 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.configurationStore.Property;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -113,6 +112,8 @@ public class JavaCodeStyleSettings extends CustomCodeStyleSettings implements Im
   public boolean ALIGN_MULTILINE_ANNOTATION_PARAMETERS;
   public boolean NEW_LINE_AFTER_LPAREN_IN_ANNOTATION = false;
   public boolean RPAREN_ON_NEW_LINE_IN_ANNOTATION = false;
+
+  public boolean SPACE_AROUND_ANNOTATION_EQ = true;
 
   public boolean ALIGN_MULTILINE_TEXT_BLOCKS = false;
 

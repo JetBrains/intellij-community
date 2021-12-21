@@ -28,7 +28,7 @@ import com.intellij.testFramework.ServiceContainerUtil;
 import com.intellij.util.xmlb.SkipDefaultsSerializationFilter;
 import org.jdom.Element;
 import org.jdom.output.XMLOutputter;
-import org.jetbrains.idea.maven.MavenTestCase;
+import com.intellij.maven.testFramework.MavenTestCase;
 import org.jetbrains.idea.maven.utils.MavenSettings;
 
 import static com.intellij.configurationStore.DefaultStateSerializerKt.deserializeState;

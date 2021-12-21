@@ -11,6 +11,7 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.PsiDocToken;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -195,16 +196,19 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
         addNewLineToTag((CompositeElement)first, getContainingFile(), getManager());
       }
       else {
-        removeEndingAsterisksFromTag((CompositeElement)first);
+        removeEndingAsterisksFromTagIfNeeded((CompositeElement)first);
       }
     }
 
     return first;
   }
 
-  private static void removeEndingAsterisksFromTag(CompositeElement tag) {
+  private static void removeEndingAsterisksFromTagIfNeeded(CompositeElement tag) {
     ASTNode current = tag.getLastChildNode();
     while (current != null && current.getElementType() == DOC_COMMENT_DATA) {
+      if (current instanceof PsiDocToken) {
+        return;
+      }
       current = current.getTreePrev();
     }
     if (current != null && current.getElementType() == DOC_COMMENT_LEADING_ASTERISKS) {
@@ -218,6 +222,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
       }
     }
   }
+
 
   private static boolean nodeIsNextAfterAsterisks(@NotNull ASTNode node) {
     ASTNode current = TreeUtil.findSiblingBackward(node, DOC_COMMENT_LEADING_ASTERISKS);

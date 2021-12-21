@@ -21,7 +21,7 @@ import com.intellij.testFramework.fixtures.BasePlatformTestCase;
 import org.intellij.lang.regexp.RegExpLanguage;
 import org.intellij.plugins.markdown.lang.MarkdownFileType;
 import org.intellij.plugins.markdown.lang.MarkdownLanguage;
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraphImpl;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownParagraph;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -259,7 +259,7 @@ public class TextExtractionTest extends BasePlatformTestCase {
       @Override
       protected @NotNull List<TextContent> buildTextContents(@NotNull PsiElement element,
                                                              @NotNull Set<TextContent.TextDomain> allowedDomains) {
-        if (element instanceof MarkdownParagraphImpl) {
+        if (element instanceof MarkdownParagraph) {
           count++;
         }
         return delegate.buildTextContents(element, allowedDomains);

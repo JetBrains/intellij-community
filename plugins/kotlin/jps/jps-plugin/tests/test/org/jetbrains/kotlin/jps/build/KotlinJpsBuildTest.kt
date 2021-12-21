@@ -335,7 +335,7 @@ abstract class KotlinJpsBuildTest : KotlinJpsBuildTestBase() {
         }
     }
 
-    class TestBucket2 : KotlinJpsBuildTest() {
+    class TestBucket17 : KotlinJpsBuildTest() {
         @Test
         fun testKotlinJavaScriptProjectWithTwoModules() {
             initProject(JS_STDLIB)
@@ -490,7 +490,7 @@ abstract class KotlinJpsBuildTest : KotlinJpsBuildTestBase() {
         }
     }
 
-    class TestBucket3 : KotlinJpsBuildTest() {
+    class TestBucket23 : KotlinJpsBuildTest() {
         @Test
         fun testExcludeModuleFolderInSourceRootOfAnotherModule() {
             doTest()

@@ -101,6 +101,7 @@ target namespace.
 import imp
 from _pydev_bundle.pydev_imports import Exec
 from _pydevd_bundle import pydevd_dont_trace
+from _pydevd_bundle.pydevd_constants import IS_PY38_OR_GREATER
 import sys
 import traceback
 import types
@@ -149,6 +150,8 @@ def notify_error(*args):
 def code_objects_equal(code0, code1):
     for d in dir(code0):
         if d.startswith('_') or 'lineno' in d:
+            continue
+        if IS_PY38_OR_GREATER and d == 'replace':
             continue
         if getattr(code0, d) != getattr(code1, d):
             return False

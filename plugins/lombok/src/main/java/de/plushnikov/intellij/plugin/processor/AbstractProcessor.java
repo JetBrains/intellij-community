@@ -102,21 +102,42 @@ public abstract class AbstractProcessor implements Processor {
       return Collections.emptyList();
     }
 
-    final Map<String, String> fullQualifiedToShortNames = new HashMap<>(copyableAnnotations.getFullQualifiedToShortNames());
+    @NotNull Set<String> annotationNames = new HashSet<>();
+
+    final Collection<String> existedShortAnnotationNames = ContainerUtil.map2Set(fieldAnnotations, PsiAnnotationSearchUtil::getShortNameOf);
+
+    Map<String, Set<String>> shortNames = copyableAnnotations.getShortNames();
+    for (String shortName : existedShortAnnotationNames) {
+      Set<String> fqns = shortNames.get(shortName);
+      if (fqns != null) {
+        annotationNames.addAll(fqns);
+      }
+    }
+
     final PsiClass containingClass = psiField.getContainingClass();
     // append only for BASE_COPYABLE
     if (LombokCopyableAnnotations.BASE_COPYABLE.equals(copyableAnnotations) && null != containingClass) {
       Collection<String> configuredCopyableAnnotations =
         ConfigDiscovery.getInstance().getMultipleValueLombokConfigProperty(ConfigKey.COPYABLE_ANNOTATIONS, containingClass);
 
-      configuredCopyableAnnotations.forEach(fqn->fullQualifiedToShortNames.put(fqn, StringUtil.getShortName(fqn)));
+      for (String fqn : configuredCopyableAnnotations) {
+        if (existedShortAnnotationNames.contains(StringUtil.getShortName(fqn))) {
+          annotationNames.add(fqn);
+        }
+      }
     }
 
-    final Collection<String> existedShortAnnotationNames = ContainerUtil.map(fieldAnnotations, PsiAnnotationSearchUtil::getShortNameOf);
-    // reduce copyableAnnotations to only matching existed annotations by shortName
-    fullQualifiedToShortNames.values().retainAll(existedShortAnnotationNames);
-    // collect existing annotations to copy
-    return PsiAnnotationSearchUtil.findAllAnnotations(psiField, fullQualifiedToShortNames.keySet());
+    if (annotationNames.isEmpty()) {
+      return Collections.emptyList();
+    }
+
+    List<PsiAnnotation> result = new ArrayList<>();
+    for (PsiAnnotation annotation : fieldAnnotations) {
+      if (ContainerUtil.exists(annotationNames, annotation::hasQualifiedName)) {
+        result.add(annotation);
+      }
+    }
+    return result;
   }
 
   protected static void copyCopyableAnnotations(@NotNull PsiField fromPsiElement,

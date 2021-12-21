@@ -82,7 +82,7 @@ abstract class GradleKtsImportTest : KotlinGradleImportingTestCase() {
         }
     }
 
-    class CompositeBuild : GradleKtsImportTest() {
+    class CompositeBuild2 : GradleKtsImportTest() {
         @Test
         @TargetVersions("6.0.1+")
         fun testCompositeBuild() {

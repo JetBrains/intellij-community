@@ -10,8 +10,8 @@ import com.intellij.lang.LanguageUtil
 import com.intellij.psi.PsiElement
 import com.intellij.ui.DeferredIconImpl
 import com.intellij.util.ProcessingContext
-import org.intellij.plugins.markdown.injection.alias.LanguageGuesser
-import org.intellij.plugins.markdown.injection.alias.LanguageInfoString.findMainAlias
+import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageGuesser
+import org.intellij.plugins.markdown.injection.aliases.CodeFenceLanguageAliases.findMainAlias
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.util.hasType
@@ -19,7 +19,7 @@ import javax.swing.Icon
 
 class CodeFenceLanguageListCompletionProvider: CompletionProvider<CompletionParameters>() {
   override fun addCompletions(parameters: CompletionParameters, context: ProcessingContext, result: CompletionResultSet) {
-    for (provider in LanguageGuesser.customProviders) {
+    for (provider in CodeFenceLanguageGuesser.customProviders) {
       val lookups = provider.getCompletionVariantsForInfoString(parameters)
       for (lookupElement in lookups) {
         val element = LookupElementDecorator.withInsertHandler(lookupElement) { context: InsertionContext, item: LookupElementDecorator<LookupElement> ->

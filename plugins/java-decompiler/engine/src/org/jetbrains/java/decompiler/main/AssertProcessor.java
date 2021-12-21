@@ -83,8 +83,8 @@ public final class AssertProcessor {
                 if (invexpr.getInstance() != null &&
                     invexpr.getInstance().type == Exprent.EXPRENT_CONST &&
                     "desiredAssertionStatus".equals(invexpr.getName()) &&
-                    "java/lang/Class".equals(invexpr.getClassname()) &&
-                    invexpr.getLstParameters().isEmpty()) {
+                    "java/lang/Class".equals(invexpr.getClassName()) &&
+                    invexpr.getParameters().isEmpty()) {
 
                   ConstExprent cexpr = (ConstExprent)invexpr.getInstance();
                   if (VarType.VARTYPE_CLASS.equals(cexpr.getConstType())) {
@@ -181,8 +181,8 @@ public final class AssertProcessor {
 
 
     lstParams.add(retcond == null ? ascond : retcond);
-    if (!throwError.getLstParameters().isEmpty()) {
-      lstParams.add(throwError.getLstParameters().get(0));
+    if (!throwError.getParameters().isEmpty()) {
+      lstParams.add(throwError.getParameters().get(0));
     }
 
     AssertExprent asexpr = new AssertExprent(lstParams);

@@ -176,7 +176,6 @@ object CodeWithMeClientDownloader {
    *
    * Update this method (any jdk-related stuff) together with:
    *  `setupJdk.gradle`
-   *  `setupJbre.gradle`
    *  `org/jetbrains/intellij/build/impl/BundledJreManager.groovy`
    */
   fun downloadClientAndJdk(clientBuildVersion: String,

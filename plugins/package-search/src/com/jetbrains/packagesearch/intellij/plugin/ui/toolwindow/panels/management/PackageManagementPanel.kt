@@ -89,7 +89,7 @@ internal class PackageManagementPanel(
         dataProvider = project.packageSearchProjectService.dataProvider
     )
 
-    private val packageDetailsPanel = PackageDetailsPanel(operationExecutor)
+    private val packageDetailsPanel = PackageDetailsPanel(project, operationExecutor)
 
     private val packagesSplitter = JBSplitter(
         "PackageSearch.PackageManagementPanel.DetailsSplitter",

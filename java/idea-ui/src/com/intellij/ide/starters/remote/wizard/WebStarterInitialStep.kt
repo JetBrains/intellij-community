@@ -39,6 +39,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.AsyncProcessIcon
@@ -95,9 +96,9 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
   private val languageLevelsModel: DefaultComboBoxModel<StarterLanguageLevel> = DefaultComboBoxModel<StarterLanguageLevel>()
   private val applicationTypesModel: DefaultComboBoxModel<StarterAppType> = DefaultComboBoxModel<StarterAppType>()
 
-  private lateinit var projectTypesSelector: ButtonSelectorToolbar
-  private lateinit var packagingTypesSelector: ButtonSelectorToolbar
-  private lateinit var languagesSelector: ButtonSelectorToolbar
+  private lateinit var projectTypesSelector: SegmentedButtonToolbar
+  private lateinit var packagingTypesSelector: SegmentedButtonToolbar
+  private lateinit var languagesSelector: SegmentedButtonToolbar
 
   private var languages: List<StarterLanguage> = starterSettings.languages
   private var applicationTypes: List<StarterAppType> = starterSettings.applicationTypes
@@ -221,20 +222,20 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
 
       if (starterSettings.languages.size > 1) {
         row(JavaStartersBundle.message("title.project.language.label")) {
-          languagesSelector = buttonSelector(starterSettings.languages, languageProperty) { it.title }
+          languagesSelector = segmentedButton(starterSettings.languages, languageProperty) { it.title }
         }.largeGapAfter()
       }
 
       if (starterSettings.projectTypes.isNotEmpty()) {
         val messages = starterSettings.customizedMessages
         row(messages?.projectTypeLabel ?: JavaStartersBundle.message("title.project.type.label")) {
-          projectTypesSelector = buttonSelector(starterSettings.projectTypes, projectTypeProperty) { it?.title ?: "" }
+          projectTypesSelector = segmentedButton(starterSettings.projectTypes, projectTypeProperty) { it?.title ?: "" }
         }.largeGapAfter()
       }
 
       if (starterSettings.testFrameworks.isNotEmpty()) {
         row(JavaStartersBundle.message("title.project.test.framework.label")) {
-          buttonSelector(starterSettings.testFrameworks, testFrameworkProperty) { it?.title ?: "" }
+          segmentedButton(starterSettings.testFrameworks, testFrameworkProperty) { it?.title ?: "" }
         }.largeGapAfter()
       }
 
@@ -280,7 +281,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
 
       if (starterSettings.packagingTypes.isNotEmpty()) {
         row(JavaStartersBundle.message("title.project.packaging.label")) {
-          packagingTypesSelector = buttonSelector(starterSettings.packagingTypes, packagingProperty) { it?.title ?: "" }
+          packagingTypesSelector = segmentedButton(starterSettings.packagingTypes, packagingProperty) { it?.title ?: "" }
         }.largeGapAfter()
       }
 
@@ -489,6 +490,8 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
     starterContext.frameworkVersion = serverOptions.frameworkVersions.find { it.isDefault }
                                       ?: serverOptions.frameworkVersions.firstOrNull()
 
+    val currentPackageName = packageName // remember package name before applying group and artifact
+
     serverOptions.extractOption(SERVER_NAME_KEY) {
       if (entityName == suggestName(DEFAULT_MODULE_NAME)) {
         val newName = suggestName(it)
@@ -508,7 +511,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       }
     }
     serverOptions.extractOption(SERVER_PACKAGE_NAME_KEY) {
-      if (packageName == DEFAULT_PACKAGE_NAME && packageName != it) {
+      if (currentPackageName == DEFAULT_PACKAGE_NAME && currentPackageName != it) {
         packageNameProperty.set(it)
       }
     }

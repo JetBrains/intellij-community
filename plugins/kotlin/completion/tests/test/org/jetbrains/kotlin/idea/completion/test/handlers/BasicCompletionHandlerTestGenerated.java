@@ -115,61 +115,49 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/handlers/basic/extensionMethodInObject")
-    public abstract static class ExtensionMethodInObject extends AbstractBasicCompletionHandlerTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/extensionMethodInObject")
-        public static class TestBucket001 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("CompanionObjectInSameFileExplicitReceiver.kt")
-            public void testCompanionObjectInSameFileExplicitReceiver() throws Exception {
-                runTest("testData/handlers/basic/extensionMethodInObject/CompanionObjectInSameFileExplicitReceiver.kt");
-            }
-
-            @TestMetadata("CompanionObjectInSameFileImplicitReceiver.kt")
-            public void testCompanionObjectInSameFileImplicitReceiver() throws Exception {
-                runTest("testData/handlers/basic/extensionMethodInObject/CompanionObjectInSameFileImplicitReceiver.kt");
-            }
-
-            @TestMetadata("NestedCompanionObjectInSameFileExplicitReceiver.kt")
-            public void testNestedCompanionObjectInSameFileExplicitReceiver() throws Exception {
-                runTest("testData/handlers/basic/extensionMethodInObject/NestedCompanionObjectInSameFileExplicitReceiver.kt");
-            }
-
-            @TestMetadata("NestedCompanionObjectInSameFileImplicitReceiver.kt")
-            public void testNestedCompanionObjectInSameFileImplicitReceiver() throws Exception {
-                runTest("testData/handlers/basic/extensionMethodInObject/NestedCompanionObjectInSameFileImplicitReceiver.kt");
-            }
-
-            @TestMetadata("NestedObjectInSameFileExplicitReceiver.kt")
-            public void testNestedObjectInSameFileExplicitReceiver() throws Exception {
-                runTest("testData/handlers/basic/extensionMethodInObject/NestedObjectInSameFileExplicitReceiver.kt");
-            }
+    public static class ExtensionMethodInObject extends AbstractBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/extensionMethodInObject")
-        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
+        @TestMetadata("CompanionObjectInSameFileExplicitReceiver.kt")
+        public void testCompanionObjectInSameFileExplicitReceiver() throws Exception {
+            runTest("testData/handlers/basic/extensionMethodInObject/CompanionObjectInSameFileExplicitReceiver.kt");
+        }
 
-            @TestMetadata("NestedObjectInSameFileImplicitReceiver.kt")
-            public void testNestedObjectInSameFileImplicitReceiver() throws Exception {
-                runTest("testData/handlers/basic/extensionMethodInObject/NestedObjectInSameFileImplicitReceiver.kt");
-            }
+        @TestMetadata("CompanionObjectInSameFileImplicitReceiver.kt")
+        public void testCompanionObjectInSameFileImplicitReceiver() throws Exception {
+            runTest("testData/handlers/basic/extensionMethodInObject/CompanionObjectInSameFileImplicitReceiver.kt");
+        }
 
-            @TestMetadata("ObjectInSameFileExplicitReceiver.kt")
-            public void testObjectInSameFileExplicitReceiver() throws Exception {
-                runTest("testData/handlers/basic/extensionMethodInObject/ObjectInSameFileExplicitReceiver.kt");
-            }
+        @TestMetadata("NestedCompanionObjectInSameFileExplicitReceiver.kt")
+        public void testNestedCompanionObjectInSameFileExplicitReceiver() throws Exception {
+            runTest("testData/handlers/basic/extensionMethodInObject/NestedCompanionObjectInSameFileExplicitReceiver.kt");
+        }
 
-            @TestMetadata("ObjectInSameFileImplicitReceiver.kt")
-            public void testObjectInSameFileImplicitReceiver() throws Exception {
-                runTest("testData/handlers/basic/extensionMethodInObject/ObjectInSameFileImplicitReceiver.kt");
-            }
+        @TestMetadata("NestedCompanionObjectInSameFileImplicitReceiver.kt")
+        public void testNestedCompanionObjectInSameFileImplicitReceiver() throws Exception {
+            runTest("testData/handlers/basic/extensionMethodInObject/NestedCompanionObjectInSameFileImplicitReceiver.kt");
+        }
+
+        @TestMetadata("NestedObjectInSameFileExplicitReceiver.kt")
+        public void testNestedObjectInSameFileExplicitReceiver() throws Exception {
+            runTest("testData/handlers/basic/extensionMethodInObject/NestedObjectInSameFileExplicitReceiver.kt");
+        }
+
+        @TestMetadata("NestedObjectInSameFileImplicitReceiver.kt")
+        public void testNestedObjectInSameFileImplicitReceiver() throws Exception {
+            runTest("testData/handlers/basic/extensionMethodInObject/NestedObjectInSameFileImplicitReceiver.kt");
+        }
+
+        @TestMetadata("ObjectInSameFileExplicitReceiver.kt")
+        public void testObjectInSameFileExplicitReceiver() throws Exception {
+            runTest("testData/handlers/basic/extensionMethodInObject/ObjectInSameFileExplicitReceiver.kt");
+        }
+
+        @TestMetadata("ObjectInSameFileImplicitReceiver.kt")
+        public void testObjectInSameFileImplicitReceiver() throws Exception {
+            runTest("testData/handlers/basic/extensionMethodInObject/ObjectInSameFileImplicitReceiver.kt");
         }
     }
 
@@ -207,14 +195,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             public void testFunctionLiteralInsertOnSpace() throws Exception {
                 runTest("testData/handlers/basic/highOrderFunctions/FunctionLiteralInsertOnSpace.kt");
             }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/highOrderFunctions")
-        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
 
             @TestMetadata("FunctionLiteralInsertWhenNoSpacesForBraces.kt")
             public void testFunctionLiteralInsertWhenNoSpacesForBraces() throws Exception {
@@ -240,14 +220,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             public void testHigherOrderFunctionWithArgs2() throws Exception {
                 runTest("testData/handlers/basic/highOrderFunctions/HigherOrderFunctionWithArgs2.kt");
             }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/highOrderFunctions")
-        public static class TestBucket003 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
 
             @TestMetadata("HigherOrderFunctionWithArgs3.kt")
             public void testHigherOrderFunctionWithArgs3() throws Exception {
@@ -272,14 +244,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             @TestMetadata("OptionalParameters2.kt")
             public void testOptionalParameters2() throws Exception {
                 runTest("testData/handlers/basic/highOrderFunctions/OptionalParameters2.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/highOrderFunctions")
-        public static class TestBucket004 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("OptionalParameters3.kt")
@@ -310,7 +274,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/highOrderFunctions")
-        public static class TestBucket005 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -334,56 +298,44 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/handlers/basic/importAliases")
-    public abstract static class ImportAliases extends AbstractBasicCompletionHandlerTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/importAliases")
-        public static class TestBucket001 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("CompanionObject.kt")
-            public void testCompanionObject() throws Exception {
-                runTest("testData/handlers/basic/importAliases/CompanionObject.kt");
-            }
-
-            @TestMetadata("ExtensionFun.kt")
-            public void testExtensionFun() throws Exception {
-                runTest("testData/handlers/basic/importAliases/ExtensionFun.kt");
-            }
-
-            @TestMetadata("ExtensionVal.kt")
-            public void testExtensionVal() throws Exception {
-                runTest("testData/handlers/basic/importAliases/ExtensionVal.kt");
-            }
-
-            @TestMetadata("KDoc.kt")
-            public void testKDoc() throws Exception {
-                runTest("testData/handlers/basic/importAliases/KDoc.kt");
-            }
-
-            @TestMetadata("TopLevelFun.kt")
-            public void testTopLevelFun() throws Exception {
-                runTest("testData/handlers/basic/importAliases/TopLevelFun.kt");
-            }
+    public static class ImportAliases extends AbstractBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/importAliases")
-        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
+        @TestMetadata("CompanionObject.kt")
+        public void testCompanionObject() throws Exception {
+            runTest("testData/handlers/basic/importAliases/CompanionObject.kt");
+        }
 
-            @TestMetadata("TopLevelVal.kt")
-            public void testTopLevelVal() throws Exception {
-                runTest("testData/handlers/basic/importAliases/TopLevelVal.kt");
-            }
+        @TestMetadata("ExtensionFun.kt")
+        public void testExtensionFun() throws Exception {
+            runTest("testData/handlers/basic/importAliases/ExtensionFun.kt");
+        }
 
-            @TestMetadata("Type.kt")
-            public void testType() throws Exception {
-                runTest("testData/handlers/basic/importAliases/Type.kt");
-            }
+        @TestMetadata("ExtensionVal.kt")
+        public void testExtensionVal() throws Exception {
+            runTest("testData/handlers/basic/importAliases/ExtensionVal.kt");
+        }
+
+        @TestMetadata("KDoc.kt")
+        public void testKDoc() throws Exception {
+            runTest("testData/handlers/basic/importAliases/KDoc.kt");
+        }
+
+        @TestMetadata("TopLevelFun.kt")
+        public void testTopLevelFun() throws Exception {
+            runTest("testData/handlers/basic/importAliases/TopLevelFun.kt");
+        }
+
+        @TestMetadata("TopLevelVal.kt")
+        public void testTopLevelVal() throws Exception {
+            runTest("testData/handlers/basic/importAliases/TopLevelVal.kt");
+        }
+
+        @TestMetadata("Type.kt")
+        public void testType() throws Exception {
+            runTest("testData/handlers/basic/importAliases/Type.kt");
         }
     }
 
@@ -421,14 +373,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             public void testExpectClassValOverride() throws Exception {
                 runTest("testData/handlers/basic/override/ExpectClassValOverride.kt");
             }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/override")
-        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
 
             @TestMetadata("ImplementFunction.kt")
             public void testImplementFunction() throws Exception {
@@ -454,14 +398,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             public void testKeepComments() throws Exception {
                 runTest("testData/handlers/basic/override/KeepComments.kt");
             }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/override")
-        public static class TestBucket003 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
 
             @TestMetadata("KeepModifiersBefore.kt")
             public void testKeepModifiersBefore() throws Exception {
@@ -486,14 +422,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             @TestMetadata("PublicValInConstructorParameter.kt")
             public void testPublicValInConstructorParameter() throws Exception {
                 runTest("testData/handlers/basic/override/PublicValInConstructorParameter.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/override")
-        public static class TestBucket004 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("Suspend.kt")
@@ -524,7 +452,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/override")
-        public static class TestBucket005 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -543,94 +471,74 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/handlers/basic/parameterNameAndType")
-    public abstract static class ParameterNameAndType extends AbstractBasicCompletionHandlerTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/parameterNameAndType")
-        public static class TestBucket001 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("CodeStyleSettings.kt")
-            public void testCodeStyleSettings() throws Exception {
-                runTest("testData/handlers/basic/parameterNameAndType/CodeStyleSettings.kt");
-            }
-
-            @TestMetadata("Comma.kt")
-            public void testComma() throws Exception {
-                runTest("testData/handlers/basic/parameterNameAndType/Comma.kt");
-            }
-
-            @TestMetadata("InsertImport.kt")
-            public void testInsertImport() throws Exception {
-                runTest("testData/handlers/basic/parameterNameAndType/InsertImport.kt");
-            }
-
-            @TestMetadata("NoInsertionOnTypingColon.kt")
-            public void testNoInsertionOnTypingColon() throws Exception {
-                runTest("testData/handlers/basic/parameterNameAndType/NoInsertionOnTypingColon.kt");
-            }
-
-            @TestMetadata("NoInsertionOnTypingSpace.kt")
-            public void testNoInsertionOnTypingSpace() throws Exception {
-                runTest("testData/handlers/basic/parameterNameAndType/NoInsertionOnTypingSpace.kt");
-            }
+    public static class ParameterNameAndType extends AbstractBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/parameterNameAndType")
-        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("ParameterInFile.kt")
-            public void testParameterInFile() throws Exception {
-                runTest("testData/handlers/basic/parameterNameAndType/ParameterInFile.kt");
-            }
-
-            @TestMetadata("ParameterInFile2.kt")
-            public void testParameterInFile2() throws Exception {
-                runTest("testData/handlers/basic/parameterNameAndType/ParameterInFile2.kt");
-            }
-
-            @TestMetadata("Simple.kt")
-            public void testSimple() throws Exception {
-                runTest("testData/handlers/basic/parameterNameAndType/Simple.kt");
-            }
-
-            @TestMetadata("TabReplace1.kt")
-            public void testTabReplace1() throws Exception {
-                runTest("testData/handlers/basic/parameterNameAndType/TabReplace1.kt");
-            }
-
-            @TestMetadata("TabReplace2.kt")
-            public void testTabReplace2() throws Exception {
-                runTest("testData/handlers/basic/parameterNameAndType/TabReplace2.kt");
-            }
+        @TestMetadata("CodeStyleSettings.kt")
+        public void testCodeStyleSettings() throws Exception {
+            runTest("testData/handlers/basic/parameterNameAndType/CodeStyleSettings.kt");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/parameterNameAndType")
-        public static class TestBucket003 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
+        @TestMetadata("Comma.kt")
+        public void testComma() throws Exception {
+            runTest("testData/handlers/basic/parameterNameAndType/Comma.kt");
+        }
 
-            @TestMetadata("TabReplace3.kt")
-            public void testTabReplace3() throws Exception {
-                runTest("testData/handlers/basic/parameterNameAndType/TabReplace3.kt");
-            }
+        @TestMetadata("InsertImport.kt")
+        public void testInsertImport() throws Exception {
+            runTest("testData/handlers/basic/parameterNameAndType/InsertImport.kt");
+        }
 
-            @TestMetadata("TypeParameter.kt")
-            public void testTypeParameter() throws Exception {
-                runTest("testData/handlers/basic/parameterNameAndType/TypeParameter.kt");
-            }
+        @TestMetadata("NoInsertionOnTypingColon.kt")
+        public void testNoInsertionOnTypingColon() throws Exception {
+            runTest("testData/handlers/basic/parameterNameAndType/NoInsertionOnTypingColon.kt");
+        }
 
-            @TestMetadata("UserPrefix.kt")
-            public void testUserPrefix() throws Exception {
-                runTest("testData/handlers/basic/parameterNameAndType/UserPrefix.kt");
-            }
+        @TestMetadata("NoInsertionOnTypingSpace.kt")
+        public void testNoInsertionOnTypingSpace() throws Exception {
+            runTest("testData/handlers/basic/parameterNameAndType/NoInsertionOnTypingSpace.kt");
+        }
+
+        @TestMetadata("ParameterInFile.kt")
+        public void testParameterInFile() throws Exception {
+            runTest("testData/handlers/basic/parameterNameAndType/ParameterInFile.kt");
+        }
+
+        @TestMetadata("ParameterInFile2.kt")
+        public void testParameterInFile2() throws Exception {
+            runTest("testData/handlers/basic/parameterNameAndType/ParameterInFile2.kt");
+        }
+
+        @TestMetadata("Simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/handlers/basic/parameterNameAndType/Simple.kt");
+        }
+
+        @TestMetadata("TabReplace1.kt")
+        public void testTabReplace1() throws Exception {
+            runTest("testData/handlers/basic/parameterNameAndType/TabReplace1.kt");
+        }
+
+        @TestMetadata("TabReplace2.kt")
+        public void testTabReplace2() throws Exception {
+            runTest("testData/handlers/basic/parameterNameAndType/TabReplace2.kt");
+        }
+
+        @TestMetadata("TabReplace3.kt")
+        public void testTabReplace3() throws Exception {
+            runTest("testData/handlers/basic/parameterNameAndType/TabReplace3.kt");
+        }
+
+        @TestMetadata("TypeParameter.kt")
+        public void testTypeParameter() throws Exception {
+            runTest("testData/handlers/basic/parameterNameAndType/TypeParameter.kt");
+        }
+
+        @TestMetadata("UserPrefix.kt")
+        public void testUserPrefix() throws Exception {
+            runTest("testData/handlers/basic/parameterNameAndType/UserPrefix.kt");
         }
     }
 
@@ -697,202 +605,162 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/handlers/basic/stringTemplate")
-    public abstract static class StringTemplate extends AbstractBasicCompletionHandlerTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/stringTemplate")
-        public static class TestBucket001 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("1.kt")
-            public void test1() throws Exception {
-                runTest("testData/handlers/basic/stringTemplate/1.kt");
-            }
-
-            @TestMetadata("2.kt")
-            public void test2() throws Exception {
-                runTest("testData/handlers/basic/stringTemplate/2.kt");
-            }
-
-            @TestMetadata("3.kt")
-            public void test3() throws Exception {
-                runTest("testData/handlers/basic/stringTemplate/3.kt");
-            }
-
-            @TestMetadata("4.kt")
-            public void test4() throws Exception {
-                runTest("testData/handlers/basic/stringTemplate/4.kt");
-            }
-
-            @TestMetadata("AfterDot1.kt")
-            public void testAfterDot1() throws Exception {
-                runTest("testData/handlers/basic/stringTemplate/AfterDot1.kt");
-            }
+    public static class StringTemplate extends AbstractBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/stringTemplate")
-        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("AfterDot2.kt")
-            public void testAfterDot2() throws Exception {
-                runTest("testData/handlers/basic/stringTemplate/AfterDot2.kt");
-            }
-
-            @TestMetadata("AfterDot3.kt")
-            public void testAfterDot3() throws Exception {
-                runTest("testData/handlers/basic/stringTemplate/AfterDot3.kt");
-            }
-
-            @TestMetadata("AfterDot4.kt")
-            public void testAfterDot4() throws Exception {
-                runTest("testData/handlers/basic/stringTemplate/AfterDot4.kt");
-            }
-
-            @TestMetadata("AfterThisDot.kt")
-            public void testAfterThisDot() throws Exception {
-                runTest("testData/handlers/basic/stringTemplate/AfterThisDot.kt");
-            }
-
-            @TestMetadata("GlobalVal.kt")
-            public void testGlobalVal() throws Exception {
-                runTest("testData/handlers/basic/stringTemplate/GlobalVal.kt");
-            }
+        @TestMetadata("1.kt")
+        public void test1() throws Exception {
+            runTest("testData/handlers/basic/stringTemplate/1.kt");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/stringTemplate")
-        public static class TestBucket003 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
+        @TestMetadata("2.kt")
+        public void test2() throws Exception {
+            runTest("testData/handlers/basic/stringTemplate/2.kt");
+        }
 
-            @TestMetadata("GlobalValInCurlyBraces.kt")
-            public void testGlobalValInCurlyBraces() throws Exception {
-                runTest("testData/handlers/basic/stringTemplate/GlobalValInCurlyBraces.kt");
-            }
+        @TestMetadata("3.kt")
+        public void test3() throws Exception {
+            runTest("testData/handlers/basic/stringTemplate/3.kt");
+        }
 
-            @TestMetadata("InsertCurlyBracesBeforeLetter.kt")
-            public void testInsertCurlyBracesBeforeLetter() throws Exception {
-                runTest("testData/handlers/basic/stringTemplate/InsertCurlyBracesBeforeLetter.kt");
-            }
+        @TestMetadata("4.kt")
+        public void test4() throws Exception {
+            runTest("testData/handlers/basic/stringTemplate/4.kt");
+        }
 
-            @TestMetadata("NotEmptyPrefix.kt")
-            public void testNotEmptyPrefix() throws Exception {
-                runTest("testData/handlers/basic/stringTemplate/NotEmptyPrefix.kt");
-            }
+        @TestMetadata("AfterDot1.kt")
+        public void testAfterDot1() throws Exception {
+            runTest("testData/handlers/basic/stringTemplate/AfterDot1.kt");
+        }
 
-            @TestMetadata("Replace.kt")
-            public void testReplace() throws Exception {
-                runTest("testData/handlers/basic/stringTemplate/Replace.kt");
-            }
+        @TestMetadata("AfterDot2.kt")
+        public void testAfterDot2() throws Exception {
+            runTest("testData/handlers/basic/stringTemplate/AfterDot2.kt");
+        }
 
-            @TestMetadata("ValInObject.kt")
-            public void testValInObject() throws Exception {
-                runTest("testData/handlers/basic/stringTemplate/ValInObject.kt");
-            }
+        @TestMetadata("AfterDot3.kt")
+        public void testAfterDot3() throws Exception {
+            runTest("testData/handlers/basic/stringTemplate/AfterDot3.kt");
+        }
+
+        @TestMetadata("AfterDot4.kt")
+        public void testAfterDot4() throws Exception {
+            runTest("testData/handlers/basic/stringTemplate/AfterDot4.kt");
+        }
+
+        @TestMetadata("AfterThisDot.kt")
+        public void testAfterThisDot() throws Exception {
+            runTest("testData/handlers/basic/stringTemplate/AfterThisDot.kt");
+        }
+
+        @TestMetadata("GlobalVal.kt")
+        public void testGlobalVal() throws Exception {
+            runTest("testData/handlers/basic/stringTemplate/GlobalVal.kt");
+        }
+
+        @TestMetadata("GlobalValInCurlyBraces.kt")
+        public void testGlobalValInCurlyBraces() throws Exception {
+            runTest("testData/handlers/basic/stringTemplate/GlobalValInCurlyBraces.kt");
+        }
+
+        @TestMetadata("InsertCurlyBracesBeforeLetter.kt")
+        public void testInsertCurlyBracesBeforeLetter() throws Exception {
+            runTest("testData/handlers/basic/stringTemplate/InsertCurlyBracesBeforeLetter.kt");
+        }
+
+        @TestMetadata("NotEmptyPrefix.kt")
+        public void testNotEmptyPrefix() throws Exception {
+            runTest("testData/handlers/basic/stringTemplate/NotEmptyPrefix.kt");
+        }
+
+        @TestMetadata("Replace.kt")
+        public void testReplace() throws Exception {
+            runTest("testData/handlers/basic/stringTemplate/Replace.kt");
+        }
+
+        @TestMetadata("ValInObject.kt")
+        public void testValInObject() throws Exception {
+            runTest("testData/handlers/basic/stringTemplate/ValInObject.kt");
         }
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/handlers/basic/typeArgsForCall")
-    public abstract static class TypeArgsForCall extends AbstractBasicCompletionHandlerTest {
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/typeArgsForCall")
-        public static class TestBucket001 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("AfterElse.kt")
-            public void testAfterElse() throws Exception {
-                runTest("testData/handlers/basic/typeArgsForCall/AfterElse.kt");
-            }
-
-            @TestMetadata("AfterElvis.kt")
-            public void testAfterElvis() throws Exception {
-                runTest("testData/handlers/basic/typeArgsForCall/AfterElvis.kt");
-            }
-
-            @TestMetadata("ExpectedTypeDoesNotHelp.kt")
-            public void testExpectedTypeDoesNotHelp() throws Exception {
-                runTest("testData/handlers/basic/typeArgsForCall/ExpectedTypeDoesNotHelp.kt");
-            }
-
-            @TestMetadata("ExpectedTypeDoesNotHelp2.kt")
-            public void testExpectedTypeDoesNotHelp2() throws Exception {
-                runTest("testData/handlers/basic/typeArgsForCall/ExpectedTypeDoesNotHelp2.kt");
-            }
-
-            @TestMetadata("ExplicitLambdaSignature.kt")
-            public void testExplicitLambdaSignature() throws Exception {
-                runTest("testData/handlers/basic/typeArgsForCall/ExplicitLambdaSignature.kt");
-            }
+    public static class TypeArgsForCall extends AbstractBasicCompletionHandlerTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/typeArgsForCall")
-        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("FunctionTypeParameter1.kt")
-            public void testFunctionTypeParameter1() throws Exception {
-                runTest("testData/handlers/basic/typeArgsForCall/FunctionTypeParameter1.kt");
-            }
-
-            @TestMetadata("FunctionTypeParameter2.kt")
-            public void testFunctionTypeParameter2() throws Exception {
-                runTest("testData/handlers/basic/typeArgsForCall/FunctionTypeParameter2.kt");
-            }
-
-            @TestMetadata("FunctionTypeParameter3.kt")
-            public void testFunctionTypeParameter3() throws Exception {
-                runTest("testData/handlers/basic/typeArgsForCall/FunctionTypeParameter3.kt");
-            }
-
-            @TestMetadata("HasExpectedType.kt")
-            public void testHasExpectedType() throws Exception {
-                runTest("testData/handlers/basic/typeArgsForCall/HasExpectedType.kt");
-            }
-
-            @TestMetadata("NotAllTypeArgumentsFromParameters.kt")
-            public void testNotAllTypeArgumentsFromParameters() throws Exception {
-                runTest("testData/handlers/basic/typeArgsForCall/NotAllTypeArgumentsFromParameters.kt");
-            }
+        @TestMetadata("AfterElse.kt")
+        public void testAfterElse() throws Exception {
+            runTest("testData/handlers/basic/typeArgsForCall/AfterElse.kt");
         }
 
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/typeArgsForCall")
-        public static class TestBucket003 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
+        @TestMetadata("AfterElvis.kt")
+        public void testAfterElvis() throws Exception {
+            runTest("testData/handlers/basic/typeArgsForCall/AfterElvis.kt");
+        }
 
-            @TestMetadata("ReplaceByTab1.kt")
-            public void testReplaceByTab1() throws Exception {
-                runTest("testData/handlers/basic/typeArgsForCall/ReplaceByTab1.kt");
-            }
+        @TestMetadata("ExpectedTypeDoesNotHelp.kt")
+        public void testExpectedTypeDoesNotHelp() throws Exception {
+            runTest("testData/handlers/basic/typeArgsForCall/ExpectedTypeDoesNotHelp.kt");
+        }
 
-            @TestMetadata("ReplaceByTab2.kt")
-            public void testReplaceByTab2() throws Exception {
-                runTest("testData/handlers/basic/typeArgsForCall/ReplaceByTab2.kt");
-            }
+        @TestMetadata("ExpectedTypeDoesNotHelp2.kt")
+        public void testExpectedTypeDoesNotHelp2() throws Exception {
+            runTest("testData/handlers/basic/typeArgsForCall/ExpectedTypeDoesNotHelp2.kt");
+        }
 
-            @TestMetadata("Simple.kt")
-            public void testSimple() throws Exception {
-                runTest("testData/handlers/basic/typeArgsForCall/Simple.kt");
-            }
+        @TestMetadata("ExplicitLambdaSignature.kt")
+        public void testExplicitLambdaSignature() throws Exception {
+            runTest("testData/handlers/basic/typeArgsForCall/ExplicitLambdaSignature.kt");
+        }
 
-            @TestMetadata("TypeArgumentsFromParameters.kt")
-            public void testTypeArgumentsFromParameters() throws Exception {
-                runTest("testData/handlers/basic/typeArgsForCall/TypeArgumentsFromParameters.kt");
-            }
+        @TestMetadata("FunctionTypeParameter1.kt")
+        public void testFunctionTypeParameter1() throws Exception {
+            runTest("testData/handlers/basic/typeArgsForCall/FunctionTypeParameter1.kt");
+        }
+
+        @TestMetadata("FunctionTypeParameter2.kt")
+        public void testFunctionTypeParameter2() throws Exception {
+            runTest("testData/handlers/basic/typeArgsForCall/FunctionTypeParameter2.kt");
+        }
+
+        @TestMetadata("FunctionTypeParameter3.kt")
+        public void testFunctionTypeParameter3() throws Exception {
+            runTest("testData/handlers/basic/typeArgsForCall/FunctionTypeParameter3.kt");
+        }
+
+        @TestMetadata("HasExpectedType.kt")
+        public void testHasExpectedType() throws Exception {
+            runTest("testData/handlers/basic/typeArgsForCall/HasExpectedType.kt");
+        }
+
+        @TestMetadata("NotAllTypeArgumentsFromParameters.kt")
+        public void testNotAllTypeArgumentsFromParameters() throws Exception {
+            runTest("testData/handlers/basic/typeArgsForCall/NotAllTypeArgumentsFromParameters.kt");
+        }
+
+        @TestMetadata("ReplaceByTab1.kt")
+        public void testReplaceByTab1() throws Exception {
+            runTest("testData/handlers/basic/typeArgsForCall/ReplaceByTab1.kt");
+        }
+
+        @TestMetadata("ReplaceByTab2.kt")
+        public void testReplaceByTab2() throws Exception {
+            runTest("testData/handlers/basic/typeArgsForCall/ReplaceByTab2.kt");
+        }
+
+        @TestMetadata("Simple.kt")
+        public void testSimple() throws Exception {
+            runTest("testData/handlers/basic/typeArgsForCall/Simple.kt");
+        }
+
+        @TestMetadata("TypeArgumentsFromParameters.kt")
+        public void testTypeArgumentsFromParameters() throws Exception {
+            runTest("testData/handlers/basic/typeArgsForCall/TypeArgumentsFromParameters.kt");
         }
     }
 
@@ -930,14 +798,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             public void testNoDuplicate() throws Exception {
                 runTest("testData/handlers/basic/typeArgsForGenericFun/NoDuplicate.kt");
             }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/typeArgsForGenericFun")
-        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
 
             @TestMetadata("NotGeneric.kt")
             public void testNotGeneric() throws Exception {
@@ -963,14 +823,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             public void testWithParamFunc_LambdaDefaultArgument() throws Exception {
                 runTest("testData/handlers/basic/typeArgsForGenericFun/WithParamFunc_LambdaDefaultArgument.kt");
             }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/typeArgsForGenericFun")
-        public static class TestBucket003 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
 
             @TestMetadata("WithParamFunc_LambdaDefaultArgument2.kt")
             public void testWithParamFunc_LambdaDefaultArgument2() throws Exception {
@@ -995,14 +847,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             @TestMetadata("WithParamFunc_LambdaExplicitNonInferrable.kt")
             public void testWithParamFunc_LambdaExplicitNonInferrable() throws Exception {
                 runTest("testData/handlers/basic/typeArgsForGenericFun/WithParamFunc_LambdaExplicitNonInferrable.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic/typeArgsForGenericFun")
-        public static class TestBucket004 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("WithParamFunc_LambdaSingleExplicitArgument.kt")
@@ -1033,7 +877,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic/typeArgsForGenericFun")
-        public static class TestBucket005 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1089,14 +933,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             public void testClassNameWithAliasConfict() throws Exception {
                 runTest("testData/handlers/basic/ClassNameWithAliasConfict.kt");
             }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic")
-        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
 
             @TestMetadata("ClassNameWithPackageConflict.kt")
             public void testClassNameWithPackageConflict() throws Exception {
@@ -1122,14 +958,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             public void testExtensionFunctionTypeVariable1() throws Exception {
                 runTest("testData/handlers/basic/ExtensionFunctionTypeVariable1.kt");
             }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic")
-        public static class TestBucket003 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
 
             @TestMetadata("ExtensionFunctionTypeVariable2.kt")
             public void testExtensionFunctionTypeVariable2() throws Exception {
@@ -1154,14 +982,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             @TestMetadata("GenericFunctionWithTab2.kt")
             public void testGenericFunctionWithTab2() throws Exception {
                 runTest("testData/handlers/basic/GenericFunctionWithTab2.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic")
-        public static class TestBucket004 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("GetOperator.kt")
@@ -1192,7 +1012,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic")
-        public static class TestBucket005 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket002 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1221,14 +1041,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             public void testKT12328() throws Exception {
                 runTest("testData/handlers/basic/KT12328.kt");
             }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic")
-        public static class TestBucket006 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
 
             @TestMetadata("KT14130.kt")
             public void testKT14130() throws Exception {
@@ -1254,14 +1066,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             public void testKT36306() throws Exception {
                 runTest("testData/handlers/basic/KT36306.kt");
             }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic")
-        public static class TestBucket007 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
 
             @TestMetadata("NestedClassNameWithFileLevelConflict.kt")
             public void testNestedClassNameWithFileLevelConflict() throws Exception {
@@ -1286,14 +1090,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             @TestMetadata("PreferMatchingKeyword.kt")
             public void testPreferMatchingKeyword() throws Exception {
                 runTest("testData/handlers/basic/PreferMatchingKeyword.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic")
-        public static class TestBucket008 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("ReceiverParam.kt")
@@ -1324,7 +1120,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/handlers/basic")
-        public static class TestBucket009 extends AbstractBasicCompletionHandlerTest {
+        public static class TestBucket003 extends AbstractBasicCompletionHandlerTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
@@ -1353,14 +1149,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             public void testSuperMethod2() throws Exception {
                 runTest("testData/handlers/basic/SuperMethod2.kt");
             }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic")
-        public static class TestBucket010 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
 
             @TestMetadata("SuperTypeArg.kt")
             public void testSuperTypeArg() throws Exception {
@@ -1385,14 +1173,6 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             @TestMetadata("TypeAliasConfict2.kt")
             public void testTypeAliasConfict2() throws Exception {
                 runTest("testData/handlers/basic/TypeAliasConfict2.kt");
-            }
-        }
-
-        @RunWith(JUnit3RunnerWithInners.class)
-        @TestMetadata("testData/handlers/basic")
-        public static class TestBucket011 extends AbstractBasicCompletionHandlerTest {
-            private void runTest(String testDataFilePath) throws Exception {
-                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
             @TestMetadata("TypeAliasConfict3.kt")

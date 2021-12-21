@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 // AFTER-WARNING: Parameter 'scriptBuilder' is never used
 // AFTER-WARNING: Parameter 'x' is never used
 // AFTER-WARNING: Variable 'resultWithDefaultPlugins' is never used

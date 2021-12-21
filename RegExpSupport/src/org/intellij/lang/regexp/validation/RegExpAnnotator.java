@@ -357,8 +357,9 @@ public final class RegExpAnnotator extends RegExpElementVisitor implements Annot
   @Override
   public void visitRegExpClosure(RegExpClosure closure) {
     if (closure.getAtom() instanceof RegExpSetOptions) {
-      myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.dangling.metacharacter"))
-        .range(closure.getQuantifier())
+      final RegExpQuantifier quantifier = closure.getQuantifier();
+      myHolder.newAnnotation(HighlightSeverity.ERROR, RegExpBundle.message("error.dangling.metacharacter", quantifier.getUnescapedText()))
+        .range(quantifier)
         .create();
     }
   }

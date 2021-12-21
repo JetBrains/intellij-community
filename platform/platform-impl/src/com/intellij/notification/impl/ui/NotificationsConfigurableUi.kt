@@ -2,10 +2,10 @@
 package com.intellij.notification.impl.ui
 
 import com.intellij.ide.IdeBundle
+import com.intellij.notification.ActionCenter
 import com.intellij.notification.impl.NotificationsConfigurationImpl
 import com.intellij.openapi.options.ConfigurableUi
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.ui.ListSpeedSearch
 import com.intellij.ui.ScrollingUtil
 import com.intellij.ui.SimpleListCellRenderer
@@ -49,7 +49,7 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
           component(notificationSettings.ui).withLargeLeftGap().constraints(CCFlags.pushX)
         }
       }
-      if (Registry.`is`("ide.notification.action.center", false)) {
+      if (ActionCenter.isEnabled()) {
         r.largeGapAfter()
         row {
           label(IdeBundle.message("notifications.configurable.do.not.ask.title"))

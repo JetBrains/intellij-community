@@ -7,7 +7,6 @@ import com.intellij.ui.dsl.gridLayout.impl.GridImpl
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
 
-@ApiStatus.Experimental
 enum class HorizontalAlign {
   LEFT,
   CENTER,
@@ -15,7 +14,6 @@ enum class HorizontalAlign {
   FILL
 }
 
-@ApiStatus.Experimental
 enum class VerticalAlign {
   TOP,
   CENTER,
@@ -23,7 +21,6 @@ enum class VerticalAlign {
   FILL
 }
 
-@ApiStatus.Experimental
 data class Constraints(
 
   /**
@@ -89,6 +86,7 @@ data class Constraints(
   /**
    * Component helper for custom behaviour
    */
+  @ApiStatus.Experimental
   val componentHelper: ComponentHelper? = null
 ) {
 

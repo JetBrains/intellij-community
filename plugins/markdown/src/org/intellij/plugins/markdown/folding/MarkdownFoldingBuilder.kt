@@ -32,31 +32,31 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
         element.acceptChildren(this)
       }
 
-      override fun visitList(list: MarkdownListImpl) {
+      override fun visitList(list: MarkdownList) {
         addDescriptors(list)
         super.visitList(list)
       }
 
-      override fun visitParagraph(paragraph: MarkdownParagraphImpl) {
+      override fun visitParagraph(paragraph: MarkdownParagraph) {
         val parent = paragraph.parent
-        if (parent is MarkdownBlockQuoteImpl && parent.childrenOfType<MarkdownParagraphImpl>().size <= 1) {
+        if (parent is MarkdownBlockQuote && parent.childrenOfType<MarkdownParagraph>().size <= 1) {
           return
         }
         addDescriptors(paragraph)
         super.visitParagraph(paragraph)
       }
 
-      override fun visitTable(table: MarkdownTableImpl) {
+      override fun visitTable(table: MarkdownTable) {
         addDescriptors(table)
         super.visitTable(table)
       }
 
-      override fun visitBlockQuote(blockQuote: MarkdownBlockQuoteImpl) {
+      override fun visitBlockQuote(blockQuote: MarkdownBlockQuote) {
         addDescriptors(blockQuote)
         super.visitBlockQuote(blockQuote)
       }
 
-      override fun visitCodeFence(codeFence: MarkdownCodeFenceImpl) {
+      override fun visitCodeFence(codeFence: MarkdownCodeFence) {
         addDescriptors(codeFence)
         super.visitCodeFence(codeFence)
       }
@@ -82,9 +82,9 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
   }
 
   private class HeaderRegionsBuildingVisitor(private val regionConsumer: (MarkdownPsiElement, TextRange) -> Unit): MarkdownRecursiveElementVisitor() {
-    private var lastProcessedHeader: MarkdownHeaderImpl? = null
+    private var lastProcessedHeader: MarkdownHeader? = null
 
-    override fun visitHeader(header: MarkdownHeaderImpl) {
+    override fun visitHeader(header: MarkdownHeader) {
       processContainer(header, {}) { nextHeader ->
         val regionEnd = skipNewLinesBackward(nextHeader)
         createRegionIfNeeded(header, regionEnd)
@@ -108,15 +108,15 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
       }
     }
 
-    private fun PsiElement.headersHierarchy(): Sequence<MarkdownHeaderImpl> {
+    private fun PsiElement.headersHierarchy(): Sequence<MarkdownHeader> {
       return sequence {
-        val headers = siblings(forward = false, withSelf = true).filterIsInstance<MarkdownHeaderImpl>()
+        val headers = siblings(forward = false, withSelf = true).filterIsInstance<MarkdownHeader>()
         var nextMaxLevel = Int.MAX_VALUE
         for (header in headers) {
           if (nextMaxLevel <= 1) {
             break
           }
-          val level = header.headerNumber
+          val level = header.level
           if (level < nextMaxLevel) {
             nextMaxLevel = level
             yield(header)
@@ -125,7 +125,7 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
       }
     }
 
-    private fun createRegionIfNeeded(currentHeader: MarkdownHeaderImpl, regionEnd: PsiElement?) {
+    private fun createRegionIfNeeded(currentHeader: MarkdownHeader, regionEnd: PsiElement?) {
       if (regionEnd != null) {
         val range = TextRange.create(currentHeader.textRange.startOffset, regionEnd.textRange.endOffset)
         regionConsumer.invoke(currentHeader, range)

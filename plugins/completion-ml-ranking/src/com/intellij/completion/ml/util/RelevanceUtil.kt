@@ -3,7 +3,6 @@ package com.intellij.completion.ml.util
 import com.intellij.codeInsight.completion.ml.MLWeigherUtil
 import com.intellij.completion.ml.features.MLCompletionWeigher
 import com.intellij.completion.ml.sorting.FeatureUtils
-import com.intellij.internal.statistic.utils.PluginType
 import com.intellij.internal.statistic.utils.getPluginInfo
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Pair
@@ -26,13 +25,13 @@ object RelevanceUtil {
                                       "com.zlabs.code.completion.ScaCompletionWeigher",
                                       "com.aliyun.odps.studio.intellij.compiler.codecompletion.OdpsqlCompletionWeigher")
 
-  private val weighersClassesCache = mutableMapOf<String, PluginType>()
+  private val weighersClassesCache = HashMap<String, Boolean>()
 
   /*
   * First map contains only features affecting default elements ordering
   * */
   fun asRelevanceMaps(relevanceObjects: List<Pair<String, Any?>>): kotlin.Pair<MutableMap<String, Any>, MutableMap<String, Any>> {
-    val relevanceMap = mutableMapOf<String, Any>()
+    val relevanceMap = HashMap<String, Any>()
     val additionalMap = mutableMapOf<String, Any>()
     for (pair in relevanceObjects) {
       val name = pair.first.normalized()
@@ -58,9 +57,8 @@ object RelevanceUtil {
     return value is Number || value is Boolean || value.javaClass.isEnum || isJetBrainsClass(value.javaClass)
   }
 
-  private fun isJetBrainsClass(cl: Class<*>): Boolean {
-    val pluginType = weighersClassesCache.getOrPut(cl.name) { getPluginInfo(cl).type }
-    return pluginType.isDevelopedByJetBrains()
+  private fun isJetBrainsClass(aClass: Class<*>): Boolean {
+    return weighersClassesCache.getOrPut(aClass.name) { getPluginInfo(aClass).type.isDevelopedByJetBrains() }
   }
 
   private fun String.normalized(): String {

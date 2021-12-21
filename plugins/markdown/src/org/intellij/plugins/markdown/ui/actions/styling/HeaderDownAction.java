@@ -5,7 +5,7 @@ import com.intellij.openapi.editor.Caret;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderImpl;
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader;
 import org.jetbrains.annotations.NotNull;
 
 public class HeaderDownAction extends MarkdownHeaderAction {
@@ -21,9 +21,9 @@ public class HeaderDownAction extends MarkdownHeaderAction {
     if (parent == null) {
       return false;
     }
-    final var header = PsiTreeUtil.getParentOfType(parent, MarkdownHeaderImpl.class, false);
+    final var header = PsiTreeUtil.getParentOfType(parent, MarkdownHeader.class, false);
     if (header != null) {
-      return header.getHeaderNumber() != 6;
+      return header.getLevel() != 6;
     }
     return true;
   }

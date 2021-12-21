@@ -39,7 +39,7 @@ public class TransientFileContentIndex<Key, Value> extends VfsAwareMapReduceInde
           new VfsAwareIndexStorageLayout<>() {
             @Override
             public @NotNull IndexStorage<Key, Value> openIndexStorage() throws IOException {
-              return new TransientChangesIndexStorage<>(indexStorageLayout.openIndexStorage(), extension.getName());
+              return new TransientChangesIndexStorage<>(indexStorageLayout.openIndexStorage(), extension);
             }
 
             @Override

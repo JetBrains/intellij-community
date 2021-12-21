@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.actions;
 
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText;
@@ -30,19 +31,6 @@ public class VcsQuickActionsToolbarPopup extends IconWithTextAction implements C
 
   public VcsQuickActionsToolbarPopup() {
     getTemplatePresentation().setText(VcsBundle.messagePointer("vcs.quicklist.popup.title"));
-  }
-
-  private static void showPopup(@NotNull AnActionEvent e, @NotNull ListPopup popup) {
-    InputEvent mouseEvent = e.getInputEvent();
-    if (mouseEvent instanceof MouseEvent) {
-      Object source = mouseEvent.getSource();
-      if (source instanceof JComponent) {
-        Point topLeftCorner = ((JComponent)source).getLocationOnScreen();
-        Point bottomLeftCorner = new Point(topLeftCorner.x, topLeftCorner.y + ((JComponent)source).getHeight());
-        popup.setLocation(bottomLeftCorner);
-        popup.show((JComponent)source);
-      }
-    }
   }
 
   @NotNull
@@ -75,6 +63,29 @@ public class VcsQuickActionsToolbarPopup extends IconWithTextAction implements C
       group, dataContext, JBPopupFactory.ActionSelectionAid.NUMBERING, true, null, -1,
       action -> true, ActionPlaces.RUN_TOOLBAR_LEFT_SIDE);
 
-    showPopup(e, popup);
+    var component = e.getInputEvent().getComponent();
+    popup.showUnderneathOf(component);
+
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    if (e.getPlace() != ActionPlaces.MAIN_TOOLBAR) {
+      e.getPresentation().setEnabledAndVisible(false);
+      return;
+    }
+  }
+
+  private static void showPopup(@NotNull AnActionEvent e, @NotNull ListPopup popup) {
+    InputEvent mouseEvent = e.getInputEvent();
+    if (mouseEvent instanceof MouseEvent) {
+      Object source = mouseEvent.getSource();
+      if (source instanceof JComponent) {
+        Point topLeftCorner = ((JComponent)source).getLocationOnScreen();
+        Point bottomLeftCorner = new Point(topLeftCorner.x, topLeftCorner.y + ((JComponent)source).getHeight());
+        popup.setLocation(bottomLeftCorner);
+        popup.show((JComponent)source);
+      }
+    }
   }
 }

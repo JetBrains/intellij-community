@@ -352,7 +352,7 @@ public final class Utils extends DataContextUtils {
         }
       }
       else if (action instanceof ActionGroup &&
-               !Boolean.TRUE.equals(presentation.getClientProperty("actionGroup.perform.only"))) {
+               !Boolean.TRUE.equals(presentation.getClientProperty(ActionUpdater.SUPPRESS_SUBMENU_IMPL))) {
         ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, useDarkIcons);
         component.add(menu);
         children.add(menu);

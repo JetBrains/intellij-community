@@ -6,12 +6,12 @@ import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getLineIndentSpaces
 import org.intellij.plugins.markdown.editor.lists.ListUtils.normalizedMarker
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 
 /**
  * Represents a list item. Allows to easily change whole item's indent (including sub-items).
  */
-internal class ListItemInfo(item: MarkdownListItemImpl, val document: Document) {
+internal class ListItemInfo(item: MarkdownListItem, val document: Document) {
   private val file = item.containingFile
 
   val lines = document.getLineNumber(item.startOffset)..document.getLineNumber(item.endOffset)

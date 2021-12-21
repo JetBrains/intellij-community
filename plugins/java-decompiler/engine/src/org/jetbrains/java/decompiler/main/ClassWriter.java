@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.java.decompiler.main;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
@@ -420,6 +420,7 @@ public class ClassWriter {
     }
 
     List<StructRecordComponent> components = cl.getRecordComponents();
+    List<String> permittedSubclassQualifiedNames = cl.getPermittedSubclasses();
 
     if (components != null) {
       // records are implicitly final
@@ -427,6 +428,13 @@ public class ClassWriter {
     }
 
     appendModifiers(buffer, flags, CLASS_ALLOWED, isInterface, CLASS_EXCLUDED);
+
+    if (permittedSubclassQualifiedNames != null) {
+      buffer.append("sealed ");
+    }
+    else if (node.isNonSealed()) {
+      buffer.append("non-sealed ");
+    }
 
     if (isEnum) {
       buffer.append("enum ");
@@ -498,6 +506,28 @@ public class ClassWriter {
       }
     }
 
+    if (permittedSubclassQualifiedNames != null && !permittedSubclassQualifiedNames.isEmpty()) {
+      Set<String> qualifiedNested = node.nested.stream()
+        .map(nestedNode -> nestedNode.classStruct.qualifiedName)
+        .collect(Collectors.toSet());
+      boolean allSubClassesAreNested = qualifiedNested.containsAll(permittedSubclassQualifiedNames);
+      if (!allSubClassesAreNested) { // only generate permits lists for non-nested classes
+        buffer.append("permits ");
+        for (int i = 0; i < permittedSubclassQualifiedNames.size(); i++) {
+          String qualifiedName = permittedSubclassQualifiedNames.get(i);
+          boolean isNested = qualifiedNested.contains(qualifiedName);
+          if (!isNested) {
+            if (i > 0) {
+              buffer.append(", ");
+            }
+            DecompilerContext.getImportCollector().getShortName(qualifiedName);
+            String simpleName = qualifiedName.substring(qualifiedName.lastIndexOf('/') + 1);
+            buffer.append(simpleName);
+          }
+        }
+        buffer.append(' ');
+      }
+    }
     buffer.append('{').appendLineSeparator();
   }
 
@@ -582,7 +612,7 @@ public class ClassWriter {
       if (attr != null) {
         PrimitiveConstant constant = cl.getPool().getPrimitiveConstant(attr.getIndex());
         buffer.append(" = ");
-        buffer.append(new ConstExprent(fieldType, constant.value, null).toJava(indent, tracer));
+        buffer.append(new ConstExprent(fieldType, constant.value, null, fd).toJava(indent, tracer));
       }
     }
 

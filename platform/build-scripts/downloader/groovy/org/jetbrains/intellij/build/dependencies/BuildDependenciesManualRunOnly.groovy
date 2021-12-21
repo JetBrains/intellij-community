@@ -9,7 +9,7 @@ import java.nio.file.Paths
 
 @CompileStatic
 class BuildDependenciesManualRunOnly {
-  static Path getCommunityRootFromWorkingDirectory() {
+  static BuildDependenciesCommunityRoot getCommunityRootFromWorkingDirectory() {
     // This method assumes the current working directory is inside intellij-based product checkout root
     Path workingDirectory = Paths.get(System.getProperty("user.dir"))
 
@@ -18,7 +18,7 @@ class BuildDependenciesManualRunOnly {
       for (def pathCandidate : [".", "community", "ultimate/community"]) {
         def probeFile = current.resolve(pathCandidate).resolve("intellij.idea.community.main.iml")
         if (Files.exists(probeFile)) {
-          return probeFile.parent
+          return new BuildDependenciesCommunityRoot(probeFile.parent)
         }
       }
 

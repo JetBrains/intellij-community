@@ -13,14 +13,10 @@ import org.jetbrains.java.decompiler.struct.StructMethod;
 import org.jetbrains.java.decompiler.struct.gen.MethodDescriptor;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory;
 import org.jetbrains.java.decompiler.util.FastSparseSetFactory.FastSparseSet;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.SFormsFastMapDirect;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 import java.util.Map.Entry;
 
 public class SSAUConstructorSparseEx {
@@ -686,7 +682,7 @@ public class SSAUConstructorSparseEx {
     }
 
     for (Entry<Integer, FastSparseSet<Integer>> ent2 : map2.entryList()) {
-      if (!InterpreterUtil.equalObjects(map1.get(ent2.getKey()), ent2.getValue())) {
+      if (!Objects.equals(map1.get(ent2.getKey()), ent2.getValue())) {
         return false;
       }
     }
@@ -706,11 +702,11 @@ public class SSAUConstructorSparseEx {
     SFormsFastMapDirect map;
 
     switch (stat.type) {
-      case Statement.TYPE_CATCHALL:
-      case Statement.TYPE_TRYCATCH:
+      case Statement.TYPE_CATCH_ALL:
+      case Statement.TYPE_TRY_CATCH:
 
         List<VarExprent> lstVars;
-        if (stat.type == Statement.TYPE_CATCHALL) {
+        if (stat.type == Statement.TYPE_CATCH_ALL) {
           lstVars = ((CatchAllStatement)stat).getVars();
         }
         else {
@@ -777,13 +773,13 @@ public class SSAUConstructorSparseEx {
         break;
       }
 
-      if (parent.type == Statement.TYPE_CATCHALL ||
-          parent.type == Statement.TYPE_TRYCATCH) {
+      if (parent.type == Statement.TYPE_CATCH_ALL ||
+          parent.type == Statement.TYPE_TRY_CATCH) {
         if (parent.getFirst() == stat) {
           return parent.id;
         }
       }
-      else if (parent.type == Statement.TYPE_SYNCRONIZED) {
+      else if (parent.type == Statement.TYPE_SYNCHRONIZED) {
         if (((SynchronizedStatement)parent).getBody() == stat) {
           return parent.id;
         }

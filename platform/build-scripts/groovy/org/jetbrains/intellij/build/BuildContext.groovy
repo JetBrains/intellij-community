@@ -6,7 +6,6 @@ import io.opentelemetry.api.trace.SpanBuilder
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.intellij.build.impl.BuildContextImpl
-import org.jetbrains.intellij.build.impl.BundledJreManager
 import org.jetbrains.intellij.build.impl.DependenciesProperties
 import org.jetbrains.jps.model.module.JpsModule
 
@@ -19,7 +18,6 @@ abstract class BuildContext implements CompilationContext {
   LinuxDistributionCustomizer linuxDistributionCustomizer
   MacDistributionCustomizer macDistributionCustomizer
   ProprietaryBuildTools proprietaryBuildTools
-  BundledJreManager bundledJreManager
   DependenciesProperties dependenciesProperties
 
   abstract ApplicationInfoProperties getApplicationInfo()

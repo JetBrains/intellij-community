@@ -19,6 +19,7 @@ import com.jetbrains.packagesearch.intellij.plugin.util.coroutineModuleTransform
 import com.jetbrains.packagesearch.intellij.plugin.util.filesChangedEventFlow
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logTrace
+import com.jetbrains.packagesearch.intellij.plugin.util.logWarn
 import com.jetbrains.packagesearch.intellij.plugin.util.mapLatestTimedWithLoading
 import com.jetbrains.packagesearch.intellij.plugin.util.modifiedBy
 import com.jetbrains.packagesearch.intellij.plugin.util.moduleChangesSignalFlow
@@ -142,13 +143,13 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         )
         .stateIn(this, SharingStarted.Eagerly, emptyList())
 
-    val buildFileChangesFlow = combine(
+    private val buildFileChangesFlow = combine(
         projectModulesSharedFlow,
         project.filesChangedEventFlow.map { it.mapNotNull { it.file } }
     ) { modules, changedBuildFiles -> modules.filter { it.buildFile in changedBuildFiles } }
         .shareIn(this, SharingStarted.Eagerly)
 
-    val projectModulesChangesFlow = merge(
+    private val projectModulesChangesFlow = merge(
         buildFileChangesFlow.filter { it.isNotEmpty() },
         operationExecutedChannel.consumeAsFlow()
     )
@@ -165,7 +166,9 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         .mapLatestTimedWithLoading(
             loggingContext = "moduleModelsStateFlow",
             loadingFlow = moduleModelsLoadingFlow
-        ) { projectModules -> projectModules.parallelMap { it to ModuleModel(it) }.toMap() }
+        ) { projectModules ->
+            projectModules.parallelMap { it to ModuleModel(it) }.toMap()
+        }
         .modifiedBy(projectModulesChangesFlow) { repositories, changedModules ->
             repositories.parallelUpdatedKeys(changedModules) { ModuleModel(it) }
         }
@@ -197,7 +200,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         (Runtime.getRuntime().availableProcessors() / 4).coerceAtLeast(2)
     ).asCoroutineDispatcher()
 
-    val dependenciesByModuleStateFlow = projectModulesSharedFlow
+    private val dependenciesByModuleStateFlow = projectModulesSharedFlow
         .mapLatestTimedWithLoading("installedPackagesStep1LoadingFlow", installedPackagesStep1LoadingFlow) {
             fetchProjectDependencies(it, cacheDirectory, json)
         }
@@ -257,8 +260,7 @@ internal class PackageSearchProjectService(val project: Project) : CoroutineScop
         // allows rerunning PKGS inspections on already opened files
         // when the data is finally available or changes for PackageUpdateInspection
         // or when a build file changes
-        merge(packageUpgradesStateFlow)
-            .onEach { DaemonCodeAnalyzer.getInstance(project).restart() }
+        packageUpgradesStateFlow.onEach { DaemonCodeAnalyzer.getInstance(project).restart() }
             .launchIn(this)
 
         coroutineContext.job.invokeOnCompletion { installedDependenciesExecutor.close() }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.impl.search;
 
 import com.intellij.lang.ASTNode;
@@ -19,12 +19,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.containers.CollectionFactory;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.StringSearcher;
-import gnu.trove.TIntProcedure;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
-import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -237,24 +234,6 @@ public final class LowLevelSearchUtil {
   // occurrences found is an int array of (startOffset used, endOffset used, occurrence 1 offset, occurrence 2 offset,...)
   private static final ConcurrentMap<CharSequence, Map<StringSearcher, int[]>> cache = CollectionFactory.createConcurrentWeakIdentityMap();
 
-  /**
-   * @deprecated Use {@link #processTexts(CharSequence, int, int, StringSearcher, IntPredicate)}
-   */
-  @Deprecated
-  @ScheduledForRemoval(inVersion = "2021.2")
-  public static boolean processTextOccurrences(@NotNull CharSequence text,
-                                               int startOffset,
-                                               int endOffset,
-                                               @NotNull StringSearcher searcher,
-                                               @NotNull TIntProcedure processor) {
-    for (int offset : getTextOccurrences(text, startOffset, endOffset, searcher)) {
-      if (!processor.execute(offset)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   public static boolean processTexts(@NotNull CharSequence text,
                                      int startOffset,
                                      int endOffset,
@@ -295,7 +274,7 @@ public final class LowLevelSearchUtil {
       }
       cachedOccurrences = occurrences.toIntArray();
       if (cachedMap == null) {
-        cachedMap = ConcurrencyUtil.cacheOrGet(cache, text, ContainerUtil.createConcurrentSoftMap());
+        cachedMap = ConcurrencyUtil.cacheOrGet(cache, text, CollectionFactory.createConcurrentSoftMap());
       }
       cachedMap.put(searcher, cachedOccurrences);
     }

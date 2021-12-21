@@ -4,12 +4,12 @@ import com.intellij.ide.CopyProvider
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.DataProvider
 import com.intellij.openapi.actionSystem.PlatformDataKeys
+import com.intellij.openapi.project.Project
 import com.intellij.ui.SpeedSearchComparator
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.TableUtil
 import com.intellij.ui.table.JBTable
 import com.intellij.util.ui.UIUtil
-import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.KnownRepositories
 import com.jetbrains.packagesearch.intellij.plugin.ui.toolwindow.models.OperationExecutor
@@ -30,6 +30,7 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.flow.MutableStateFlow
+import java.awt.Cursor
 import java.awt.Dimension
 import java.awt.KeyboardFocusManager
 import java.awt.event.ComponentAdapter
@@ -49,6 +50,7 @@ internal typealias SearchResultStateChangeListener =
 
 @Suppress("MagicNumber") // Swing dimension constants
 internal class PackagesTable(
+    private val project: Project,
     private val operationExecutor: OperationExecutor,
     private val onSearchResultStateChanged: SearchResultStateChangeListener
 ) : JBTable(), CopyProvider, DataProvider {
@@ -75,7 +77,7 @@ internal class PackagesTable(
         updatePackageVersion(packageModel, newVersion)
     }
 
-    private val actionsColumn = ActionsColumn(operationExecutor = ::executeActionColumnOperations)
+    private val actionsColumn = ActionsColumn(project, operationExecutor = ::executeActionColumnOperations)
 
     private val actionsColumnIndex: Int
 
@@ -210,23 +212,18 @@ internal class PackagesTable(
         })
 
         onMouseMotion(
-            onMouseMoved = {
-                val point = it.point
+            onMouseMoved = { mouseEvent ->
+                val point = mouseEvent.point
                 val hoverColumn = columnAtPoint(point)
                 val hoverRow = rowAtPoint(point)
 
-                if (tableModel.items.isEmpty() || !(0 until tableModel.items.count()).contains(hoverColumn)) {
-                    actionsColumn.hoverItem = null
+                if (tableModel.items.isEmpty() || hoverRow < 0) {
+                    cursor = Cursor.getDefaultCursor()
                     return@onMouseMotion
                 }
 
-                val item = tableModel.items[hoverRow]
-                if (actionsColumn.hoverItem != item && hoverColumn == actionsColumnIndex) {
-                    actionsColumn.hoverItem = item
-                    updateAndRepaint()
-                } else {
-                    actionsColumn.hoverItem = null
-                }
+                val isHoveringActionsColumn = hoverColumn == actionsColumnIndex
+                cursor = if (isHoveringActionsColumn) Cursor.getPredefinedCursor(Cursor.HAND_CURSOR) else Cursor.getDefaultCursor()
             }
         )
     }
@@ -331,8 +328,9 @@ internal class PackagesTable(
             is UiPackageModel.Installed -> {
                 val operations = uiPackageModel.packageModel.usageInfo.flatMap {
                     val repoToInstall = knownRepositoriesInTargetModules.repositoryToAddWhenInstallingOrUpgrading(
-                        uiPackageModel.packageModel,
-                        newVersion.originalVersion
+                        project = project,
+                        packageModel = uiPackageModel.packageModel,
+                        selectedVersion = newVersion.originalVersion
                     )
 
                     operationFactory.createChangePackageVersionOperations(

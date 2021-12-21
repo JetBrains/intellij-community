@@ -32,6 +32,17 @@ import java.nio.file.Path
 @ApiStatus.Experimental
 class MavenImportFlow {
 
+  fun addManagedFiles(project: Project,
+                      indicator: MavenProgressIndicator,
+                      files: List<VirtualFile>): MavenInitialImportContext {
+    ApplicationManager.getApplication().assertIsNonDispatchThread()
+    val manager = MavenProjectsManager.getInstance(project);
+    val allFiles = ArrayList(manager.projectsFiles)
+    allFiles.addAll(files)
+    val profiles = MavenProjectsManager.getInstance(project).explicitProfiles
+    return MavenInitialImportContext(project, FilesList(allFiles), profiles, manager.generalSettings, manager.importingSettings, indicator)
+  }
+
   fun prepareNewImport(project: Project,
                        indicator: MavenProgressIndicator,
                        importPaths: ImportPaths,
@@ -57,10 +68,13 @@ class MavenImportFlow {
 
     val projectsTree = loadOrCreateProjectTree(projectManager)
     MavenProjectsManager.applyStateToTree(projectsTree, projectManager)
-    val pomFiles = when (context.paths) {
+    val pomFiles = ArrayList(MavenProjectsManager.getInstance(context.project).projectsFiles)
+
+    val newPomFiles = when (context.paths) {
       is FilesList -> context.paths.poms
       is RootPath -> searchForMavenFiles(context.paths.path, context.indicator)
     }
+    pomFiles.addAll(newPomFiles)
 
     projectsTree.addManagedFilesWithProfiles(pomFiles, context.profiles)
     val toResolve = HashSet<MavenProject>()
@@ -88,8 +102,16 @@ class MavenImportFlow {
       }
     }, d)
 
-    ignorePaths?.let { projectsTree.ignoredFilesPaths = it }
-    ignorePatterns?.let { projectsTree.ignoredFilesPatterns = it }
+    ignorePaths?.let {
+      val curr = projectsTree.ignoredFilesPaths
+      curr.addAll(it)
+      projectsTree.ignoredFilesPatterns = curr
+    }
+    ignorePatterns?.let {
+      val curr = projectsTree.ignoredFilesPatterns
+      curr.addAll(it)
+      projectsTree.ignoredFilesPatterns = curr
+    }
 
     projectsTree.update(pomFiles, true, context.generalSettings, context.indicator)
     Disposer.dispose(d)
@@ -220,7 +242,7 @@ class MavenImportFlow {
 
   fun updateProjectManager(context: MavenReadContext) {
     val projectManager = MavenProjectsManager.getInstance(context.project)
-    projectManager.addManagedFilesWithProfiles(context.projectsTree.rootProjectsFiles, context.initialContext.profiles, null)
+    projectManager.addManagedFilesWithProfiles(context.projectsTree.projectsFiles, context.initialContext.profiles, null)
     projectManager.setProjectsTree(context.projectsTree)
   }
 

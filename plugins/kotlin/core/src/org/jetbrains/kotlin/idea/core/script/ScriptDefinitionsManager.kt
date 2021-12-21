@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.core.script
 
 import com.intellij.diagnostic.PluginException
@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.util.containers.SLRUMap
+import com.intellij.util.lang.UrlClassLoader
 import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.caches.project.SdkInfo
@@ -39,7 +40,6 @@ import org.jetbrains.kotlin.scripting.resolve.VirtualFileScriptSource
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 import org.jetbrains.kotlin.utils.addToStdlib.flattenTo
 import java.io.File
-import java.net.URLClassLoader
 import java.nio.file.Path
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.script.dependencies.Environment
@@ -346,14 +346,15 @@ fun loadDefinitionsFromTemplatesByPaths(
     val loader = if (classpath.isEmpty())
         baseLoader
     else
-        URLClassLoader(classpath.map { it.toUri().toURL() }.toTypedArray(), baseLoader)
+        UrlClassLoader.build().files(classpath).parent(baseLoader).get()
 
     return templateClassNames.mapNotNull { templateClassName ->
         try {
             // TODO: drop class loading here - it should be handled downstream
             // as a compatibility measure, the asm based reading of annotations should be implemented to filter classes before classloading
             val template = loader.loadClass(templateClassName).kotlin
-            val templateClasspathAsFiles = templateClasspath.map(Path::toFile)
+            // do not use `Path::toFile` here as it might break the path format of non-local file system
+            val templateClasspathAsFiles = templateClasspath.map { File(it.toString()) }
             val hostConfiguration = ScriptingHostConfiguration(baseHostConfiguration) {
                 configurationDependencies(JvmDependency(templateClasspathAsFiles))
             }

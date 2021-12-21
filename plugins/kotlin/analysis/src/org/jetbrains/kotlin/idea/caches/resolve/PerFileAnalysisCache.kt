@@ -282,7 +282,7 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
             throw e
         } catch (e: Throwable) {
             DiagnosticUtils.throwIfRunningOnServer(e)
-            LOG.error(e)
+            LOG.warn(e)
 
             return AnalysisResult.internalError(BindingContext.EMPTY, e)
         }
@@ -522,13 +522,15 @@ private object KotlinResolveDataProvider {
             }
 
             return AnalysisResult.success(trace.bindingContext, moduleDescriptor)
+        } catch (e: InvalidModuleException) {
+            throw ProcessCanceledException(e)
         } catch (e: ProcessCanceledException) {
             throw e
         } catch (e: IndexNotReadyException) {
             throw e
         } catch (e: Throwable) {
             DiagnosticUtils.throwIfRunningOnServer(e)
-            LOG.error(e)
+            LOG.warn(e)
 
             return AnalysisResult.internalError(BindingContext.EMPTY, e)
         }

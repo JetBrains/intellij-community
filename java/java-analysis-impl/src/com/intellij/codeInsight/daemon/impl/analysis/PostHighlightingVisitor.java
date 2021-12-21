@@ -122,22 +122,17 @@ class PostHighlightingVisitor {
   }
 
   void collectHighlights(@NotNull HighlightInfoHolder result, @NotNull ProgressIndicator progress) {
-    DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
-    FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
-
-    boolean unusedSymbolEnabled = profile.isToolEnabled(myDeadCodeKey, myFile);
-    GlobalUsageHelper globalUsageHelper = myRefCountHolder.getGlobalUsageHelper(myFile, myDeadCodeInspection, unusedSymbolEnabled);
-
     boolean errorFound = false;
 
-    if (unusedSymbolEnabled) {
+    if (isToolEnabled(myDeadCodeKey)) {
+      GlobalUsageHelper globalUsageHelper = myRefCountHolder.getGlobalUsageHelper(myFile, myDeadCodeInspection, true);
       final FileViewProvider viewProvider = myFile.getViewProvider();
       final Set<Language> relevantLanguages = viewProvider.getLanguages();
       for (Language language : relevantLanguages) {
         ProgressManager.checkCanceled();
         PsiElement psiRoot = viewProvider.getPsi(language);
-        if (!HighlightingLevelManager.getInstance(myProject).shouldInspect(psiRoot)) continue;
+        HighlightingLevelManager highlightingLevelManager = HighlightingLevelManager.getInstance(myProject);
+        if (!highlightingLevelManager.shouldInspect(psiRoot) || highlightingLevelManager.runEssentialHighlightingOnly(psiRoot)) continue;
         List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(psiRoot, 0, myFile.getTextLength());
         for (PsiElement element : elements) {
           ProgressManager.checkCanceled();
@@ -172,6 +167,8 @@ class PostHighlightingVisitor {
     }
 
     if (errorFound) {
+      DaemonCodeAnalyzerEx daemonCodeAnalyzer = DaemonCodeAnalyzerEx.getInstanceEx(myProject);
+      FileStatusMap fileStatusMap = daemonCodeAnalyzer.getFileStatusMap();
       fileStatusMap.setErrorFoundFlag(myProject, myDocument, true);
     }
 
@@ -179,16 +176,19 @@ class PostHighlightingVisitor {
   }
 
   private boolean isUnusedImportEnabled(HighlightDisplayKey unusedImportKey) {
-    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
-    if (profile.isToolEnabled(unusedImportKey, myFile) &&
-        myFile instanceof PsiJavaFile &&
-        HighlightingLevelManager.getInstance(myProject).shouldInspect(myFile)) {
-      return true;
-    }
+    if (isToolEnabled(unusedImportKey)) return true;
     for (ImplicitUsageProvider provider : ImplicitUsageProvider.EP_NAME.getExtensionList()) {
       if (provider instanceof UnusedImportProvider && ((UnusedImportProvider)provider).isUnusedImportEnabled(myFile)) return true;
     }
     return false;
+  }
+
+  private boolean isToolEnabled(HighlightDisplayKey displayKey) {
+    InspectionProfile profile = InspectionProjectProfileManager.getInstance(myProject).getCurrentProfile();
+    return profile.isToolEnabled(displayKey, myFile) &&
+           myFile instanceof PsiJavaFile &&
+           HighlightingLevelManager.getInstance(myProject).shouldInspect(myFile) &&
+           !HighlightingLevelManager.getInstance(myProject).runEssentialHighlightingOnly(myFile);
   }
 
   @Nullable

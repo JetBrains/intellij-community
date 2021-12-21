@@ -1,20 +1,20 @@
 <component name="libraryTable">
   <library name="okhttp" type="repository">
-    <properties maven-id="com.squareup.okhttp3:okhttp:4.9.2">
+    <properties maven-id="com.squareup.okhttp3:okhttp:5.0.0-alpha.3">
       <exclude>
-        <dependency maven-id="org.jetbrains:annotations" />
+        <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-jdk8" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib-common" />
         <dependency maven-id="org.jetbrains.kotlin:kotlin-stdlib" />
       </exclude>
     </properties>
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/4.9.2/okhttp-4.9.2.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/2.8.0/okio-2.8.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/5.0.0-alpha.3/okhttp-5.0.0-alpha.3.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.0.0/okio-jvm-3.0.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/4.9.2/okhttp-4.9.2-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio/2.8.0/okio-2.8.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okhttp3/okhttp/5.0.0-alpha.3/okhttp-5.0.0-alpha.3-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/squareup/okio/okio-jvm/3.0.0/okio-jvm-3.0.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

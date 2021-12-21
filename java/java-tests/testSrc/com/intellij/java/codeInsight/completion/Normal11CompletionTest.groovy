@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
+import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.testFramework.NeedsIndex
@@ -48,6 +49,39 @@ class Normal11CompletionTest extends NormalCompletionTestCase {
 
   void "test no var in catch"() {
     assert !completeVar("{ try {} catch(<caret>) {} }")
+  }
+
+  @NeedsIndex.ForStandardLibrary(reason = "To display 'equals' suggestion")
+  void "test var initializer type"() {
+    def source = "class X {boolean test() {var x = <caret>; return x;}}"
+    myFixture.configureByText "Test.java", source
+    myFixture.complete(CompletionType.SMART)
+    assert myFixture.lookupElementStrings == ['equals', 'false', 'true', 'test']
+  }
+
+  @NeedsIndex.ForStandardLibrary(reason = "To display 'equals' suggestion")
+  void "test var initializer type 3"() {
+    def source = "class X {boolean test() {var x = <caret>;var y = x;var z = y; return z;}}"
+    myFixture.configureByText "Test.java", source
+    myFixture.complete(CompletionType.SMART)
+    assert myFixture.lookupElementStrings == ['equals', 'false', 'true', 'test']
+  }
+
+  @NeedsIndex.ForStandardLibrary(reason = "To display 'equals' suggestion")
+  void "test var initializer type 4"() {
+    def source = "class X {boolean test() {var x = <caret>;var y = x;var z = y;var w = z;return w;}}"
+    myFixture.configureByText "Test.java", source
+    myFixture.complete(CompletionType.SMART)
+    // too many hops to track `x` type
+    assert myFixture.lookupElementStrings == []
+  }
+
+  @NeedsIndex.ForStandardLibrary(reason = "To display 'equals' suggestion")
+  void "test var initializer type used twice"() {
+    def source = "class X {boolean test() {var x = <caret>;if (Math.random() > 0.5) return x;return x;}}"
+    myFixture.configureByText "Test.java", source
+    myFixture.complete(CompletionType.SMART)
+    assert myFixture.lookupElementStrings == ['equals', 'false', 'true', 'test']
   }
 
   private LookupElement completeVar(String text) {

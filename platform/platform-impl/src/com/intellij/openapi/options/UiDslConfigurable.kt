@@ -6,12 +6,12 @@ import com.intellij.ui.layout.*
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-@Deprecated("Use Kotlin UI DSL 2.0", ReplaceWith("UiDslUnnamedConfigurable"))
+@Deprecated("Use Kotlin UI DSL Version 2", ReplaceWith("UiDslUnnamedConfigurable"))
 interface UiDslConfigurable : UnnamedConfigurable {
   fun RowBuilder.createComponentRow()
 
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated("Use Kotlin UI DSL 2.0", ReplaceWith("UiDslUnnamedConfigurable.Simple"))
+  @Deprecated("Use Kotlin UI DSL Version 2", ReplaceWith("UiDslUnnamedConfigurable.Simple"))
   abstract class Simple : DslConfigurableBase(), UiDslConfigurable {
     final override fun createPanel(): DialogPanel {
       return panel {

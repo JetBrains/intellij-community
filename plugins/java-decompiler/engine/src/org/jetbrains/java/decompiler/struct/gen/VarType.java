@@ -2,7 +2,8 @@
 package org.jetbrains.java.decompiler.struct.gen;
 
 import org.jetbrains.java.decompiler.code.CodeConstants;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
+
+import java.util.Objects;
 
 public class VarType {  // TODO: optimize switch
 
@@ -270,7 +271,7 @@ public class VarType {  // TODO: optimize switch
     }
 
     VarType vt = (VarType)o;
-    return type == vt.type && arrayDim == vt.arrayDim && InterpreterUtil.equalObjects(value, vt.value);
+    return type == vt.type && arrayDim == vt.arrayDim && Objects.equals(value, vt.value);
   }
 
   @Override

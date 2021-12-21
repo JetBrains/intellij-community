@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.application.options.RegistryManager;
@@ -84,7 +84,7 @@ public final class PerformanceWatcherImpl extends PerformanceWatcher {
   private PerformanceWatcherImpl() {
     Application application = ApplicationManager.getApplication();
     if (application == null) {
-      throw ExtensionNotApplicableException.INSTANCE;
+      throw ExtensionNotApplicableException.create();
     }
 
     RegistryManager registryManager = application.getService(RegistryManager.class);

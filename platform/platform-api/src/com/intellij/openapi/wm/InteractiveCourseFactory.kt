@@ -9,5 +9,5 @@ interface InteractiveCourseFactory {
     val INTERACTIVE_COURSE_FACTORY_EP = ExtensionPointName<InteractiveCourseFactory>("com.intellij.interactiveCourseFactory")
   }
 
-  fun getInteractiveCourseData(): InteractiveCourseData
+  fun getInteractiveCourseData(): InteractiveCourseData?
 }

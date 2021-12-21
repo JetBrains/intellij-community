@@ -33,6 +33,26 @@ fun URI.withPath(newPath: String?): URI = URI(
   fragment
 )
 
+fun URI.withQuery(newQuery: String?): URI = URI(
+  scheme,
+  userInfo,
+  host,
+  port,
+  path,
+  newQuery,
+  fragment
+)
+
+fun URI.withPort(newPort: Int): URI = URI(
+  scheme,
+  userInfo,
+  host,
+  newPort,
+  path,
+  query,
+  fragment
+)
+
 private fun parseParameters(input: String?): Map<String, String> {
   if (input.isNullOrBlank()) return emptyMap()
 

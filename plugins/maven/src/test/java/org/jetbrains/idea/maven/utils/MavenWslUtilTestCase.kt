@@ -7,7 +7,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testFramework.RunAll
 import junit.framework.TestCase
-import org.jetbrains.idea.maven.MavenTestCase
+import com.intellij.maven.testFramework.MavenTestCase
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getWindowsFile
 import org.jetbrains.idea.maven.utils.MavenWslUtil.getWslFile
 import org.jetbrains.idea.maven.utils.MavenWslUtil.resolveLocalRepository

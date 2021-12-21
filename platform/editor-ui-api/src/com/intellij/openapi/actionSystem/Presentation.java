@@ -10,6 +10,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.text.TextWithMnemonic;
+import com.intellij.util.BitUtil;
 import com.intellij.util.SmartFMap;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -35,18 +36,17 @@ import static com.intellij.openapi.util.NlsActions.ActionText;
  * @see ActionPlaces
  */
 public final class Presentation implements Cloneable {
-  public static final Supplier<String> NULL_STRING = () -> null;
   private static final Logger LOG = Logger.getInstance(Presentation.class);
 
-  private SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
+  public static final Supplier<String> NULL_STRING = () -> null;
 
   /**
-   * Defines tool tip for button at tool bar or text for element at menu
+   * Defines tool tip for button at toolbar or text for element at menu
    * value: String
    */
   @NonNls public static final String PROP_TEXT = "text";
   /**
-   * Defines tool tip for button at tool bar or text for element at menu
+   * Defines tool tip for button at toolbar or text for element at menu
    * that includes mnemonic suffix, like "Git(G)"
    * value: String
    */
@@ -87,26 +87,42 @@ public final class Presentation implements Cloneable {
    * The actual value is a Boolean.
    */
   @NonNls public static final String PROP_ENABLED = "enabled";
+
   @NonNls public static final Key<@Nls String> PROP_VALUE = Key.create("value");
 
   public static final double DEFAULT_WEIGHT = 0;
   public static final double HIGHER_WEIGHT = 42;
   public static final double EVEN_HIGHER_WEIGHT = 239;
 
-  private PropertyChangeSupport myChangeSupport;
-  @NotNull private Supplier<@ActionDescription String> myDescriptionSupplier = () -> null;
+  private static final int IS_ENABLED = 0x1;
+  private static final int IS_VISIBLE = 0x2;
+  private static final int IS_MULTI_CHOICE = 0x4;
+  private static final int IS_POPUP_GROUP = 0x10;
+  private static final int IS_PERFORM_GROUP = 0x20;
+  private static final int IS_TEMPLATE = 0x1000;
+
+  private int myFlags = IS_ENABLED | IS_VISIBLE;
+  private @NotNull Supplier<@ActionDescription String> myDescriptionSupplier = () -> null;
+  private @NotNull Supplier<TextWithMnemonic> myTextWithMnemonicSupplier = () -> null;
+  private @NotNull SmartFMap<String, Object> myUserMap = SmartFMap.emptyMap();
+
   private Icon myIcon;
   private Icon myDisabledIcon;
   private Icon myHoveredIcon;
   private Icon mySelectedIcon;
-  @NotNull private Supplier<TextWithMnemonic> myTextWithMnemonicSupplier = () -> null;
-  private boolean myVisible = true;
-  private boolean myEnabled = true;
-  private boolean myMultipleChoice = false;
+
+  private PropertyChangeSupport myChangeSupport;
   private double myWeight = DEFAULT_WEIGHT;
+
   private static final @NotNull NotNullLazyValue<Boolean> removeMnemonics = NotNullLazyValue.createValue(() -> {
     return SystemInfoRt.isMac && DynamicBundle.LanguageBundleEP.EP_NAME.hasAnyExtensions();
   });
+
+  public static Presentation newTemplatePresentation() {
+    Presentation presentation = new Presentation();
+    presentation.myFlags = BitUtil.set(presentation.myFlags, IS_TEMPLATE, true);
+    return presentation;
+  }
 
   public Presentation() {
   }
@@ -305,36 +321,71 @@ public final class Presentation implements Cloneable {
     return textWithMnemonic == null ? -1 : textWithMnemonic.getMnemonicIndex();
   }
 
+  /** @see Presentation#setVisible(boolean)  */
   public boolean isVisible() {
-    return myVisible;
-  }
-
-  public void setVisible(boolean visible) {
-    boolean oldVisible = myVisible;
-    myVisible = visible;
-    fireBooleanPropertyChange(PROP_VISIBLE, oldVisible, myVisible);
+    return BitUtil.isSet(myFlags, IS_VISIBLE);
   }
 
   /**
-   * Returns the state of this action.
-   *
-   * @return {@code true} if action is enabled, {@code false} otherwise
+   * Sets whether the action is visible in menus, toolbars and popups or not.
    */
-  public boolean isEnabled() {
-    return myEnabled;
+  public void setVisible(boolean visible) {
+    assertNotTemplatePresentation();
+    boolean oldVisible = BitUtil.isSet(myFlags, IS_VISIBLE);
+    myFlags = BitUtil.set(myFlags, IS_VISIBLE, visible);
+    fireBooleanPropertyChange(PROP_VISIBLE, oldVisible, visible);
+  }
+
+  /** @see Presentation#setPopupGroup(boolean) */
+  public boolean isPopupGroup() {
+    return BitUtil.isSet(myFlags, IS_POPUP_GROUP);
   }
 
   /**
-   * Sets whether the action enabled or not. If an action is disabled, {@link AnAction#actionPerformed}
-   * won't be called. In case when action represents a button or a menu item, the
-   * representing button or item will be greyed out.
-   *
-   * @param enabled {@code true} if you want to enable action, {@code false} otherwise
+   * For an action group presentation sets whether the action group is a popup group or not.
+   * A popup action group is shown as a submenu, a toolbar button that shows a popup when clicked, etc.
+   * A non-popup action group child actions are injected into the group parent group.
+   */
+  public void setPopupGroup(boolean popup) {
+    myFlags = BitUtil.set(myFlags, IS_POPUP_GROUP, popup);
+  }
+
+  /** @see Presentation#setPerformGroup(boolean) */
+  public boolean isPerformGroup() {
+    return BitUtil.isSet(myFlags, IS_PERFORM_GROUP);
+  }
+
+  /**
+   * For an action group presentation sets whether the action group is "performable" as an ordinary action or not.
+   */
+  public void setPerformGroup(boolean performing) {
+    myFlags = BitUtil.set(myFlags, IS_PERFORM_GROUP, performing);
+  }
+
+  /**
+   * Template presentations must be returned by {@link AnAction#getTemplatePresentation()} only.
+   * Template presentations assert that their enabled and visible flags are never updated
+   * because menus and shortcut processing use different defaults,
+   * so values from template presentations are silently ignored.
+   */
+  boolean isTemplate() {
+    return BitUtil.isSet(myFlags, IS_TEMPLATE);
+  }
+
+  /** @see Presentation#setEnabled(boolean)  */
+  public boolean isEnabled() {
+    return BitUtil.isSet(myFlags, IS_ENABLED);
+  }
+
+  /**
+   * Sets whether the action is enabled or not. If an action is disabled, {@link AnAction#actionPerformed} is not be called.
+   * In case when action represents a button or a menu item, the representing button or item will be greyed out.
    */
   public void setEnabled(boolean enabled) {
-    boolean oldEnabled = myEnabled;
-    myEnabled = enabled;
-    fireBooleanPropertyChange(PROP_ENABLED, oldEnabled, myEnabled);
+    assertNotTemplatePresentation();
+    boolean oldEnabled = BitUtil.isSet(myFlags, IS_ENABLED);
+    myFlags = BitUtil.set(myFlags, IS_ENABLED, enabled);
+    fireBooleanPropertyChange(PROP_ENABLED, oldEnabled, enabled);
   }
 
   public void setEnabledAndVisible(boolean enabled) {
@@ -356,10 +407,17 @@ public final class Presentation implements Cloneable {
     }
   }
 
+  private void assertNotTemplatePresentation() {
+    if (BitUtil.isSet(myFlags, IS_TEMPLATE)) {
+      LOG.warn(new Throwable("Shall not be called on a template presentation"));
+    }
+  }
+
   @Override
   public Presentation clone() {
     try {
       Presentation clone = (Presentation)super.clone();
+      clone.myFlags = BitUtil.set(clone.myFlags, IS_TEMPLATE, false);
       clone.myChangeSupport = null;
       return clone;
     }
@@ -369,15 +427,32 @@ public final class Presentation implements Cloneable {
   }
 
   public void copyFrom(@NotNull Presentation presentation) {
-    copyFrom(presentation, null, false);
+    copyFrom(presentation, null, false, false);
   }
 
   public void copyFrom(@NotNull Presentation presentation, @Nullable Component customComponent) {
-    copyFrom(presentation, customComponent, true);
+    copyFrom(presentation, customComponent, true, false);
   }
 
-  private void copyFrom(@NotNull Presentation presentation, @Nullable Component customComponent, boolean forceNullComponent) {
+  public void copyFrom(@NotNull Presentation presentation, @Nullable Component customComponent, boolean allFlags) {
+    copyFrom(presentation, customComponent, true, allFlags);
+  }
+
+  private void copyFrom(@NotNull Presentation presentation,
+                        @Nullable Component customComponent,
+                        boolean forceNullComponent,
+                        boolean allFlags) {
     if (presentation == this) return;
+    boolean oldEnabled = isEnabled(), oldVisible = isVisible();
+    if (allFlags) {
+      myFlags = BitUtil.set(presentation.myFlags, IS_TEMPLATE, isTemplate());
+    }
+    else {
+      myFlags = BitUtil.set(myFlags, IS_ENABLED, BitUtil.isSet(presentation.myFlags, IS_ENABLED));
+      myFlags = BitUtil.set(myFlags, IS_VISIBLE, BitUtil.isSet(presentation.myFlags, IS_VISIBLE));
+    }
+    fireBooleanPropertyChange(PROP_ENABLED, oldEnabled, isEnabled());
+    fireBooleanPropertyChange(PROP_VISIBLE, oldVisible, isVisible());
 
     setTextWithMnemonic(presentation.getTextWithPossibleMnemonic());
     setDescription(presentation.myDescriptionSupplier);
@@ -385,8 +460,6 @@ public final class Presentation implements Cloneable {
     setSelectedIcon(presentation.getSelectedIcon());
     setDisabledIcon(presentation.getDisabledIcon());
     setHoveredIcon(presentation.getHoveredIcon());
-    setVisible(presentation.isVisible());
-    setEnabled(presentation.isEnabled());
     setWeight(presentation.getWeight());
 
     if (!myUserMap.equals(presentation.myUserMap)) {
@@ -463,10 +536,10 @@ public final class Presentation implements Cloneable {
    * This parameter specifies if multiple actions can be taken in the same context
    */
   public void setMultipleChoice(boolean b) {
-    this.myMultipleChoice = b;
+    myFlags = BitUtil.set(myFlags, IS_MULTI_CHOICE, b);
   }
 
   public boolean isMultipleChoice(){
-    return myMultipleChoice;
+    return BitUtil.isSet(myFlags, IS_MULTI_CHOICE);
   }
 }

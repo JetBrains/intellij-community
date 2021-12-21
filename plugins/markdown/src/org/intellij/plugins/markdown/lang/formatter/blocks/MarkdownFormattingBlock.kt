@@ -11,9 +11,9 @@ import org.intellij.plugins.markdown.injection.MarkdownCodeFenceUtils
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypeSets
 import org.intellij.plugins.markdown.lang.formatter.settings.MarkdownCustomCodeStyleSettings
+import org.intellij.plugins.markdown.lang.psi.MarkdownAstUtils.children
+import org.intellij.plugins.markdown.lang.psi.MarkdownAstUtils.parents
 import org.intellij.plugins.markdown.util.MarkdownPsiUtil
-import org.intellij.plugins.markdown.util.children
-import org.intellij.plugins.markdown.util.parents
 
 /**
  * Formatting block used by markdown plugin
@@ -43,7 +43,7 @@ internal open class MarkdownFormattingBlock(
   override fun getSpacing(child1: Block?, child2: Block): Spacing? = spacing.getSpacing(this, child1, child2)
 
   override fun getIndent(): Indent? {
-    if (node.elementType in MarkdownTokenTypeSets.LISTS && node.parents().any { it.elementType == MarkdownElementTypes.LIST_ITEM }) {
+    if (node.elementType in MarkdownTokenTypeSets.LISTS && node.parents(withSelf = false).any { it.elementType == MarkdownElementTypes.LIST_ITEM }) {
       return Indent.getNormalIndent()
     }
     return Indent.getNoneIndent()

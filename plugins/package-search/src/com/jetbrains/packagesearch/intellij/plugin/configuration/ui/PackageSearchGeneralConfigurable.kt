@@ -1,35 +1,49 @@
 package com.jetbrains.packagesearch.intellij.plugin.configuration.ui
 
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.ui.TitledSeparator
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
+import com.jetbrains.packagesearch.intellij.plugin.configuration.PackageSearchGeneralConfiguration
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.AnalyticsAwareConfigurableContributorDriver
 import com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributor
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
+import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
+import java.awt.event.ItemEvent.SELECTED
 import javax.swing.JComponent
-import javax.swing.JLabel
 import javax.swing.JPanel
 
 class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurable {
-
-    companion object {
-
-        const val ID = "preferences.packagesearch.PackageSearchGeneralConfigurable"
-    }
-
-    override fun getId(): String = ID
-
-    override fun getDisplayName(): String = PackageSearchBundle.message("packagesearch.configuration.title")
 
     private val extensions = ConfigurableContributor.extensionsForProject(project)
         .sortedBy { it.javaClass.simpleName }
         .map { it.createDriver() }
 
-    private var modified: Boolean = false
+    private val isAnyContributorModified: Boolean
+        get() = extensions.any { it.isModified() }
+
+    private var isAutoAddRepositoriesModified: Boolean = false
 
     private val builder = FormBuilder.createFormBuilder()
+
+    private val configuration = PackageSearchGeneralConfiguration.getInstance(project)
+
+    private val autoAddRepositoriesCheckBox = PackageSearchUI.checkBox(
+        PackageSearchBundle.message("packagesearch.configuration.automatically.add.repositories")
+    ) {
+        isSelected = configuration.autoAddMissingRepositories
+        addItemListener {
+            val newIsSelected = it.stateChange == SELECTED
+            isAutoAddRepositoriesModified = newIsSelected != configuration.autoAddMissingRepositories
+        }
+    }
+
+    override fun getId(): String = ID
+
+    override fun getDisplayName(): String = PackageSearchBundle.message("packagesearch.configuration.title")
 
     override fun createComponent(): JComponent? {
         // Extensions
@@ -44,7 +58,7 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
         )
 
         // Reset defaults
-        builder.addComponent(JLabel())
+        builder.addComponent(autoAddRepositoriesCheckBox)
         builder.addComponent(
             LinkLabel<Any>(
                 PackageSearchBundle.message("packagesearch.configuration.restore.defaults"),
@@ -57,13 +71,16 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
         return builder.panel
     }
 
-    override fun isModified() = modified || extensions.any { it.isModified() }
+    override fun isModified() = isAutoAddRepositoriesModified || isAnyContributorModified
 
     override fun reset() {
         for (contributor in extensions) {
             contributor.reset()
         }
-        modified = false
+
+        autoAddRepositoriesCheckBox.isSelected = configuration.autoAddMissingRepositories
+
+        isAutoAddRepositoriesModified = false
     }
 
     private fun restoreDefaults() {
@@ -71,14 +88,31 @@ class PackageSearchGeneralConfigurable(project: Project) : SearchableConfigurabl
             contributor.restoreDefaults()
         }
 
+        val defaultAutoAddRepositories = true
+        isAutoAddRepositoriesModified = autoAddRepositoriesCheckBox.isSelected == defaultAutoAddRepositories
+        autoAddRepositoriesCheckBox.isSelected = defaultAutoAddRepositories
+
         PackageSearchEventsLogger.logPreferencesRestoreDefaults()
-        modified = true
     }
 
     override fun apply() {
+        val analyticsFields = mutableSetOf<EventPair<*>>()
         for (contributor in extensions) {
             contributor.apply()
+            if (contributor is AnalyticsAwareConfigurableContributorDriver) {
+                analyticsFields.addAll(contributor.provideApplyEventAnalyticsData())
+            }
         }
-        modified = false
+
+        configuration.autoAddMissingRepositories = autoAddRepositoriesCheckBox.isSelected
+        analyticsFields += PackageSearchEventsLogger.preferencesAutoAddRepositoriesField.with(configuration.autoAddMissingRepositories)
+        PackageSearchEventsLogger.logPreferencesChanged(*analyticsFields.toTypedArray())
+
+        isAutoAddRepositoriesModified = false
+    }
+
+    companion object {
+
+        const val ID = "preferences.packagesearch.PackageSearchGeneralConfigurable"
     }
 }

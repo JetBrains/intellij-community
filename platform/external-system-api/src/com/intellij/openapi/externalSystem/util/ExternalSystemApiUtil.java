@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
@@ -55,12 +55,9 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
-/**
- * @author Denis Zhdanov
- */
 public final class ExternalSystemApiUtil {
-
   @NotNull public static final String PATH_SEPARATOR = "/";
 
   @NotNull public static final Comparator<Object> ORDER_AWARE_COMPARATOR = new Comparator<>() {
@@ -281,13 +278,13 @@ public final class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static <T> Collection<DataNode<T>> findAllRecursively(@Nullable final DataNode<?> node,
-                                                               @NotNull final Key<T> key) {
-    if (node == null) return Collections.emptyList();
+  public static <T> Collection<DataNode<T>> findAllRecursively(@Nullable DataNode<?> node, @NotNull Key<T> key) {
+    if (node == null) {
+      return Collections.emptyList();
+    }
 
-    final Collection<DataNode<?>> nodes = findAllRecursively(node.getChildren(), node1 -> node1.getKey().equals(key));
     //noinspection unchecked
-    return new SmartList(nodes);
+    return (Collection)findAllRecursively(node.getChildren(), it -> it.getKey().equals(key));
   }
 
   @NotNull
@@ -297,17 +294,17 @@ public final class ExternalSystemApiUtil {
 
   @NotNull
   public static Collection<DataNode<?>> findAllRecursively(@Nullable DataNode<?> node,
-                                                           @Nullable BooleanFunction<? super DataNode<?>> predicate) {
+                                                           @Nullable Predicate<? super DataNode<?>> predicate) {
     if (node == null) return Collections.emptyList();
     return findAllRecursively(node.getChildren(), predicate);
   }
 
   @NotNull
   public static Collection<DataNode<?>> findAllRecursively(@NotNull Collection<? extends DataNode<?>> nodes,
-                                                           @Nullable BooleanFunction<? super DataNode<?>> predicate) {
-    SmartList<DataNode<?>> result = new SmartList<>();
+                                                           @Nullable Predicate<? super DataNode<?>> predicate) {
+    List<DataNode<?>> result = new ArrayList<>();
     for (DataNode<?> node : nodes) {
-      if (predicate == null || predicate.fun(node)) {
+      if (predicate == null || predicate.test(node)) {
         result.add(node);
       }
     }
@@ -319,7 +316,7 @@ public final class ExternalSystemApiUtil {
 
   @Nullable
   public static DataNode<?> findFirstRecursively(@NotNull DataNode<?> parentNode,
-                                                 @NotNull BooleanFunction<? super DataNode<?>> predicate) {
+                                                 @NotNull Predicate<? super DataNode<?>> predicate) {
     Queue<DataNode<?>> queue = new LinkedList<>();
     queue.add(parentNode);
     return findInQueue(queue, predicate);
@@ -327,16 +324,16 @@ public final class ExternalSystemApiUtil {
 
   @Nullable
   public static DataNode<?> findFirstRecursively(@NotNull Collection<? extends DataNode<?>> nodes,
-                                                 @NotNull BooleanFunction<? super DataNode<?>> predicate) {
+                                                 @NotNull Predicate<? super DataNode<?>> predicate) {
     return findInQueue(new LinkedList<>(nodes), predicate);
   }
 
   @Nullable
   private static DataNode<?> findInQueue(@NotNull Queue<DataNode<?>> queue,
-                                         @NotNull BooleanFunction<? super DataNode<?>> predicate) {
+                                         @NotNull Predicate<? super DataNode<?>> predicate) {
     while (!queue.isEmpty()) {
       DataNode<?> node = queue.remove();
-      if (predicate.fun(node)) {
+      if (predicate.test(node)) {
         return node;
       }
       queue.addAll(node.getChildren());

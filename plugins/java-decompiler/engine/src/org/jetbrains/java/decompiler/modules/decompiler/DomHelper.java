@@ -11,7 +11,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.deobfuscator.Irreducible
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory;
 import org.jetbrains.java.decompiler.util.FastFixedSetFactory.FastFixedSet;
-import org.jetbrains.java.decompiler.util.InterpreterUtil;
 import org.jetbrains.java.decompiler.util.VBStyleCollection;
 
 import java.util.*;
@@ -149,7 +148,7 @@ public final class DomHelper {
           domsSuccs.add(stat);
         }
 
-        if (!InterpreterUtil.equalObjects(domsSuccs, doms)) {
+        if (!Objects.equals(domsSuccs, doms)) {
 
           lists.put(stat, domsSuccs);
 
@@ -220,7 +219,7 @@ public final class DomHelper {
       removeSynchronizedHandler(st);
     }
 
-    if (stat.type == Statement.TYPE_SYNCRONIZED) {
+    if (stat.type == Statement.TYPE_SYNCHRONIZED) {
       ((SynchronizedStatement)stat).removeExc();
     }
   }
@@ -251,7 +250,7 @@ public final class DomHelper {
               next = next.getFirst();
             }
 
-            if (next.type == Statement.TYPE_CATCHALL) {
+            if (next.type == Statement.TYPE_CATCH_ALL) {
 
               CatchAllStatement ca = (CatchAllStatement)next;
 

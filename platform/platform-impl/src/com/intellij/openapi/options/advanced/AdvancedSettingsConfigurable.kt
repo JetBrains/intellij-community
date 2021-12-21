@@ -278,6 +278,8 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
 
   override fun getId(): String = "advanced.settings"
 
+  override fun getHelpTopic(): String? = "Advanced_settings"
+
   override fun enableSearch(option: String?): Runnable {
     return Runnable { applyFilter(option, false) }
   }

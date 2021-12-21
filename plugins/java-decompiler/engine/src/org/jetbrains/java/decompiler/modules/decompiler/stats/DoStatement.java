@@ -29,7 +29,7 @@ public final class DoStatement extends Statement {
   // *****************************************************************************
 
   private DoStatement() {
-    type = Statement.TYPE_DO;
+    super(Statement.TYPE_DO);
     looptype = LOOP_DO;
 
     initExprent.add(null);

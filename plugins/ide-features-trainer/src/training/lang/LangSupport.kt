@@ -30,6 +30,12 @@ interface LangSupport {
   /** The onboarding leson can set this variable to non-null value to invoke feedback dialog and include corresponding data */
   var onboardingFeedbackData: OnboardingFeedbackData?
 
+  /**
+   * Should be true iff this language support will not create its own demo project and
+   * will use current user project even for non-scratch lessons.
+   */
+  val useUserProjects: Boolean get() = false
+
   /** Relative path inside plugin resources */
   val projectResourcePath: String
     get() = "learnProjects/${primaryLanguage.toLowerCase()}/$contentRootDirectoryName"

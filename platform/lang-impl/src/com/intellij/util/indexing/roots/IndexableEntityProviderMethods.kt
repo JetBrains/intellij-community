@@ -7,14 +7,17 @@ import com.intellij.openapi.module.ModuleManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.libraries.Library
+import com.intellij.openapi.roots.libraries.LibraryTable
+import com.intellij.openapi.roots.libraries.LibraryTablesRegistrar
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.indexing.roots.builders.IndexableIteratorBuilders
-import com.intellij.workspaceModel.ide.impl.legacyBridge.library.LibraryBridge
+import com.intellij.workspaceModel.ide.WorkspaceModel
+import com.intellij.workspaceModel.ide.impl.legacyBridge.library.ProjectLibraryTableBridgeImpl.Companion.libraryMap
 import com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerBridgeImpl.Companion.moduleMap
 import com.intellij.workspaceModel.ide.legacyBridge.ModuleBridge
 import com.intellij.workspaceModel.storage.ExternalEntityMapping
 import com.intellij.workspaceModel.storage.WorkspaceEntityStorage
-import com.intellij.workspaceModel.storage.bridgeEntities.LibraryId
+import com.intellij.workspaceModel.storage.bridgeEntities.LibraryEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 
 object IndexableEntityProviderMethods {
@@ -69,13 +72,27 @@ object IndexableEntityProviderMethods {
     }
   }
 
-  fun createIterators(library: LibraryBridge): Collection<IndexableFilesIterator> = createIterators(library, library.libraryId)
-
-  fun createIterators(library: Library, libraryId: LibraryId): Collection<IndexableFilesIterator> {
-    return listOf(LibraryBridgeIndexableFilesIteratorImpl(library, libraryId))
-  }
+  fun createIterators(library: Library): Collection<IndexableFilesIterator> = createIteratorList(library)
 
   fun createIterators(sdk: Sdk): Collection<IndexableFilesIterator> {
     return listOf(SdkIndexableFilesIteratorImpl(sdk))
+  }
+
+  private fun createIteratorList(library: Library): List<IndexableFilesIterator> = listOf(LibraryIndexableFilesIteratorImpl(library))
+
+  private fun getLibIteratorsByName(libraryTable: LibraryTable, name: String): List<IndexableFilesIterator>? =
+    libraryTable.getLibraryByName(name)?.run { createIteratorList(this) }
+
+  fun createLibraryIterators(name: String, project: Project): List<IndexableFilesIterator> {
+    val registrar = LibraryTablesRegistrar.getInstance()
+    getLibIteratorsByName(registrar.libraryTable, name)?.also { return it }
+    for (customLibraryTable in registrar.customLibraryTables) {
+      getLibIteratorsByName(customLibraryTable, name)?.also { return it }
+    }
+    val storage = WorkspaceModel.getInstance(project).entityStorage.current
+    storage.entities(LibraryEntity::class.java).firstOrNull { it.name == name }?.let { storage.libraryMap.getDataByEntity(it) }?.also {
+      return createIteratorList(it)
+    }
+    return emptyList()
   }
 }

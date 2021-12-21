@@ -355,7 +355,7 @@ public final class JDOMUtil {
   /**
    * @deprecated Use {@link #load(CharSequence)}
    * <p>
-   * Direct usage of element allows to get rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
+   * Direct usage of element allows getting rid of {@link Document#getRootElement()} because only Element is required in mostly all cases.
    */
   @Deprecated
   public static @NotNull Document loadDocument(@NotNull URL url) throws JDOMException, IOException {

@@ -234,8 +234,6 @@ final class PortableCompilationCache {
                              "please execute `git config --global core.autocrlf input` before checkout " +
                              "and upvote https://youtrack.jetbrains.com/issue/KTIJ-17296")
     }
-    // ensure that JBR and Kotlin compiler are downloaded before compilation
-    CompilationContextImpl.setupCompilationDependencies(context.gradle, context.options)
     def jps = new JpsCompilationRunner(context)
     try {
       jps.buildAll()

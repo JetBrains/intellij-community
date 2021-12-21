@@ -387,7 +387,7 @@ public class JavaDocInfoGenerator {
    * Converts a relative link into {@link DocumentationManagerProtocol#PSI_ELEMENT_PROTOCOL PSI_ELEMENT_PROTOCOL}-type link if possible.
    */
   @Nullable
-  static String createReferenceForRelativeLink(@NotNull String relativeLink, @NotNull PsiElement contextElement) {
+  public static String createReferenceForRelativeLink(@NotNull String relativeLink, @NotNull PsiElement contextElement) {
     String fragment = null;
     int hashPosition = relativeLink.indexOf('#');
     if (hashPosition >= 0) {
@@ -540,6 +540,11 @@ public class JavaDocInfoGenerator {
       return null;
     }
 
+    HtmlChunk containerInfo = generateContainerInfo(myElement);
+    if (containerInfo != null) {
+      containerInfo.appendTo(buffer);
+    }
+
     if (docURLs != null) {
       if (buffer.length() > 0 && elementHasSourceCode()) {
         LOG.debug("Documentation for " + myElement + " was generated from source code, it wasn't found at following URLs: ", docURLs);
@@ -580,6 +585,63 @@ public class JavaDocInfoGenerator {
     }
 
     return sanitizeHtml(buffer);
+  }
+
+  private @Nullable HtmlChunk generateContainerInfo(@Nullable PsiElement element) {
+    JavaDocHighlightingManager highlightingManager = JavaDocHighlightingManagerImpl.getInstance();
+
+    @NlsSafe String ownerLink = null;
+    String ownerIcon = null;
+
+    if (element instanceof PsiClass) {
+      PsiFile file = element.getContainingFile();
+      if (file instanceof PsiJavaFile) {
+        String packageName = ((PsiJavaFile)file).getPackageName();
+        if (!packageName.isEmpty()) {
+          PsiPackage aPackage = JavaPsiFacade.getInstance(file.getProject()).findPackage(packageName);
+          StringBuilder packageFqnBuilder = new StringBuilder();
+          if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) {
+            appendStyledSpan(packageFqnBuilder, highlightingManager.getClassNameAttributes(), packageName);
+          }
+          else {
+            packageFqnBuilder.append(packageName);
+          }
+          ownerLink = aPackage != null
+                      ? generateLink(aPackage, packageFqnBuilder.toString(), false, false)
+                      : "<code>" + packageFqnBuilder + "</code>";
+          ownerIcon = "AllIcons.Nodes.Package";
+        }
+      }
+    }
+    else if (element instanceof PsiMember) {
+      PsiClass parentClass = ((PsiMember)element).getContainingClass();
+      if (parentClass != null && !PsiUtil.isArrayClass(parentClass)) {
+        String qName = parentClass.getQualifiedName();
+        if (qName != null) {
+          StringBuilder classFqnBuilder = new StringBuilder();
+          if (DocumentationSettings.isSemanticHighlightingOfLinksEnabled()) {
+            appendStyledSpan(classFqnBuilder, highlightingManager.getClassNameAttributes(), qName);
+          }
+          else {
+            classFqnBuilder.append(qName);
+          }
+          classFqnBuilder.append(generateTypeParameters(parentClass, false));
+          ownerLink = generateLink(parentClass, classFqnBuilder.toString(), false, false);
+          ownerIcon = "AllIcons.Nodes.Class";
+        }
+      }
+    }
+
+    if (ownerLink != null) {
+      return HtmlChunk.div()
+        .setClass("bottom")
+        .children(
+          HtmlChunk.tag("icon").attr("src", ownerIcon),
+          HtmlChunk.nbsp(),
+          HtmlChunk.raw(ownerLink)
+        );
+    }
+    return null;
   }
 
   private boolean elementHasSourceCode() {
@@ -1582,24 +1644,71 @@ public class JavaDocInfoGenerator {
   @Contract(mutates = "param1")
   private static void generateIndexValue(@NotNull StringBuilder buffer, @NotNull PsiInlineDocTag tag) {
     final PsiDocTagValue indexTagValue = PsiTreeUtil.findChildOfType(tag, PsiDocTagValue.class);
-    if (indexTagValue == null) return;
-
-    final ASTNode[] valuesTokens = indexTagValue.getNode().getChildren(TokenSet.create(JavaDocTokenType.DOC_TAG_VALUE_TOKEN));
-    if (valuesTokens.length == 0) return;
-
-    final StringJoiner indexValue = new StringJoiner(" ");
-    for (ASTNode token : valuesTokens) {
-      indexValue.add(token.getText());
+    if (indexTagValue != null) {
+      buffer.append(indexTagValue.getText());
+      return;
     }
 
-    buffer.append(indexValue);
+    // probably the index value is inside double quotes, so let's extract it
+    final PsiElement[] elements = tag.getDataElements();
+    final int first = getFirstIndexOfElementWithQuote(elements);
+    if (first == -1) return;
+
+    final PsiElement indexValueStart = elements[first];
+    final String indexValueText = indexValueStart.getText();
+    final int quoteBeginIdx = indexValueText.indexOf('"');
+    final int quoteEndIdx = indexValueText.lastIndexOf('"');
+    if (quoteBeginIdx != quoteEndIdx) {
+      buffer.append(indexValueText, quoteBeginIdx + 1, quoteEndIdx);
+      return;
+    }
+
+    buffer.append(indexValueText, quoteBeginIdx + 1, indexValueText.length());
+
+    for (int i = first + 1, length = elements.length; i < length; i++) {
+      final PsiElement element = elements[i];
+      if (element instanceof PsiWhiteSpace) continue;
+      if (element instanceof PsiDocToken && ((PsiDocToken)element).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) continue;
+
+      buffer.append(' ');
+
+      final String text = element.getText();
+      final int indexOfQuote = text.indexOf('"');
+      final int until = indexOfQuote == -1 ? text.length() : indexOfQuote;
+      buffer.append(text, 0, until);
+
+      if (indexOfQuote != -1) {
+        return;
+      }
+    }
+  }
+
+  @Contract(pure = true)
+  private static int getFirstIndexOfElementWithQuote(PsiElement[] elements) {
+    for (int i = 0, length = elements.length; i < length; i++) {
+      final PsiElement e = elements[i];
+      if (e instanceof PsiWhiteSpace) continue;
+      if (e instanceof PsiDocToken && ((PsiDocToken)e).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) continue;
+
+      if (e.textContains('"')) {
+        return i;
+      }
+    }
+    return -1;
   }
 
   private static boolean isCodeBlock(PsiInlineDocTag tag) {
-    PsiElement prevSibling = tag.getPrevSibling();
-    return CODE_TAG.equals(tag.getName())
-           && (prevSibling instanceof PsiDocToken)
-           && StringUtil.endsWithIgnoreCase(StringUtil.trim(prevSibling.getText()), "<pre>");
+    if (!CODE_TAG.equals(tag.getName())) return false;
+
+    ASTNode prevNode = tag.getNode().getTreePrev();
+    while (prevNode != null) {
+      String text = prevNode.getText();
+      if (prevNode.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA && StringUtil.endsWithIgnoreCase(StringUtil.trim(text), "<pre>")) {
+        return true;
+      }
+      prevNode = prevNode.getTreePrev();
+    }
+    return false;
   }
 
   private void generateCodeValue(PsiInlineDocTag tag, StringBuilder buffer) {
@@ -1612,13 +1721,15 @@ public class JavaDocInfoGenerator {
       buffer.setLength(lastNonWhite + 1);
     }
 
+    final int offset = isCodeBlock ? getCodeTagOffset(tag) : 0;
+
     buffer.append("<code style='font-size:");
     buffer.append(DocumentationSettings.getMonospaceFontSizeCorrection(isRendered()));
     buffer.append("%;'>");
     int pos = buffer.length();
 
     StringBuilder codeSnippetBuilder = new StringBuilder();
-    generateLiteralValue(codeSnippetBuilder, tag, false);
+    generateLiteralValue(codeSnippetBuilder, tag, !isCodeBlock && getInlineCodeHighlightingMode() == InlineCodeHighlightingMode.NO_HIGHLIGHTING);
     String codeSnippet = codeSnippetBuilder.toString();
     if (isCodeBlock) {
       codeSnippet = StringsKt.trimIndent(codeSnippet);
@@ -1645,7 +1756,7 @@ public class JavaDocInfoGenerator {
     if (isCodeBlock) {
       // indent code block
       codeSnippet = Arrays.stream(codeSnippet.contains(BR_TAG) ? codeSnippet.split(BR_TAG) : codeSnippet.split("\n"))
-        .map(it -> "  " + it)
+        .map(it -> " ".repeat(offset + 1) + it)
         .collect(Collectors.joining(BR_TAG));
     }
     else {
@@ -1656,6 +1767,13 @@ public class JavaDocInfoGenerator {
     buffer.append(codeSnippet);
     buffer.append("</code>");
     if (buffer.charAt(pos) == '\n') buffer.insert(pos, ' '); // line break immediately after opening tag is ignored by JEditorPane
+  }
+
+  private static int getCodeTagOffset(@NotNull PsiInlineDocTag tag) {
+    final PsiElement sibling = tag.getPrevSibling();
+    if (sibling == null || !sibling.getText().isBlank()) return 0;
+
+    return sibling.getTextLength();
   }
 
   private void generateLiteralValue(StringBuilder buffer, PsiDocTag tag, boolean doEscaping) {
@@ -2067,6 +2185,16 @@ public class JavaDocInfoGenerator {
   private void generateLink(@NotNull StringBuilder buffer, @NotNull PsiClass target) {
     final String label = JavaDocUtil.getLabelText(target.getProject(), target.getManager(), target.getName(), target);
     appendMaybeUnresolvedLink(buffer, target, label, target.getProject(), false);
+  }
+
+  private static @Nullable String generateLink(@NotNull PsiElement element, String label, boolean plainLink, boolean isRenderedDoc) {
+    String refText = JavaDocUtil.getReferenceText(element.getProject(), element);
+    if (refText != null) {
+      StringBuilder linkBuilder = new StringBuilder();
+      DocumentationManagerUtil.createHyperlink(linkBuilder, element, refText, label, plainLink, isRenderedDoc);
+      return linkBuilder.toString();
+    }
+    return null;
   }
 
   private void generateSuperMethodsSection(StringBuilder buffer, PsiMethod method, boolean overrides) {
@@ -2705,14 +2833,6 @@ public class JavaDocInfoGenerator {
     generateAnnotations(buffer, owner, SignaturePlace.ToolTip, true, true, false);
   }
 
-  /**
-   * @deprecated reason.
-   *
-   * <pre>
-   *     line 1
-   *     line 2
-   * </pre>
-   */
   private enum SignaturePlace {
     Javadoc, ToolTip
   }

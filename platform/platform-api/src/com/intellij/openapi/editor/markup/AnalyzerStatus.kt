@@ -19,6 +19,7 @@ import kotlin.math.roundToInt
 enum class InspectionsLevel(@PropertyKey(resourceBundle = EditorBundle.BUNDLE) private val bundleKey: String) {
   NONE("iw.level.none"),
   SYNTAX("iw.level.syntax"),
+  ESSENTIAL("iw.level.essential"),
   ALL("iw.level.all");
 
   @Nls

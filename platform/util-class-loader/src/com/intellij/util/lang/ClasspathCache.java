@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.lang;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -112,7 +112,7 @@ public final class ClasspathCache {
       StrippedLongToObjectMap<Loader[]> newClassMap = classPackageCache == null
                                                       ? new StrippedLongToObjectMap<>(ARRAY_FACTORY, registrar.classPackageCount())
                                                       : new StrippedLongToObjectMap<>(classPackageCache);
-      addPackages(registrar.classPackages(), newClassMap, registrar.getKeyFilter(true), loader);
+      addPackages(registrar.classPackages(), newClassMap, loader, registrar.getKeyFilter(true));
       classPackageCache = newClassMap;
       classPackageCacheGetter = newClassMap;
     }
@@ -122,7 +122,7 @@ public final class ClasspathCache {
                                                          : new StrippedLongToObjectMap<>(resourcePackageCache);
       resourcePackageCache = newResourceMap;
       resourcePackageCacheGetter = newResourceMap;
-      addPackages(registrar.resourcePackages(), newResourceMap, registrar.getKeyFilter(false), loader);
+      addPackages(registrar.resourcePackages(), newResourceMap, loader, registrar.getKeyFilter(false));
     }
   }
 
@@ -144,7 +144,7 @@ public final class ClasspathCache {
     return endIndex <= 0 ? 0 : Xx3UnencodedString.hashUnencodedStringRange(resourcePath, 0, endIndex);
   }
 
-  private static void addPackages(long[] hashes, StrippedLongToObjectMap<Loader[]> map, @Nullable LongPredicate hashFilter, Loader loader) {
+  private static void addPackages(long[] hashes, StrippedLongToObjectMap<Loader[]> map, Loader loader, @Nullable LongPredicate hashFilter) {
     Loader[] singleArray = null;
     for (long hash : hashes) {
       if (hashFilter != null && !hashFilter.test(hash)) {

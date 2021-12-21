@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.diagnostic
 
 import com.intellij.openapi.project.Project
@@ -19,8 +19,10 @@ class ScanningStatistics(val fileSetName: String) {
 
   var numberOfFilesForIndexing: Int = 0
   var numberOfFilesFullyIndexedByInfrastructureExtension: Int = 0
+  var listOfFilesFullyIndexedByInfrastructureExtension = arrayListOf<String>()
 
   var scanningTime: TimeNano = 0
+  var statusTime: TimeNano = 0
 
   var timeProcessingUpToDateFiles: TimeNano = 0
   var timeUpdatingContentLessIndexes: TimeNano = 0
@@ -36,7 +38,7 @@ class ScanningStatistics(val fileSetName: String) {
     if (unindexedFileStatus.shouldIndex) {
       numberOfFilesForIndexing++
     }
-    scanningTime += statusTime
+    this.statusTime += statusTime
 
     timeProcessingUpToDateFiles += unindexedFileStatus.timeProcessingUpToDateFiles
     timeUpdatingContentLessIndexes += unindexedFileStatus.timeUpdatingContentLessIndexes
@@ -44,10 +46,12 @@ class ScanningStatistics(val fileSetName: String) {
 
     if (unindexedFileStatus.wasFullyIndexedByInfrastructureExtension) {
       numberOfFilesFullyIndexedByInfrastructureExtension++
+      listOfFilesFullyIndexedByInfrastructureExtension.add(fileOrDir.toString())
     }
     if (IndexDiagnosticDumper.shouldDumpPathsOfIndexedFiles) {
       val portableFilePath = getIndexedFilePath(fileOrDir, project)
-      scannedFiles += ScannedFile(portableFilePath, !unindexedFileStatus.shouldIndex, unindexedFileStatus.wasFullyIndexedByInfrastructureExtension)
+      scannedFiles += ScannedFile(portableFilePath, !unindexedFileStatus.shouldIndex,
+                                  unindexedFileStatus.wasFullyIndexedByInfrastructureExtension)
     }
   }
 
@@ -56,5 +60,9 @@ class ScanningStatistics(val fileSetName: String) {
   }
   catch (e: Exception) {
     PortableFilePath.AbsolutePath(file.url)
+  }
+
+  fun addScanningTime(time: Long) {
+    scanningTime += time
   }
 }

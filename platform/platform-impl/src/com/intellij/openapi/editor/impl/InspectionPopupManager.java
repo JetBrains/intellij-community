@@ -48,12 +48,11 @@ import java.util.*;
 import java.util.function.Supplier;
 
 final class InspectionPopupManager {
-
   private final ExtensionPointName<InspectionPopupLevelChangePolicy> EP_NAME = ExtensionPointName.create("com.intellij.inspectionPopupLevelChangePolicy");
   private static final int DELTA_X = 6;
   private static final int DELTA_Y = 6;
 
-  private final Supplier<AnalyzerStatus> statusSupplier;
+  private final Supplier<? extends @NotNull AnalyzerStatus> statusSupplier;
   private final Editor myEditor;
   private final AnAction compactViewAction;
 
@@ -69,7 +68,7 @@ final class InspectionPopupManager {
   private JBPopup myPopup;
   private boolean insidePopup;
 
-  InspectionPopupManager(@NotNull Supplier<AnalyzerStatus> statusSupplier, @NotNull Editor editor, @NotNull AnAction compactViewAction) {
+  InspectionPopupManager(@NotNull Supplier<? extends @NotNull AnalyzerStatus> statusSupplier, @NotNull Editor editor, @NotNull AnAction compactViewAction) {
     this.statusSupplier = statusSupplier;
     this.myEditor = editor;
     this.compactViewAction = compactViewAction;
@@ -79,7 +78,7 @@ final class InspectionPopupManager {
 
     myPopupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(myContent, null).
       setCancelOnClickOutside(true).
-      setCancelCallback(() -> getAnalyzerStatus() == null || getAnalyzerStatus().getController().canClosePopup());
+      setCancelCallback(() -> getAnalyzerStatus().getController().canClosePopup());
 
     myAncestorListener = new AncestorListenerAdapter() {
       @Override
@@ -91,9 +90,7 @@ final class InspectionPopupManager {
     myPopupListener = new JBPopupListener() {
       @Override
       public void onClosed(@NotNull LightweightWindowEvent event) {
-        if (statusSupplier.get() != null) {
-          statusSupplier.get().getController().onClosePopup();
-        }
+        statusSupplier.get().getController().onClosePopup();
         myEditor.getComponent().removeAncestorListener(myAncestorListener);
       }
     };
@@ -139,7 +136,7 @@ final class InspectionPopupManager {
     }, Registry.intValue("ide.tooltip.initialDelay.highlighter"));
   }
 
-  void showPopup(@NotNull InputEvent event) {
+  private void showPopup(@NotNull InputEvent event) {
     hidePopup();
     if (myPopupState.isRecentlyHidden()) return; // do not show new popup
 
@@ -169,6 +166,7 @@ final class InspectionPopupManager {
     myPopup = null;
   }
 
+  @NotNull
   private AnalyzerStatus getAnalyzerStatus() {
     return statusSupplier.get();
   }

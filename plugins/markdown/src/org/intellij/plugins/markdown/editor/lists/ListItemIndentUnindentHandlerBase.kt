@@ -11,7 +11,7 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.refactoring.suggested.endOffset
 import org.intellij.plugins.markdown.editor.lists.ListUtils.getListItemAtLine
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownFile
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItemImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownListItem
 import org.intellij.plugins.markdown.settings.MarkdownSettings
 
 /**
@@ -75,7 +75,7 @@ internal abstract class ListItemIndentUnindentHandlerBase(private val baseHandle
   }
 
   /** If this method returns `true`, then the document is committed and [updateNumbering] is called */
-  protected abstract fun doIndentUnindent(item: MarkdownListItemImpl, file: MarkdownFile, document: Document): Boolean
+  protected abstract fun doIndentUnindent(item: MarkdownListItem, file: MarkdownFile, document: Document): Boolean
 
-  protected abstract fun updateNumbering(item: MarkdownListItemImpl, file: MarkdownFile, document: Document)
+  protected abstract fun updateNumbering(item: MarkdownListItem, file: MarkdownFile, document: Document)
 }

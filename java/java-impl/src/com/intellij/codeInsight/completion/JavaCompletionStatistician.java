@@ -61,6 +61,10 @@ public class JavaCompletionStatistician extends CompletionStatistician{
         return StatisticsInfo.EMPTY;
       }
 
+      if (o instanceof CustomStatisticsInfoProvider) {
+        return ((CustomStatisticsInfoProvider)o).getStatisticsInfo();
+      }
+
       if (!(o instanceof PsiMember)) {
         return null;
       }
@@ -116,5 +120,15 @@ public class JavaCompletionStatistician extends CompletionStatistician{
     }
 
     return new StatisticsInfo(contextPrefix, JavaStatisticsManager.getMemberUseKey2(member));
+  }
+
+  /**
+   * An interface for LookupElement objects that provide custom StatisticsInfo
+   */
+  public interface CustomStatisticsInfoProvider {
+    /**
+     * @return a statistics info for the current object; null if the statistics should not be collected for this item.
+     */
+    @Nullable StatisticsInfo getStatisticsInfo();
   }
 }

@@ -33,7 +33,6 @@ import java.lang.reflect.Modifier
 import java.nio.charset.Charset
 import java.nio.file.Files
 import java.nio.file.Path
-import java.nio.file.Paths
 import java.util.function.BiConsumer
 import java.util.function.Consumer
 import java.util.function.Predicate
@@ -365,7 +364,9 @@ class TestingTasksImpl extends TestingTasks {
     else {
       context.messages.info("Starting ${(testGroups == null ? "all tests" : "test from groups '${testGroups}'")} from classpath of module '$mainModule'")
     }
-    context.messages.info("Runtime: ${runtimeExecutablePath()}")
+    String runtime = runtimeExecutablePath()
+    context.messages.info("Runtime: $runtime")
+    BuildHelper.runProcess(context, List.of(runtime, "-version"))
     context.messages.info("Runtime options: $allJvmArgs")
     context.messages.info("System properties: $allSystemProperties")
     context.messages.info("Bootstrap classpath: $bootstrapClasspath")
@@ -384,23 +385,47 @@ class TestingTasksImpl extends TestingTasks {
     notifySnapshotBuilt(allJvmArgs)
   }
 
-  private String runtimeExecutablePath() {
-    String path = options.customJrePath
-    if (path == null) {
-      Path runtime = Paths
-        .get(CompilationContextImpl.jbrTargetDir(context.paths.projectHome, context.options))
-        .resolve(context.options.bundledRuntimeVersion.toString())
-      if (SystemInfoRt.isMac) {
-        runtime = runtime.resolve("Contents/Home")
-      }
-      if (Files.exists(runtime.resolve("bin/java"))) {
-        path = runtime.toString()
+  private Path runtimeExecutablePath() {
+    String binJava = "bin/java"
+    String binJavaExe = "bin/java.exe"
+    String contentsHome = "Contents/Home"
+
+    Path runtimeDir
+    if (options.customRuntimePath != null) {
+      runtimeDir = Path.of(options.customRuntimePath)
+      if (!Files.isDirectory(runtimeDir)) {
+        throw new IllegalStateException("Custom Jre path from system property '" + TestingOptions.TEST_JRE_PROPERTY + "' is missing: " + runtimeDir)
       }
     }
-    if (path == null) {
-      path = System.getProperty("java.home")
+    else {
+      runtimeDir = context.bundledRuntime.getHomeForCurrentOsAndArch()
     }
-    return "$path/bin/java"
+
+    if (SystemInfoRt.isWindows) {
+      Path path = runtimeDir.resolve(binJavaExe)
+      if (!Files.exists(path)) {
+        throw new IllegalStateException("java.exe is missing: " + path)
+      }
+      return path
+    }
+
+    if (SystemInfoRt.isMac) {
+      if (Files.exists(runtimeDir.resolve(binJava))) {
+        return runtimeDir.resolve(binJava)
+      }
+
+      if (Files.exists(runtimeDir.resolve(contentsHome).resolve(binJava))) {
+        return runtimeDir.resolve(contentsHome).resolve(binJava)
+      }
+
+      throw new IllegalStateException("java executable is missing under " + runtimeDir)
+    }
+
+    if (!Files.exists(runtimeDir.resolve(binJava))) {
+      throw new IllegalStateException("java executable is missing: " + runtimeDir.resolve(binJava))
+    }
+
+    return runtimeDir.resolve(binJava)
   }
 
   private void notifySnapshotBuilt(List<String> jvmArgs) {

@@ -1,8 +1,12 @@
 class Test {
 
   public static void test() {
-    while ((<warning descr="Condition is always false">fa<caret>lse</warning>)) <error descr="Unreachable statement">{
+    while (<error descr="Loop condition is always false making the loop body unreachable">(false)</error>) {
         System.out.println();
-    }</error>
+    }
+    boolean c = false;
+    while ((<warning descr="Condition 'c' is always 'false'"><caret>c</warning>)) {
+        System.out.println();
+    }
   }
 }

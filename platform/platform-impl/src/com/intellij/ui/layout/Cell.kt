@@ -10,10 +10,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
-import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.ObservableClearableProperty
-import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.observable.properties.*
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
@@ -41,6 +38,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
 import javax.swing.text.JTextComponent
+import javax.swing.tree.DefaultMutableTreeNode
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KMutableProperty0
 
@@ -51,7 +49,7 @@ data class PropertyBinding<V>(val get: () -> V, val set: (V) -> Unit)
 
 @PublishedApi
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-@Deprecated("Use Kotlin UI DSL 2.0")
+@Deprecated("Use Kotlin UI DSL Version 2")
 internal fun <T> createPropertyBinding(prop: KMutableProperty0<T>, propType: Class<T>): PropertyBinding<T> {
   if (prop is CallableReference) {
     val name = prop.name
@@ -109,7 +107,7 @@ interface CellBuilder<out T : JComponent> {
               forComponent: Boolean = false): CellBuilder<T>
 
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated("Use Kotlin UI DSL 2.0")
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun commentComponent(component: JComponent, forComponent: Boolean = false): CellBuilder<T>
 
   fun focused(): CellBuilder<T>
@@ -427,14 +425,14 @@ abstract class Cell : BaseBuilder {
 
   @JvmOverloads
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated("Use Kotlin UI DSL 2.0")
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun intTextField(prop: KMutableProperty0<Int>, columns: Int? = null, range: IntRange? = null, step: Int? = null): CellBuilder<JBTextField> {
     return intTextField(prop.toBinding(), columns, range, step)
   }
 
   @JvmOverloads
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated("Use Kotlin UI DSL 2.0")
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun intTextField(getter: () -> Int, setter: (Int) -> Unit, columns: Int? = null, range: IntRange? = null, step: Int? = null): CellBuilder<JBTextField> {
     return intTextField(PropertyBinding(getter, setter), columns, range, step)
   }
@@ -444,7 +442,7 @@ abstract class Cell : BaseBuilder {
    */
   @JvmOverloads
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated("Use Kotlin UI DSL 2.0")
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun intTextField(binding: PropertyBinding<Int>,
                    columns: Int? = null,
                    range: IntRange? = null,
@@ -587,7 +585,7 @@ abstract class Cell : BaseBuilder {
   }
 
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated("Use Kotlin UI DSL 2.0")
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun actionButton(action: AnAction, dimension: Dimension = ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE): CellBuilder<ActionButton> {
     val actionButton = ActionButton(action, action.templatePresentation, ActionPlaces.UNKNOWN, dimension)
     return actionButton()
@@ -660,13 +658,13 @@ abstract class Cell : BaseBuilder {
   }
 
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated("Use Kotlin UI DSL 2.0")
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun commentNoWrap(@DetailedDescription text: String): CellBuilder<JLabel> {
     return component(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
   }
 
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated("Use Kotlin UI DSL 2.0")
+  @Deprecated("Use Kotlin UI DSL Version 2")
   fun placeholder(): CellBuilder<JComponent> {
     return component(JPanel().apply {
       minimumSize = Dimension(0, 0)
@@ -700,7 +698,7 @@ class InnerCell(val cell: Cell) : Cell() {
   }
 
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-  @Deprecated("Use Kotlin UI DSL 2.0")
+  @Deprecated("Use Kotlin UI DSL Version 2")
   override fun withButtonGroup(title: String?, buttonGroup: ButtonGroup, body: () -> Unit) {
     cell.withButtonGroup(title, buttonGroup, body)
   }
@@ -760,7 +758,7 @@ fun <T, C : DropDownLink<T>> C.bind(property: ObservableClearableProperty<T>): C
   }
 }
 
-fun <T, C : JList<T>> C.bind(property: ObservableClearableProperty<T>): C = apply {
+fun <T, C : JList<T>> C.bind(property: ObservableClearableProperty<T?>): C = apply {
   val mutex = AtomicBoolean()
   property.afterChange {
     mutex.lockOrSkip {
@@ -776,13 +774,30 @@ fun <T, C : JList<T>> C.bind(property: ObservableClearableProperty<T>): C = appl
   }
 }
 
-private val TextFieldWithBrowseButton.emptyText
-  get() = (textField as JBTextField).emptyText
+fun <T, C : JTree> C.bind(property: ObservableClearableProperty<T?>) = apply {
+  val mutex = AtomicBoolean()
+  property.afterChange {
+    mutex.lockOrSkip {
+      selectionPath = model.getTreePath(property.get())
+    }
+  }
+  addTreeSelectionListener {
+    mutex.lockOrSkip {
+      val node = lastSelectedPathComponent as? DefaultMutableTreeNode
+      @Suppress("UNCHECKED_CAST")
+      property.set(node?.userObject as T?)
+    }
+  }
+}
 
 fun <C : Component> C.bindEnabled(property: ObservableProperty<Boolean>): C = apply {
-  property.afterChange {
-    UIUtil.setEnabledRecursively(this, it)
-  }
+  UIUtil.setEnabledRecursively(this, property.get())
+  property.afterChange { UIUtil.setEnabledRecursively(this, it) }
+}
+
+fun <C : Component> C.bindVisible(property: ObservableProperty<Boolean>): C = apply {
+  isVisible = property.get()
+  property.afterChange { isVisible = it }
 }
 
 fun <C : ComponentWithEmptyText> C.bindEmptyText(property: ObservableClearableProperty<@NlsContexts.StatusText String>): C = apply {
@@ -859,12 +874,12 @@ fun <C : JTextComponent> C.bind(property: ObservableClearableProperty<String>): 
 }
 
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-@Deprecated("Use Kotlin UI DSL 2.0")
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun <C : JTextComponent> C.bindIntProperty(property: ObservableClearableProperty<Int>): C =
   bind(property.transform({ it.toString() }, { it.toInt() }))
 
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-@Deprecated("Use Kotlin UI DSL 2.0")
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder<JSlider> {
   val slider = JSlider()
   UIUtil.setSliderIsFilled(slider, true)
@@ -879,14 +894,14 @@ fun Cell.slider(min: Int, max: Int, minorTick: Int, majorTick: Int): CellBuilder
 }
 
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-@Deprecated("Use Kotlin UI DSL 2.0")
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun <T : JSlider> CellBuilder<T>.labelTable(table: Hashtable<Int, JComponent>.() -> Unit): CellBuilder<T> {
   component.labelTable = Hashtable<Int, JComponent>().apply(table)
   return this
 }
 
 @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
-@Deprecated("Use Kotlin UI DSL 2.0")
+@Deprecated("Use Kotlin UI DSL Version 2")
 fun <T : JSlider> CellBuilder<T>.withValueBinding(modelBinding: PropertyBinding<Int>): CellBuilder<T> {
   return withBinding(JSlider::getValue, JSlider::setValue, modelBinding)
 }

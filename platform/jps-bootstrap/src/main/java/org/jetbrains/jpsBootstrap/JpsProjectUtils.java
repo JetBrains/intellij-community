@@ -10,12 +10,14 @@ import org.jetbrains.jps.model.JpsElementFactory;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.java.JpsJavaDependenciesEnumerator;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
+import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
 import org.jetbrains.jps.model.serialization.JpsPathVariablesConfiguration;
 import org.jetbrains.jps.model.serialization.JpsProjectLoader;
+import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +27,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
+
+import static org.jetbrains.jpsBootstrap.BuildDependenciesDownloader.info;
 
 @SuppressWarnings("SameParameterValue")
 public class JpsProjectUtils {
@@ -46,7 +50,9 @@ public class JpsProjectUtils {
         model.getProject().getLibraryCollection().getLibraries().size() + " libraries in " +
         (System.currentTimeMillis() - startTime) + " ms");
 
-    addSdk(model, "corretto-11", System.getProperty("java.home"));
+    String sdkName = "current-java-home-sdk";
+    addSdk(model, sdkName, System.getProperty("java.home"));
+    JpsSdkTableSerializer.setSdkReference(model.getProject().getSdkReferencesTable(), sdkName, JpsJavaSdkType.INSTANCE);
 
     return model;
   }
@@ -77,6 +83,8 @@ public class JpsProjectUtils {
   }
 
   private static void addSdk(JpsModel model, String sdkName, String sdkHome) throws IOException {
+    info("Adding SDK '" + sdkName + "' at " + sdkHome);
+
     JpsJavaExtensionService.getInstance().addJavaSdk(model.getGlobal(), sdkName, sdkHome);
     JpsLibrary additionalSdk = model.getGlobal().getLibraryCollection().findLibrary(sdkName);
     if (additionalSdk == null) {

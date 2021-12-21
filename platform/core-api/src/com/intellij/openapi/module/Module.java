@@ -18,27 +18,26 @@ import java.nio.file.Path;
  * Represents a module in an IDEA project.
  *
  * @see ModuleManager#getModules()
- * @see ModuleComponent
  */
 @SuppressWarnings("DeprecatedIsStillUsed")
 public interface Module extends ComponentManager, AreaInstance, Disposable {
   /**
-   * The empty array of modules which cab be reused to avoid unnecessary allocations.
+   * The empty array of modules which can be reused to avoid unnecessary allocations.
    */
   Module[] EMPTY_ARRAY = new Module[0];
 
   @NonNls String ELEMENT_TYPE = "type";
 
   /**
-   * @deprecated Module level message bus is deprecated. Please use app- or project- level.
+   * @deprecated Module level message bus is deprecated. Please use application- or project- level.
    */
   @Override
   @Deprecated
   @NotNull MessageBus getMessageBus();
 
   /**
-   * Returns the {@code VirtualFile} for the module .iml file. Note that location if .iml file may not be related to location of the module
-   * files, it may be stored in a different directory, under .idea/modules or doesn't exist at all if the module configuration is imported
+   * Returns the {@code VirtualFile} for the module {@code .iml} file. Note that location if {@code .iml} file may not be related to location of the module
+   * files, it may be stored in a different directory, under {@code .idea/modules} or doesn't exist at all if the module configuration is imported
    * from external project system (e.g., Gradle). So only internal subsystems which deal with serialization are supposed to use this method.
    * If you need to find a directory (directories) where source files for the module are located, get its {@link com.intellij.openapi.roots.ModuleRootModel#getContentRoots() content roots}.
    * If you need to get just some directory near to module files (e.g., to select by default in a file chooser), use {@link com.intellij.openapi.project.ProjectUtil#guessModuleDir(Module)}.
@@ -47,16 +46,17 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   @Nullable VirtualFile getModuleFile();
 
   /**
-   * Returns path to the module .iml file. This method isn't supposed to be used from plugins, see {@link #getModuleFile()} details.
+   * Returns path to the module {@code .iml} file. This method isn't supposed to be used from plugins, see {@link #getModuleFile()} details.
    */
   @ApiStatus.Internal
-  @SystemIndependent @NonNls
+  @SystemIndependent
+  @NonNls
   default @NotNull String getModuleFilePath() {
     return getModuleNioFile().toString().replace(File.separatorChar, '/');
   }
 
   /**
-   * Returns path to the module .iml file. This method isn't supposed to be used from plugins, see {@link #getModuleFile()} details.
+   * Returns path to the module {@code .iml} file. This method isn't supposed to be used from plugins, see {@link #getModuleFile()} details.
    */
   @ApiStatus.Internal
   @NotNull Path getModuleNioFile();
@@ -171,14 +171,14 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
   GlobalSearchScope getModuleRuntimeScope(boolean includeTests);
 
   /**
-   * This method isn't supposed to be used from plugins. If you really need to determine type of a module, use
-   * {@link com.intellij.openapi.module.ModuleType#get(Module) ModuleType.get}. However it would be better to make your functionality work regaradless
+   * This method isn't supposed to be used from plugins. If you really need to determine the type of a module, use
+   * {@link com.intellij.openapi.module.ModuleType#get(Module) ModuleType.get}. However, it would be better to make your functionality work regardless
    * of type of the module, see {@link com.intellij.openapi.module.ModuleType ModuleType}'s javadoc for details.
    */
   @ApiStatus.Internal
-  @Nullable @NonNls
+  @Nullable
+  @NonNls
   default String getModuleTypeName() {
-    //noinspection deprecation
     return getOptionValue(ELEMENT_TYPE);
   }
 
@@ -188,7 +188,6 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    */
   @ApiStatus.Internal
   default void setModuleType(@NotNull @NonNls String name) {
-    //noinspection deprecation
     setOption(ELEMENT_TYPE, name);
   }
 }

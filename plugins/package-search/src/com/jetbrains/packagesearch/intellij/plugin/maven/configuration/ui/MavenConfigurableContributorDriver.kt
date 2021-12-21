@@ -1,34 +1,29 @@
 package com.jetbrains.packagesearch.intellij.plugin.maven.configuration.ui
 
+import com.intellij.internal.statistic.eventLog.events.EventPair
 import com.intellij.openapi.project.Project
-import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.RelativeFont
 import com.intellij.ui.TitledSeparator
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.packagesearch.intellij.plugin.PackageSearchBundle
-import com.jetbrains.packagesearch.intellij.plugin.extensibility.ConfigurableContributorDriver
+import com.jetbrains.packagesearch.intellij.plugin.extensibility.AnalyticsAwareConfigurableContributorDriver
 import com.jetbrains.packagesearch.intellij.plugin.fus.PackageSearchEventsLogger
 import com.jetbrains.packagesearch.intellij.plugin.maven.configuration.PackageSearchMavenConfiguration
+import com.jetbrains.packagesearch.intellij.plugin.ui.PackageSearchUI
+import com.jetbrains.packagesearch.intellij.plugin.ui.util.addOnTextChangedListener
 import javax.swing.JLabel
-import javax.swing.JTextField
-import javax.swing.event.DocumentEvent
 
-internal class MavenConfigurableContributorDriver(private val project: Project) : ConfigurableContributorDriver {
+internal class MavenConfigurableContributorDriver(project: Project) : AnalyticsAwareConfigurableContributorDriver {
 
-    private var modified: Boolean = false
-    private val configuration
-        get() = PackageSearchMavenConfiguration.getInstance(project)
+    private var isMavenDefaultScopeChanged: Boolean = false
 
-    private val textFieldChangeListener = object : DocumentAdapter() {
-        override fun textChanged(e: DocumentEvent) {
-            modified = true
+    private val configuration = PackageSearchMavenConfiguration.getInstance(project)
+
+    private val mavenScopeEditor = PackageSearchUI.textField {
+        addOnTextChangedListener {
+            isMavenDefaultScopeChanged = text != configuration.defaultMavenScope
         }
     }
-
-    private val mavenScopeEditor = JTextField()
-        .apply {
-            document.addDocumentListener(textFieldChangeListener)
-        }
 
     override fun contributeUserInterface(builder: FormBuilder) {
         builder.addComponent(
@@ -49,26 +44,26 @@ internal class MavenConfigurableContributorDriver(private val project: Project) 
         )
     }
 
-    override fun isModified(): Boolean {
-        return modified
-    }
+    override fun isModified() = isMavenDefaultScopeChanged
 
     override fun reset() {
         mavenScopeEditor.text = configuration.determineDefaultMavenScope()
-        modified = false
+        isMavenDefaultScopeChanged = false
     }
 
     override fun restoreDefaults() {
-        mavenScopeEditor.text = configuration.determineDefaultMavenScope()
-        modified = true
+        val defaultMavenScope = configuration.determineDefaultMavenScope()
+        isMavenDefaultScopeChanged = mavenScopeEditor.text != defaultMavenScope
+        mavenScopeEditor.text = defaultMavenScope
     }
 
     override fun apply() {
         configuration.defaultMavenScope = mavenScopeEditor.text
-
-        PackageSearchEventsLogger.logPreferencesChanged(
-            PackageSearchEventsLogger.preferencesDefaultMavenScopeChangedField
-                .with(configuration.defaultMavenScope != configuration.determineDefaultMavenScope()),
-        )
+        isMavenDefaultScopeChanged = false
     }
+
+    override fun provideApplyEventAnalyticsData(): List<EventPair<*>> = listOf(
+        PackageSearchEventsLogger.preferencesDefaultMavenScopeChangedField
+            .with(configuration.defaultMavenScope != configuration.determineDefaultMavenScope())
+    )
 }

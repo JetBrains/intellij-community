@@ -99,6 +99,8 @@
     <externalSystemNotificationExtension implementation="org.jetbrains.plugins.gradle.service.notification.GradleNotificationExtension" order="last"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
+    <applicationService serviceInterface="org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManager"
+      serviceImplementation="org.jetbrains.plugins.gradle.service.notification.ExternalAnnotationsProgressNotificationManagerImpl"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSystemSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettingsMigration$LegacyDefaultGradleProjectSettings"/>
@@ -199,13 +201,17 @@
       <add-to-group group-id="ExternalSystemView.BaseProjectMenu" anchor="last"/>
     </group>
 
-    <reference id="ExternalSystem.AnalyzeDependencies">
+    <action id="Gradle.DependencyAnalyzer" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerAction">
       <add-to-group group-id="ExternalSystemView.BaseProjectMenu" anchor="after"
                     relative-to-action="Gradle.RefreshDependencies"/>
       <add-to-group group-id="ExternalSystemView.ModuleMenu" anchor="last"/>
       <add-to-group group-id="ExternalSystemView.ActionsToolbar.CenterPanel" anchor="after"
                     relative-to-action="ExternalSystem.SelectProjectDataToImport"/>
-    </reference>
+    </action>
+    <action id="Gradle.DependencyAnalyzer.GoTo" class="org.jetbrains.plugins.gradle.dependency.analyzer.GradleDependencyAnalyzerGoToAction">
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.DependencyTreeGroup"/>
+      <add-to-group group-id="ExternalSystem.DependencyAnalyzer.UsagesTreeGroup"/>
+    </action>
 
     <action id="Gradle.ShowDaemons" class="org.jetbrains.plugins.gradle.internal.daemon.ShowGradleDaemonsAction"/>
 

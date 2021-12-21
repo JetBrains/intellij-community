@@ -354,6 +354,8 @@ internal class ZipArchiveOutputStream(private val channel: WritableByteChannel,
     buffer.putShort(0)
   }
 
+  internal fun getChannelPosition() = channelPosition
+
   internal fun getChannelPositionAndAdd(increment: Int): Long {
     val p = channelPosition
     channelPosition += increment.toLong()

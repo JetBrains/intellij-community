@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.openapi.project.impl
 
@@ -224,6 +224,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       return true
     }
 
+    @Suppress("DEPRECATION")
     val previousTrustedState = project.service<TrustedProjectSettings>().trustedState
     if (previousTrustedState != ThreeState.UNSURE) {
       // we were asking about this project in the previous IDE version => migrate

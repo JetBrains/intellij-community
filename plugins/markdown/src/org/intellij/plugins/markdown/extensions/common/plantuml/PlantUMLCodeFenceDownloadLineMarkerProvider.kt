@@ -6,12 +6,12 @@ import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
 import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceDownloadLineMarkerProvider
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import java.util.*
 
 internal class PlantUMLCodeFenceDownloadLineMarkerProvider : MarkdownCodeFenceDownloadLineMarkerProvider() {
   override fun shouldProcessElement(element: PsiElement): Boolean {
-    return (element as? MarkdownCodeFenceImpl)?.fenceLanguage == PlantUMLLanguage.INSTANCE.displayName.lowercase(Locale.getDefault())
+    return (element as? MarkdownCodeFence)?.fenceLanguage == PlantUMLLanguage.INSTANCE.displayName.lowercase(Locale.getDefault())
   }
 
   override fun getExtension(): MarkdownExtensionWithExternalFiles? {

@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
@@ -96,11 +97,13 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun <T : JComponent> cell(component: T, viewComponent: JComponent): CellImpl<T> {
-    return cell(component, viewComponent, null)
+    val result = CellImpl(dialogPanelConfig, component, this, viewComponent)
+    cells.add(result)
+    return result
   }
 
   override fun <T : JComponent> cell(component: T): CellImpl<T> {
-    return cell(component, component, null)
+    return cell(component, component)
   }
 
   override fun cell() {
@@ -108,7 +111,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
   }
 
   override fun <T : JComponent> scrollCell(component: T): CellImpl<T> {
-    return cell(component, JBScrollPane(component), null)
+    return cell(component, JBScrollPane(component))
   }
 
   fun cell(cell: CellBaseImpl<*>) {
@@ -223,7 +226,7 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar> {
     val actionGroup = DefaultActionGroup(options.map { SegmentedButtonAction(it, property, renderer(it)) })
-    val toolbar = SegmentedButtonToolbar(actionGroup, true, dialogPanelConfig.spacing)
+    val toolbar = SegmentedButtonToolbar(actionGroup, dialogPanelConfig.spacing)
     toolbar.targetComponent = null // any data context is supported, suppress warning
     return cell(toolbar)
   }
@@ -357,7 +360,8 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     textArea.columns = COLUMNS_SHORT
     textArea.font = JBFont.regular()
     textArea.emptyText.setFont(JBFont.regular())
-    return cell(textArea, JBScrollPane(textArea), Gaps.EMPTY)
+    textArea.putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps.EMPTY)
+    return cell(textArea, JBScrollPane(textArea))
   }
 
   override fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
@@ -398,30 +402,18 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     }
     rowComment?.let { it.isEnabled = isEnabled }
   }
-
-  private fun <T : JComponent> cell(component: T, viewComponent: JComponent, visualPaddings: Gaps?): CellImpl<T> {
-    val result = CellImpl(dialogPanelConfig, component, this, viewComponent, visualPaddings = visualPaddings)
-    cells.add(result)
-    return result
-  }
 }
 
-private class PopupActionGroup(private val actions: Array<AnAction>): ActionGroup() {
+private class PopupActionGroup(private val actions: Array<AnAction>): ActionGroup(), DumbAware {
 
   private val popupState = PopupState.forPopup()
 
   init {
     isPopup = true
+    templatePresentation.isPerformGroup = actions.isNotEmpty()
   }
 
-  override fun getChildren(e: AnActionEvent?): Array<AnAction> =
-    actions
-
-  override fun isDumbAware(): Boolean =
-    true
-
-  override fun canBePerformed(context: DataContext): Boolean =
-    actions.isNotEmpty()
+  override fun getChildren(e: AnActionEvent?): Array<AnAction> = actions
 
   override fun actionPerformed(e: AnActionEvent) {
     if (popupState.isRecentlyHidden) {

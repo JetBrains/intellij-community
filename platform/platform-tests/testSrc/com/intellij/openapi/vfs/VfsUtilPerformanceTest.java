@@ -5,6 +5,7 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.concurrency.JobSchedulerImpl;
 import com.intellij.idea.HardwareAgentRequired;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
@@ -21,7 +22,6 @@ import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.*;
-import com.intellij.testFramework.fixtures.BareTestFixtureTestCase;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.testFramework.rules.TempDirectory;
 import com.intellij.util.ExceptionUtil;
@@ -29,6 +29,8 @@ import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import it.unimi.dsi.fastutil.ints.IntSortedSets;
+import org.junit.AfterClass;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.Test;
 
@@ -48,8 +50,22 @@ import static org.junit.Assert.*;
 @RunFirst
 @SkipSlowTestLocally
 @HardwareAgentRequired
-public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
+public class VfsUtilPerformanceTest {
+  @Rule public ApplicationRule myAppRule = new ApplicationRule();
+
   @Rule public TempDirectory myTempDir = new TempDirectory();
+
+  @Rule public DisposableRule myDisposableRule = new DisposableRule();
+
+  @BeforeClass
+  public static void setupInStressTestsFlag() {
+    ApplicationManagerEx.setInStressTest(true);
+  }
+
+  @AfterClass
+  public static void clearInStressTestsFlag() {
+    ApplicationManagerEx.setInStressTest(false);
+  }
 
   @Test
   public void testFindChildByNamePerformance() throws IOException {
@@ -157,14 +173,14 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   public void testGetPathPerformance() throws Exception {
     LightTempDirTestFixtureImpl fixture = new LightTempDirTestFixtureImpl();
     fixture.setUp();
-    Disposer.register(getTestRootDisposable(), () -> {
+    Disposer.register(myDisposableRule.getDisposable(), () -> EdtTestUtil.runInEdtAndWait(() -> {
       try {
         fixture.tearDown();
       }
       catch (Exception e) {
         ExceptionUtil.rethrowAllAsUnchecked(e);
       }
-    });
+    }));
 
     EdtTestUtil.runInEdtAndWait(() -> {
       String path = "unitTest_testGetPathPerformance_6542623412414351229/" +
@@ -311,7 +327,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   private VirtualDirectoryImpl createTempFsDirectory() {
     VirtualFile root = TempFileSystem.getInstance().findFileByPath("/");
     VirtualDirectoryImpl temp = (VirtualDirectoryImpl)VfsTestUtil.createDir(root, "temp");
-    Disposer.register(getTestRootDisposable(), () -> VfsTestUtil.deleteFile(temp));
+    Disposer.register(myDisposableRule.getDisposable(), () -> VfsTestUtil.deleteFile(temp));
     return temp;
   }
 

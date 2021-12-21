@@ -1,9 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.featureStatistics.fusCollectors
 
-import com.intellij.execution.ExecutionException
-import com.intellij.execution.configurations.GeneralCommandLine
-import com.intellij.execution.util.ExecUtil
 import com.intellij.internal.statistic.beans.MetricEvent
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventFields
@@ -97,10 +94,10 @@ internal class OsDataCollector : ApplicationUsagesCollector() {
 
   private fun detectIsUnderWsl(): Boolean =
     try {
-      val output = ExecUtil.execAndGetOutput(GeneralCommandLine("uname", "-a"))
-      "-microsoft-" in output.stdout
+      @Suppress("SpellCheckingInspection") val kernel = Files.readString(Path.of("/proc/sys/kernel/osrelease"))
+      kernel.contains("-microsoft-")
     }
-    catch(ignored: ExecutionException) {
+    catch(e: IOException) {
       false
     }
 }

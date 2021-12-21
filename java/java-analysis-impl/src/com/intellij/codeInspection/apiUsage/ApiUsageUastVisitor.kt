@@ -6,6 +6,7 @@ import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 import com.intellij.uast.UastVisitorAdapter
+import com.intellij.util.castSafelyTo
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.visitor.AbstractUastNonRecursiveVisitor
@@ -269,22 +270,8 @@ open class ApiUsageUastVisitor(private val apiUsageProcessor: ApiUsageProcessor)
 
   private fun maybeProcessReferenceInsideImportStatement(node: UReferenceExpression): Boolean {
     if (isInsideImportStatement(node)) {
-      if (isKotlin(node)) {
-        /*
-        UAST for Kotlin 1.3.30 import statements have bugs.
-
-        KT-30546: some references resolve to nulls.
-        KT-30957: simple references for members resolve incorrectly to class declaration, not to the member declaration
-
-        Therefore, we have to fallback to base PSI for Kotlin references.
-         */
-        val resolved = node.sourcePsi?.reference?.resolve()
-        val target = (resolved?.toUElement()?.javaPsi ?: resolved) as? PsiModifierListOwner
-        if (target != null) {
-          apiUsageProcessor.processImportReference(node, target)
-        }
-      }
-      else {
+      val parentingQualifier = node.castSafelyTo<USimpleNameReferenceExpression>()?.uastParent.castSafelyTo<UQualifiedReferenceExpression>()
+      if (node != parentingQualifier?.selector) {
         val resolved = node.resolve() as? PsiModifierListOwner
         if (resolved != null) {
           apiUsageProcessor.processImportReference(node.referenceNameElement ?: node, resolved)

@@ -56,6 +56,16 @@ object EventFields {
   fun Int(@NonNls name: String): IntEventField = IntEventField(name)
 
   /**
+   * Creates an int field that will be validated by regexp rule
+   * @param name  name of the field
+   * @param regexp  regular expression, e.g "-?[0-9]{1,3}"
+   * Please choose regexp carefully to avoid reporting any sensitive data.
+   */
+  @JvmStatic
+  fun RegexpInt(@NonNls name: String, @NonNls regexp: String): RegexpIntEventField =
+    RegexpIntEventField(name, regexp)
+
+  /**
    * Rounds integer value to the next power of two.
    * Use it to anonymize sensitive information like the number of files in a project.
    * @see com.intellij.internal.statistic.utils.StatisticsUtil.roundToPowerOfTwo

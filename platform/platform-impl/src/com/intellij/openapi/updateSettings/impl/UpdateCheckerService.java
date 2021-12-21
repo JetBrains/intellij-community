@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.execution.process.ProcessIOExecutorService;
@@ -151,7 +151,7 @@ final class UpdateCheckerService {
     MyActivity() {
       Application app = ApplicationManager.getApplication();
       if (app.isCommandLine() || app.isHeadlessEnvironment() || app.isUnitTestMode()) {
-        throw ExtensionNotApplicableException.INSTANCE;
+        throw ExtensionNotApplicableException.create();
       }
     }
 

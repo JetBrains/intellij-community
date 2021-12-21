@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.testframework;
 
@@ -95,8 +95,7 @@ public abstract class JavaAwareTestConsoleProperties<T extends ModuleBasedConfig
         Document document = PsiDocumentManager.getInstance(containingClass.getProject()).getDocument(psiFile);
         TextRange textRange = containingMethod.getTextRange();
         if (textRange == null || document == null || 
-            lineNumber < 0 || lineNumber >= document.getLineCount() || 
-            textRange.contains(document.getLineStartOffset(lineNumber))) {
+            lineNumber >= 0 && lineNumber < document.getLineCount() && textRange.contains(document.getLineStartOffset(lineNumber))) {
           return new OpenFileDescriptor(containingClass.getProject(), psiFile.getVirtualFile(), lineNumber, 0);
         }
       }

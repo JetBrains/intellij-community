@@ -25,7 +25,7 @@ public class ax {
    }
 
    public String a(boolean var1) {
-      String var2 = String.valueOf(((double)System.nanoTime() - (double)this.a) / 1000.0D);
+      String var2 = String.valueOf(((double)System.nanoTime() - (double)this.a) / 1000.0);
 
       try {
          if (var1) {

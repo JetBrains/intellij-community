@@ -21,6 +21,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.pom.Navigatable;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TreeSpeedSearch;
@@ -42,6 +43,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.Comparator;
@@ -214,10 +216,21 @@ public class ProblemsViewPanel extends OnePixelSplitter implements Disposable, D
     myToolbar = getToolbar();
     myToolbar.setTargetComponent(myTree);
     myToolbar.getComponent().setVisible(state.getShowToolbar());
-    UIUtil.addBorder(myToolbar.getComponent(), new CustomLineBorder(myToolbarInsets));
 
     myPanel = new JPanel(new BorderLayout());
-    myPanel.add(BorderLayout.CENTER, createScrollPane(myTree, true));
+    JScrollPane scrollPane = createScrollPane(myTree, true);
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      scrollPane.getHorizontalScrollBar().addAdjustmentListener(event -> {
+        Border border = event.getAdjustable().getValue() != 0 ? new CustomLineBorder(myToolbarInsets) : JBUI.Borders.empty(myToolbarInsets);
+        myToolbar.getComponent().setBorder(border);
+        myToolbar.getComponent().repaint();
+      });
+    }
+    else {
+      UIUtil.addBorder(myToolbar.getComponent(), new CustomLineBorder(myToolbarInsets));
+    }
+
+    myPanel.add(BorderLayout.CENTER, scrollPane);
     myPanel.add(BorderLayout.WEST, myToolbar.getComponent());
     myPanel.putClientProperty(OPEN_IN_PREVIEW_TAB, true);
     setFirstComponent(myPanel);

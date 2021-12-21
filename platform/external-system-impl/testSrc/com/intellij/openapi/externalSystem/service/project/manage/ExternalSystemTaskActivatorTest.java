@@ -14,9 +14,9 @@ import com.intellij.openapi.externalSystem.service.execution.AbstractExternalSys
 import com.intellij.openapi.externalSystem.service.execution.ProgressExecutionMode;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
-import com.intellij.openapi.externalSystem.test.TestExternalProjectSettings;
-import com.intellij.openapi.externalSystem.test.TestExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.test.TestExternalSystemManager;
+import com.intellij.platform.externalSystem.testFramework.TestExternalProjectSettings;
+import com.intellij.platform.externalSystem.testFramework.TestExternalSystemExecutionSettings;
+import com.intellij.platform.externalSystem.testFramework.TestExternalSystemManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
@@ -40,7 +40,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator.Phase.*;
-import static com.intellij.openapi.externalSystem.test.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID;
+import static com.intellij.platform.externalSystem.testFramework.ExternalSystemTestUtil.TEST_EXTERNAL_SYSTEM_ID;
 import static com.intellij.openapi.externalSystem.util.ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY_SUFFIX;
 import static java.util.Collections.emptyList;
 

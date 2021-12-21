@@ -8,7 +8,7 @@ class at extends ap {
    }
 
    public double d() {
-      return (double)an.a(this.d).getHeapMemoryUsage().getUsed() / 1024.0D / 1024.0D;
+      return (double)an.a(this.d).getHeapMemoryUsage().getUsed() / 1024.0 / 1024.0;
    }
 
    public String c() {
@@ -16,7 +16,7 @@ class at extends ap {
    }
 
    public Double e() {
-      return (double)an.a(this.d).getHeapMemoryUsage().getMax() / 1024.0D / 1024.0D;
+      return (double)an.a(this.d).getHeapMemoryUsage().getMax() / 1024.0 / 1024.0;
    }
 
    static {

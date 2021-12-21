@@ -769,13 +769,13 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.externalSystem.statistics.ProjectImportCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.service.fus.collectors.UIEventLogger"/>
     <statistics.counterUsagesCollector groupId="plugins.advertiser" version="1"/>
-    <statistics.counterUsagesCollector groupId="plugins.dynamic" version="1"/>
-    <statistics.counterUsagesCollector groupId="editor.notification.panel" version="1"/>
-    <statistics.counterUsagesCollector groupId="customize.wizard" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.plugins.PluginsDynamicCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ui.EditorNotificationPanelCollector"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.customize.CustomizeWizardCollector"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.openapi.updateSettings.impl.UpdateInfoStatsCollector"/>
 
-    <statistics.counterUsagesCollector groupId="light.edit" version="2"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger"/>
 
     <statistics.counterUsagesCollector groupId="ui.mnemonic" version="1"/>
@@ -992,7 +992,8 @@
     <registryKey key="jdk.downloader.url" description="Custom URL to download the list of available JDKs" defaultValue=""/>
     <registryKey key="jdk.downloader.reuse.installed" defaultValue="true" description="Allow to reuse locally installed with the JDK Downloader JDK instead of download it again"/>
     <registryKey key="jdk.downloader.reuse.downloading" defaultValue="true" description="Allow to reuse currently downloading with the JDK Downloader JDK instead of downloading it again"/>
-    <registryKey key="jdk.downloader.assume.m1" defaultValue="false" description="Makes IntelliJ tryly believe it's running on Apple Silicon compatible hardware"/>
+    <registryKey key="jdk.downloader.assume.m1" defaultValue="false" description="Makes IntelliJ truly believe it's running on Apple Silicon compatible hardware"/>
+    <registryKey key="jdk.downloader.assume.linux.aarch64" defaultValue="false" description="Makes IntelliJ truly believe it's running on arm64 compatible hardware for Linux OS"/>
     <registryKey key="jdk.auto.run.configurations" defaultValue="true" description="Tries to find an SDK for a run configuration" />
 
 
@@ -1215,7 +1216,6 @@
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService" headlessImplementation=""/>
     <postStartupActivity implementation="com.intellij.openapi.updateSettings.impl.UpdateCheckerService$MyActivity" order="last"/>
 
-    <postStartupActivity implementation="com.intellij.ide.bookmarks.BookmarkManager$MyStartupActivity"/>
     <notificationGroup id="System Clipboard" displayType="BALLOON"/>
     <notificationGroup id="Project Startup Tasks Messages" displayType="NONE"/>
     <notificationGroup id="scrolling-capabilities-debug" displayType="NONE"/>
@@ -1337,6 +1337,8 @@
     <recoveryAction implementation="com.intellij.ide.actions.cache.InvalidateCachesAndRestartAction"/>
 
     <toolbarWidget implementation="com.intellij.openapi.wm.impl.headertoolbar.ProjectWidgetFactory"/>
+    <applicationService serviceInterface="com.intellij.openapi.application.ReadActionSupport"
+                        serviceImplementation="com.intellij.openapi.application.rw.PlatformReadActionSupport"/>
    </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">

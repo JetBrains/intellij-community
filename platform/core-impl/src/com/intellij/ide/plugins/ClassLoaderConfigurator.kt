@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.ide.plugins
 
@@ -203,7 +203,7 @@ class ClassLoaderConfigurator(
     if (coreUrlClassLoader == null) {
       if (!java.lang.Boolean.getBoolean("idea.use.core.classloader.for.plugin.path")) {
         @Suppress("SpellCheckingInspection")
-        log.error("You should run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
+        log.error("You must run JVM with -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
       }
       setPluginClassLoaderForModuleAndOldSubDescriptors(module, coreLoader)
       return null

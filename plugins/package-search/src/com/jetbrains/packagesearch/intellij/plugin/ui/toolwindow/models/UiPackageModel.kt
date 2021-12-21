@@ -70,7 +70,7 @@ internal fun PackageModel.Installed.toUiPackageModel(
         selectedVersion = latestInstalledVersion,
         selectedScope = declaredScopes.firstOrNull() ?: defaultScope,
         mixedBuildSystemTargets = targetModules.isMixedBuildSystems,
-        packageOperations = project.lifecycleScope.computeActionsAsync(this, targetModules, knownRepositoriesInTargetModules, onlyStable),
+        packageOperations = project.lifecycleScope.computeActionsAsync(project, this, targetModules, knownRepositoriesInTargetModules, onlyStable),
         sortedVersions = sortedVersions
     )
 }
@@ -99,6 +99,7 @@ internal fun PackageModel.SearchResult.toUiPackageModel(
     knownRepositoriesInTargetModules: KnownRepositories.InTargetModules,
     onlyStable: Boolean
 ) = toUiPackageModel(
+    project = project,
     declaredScopes = targetModules.declaredScopes(project),
     defaultScope = targetModules.defaultScope(project),
     mixedBuildSystems = targetModules.isMixedBuildSystems,
@@ -110,6 +111,7 @@ internal fun PackageModel.SearchResult.toUiPackageModel(
 )
 
 internal fun PackageModel.SearchResult.toUiPackageModel(
+    project: Project,
     declaredScopes: List<PackageScope>,
     defaultScope: PackageScope,
     mixedBuildSystems: Boolean,
@@ -132,6 +134,7 @@ internal fun PackageModel.SearchResult.toUiPackageModel(
         selectedScope = selectedScope,
         mixedBuildSystemTargets = mixedBuildSystems,
         packageOperations = coroutineScope.computeActionsAsync(
+            project = project,
             packageModel = this,
             targetModules = targetModules,
             knownRepositoriesInTargetModules = knownRepositoriesInTargetModules,

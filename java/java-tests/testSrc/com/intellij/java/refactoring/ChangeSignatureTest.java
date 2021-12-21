@@ -5,6 +5,7 @@ import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.JavaThrownExceptionInfo;
@@ -587,6 +588,38 @@ public class ChangeSignatureTest extends ChangeSignatureBaseTest {
 
   public void testAddReturnAnnotation() {
     doTest(null, null, "@org.jetbrains.annotations.NotNull java.lang.String", method -> new ParameterInfoImpl[0], false);
+  }
+
+  public void testMultilineJavadoc() { // IDEA-281568
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withType(PsiType.INT).withName("b"),
+      ParameterInfoImpl.create(0).withType(PsiType.INT).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiType.INT).withName("c"),
+    }, false);
+  }
+
+  public void testMultilineJavadocWithoutFormatting() { // IDEA-281568
+    JavaCodeStyleSettings.getInstance(getProject()).ENABLE_JAVADOC_FORMATTING = false;
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(1).withType(PsiType.INT).withName("b"),
+      ParameterInfoImpl.create(0).withType(PsiType.INT).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiType.INT).withName("c"),
+    }, false);
+  }
+
+  public void testJavadocNotBrokenAfterDelete() { // IDEA-139879
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withType(PsiType.INT).withName("i1")
+    }, false);
+  }
+
+  public void testNoGapsInParameterTags() { // IDEA-139879
+    doTest(null, null, null, method -> new ParameterInfoImpl[]{
+      ParameterInfoImpl.create(0).withType(PsiType.INT).withName("b"),
+      ParameterInfoImpl.create(1).withType(PsiType.LONG).withName("a"),
+      ParameterInfoImpl.create(2).withType(PsiType.BOOLEAN).withName("c"),
+      ParameterInfoImpl.createNew().withType(PsiType.SHORT).withName("d"),
+    }, false);
   }
 
   /* workers */

@@ -9,6 +9,7 @@ import com.intellij.ide.DataManager
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl
 import com.intellij.ide.actions.searcheverywhere.SearchEverywhereUI
 import com.intellij.ide.ui.UISettings
+import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.gotoByName.GotoActionModel
 import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.actionSystem.ActionPlaces
@@ -78,7 +79,6 @@ import training.learn.lesson.general.run.toggleBreakpointTask
 import training.project.ProjectUtils
 import training.ui.LearningUiHighlightingManager
 import training.ui.LearningUiManager
-import training.ui.showOnboardingFeedbackNotification
 import training.util.*
 import java.awt.Point
 import java.awt.Rectangle
@@ -181,7 +181,7 @@ class PythonOnboardingTour :
     uiSettings.fireUISettingsChanged()
 
     if (!lessonEndInfo.lessonPassed) {
-      showFeedbackNotification(project)
+      LessonUtil.showFeedbackNotification(this, project)
       return
     }
     val dataContextPromise = DataManager.getInstance().dataContextFromFocusAsync
@@ -210,27 +210,17 @@ class PythonOnboardingTour :
         }
       }
       if (result != Messages.YES) {
-        showFeedbackNotification(project)
-      }
-    }
-  }
-
-  private fun showFeedbackNotification(project: Project) {
-    invokeLater {
-      if (project.isDisposed) {
-        return@invokeLater
-      }
-      module.primaryLanguage?.let { langSupport ->
-        // exit link will show notification directly and reset this field to null
-        langSupport.onboardingFeedbackData?.let {
-          showOnboardingFeedbackNotification(project, it)
-        }
-        langSupport.onboardingFeedbackData = null
+        LessonUtil.showFeedbackNotification(this, project)
       }
     }
   }
 
   private fun prepareFeedbackData(project: Project, lessonEndInfo: LessonEndInfo) {
+    val configPropertyName = "ift.pycharm.onboarding.feedback.proposed"
+    if (PropertiesComponent.getInstance().getBoolean(configPropertyName, false)) {
+      return
+    }
+
     val primaryLanguage = module.primaryLanguage
     if (primaryLanguage == null) {
       thisLogger().error("Onboarding lesson has no language support for some magical reason")
@@ -251,6 +241,8 @@ class PythonOnboardingTour :
 
     primaryLanguage.onboardingFeedbackData = object : OnboardingFeedbackData("PyCharm Onboarding Tour Feedback", lessonEndInfo) {
       override val feedbackReportId = "pycharm_onboarding_tour"
+
+      override val additionalFeedbackFormatVersion: Int = 0
 
       val interpreters: List<String>? by lazy {
         if (interpreterVersions.isDone) interpreterVersions.get() else null
@@ -278,6 +270,10 @@ class PythonOnboardingTour :
       override val possibleTechnicalIssues: Map<String, @Nls String> = mapOf(
         "interpreter_issues" to PythonLessonsBundle.message("python.onboarding.option.interpreter.issues")
       )
+
+      override fun feedbackHasBeenProposed() {
+        PropertiesComponent.getInstance().setValue(configPropertyName, true, false)
+      }
     }
   }
 
@@ -382,7 +378,7 @@ class PythonOnboardingTour :
     task {
       text(PythonLessonsBundle.message("python.onboarding.run.sample", strong(runItem), action("RunClass")))
       checkToolWindowState("Run", true)
-      stateCheck {
+      timerCheck {
         configurations().isNotEmpty()
       }
       restoreIfModified(sample)

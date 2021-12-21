@@ -28,8 +28,6 @@ group 'intellij.tools'
 version '1.0'
 
 apply from: 'setupJdk.gradle'
-apply from: 'setupJbre.gradle'
-apply from: 'setupKotlinCompiler.gradle'
 apply from: 'setupAndroidSdk.gradle'
 apply from: 'setupBuildScriptsDeps.gradle'
 apply from: 'setupToolboxLiteGen.gradle'
@@ -37,11 +35,10 @@ apply from: 'setupBundledMaven.gradle'
 apply from: 'setupCidr.gradle'
 apply from: 'setupRpluginDeps.gradle'
 apply from: 'setupAndroidStudio.gradle'
-//Temporary unbundle VulnerabilitySearch
-//apply from: 'setupVulnerabilitySearchPlugin.gradle'
+apply from: 'setupVulnerabilitySearchPlugin.gradle'
 
-task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinCompiler', 'setupBundledMaven'], group: 'dependencies')
-clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinCompiler', 'cleanSetupBundledMaven')
+task setupDependencies(dependsOn: ['setupJdks', 'setupBundledMaven'], group: 'dependencies')
+clean.dependsOn('cleanSetupJdks', 'cleanSetupBundledMaven')
 
 task dependenciesFile() {
   description = 'Creates file with all dependencies version, even those that were overloaded by system or env properties'

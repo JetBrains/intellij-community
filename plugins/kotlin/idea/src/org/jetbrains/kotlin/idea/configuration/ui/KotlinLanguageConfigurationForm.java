@@ -114,10 +114,4 @@ public class KotlinLanguageConfigurationForm {
             verifierDisabledText.setText("");
         }
     }
-
-    private static boolean isAndroidStudio() {
-        PlatformVersion platformVersion = PlatformVersion.Companion.getCurrent();
-        if (platformVersion == null) return false;
-        return platformVersion.getPlatform().equals(PlatformVersion.Platform.ANDROID_STUDIO);
-    }
 }

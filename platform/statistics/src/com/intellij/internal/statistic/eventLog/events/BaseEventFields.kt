@@ -70,6 +70,15 @@ data class IntEventField(override val name: String) : PrimitiveEventField<Int>()
   }
 }
 
+data class RegexpIntEventField(override val name: String, @NonNls val regexp: String) : PrimitiveEventField<Int>() {
+  override val validationRule: List<String>
+    get() = listOf("{regexp:$regexp}")
+
+  override fun addData(fuData: FeatureUsageData, value: Int) {
+    fuData.addData(name, value)
+  }
+}
+
 data class RoundedIntEventField(override val name: String) : PrimitiveEventField<Int>() {
   override val validationRule: List<String>
     get() = listOf("{regexp#integer}")

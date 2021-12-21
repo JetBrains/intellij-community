@@ -68,10 +68,15 @@ import org.jetbrains.idea.maven.buildtool.MavenSyncConsole;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.execution.MavenRunnerSettings;
 import org.jetbrains.idea.maven.execution.SyncBundle;
-import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.CleanBrokenArtifactsAndReimportQuickFix;
-import org.jetbrains.idea.maven.model.*;
+import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.model.MavenId;
+import org.jetbrains.idea.maven.model.MavenPlugin;
+import org.jetbrains.idea.maven.model.MavenRemoteRepository;
 import org.jetbrains.idea.maven.project.*;
-import org.jetbrains.idea.maven.server.*;
+import org.jetbrains.idea.maven.server.MavenEmbedderWrapper;
+import org.jetbrains.idea.maven.server.MavenServerEmbedder;
+import org.jetbrains.idea.maven.server.MavenServerManager;
+import org.jetbrains.idea.maven.server.MavenServerUtil;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
@@ -122,7 +127,7 @@ public class MavenUtil {
   public static final String LIB_DIR = "lib";
   public static final String CLIENT_ARTIFACT_SUFFIX = "-client";
   public static final String CLIENT_EXPLODED_ARTIFACT_SUFFIX = CLIENT_ARTIFACT_SUFFIX + " exploded";
-  private static final String PROP_FORCED_M2_HOME = "idea.force.m2.home";
+  protected static final String PROP_FORCED_M2_HOME = "idea.force.m2.home";
 
 
   @SuppressWarnings("unchecked")
@@ -212,15 +217,6 @@ public class MavenUtil {
     }
   }
 
-  public static void runDumbAware(@NotNull Project project, @NotNull Runnable r) {
-    if (DumbService.isDumbAware(r)) {
-      r.run();
-    }
-    else {
-      DumbService.getInstance(project).runWhenSmart(DisposeAwareRunnable.create(r, project));
-    }
-  }
-
   public static void runWhenInitialized(@NotNull Project project, @NotNull Runnable runnable) {
     if (project.isDisposed()) return;
 
@@ -229,16 +225,11 @@ public class MavenUtil {
       return;
     }
 
-    if (!project.isInitialized()) {
-      StartupManager.getInstance(project).runAfterOpened(runnable);
-      return;
-    }
-
-    runDumbAware(project, runnable);
+    StartupManager.getInstance(project).runAfterOpened(runnable);
   }
 
   public static boolean isNoBackgroundMode() {
-    if (shouldRunTasksAsynchronouslyInTests()) {
+    if (shouldRunTasksAsynchronouslyInTests() || Registry.is("maven.new.import")) {
       return false;
     }
     return (ApplicationManager.getApplication().isUnitTestMode()
@@ -1098,41 +1089,6 @@ public class MavenUtil {
     }
 
     return res;
-  }
-
-  public static void notifyMavenProblems(@NotNull Project project) {
-    MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-    MavenSyncConsole syncConsole = projectsManager.getSyncConsole();
-    for (MavenProject mavenProject : projectsManager.getProjects()) {
-      for (MavenProjectProblem problem : mavenProject.getProblems()) {
-        syncConsole.showProblem(problem);
-      }
-    }
-  }
-
-  public static void notifySyncForUnresolved(@NotNull Project project, @NotNull Collection<MavenArtifact> unresolvedArtifacts) {
-    MavenSyncConsole syncConsole = MavenProjectsManager.getInstance(project).getSyncConsole();
-    List<java.nio.file.Path> files = ContainerUtil.map(unresolvedArtifacts, a -> a.getFile().toPath().getParent());
-    CleanBrokenArtifactsAndReimportQuickFix fix = new CleanBrokenArtifactsAndReimportQuickFix(files);
-    for (MavenArtifact artifact : unresolvedArtifacts) {
-      syncConsole.getListener(MavenServerProgressIndicator.ResolveType.DEPENDENCY)
-        .showBuildIssue(artifact.getMavenId().getKey(), fix);
-    }
-  }
-
-  @NotNull
-  public static Set<MavenArtifact> getUnresolvedArtifacts(@NotNull Collection<MavenProjectReaderResult> results) {
-    Set<MavenArtifact> unresolvedArtifacts = new HashSet<>();
-    for (MavenProjectReaderResult result : results) {
-      if (result.mavenModel.getDependencies() != null) {
-        for (MavenArtifact artifact : result.mavenModel.getDependencies()) {
-          if (!MavenArtifactUtilKt.resolved(artifact)) {
-            unresolvedArtifacts.add(artifact);
-          }
-        }
-      }
-    }
-    return unresolvedArtifacts;
   }
 
   public static boolean newModelEnabled(Project project) {

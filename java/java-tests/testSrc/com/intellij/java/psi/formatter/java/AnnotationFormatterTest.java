@@ -222,7 +222,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
   }
 
   public void testSpaces3() {
-    getSettings(JavaLanguage.INSTANCE).SPACE_AROUND_ASSIGNMENT_OPERATORS = false;
+    getCustomJavaSettings().SPACE_AROUND_ANNOTATION_EQ = false;
     doTextTest("public interface PsiClass{\n" +
                "    @Nullable(documentation = \"parameter1 value\", doc2=\"parameter2 value\")\n" +
                "    String getQualifiedName();\n" +
@@ -234,7 +234,7 @@ public class AnnotationFormatterTest extends JavaFormatterTestCase {
   }
 
   public void testSpaces4() {
-    getSettings(JavaLanguage.INSTANCE).SPACE_AROUND_ASSIGNMENT_OPERATORS = true;
+    getCustomJavaSettings().SPACE_AROUND_ANNOTATION_EQ = true;
 
     doTextTest("public interface PsiClass{\n" +
                "    @Nullable(documentation = \"parameter1 value\", doc2=\"parameter2 value\")\n" +

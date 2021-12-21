@@ -29,10 +29,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.ElementPresentationManager;
 import com.intellij.util.xml.highlighting.DomElementAnnotationHolder;
-import org.jetbrains.annotations.Nls;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.*;
 
 import javax.swing.*;
 import java.text.MessageFormat;
@@ -166,9 +163,26 @@ public class NavigationGutterIconBuilder<T> {
     return this;
   }
 
+  /**
+   * This method may lead to a deadlock when used from pooled thread, e.g. from
+   * {@link com.intellij.codeInsight.daemon.LineMarkerProvider#collectSlowLineMarkers(List, Collection)}.
+   * {@link PsiElementListCellRenderer} is a UI component that acquires Swing tree lock on init.
+   *
+   * @deprecated Use {@link #setCellRenderer(Computable)} instead, then renderer will be instantiated lazily and from EDT
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
   @NotNull
   public NavigationGutterIconBuilder<T> setCellRenderer(@NotNull final PsiElementListCellRenderer cellRenderer) {
     myCellRenderer = new Computable.PredefinedValueComputable<>(cellRenderer);
+    return this;
+  }
+
+  /**
+   * @param cellRendererProvider list cell renderer for navigation popup
+   */
+  public @NotNull NavigationGutterIconBuilder<T> setCellRenderer(@NotNull Computable<PsiElementListCellRenderer<?>> cellRendererProvider) {
+    myCellRenderer = cellRendererProvider;
     return this;
   }
 

@@ -84,7 +84,10 @@ class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableActionGroupP
 internal class RunToolbarWidget : JBPanel<RunToolbarWidget>(VerticalLayout(0)) {
 
   init {
-    add(createRunActionToolbar().component, VerticalLayout.CENTER)
+    isOpaque = false
+    add(createRunActionToolbar().component.apply {
+      isOpaque = false
+    }, VerticalLayout.CENTER)
     registerProcessListenerWhenActionAdded()
   }
 

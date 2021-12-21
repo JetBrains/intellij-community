@@ -9,10 +9,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.actionholder.ActionRef;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.NlsContexts;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -48,6 +45,13 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
 public final class ActionMenu extends JBMenu {
+  /**
+   * By default, a "performable" popup action group menu item provides a submenu.
+   * Use this key to avoid suppress that submenu for a presentation or a template presentation like this:
+   * {@code presentation.putClientProperty(ActionMenu.SUPPRESS_SUBMENU, true)}.
+   */
+  public static final Key<Boolean> SUPPRESS_SUBMENU = Key.create("SUPPRESS_SUBMENU");
+
   private final String myPlace;
   private final DataContext myContext;
   private final ActionRef<ActionGroup> myGroup;
@@ -201,6 +205,7 @@ public final class ActionMenu extends JBMenu {
         else {
           setDisabledIcon(icon == null ? null : IconLoader.getDisabledIcon(icon));
         }
+        if (myScreenMenuPeer != null) myScreenMenuPeer.setIcon(icon);
       }
     }
   }

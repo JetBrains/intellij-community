@@ -12,7 +12,7 @@ import com.intellij.settingsSync.isSettingsSyncEnabled
 import com.intellij.ui.layout.*
 import javax.swing.JCheckBox
 
-class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync")) {
+internal class SettingsSyncConfigurable : BoundConfigurable(message("title.settings.sync")) {
 
   private lateinit var configPanel: DialogPanel
 

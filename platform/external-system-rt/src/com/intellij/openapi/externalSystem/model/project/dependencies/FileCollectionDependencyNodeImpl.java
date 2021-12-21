@@ -28,21 +28,4 @@ public class FileCollectionDependencyNodeImpl extends AbstractDependencyNode imp
   public String getDisplayName() {
     return displayName;
   }
-
-  @Override
-  public boolean match(AbstractDependencyNode dependencyNode) {
-    if (dependencyNode == null || getClass() != dependencyNode.getClass()) return false;
-    FileCollectionDependencyNodeImpl node = (FileCollectionDependencyNodeImpl)dependencyNode;
-    if (!displayName.equals(node.displayName)) return false;
-    if (!path.equals(node.path)) return false;
-    return true;
-  }
-
-  @Override
-  public int hashCode() {
-    int result = super.hashCode();
-    result = 31 * result + displayName.hashCode();
-    result = 31 * result + path.hashCode();
-    return result;
-  }
 }

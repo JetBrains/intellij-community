@@ -491,7 +491,8 @@ public class FunctionExprent extends Exprent {
       case FUNCTION_MMI:
         return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("--");
       case FUNCTION_INSTANCEOF:
-        return wrapOperandString(lstOperands.get(0), true, indent, tracer).append(" instanceof ").append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
+        return wrapOperandString(lstOperands.get(0), true, indent, tracer).append(" instanceof ")
+          .append(wrapOperandString(lstOperands.get(1), true, indent, tracer));
       case FUNCTION_LCMP: // shouldn't appear in the final code
         return wrapOperandString(lstOperands.get(0), true, indent, tracer).prepend("__lcmp__(")
                  .append(", ")

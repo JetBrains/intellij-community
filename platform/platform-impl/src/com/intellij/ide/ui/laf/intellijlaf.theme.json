@@ -608,6 +608,7 @@
     },
 
     "SearchField.errorBackground": "#ffcccc",
+    "SearchField.errorForeground": "#ff0000",
 
     "SearchMatch.endBackground": "#ffd042b3",
     "SearchMatch.startBackground": "#ffd042b3",
@@ -902,6 +903,7 @@
     },
 
     "MainToolbar": {
+      "background": "#f2f2f2",
       "icon.borderInsets": "10,10,10,10",
       "dropdown.borderInsets": "12,6,12,6"
     },

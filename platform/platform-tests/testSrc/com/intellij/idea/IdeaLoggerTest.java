@@ -8,8 +8,6 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Priority;
 import org.jetbrains.annotations.NotNull;
 import org.junit.After;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.ArrayList;
@@ -20,18 +18,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import static org.junit.Assert.*;
 
 public class IdeaLoggerTest extends BareTestFixtureTestCase {
-  private static final int FREQUENCY = 5;
-
-  @BeforeClass
-  public static void setFrequency() {
-    IdeaLogger.setMutedExceptionFrequency(String.valueOf(FREQUENCY));
-  }
-
-  @AfterClass
-  public static void resetFrequency() {
-    IdeaLogger.setMutedExceptionFrequency("");
-  }
-
   @After
   public void dropCaches() {
     IdeaLogger.dropFrequentExceptionsCaches();
@@ -64,32 +50,6 @@ public class IdeaLoggerTest extends BareTestFixtureTestCase {
 
       Pair<String, Throwable> first = diags.get(level).get(0);
       assertSame("Second error doesn't contain throwable: " + first, t, first.second);
-    }
-  }
-
-  @Test
-  public void testManyExceptionsInLogAreAccompaniedByTooManyExceptionsMessage() {
-    for (Level level : new Level[]{Level.ERROR, Level.WARN, Level.DEBUG}) {
-      Map<Level, List<Pair<String, Throwable>>> diags = new ConcurrentHashMap<>();
-      Throwable t = new Throwable(level.toString());
-      Logger logger = getDelegate(diags);
-
-      for (int i = 0; i < FREQUENCY; i++) {
-        log(logger, level, null, t);
-      }
-
-      // exception, "exception was reported x times" message
-      List<Pair<String, Throwable>> diag = diags.get(level);
-      assertEquals("Too many " + level + " posted: " + diags, 2, diag.size());
-      assertEquals("Too many " + level + " posted: " + diags, 1, diags.size());
-
-      Pair<String, Throwable> first = diag.get(0);
-      assertSame("Second error doesn't contain throwable: " + first, t, first.second);
-
-      Pair<String, Throwable> third = diag.get(1);
-      assertEquals("Third error doesn't contain message and occurrences: " + third, third.first,
-                   IdeaLogger.getExceptionWasAlreadyReportedNTimesMessage(t, FREQUENCY));
-      assertNull("Third error contains throwable: " + third, third.second);
     }
   }
 
@@ -137,7 +97,6 @@ public class IdeaLoggerTest extends BareTestFixtureTestCase {
     log4j.setLevel(Level.DEBUG);
     IdeaLogger logger = new IdeaLogger(log4j);
     assertTrue(IdeaLogger.isMutingFrequentExceptionsEnabled());
-    assertEquals(FREQUENCY, logger.REPORT_EVERY_NTH_FREQUENT_EXCEPTION);
     return logger;
   }
 }

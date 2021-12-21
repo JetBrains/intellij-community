@@ -284,7 +284,7 @@ class MavenLibraryDescription(name: String, val mavenArtefact: String, scope: De
         }
         val libraryProperties = RepositoryLibraryProperties(libraryGroupId, libraryArtifactId, version, true, emptyList())
         val orderRoots = JarRepositoryManager.loadDependenciesModal(project, libraryProperties, false, false, null, null)
-        //val libraryDescription = RepositoryLibraryDescription.findDescription(libraryGroupId, libraryArtifactId)
+
         ConfigLibraryUtil.addLibrary(module, name, kind = REPOSITORY_LIBRARY_KIND) {
             val modifiableLibrary = cast<LibraryEx.ModifiableModelEx>()
             val realLibraryProperties = modifiableLibrary.properties.cast<RepositoryLibraryProperties>()
@@ -294,27 +294,6 @@ class MavenLibraryDescription(name: String, val mavenArtefact: String, scope: De
                 addRoot(orderRoot.file, orderRoot.type)
             }
         }
-
-        //val model = RepositoryLibraryPropertiesModel(version, false, false)
-        //val modifiableModelsProvider = IdeaModifiableModelsProvider()
-        //val modifiableModel: ModifiableRootModel = modifiableModelsProvider.getModuleModifiableModel(module)!!
-        //val librarySupport = RepositoryLibrarySupport(module.project, libraryDescription, model)
-        //librarySupport.addSupport(
-        //    module,
-        //    modifiableModel,
-        //    modifiableModelsProvider,
-        //    scope
-        //)
-        //runWriteAction { modifiableModel.commit() }
-        //
-        //val sleepMs = 500L
-        //val timeoutMs = TimeUnit.MINUTES.toMillis(2)
-        //for(attempt in 0..(timeoutMs / sleepMs).toInt()) {
-        //    UIUtil.dispatchAllInvocationEvents()
-        //    if (!JarRepositoryManager.hasRunningTasks()) break
-        //    Thread.sleep(sleepMs)
-        //}
-        //check(!JarRepositoryManager.hasRunningTasks()) { "$this has not been downloaded" }
     }
 
     override fun toString(): String {

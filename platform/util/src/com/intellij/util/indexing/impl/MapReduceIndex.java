@@ -253,6 +253,11 @@ public abstract class MapReduceIndex<Key,Value, Input> implements InvertedIndex<
       throw new MapReduceIndexMappingException(e, myExtension.getClass());
     }
 
+    return prepareUpdate(inputId, data);
+  }
+
+  @Override
+  public @NotNull IndexUpdateComputable prepareUpdate(int inputId, @NotNull InputData<Key, Value> data) {
     UpdateData<Key, Value> updateData = new UpdateData<>(
       inputId,
       data.getKeyValues(),

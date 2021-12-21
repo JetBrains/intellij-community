@@ -2,8 +2,6 @@
 package com.intellij.ui;
 
 import com.intellij.ProjectTopics;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -184,11 +182,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
         ((EditorNotificationPanel)component).setProviderKey(key);
         ((EditorNotificationPanel)component).setProject(myProject);
       }
-
-      FeatureUsageData data = new FeatureUsageData()
-        .addData("key", key.toString())
-        .addPluginInfo(PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
-      FUCounterUsageLogger.getInstance().logEvent(myProject, "editor.notification.panel", "shown", data);
+      EditorNotificationPanelCollector.logShown(myProject, key.toString(), PluginInfoDetectorKt.getPluginInfo(provider.getClass()));
 
       FileEditorManager.getInstance(myProject).addTopComponent(editor, component);
     }
@@ -200,11 +194,8 @@ public final class EditorNotificationsImpl extends EditorNotifications {
   public void logNotificationActionInvocation(@Nullable Key<?> providerKey, @Nullable Class<?> runnableClass) {
     if (providerKey == null || runnableClass == null) return;
 
-    FeatureUsageData data = new FeatureUsageData()
-      .addData("key", providerKey.toString())
-      .addData("class_name", runnableClass.getName())
-      .addPluginInfo(PluginInfoDetectorKt.getPluginInfo(runnableClass));
-    FUCounterUsageLogger.getInstance().logEvent(myProject, "editor.notification.panel", "actionInvoked", data);
+    EditorNotificationPanelCollector.logActionInvoked(myProject, providerKey.toString(), runnableClass,
+                                                      PluginInfoDetectorKt.getPluginInfo(runnableClass));
   }
 
   @Override

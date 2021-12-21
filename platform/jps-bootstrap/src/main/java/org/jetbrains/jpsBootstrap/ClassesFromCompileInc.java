@@ -25,7 +25,7 @@ import java.util.Map;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.verbose;
+import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.*;
 
 public class ClassesFromCompileInc {
   public final static String MANIFEST_JSON_URL_ENV_NAME = "JPS_BOOTSTRAP_MANIFEST_JSON_URL";
@@ -79,11 +79,19 @@ public class ClassesFromCompileInc {
 
         javaExtension.setOutputUrl(JpsPathUtil.pathToUrl(productionOutputPath.toString()));
       }
+
+      javaExtension.setInheritOutput(false);
     }
 
     if (!partsCopy.isEmpty()) {
-      throw new IllegalStateException("After processing all project modules some entries left: " +
-        String.join(" ", partsCopy.keySet()));
+      String message = "After processing all project modules some entries left: " + String.join(" ", partsCopy.keySet());
+      if (underTeamCity) {
+        throw new IllegalStateException(message);
+      }
+      else {
+        // Locally some modules could be unloaded
+        warn(message);
+      }
     }
   }
 

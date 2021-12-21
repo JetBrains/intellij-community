@@ -44,8 +44,8 @@ public class MatchEngine {
     "if", Statement.TYPE_IF,
     "do", Statement.TYPE_DO,
     "switch", Statement.TYPE_SWITCH,
-    "trycatch", Statement.TYPE_TRYCATCH,
-    "basicblock", Statement.TYPE_BASICBLOCK,
+    "trycatch", Statement.TYPE_TRY_CATCH,
+    "basicblock", Statement.TYPE_BASIC_BLOCK,
     "sequence", Statement.TYPE_SEQUENCE);
 
   private static final Map<String, Integer> expr_type = Map.ofEntries(

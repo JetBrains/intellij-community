@@ -152,6 +152,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
     }
 
     if (myLastLayout != null &&
+        (myIdLabel == null || myIdLabel.isValid()) &&
         myLastLayout.layoutSize.equals(bounds.getSize()) &&
         myLastLayout.contentCount == manager.getContentCount() &&
         ContainerUtil.all(myTabs, Component::isValid)) {
@@ -172,7 +173,7 @@ class TabContentLayout extends ContentLayout implements MorePopupAware {
 
       if (myUi.myDropOverIndex != -1) {
         data.requiredWidth += myUi.myDropOverWidth;
-        data.toLayout.add(myUi.myDropOverIndex - 1, myDropOverPlaceholder);
+        data.toLayout.add(Math.max(0, myUi.myDropOverIndex - 1), myDropOverPlaceholder);
       }
 
       data.toFitWidth = bounds.getSize().width - data.eachX;

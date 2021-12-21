@@ -97,16 +97,12 @@ public class GenerateAction extends DumbAwareAction implements UpdateInBackgroun
       myEditTemplateAction = editTemplateAction;
       copyFrom(action);
       setPopup(true);
+      getTemplatePresentation().setPerformGroup(true);
     }
 
     @Override
     public boolean isUpdateInBackground() {
       return UpdateInBackground.isUpdateInBackground(myAction);
-    }
-
-    @Override
-    public boolean canBePerformed(@NotNull DataContext context) {
-      return true;
     }
 
     @Override

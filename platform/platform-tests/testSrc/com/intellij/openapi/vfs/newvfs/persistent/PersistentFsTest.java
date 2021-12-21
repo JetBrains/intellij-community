@@ -59,8 +59,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
-import static com.intellij.openapi.util.io.IoTestUtil.assumeWindows;
-import static com.intellij.openapi.util.io.IoTestUtil.setCaseSensitivity;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndGet;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
@@ -82,6 +80,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
     assertNull(PersistentFS.getInstance().findFileById(id));
   }
 
+  @NotNull
   private static VirtualFile refreshAndFind(File file) {
     return Objects.requireNonNull(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file), file.getPath());
   }
@@ -877,12 +876,12 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
   @Test
   public void testFileContentChangeEventsMustDifferentiateCaseSensitivityToggledFiles() throws IOException {
-    assumeWindows();
+    IoTestUtil.assumeWindows();
     assumeTrue("'fsutil.exe' needs elevated privileges to work", SuperUserStatus.isSuperUser());
 
     File dir = tempDirectory.newDirectory();
     VirtualFile vDir = refreshAndFind(dir);
-    setCaseSensitivity(dir, true);
+    IoTestUtil.setCaseSensitivity(dir, true);
     File file = new File(dir, "file.txt");
     assertTrue(file.createNewFile());
     File FILE = new File(dir, "FILE.TXT");
@@ -896,7 +895,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
         for (VFileEvent event : e) {
           VirtualFile evFile = event.getFile();
-          if (evFile.getParent().equals(vDir)) {
+          if (vDir.equals(evFile.getParent())) {
             events.add(event);
           }
         }
@@ -958,7 +957,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
 
   private VFileEvent ignoreCrazyVFileContentChangedEquals(VFileEvent exp) {
     if (exp instanceof VFileContentChangeEvent) {
-      exp = new VFileContentChangeEvent(this, exp.getFile(), 0, 0, -1, -1, -1, -1, true);
+      exp = new VFileContentChangeEvent(this, ((VFileContentChangeEvent)exp).getFile(), 0, 0, -1, -1, -1, -1, true);
     }
     return exp;
   }
@@ -974,7 +973,7 @@ public class PersistentFsTest extends BareTestFixtureTestCase {
       public void after(@NotNull List<? extends @NotNull VFileEvent> e) {
         for (VFileEvent event : e) {
           VirtualFile evFile = event.getFile();
-          if (evFile.getParent().equals(vDir)) {
+          if (vDir.equals(evFile.getParent())) {
             events.add(event);
           }
         }

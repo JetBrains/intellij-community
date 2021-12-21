@@ -18,7 +18,7 @@ import org.intellij.plugins.markdown.editor.tables.TableUtils.columnsCount
 import org.intellij.plugins.markdown.editor.tables.TableUtils.separatorRow
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.MarkdownPsiElementFactory
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRowImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableRow
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
 import org.intellij.plugins.markdown.util.hasType
 
@@ -67,7 +67,7 @@ internal class FixTableBordersIntention: PsiElementBaseIntentionAction() {
     separatorRow.replace(MarkdownPsiElementFactory.createTableSeparatorRow(separatorRow.project, newText))
   }
 
-  private fun fixRow(row: MarkdownTableRowImpl, columnsCount: Int) {
+  private fun fixRow(row: MarkdownTableRow, columnsCount: Int) {
     val project = row.project
     if (row.firstChild?.hasType(MarkdownTokenTypes.TABLE_SEPARATOR) == false) {
       row.addBefore(MarkdownPsiElementFactory.createTableSeparator(project), row.firstChild)

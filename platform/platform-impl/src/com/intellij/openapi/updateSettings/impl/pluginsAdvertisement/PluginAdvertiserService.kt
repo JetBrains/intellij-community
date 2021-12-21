@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.updateSettings.impl.PluginDownloader
 import com.intellij.openapi.util.NlsContexts.NotificationContent
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.annotations.ApiStatus
 
 open class PluginAdvertiserService {
 
@@ -278,6 +279,19 @@ open class PluginAdvertiserService {
         )
       }
     }
+  }
+
+  @ApiStatus.Internal
+  open fun collectDependencyUnknownFeatures(project: Project, includeIgnored: Boolean = false): Sequence<UnknownFeature> {
+    return DependencyCollectorBean.EP_NAME.extensions.asSequence()
+      .flatMap { dependencyCollectorBean ->
+        dependencyCollectorBean.instance.collectDependencies(project).map { coordinate ->
+          UnknownFeature(DEPENDENCY_SUPPORT_FEATURE,
+                         IdeBundle.message("plugins.advertiser.feature.dependency"),
+                         dependencyCollectorBean.kind + ":" + coordinate, null)
+        }
+      }
+      .filter { includeIgnored || !UnknownFeaturesCollector.getInstance(project).isIgnored(it) }
   }
 
   protected fun collectFeaturesByName(ids: Set<PluginId>,

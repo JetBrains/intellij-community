@@ -70,7 +70,7 @@ class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boo
     toolbarGroup.addSeparator()
     toolbarGroup.addAll(TreeActionsToolbarPanel.createTreeActions(tree))
     val toolbar = ActionManager.getInstance().createActionToolbar(GIT_STASH_UI_PLACE, toolbarGroup, true)
-    toolbar.setTargetComponent(tree)
+    toolbar.targetComponent = tree
     return toolbar.component
   }
 

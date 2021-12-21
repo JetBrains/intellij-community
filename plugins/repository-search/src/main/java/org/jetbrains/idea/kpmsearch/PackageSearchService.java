@@ -156,8 +156,7 @@ public class PackageSearchService implements DependencySearchProvider {
   private void readVariants(JsonReader reader,
                             Consumer<RepositoryArtifactData> consumer) throws IOException {
     reader.beginArray();
-    int results = 0;
-    while (reader.hasNext() && results++ < 20) {
+    while (reader.hasNext()) {
       PackageSearchResultModel resultModel = myGson.fromJson(reader, PackageSearchResultModel.class);
       ProgressManager.checkCanceled();
       if (resultModel.versions == null ||

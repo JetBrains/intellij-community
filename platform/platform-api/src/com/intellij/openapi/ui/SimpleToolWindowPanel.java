@@ -4,6 +4,9 @@ package com.intellij.openapi.ui;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.util.Key;
+import com.intellij.ui.ClientProperty;
+import com.intellij.ui.ExperimentalUI;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.paint.LinePainter2D;
@@ -16,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.AdjustmentListener;
 import java.awt.event.ContainerAdapter;
 import java.awt.event.ContainerEvent;
 import java.util.Collections;
@@ -28,6 +32,7 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
   private final boolean myBorderless;
   protected boolean myVertical;
   private boolean myProvideQuickActions;
+  public static final Key<Boolean> SCROLLED_STATE = Key.create("ScrolledState");
 
   public SimpleToolWindowPanel(boolean vertical) {
     this(vertical, false);
@@ -135,6 +140,20 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
     }
 
     myContent = c;
+
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      JScrollPane scrollPane = UIUtil.findComponentOfType(myContent, JScrollPane.class);
+      AdjustmentListener listener = event -> {
+        ClientProperty.put(myContent, SCROLLED_STATE, event.getAdjustable().getValue() != 0);
+        repaint();
+      };
+
+      if (scrollPane != null) {
+        scrollPane.getVerticalScrollBar().addAdjustmentListener(listener);
+        scrollPane.getHorizontalScrollBar().addAdjustmentListener(listener);
+      }
+    }
+
     add(c, BorderLayout.CENTER);
 
     if (myBorderless) {
@@ -151,6 +170,13 @@ public class SimpleToolWindowPanel extends JBPanelWithEmptyText implements Quick
 
     if (myToolbar != null && myToolbar.getParent() == this && myContent != null && myContent.getParent() == this) {
       g.setColor(JBColor.border());
+
+      if (ExperimentalUI.isNewToolWindowsStripes()) {
+        //don't draw line for scrolled content
+        if (Boolean.FALSE.equals(ClientProperty.get(myContent, SCROLLED_STATE))) {
+          return;
+        }
+      }
       if (myVertical) {
         int y = (int)myToolbar.getBounds().getMaxY();
         LinePainter2D.paint((Graphics2D)g, 0, y, getWidth(), y);

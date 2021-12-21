@@ -2,10 +2,8 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.ui.layout.*
-import org.jetbrains.annotations.ApiStatus
 import kotlin.reflect.KMutableProperty0
 
-@ApiStatus.Experimental
 interface ButtonsGroup {
 
   /**

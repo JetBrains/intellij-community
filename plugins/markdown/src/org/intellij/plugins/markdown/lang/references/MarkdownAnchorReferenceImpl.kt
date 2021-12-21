@@ -11,7 +11,7 @@ import com.intellij.util.Processor
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.lang.MarkdownElementTypes
 import org.intellij.plugins.markdown.lang.index.MarkdownHeadersIndex
-import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeaderImpl
+import org.intellij.plugins.markdown.lang.psi.impl.MarkdownHeader
 import org.intellij.plugins.markdown.util.hasType
 
 class MarkdownAnchorReferenceImpl internal constructor(
@@ -53,7 +53,7 @@ class MarkdownAnchorReferenceImpl internal constructor(
         StubIndex.getInstance().processElements(
           MarkdownHeadersIndex.KEY, key, project,
           file?.let { GlobalSearchScope.fileScope(it) },
-          MarkdownHeaderImpl::class.java,
+          MarkdownHeader::class.java,
           Processor { list.add(MarkdownAnchorReference.dashed(key)) }
         )
       }

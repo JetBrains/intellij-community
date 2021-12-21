@@ -22,7 +22,6 @@ import com.intellij.util.ArrayUtilRt
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.indexing.UnindexedFilesUpdater
 import com.intellij.util.ui.UIUtil
-import org.jetbrains.kotlin.idea.core.script.ScriptConfigurationManager
 import org.jetbrains.kotlin.idea.testFramework.Stats
 import org.jetbrains.kotlin.idea.testFramework.Stats.Companion.WARM_UP
 import org.jetbrains.kotlin.idea.perf.suite.PerformanceSuite.ApplicationScope.Companion.initApp
@@ -32,9 +31,6 @@ import org.jetbrains.kotlin.idea.perf.util.logMessage
 import org.jetbrains.kotlin.idea.search.usagesSearch.ExpressionsOfTypeProcessor
 import org.jetbrains.kotlin.idea.test.invalidateLibraryCache
 import org.jetbrains.kotlin.idea.testFramework.*
-import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.cleanupCaches
-import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.close
-import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.isAKotlinScriptFile
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.openInEditor
 import org.jetbrains.kotlin.idea.testFramework.Fixture.Companion.openFixture
 import org.jetbrains.kotlin.test.KotlinRoot
@@ -109,7 +105,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
             stats(stats)
             warmUpIterations(warmUpIterations)
             iterations(iterations)
-            checkStability(!fast)
+            stabilityWatermark(25.takeIf { !fast })
             test {
                 it.value = openProjectOperation.openProject()
             }
@@ -164,7 +160,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
             stats(stats)
             warmUpIterations(warmUpIterations)
             iterations(iterations)
-            checkStability(!fast)
+            stabilityWatermark(25.takeIf { !fast })
             test {
                 it.value = ProjectOpenAction.openProject(openProject)
             }
@@ -433,7 +429,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
         note: String = "",
         warmUpIterations: Int = 3,
         iterations: Int = 10,
-        checkStability: Boolean = true,
+        stabilityWatermark: Int = 25,
         filenameSimplifier: (String) -> String = ::simpleFilename
     ): List<HighlightInfo> {
         val profileManager = ProjectInspectionProfileManager.getInstance(project)
@@ -450,7 +446,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
                     stats(stats)
                     warmUpIterations(if (isWarmUp) 1 else warmUpIterations)
                     iterations(if (isWarmUp) 2 else iterations)
-                    checkStability(checkStability)
+                    stabilityWatermark(stabilityWatermark)
                     setUp {
                         it.setUpValue = openInEditor(project, fileName)
                     }
@@ -491,39 +487,7 @@ abstract class AbstractPerformanceProjectsTest : UsefulTestCase() {
         return CodeInsightTestFixtureImpl.instantiateAndRun(psiFile, editor, ArrayUtilRt.EMPTY_INT_ARRAY, true)
     }
 
-    protected fun perfScriptDependencies(name: String, stats: Stats, note: String = "") =
-        perfScriptDependencies(project(), name, stats, note = note)
-
     protected fun project() = myProject ?: error("project has not been initialized")
-
-    private fun perfScriptDependencies(
-        project: Project,
-        fileName: String,
-        stats: Stats,
-        note: String = ""
-    ) {
-        if (!isAKotlinScriptFile(fileName)) return
-        performanceTest<EditorFile, EditorFile> {
-            name("updateScriptDependencies ${notePrefix(note)}${simpleFilename(fileName)}")
-            stats(stats)
-            warmUpIterations(20)
-            iterations(50)
-            setUp { it.setUpValue = openInEditor(project, fileName) }
-            test {
-                ScriptConfigurationManager.updateScriptDependenciesSynchronously(it.setUpValue!!.psiFile)
-                it.value = it.setUpValue
-            }
-            tearDown {
-                it.setUpValue?.let { ef ->
-                    project.cleanupCaches()
-                    project.close(ef.psiFile)
-                }
-                it.value?.let { v -> assertNotNull(v) }
-            }
-            profilerConfig.enabled = true
-            checkStability(false)
-        }
-    }
 
     fun notePrefix(note: String) = if (note.isNotEmpty()) {
         if (note.endsWith("/")) note else "$note "

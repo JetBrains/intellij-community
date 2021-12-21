@@ -48,6 +48,8 @@ import java.util.function.Supplier;
 final class ActionUpdater {
   private static final Logger LOG = Logger.getInstance(ActionUpdater.class);
 
+  static final Key<Boolean> SUPPRESS_SUBMENU_IMPL = Key.create("SUPPRESS_SUBMENU_IMPL");
+
   static final Executor ourBeforePerformedExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Exclusive)", 1);
   private static final Executor ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("Action Updater (Common)", 2);
   private static final List<CancellablePromise<?>> ourPromises = new CopyOnWriteArrayList<>();
@@ -123,9 +125,22 @@ final class ActionUpdater {
     Presentation presentation = myPresentationFactory.getPresentation(action).clone();
     boolean isBeforePerformed = operation == Op.beforeActionPerformedUpdate;
     if (!ActionPlaces.isShortcutPlace(myPlace)) presentation.setEnabledAndVisible(true);
+    boolean wasPopup = action instanceof ActionGroup && ((ActionGroup)action).isPopup(myPlace);
+    presentation.setPopupGroup(action instanceof ActionGroup && (presentation.isPopupGroup() || wasPopup));
     Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(presentation), isBeforePerformed);
     boolean success = callAction(action, operation, doUpdate);
+    if (success) assertActionGroupPopupStateIsNotChanged(action, myPlace, wasPopup, presentation);
     return success ? presentation : null;
+  }
+
+  static void assertActionGroupPopupStateIsNotChanged(@NotNull AnAction action, @NotNull String place,
+                                                      boolean wasPopup, @NotNull Presentation presentation) {
+    if (action instanceof ActionGroup && wasPopup != ((ActionGroup)action).isPopup(place)) {
+      presentation.setPopupGroup(!wasPopup); // keep the old logic for a while
+      String operationName = action.getClass().getSimpleName() + "#" + Op.update + " (" + action.getClass().getName() + ")";
+      LOG.warn("Calling `setPopup()` in " + operationName + ". " +
+               "Please use `event.getPresentation().setPopupGroup()` instead.");
+    }
   }
 
   void applyPresentationChanges() {
@@ -139,7 +154,7 @@ final class ActionUpdater {
         // 2. presentation factory may be just reset, do not reuse component from a copy
         customComponent = orig.getClientProperty(CustomComponentAction.COMPONENT_KEY);
       }
-      orig.copyFrom(copy, customComponent);
+      orig.copyFrom(copy, customComponent, true);
       if (customComponent != null && orig.isVisible()) {
         ((CustomComponentAction)action).updateCustomComponent(customComponent, orig);
       }
@@ -442,7 +457,7 @@ final class ActionUpdater {
     if (child instanceof ActionGroup) {
       ActionGroup actionGroup = (ActionGroup)child;
 
-      boolean isPopup = actionGroup.isPopup(myPlace);
+      boolean isPopup = presentation.isPopupGroup();
       boolean hasEnabled = false, hasVisible = false;
 
       if (child instanceof AlwaysVisibleActionGroup) {
@@ -467,9 +482,11 @@ final class ActionUpdater {
         return Collections.emptyList();
       }
       if (isPopup) {
-        boolean canBePerformed = canBePerformed(actionGroup, strategy);
-        boolean performOnly = canBePerformed && (actionGroup instanceof AlwaysPerformingActionGroup || !hasVisible);
-        presentation.putClientProperty("actionGroup.perform.only", performOnly ? true : null);
+        boolean canBePerformed = presentation.isPerformGroup();
+        boolean performOnly = canBePerformed && (
+          !hasVisible || Boolean.TRUE.equals(presentation.getClientProperty(ActionMenu.SUPPRESS_SUBMENU)) ||
+          actionGroup instanceof AlwaysPerformingActionGroup);
+        presentation.putClientProperty(SUPPRESS_SUBMENU_IMPL, performOnly ? true : null);
 
         if (!hasVisible && actionGroup.disableIfNoVisibleChildren()) {
           if (actionGroup.hideIfNoVisibleChildren()) {
@@ -558,7 +575,8 @@ final class ActionUpdater {
       if (presentation == null || !presentation.isVisible()) {
         return null;
       }
-      if ((oo.isPopup(myPlace) || strategy.canBePerformed.test(oo))) {
+      if (presentation.isPopupGroup() || presentation.isPerformGroup() ||
+          strategy.canBePerformed.test(oo)) {
         return null;
       }
       return getGroupChildren(oo, strategy);
@@ -587,6 +605,9 @@ final class ActionUpdater {
 
     Presentation presentation = strategy.update.fun(action);
     if (presentation != null) {
+      presentation.setPerformGroup(
+        action instanceof ActionGroup && presentation.isPopupGroup() &&
+        (presentation.isPerformGroup() || canBePerformed((ActionGroup)action, strategy)));
       myUpdatedPresentations.put(action, presentation);
     }
     return presentation;

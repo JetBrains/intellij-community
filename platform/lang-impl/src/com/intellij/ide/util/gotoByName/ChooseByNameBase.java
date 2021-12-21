@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.ide.util.gotoByName;
 
@@ -434,6 +434,7 @@ public abstract class ChooseByNameBase implements ChooseByNameViewModel {
     final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("ChooseByNameBase", group, true);
     actionToolbar.setLayoutPolicy(ActionToolbar.NOWRAP_LAYOUT_POLICY);
     final JComponent toolbarComponent = actionToolbar.getComponent();
+    actionToolbar.setTargetComponent(toolbarComponent);
     toolbarComponent.setBorder(null);
 
     if (myToolArea == null) {

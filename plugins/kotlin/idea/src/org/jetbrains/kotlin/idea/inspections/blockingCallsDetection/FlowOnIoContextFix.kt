@@ -9,8 +9,11 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.inspections.blockingCallsDetection.CoroutineBlockingCallInspectionUtils.findFlowOnCall
+import org.jetbrains.kotlin.idea.util.ImportInsertHelperImpl
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.resolve.calls.callUtil.getFirstArgumentExpression
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -43,11 +46,16 @@ internal class FlowOnIoContextFix : LocalQuickFix {
                     dotQualifiedParent.replaced(flowOnExpression)
                 }
 
+            addImportExplicitly(project, refactoredElement.containingKtFile, "kotlinx.coroutines.flow.flowOn")
             CoroutineBlockingCallInspectionUtils.postProcessQuickFix(refactoredElement, project)
         } else {
             val replacedArgument = flowOnCallOrNull.getFirstArgumentExpression()
                 ?.replaced(ktPsiFactory.createExpression("kotlinx.coroutines.Dispatchers.IO")) ?: return
             CoroutineBlockingCallInspectionUtils.postProcessQuickFix(replacedArgument, project)
         }
+    }
+
+    private fun addImportExplicitly(project: Project, file: KtFile, @Suppress("SameParameterValue") fqnToImport: String) {
+        ImportInsertHelperImpl.addImport(project, file, FqName(fqnToImport))
     }
 }

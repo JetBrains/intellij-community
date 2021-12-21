@@ -21,6 +21,7 @@ import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 public class NewExprent extends Exprent {
@@ -109,7 +110,7 @@ public class NewExprent extends Exprent {
       if (constructor != null) { // should be true only for a lambda expression with a virtual content method
         lst.add(constructor);
       }
-      lst.addAll(this.constructor.getLstParameters());
+      lst.addAll(this.constructor.getParameters());
     }
 
     return lst;
@@ -150,7 +151,7 @@ public class NewExprent extends Exprent {
         String enclosing = null;
 
         if (!lambda && constructor != null) {
-          enclosing = getQualifiedNewInstance(child.anonymousClassType.value, constructor.getLstParameters(), indent, tracer);
+          enclosing = getQualifiedNewInstance(child.anonymousClassType.value, constructor.getParameters(), indent, tracer);
           if (enclosing != null) {
             buf.append(enclosing).append('.');
           }
@@ -194,11 +195,11 @@ public class NewExprent extends Exprent {
       buf.append('(');
 
       if (!lambda && constructor != null) {
-        List<Exprent> parameters = constructor.getLstParameters();
+        List<Exprent> parameters = constructor.getParameters();
         List<VarVersionPair> mask = child.getWrapper().getMethodWrapper(CodeConstants.INIT_NAME, constructor.getStringDescriptor()).synthParameters;
         if (mask == null) {
           InvocationExprent superCall = child.superInvocation;
-          mask = ExprUtil.getSyntheticParametersMask(superCall.getClassname(), superCall.getStringDescriptor(), parameters.size());
+          mask = ExprUtil.getSyntheticParametersMask(superCall.getClassName(), superCall.getStringDescriptor(), parameters.size());
         }
 
         int start = enumConst ? 2 : 0;
@@ -255,7 +256,7 @@ public class NewExprent extends Exprent {
         String enclosing = null;
 
         if (constructor != null) {
-          enclosing = getQualifiedNewInstance(newType.value, constructor.getLstParameters(), indent, tracer);
+          enclosing = getQualifiedNewInstance(newType.value, constructor.getParameters(), indent, tracer);
           if (enclosing != null) {
             buf.append(enclosing).append('.');
           }
@@ -277,8 +278,8 @@ public class NewExprent extends Exprent {
       }
 
       if (constructor != null) {
-        List<Exprent> parameters = constructor.getLstParameters();
-        List<VarVersionPair> mask = ExprUtil.getSyntheticParametersMask(constructor.getClassname(), constructor.getStringDescriptor(), parameters.size());
+        List<Exprent> parameters = constructor.getParameters();
+        List<VarVersionPair> mask = ExprUtil.getSyntheticParametersMask(constructor.getClassName(), constructor.getStringDescriptor(), parameters.size());
 
         int start = enumConst ? 2 : 0;
         if (!enumConst || start < parameters.size()) {
@@ -431,9 +432,9 @@ public class NewExprent extends Exprent {
     if (!(o instanceof NewExprent)) return false;
 
     NewExprent ne = (NewExprent)o;
-    return InterpreterUtil.equalObjects(newType, ne.getNewType()) &&
+    return Objects.equals(newType, ne.getNewType()) &&
            InterpreterUtil.equalLists(lstDims, ne.getLstDims()) &&
-           InterpreterUtil.equalObjects(constructor, ne.getConstructor()) &&
+           Objects.equals(constructor, ne.getConstructor()) &&
            directArrayInit == ne.directArrayInit &&
            InterpreterUtil.equalLists(lstArrayElements, ne.getLstArrayElements());
   }

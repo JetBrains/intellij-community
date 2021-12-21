@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.tasks
 
 import io.opentelemetry.api.trace.SpanBuilder
@@ -30,5 +30,7 @@ fun expose(): Map<String, Any> {
     BiFunction<Path, IntConsumer?, Any>(::createZipSource),
     "isLibraryMergeable",
     Predicate<String>(::isLibraryMergeable),
+    "packInternalUtilities",
+    BiConsumer<Path, List<Path>>(::packInternalUtilities),
   )
 }

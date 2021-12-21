@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceParameter;
 
 import com.intellij.analysis.AnalysisScope;
@@ -37,8 +37,6 @@ import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
-import gnu.trove.TIntArrayList;
-import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -118,25 +116,25 @@ public class IntroduceParameterProcessor extends BaseRefactoringProcessor implem
   /**
    * if expressionToSearch is null, search for localVariable
    */
-  public IntroduceParameterProcessor(@NotNull Project project,
-                                     PsiMethod methodToReplaceIn,
-                                     @NotNull PsiMethod methodToSearchFor,
-                                     PsiExpression parameterInitializer,
-                                     PsiExpression expressionToSearch,
-                                     PsiLocalVariable localVariable,
-                                     boolean removeLocalVariable,
-                                     String parameterName,
-                                     IntroduceVariableBase.JavaReplaceChoice replaceOccurrencesChoice,
-                                     int replaceFieldsWithGetters,
-                                     boolean declareFinal,
-                                     boolean generateDelegate,
-                                     boolean replaceWithLambda,
-                                     PsiType forcedType,
-                                     @NotNull TIntArrayList parametersToRemove) {
-    this(project, methodToReplaceIn, methodToSearchFor, parameterInitializer, expressionToSearch, localVariable, removeLocalVariable, parameterName,
-         replaceOccurrencesChoice,
-         replaceFieldsWithGetters, declareFinal, generateDelegate, replaceWithLambda, forcedType, new IntArrayList(parametersToRemove.toNativeArray()));
-  }
+  //public IntroduceParameterProcessor(@NotNull Project project,
+  //                                   PsiMethod methodToReplaceIn,
+  //                                   @NotNull PsiMethod methodToSearchFor,
+  //                                   PsiExpression parameterInitializer,
+  //                                   PsiExpression expressionToSearch,
+  //                                   PsiLocalVariable localVariable,
+  //                                   boolean removeLocalVariable,
+  //                                   String parameterName,
+  //                                   IntroduceVariableBase.JavaReplaceChoice replaceOccurrencesChoice,
+  //                                   int replaceFieldsWithGetters,
+  //                                   boolean declareFinal,
+  //                                   boolean generateDelegate,
+  //                                   boolean replaceWithLambda,
+  //                                   PsiType forcedType,
+  //                                   @NotNull IntList parametersToRemove) {
+  //  this(project, methodToReplaceIn, methodToSearchFor, parameterInitializer, expressionToSearch, localVariable, removeLocalVariable, parameterName,
+  //       replaceOccurrencesChoice,
+  //       replaceFieldsWithGetters, declareFinal, generateDelegate, replaceWithLambda, forcedType, parametersToRemove);
+  //}
 
   public void setParameterInitializer(PsiExpression parameterInitializer) {
     myParameterInitializer = parameterInitializer;

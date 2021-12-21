@@ -378,7 +378,7 @@ public class JavaCoverageEngine extends CoverageEngine {
 
     final List<Integer> uncoveredLines = new ArrayList<>();
     try {
-      SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(uncoveredLines, content, suite.isTracingEnabled(), suite.getProject());
+      SourceLineCounterUtil.collectSrcLinesForUntouchedFiles(uncoveredLines, content, !suite.isTracingEnabled(), suite.getProject());
     }
     catch (Exception e) {
       LOG.error("Fail to process class from: " + classFile.getPath(), e);

@@ -288,7 +288,10 @@ public final class GlobalMenuLinux implements LinuxGlobalMenuEventHandler, Dispo
 
         for (GlobalMenuLinux gml : ourInstances.values()) {
           if (gml.myFrame == wndParent) {
-            for (MenuItemInternal root : gml.myRoots) {
+            List<MenuItemInternal> currentRoots = gml.myRoots;
+            if (currentRoots == null) return false;
+
+            for (MenuItemInternal root : currentRoots) {
               if (eventChar == root.mnemonic) {
                 ourLib.showMenuItem(root.nativePeer);
                 return false;

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -29,6 +29,7 @@ import com.intellij.ui.hover.HoverStateListener;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.animation.AlphaAnimated;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -57,8 +58,6 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
   @ApiStatus.Internal
   static final Key<Boolean> HIDE_COMMON_TOOLWINDOW_BUTTONS = Key.create("HideCommonToolWindowButtons");
   static final Key<Boolean> INACTIVE_LOOK = Key.create("InactiveLook");
-  static final Key<Boolean> SCROLLED_STATE = Key.create("ScrolledState");
-
   public enum Mode {
     SINGLE, VERTICAL_SPLIT, HORIZONTAL_SPLIT, CELL;
 
@@ -546,8 +545,9 @@ public final class InternalDecoratorImpl extends InternalDecorator implements Qu
 
   void updateActiveAndHoverState() {
     ActionToolbar toolbar = getHeaderToolbar();
-    if (toolbar != null) {
-      toolbar.getComponent().setVisible(!isNewUI() || isWindowHovered || toolWindow.isActive());
+    if (toolbar instanceof AlphaAnimated) {
+      AlphaAnimated alpha = (AlphaAnimated)toolbar;
+      alpha.getAlphaAnimator().setVisible(!isNewUI() || isWindowHovered || header.isPopupShowing() || toolWindow.isActive());
     }
   }
 
