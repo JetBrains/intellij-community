@@ -1,5 +1,5 @@
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
-UReturnExpression -> UQualifiedReferenceExpression -> PsiMethod:toString: toString
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
+UReturnExpression -> UQualifiedReferenceExpression -> Decompiled_Method: toString
 UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = this) -> Kotlin_Light_Class:class PropertyTest {
     var stringRepresentation: String
         get() = this.toString()
@@ -11,7 +11,7 @@ UThisExpression (label = null) -> USimpleNameReferenceExpression (identifier = t
 
     }
 }: PropertyTest
-UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> PsiMethod:toString: toString
+UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toString) -> Decompiled_Method: toString
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = setDataFromString) -> Kotlin_Light_Method: setDataFromString
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = value) -> Kotlin_Light_Value_Parameter: value
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
