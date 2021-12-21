@@ -24,3 +24,7 @@ interface Next {
 class X {
   static <warning descr="Modifier 'transient' is redundant for a 'static' field">transient</warning> String s;
 }
+<warning descr="Modifier 'strictfp' is redundant on Java 17 and higher">strictfp</warning> class Y {
+
+  <warning descr="Modifier 'strictfp' is redundant on Java 17 and higher">strictfp</warning> void y() {}
+}

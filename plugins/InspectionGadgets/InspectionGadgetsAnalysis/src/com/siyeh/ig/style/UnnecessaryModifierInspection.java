@@ -6,6 +6,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -42,7 +43,8 @@ public class UnnecessaryModifierInspection extends BaseInspection implements Cle
     public void visitClass(PsiClass aClass) {
       final PsiElement parent = aClass.getParent();
       final boolean interfaceMember = parent instanceof PsiClass && ((PsiClass)parent).isInterface();
-      if (aClass.isRecord() || aClass.isInterface() || aClass.isEnum() || interfaceMember) {
+      final boolean redundantStrictfp = PsiUtil.isLanguageLevel17OrHigher(aClass) && aClass.hasModifierProperty(PsiModifier.STRICTFP);
+      if (aClass.isRecord() || aClass.isInterface() || aClass.isEnum() || interfaceMember || redundantStrictfp) {
         PsiModifierList modifierList = aClass.getModifierList();
         if (modifierList == null) {
           return;
@@ -85,12 +87,28 @@ public class UnnecessaryModifierInspection extends BaseInspection implements Cle
             registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
                           InspectionGadgetsBundle.message("unnecessary.interface.inner.class.modifier.problem.descriptor"));
           }
+          if (JavaTokenType.STRICTFP_KEYWORD == tokenType && redundantStrictfp) {
+            // all code is strictfp under Java 17
+            registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                          InspectionGadgetsBundle.message("unnecessary.strictfp.modifier.problem.descriptor"));
+          }
         }
       }
     }
 
     @Override
     public void visitMethod(PsiMethod method) {
+      final boolean redundantStrictfp = PsiUtil.isLanguageLevel17OrHigher(method) && method.hasModifierProperty(PsiModifier.STRICTFP);
+      if (redundantStrictfp) {
+        final PsiModifierList modifierList = method.getModifierList();
+        final List<PsiKeyword> modifiers = PsiTreeUtil.getChildrenOfTypeAsList(modifierList, PsiKeyword.class);
+        for (PsiKeyword modifier : modifiers) {
+          if (JavaTokenType.STRICTFP_KEYWORD == modifier.getTokenType()) {
+            registerError(modifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                          InspectionGadgetsBundle.message("unnecessary.strictfp.modifier.problem.descriptor"));
+          }
+        }
+      }
       final PsiClass containingClass = method.getContainingClass();
       if (containingClass == null) {
         return;
