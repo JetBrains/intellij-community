@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.collectors.fus.fileTypes;
 
 import com.intellij.codeInsight.actions.ReaderModeSettings;
@@ -8,6 +8,7 @@ import com.intellij.internal.statistic.eventLog.validator.ValidationResultType;
 import com.intellij.internal.statistic.eventLog.validator.rules.EventContext;
 import com.intellij.internal.statistic.eventLog.validator.rules.impl.CustomValidationRule;
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
+import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -38,13 +39,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.internal.statistic.utils.PluginInfoDetectorKt.getPluginInfo;
-
-public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
+public final class FileTypeUsageCounterCollector extends CounterUsagesCollector {
   private static final Logger LOG = Logger.getInstance(FileTypeUsageCounterCollector.class);
 
   private static final ExtensionPointName<FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor>> EP =
-    ExtensionPointName.create("com.intellij.fileTypeUsageSchemaDescriptor");
+    new ExtensionPointName<>("com.intellij.fileTypeUsageSchemaDescriptor");
 
   private static final EventLogGroup GROUP = new EventLogGroup("file.types.usage", 63);
 
@@ -154,13 +153,13 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
       }
 
       if (instance.describes(project, file)) {
-        return getPluginInfo(instance.getClass()).isSafeToReport() ? ext.schema : "third.party";
+        return PluginInfoDetectorKt.getPluginInfo(instance.getClass()).isSafeToReport() ? ext.schema : "third.party";
       }
     }
     return null;
   }
 
-  public static final class FileTypeUsageSchemaDescriptorEP<T> extends BaseKeyedLazyInstance<T> implements KeyedLazyInstance<T> {
+  static final class FileTypeUsageSchemaDescriptorEP<T> extends BaseKeyedLazyInstance<T> implements KeyedLazyInstance<T> {
     // these must be public for scrambling compatibility
     @Attribute("schema")
     public String schema;
@@ -180,8 +179,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
     }
   }
 
-  public static final class FileTypeSchemaValidator extends CustomValidationRule {
-
+  static final class FileTypeSchemaValidator extends CustomValidationRule {
     @Override
     public boolean acceptRuleId(@Nullable String ruleId) {
       return "file_type_schema".equals(ruleId);
@@ -194,7 +192,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
 
       for (FileTypeUsageSchemaDescriptorEP<FileTypeUsageSchemaDescriptor> ext : EP.getExtensionList()) {
         if (StringUtil.equals(ext.schema, data)) {
-          return getPluginInfo(ext.getInstance().getClass()).isSafeToReport() ?
+          return PluginInfoDetectorKt.getPluginInfo(ext.getInstance().getClass()).isSafeToReport() ?
                  ValidationResultType.ACCEPTED : ValidationResultType.THIRD_PARTY;
         }
       }
@@ -202,7 +200,7 @@ public class FileTypeUsageCounterCollector extends CounterUsagesCollector {
     }
   }
 
-  public static class MyAnActionListener implements AnActionListener {
+  static class MyAnActionListener implements AnActionListener {
     private static final Key<Long> LAST_EDIT_USAGE = Key.create("LAST_EDIT_USAGE");
 
     @Override

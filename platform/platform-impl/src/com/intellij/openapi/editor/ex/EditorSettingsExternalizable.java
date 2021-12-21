@@ -14,7 +14,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.serviceContainer.NonInjectable;
 import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -130,10 +129,14 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
     public CaretStopOptions CARET_STOP_OPTIONS = new CaretStopOptions();
 
     @Override
-    public OsSpecificState getState() { return this; }
+    public OsSpecificState getState() {
+      return this;
+    }
 
     @Override
-    public void loadState(@NotNull OsSpecificState state) { XmlSerializerUtil.copyBean(state, this); }
+    public void loadState(@NotNull OsSpecificState state) {
+      CARET_STOP_OPTIONS = state.CARET_STOP_OPTIONS;
+    }
   }
 
   private static final String COMPOSITE_PROPERTY_SEPARATOR = ":";
@@ -164,12 +167,7 @@ public class EditorSettingsExternalizable implements PersistentStateComponent<Ed
   }
 
   public static EditorSettingsExternalizable getInstance() {
-    if (ApplicationManager.getApplication().isDisposed()) {
-      return new EditorSettingsExternalizable(new OsSpecificState());
-    }
-    else {
-      return ApplicationManager.getApplication().getService(EditorSettingsExternalizable.class);
-    }
+    return ApplicationManager.getApplication().getService(EditorSettingsExternalizable.class);
   }
 
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener, @NotNull Disposable disposable) {
