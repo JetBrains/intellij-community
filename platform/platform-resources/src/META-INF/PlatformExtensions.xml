@@ -891,7 +891,6 @@
     <applicationService serviceImplementation="com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.GlobalIgnoredPluginSuggestionState"/>
     <actionPromoter implementation="com.intellij.ui.ToolbarDecoratorActionPromoter"/>
     <actionPromoter implementation="com.intellij.ide.actions.WindowActionPromoter"/>
-    <applicationService serviceImplementation="com.intellij.internal.statistic.local.ActionsGlobalSummaryManager"/>
 
     <projectService serviceInterface="com.intellij.internal.statistic.local.FileTypeUsageSummaryProvider"
                     serviceImplementation="com.intellij.internal.statistic.local.FileTypeUsageLocalSummary"
