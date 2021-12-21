@@ -55,8 +55,6 @@ import java.util.function.Consumer;
 
 public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Disposable {
     private final static String KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID = "kotlin-jps-plugin-classpath";
-    private final static String KOTLIN_MAVEN_GROUP_ID = "org.jetbrains.kotlin";
-    private final static String KOTLIN_DIST_ARTIFACT_ID = "kotlin-jps-plugin-classpath";
 
     private static final Map<String, @NlsSafe String> moduleKindDescriptions = new LinkedHashMap<>();
     private static final Map<String, @NlsSafe String> sourceMapSourceEmbeddingDescriptions = new LinkedHashMap<>();
@@ -377,14 +375,14 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
 
     private void fetchAvailableJpsCompilersAsync(Consumer<? super @NlsSafe @Nullable Collection<String>> onFinish) {
         JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
-                        KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID))
+                        KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID, KotlinPathsProvider.KOTLIN_DIST_ARTIFACT_ID))
                 .onProcessed(distVersions -> {
                     if (distVersions == null) {
                         onFinish.accept(null);
                         return;
                     }
                     JarRepositoryManager.getAvailableVersions(project, RepositoryLibraryDescription.findDescription(
-                                    KOTLIN_MAVEN_GROUP_ID,
+                                    KotlinPathsProvider.KOTLIN_MAVEN_GROUP_ID,
                                     KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID))
                             .onProcessed(jpsClassPathVersions -> {
                                 if (jpsClassPathVersions == null) {
