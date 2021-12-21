@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -19,7 +19,7 @@ final class CommunityRepositoryModules {
   /**
    * Specifies non-trivial layout for all plugins which sources are located in 'community' and 'contrib' repositories
    */
-  static List<PluginLayout> COMMUNITY_REPOSITORY_PLUGINS = [
+  public final static List<PluginLayout> COMMUNITY_REPOSITORY_PLUGINS = List.of(
     plugin("intellij.ant") {
       mainJarName = "antIntegration.jar"
       withModule("intellij.ant.jps", "ant-jps.jar")
@@ -199,9 +199,9 @@ final class CommunityRepositoryModules {
       withModule("intellij.toml.core")
       withModule("intellij.toml.json")
     }
-  ]
+  )
 
-  static List<PluginLayout> CONTRIB_REPOSITORY_PLUGINS = [
+  public final static List<PluginLayout> CONTRIB_REPOSITORY_PLUGINS = List.of(
     plugin("intellij.errorProne") {
       withModule("intellij.errorProne.jps", "jps/errorProne-jps.jar")
     },
@@ -220,7 +220,7 @@ final class CommunityRepositoryModules {
       withModule("intellij.protoeditor.jvm")
       withModule("intellij.protoeditor.python")
     }
-  ]
+  )
 
   static PluginLayout androidPlugin(Map<String, String> additionalModulesToJars) {
     // the following is adapted from https://android.googlesource.com/platform/tools/adt/idea/+/refs/heads/studio-main/studio/BUILD
@@ -405,21 +405,7 @@ final class CommunityRepositoryModules {
       //],
 
       // libs = [
-      withModuleLibrary("jb-r8", "android.sdktools.deployer", "")
-      withModuleLibrary("explainer", "android.sdktools.analyzer", "")
-      withModuleLibrary("generator", "android.sdktools.analyzer", "")
-      withModuleLibrary("shared", "android.sdktools.analyzer", "")
-      withModuleLibrary("jetifier-core", "android.sdktools.db-compilerCommon", "")
-      withModuleLibrary("auto-common", "android.sdktools.db-compiler", "")
-      withModuleLibrary("flatbuffers-java", "android.sdktools.mlkit-common", "")
-      withModuleLibrary("utp-core-proto", "intellij.android.core", "")
-      withModuleLibrary("juniversalchardet", "android.sdktools.db-compilerCommon", "")
-      withModuleLibrary("javapoet", "android.sdktools.db-compilerCommon", "")
-      withModuleLibrary("okio", "intellij.android.core", "")
-      withModuleLibrary("commons-lang", "android.sdktools.db-compiler", "")
-      withModuleLibrary("antlr4-runtime", "android.sdktools.db-compiler", "")
       withProjectLibrary("kotlinx-coroutines-guava")
-      withModuleLibrary("tensorflow-lite-metadata", "android.sdktools.mlkit-common", "")
       withProjectLibrary("aapt-proto")
       withProjectLibrary("aia-proto")
       withProjectLibrary("android-test-plugin-host-device-info-proto")
@@ -442,25 +428,10 @@ final class CommunityRepositoryModules {
       withProjectLibrary("studio-proto")
       withProjectLibrary("transport-proto")
       withProjectLibrary("zxing-core")
-      withModuleLibrary("libandroid-core-proto", "intellij.android.core", "")
-      withModuleLibrary("libstudio.android-test-plugin-host-retention-proto", "intellij.android.core", "")
-      withModuleLibrary("moshi", "intellij.android.core", "")
       //tools/adt/idea/android/lib:android-sdk-tools-jps
-      withModuleLibrary("instantapps-api", "intellij.android.core", "")
-      withModuleLibrary("pepk", "intellij.android.core", "")
-      withModuleLibrary("spantable.jar", "intellij.android.core", "")
-      withModuleLibrary("background-inspector-proto", "intellij.android.app-inspection.inspectors.backgroundtask.model", "")
       //tools/adt/idea/app-inspection/inspectors/backgroundtask/view:background-inspector-proto
-      withModuleLibrary("workmanager-inspector-proto", "intellij.android.app-inspection.inspectors.workmanager.model", "")
       //tools/adt/idea/app-inspection/inspectors/workmanager/view:workmanager-inspector-proto
-      withModuleLibrary("ui-animation-tooling-internal", "intellij.android.compose-designer", "")
-      withModuleLibrary("eclipse-layout-kernel", "intellij.android.nav.editor", "")
-      withModuleLibrary("traceprocessor-proto", "intellij.android.profilersAndroid", "")
       //tools/adt/idea/profilers:traceprocessor-proto
-      withModuleLibrary("android-test-plugin-result-listener-gradle-proto", "intellij.android.utp", "")
-      withModuleLibrary("deploy_java_proto", "android.sdktools.deployer", "")
-      withModuleLibrary("libjava_sites", "android.sdktools.deployer", "")
-      withModuleLibrary("libjava_version", "android.sdktools.deployer", "")
       //tools/vendor/google/game-tools/main:game-tools-protos
       // ]
 
@@ -499,14 +470,13 @@ final class CommunityRepositoryModules {
       withModule("android.sdktools.layoutlib-api") // force layoutlib-standard (IDEA-256114)
       withProjectLibrary("layoutlib")
       withProjectLibrary("kxml2")
-      withProjectLibrary("commons-compress")
 
       //these project-level libraries are used from Android plugin only, so it's better to include them into its lib directory
       withProjectLibrary("kotlin-gradle-plugin-model")
       withProjectLibrary("HdrHistogram")
 
-      additionalModulesToJars.entrySet().each {
-        withModule(it.key, it.value)
+      for (Map.Entry<String, String> entry in additionalModulesToJars.entrySet()) {
+        withModule(entry.key, entry.value)
       }
 
       // FIXME-ank: We abuse `withGeneratedResources`. There is no intention to generate any resources, instead we want to create empty
