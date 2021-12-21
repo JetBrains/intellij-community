@@ -98,13 +98,6 @@ public class CompilerReferenceIndex<Input> {
         myIndices.put(indexExtension.getName(), new CompilerMapReduceIndex(indexExtension, myIndicesDir, readOnly));
       }
 
-      ShutDownTracker.getInstance().registerShutdownTask(() -> {
-        for (IndexId<?, ?> id : myIndices.keySet()) {
-          //noinspection UseOfSystemOutOrSystemErr
-          System.err.println("Leaked javac compiler index \"" + id.getName() + "\"");
-        }
-      });
-
       myNameEnumerator = new NameEnumerator(new File(myIndicesDir, NAME_ENUM_TAB));
     }
     catch (IOException e) {
