@@ -35,7 +35,6 @@ public final class JpsCacheStartupActivity implements StartupActivity.Background
       LOG.info("User authentication for JPS Cache download complete successfully");
     });
     checkWindowsCRLF(project);
-    checkAutoBuildEnabled(project);
   }
 
   private static void checkWindowsCRLF(@NotNull Project project) {
@@ -54,33 +53,6 @@ public final class JpsCacheStartupActivity implements StartupActivity.Background
 
   @Override
   public void dispose() { }
-
-  private static void checkAutoBuildEnabled(@NotNull Project project) {
-    //PropertiesComponent propertiesComponent = PropertiesComponent.getInstance(project);
-    //if (propertiesComponent.getBoolean(NOT_ASK_AGAIN)) {
-    //  return;
-    //}
-    //
-    //CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(project);
-    //if (!workspaceConfiguration.MAKE_PROJECT_ON_SAVE || !TrustedProjects.isTrusted(project)) {
-    //  return;
-    //}
-    //
-    //ATTENTION
-    //  .createNotification(JpsCacheBundle.message("notification.title.automatic.project.build.enabled"),
-    //                      JpsCacheBundle.message("notification.content.make.project.automatically.enabled.affect.caches"),
-    //                      NotificationType.WARNING)
-    //  .addAction(NotificationAction.createSimpleExpiring(
-    //    JpsCacheBundle.message("action.NotificationAction.JpsCachesDummyProjectComponent.text.disable.property"), () -> {
-    //      workspaceConfiguration.MAKE_PROJECT_ON_SAVE = false;
-    //      BuildManager.getInstance().clearState(project);
-    //    }))
-    //  .addAction(NotificationAction.createSimpleExpiring(
-    //    JpsCacheBundle.message("action.NotificationAction.JpsCachesDummyProjectComponent.text.dont.ask"), () -> {
-    //      propertiesComponent.setValue(NOT_ASK_AGAIN, true);
-    //    }))
-    //  .notify(project);
-  }
 
   public static boolean isLineEndingsConfiguredCorrectly() {
     return lineEndingsConfiguredCorrectly;

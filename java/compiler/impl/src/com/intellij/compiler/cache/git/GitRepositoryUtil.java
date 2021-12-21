@@ -12,12 +12,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.StandardCharsets;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 
 public final class GitRepositoryUtil {
   private static final Logger LOG = Logger.getInstance(GitRepositoryUtil.class);
@@ -229,20 +227,4 @@ public final class GitRepositoryUtil {
     if (latestBuiltCommit == null) return "";
     return latestBuiltCommit;
   }
-
-  //@Nullable
-  //public static GitRepository getRepositoryByName(@NotNull Project project, @NotNull String repositoryName) {
-  //  if (GitUtil.hasGitRepositories(project)) {
-  //    return ContainerUtil.find(GitUtil.getRepositories(project), repo -> {
-  //      for (GitRemote remote : repo.getRemotes()) {
-  //        for (String remoteUrl : remote.getUrls()) {
-  //          if (getRemoteRepoName(remoteUrl).equals(repositoryName)) return true;
-  //        }
-  //      }
-  //      return false;
-  //    });
-  //  }
-  //  LOG.info("Project doesn't contain Git repository");
-  //  return null;
-  //}
 }

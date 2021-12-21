@@ -126,7 +126,7 @@ public class JpsOutputLoaderManager {
     String latestBuiltCommit = commitsIterator.getLatestBuiltRemoteMasterCommit();
     Set<String> availableCommitsForRemote = availableCommitsPerRemote.get(commitsIterator.getRemote());
     if (availableCommitsForRemote == null) {
-      String message = JpsBuildBundle.message("notification.content.not.found.any.caches.for.latest.commits.in.branch");
+      String message = JpsBuildBundle.message("progress.text.not.found.any.caches.for.latest.commits.in.branch");
       LOG.warn(message);
       myNettyClient.sendDescriptionStatusMessage(message);
       return null;
@@ -155,13 +155,13 @@ public class JpsOutputLoaderManager {
     }
 
     if (commitsCountBetweenCompilation == 0) {
-      String message = JpsBuildBundle.message("notification.content.no.commits.since.latest.compilation");
+      String message = JpsBuildBundle.message("progress.text.no.commits.since.latest.compilation");
       LOG.warn(message);
       myNettyClient.sendDescriptionStatusMessage(message);
       return null;
     }
     if (!availableCommitsForRemote.contains(commitToDownload)) {
-      String message = JpsBuildBundle.message("notification.content.not.found.any.caches.for.latest.commits.in.branch");
+      String message = JpsBuildBundle.message("progress.text.not.found.any.caches.for.latest.commits.in.branch");
       LOG.warn(message);
       myNettyClient.sendDescriptionStatusMessage(message);
       return null;
@@ -169,13 +169,13 @@ public class JpsOutputLoaderManager {
     LOG.info("Commits count between latest success compilation and current commit: " + commitsCountBetweenCompilation +
              ". Detected commit to download: " + commitToDownload);
     if (commitToDownload.equals(latestDownloadedCommit)) {
-      String message = JpsBuildBundle.message("notification.content.system.contains.up.to.date.caches");
+      String message = JpsBuildBundle.message("progress.text.system.contains.up.to.date.caches");
       LOG.info(message);
       myNettyClient.sendDescriptionStatusMessage(message);
       return null;
     }
     if (!isDownloadQuickerThanLocalBuild(buildRunner, commitsCountBetweenCompilation, scopes)) {
-      String message = JpsBuildBundle.message("notification.content.local.build.is.quicker");
+      String message = JpsBuildBundle.message("progress.text.local.build.is.quicker");
       LOG.warn(message);
       myNettyClient.sendDescriptionStatusMessage(message);
       return null;
