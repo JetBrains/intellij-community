@@ -320,9 +320,6 @@ public final class ProjectUtil extends ProjectUtilCore {
     return project;
   }
 
-  @ApiStatus.Internal
-  public static Boolean omitProcessorChoosingDialog = false;
-
   private static @Nullable Project chooseProcessorAndOpen(@NotNull List<? extends ProjectOpenProcessor> processors,
                                                           @NotNull VirtualFile virtualFile,
                                                           @NotNull OpenProjectTask options) {
@@ -335,9 +332,9 @@ public final class ProjectUtil extends ProjectUtilCore {
       if (processors.size() == 1) {
         processor = processors.get(0);
       }
-      else if (omitProcessorChoosingDialog) {
-        LOG.warn("Omitting project processor dialog. Selecting the first one");
-        processor = processors.get(0);
+      else if (options.getOpenProcessorChooser() != null) {
+        LOG.info("options.openProcessorChooser will handle the open processor dilemma");
+        processor = options.getOpenProcessorChooser().invoke(processors);
       }
       else {
         Ref<ProjectOpenProcessor> ref = new Ref<>();
@@ -370,9 +367,9 @@ public final class ProjectUtil extends ProjectUtilCore {
       if (processors.size() == 1) {
         processorFuture = CompletableFuture.completedFuture(processors.get(0));
       }
-      else if (omitProcessorChoosingDialog) {
-        LOG.warn("Omitting project processor dialog. Selecting the first one");
-        processorFuture = CompletableFuture.completedFuture(processors.get(0));
+      else if (options.getOpenProcessorChooser() != null) {
+        LOG.info("options.openProcessorChooser will handle the open processor dilemma");
+        processorFuture = CompletableFuture.completedFuture(options.getOpenProcessorChooser().invoke(processors));
       }
       else {
         processorFuture = CompletableFuture.supplyAsync(() -> {
