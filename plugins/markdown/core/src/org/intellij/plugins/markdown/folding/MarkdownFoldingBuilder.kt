@@ -33,7 +33,8 @@ internal class MarkdownFoldingBuilder: CustomFoldingBuilder(), DumbAware {
       }
 
       override fun visitList(list: MarkdownList) {
-        addDescriptors(list)
+        val parent = list.parent
+        addDescriptors(if (parent is MarkdownListItem) parent else list)
         super.visitList(list)
       }
 
