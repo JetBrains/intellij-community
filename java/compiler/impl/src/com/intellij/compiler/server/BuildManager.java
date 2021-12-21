@@ -104,13 +104,11 @@ import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.cmdline.ClasspathBootstrap;
 import org.jetbrains.jps.incremental.Utils;
 import org.jetbrains.jps.incremental.storage.ProjectStamps;
-import org.jetbrains.jps.javac.Iterators;
 import org.jetbrains.jps.model.java.compiler.JavaCompilers;
 import org.jvnet.winp.Priority;
 import org.jvnet.winp.WinProcess;
 
-import javax.tools.JavaCompiler;
-import javax.tools.ToolProvider;
+import javax.tools.*;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -119,6 +117,7 @@ import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.List;
 import java.util.*;
@@ -1450,7 +1449,11 @@ public final class BuildManager implements Disposable {
 
     for (BuildProcessParametersProvider provider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
       for (String arg : provider.getVMArguments()) {
-        cmdLine.addParameter(arg); // TODO path parameters
+        cmdLine.addParameter(arg);
+      }
+
+      for (Pair<String, Path> parameter : provider.getPathParameters()) {
+        cmdLine.addPathParameter(parameter.getFirst(), cmdLine.copyPathToTargetIfRequired(parameter.getSecond()));
       }
     }
 
@@ -1494,7 +1497,9 @@ public final class BuildManager implements Disposable {
     cmdLine.addClasspathParameter(cp, isProfilingMode ? Collections.singletonList("yjp-controller-api-redist.jar") : Collections.emptyList());
 
     for (BuildProcessParametersProvider buildProcessParametersProvider : BuildProcessParametersProvider.EP_NAME.getExtensions(project)) {
-      cmdLine.copyPathToTarget(Iterators.map(buildProcessParametersProvider.getAdditionalPluginPaths(), File::new));
+      for (String path : buildProcessParametersProvider.getAdditionalPluginPaths()) {
+        cmdLine.copyPathToTargetIfRequired(Paths.get(path));
+      }
     }
 
     cmdLine.addParameter(BuildMain.class.getName());

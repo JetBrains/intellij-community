@@ -4,17 +4,19 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 
 import com.intellij.compiler.server.BuildProcessParametersProvider
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Pair
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.util.io.isDirectory
 import org.jetbrains.kotlin.config.IncrementalCompilation
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.jps.SetupKotlinJpsPluginBeforeCompileTask
+import java.nio.file.Path
 
 class KotlinBuildProcessParametersProvider(private val project: Project) : BuildProcessParametersProvider() {
     override fun getVMArguments(): MutableList<String> {
         val compilerWorkspaceSettings = KotlinCompilerWorkspaceSettings.getInstance(project)
 
         val res = arrayListOf<String>()
-        res.add("-Djps.kotlin.home=" + KotlinPathsProvider.getKotlinPaths(project).homePath)
         if (compilerWorkspaceSettings.preciseIncrementalEnabled) {
             res.add("-D" + IncrementalCompilation.INCREMENTAL_COMPILATION_JVM_PROPERTY + "=true")
         }
@@ -36,7 +38,10 @@ class KotlinBuildProcessParametersProvider(private val project: Project) : Build
         return res
     }
 
-    override fun getAdditionalPluginPaths(): Iterable<String> {
-        return listOf(KotlinArtifacts.instance.kotlincDirectory.path)
-    }
+    override fun getPathParameters() =
+        listOf(Pair("-Djps.kotlin.home=", KotlinPathsProvider.getKotlinPaths(project).homePath.toPath().also {
+            check(it.isDirectory()) {
+                "$it should be existing directory because '${SetupKotlinJpsPluginBeforeCompileTask::class.simpleName}' had to create it"
+            }
+        }))
 }
