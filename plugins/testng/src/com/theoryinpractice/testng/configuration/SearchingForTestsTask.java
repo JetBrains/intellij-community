@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.theoryinpractice.testng.configuration;
 
@@ -22,6 +22,7 @@ import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.rt.testng.TestNGXmlSuiteHelper;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.execution.ParametersListUtil;
 import com.theoryinpractice.testng.TestngBundle;
 import com.theoryinpractice.testng.model.TestData;
 import com.theoryinpractice.testng.model.TestNGTestObject;
@@ -145,14 +146,20 @@ public class SearchingForTestsTask extends SearchForTestsTask {
       xmlFile = suite.save(new File(PathManager.getSystemPath()));
     }
     else {
-      xmlFile = TestNGXmlSuiteHelper.writeSuite(map, testParams, myProject.getName(),
+      XmlSuite suite = new XmlSuite();
+      suite.setParameters(testParams);
+      String programParameters = myConfig.getProgramParameters();
+      if (programParameters != null && ParametersListUtil.parse(programParameters).contains("-threadcount")) {
+        suite.setThreadCount(-1);
+      }
+      xmlFile = TestNGXmlSuiteHelper.writeSuite(map, myProject.getName(),
                                                 PathManager.getSystemPath(),
                                                 new TestNGXmlSuiteHelper.Logger() {
                                                   @Override
                                                   public void log(Throwable e) {
                                                     LOG.error(e);
                                                   }
-                                                }, requireToDowngradeToHttp());
+                                                }, requireToDowngradeToHttp(), suite);
     }
     String path = xmlFile.getAbsolutePath() + "\n";
     try {
