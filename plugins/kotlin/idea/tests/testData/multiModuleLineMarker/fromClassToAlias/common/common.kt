@@ -1,4 +1,3 @@
-expect class <!LINE_MARKER("descr='Has actuals in JVM'")!>Header<!> {
+expect class <!LINE_MARKER("descr='Has actuals in jvm module'")!>Header<!> {
 
 }
-
