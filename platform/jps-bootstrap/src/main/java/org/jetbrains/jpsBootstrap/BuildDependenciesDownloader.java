@@ -18,6 +18,8 @@ import java.time.Instant;
 import java.util.Arrays;
 import java.util.stream.Stream;
 
+import static org.jetbrains.jpsBootstrap.JpsBootstrapUtil.verbose;
+
 // This currently a copy of BuildDependenciesDownloader.groovy. In the feature both places will share one java implementation
 final class BuildDependenciesDownloader {
   // Add something to file name computation to make a different name than BuildDependenciesDownloader.groovy
@@ -27,7 +29,7 @@ final class BuildDependenciesDownloader {
   private static final HttpClient httpClient = HttpClient.newBuilder().followRedirects(HttpClient.Redirect.NORMAL).build();
 
   static void debug(String message) {
-    JpsBootstrapUtil.verbose(message);
+    verbose(message);
   }
 
   static void info(String message) {
@@ -149,7 +151,7 @@ final class BuildDependenciesDownloader {
       BuildDependenciesUtil.cleanDirectory(targetDirectory);
     }
 
-    info(" * Extracting " + archiveFile + " to " + targetDirectory);
+    verbose(" * Extracting " + archiveFile + " to " + targetDirectory);
 
     Files.createDirectories(targetDirectory);
     BuildDependenciesUtil.extractZip(archiveFile, targetDirectory);
