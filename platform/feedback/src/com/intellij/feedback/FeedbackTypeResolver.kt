@@ -38,7 +38,7 @@ object FeedbackTypeResolver {
     }
 
   private fun showFeedbackNotification(project: Project?) {
-    if (!Registry.`is`("platform.feedback", true) || isFeedbackNotificationDisabled) {
+    if (!Registry.`is`("platform.feedback") || isFeedbackNotificationDisabled) {
       return
     }
     val suitableFeedbackTypes = FeedbackTypes.values().filter { it.isSuitable() }

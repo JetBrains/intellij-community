@@ -9,7 +9,7 @@
     <editorFactoryMouseListener implementation="com.intellij.feedback.track.active.EditorMouseEventTracker"/>
     <editorFactoryMouseMotionListener implementation="com.intellij.feedback.track.active.EditorMouseEventTracker"/>
 
-    <registryKey defaultValue="false" description="Enable to collect user feedback" key="platform.feedback"/>
+    <registryKey defaultValue="true" description="Enable to collect user feedback" key="platform.feedback"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.feedback.statistics.ProjectCreationFeedbackCountCollector"/>
   </extensions>
