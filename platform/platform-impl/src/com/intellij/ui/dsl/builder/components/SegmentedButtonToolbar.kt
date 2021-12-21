@@ -12,7 +12,9 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.util.NlsActions
+import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.SpacingConfiguration
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus
@@ -35,6 +37,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
     // Buttons preferred size is calculated in SegmentedButton.getPreferredSize, so reset default size
     setMinimumButtonSize(Dimension(0, 0))
     layoutPolicy = ActionToolbar.WRAP_LAYOUT_POLICY
+    putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps(size = DarculaUIUtil.BW.get()))
 
     addFocusListener(object : FocusListener {
       override fun focusGained(e: FocusEvent?) {
