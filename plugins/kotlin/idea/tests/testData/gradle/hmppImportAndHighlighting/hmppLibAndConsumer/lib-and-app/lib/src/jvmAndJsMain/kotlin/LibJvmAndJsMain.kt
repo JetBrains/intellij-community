@@ -1,7 +1,7 @@
 package com.h0tk3y.hmpp.klib.demo
 
-actual class <!LINE_MARKER("descr='Has declaration in common module'")!>LibCommonMainExpect<!> actual constructor(): LibCommonMainInterface {
-    actual fun <!LINE_MARKER("descr='Has declaration in common module'")!>libCommonMainExpectFun<!>() {
+actual class <!LINE_MARKER("descr='Has expects in lib-and-app.lib.commonMain module'")!>LibCommonMainExpect<!> actual constructor(): LibCommonMainInterface {
+    actual fun <!LINE_MARKER("descr='Has expects in lib-and-app.lib.commonMain module'")!>libCommonMainExpectFun<!>() {
         println("actualized in jvmAndJsMain")
         libCommonMainTopLevelFun()
     }
