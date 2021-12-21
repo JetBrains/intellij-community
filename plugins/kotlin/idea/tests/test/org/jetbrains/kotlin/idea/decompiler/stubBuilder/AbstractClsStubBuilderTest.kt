@@ -10,8 +10,8 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.stubs.StubElement
 import com.intellij.testFramework.LightProjectDescriptor
 import com.intellij.util.indexing.FileContentImpl
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.KotlinClsStubBuilder
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.decompiler.classFile.KotlinClsStubBuilder
 import org.jetbrains.kotlin.idea.stubs.AbstractStubBuilderTest
 import org.jetbrains.kotlin.idea.test.KotlinJdkAndLibraryProjectDescriptor
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase

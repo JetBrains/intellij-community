@@ -4,7 +4,7 @@ package org.jetbrains.kotlin.idea.decompiler.stubBuilder
 
 import com.intellij.psi.stubs.PsiFileStub
 import com.intellij.util.indexing.FileContentImpl
-import org.jetbrains.kotlin.idea.decompiler.builtIns.KotlinBuiltInDecompiler
+import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInDecompiler
 import org.jetbrains.kotlin.idea.test.IDEA_TEST_DATA_DIR
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase
 import org.jetbrains.kotlin.idea.test.KotlinWithJdkAndRuntimeLightProjectDescriptor
