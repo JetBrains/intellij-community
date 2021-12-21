@@ -38,6 +38,7 @@ public class PatchSpec {
   private Map<String, String> myWarnings = Collections.emptyMap();
   private List<String> myDeleteFiles = Collections.emptyList();
   private String myRoot = "";
+  private int myTimeout = 0;
 
   public String getOldVersionDescription() {
     return myOldVersionDescription;
@@ -181,5 +182,14 @@ public class PatchSpec {
 
   public String getRoot() {
     return myRoot;
+  }
+
+  public int getTimeout() {
+    return myTimeout;
+  }
+
+  public PatchSpec setTimeout(int timeout) {
+    myTimeout = timeout;
+    return this;
   }
 }

@@ -256,7 +256,7 @@ public class JBDiff {
     }
   }
 
-  public static byte[] bsdiff(InputStream oldFileIn, InputStream newFileIn, OutputStream diffFileOut) throws IOException {
+  public static byte[] bsdiff(InputStream oldFileIn, InputStream newFileIn, ByteArrayOutputStream diffFileOut, int timeout) throws IOException {
     byte[] oldBuf = Utils.readBytes(oldFileIn);
     int oldSize = oldBuf.length;
 
@@ -308,7 +308,14 @@ public class JBDiff {
     IntByRef pos = new IntByRef();
     int ctrlBlockLen = 0;
 
+    long stop = timeout > 0 ? System.nanoTime() + timeout * 1_000_000_000L : 0;
+
     while (scan < newSize) {
+      if (stop != 0 && System.nanoTime() > stop) {
+        diffFileOut.reset();
+        return newBuf;
+      }
+
       oldScore = 0;
 
       for (scSc = scan += len; scan < newSize; scan++) {

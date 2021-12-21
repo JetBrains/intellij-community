@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -143,6 +143,9 @@ public class Runner {
       List<String> deleteFiles = extractArguments(args, "delete");
       Map<String, String> warnings = buildWarningMap(extractArguments(args, "warning"));
 
+      String timeoutStr = getArgument(args, "timeout");
+      int timeout = timeoutStr != null ? Integer.parseInt(timeoutStr) : 0;
+
       PatchSpec spec = new PatchSpec()
         .setOldVersionDescription(oldVersionDesc)
         .setNewVersionDescription(newVersionDesc)
@@ -159,7 +162,8 @@ public class Runner {
         .setStrictFiles(strictFiles)
         .setOptionalFiles(optionalFiles)
         .setDeleteFiles(deleteFiles)
-        .setWarnings(warnings);
+        .setWarnings(warnings)
+        .setTimeout(timeout);
 
       boolean success = create(spec);
       System.exit(success ? 0 : 1);
@@ -292,6 +296,8 @@ public class Runner {
       "                  in a non-binary way to a fully binary patch. This will yield a larger patch, but\n" +
       "                  the generated patch can be applied on versions where non-binary patches have been applied to and it\n" +
       "                  guarantees that the patched version will match exactly the original one.\n" +
+      "    --timeout=<T> A time budget for building a 'bsdiff' patch between a pair of files, in seconds.\n" +
+      "                  If exceeded, the new version is included into the patch as a whole.\n" +
       "  <folder>: The folder where product was installed. For example: c:/Program Files/JetBrains/IntelliJ IDEA 2017.3.4");
   }
 
