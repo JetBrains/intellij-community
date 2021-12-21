@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.BundleBase
@@ -1396,11 +1396,13 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
   }
 
   fun updateSquareButtons() {
-    val leftToolbar = toolWindowPane!!.getSquareStripeFor(ToolWindowAnchor.LEFT)
-    val rightToolbar = toolWindowPane!!.getSquareStripeFor(ToolWindowAnchor.RIGHT)
-    if (leftToolbar != null) { ToolwindowToolbar.updateButtons(leftToolbar) }
-    if (rightToolbar != null) { ToolwindowToolbar.updateButtons(rightToolbar) }
-
+    val toolWindowPane = toolWindowPane!!
+    toolWindowPane.getSquareStripeFor(ToolWindowAnchor.LEFT)?.let {
+      ToolwindowToolbar.updateButtons(it)
+    }
+    toolWindowPane.getSquareStripeFor(ToolWindowAnchor.RIGHT)?.let {
+      ToolwindowToolbar.updateButtons(it)
+    }
   }
 
   fun notifySquareButtonByBalloon(options: ToolWindowBalloonShowOptions) {
