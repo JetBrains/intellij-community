@@ -28,10 +28,7 @@ import kotlin.jvm.functions.Function1;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments;
-import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments;
-import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments;
-import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants;
+import org.jetbrains.kotlin.cli.common.arguments.*;
 import org.jetbrains.kotlin.config.*;
 import org.jetbrains.kotlin.idea.KotlinBundle;
 import org.jetbrains.kotlin.idea.PluginStartupApplicationService;
@@ -165,10 +162,10 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
     @SuppressWarnings("unused")
     public KotlinCompilerConfigurableTab(Project project) {
         this(project,
-             (CommonCompilerArguments) KotlinCommonCompilerArgumentsHolder.Companion.getInstance(project).getSettings().unfrozen(),
-             (K2JSCompilerArguments) Kotlin2JsCompilerArgumentsHolder.Companion.getInstance(project).getSettings().unfrozen(),
-             (K2JVMCompilerArguments) Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project).getSettings().unfrozen(),
-             (CompilerSettings) KotlinCompilerSettings.Companion.getInstance(project).getSettings().unfrozen(),
+             FreezableKt.unfrozen(KotlinCommonCompilerArgumentsHolder.Companion.getInstance(project).getSettings()),
+             FreezableKt.unfrozen(Kotlin2JsCompilerArgumentsHolder.Companion.getInstance(project).getSettings()),
+             FreezableKt.unfrozen(Kotlin2JvmCompilerArgumentsHolder.Companion.getInstance(project).getSettings()),
+             FreezableKt.unfrozen(KotlinCompilerSettings.Companion.getInstance(project).getSettings()),
              KotlinCompilerWorkspaceSettings.getInstance(project),
              true,
              false);
