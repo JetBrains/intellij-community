@@ -7,13 +7,13 @@ import java.util.concurrent.ExecutorService;
 
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
 
-public final class JpsCachesPluginUtil {
-  private static final Logger LOG = Logger.getInstance(JpsCachesPluginUtil.class);
-  public static final String PLUGIN_NAME = "jps-cache-loader";
+public final class JpsCachesLoaderUtil {
+  private static final Logger LOG = Logger.getInstance(JpsCachesLoaderUtil.class);
+  public static final String LOADER_TMP_FOLDER_NAME = "jps-cache-loader";
   public static final String INTELLIJ_REPO_NAME = "intellij.git";
   public static final ExecutorService EXECUTOR_SERVICE = AppExecutorUtil.createBoundedApplicationPoolExecutor("JpsCacheLoader Pool",
                                                                                                          INSTANCE, getThreadPoolSize());
-  private JpsCachesPluginUtil() {}
+  private JpsCachesLoaderUtil() {}
 
   private static int getThreadPoolSize() {
     int threadsCount = Runtime.getRuntime().availableProcessors() - 1;

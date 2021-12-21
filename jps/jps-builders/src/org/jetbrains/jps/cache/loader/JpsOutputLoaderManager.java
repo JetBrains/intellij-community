@@ -1,6 +1,5 @@
 package org.jetbrains.jps.cache.loader;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
@@ -19,10 +18,10 @@ import org.jetbrains.jps.cache.client.JpsServerClient;
 import org.jetbrains.jps.cache.client.JpsServerConnectionUtil;
 import org.jetbrains.jps.cache.git.GitCommitsIterator;
 import org.jetbrains.jps.cache.loader.JpsOutputLoader.LoaderStatus;
-import org.jetbrains.jps.cache.model.ProjectBuildStatistic;
+import org.jetbrains.jps.cache.statistics.ProjectBuildStatistic;
 import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
-import org.jetbrains.jps.cache.model.SystemOpsStatistic;
+import org.jetbrains.jps.cache.statistics.SystemOpsStatistic;
 import org.jetbrains.jps.cache.statistics.JpsCacheLoadingSystemStats;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
@@ -41,9 +40,9 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
-import static org.jetbrains.jps.cache.JpsCachesPluginUtil.INTELLIJ_REPO_NAME;
+import static org.jetbrains.jps.cache.JpsCachesLoaderUtil.INTELLIJ_REPO_NAME;
 
-public class JpsOutputLoaderManager implements Disposable {
+public class JpsOutputLoaderManager {
   private static final Logger LOG = Logger.getInstance(JpsOutputLoaderManager.class);
   private static final String FS_STATE_FILE = "fs_state.dat";
   private static final int DEFAULT_PROJECT_MODULES_COUNT = 2200;
@@ -52,7 +51,6 @@ public class JpsOutputLoaderManager implements Disposable {
   private static final int PROJECT_MODULE_SIZE_DISK_BYTES = 921_600;
   private static final int COMMITS_COUNT_THRESHOLD = 600;
   private final AtomicBoolean hasRunningTask;
-  //private final CompilerWorkspaceConfiguration myWorkspaceConfiguration;
   private List<JpsOutputLoader<?>> myJpsOutputLoadersLoaders;
   private final JpsMetadataLoader myMetadataLoader;
   private ProjectBuildStatistic myOriginalBuildStatistic;
@@ -62,14 +60,6 @@ public class JpsOutputLoaderManager implements Disposable {
   private final String myBuildOutDir;
   private final String myProjectPath;
   private final JpsNettyClient myNettyClient;
-
-  @Override
-  public void dispose() { }
-
-  //@NotNull
-  //public static JpsOutputLoaderManager getInstance(@NotNull Project project) {
-  //  return project.getService(JpsOutputLoaderManager.class);
-  //}
 
   public JpsOutputLoaderManager(@NotNull JpsProject project,
                                 @NotNull CanceledStatus canceledStatus,
@@ -83,10 +73,6 @@ public class JpsOutputLoaderManager implements Disposable {
     myBuildOutDir = getBuildDirPath(project);
     myServerClient = JpsServerClient.getServerClient();
     myMetadataLoader = new JpsMetadataLoader(projectPath, myServerClient);
-    //myWorkspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
-    // Configure build manager
-    //BuildManager buildManager = BuildManager.getInstance();
-    //if (!buildManager.isGeneratePortableCachesEnabled()) buildManager.setGeneratePortableCachesEnabled(true);
   }
 
   public void load(@NotNull BuildRunner buildRunner, boolean isForceUpdate,
@@ -94,8 +80,6 @@ public class JpsOutputLoaderManager implements Disposable {
     if (!canRunNewLoading()) return;
     Pair<String, Integer> commitInfo = getNearestCommit(buildRunner, isForceUpdate, scopes);
     if (commitInfo != null) {
-      //assert myProject != null;
-      //myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingStarted();
       // Drop JPS metadata to force plugin for downloading all compilation outputs
       if (isForceUpdate) {
         myMetadataLoader.dropCurrentProjectMetadata();
@@ -135,7 +119,6 @@ public class JpsOutputLoaderManager implements Disposable {
   private Pair<String, Integer> getNearestCommit(@NotNull BuildRunner buildRunner, boolean isForceUpdate,
                                                  @NotNull List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
     Map<String, Set<String>> availableCommitsPerRemote = myServerClient.getCacheKeysPerRemote(myNettyClient);
-    //List<GitCommitsIterator> repositoryList = GitRepositoryUtil.getCommitsIterator(myProject, availableCommitsPerRemote.keySet());
 
     GitCommitsIterator commitsIterator = new GitCommitsIterator(myNettyClient, INTELLIJ_REPO_NAME);
     String latestDownloadedCommit = commitsIterator.getLatestDownloadedCommit();
@@ -232,14 +215,14 @@ public class JpsOutputLoaderManager implements Disposable {
     long decompressionSpeed;
     if (JpsCacheLoadingSystemStats.getDecompressionSpeedBytesPesSec() > 0) {
       decompressionSpeed = JpsCacheLoadingSystemStats.getDecompressionSpeedBytesPesSec();
-      LOG.info("Using previously saved statistic about decompression speed: " + decompressionSpeed);
+      LOG.info("Using previously saved statistic about decompression speed: " + StringUtil.formatFileSize(decompressionSpeed) + "/s");
     } else {
       decompressionSpeed = systemOpsStatistic.getDecompressionSpeedBytesPesSec();
     }
     long deletionSpeed;
     if (JpsCacheLoadingSystemStats.getDeletionSpeedBytesPerSec() > 0) {
       deletionSpeed = JpsCacheLoadingSystemStats.getDeletionSpeedBytesPerSec();
-      LOG.info("Using previously saved statistic about deletion speed: " + deletionSpeed);
+      LOG.info("Using previously saved statistic about deletion speed: " + StringUtil.formatFileSize(deletionSpeed) + "/s");
     } else {
       deletionSpeed = systemOpsStatistic.getDeletionSpeedBytesPerSec();
     }
@@ -253,7 +236,7 @@ public class JpsOutputLoaderManager implements Disposable {
     LOG.info("Expected download size: " + StringUtil.formatFileSize(approximateDownloadSize) + ". Expected download time: " + expectedDownloadTimeSec + "sec. " +
              "Expected decompression time: " + expectedDecompressionTimeSec + "sec. " +
              "Expected size to delete: " + StringUtil.formatFileSize(approximateDownloadSize) + ". Expected delete time: " + expectedDeleteTimeSec + "sec. " +
-             "Total time of working: " + expectedTimeOfWorkSec + "sec.");
+             "Total time of working: " + StringUtil.formatDuration(expectedTimeOfWorkSec) + "sec.");
     return expectedTimeOfWorkSec * 1000;
   }
 
@@ -265,7 +248,6 @@ public class JpsOutputLoaderManager implements Disposable {
     Map<String, Map<String, BuildTargetState>> commitSourcesState = myMetadataLoader.loadMetadataForCommit(myNettyClient, commitId);
     if (commitSourcesState == null) {
       LOG.warn("Couldn't load metadata for commit: " + commitId);
-      //myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
       return;
     }
 
@@ -287,7 +269,6 @@ public class JpsOutputLoaderManager implements Disposable {
           LOG.warn("Unexpected exception rollback all progress", e);
           onFail();
           getLoaders().forEach(loader -> loader.rollback());
-          //myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
           myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.rolling.back.downloaded.caches"));
         }
       }).handle((result, ex) -> handleExceptions(result, ex)).get();
@@ -295,7 +276,6 @@ public class JpsOutputLoaderManager implements Disposable {
     catch (InterruptedException | ExecutionException e) {
       LOG.warn("Couldn't fetch jps compilation caches", e);
       onFail();
-      //myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
     }
   }
 
@@ -317,14 +297,6 @@ public class JpsOutputLoaderManager implements Disposable {
       LOG.warn("Build output dir is not configured for the project");
       return false;
     }
-    //if (myWorkspaceConfiguration.MAKE_PROJECT_ON_SAVE) {
-    //  LOG.warn("Project automatic build should be disabled, it can affect portable caches");
-    //  return false;
-    //}
-    //if (!JpsCacheStartupActivity.isLineEndingsConfiguredCorrectly()) {
-    //  LOG.warn("Git line-endings not configured correctly for the project");
-    //  return false;
-    //}
     hasRunningTask.set(true);
     return true;
   }
@@ -361,7 +333,6 @@ public class JpsOutputLoaderManager implements Disposable {
   private void saveStateAndNotify(LoaderStatus loaderStatus, String commitId, long startTime) {
     if (loaderStatus == LoaderStatus.FAILED) {
       onFail();
-      //myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
       return;
     }
 
@@ -369,19 +340,6 @@ public class JpsOutputLoaderManager implements Disposable {
     myNettyClient.sendDownloadStatisticMessage(commitId, JpsCacheLoadingSystemStats.getDecompressionSpeedBytesPesSec(),
                                                JpsCacheLoadingSystemStats.getDeletionSpeedBytesPerSec());
     isCacheDownloaded = true;
-    //PropertiesComponent.getInstance().setValue(LATEST_COMMIT_ID, commitId);
-    //BuildManager.getInstance().clearState(myProject);
-    //long endTime = System.nanoTime() - startTime;
-    //ApplicationManager.getApplication().invokeLater(() -> {
-    //  STANDARD
-    //    .createNotification(JpsCacheBundle.message("notification.title.compiler.caches.loader"),
-    //                        JpsCacheBundle.message("notification.content.update.compiler.caches.completed.successfully.in.s",
-    //                                               endTime / 1_000_000_000),
-    //                        NotificationType.INFORMATION)
-    //    .notify(myProject);
-    //});
-    //DOWNLOAD_DURATION_EVENT_ID.log(endTime);
-    //myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(true);
     LOG.info("Loading finished");
   }
 
@@ -396,7 +354,6 @@ public class JpsOutputLoaderManager implements Disposable {
         onFail();
       }
       getLoaders().forEach(loader -> loader.rollback());
-      //myProject.getMessageBus().syncPublisher(PortableCachesLoadListener.TOPIC).loadingFinished(false);
       myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.rolling.back.downloaded.caches"));
     }
     return result;
@@ -414,13 +371,7 @@ public class JpsOutputLoaderManager implements Disposable {
     return LoaderStatus.COMPLETE;
   }
 
-  private void onFail() {
-    //ApplicationManager.getApplication().invokeLater(() -> {
-    //  ATTENTION.createNotification(JpsCacheBundle.message("notification.title.compiler.caches.loader"),
-    //                               JpsCacheBundle.message("notification.content.update.compiler.caches.failed"), NotificationType.WARNING)
-    //    .notify(myProject);
-    //});
-  }
+  private void onFail() { }
 
   private @Nullable Pair<Long, Integer> estimateProjectBuildTime(BuildRunner buildRunner,
                                        List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
@@ -450,7 +401,7 @@ public class JpsOutputLoaderManager implements Disposable {
       }
       myOriginalBuildStatistic = new ProjectBuildStatistic(targetsState.getLastSuccessfulRebuildDuration(), buildTargetTypeStatistic);
       long totalCalculationTime = System.currentTimeMillis() - startTime;
-      LOG.info("Calculated build time: " + estimatedBuildTime);
+      LOG.info("Calculated build time: " + StringUtil.formatDuration(estimatedBuildTime));
       LOG.info("Time spend to context initialization and time calculation: " + totalCalculationTime);
       return Pair.create(estimatedBuildTime, projectDescriptor.getProject().getModules().size());
     }

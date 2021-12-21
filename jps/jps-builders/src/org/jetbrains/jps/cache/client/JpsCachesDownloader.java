@@ -4,10 +4,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.io.NioFiles;
 import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.io.CountingGZIPInputStream;
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
@@ -22,8 +20,6 @@ import org.jetbrains.jps.cache.model.JpsLoaderContext;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -32,7 +28,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
-import static org.jetbrains.jps.cache.JpsCachesPluginUtil.EXECUTOR_SERVICE;
+import static org.jetbrains.jps.cache.JpsCachesLoaderUtil.EXECUTOR_SERVICE;
 import static org.jetbrains.jps.cache.client.JpsServerConnectionUtil.saveToFile;
 
 class JpsCachesDownloader {
@@ -117,7 +113,6 @@ class JpsCachesDownloader {
             totalSize.addAndGet(downloaded.length());
             downloadedFiles.add(Pair.create(downloaded, description));
           }
-          //indicator.finished();
           return null;
         }));
       }
@@ -140,14 +135,12 @@ class JpsCachesDownloader {
         }
       }
       long duration = System.currentTimeMillis() - start;
-      //if (eventId != null) eventId.log(totalSize.get());
       LOG.info("Downloaded " + StringUtil.formatFileSize(totalSize.get()) + " in " + StringUtil.formatDuration(duration) +
                "(" + duration + "ms). Percentage of CDN cache hits: " + (hitsCount * 100/myFilesDescriptions.size()) + "%");
 
       List<Pair<File, DownloadableFileUrl>> localFiles = new ArrayList<>();
       localFiles.addAll(moveToDir(downloadedFiles, targetDir));
       localFiles.addAll(existingFiles);
-      //myProgressIndicatorManager.finished(this);
       return localFiles;
     }
     catch (ProcessCanceledException | IOException e) {
@@ -162,7 +155,6 @@ class JpsCachesDownloader {
   private File downloadFile(@NotNull final DownloadableFileUrl description, @NotNull final File existingFile, int expectedDownloads) throws IOException {
     final String presentableUrl = description.getPresentableDownloadUrl();
     Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders(myNettyClient);
-    //myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.connecting.to.download.file.text", presentableUrl));
 
     try (CloseableHttpClient client = HttpClientBuilder.create().disableAutomaticRetries().build()) {
       HttpGet httpRequest = new HttpGet(description.getDownloadUrl());

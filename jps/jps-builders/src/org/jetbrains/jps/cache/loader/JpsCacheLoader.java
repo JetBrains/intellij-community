@@ -72,8 +72,6 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
       FileUtil.delete(zipFile);
       JpsCacheLoadingSystemStats.setDeletionTimeMs(fileSize, System.currentTimeMillis() - deletionStart);
       LOG.info("Unzip compilation caches took: " + (System.currentTimeMillis() - start));
-      //subTaskIndicator.finished();
-      //extractIndicatorManager.finished(this);
 
       myTmpCacheFolder = tmpFolder;
       return LoaderStatus.COMPLETE;
@@ -135,7 +133,6 @@ class JpsCacheLoader implements JpsOutputLoader<File> {
       //subTaskIndicator.finished();
       LOG.debug("JPS cache downloads finished");
     }
-    //indicatorManager.finished(this);
   }
 
   @Override

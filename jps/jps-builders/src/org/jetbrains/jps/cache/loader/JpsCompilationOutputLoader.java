@@ -27,7 +27,7 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
-import static org.jetbrains.jps.cache.JpsCachesPluginUtil.EXECUTOR_SERVICE;
+import static org.jetbrains.jps.cache.JpsCachesLoaderUtil.EXECUTOR_SERVICE;
 
 class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResult>> {
   private static final Logger LOG = Logger.getInstance(JpsCompilationOutputLoader.class);
@@ -62,7 +62,6 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
     myContext.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.calculating.affected.modules"));
     List<AffectedModule> affectedModules = calculateAffectedModules(myContext.getCurrentSourcesState(),
                                                                     myContext.getCommitSourcesState(), true);
-    //downloadProgressManager.finished(this);
     myContext.checkCanceled();
     if (affectedModules.size() > 0) {
       long start = System.currentTimeMillis();
@@ -90,7 +89,6 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
       for (Future<?> future : futureList) {
         future.get();
       }
-      //extractIndicatorManager.finished(this);
       myTmpFolderToModuleName = result;
       LOG.info("Unzip compilation output took: " + (System.currentTimeMillis() - start));
       return LoaderStatus.COMPLETE;
@@ -141,7 +139,6 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
                         catch (IOException e) {
                           LOG.warn("Couldn't replace compilation output for module: " + moduleName, e);
                         }
-                        //subTaskIndicator.finished();
                       }))
       .forEach(future -> {
         try {
@@ -151,7 +148,6 @@ class JpsCompilationOutputLoader implements JpsOutputLoader<List<OutputLoadResul
           LOG.info("Couldn't apply compilation output", e);
         }
       });
-    //indicatorManager.finished(this);
     LOG.info("Applying compilation output took: " + (System.currentTimeMillis() - start));
   }
 

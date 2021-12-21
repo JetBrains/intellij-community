@@ -16,8 +16,7 @@ import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.cache.JpsCachesPluginUtil;
-import org.jetbrains.jps.cache.git.GitRepositoryUtil;
+import org.jetbrains.jps.cache.JpsCachesLoaderUtil;
 import org.jetbrains.jps.cache.model.AffectedModule;
 import org.jetbrains.jps.cache.model.DownloadableFileUrl;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
@@ -49,7 +48,10 @@ public final class JpsServerClientImpl implements JpsServerClient {
     Map<String, List<String>> response = doGetRequest(nettyClient);
     if (response == null) return Collections.emptyMap();
     Map<String, Set<String>> result = new HashMap<>();
-    response.forEach((key, value) -> result.put(GitRepositoryUtil.getRemoteRepoName(key), new HashSet<>(value)));
+    response.forEach((key, value) -> {
+      String[] splittedRemoteUrl = key.split("/");
+      result.put(splittedRemoteUrl[splittedRemoteUrl.length - 1], new HashSet<>(value));
+    });
     return result;
   }
 
@@ -108,7 +110,7 @@ public final class JpsServerClientImpl implements JpsServerClient {
 
   @Override
   public List<OutputLoadResult> downloadCompiledModules(@NotNull JpsLoaderContext context, @NotNull List<AffectedModule> affectedModules) {
-    File targetDir = new File(PathManager.getPluginTempPath(), JpsCachesPluginUtil.PLUGIN_NAME);
+    File targetDir = new File(PathManager.getPluginTempPath(), JpsCachesLoaderUtil.LOADER_TMP_FOLDER_NAME);
     if (targetDir.exists()) FileUtil.delete(targetDir);
     targetDir.mkdirs();
 
@@ -125,8 +127,6 @@ public final class JpsServerClientImpl implements JpsServerClient {
     try {
       // Downloading process
       List<Pair<File, DownloadableFileUrl>> download = downloader.download(targetDir);
-      //downloadIndicatorManager.finished(this);
-
       downloadedFiles = ContainerUtil.map(download, pair -> pair.first);
       return ContainerUtil.map(download, pair -> {
         String downloadUrl = pair.second.getDownloadUrl();
@@ -152,7 +152,6 @@ public final class JpsServerClientImpl implements JpsServerClient {
       HttpEntity responseEntity = response.getEntity();
       if (response.getStatusLine().getStatusCode() == 200) {
         Gson gson = new Gson();
-        //String contentEncoding = responseEntity.getContentEncoding().getName();
         InputStream inputStream = responseEntity.getContent();
         return gson.fromJson(new InputStreamReader(inputStream, StandardCharsets.UTF_8), GSON_MAPPER);
       }
@@ -164,19 +163,7 @@ public final class JpsServerClientImpl implements JpsServerClient {
     }
     catch (IOException e) {
       LOG.warn("Failed request to cache server", e);
-      //JpsLoaderNotifications.ATTENTION
-      //  .createNotification(JpsCacheBundle.message("notification.title.compiler.caches.loader"), JpsCacheBundle.message("notification.content.failed.request.to.cache.server", e.getMessage()), NotificationType.ERROR)
-      //  .notify(project);
     }
     return null;
   }
-
-  //private static InputStream getInputStream(HttpEntity responseEntity) throws IOException {
-  //  String contentEncoding = responseEntity.getContentEncoding().getName();
-  //  InputStream inputStream = responseEntity.getContent();
-  //  if (contentEncoding != null && StringUtil.toLowerCase(contentEncoding).contains("gzip")) {
-  //    return new GZIPInputStream(inputStream);
-  //  }
-  //  return new InputStreamReader(inputStream, contentEncoding);
-  //}
 }

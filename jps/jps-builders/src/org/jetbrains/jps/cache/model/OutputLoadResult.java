@@ -3,9 +3,9 @@ package org.jetbrains.jps.cache.model;
 import java.io.File;
 
 public class OutputLoadResult {
-  private File zipFile;
-  private String downloadUrl;
-  private AffectedModule module;
+  private final File zipFile;
+  private final String downloadUrl;
+  private final AffectedModule module;
 
   public OutputLoadResult(File zipFile, String downloadUrl, AffectedModule module) {
     this.zipFile = zipFile;

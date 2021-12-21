@@ -16,7 +16,7 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
-import org.jetbrains.jps.cache.model.SystemOpsStatistic;
+import org.jetbrains.jps.cache.statistics.SystemOpsStatistic;
 
 import java.io.*;
 import java.nio.charset.StandardCharsets;
@@ -25,19 +25,19 @@ import java.nio.file.Path;
 import java.text.DecimalFormat;
 import java.util.Base64;
 import java.util.Map;
-//
-///**
-// * This class was introduced to detect internet connection problems from the client side.
-// * One of the cases was found, the constant connection refuse at caches download was related to
-// * the internet provider issue.
-// *
-// * traceroute for the d1lc5k9lerg6km.cloudfront.net
-// *  1  * * 192.168.0.1 (192.168.0.1)  2.183 ms
-// *  2  100.92.128.1 (100.92.128.1)  9.851 ms  8.761 ms  9.509 ms
-// *  3  100.127.1.253 (100.127.1.253)  10.748 ms  9.603 ms  13.316 ms
-// *  4  212.48.195.38 (212.48.195.38)  30.396 ms  13.616 ms  9.258 ms
-// *  5  100.64.97.116 (100.64.97.116)  9.306 ms !X  8.332 ms !X  14.542 ms !X
-// */
+
+/**
+ * This class was introduced to detect internet connection problems from the client side.
+ * One of the cases was found, the constant connection refuse at caches download was related to
+ * the internet provider issue.
+ * <p>
+ * traceroute for the d1lc5k9lerg6km.cloudfront.net
+ * 1  * * 192.168.0.1 (192.168.0.1)  2.183 ms
+ * 2  100.92.128.1 (100.92.128.1)  9.851 ms  8.761 ms  9.509 ms
+ * 3  100.127.1.253 (100.127.1.253)  10.748 ms  9.603 ms  13.316 ms
+ * 4  212.48.195.38 (212.48.195.38)  30.396 ms  13.616 ms  9.258 ms
+ * 5  100.64.97.116 (100.64.97.116)  9.306 ms !X  8.332 ms !X  14.542 ms !X
+ */
 public class JpsServerConnectionUtil {
   private static final Logger LOG = Logger.getInstance(JpsServerConnectionUtil.class);
   private static final String CDN_CACHE_HEADER = "X-Cache";
