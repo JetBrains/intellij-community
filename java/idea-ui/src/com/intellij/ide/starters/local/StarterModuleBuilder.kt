@@ -27,7 +27,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleType
 import com.intellij.openapi.module.StdModuleTypes
-import com.intellij.openapi.progress.ProgressManager
+import com.intellij.openapi.options.ConfigurationException
 import com.intellij.openapi.project.rootManager
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.projectRoots.JavaSdkType
@@ -199,6 +199,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     return null
   }
 
+  @Throws(ConfigurationException::class)
   override fun setupModule(module: Module) {
     super.setupModule(module)
 
@@ -290,6 +291,7 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     }
   }
 
+  @Throws(ConfigurationException::class)
   private fun startGenerator(module: Module) {
     val moduleContentRoot =
       if (!ApplicationManager.getApplication().isUnitTestMode) {
@@ -325,27 +327,25 @@ abstract class StarterModuleBuilder : ModuleBuilder() {
     )
 
     if (!ApplicationManager.getApplication().isUnitTestMode) {
-      ProgressManager.getInstance().runProcessWithProgressSynchronously(
-        {
-          WriteAction.runAndWait<Throwable> {
-            try {
-              AssetsProcessor().generateSources(generatorContext, getTemplateProperties())
-            }
-            catch (e: IOException) {
-              logger<StarterModuleBuilder>().error("Unable to create module by template", e)
+      WriteAction.runAndWait<Throwable> {
+        try {
+          AssetsProcessor().generateSources(generatorContext, getTemplateProperties())
+        }
+        catch (e: IOException) {
+          logger<StarterModuleBuilder>().error("Unable to create module by template", e)
 
-              ApplicationManager.getApplication().invokeLater {
-                Messages.showErrorDialog(
-                  JavaStartersBundle.message("starter.generation.error", e.message ?: ""),
-                  presentableName)
-              }
-            }
-
-            applyAdditionalChanges(module)
+          ApplicationManager.getApplication().invokeLater {
+            Messages.showErrorDialog(
+              JavaStartersBundle.message("starter.generation.error", e.message ?: ""),
+              presentableName)
           }
-        },
-        JavaStartersBundle.message("starter.generation.progress", presentableName),
-        true, module.project)
+          return@runAndWait
+        }
+
+        applyAdditionalChanges(module)
+      }
+
+      preprocessModuleCreated(module, this, starterContext.starter?.id)
 
       StartupManager.getInstance(module.project).runAfterOpened {  // IDEA-244863
         ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, module.disposed, Runnable {
