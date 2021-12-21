@@ -1,5 +1,5 @@
-actual class <!LINE_MARKER("descr='Has declaration in common module'")!>WithCompanion<!> {
-    actual companion <!LINE_MARKER("descr='Has declaration in common module'")!>object<!> {
+actual class <!LINE_MARKER("descr='Has expects in common module'")!>WithCompanion<!> {
+    actual companion <!LINE_MARKER("descr='Has expects in common module'")!>object<!> {
 
     }
 }
