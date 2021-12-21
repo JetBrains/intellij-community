@@ -1,9 +1,9 @@
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
 UTypeReferenceExpression (name = Base) -> USimpleNameReferenceExpression (identifier = Base) -> Kotlin_Light_Class:interface Base {
     fun print()
 }: Base
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:print) -> USimpleNameReferenceExpression (identifier = print) -> PsiMethod:print: print
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to PsiMethod:print) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Value_Parameter: x
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = print) -> Decompiled_Method: print
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = x) -> Kotlin_Light_Value_Parameter: x
 UTypeReferenceExpression (name = Base) -> USimpleNameReferenceExpression (identifier = Base) -> Kotlin_Light_Class:interface Base {
     fun print()
 }: Base
@@ -11,8 +11,8 @@ UTypeReferenceExpression (name = Base) -> USimpleNameReferenceExpression (identi
     fun print()
 }: Base
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = createBase) -> Kotlin_Light_Method: createBase
-UTypeReferenceExpression (name = java.lang.CharSequence) -> USimpleNameReferenceExpression (identifier = CharSequence) -> PsiClass:CharSequence: CharSequence
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = java.lang.CharSequence) -> USimpleNameReferenceExpression (identifier = CharSequence) -> Decompiled_Class: CharSequence
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
 UTypeReferenceExpression (name = Base) -> USimpleNameReferenceExpression (identifier = Base) -> Kotlin_Light_Class:interface Base {
     fun print()
 }: Base
