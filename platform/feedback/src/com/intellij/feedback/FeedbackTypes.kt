@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.feedback
 
-import com.intellij.feedback.FeedbackTypeResolver.isFeedbackNotificationEnabled
+import com.intellij.feedback.FeedbackTypeResolver.isFeedbackNotificationDisabled
 import com.intellij.feedback.bundle.FeedbackBundle
 import com.intellij.feedback.dialog.ProjectCreationFeedbackDialog
 import com.intellij.feedback.notification.RequestFeedbackNotification
@@ -83,9 +83,7 @@ enum class FeedbackTypes {
   protected abstract fun createFeedbackDialog(project: Project?, forTest: Boolean): DialogWrapper
 
   protected abstract fun updateStateAfterNotificationShowed()
-
-  //TODO: Implement method for resolve zendesk form - staging or production
-
+  
   fun showNotification(project: Project?, forTest: Boolean = false) {
     val notification = createNotification(forTest)
     notification.addAction(
@@ -103,7 +101,7 @@ enum class FeedbackTypes {
     notification.addAction(
       NotificationAction.createSimpleExpiring(FeedbackBundle.message("notification.request.feedback.action.dont.show.text")) {
         if (!forTest) {
-          isFeedbackNotificationEnabled = false
+          isFeedbackNotificationDisabled = true
         }
       }
     )
