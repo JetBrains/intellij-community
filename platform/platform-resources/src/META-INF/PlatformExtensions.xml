@@ -477,8 +477,6 @@
     <projectService serviceInterface="com.intellij.externalDependencies.ExternalDependenciesManager"
                     serviceImplementation="com.intellij.externalDependencies.impl.ExternalDependenciesManagerImpl"/>
 
-    <projectService serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorHistoryManager"/>
-
     <applicationService serviceInterface="com.intellij.ide.PlatformIdeService"
                         serviceImplementation="com.intellij.ide.PlatformIdeServiceImpl"/>
 
@@ -1355,6 +1353,8 @@
               topic="com.intellij.ide.ui.UISettingsListener"/>
     <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener" activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.notification.EventLogListener"/>
+    <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener" activeInHeadlessMode="false" activeInTestMode="false"
+              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
     <listener class="com.intellij.codeInsight.hints.InlayUnloadingListener" activeInHeadlessMode="false" activeInTestMode="false"
               topic="com.intellij.ide.plugins.DynamicPluginListener"/>
     <listener class="com.intellij.openapi.fileTypes.StdFileTypes$StdFileTypesUpdater" activeInHeadlessMode="true" activeInTestMode="false"
@@ -1374,18 +1374,8 @@
     <listener class="com.intellij.ui.ExperimentalUI$NewUiRegistryListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener class="com.intellij.ui.ExperimentalUI$NewUiLafManagerListener" topic="com.intellij.ide.ui.LafManagerListener"/>
   </applicationListeners>
-  <projectListeners>
-    <listener class="com.intellij.openapi.wm.impl.ToolwindowToolbarListener"
-              activeInHeadlessMode="false"
-              activeInTestMode="false"
-              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
-    <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener"
-              activeInHeadlessMode="false"
-              activeInTestMode="false"
-              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
-  </projectListeners>
 
-  <xi:include href="/META-INF/RemoteDevUtil.xml">
+  <xi:include href="/META-INF/RemoteDevUtil.xml" xpointer="xpointer(/idea-plugin/*)">
     <xi:fallback/>
   </xi:include>
 </idea-plugin>
