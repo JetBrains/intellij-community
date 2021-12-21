@@ -1,10 +1,10 @@
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
-UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> PsiClass:Float: Float
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
-UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> PsiClass:Float: Float
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
+UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> Decompiled_Class: Float
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
+UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> Decompiled_Class: Float
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = global) -> Kotlin_Light_Method: global
     null -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Value_Parameter: b
     null -> USimpleNameReferenceExpression (identifier = a) -> Kotlin_Light_Value_Parameter: a
@@ -13,41 +13,41 @@ UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (ident
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = withReceiver) -> Kotlin_Light_Method: withReceiver
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Math) -> PsiClass:Math: Math
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to PsiMethod:atan2) -> USimpleNameReferenceExpression (identifier = atan2) -> PsiMethod:atan2: atan2
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = Math) -> Decompiled_Class: Math
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = atan2) -> Decompiled_Method: atan2
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = unresolvedMethod) -> null: null
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiClass:String: String
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Class: String
     UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 4))(resolves to PsiMethod:format) -> USimpleNameReferenceExpression (identifier = format) -> PsiMethod:format: format
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 4))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = format) -> Decompiled_Method: format
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiClass:String: String
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Class: String
     UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to PsiMethod:format) -> USimpleNameReferenceExpression (identifier = format) -> PsiMethod:format: format
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = format) -> Decompiled_Method: format
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3))(resolves to null) -> USimpleNameReferenceExpression (identifier = arrayOf) -> FUN: arrayOf
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiClass:String: String
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Class: String
     UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3))(resolves to PsiMethod:format) -> USimpleNameReferenceExpression (identifier = format) -> PsiMethod:format: format
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = format) -> Decompiled_Method: format
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3))(resolves to null) -> USimpleNameReferenceExpression (identifier = arrayOf) -> FUN: arrayOf
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 3))(resolves to null) -> USimpleNameReferenceExpression (identifier = arrayOf) -> FUN: arrayOf
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiClass:String: String
+    UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> Decompiled_Class: String
     UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> PsiPackage:java.lang: lang
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = java) -> PsiPackage:java: java
     UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = lang) -> PsiPackage:java.lang: lang
-    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to PsiMethod:format) -> USimpleNameReferenceExpression (identifier = format) -> PsiMethod:format: format
-    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to PsiMethod:format) -> UQualifiedReferenceExpression -> null: null
+    UQualifiedReferenceExpression -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Decompiled_Method) -> USimpleNameReferenceExpression (identifier = format) -> Decompiled_Method: format
+    UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Decompiled_Method) -> UQualifiedReferenceExpression -> null: null
     UQualifiedReferenceExpression -> UQualifiedReferenceExpression -> null: null
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = chunked) -> FUN: chunked
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toTypedArray) -> FUN: toTypedArray
@@ -59,11 +59,11 @@ UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (ident
 }: A
         UBlockExpression -> UQualifiedReferenceExpression -> null: null
         UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = with2Receivers) -> Kotlin_Light_Method: with2Receivers
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
-UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> PsiClass:Float: Float
-UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> PsiClass:String: String
-UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> PsiClass:Integer: Integer
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
+UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (identifier = Float) -> Decompiled_Class: Float
+UTypeReferenceExpression (name = java.lang.String) -> USimpleNameReferenceExpression (identifier = String) -> Decompiled_Class: String
+UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
     UBlockExpression -> UObjectLiteralExpression -> Kotlin_Light_Method:
     UTypeReferenceExpression (name = Parent) -> USimpleNameReferenceExpression (identifier = Parent) -> Kotlin_Light_Class:open class Parent(a: String, b: Int): Parent
     null -> USimpleNameReferenceExpression (identifier = b) -> Kotlin_Light_Value_Parameter: b

@@ -6,9 +6,9 @@ UFile (package = test.pkg) [package test.pkg...]
         UMethod (name = test2) [@kotlin.Deprecated(level = DeprecationLevel.HIDDEN, message = "nothing")...}]
             UAnnotation (fqName = kotlin.Deprecated) [@kotlin.Deprecated(level = DeprecationLevel.HIDDEN, message = "nothing")]
                 UNamedExpression (name = level) [level = DeprecationLevel.HIDDEN] = Undetermined
-                    UQualifiedReferenceExpression [DeprecationLevel.HIDDEN] = external HIDDEN()
+                    UQualifiedReferenceExpression [DeprecationLevel.HIDDEN] = HIDDEN (enum entry)
                         USimpleNameReferenceExpression (identifier = DeprecationLevel) [DeprecationLevel] = external DeprecationLevel()
-                        USimpleNameReferenceExpression (identifier = HIDDEN) [HIDDEN] = external HIDDEN()
+                        USimpleNameReferenceExpression (identifier = HIDDEN) [HIDDEN] = HIDDEN (enum entry)
                 UNamedExpression (name = message) [message = "nothing"] = Undetermined
                     ULiteralExpression (value = "nothing") ["nothing"] = "nothing"
             UBlockExpression [{...}] = Undetermined
