@@ -13,11 +13,11 @@ import com.intellij.util.indexing.*
 import com.intellij.util.io.IOUtil
 import com.intellij.util.io.KeyDescriptor
 import com.intellij.util.io.VoidDataExternalizer
+import org.jetbrains.kotlin.analysis.decompiler.psi.BuiltInDefinitionFile
+import org.jetbrains.kotlin.analysis.decompiler.psi.KotlinBuiltInFileType
+import org.jetbrains.kotlin.analysis.decompiler.stub.file.ClsKotlinBinaryClassCache
 import org.jetbrains.kotlin.builtins.jvm.JvmBuiltInsPackageFragmentProvider
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.caches.IDEKotlinBinaryClassCache
-import org.jetbrains.kotlin.idea.decompiler.builtIns.BuiltInDefinitionFile
-import org.jetbrains.kotlin.idea.decompiler.builtIns.KotlinBuiltInFileType
 import org.jetbrains.kotlin.idea.decompiler.js.KotlinJavaScriptMetaFileType
 import org.jetbrains.kotlin.idea.klib.KlibLoadingMetadataCache
 import org.jetbrains.kotlin.idea.klib.KlibMetaFileType
@@ -157,7 +157,7 @@ object KotlinPartialPackageNamesIndex: FileBasedIndexExtension<FqName, Void>() {
     private fun FileContent.toPackageFqName(): FqName? =
         when (this.fileType) {
             KotlinFileType.INSTANCE -> this.psiFile.safeAs<KtFile>()?.packageFqName
-            JavaClassFileType.INSTANCE -> IDEKotlinBinaryClassCache.getInstance()
+            JavaClassFileType.INSTANCE -> ClsKotlinBinaryClassCache.getInstance()
                 .getKotlinBinaryClassHeaderData(this.file, this.content)?.packageName?.let(::FqName)
             KotlinJavaScriptMetaFileType -> this.fqNameFromJsMetadata()
             else -> null
@@ -190,7 +190,7 @@ object KotlinClassFileIndex : KotlinFileIndexBase<KotlinClassFileIndex>(KotlinCl
     private const val VERSION = 3
 
     private val INDEXER = indexer { fileContent ->
-        val headerInfo = IDEKotlinBinaryClassCache.getInstance().getKotlinBinaryClassHeaderData(fileContent.file, fileContent.content)
+        val headerInfo = ClsKotlinBinaryClassCache.getInstance().getKotlinBinaryClassHeaderData(fileContent.file, fileContent.content)
         if (headerInfo != null && headerInfo.metadataVersion.isCompatible()) headerInfo.classId.asSingleFqName() else null
     }
 }
