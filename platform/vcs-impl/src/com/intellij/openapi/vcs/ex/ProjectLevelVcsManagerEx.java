@@ -11,6 +11,7 @@ import com.intellij.openapi.vcs.update.UpdateInfoTree;
 import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
+import com.intellij.util.messages.Topic;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -18,6 +19,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
+  @Topic.ProjectLevel
+  public static final Topic<VcsActivationListener> VCS_ACTIVATED =
+    new Topic<>(VcsActivationListener.class, Topic.BroadcastDirection.NONE);
+
   public static ProjectLevelVcsManagerEx getInstanceEx(Project project) {
     return (ProjectLevelVcsManagerEx)project.getService(ProjectLevelVcsManager.class);
   }
@@ -51,4 +56,12 @@ public abstract class ProjectLevelVcsManagerEx extends ProjectLevelVcsManager {
   public abstract void fireDirectoryMappingsChanged();
 
   public abstract String haveDefaultMapping();
+
+  /**
+   * Whether vcs mappings were already processed after opening the project.
+   * ie: if true, one can assume that {@link #hasActiveVcss()} and {@link #hasAnyMappings()} match if the mappings are correct.
+   * <p>
+   * See {@link #VCS_ACTIVATED} listener that will be notified when this value changes.
+   */
+  public abstract boolean areVcsesActivated();
 }

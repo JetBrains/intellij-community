@@ -2,7 +2,6 @@
 package com.intellij.openapi.vcs.changes.ui
 
 import com.intellij.ide.actions.ToolWindowEmptyStateAction.rebuildContentUi
-import com.intellij.ide.actions.ToolWindowEmptyStateAction.setEmptyStateBackground
 import com.intellij.ide.impl.isTrusted
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.ActionManager
@@ -13,6 +12,7 @@ import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.C
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.ex.ToolWindowEx
+import com.intellij.util.ui.StatusText
 
 private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
   override fun init(window: ToolWindow) {
@@ -20,9 +20,10 @@ private class ChangesViewToolWindowFactory : VcsToolWindowFactory() {
 
     window as ToolWindowEx
     window.setAdditionalGearActions(ActionManager.getInstance().getAction("LocalChangesView.GearActions") as ActionGroup)
+  }
 
-    setEmptyStateBackground(window)
-    window.emptyText?.setChangesViewEmptyState(window.project)
+  override fun setEmptyState(project: Project, state: StatusText) {
+    state.setChangesViewEmptyState(project)
   }
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
@@ -48,9 +49,11 @@ private class CommitToolWindowFactory : VcsToolWindowFactory() {
     window as ToolWindowEx
     window.setAdditionalGearActions(ActionManager.getInstance().getAction("CommitView.GearActions") as ActionGroup)
 
-    setEmptyStateBackground(window)
-    window.emptyText?.setCommitViewEmptyState(window.project)
     window.hideIdLabelIfNotEmptyState()
+  }
+
+  override fun setEmptyState(project: Project, state: StatusText) {
+    state.setCommitViewEmptyState(project)
   }
 
   override fun shouldBeAvailable(project: Project): Boolean =

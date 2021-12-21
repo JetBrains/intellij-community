@@ -252,6 +252,11 @@ public final class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx i
   }
 
   @Override
+  public boolean areVcsesActivated() {
+    return myMappings.isActivated();
+  }
+
+  @Override
   public boolean hasAnyMappings() {
     return !myMappings.isEmpty();
   }

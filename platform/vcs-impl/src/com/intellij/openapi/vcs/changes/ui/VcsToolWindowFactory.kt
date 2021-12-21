@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.changes.ui
 
+import com.intellij.ide.actions.ToolWindowEmptyStateAction
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.extensions.ExtensionPointListener
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -12,12 +13,15 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED
 import com.intellij.openapi.vcs.VcsListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.CONTENT_PROVIDER_SUPPLIER_KEY
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager.Companion.IS_IN_COMMIT_TOOLWINDOW_KEY
+import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx
+import com.intellij.openapi.vcs.ex.VcsActivationListener
 import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.ui.ClientProperty
 import com.intellij.ui.content.Content
 import com.intellij.ui.content.ContentFactory
+import com.intellij.util.ui.StatusText
 import com.intellij.vcs.commit.CommitModeManager
 import java.awt.Component
 import javax.swing.JPanel
@@ -37,6 +41,12 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     updateState(project, window)
     val connection = project.messageBus.connect()
     connection.subscribe(VCS_CONFIGURATION_CHANGED, VcsListener {
+      runInEdt {
+        if (project.isDisposed) return@runInEdt
+        updateState(project, window)
+      }
+    })
+    connection.subscribe(ProjectLevelVcsManagerEx.VCS_ACTIVATED, VcsActivationListener {
       runInEdt {
         if (project.isDisposed) return@runInEdt
         updateState(project, window)
@@ -67,6 +77,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
   protected open fun updateState(project: Project, toolWindow: ToolWindow) {
     updateAvailability(project, toolWindow)
     updateContentIfCreated(project, toolWindow)
+    updateEmptyState(project, toolWindow)
   }
 
   private fun updateAvailability(project: Project, toolWindow: ToolWindow) {
@@ -103,6 +114,21 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
     }
     if (wasEmpty) toolWindow.contentManager.selectFirstContent()
   }
+
+  private fun updateEmptyState(project: Project, toolWindow: ToolWindow) {
+    val emptyText = (toolWindow as? ToolWindowEx)?.emptyText ?: return
+
+    ToolWindowEmptyStateAction.setEmptyStateBackground(toolWindow)
+    emptyText.clear()
+
+    // do not show empty state while project is being opened (as it might already have configured VCS)
+    val vcsManager = ProjectLevelVcsManagerEx.getInstanceEx(project)
+    if (vcsManager.areVcsesActivated() && !vcsManager.hasActiveVcss()) {
+      setEmptyState(project, emptyText)
+    }
+  }
+
+  protected open fun setEmptyState(project: Project, state: StatusText) = Unit
 
   private fun getExtensions(project: Project, toolWindow: ToolWindow): Collection<ChangesViewContentEP> {
     return ChangesViewContentEP.EP_NAME.getExtensions(project).filter {
