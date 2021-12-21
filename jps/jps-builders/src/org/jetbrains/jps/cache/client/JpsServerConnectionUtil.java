@@ -103,6 +103,7 @@ public class JpsServerConnectionUtil {
         start = System.currentTimeMillis();
         FileUtil.delete(downloadedFile);
         long deletionTime = System.currentTimeMillis() - start;
+        if (deletionTime == 0) deletionTime = 1;
         long deletionSpeedBytesPerSec = fileSize / deletionTime * 1000 ;
         LOG.info("Time spent to delete file " + fileName + " " + deletionTime + "ms");
         return new SystemOpsStatistic(bytesPerSecond, decompressionSpeedBytesPesSec, deletionSpeedBytesPerSec);

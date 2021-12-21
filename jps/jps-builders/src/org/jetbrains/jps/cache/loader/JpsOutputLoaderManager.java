@@ -13,6 +13,7 @@ import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.JpsBuildBundle;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.cache.client.JpsNettyClient;
 import org.jetbrains.jps.cache.client.JpsServerClient;
 import org.jetbrains.jps.cache.client.JpsServerConnectionUtil;
@@ -232,12 +233,12 @@ public class JpsOutputLoaderManager {
     long expectedDownloadTimeSec = approximateDownloadSize / systemOpsStatistic.getConnectionSpeedBytesPerSec();
     long expectedDecompressionTimeSec = approximateDownloadSize / decompressionSpeed;
     long expectedDeleteTimeSec = approximateSizeToDelete / deletionSpeed;
-    long expectedTimeOfWorkSec = (long)(expectedDeleteTimeSec * magicCoefficient) + expectedDownloadTimeSec + expectedDecompressionTimeSec;
+    long expectedTimeOfWorkMs = ((long)(expectedDeleteTimeSec * magicCoefficient) + expectedDownloadTimeSec + expectedDecompressionTimeSec) * 1000;
     LOG.info("Expected download size: " + StringUtil.formatFileSize(approximateDownloadSize) + ". Expected download time: " + expectedDownloadTimeSec + "sec. " +
              "Expected decompression time: " + expectedDecompressionTimeSec + "sec. " +
              "Expected size to delete: " + StringUtil.formatFileSize(approximateDownloadSize) + ". Expected delete time: " + expectedDeleteTimeSec + "sec. " +
-             "Total time of working: " + StringUtil.formatDuration(expectedTimeOfWorkSec) + "sec.");
-    return expectedTimeOfWorkSec * 1000;
+             "Total time of work: " + StringUtil.formatDuration(expectedTimeOfWorkMs));
+    return expectedTimeOfWorkMs;
   }
 
   private void startLoadingForCommit(@NotNull String commitId) {
@@ -395,6 +396,10 @@ public class JpsOutputLoaderManager {
       long estimatedBuildTime = IncProjectBuilder.calculateEstimatedBuildTime(projectDescriptor, projectDescriptor.getTargetsState(),
                                                                        compilationScope);
       BuildTargetsState targetsState = projectDescriptor.getTargetsState();
+      if (JavaBuilderUtil.isForcedRecompilationAllJavaModules(compilationScope)) {
+        estimatedBuildTime = targetsState.getLastSuccessfulRebuildDuration();
+        LOG.info("Project rebuild enabled, use latest successful rebuild time: " + StringUtil.formatDuration(estimatedBuildTime));
+      }
       Map<BuildTargetType<?>, Long> buildTargetTypeStatistic = new HashMap<>();
       for (BuildTargetType<?> type : TargetTypeRegistry.getInstance().getTargetTypes()) {
         buildTargetTypeStatistic.put(type,  targetsState.getAverageBuildTime(type));

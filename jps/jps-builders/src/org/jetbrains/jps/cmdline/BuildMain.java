@@ -21,7 +21,6 @@ import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.PreloadedDataExtension;
 import org.jetbrains.jps.cache.client.JpsServerAuthUtil;
 import org.jetbrains.jps.cache.git.GitCommitsIterator;
-import org.jetbrains.jps.cache.git.GitRepositoryUtil;
 import org.jetbrains.jps.cache.statistics.JpsCacheLoadingSystemStats;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.MessageHandler;
