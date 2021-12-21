@@ -322,11 +322,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
                 runTest("testData/inspections/redundantWith/inspectionData/inspections.test");
             }
 
-            @TestMetadata("reformat/inspectionData/inspections.test")
-            public void testReformat_inspectionData_Inspections_test() throws Exception {
-                runTest("testData/inspections/reformat/inspectionData/inspections.test");
-            }
-
             @TestMetadata("removeSetterParameterType/inspectionData/inspections.test")
             public void testRemoveSetterParameterType_inspectionData_Inspections_test() throws Exception {
                 runTest("testData/inspections/removeSetterParameterType/inspectionData/inspections.test");
