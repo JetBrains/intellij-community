@@ -39,7 +39,17 @@ public interface PyFrameAccessor {
   @Nullable
   XValueChildrenList loadFrame(@Nullable XStackFrame frame) throws PyDebuggerException;
 
+  /*
+   * Load a variable's attributes taking into account various view settings (for example, Type Renderers)
+   * */
+  @Nullable
   XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException;
+
+  /*
+   * Load full list of a variable's attributes ignoring view settings
+   * */
+  @Nullable
+  default XValueChildrenList loadVariableDefaultView(PyDebugValue variable) throws PyDebuggerException { return new XValueChildrenList(); }
 
   void changeVariable(PyDebugValue variable, String expression) throws PyDebuggerException;
 

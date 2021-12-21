@@ -5,19 +5,21 @@ import com.intellij.ide.util.ElementsChooser
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.event.DocumentListener
 import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.ComponentValidator
 import com.intellij.openapi.ui.Splitter
 import com.intellij.openapi.ui.ValidationInfo
+import com.intellij.openapi.util.Disposer
 import com.intellij.psi.util.QualifiedName
 import com.intellij.ui.*
 import com.intellij.ui.layout.*
 import com.intellij.ui.table.JBTable
 import com.intellij.util.textCompletion.TextFieldWithCompletion
 import com.intellij.xdebugger.XDebuggerManager
-import com.intellij.xdebugger.impl.XDebuggerUtilImpl
+import com.intellij.xdebugger.impl.XSourcePositionImpl
 import com.intellij.xdebugger.impl.breakpoints.XExpressionImpl
 import com.intellij.xdebugger.impl.ui.XDebuggerExpressionEditor
 import com.jetbrains.python.PyBundle
@@ -61,16 +63,6 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
     myProject = if (openProjects.isNotEmpty()) openProjects.first() else projectManager.defaultProject
     myRendererChooser = ElementsChooser(true)
     myRendererSettings = RendererSettings()
-
-    setupRendererSettings()
-    setupRendererChooser()
-    val chooserDecorator = RendererChooserToolbarDecorator().decorator
-    val splitter = Splitter(false).apply {
-      proportion = PANEL_SPLIT_PROPORTION
-      firstComponent = chooserDecorator.createPanel()
-      secondComponent = myRendererSettings
-    }
-    myMainPanel.add(splitter, BorderLayout.CENTER)
   }
 
   fun setRendererIndexToSelect(index: Int?) {
@@ -81,7 +73,26 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
     myNewRendererToAdd = renderer
   }
 
-  override fun createComponent() = myMainPanel
+  override fun createComponent(): JPanel {
+    ApplicationManager.getApplication().invokeLater {
+      setupRendererSettings()
+      setupRendererChooser()
+      val chooserDecorator = RendererChooserToolbarDecorator().decorator
+      val splitter = Splitter(false).apply {
+        proportion = PANEL_SPLIT_PROPORTION
+        firstComponent = chooserDecorator.createPanel()
+        secondComponent = myRendererSettings
+      }
+      if (myRendererChooser.elementCount > 0) {
+        val index = myRendererIndexToSelect ?: 0
+        val first = myRendererChooser.getElementAt(index)
+        myRendererChooser.selectElements(listOf(first))
+      }
+      myMainPanel.removeAll()
+      myMainPanel.add(splitter, BorderLayout.CENTER)
+    }
+    return myMainPanel
+  }
 
   override fun reset() {
     myRendererChooser.removeAllElements()
@@ -140,13 +151,10 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
 
   private fun applyRenderersToDebugger() {
     val debugSession = XDebuggerManager.getInstance(myProject).currentSession
-    val debugProcess = debugSession?.debugProcess
-    val pyDebugProcess = debugProcess as? PyDebugProcess
-    pyDebugProcess?.let {
-      ApplicationManager.getApplication().executeOnPooledThread {
-        it.setUserTypeRenderersSettings()
-        ApplicationManager.getApplication().invokeLater { it.session?.rebuildViews() }
-      }
+    (debugSession?.debugProcess as? PyDebugProcess)?.let { debugProcess ->
+      debugProcess.setUserTypeRenderersSettings()
+      debugProcess.dropFrameCaches()
+      debugProcess.session?.rebuildViews()
     }
   }
 
@@ -193,6 +201,16 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
     myRendererSettings.reset()
   }
 
+  fun getCurrentlyVisibleNames(): List<String> {
+    val resultList = mutableListOf<String>()
+    for (i in 0 until myRendererChooser.elementCount) {
+      myRendererChooser.getElementAt(i)?.name?.let { name ->
+        resultList.add(name)
+      }
+    }
+    return resultList
+  }
+
   private inner class RendererChooserToolbarDecorator {
 
     val decorator = ToolbarDecorator.createDecorator(myRendererChooser.component)
@@ -207,7 +225,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
 
     private inner class AddAction : AnActionButtonRunnable {
       override fun run(button: AnActionButton?) {
-        val renderer = PyUserNodeRenderer(true)
+        val renderer = PyUserNodeRenderer(true, getCurrentlyVisibleNames())
         myRendererChooser.addElement(renderer, renderer.isEnabled)
         myRendererChooser.moveElement(renderer, 0)
       }
@@ -237,15 +255,25 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
     }
   }
 
+  override fun disposeUIResources() {
+    super.disposeUIResources()
+    ApplicationManager.getApplication().executeOnPooledThread { Disposer.dispose(myRendererSettings) }
+  }
+
   private inner class RendererSettings : JPanel(BorderLayout()), Disposable {
 
     private val myPanel: JPanel
     private val myRendererNameTextField = JTextField()
-    private val myAppendDefaultChildrenCheckBox = JCheckBox(PyBundle.message("form.debugger.variables.view.user.type.renderers.append.default.children"))
-    private val myRbDefaultValueRenderer = JRadioButton(PyBundle.message("form.debugger.variables.view.user.type.renderers.use.default.renderer"))
-    private val myRbExpressionValueRenderer = JRadioButton(PyBundle.message("form.debugger.variables.view.user.type.renderers.use.following.expression"))
-    private val myRbDefaultChildrenRenderer = JRadioButton(PyBundle.message("form.debugger.variables.view.user.type.renderers.use.default.renderer"))
-    private val myRbListChildrenRenderer = JRadioButton(PyBundle.message("form.debugger.variables.view.user.type.renderers.use.list.of.expressions"))
+    private val myAppendDefaultChildrenCheckBox = JCheckBox(
+      PyBundle.message("form.debugger.variables.view.user.type.renderers.append.default.children"))
+    private val myRbDefaultValueRenderer = JRadioButton(
+      PyBundle.message("form.debugger.variables.view.user.type.renderers.use.default.renderer"))
+    private val myRbExpressionValueRenderer = JRadioButton(
+      PyBundle.message("form.debugger.variables.view.user.type.renderers.use.following.expression"))
+    private val myRbDefaultChildrenRenderer = JRadioButton(
+      PyBundle.message("form.debugger.variables.view.user.type.renderers.use.default.renderer"))
+    private val myRbListChildrenRenderer = JRadioButton(
+      PyBundle.message("form.debugger.variables.view.user.type.renderers.use.list.of.expressions"))
     private val myTypeNameTextField: TextFieldWithCompletion = TextFieldWithCompletion(myProject, TypeNameCompletionProvider(myProject), "",
                                                                                        true, true, true)
     private val myNodeValueExpressionEditor: XDebuggerExpressionEditor
@@ -254,11 +282,8 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
     private val myChildrenListEditorTable: JBTable
 
     init {
-      val contextWithSelf = PyExpressionCodeFragmentImpl(myProject, "fragment.py", "self = None", true)
-      val srcPosition = XDebuggerUtilImpl().createPositionByElement(contextWithSelf)
-      myNodeValueExpressionEditor = XDebuggerExpressionEditor(myProject, PyDebuggerEditorsProvider(), "NodeValueExpression", srcPosition,
+      myNodeValueExpressionEditor = XDebuggerExpressionEditor(myProject, PyDebuggerEditorsProvider(), "NodeValueExpression", null,
                                                               XExpressionImpl.EMPTY_EXPRESSION, false, false, true)
-
       myChildrenListEditorTableModel = ChildrenListEditorTableModel()
       myChildrenListEditorTable = JBTable(myChildrenListEditorTableModel)
       myChildrenRenderersListEditor = createChildrenListEditor()
@@ -286,7 +311,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
             row { myRbExpressionValueRenderer() }
           }
           row {
-            row { myNodeValueExpressionEditor.component(CCFlags.growX) }
+            row { myNodeValueExpressionEditor.component(CCFlags.growX, comment = PyBundle.message("form.debugger.variables.view.user.type.renderers.variable.name")) }
           }
         }
         row(PyBundle.message("form.debugger.variables.view.user.type.renderers.when.expanding.node")) {
@@ -295,7 +320,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
             row { myRbListChildrenRenderer() }
           }
           row {
-            row { myChildrenRenderersListEditor(CCFlags.growX) }
+            row { myChildrenRenderersListEditor(CCFlags.growX, comment = PyBundle.message("form.debugger.variables.view.user.type.renderers.variable.name")) }
             row { myAppendDefaultChildrenCheckBox() }
           }
         }
@@ -315,12 +340,13 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       val myTypeNameFieldValidator = ComponentValidator(this).withValidator(
         Supplier<ValidationInfo?> {
           val text: String = myTypeNameTextField.text
-          val cls = PyTypeNameResolver(myProject).resolve(text)
-          if (cls == null) {
-            return@Supplier ValidationInfo(PyBundle.message("form.debugger.variables.view.user.type.renderers.class.not.found"),
-                                           myTypeNameTextField)
+          return@Supplier if (!isValidTypeName(text)) {
+            ValidationInfo(PyBundle.message("form.debugger.variables.view.user.type.renderers.class.not.found"),
+                           myTypeNameTextField)
           }
-          null
+          else {
+            null
+          }
         }).installOn(myTypeNameTextField)
 
       myTypeNameTextField.addFocusListener(object : FocusAdapter() {
@@ -328,6 +354,33 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
           myTypeNameFieldValidator.revalidate()
         }
       })
+
+      myTypeNameTextField.addDocumentListener(object : DocumentListener {
+        override fun documentChanged(event: com.intellij.openapi.editor.event.DocumentEvent) {
+          updateSelfType()
+        }
+      })
+    }
+
+    private fun isValidTypeName(typeName: String): Boolean {
+      return PyTypeNameResolver(myProject).resolve(typeName) != null
+    }
+
+    private fun updateSelfType() {
+      val typeName = myTypeNameTextField.text
+      val moduleName = typeName.substringBeforeLast(".")
+      val className = typeName.substringAfterLast(".")
+      val import = if (moduleName == className) "" else "from $moduleName import $className"
+      val contextText =
+        """
+        $import
+        def foo(self: $className):
+          pass
+        """.trimIndent()
+      val contextWithSelf = PyExpressionCodeFragmentImpl(myProject, "fragment.py", contextText, true)
+      val offset = contextText.indexOf("def")
+      val srcPosition = XSourcePositionImpl.createByOffset(contextWithSelf.virtualFile, offset)
+      myNodeValueExpressionEditor.setSourcePosition(srcPosition)
     }
 
     private fun setupRadioButtons() {
@@ -335,9 +388,21 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       myRbDefaultChildrenRenderer.isSelected = true
       val listener = ActionListener { e ->
         when (e.source) {
-          myRbDefaultChildrenRenderer, myRbListChildrenRenderer -> {
+          myRbDefaultChildrenRenderer -> {
             myAppendDefaultChildrenCheckBox.isEnabled = myRbListChildrenRenderer.isSelected
             myChildrenListEditorTable.isEnabled = myRbListChildrenRenderer.isSelected
+          }
+          myRbListChildrenRenderer -> {
+            myAppendDefaultChildrenCheckBox.isEnabled = myRbListChildrenRenderer.isSelected
+            myChildrenListEditorTable.isEnabled = myRbListChildrenRenderer.isSelected
+            val renderer = myCurrentRenderer
+            if (myChildrenListEditorTableModel.rowCount == 0 && renderer != null) {
+              val pyClass = PyTypeNameResolver(myProject).resolve(renderer.toType)
+              pyClass?.visitClassAttributes({
+                                              myChildrenListEditorTableModel.addRow("self.${it.name}")
+                                              true
+                                            }, false, null)
+            }
           }
         }
       }
@@ -390,8 +455,6 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
     }
 
     private fun resetTypeInfo(renderer: PyUserNodeRenderer) {
-      renderer.typeQualifiedName = ""
-      renderer.typeCanonicalImportPath = ""
       renderer.typeSourceFile = ""
       renderer.moduleRootHasOneTypeWithSameName = false
 
@@ -441,6 +504,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
       } ?: run {
         myPanel.isVisible = false
       }
+      updateSelfType()
     }
 
     override fun dispose() {
@@ -467,10 +531,7 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
 
       private inner class RemoveAction : AnActionButtonRunnable {
         override fun run(button: AnActionButton?) {
-          val selectedRow = table.selectedRow
-          if (selectedRow >= 0 && selectedRow < tableModel.rowCount) {
-            tableModel.removeRow(selectedRow)
-          }
+          tableModel.removeRows(table.selectedRows)
         }
       }
 
@@ -545,11 +606,11 @@ class PyUserTypeRenderersConfigurable : SearchableConfigurable {
         fireTableRowsInserted(lastRow, lastRow)
       }
 
-      fun removeRow(row: Int) {
-        if (row >= 0 && row < myData.size) {
-          myData.removeAt(row)
-          fireTableRowsDeleted(row, row)
-        }
+      fun removeRows(rows: IntArray) {
+        val nonSelected = myData.filterIndexed({ id, _ -> id !in rows })
+        myData.clear()
+        myData.addAll(nonSelected)
+        fireTableDataChanged()
       }
 
       fun clear() {

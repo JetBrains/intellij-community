@@ -39,16 +39,9 @@ public class GetFrameCommand extends AbstractFrameCommand {
   protected void processResponse(@NotNull final ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
     final List<PyDebugValue> values = ProtocolParser.parseValues(response.getPayload(), myDebugProcess);
-    processValues(values);
-  }
-
-  protected void processValues(List<PyDebugValue> values) {
     myFrameVariables = new XValueChildrenList(values.size());
     for (PyDebugValue value : values) {
-      String name = value.getName();
-      boolean startsWithTempPrefix = name.startsWith(RemoteDebugger.TEMP_VAR_PREFIX) ||
-                                     name.startsWith(RemoteDebugger.TYPE_RENDERERS_TEMP_VAR_PREFIX);
-      if (!startsWithTempPrefix) {
+      if (!value.getName().startsWith(RemoteDebugger.TEMP_VAR_PREFIX)) {
         final PyDebugValue debugValue = extend(value);
         myFrameVariables.add(debugValue.getVisibleName(), debugValue);
       }

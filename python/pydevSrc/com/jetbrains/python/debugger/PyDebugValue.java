@@ -472,6 +472,7 @@ public class PyDebugValue extends XNamedValue {
 
   private void setConfigureTypeRenderersLink(@NotNull XValueNode node) {
     String typeRendererId = getTypeRendererId();
+    node.clearAdditionalHyperlinks();
     if (typeRendererId != null) {
       XDebuggerTreeNodeHyperlink link = myFrameAccessor.getUserTypeRenderersLink(typeRendererId);
       if (link != null) node.addAdditionalHyperlink(link);

@@ -24,6 +24,7 @@ public class PyUserTypeRenderersSettings implements PersistentStateComponent<Ele
   private static final String CHILDREN_RENDERER_TAG = "CHILDREN_RENDERER";
   private static final String CHILD_TAG = "CHILD";
 
+  private static final String NAME = "name";
   private static final String IS_ENABLED = "isEnabled";
   private static final String IS_DEFAULT = "isDefault";
   private static final String EXPRESSION = "expression";
@@ -78,6 +79,7 @@ public class PyUserTypeRenderersSettings implements PersistentStateComponent<Ele
 
   private static void addRendererToElement(final @NotNull PyUserNodeRenderer renderer, Element parent) {
     final Element rendererElement = new Element(RENDERER_TAG);
+    JDOMExternalizerUtil.writeField(rendererElement, NAME, renderer.getName());
     JDOMExternalizerUtil.writeField(rendererElement, IS_ENABLED, String.valueOf(renderer.isEnabled()));
     JDOMExternalizerUtil.writeField(rendererElement, TO_TYPE, renderer.getToType());
     JDOMExternalizerUtil.writeField(rendererElement, TYPE_CANONICAL_IMPORT_PATH, renderer.getTypeCanonicalImportPath());
@@ -117,12 +119,14 @@ public class PyUserTypeRenderersSettings implements PersistentStateComponent<Ele
   }
 
   private static @NotNull PyUserNodeRenderer loadRenderer(final @NotNull Element element) {
-    PyUserNodeRenderer renderer = new PyUserNodeRenderer(false);
+    PyUserNodeRenderer renderer = new PyUserNodeRenderer(false, null);
+    String name = toString(JDOMExternalizerUtil.readField(element, NAME));
     boolean isEnabled = toBoolean(JDOMExternalizerUtil.readField(element, IS_ENABLED));
     @NotNull String toType = toString(JDOMExternalizerUtil.readField(element, TO_TYPE));
     @NotNull String typeCanonicalImportPath = toString(JDOMExternalizerUtil.readField(element, TYPE_CANONICAL_IMPORT_PATH));
     @NotNull String typeQualifiedName = toString(JDOMExternalizerUtil.readField(element, TYPE_QUALIFIED_NAME));
     @NotNull String typeSourceFile = toString(JDOMExternalizerUtil.readField(element, TYPE_SOURCE_FILE));
+    renderer.setName(name);
     renderer.setEnabled(isEnabled);
     renderer.setToType(toType);
     renderer.setTypeCanonicalImportPath(typeCanonicalImportPath);

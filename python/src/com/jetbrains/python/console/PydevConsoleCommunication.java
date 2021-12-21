@@ -20,11 +20,7 @@ import com.intellij.util.Function;
 import com.intellij.util.concurrency.FutureResult;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XSourcePosition;
-import com.intellij.xdebugger.frame.XCompositeNode;
-import com.intellij.xdebugger.frame.XStackFrame;
-import com.intellij.xdebugger.frame.XValueChildrenList;
-import com.intellij.xdebugger.frame.XValueNode;
-import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
+import com.intellij.xdebugger.frame.*;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.console.actions.CommandQueueForPythonConsoleService;
 import com.jetbrains.python.console.protocol.*;
@@ -40,6 +36,7 @@ import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandBuilder;
 import com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersHyperLink;
+import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRenderer;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings;
 import com.jetbrains.python.parsing.console.PythonConsoleData;
 import org.apache.thrift.TException;
@@ -58,6 +55,8 @@ import java.util.concurrent.Future;
 
 import static com.jetbrains.python.console.PydevConsoleCommunicationUtil.*;
 import static com.jetbrains.python.debugger.pydev.dataviewer.DataViewerCommandResult.ResultType.UNHANDLED_ERROR;
+import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.getTypeRenderer;
+import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.loadTypeRendererChildren;
 
 /**
  * Communication with Python console backend using Thrift services.
@@ -611,14 +610,14 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
   }
 
   @Override
-  public XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException {
+  public @Nullable XValueChildrenList loadVariableDefaultView(PyDebugValue variable) throws PyDebuggerException {
     if (!isCommunicationClosed()) {
       return executeBackgroundTask(
         () -> {
-          final String name = var.getOffset() == 0 ? GetVariableCommand.composeName(var)
-                                                   : var.getOffset() + "\t" + GetVariableCommand.composeName(var);
+          final String name = variable.getOffset() == 0 ? GetVariableCommand.composeName(variable)
+                                                        : variable.getOffset() + "\t" + GetVariableCommand.composeName(variable);
           List<DebugValue> ret = getPythonConsoleBackendClient().getVariable(name);
-          return parseVars(ret, var, this);
+          return parseVars(ret, variable, this);
         },
         true,
         createRuntimeMessage(PyBundle.message("console.getting.variable.value")),
@@ -627,6 +626,24 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
     }
     else {
       return new XValueChildrenList();
+    }
+  }
+
+  @Override
+  public @Nullable XValueChildrenList loadVariable(PyDebugValue var) throws PyDebuggerException {
+    PyUserNodeRenderer typeRenderer = getTypeRenderer(var);
+    if (typeRenderer != null) {
+      return executeBackgroundTask(
+        () -> {
+          return loadTypeRendererChildren(this, var, typeRenderer);
+        },
+        true,
+        createRuntimeMessage(PyBundle.message("console.getting.variable.value")),
+        "Error in loadVariable():"
+      );
+    }
+    else {
+      return loadVariableDefaultView(var);
     }
   }
 
@@ -790,14 +807,14 @@ public abstract class PydevConsoleCommunication extends AbstractConsoleCommunica
         );
       }
       catch (PyDebuggerException e) {
-        // ignore
+        LOG.warn("Failed to send Type Renderers", e);
       }
     }
   }
 
   @Override
   public @Nullable XDebuggerTreeNodeHyperlink getUserTypeRenderersLink(@NotNull String typeRendererId) {
-    return new ConfigureTypeRenderersHyperLink(typeRendererId, getProject());
+    return new ConfigureTypeRenderersHyperLink(typeRendererId, getProject(), null);
   }
 
   public void setDebugCommunication(PythonDebugConsoleCommunication debugCommunication) {

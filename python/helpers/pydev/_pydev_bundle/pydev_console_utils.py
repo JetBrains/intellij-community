@@ -15,7 +15,6 @@ from _pydevd_bundle.pydevd_comm import InternalDataViewerAction
 from _pydevd_bundle.pydevd_constants import IS_JYTHON, dict_iter_items
 from _pydevd_bundle.pydevd_tables import exec_table_command
 from _pydevd_bundle.pydevd_user_type_renderers import parse_set_type_renderers_message
-from _pydevd_bundle.pydevd_user_type_renderers_utils import is_temp_var, get_expression_from_temp_var
 from pydev_console.pydev_protocol import CompletionOption, CompletionOptionType, \
     PythonUnhandledException, PythonTableException
 
@@ -197,7 +196,6 @@ class BaseInterpreterInterface(BaseCodeExecutor):
     def getVariable(self, attributes):
         try:
             namespace = self.get_namespace()
-
             debug_values = []
             val_dict = pydevd_vars.resolve_compound_var_object_fields(namespace, attributes, self.user_type_renderers)
             if val_dict is None:
@@ -307,10 +305,6 @@ class BaseInterpreterInterface(BaseCodeExecutor):
                     attrs = None
                 if name in frame_variables.keys():
                     var_object = pydevd_vars.resolve_var_object(frame_variables[name], attrs)
-                elif is_temp_var(name):
-                    expr = get_expression_from_temp_var(name)
-                    var_object = pydevd_vars.eval_in_context(expr, frame_variables, frame_variables)
-                    var_object = pydevd_vars.resolve_var_object(var_object, attrs)
                 else:
                     var_object = pydevd_vars.eval_in_context(name, frame_variables, frame_variables)
 

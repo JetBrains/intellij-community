@@ -8,7 +8,7 @@ from _pydev_bundle.pydev_imports import quote
 from _pydev_imps._pydev_saved_modules import thread
 from _pydevd_bundle.pydevd_constants import get_frame, get_current_thread_id, xrange, NUMPY_NUMERIC_TYPES, NUMPY_FLOATING_POINT_TYPES
 from _pydevd_bundle.pydevd_custom_frames import get_custom_frame
-from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var, is_temp_var, get_expression_from_temp_var
+from _pydevd_bundle.pydevd_user_type_renderers_utils import try_get_type_renderer_for_var
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate, get_type, var_to_xml
 
 try:
@@ -265,15 +265,8 @@ def _resolve_default_variable_fields(var, resolver, offset):
 
 
 def _resolve_custom_variable_fields(var, var_expr, resolver, offset, type_renderer, frame_info=None):
-    append_default_children, val_dict = type_renderer.evaluate_var_children(
-        var, var_expr
-    )
-
-    if frame_info is not None:
-        thread_id, frame_id = frame_info
-        type_renderer.save_temp_vars_as_frame_locals(val_dict, thread_id, frame_id)
-
-    if append_default_children:
+    val_dict = OrderedDict()
+    if type_renderer.is_default_children or type_renderer.append_default_children:
         default_val_dict = _resolve_default_variable_fields(var, resolver, offset)
         if len(val_dict) == 0:
             return default_val_dict
@@ -363,13 +356,9 @@ def resolve_compound_var_object_fields(var, attrs, user_type_renderers={}):
 
     var_expr = ".".join(attr_list)
 
-    if is_temp_var(var_expr):
-        var_expr = get_expression_from_temp_var(var_expr)
-        var = eval_in_context(var_expr, namespace, namespace)
-    else:
-        for k in attr_list:
-            type, _typeName, resolver = get_type(var)
-            var = resolver.resolve(var, k)
+    for k in attr_list:
+        type, _typeName, resolver = get_type(var)
+        var = resolver.resolve(var, k)
 
     try:
         type, _typeName, resolver = get_type(var)

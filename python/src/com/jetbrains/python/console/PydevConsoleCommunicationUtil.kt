@@ -15,17 +15,11 @@ import com.jetbrains.python.debugger.pydev.GetVariableCommand
 fun parseVars(vars: List<DebugValue>, parent: PyDebugValue?, frameAccessor: PyFrameAccessor): XValueChildrenList {
   val list = XValueChildrenList(vars.size)
   for (debugValue in vars) {
-    if (GetVariableCommand.isTypeRenderersTempVarName(debugValue.name)) {
-      var pyDebugValue = createPyDebugValue(debugValue, frameAccessor)
-      pyDebugValue = GetVariableCommand.createTempTypeRenderersValue(pyDebugValue, frameAccessor)
-      list.add(pyDebugValue.name, pyDebugValue)
-    } else {
-      val pyDebugValue = createPyDebugValue(debugValue, frameAccessor)
-      if (parent != null) {
-        pyDebugValue.parent = parent
-      }
-      list.add(pyDebugValue.visibleName, pyDebugValue)
+    val pyDebugValue = createPyDebugValue(debugValue, frameAccessor)
+    if (parent != null) {
+      pyDebugValue.parent = parent
     }
+    list.add(pyDebugValue.visibleName, pyDebugValue)
   }
   return list
 }

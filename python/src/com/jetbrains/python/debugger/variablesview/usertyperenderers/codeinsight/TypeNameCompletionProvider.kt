@@ -60,11 +60,10 @@ class TypeNameCompletionProvider(val project: Project) : TextCompletionProvider 
   private fun addVariantsFromModuleComponents(parameters: CompletionParameters,
                                               result: CompletionResultSet,
                                               moduleComponents: List<String>) {
-    val moduleElements = getElementsFromModule(moduleComponents, project)
     val alreadyAddedModulesNames = HashSet<String>()
     val alreadyAddedClsNames = HashSet<String>()
 
-    for (element in moduleElements) {
+    for (element in getElementsFromModule(moduleComponents, project)) {
       when (element) {
         is PsiDirectory -> {
           val modules = PyModuleType.getSubModuleVariants(element, parameters.position.parent, alreadyAddedModulesNames)
@@ -84,11 +83,9 @@ class TypeNameCompletionProvider(val project: Project) : TextCompletionProvider 
     for (elementName in result.prefixMatcher.sortMatching(clsKeys)) {
       stubIndex.processElements(PyClassNameIndex.KEY, elementName, project, scope, PyClass::class.java) { element ->
         ProgressManager.checkCanceled()
-        val name = element.name
-        val qualifiedName = element.qualifiedName
-        if (name == null || qualifiedName == null) return@processElements true
-        val importPath = QualifiedNameFinder.findCanonicalImportPath(element, null)
-        if (importPath == null) return@processElements true
+        val name = element.name ?: return@processElements true
+        if (element.qualifiedName == null) return@processElements true
+        val importPath = QualifiedNameFinder.findCanonicalImportPath(element, null) ?: return@processElements true
         val pathName = "$importPath.$name"
         if (alreadySuggested.add(pathName)) {
           val builder = LookupElementBuilder

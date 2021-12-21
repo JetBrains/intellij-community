@@ -1238,9 +1238,7 @@ class InternalGetVariable(InternalThreadCommand):
         try:
             xml = StringIO.StringIO()
             xml.write("<xml>")
-
             _typeName, val_dict = pydevd_vars.resolve_compound_variable_fields(self.thread_id, self.frame_id, self.scope, self.attributes, dbg.get_user_type_renderers())
-
             if val_dict is None:
                 val_dict = {}
 

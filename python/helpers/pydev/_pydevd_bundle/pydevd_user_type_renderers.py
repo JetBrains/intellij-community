@@ -1,7 +1,6 @@
 #  Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 from _pydevd_bundle import pydevd_vars
-from _pydevd_bundle.pydevd_constants import get_global_debugger
-from _pydevd_bundle.pydevd_user_type_renderers_utils import TypeRenderersConstants, get_expression_from_temp_var, create_temp_var
+from _pydevd_bundle.pydevd_user_type_renderers_utils import TypeRenderersConstants
 from _pydevd_bundle.pydevd_xml import ExceptionOnEvaluate
 
 try:
@@ -45,37 +44,6 @@ class UserTypeRenderer(object):
         eval_result = pydevd_vars.eval_in_context(self.expression, context, context)
         return _obj_to_string(eval_result)
 
-    def evaluate_var_children(self, var_obj, var_expression):
-        if self.is_default_children:
-            return self.append_default_children, OrderedDict()
-
-        result = OrderedDict()
-        var_expression = get_expression_from_temp_var(var_expression)
-        for child in self.children:
-            expr = _replace_self_to_var_expression(child.expression, var_expression)
-            child_name = create_temp_var(expr)
-
-            context = {"self": var_obj}
-            eval_result = pydevd_vars.eval_in_context(
-                child.expression, context, context
-            )
-
-            result[child_name] = eval_result
-
-        return self.append_default_children, result
-
-    @staticmethod
-    def save_temp_vars_as_frame_locals(variables, thread_id, frame_id):
-        dbg = get_global_debugger()
-        if dbg is None:
-            return
-
-        for (var_tmp_name, value) in variables.items():
-            var_expression = get_expression_from_temp_var(var_tmp_name)
-            pydevd_vars.change_attr_expression(
-                thread_id, frame_id, var_tmp_name, var_expression, dbg, value
-            )
-
 
 class TypeChildInfo(object):
     def __init__(self, expression):
@@ -86,28 +54,6 @@ def _convert_empty_expression(expression):
     if expression == "":
         return "\"\""
     return expression
-
-
-def _replace_self_to_var_expression(expression, var_expression):
-    self = "self"
-    replace_len = len(self)
-
-    new_expression = ""
-    current_idx = 0
-    stack = []
-    for idx, symbol in enumerate(expression):
-        if symbol == "\"" or symbol == "\'":
-            if stack and stack[-1] == symbol:
-                stack.pop()
-            else:
-                stack.append(symbol)
-        if not stack and expression[idx:idx + replace_len] == self:
-            new_expression += expression[current_idx:idx] + var_expression
-            current_idx += idx + replace_len
-
-    new_expression += expression[current_idx:]
-
-    return new_expression
 
 
 def _obj_to_string(obj):

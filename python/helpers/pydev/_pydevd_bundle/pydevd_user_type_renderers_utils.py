@@ -5,9 +5,6 @@ from _pydevd_bundle import pydevd_utils
 
 
 class TypeRenderersConstants:
-    temp_var_prefix = "__py_debug_user_type_renderers_temp_var_"
-    left_paren_char = "@_@LEFT_PAREN_CHAR@_@"
-    right_paren_char = "@_@RIGHT_PAREN_CHAR@_@"
     new_line = "@_@NEW_LINE_CHAR@_@"
     tab = "@_@TAB_CHAR@_@"
 
@@ -59,32 +56,3 @@ def try_get_type_renderer_for_var(var, renderers_dict):
         pass
 
     return None
-
-
-def try_get_custom_var_string_repr(var_obj, user_type_renderers):
-    type_renderer = try_get_type_renderer_for_var(var_obj, user_type_renderers)
-    if type_renderer is not None:
-        return type_renderer.evaluate_var_string_repr(var_obj)
-
-    return None
-
-
-def is_temp_var(var_name):
-    return var_name.startswith(TypeRenderersConstants.temp_var_prefix)
-
-
-def create_temp_var(expression):
-    expression = expression \
-        .replace("(", TypeRenderersConstants.left_paren_char) \
-        .replace(")", TypeRenderersConstants.right_paren_char)
-    return TypeRenderersConstants.temp_var_prefix + expression
-
-
-def get_expression_from_temp_var(var_name):
-    if var_name.startswith(TypeRenderersConstants.temp_var_prefix):
-        var_name = var_name[len(TypeRenderersConstants.temp_var_prefix):]
-        return var_name \
-            .replace(TypeRenderersConstants.left_paren_char, "(") \
-            .replace(TypeRenderersConstants.right_paren_char, ")")
-
-    return var_name

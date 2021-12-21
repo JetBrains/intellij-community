@@ -70,6 +70,7 @@ import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoContext;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoHandler;
 import com.jetbrains.python.debugger.smartstepinto.PySmartStepIntoVariant;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersHyperLink;
+import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserNodeRenderer;
 import com.jetbrains.python.debugger.variablesview.usertyperenderers.PyUserTypeRenderersSettings;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -86,6 +87,10 @@ import java.net.ServerSocket;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.getTypeRenderer;
+import static com.jetbrains.python.debugger.variablesview.usertyperenderers.ConfigureTypeRenderersActionKt.loadTypeRendererChildren;
+
 
 public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, ProcessListener {
   private static final Logger LOG = Logger.getInstance(PyDebugProcess.class);
@@ -495,7 +500,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public @Nullable XDebuggerTreeNodeHyperlink getUserTypeRenderersLink(@NotNull String typeRendererId) {
-    return new ConfigureTypeRenderersHyperLink(typeRendererId, getProject());
+    return new ConfigureTypeRenderersHyperLink(typeRendererId, getProject(), null);
   }
 
   public void registerLineBreakpoints() {
@@ -883,7 +888,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
             if (node != null && !node.isObsolete()) {
               if (e.getMessage().startsWith("Timeout")) {
                 value.updateNodeValueAfterLoading(node, " ", "", PyBundle.message("debugger.variables.view.loading.timed.out"));
-                PyVariableViewSettings.showWarningMessage(getCurrentRootNode());
+                ConfigureTypeRenderersHyperLink configureLink = new ConfigureTypeRenderersHyperLink(null, getProject(), value);
+                node.clearAdditionalHyperlinks();
+                node.addAdditionalHyperlink(configureLink);
               }
               else {
                 LOG.error(e);
@@ -916,10 +923,22 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
   }
 
   @Override
-  public XValueChildrenList loadVariable(final PyDebugValue var) throws PyDebuggerException {
+  public @NotNull XValueChildrenList loadVariableDefaultView(final PyDebugValue variable) throws PyDebuggerException {
     final PyStackFrame frame = currentFrame();
-    PyDebugValue debugValue = new PyDebugValue(var, var.getFullName());
+    PyDebugValue debugValue = new PyDebugValue(variable, variable.getFullName());
     return myDebugger.loadVariable(frame.getThreadId(), frame.getFrameId(), debugValue);
+  }
+
+  @Override
+  public @Nullable XValueChildrenList loadVariable(final PyDebugValue var) throws PyDebuggerException {
+    PyDebugValue debugValue = new PyDebugValue(var, var.getFullName());
+    PyUserNodeRenderer typeRenderer = getTypeRenderer(var);
+    if (typeRenderer != null) {
+      return loadTypeRendererChildren(this, debugValue, typeRenderer);
+    }
+    else {
+      return loadVariableDefaultView(debugValue);
+    }
   }
 
   @Override
@@ -1149,10 +1168,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     mySuspendedThreads.remove(threadInfo);
   }
 
-  private void dropFrameCaches() {
+  public void dropFrameCaches() {
     myStackFrameCache.clear();
     myNewVariableValue.clear();
-    PyDebugValueExecutionService.getInstance(getProject()).cancelSubmittedTasks(this);
   }
 
   @NotNull

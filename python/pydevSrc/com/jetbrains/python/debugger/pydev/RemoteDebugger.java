@@ -283,7 +283,7 @@ public class RemoteDebugger implements ProcessDebugger {
       return;
     }
     String tempName = topVar.getTempName();
-    if (tempName != null && tempName.startsWith(TYPE_RENDERERS_TEMP_VAR_PREFIX)) {
+    if (tempName != null) {
       return;
     }
     if (!myDebugProcess.canSaveToTemp(topVar.getName())) {

@@ -27,7 +27,6 @@ class ThriftAbstractGetValueAsyncThread(PyDBDaemonThread):
             current_time = time.time()
             if current_time - start > ASYNC_EVAL_TIMEOUT_SEC or self.cancel_event.is_set():
                 break
-
             # pydev_console_thrift.DebugValue()
             values.append(pydevd_thrift.var_to_struct(var_obj, name, evaluate_full_value=True, user_type_renderers=self.user_type_renderers))
         self.send_result(values)

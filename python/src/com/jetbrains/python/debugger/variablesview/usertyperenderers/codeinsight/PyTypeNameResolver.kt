@@ -30,7 +30,7 @@ class PyTypeNameResolver(val project: Project) {
 
   private fun getClass(file: PyFile, name: String): PyClass? {
     val moduleType = PyModuleType(file)
-    val resolveContext = PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(file.project));
+    val resolveContext = PyResolveContext.defaultContext(TypeEvalContext.codeInsightFallback(file.project))
     val results = moduleType.resolveMember(name, null, AccessDirection.READ, resolveContext)
     val firstPyClass = results?.firstOrNull { it.element is PyClass }?.element
     return firstPyClass as? PyClass
@@ -38,11 +38,7 @@ class PyTypeNameResolver(val project: Project) {
 
   private fun getClassFromModule(clsName: String, moduleComponents: List<String>): PyClass? {
     val pyFiles = getElementsFromModule(moduleComponents, project).filterIsInstance<PyFile>()
-    for (pyFile in pyFiles) {
-      val cls = getClass(pyFile, clsName)
-      if (cls != null) return cls
-    }
-    return null
+    return pyFiles.firstNotNullOfOrNull { getClass(it, clsName) }
   }
 
   fun resolve(qualifiedName: String): PyClass? {
@@ -64,9 +60,8 @@ fun getClassesNumberInModuleRootWithName(cls: PyClass, clsCanonicalImportPath: Q
   val clsName = cls.name ?: return 0
   val scope = PySearchUtilBase.defaultSuggestionScope(cls)
   return PyClassNameIndex.find(clsName, project, scope)
-    .map { QualifiedNameFinder.findCanonicalImportPath(it, null) }
+    .mapNotNull { QualifiedNameFinder.findCanonicalImportPath(it, null) }
     .filter { canonicalImportPath ->
-      canonicalImportPath != null &&
       canonicalImportPath.firstComponent == clsCanonicalImportPath.firstComponent
     }
     .groupBy { it }

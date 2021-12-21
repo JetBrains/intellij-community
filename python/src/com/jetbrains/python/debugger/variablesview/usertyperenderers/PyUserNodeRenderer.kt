@@ -4,10 +4,9 @@ package com.jetbrains.python.debugger.variablesview.usertyperenderers
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.debugger.PyUserTypeRenderer
 import java.io.Serializable
-import java.util.function.Consumer
 
-class PyUserNodeRenderer(var isEnabled: Boolean) {
-  var name: String = PyBundle.message("form.debugger.variables.view.user.type.renderers.unnamed")
+class PyUserNodeRenderer(var isEnabled: Boolean, existingNames: List<String>?) {
+  var name: String = getNewRendererName(existingNames)
   var toType: String = "object"
   var typeCanonicalImportPath = ""
   var typeQualifiedName: String = ""
@@ -17,7 +16,7 @@ class PyUserNodeRenderer(var isEnabled: Boolean) {
   val childrenRenderer = PyNodeChildrenRenderer()
 
   fun clone(): PyUserNodeRenderer {
-    val renderer = PyUserNodeRenderer(isEnabled)
+    val renderer = PyUserNodeRenderer(isEnabled, null)
     renderer.name = name
     renderer.toType = toType
     renderer.typeCanonicalImportPath = typeCanonicalImportPath
@@ -49,7 +48,7 @@ class PyUserNodeRenderer(var isEnabled: Boolean) {
 
   fun hasNoEmptyTypeInfo() = typeQualifiedName != "" || typeCanonicalImportPath != ""
 
-  fun isApplicable() = !isDefault() && hasNoEmptyTypeInfo() && isEnabled
+  fun isApplicable() = hasNoEmptyTypeInfo() && isEnabled
 
   fun equalTo(other: PyUserNodeRenderer): Boolean {
     return other.isEnabled == isEnabled &&
@@ -75,5 +74,17 @@ class PyUserNodeRenderer(var isEnabled: Boolean) {
       childrenRenderer.appendDefaultChildren,
       children
     )
+  }
+}
+
+fun getNewRendererName(existingNames: List<String>?): String {
+  val default = PyBundle.message("form.debugger.variables.view.user.type.renderers.unnamed")
+  if (existingNames == null || existingNames.isEmpty()) return default
+  val duplicatedNames = existingNames.filter { it.startsWith(default) }.size
+  return if (duplicatedNames > 0) {
+    "$default ($duplicatedNames)"
+  }
+  else {
+    default
   }
 }

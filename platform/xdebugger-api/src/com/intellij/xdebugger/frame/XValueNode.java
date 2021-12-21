@@ -17,6 +17,7 @@ package com.intellij.xdebugger.frame;
 
 import com.intellij.xdebugger.Obsolescent;
 import com.intellij.xdebugger.frame.presentation.XValuePresentation;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -68,8 +69,16 @@ public interface XValueNode extends Obsolescent {
   void setFullValueEvaluator(@NotNull XFullValueEvaluator fullValueEvaluator);
 
   /**
-   * The ability to add an unlimited number of hyper links to the node
+   * The ability to add an unlimited number of hyperlinks to the node
+   *
    * @param link its use depends on the implementation of the interface (not used by default)
    */
-  default void addAdditionalHyperlink(@NotNull XDebuggerTreeNodeHyperlink link) {}
+  @ApiStatus.Experimental
+  default void addAdditionalHyperlink(@NotNull XDebuggerTreeNodeHyperlink link) { }
+
+  /*
+   * Clear additional hyperlinks for the node
+   */
+  @ApiStatus.Experimental
+  default void clearAdditionalHyperlinks() { }
 }
