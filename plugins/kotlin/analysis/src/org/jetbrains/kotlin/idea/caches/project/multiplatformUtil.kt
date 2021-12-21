@@ -166,7 +166,7 @@ val ModuleDescriptor.implementingDescriptors: List<ModuleDescriptor>
     }
 
 val ModuleDescriptor.allImplementingDescriptors: Collection<ModuleDescriptor>
-    get() = implementingDescriptors.closure(true) { it.implementingDescriptors }
+    get() = implementingDescriptors.closure(preserveOrder = true) { it.implementingDescriptors }
 
 fun Module.toInfo(type: SourceType): ModuleSourceInfo? = when (type) {
     PRODUCTION -> productionSourceInfo()
