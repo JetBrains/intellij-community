@@ -1972,7 +1972,7 @@ public abstract class DialogWrapper {
   private void doUpdateErrorText(@NotNull ErrorText errorText, @NotNull List<ValidationInfo> infos) {
     HtmlBuilder htmlBuilder = new HtmlBuilder();
     for (ValidationInfo info : infos) {
-      if (info.component != null) continue;
+      if (info.component != null || StringUtil.isEmptyOrSpaces(info.message)) continue;
 
       Color color = info.warning ? MessageType.WARNING.getTitleForeground() : UIUtil.getErrorForeground();
       htmlBuilder
