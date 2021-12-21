@@ -425,8 +425,6 @@
     <applicationService serviceInterface="com.intellij.util.io.IoService"
                         serviceImplementation="com.intellij.util.io.IoServiceImpl" />
 
-    <applicationService serviceImplementation="com.intellij.ide.CommandLineWaitingManager" />
-
     <applicationService serviceImplementation="com.intellij.diagnostic.HeapDumpAnalysisSupport"/>
 
     <applicationService serviceInterface="com.intellij.diagnostic.EventWatcher"
@@ -445,7 +443,6 @@
                     serviceImplementation="com.intellij.ide.startup.impl.StartupManagerImpl" preload="notHeadless"/>
     <projectService serviceImplementation="com.intellij.openapi.project.ProjectTypeService"/>
     <projectService serviceImplementation="com.intellij.openapi.ui.MasterDetailsStateService"/>
-    <projectService serviceImplementation="com.intellij.ide.SelectInManager"/>
 
     <projectService serviceImplementation="com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration"/>
 
