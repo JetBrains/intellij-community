@@ -320,7 +320,7 @@ public final class SpellCheckerManager implements Disposable {
     ApplicationManager.getApplication().invokeLater(() -> {
       Project[] projects = ProjectManager.getInstance().getOpenProjects();
       for (Project project : projects) {
-        if (project.isInitialized() && project.isOpen() && !project.isDefault()) {
+        if (project.isInitialized() && project.isOpen()) {
           DaemonCodeAnalyzer.getInstance(project).restart();
         }
       }
