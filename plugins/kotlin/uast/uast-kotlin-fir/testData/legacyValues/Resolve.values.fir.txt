@@ -119,7 +119,7 @@ UFile (package = ) [public final class ResolveKt {...]
                             UTypeReferenceExpression (name = int) [int] = Undetermined
                 UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 2)) [<init>(1, 2)] = external <init>(1, 2)(1, 2)
                     UIdentifier (Identifier (IntRange)) [UIdentifier (Identifier (IntRange))]
-                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = null) [<init>] = external <init>(1, 2)(1, 2)
+                    USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: IntRange) [<init>] = external <init>(1, 2)(1, 2)
                     ULiteralExpression (value = 1) [1] = 1
                     ULiteralExpression (value = 2) [2] = 2
         UMethod (name = barT) [public static final fun barT(@org.jetbrains.annotations.NotNull t: T) : void {...}]
