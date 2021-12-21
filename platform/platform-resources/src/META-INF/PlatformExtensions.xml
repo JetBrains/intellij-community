@@ -985,7 +985,6 @@
     <registryKey key="jdk.downloader.assume.linux.aarch64" defaultValue="false" description="Makes IntelliJ truly believe it's running on arm64 compatible hardware for Linux OS"/>
     <registryKey key="jdk.auto.run.configurations" defaultValue="true" description="Tries to find an SDK for a run configuration" />
 
-
     <actionPromoter implementation="com.intellij.execution.testframework.TestTreeViewActionsPromoter"/>
     <smartSelectProvider implementation="com.intellij.ui.tree.TreeSmartSelectProvider"/>
 
@@ -1003,7 +1002,6 @@
                              key="browsers.settings" bundle="messages.IdeBundle"/>
     <stepsBeforeRunProvider implementation="com.intellij.ide.browsers.LaunchBrowserBeforeRunTaskProvider"/>
     <selectInTarget implementation="com.intellij.ide.browsers.actions.SelectInDefaultBrowserTarget"/>
-    <applicationService serviceImplementation="com.intellij.ide.browsers.WebBrowserManager"/>
     <applicationService serviceImplementation="com.intellij.ide.browsers.WebBrowserXmlService" />
     <applicationService serviceInterface="com.intellij.ide.browsers.WebBrowserService"
                         serviceImplementation="com.intellij.ide.browsers.impl.WebBrowserServiceImpl"/>
