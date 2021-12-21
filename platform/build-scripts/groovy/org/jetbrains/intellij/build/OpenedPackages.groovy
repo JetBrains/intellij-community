@@ -7,6 +7,7 @@ import groovy.transform.CompileStatic
 final class OpenedPackages implements Iterable<String> {
   private static final List<String> OPENED_PACKAGES = List.of(
     '--add-opens=java.base/java.lang=ALL-UNNAMED',
+    '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED',
     '--add-opens=java.base/java.text=ALL-UNNAMED',
     '--add-opens=java.base/java.time=ALL-UNNAMED',
     '--add-opens=java.base/java.util=ALL-UNNAMED',
@@ -17,6 +18,7 @@ final class OpenedPackages implements Iterable<String> {
     '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
     '--add-opens=java.base/java.nio.charset=ALL-UNNAMED',
     '--add-opens=java.desktop/java.awt=ALL-UNNAMED',
+    '--add-opens=java.desktop/java.awt.dnd.peer=ALL-UNNAMED',
     '--add-opens=java.desktop/java.awt.event=ALL-UNNAMED',
     '--add-opens=java.desktop/java.awt.image=ALL-UNNAMED',
     '--add-opens=java.desktop/java.awt.peer=ALL-UNNAMED',
