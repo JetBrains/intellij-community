@@ -1,6 +1,7 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.nls;
 
+import com.ibm.icu.util.MeasureUnit;
 import org.junit.Test;
 
 import java.util.Arrays;
@@ -113,5 +114,35 @@ public class NlsMessagesTest {
     assertEquals("2h 00m 00s 000ms", NlsMessages.formatDurationPadded(TimeUnit.HOURS.toMillis(2)));
     assertEquals("2d 00h 00m 00s 000ms", NlsMessages.formatDurationPadded(TimeUnit.DAYS.toMillis(2)));
     assertEquals("1,434,852d 16h 13m 50s 987ms", NlsMessages.formatDurationPadded(123971271230987L));
+  }
+
+  @Test
+  public void testFormatDurationTimeUnit() {
+    assertEquals("0 ms", NlsMessages.formatDurationTimeUnit(0, MeasureUnit.MILLISECOND));
+    assertEquals("1 ms", NlsMessages.formatDurationTimeUnit(1, MeasureUnit.MILLISECOND));
+    assertEquals("1 sec", NlsMessages.formatDurationTimeUnit(1000, MeasureUnit.MILLISECOND));
+    assertEquals("3 wks, 3 days, 20 hr, 31 min, 23 sec, 647 ms",
+                 NlsMessages.formatDurationTimeUnit(Integer.MAX_VALUE, MeasureUnit.MILLISECOND));
+    assertEquals("11 wks, 5 days, 17 hr, 24 min, 43 sec, 647 ms",
+                 NlsMessages.formatDurationTimeUnit(Integer.MAX_VALUE + 5000000000L, MeasureUnit.MILLISECOND));
+
+    assertEquals("1 wk", NlsMessages.formatDurationTimeUnit(1, MeasureUnit.WEEK));
+
+    assertEquals("1 min, 0 sec, 100 ms", NlsMessages.formatDurationTimeUnit(60100, MeasureUnit.MILLISECOND));
+  }
+
+  @Test
+  public void testFormatDurationPaddedTimeUnit() {
+    assertEquals("0ms", NlsMessages.formatDurationPaddedTimeUnit(0, MeasureUnit.MILLISECOND));
+    assertEquals("1s 000ms", NlsMessages.formatDurationPaddedTimeUnit(1000, MeasureUnit.MILLISECOND));
+    assertEquals("1s 001ms", NlsMessages.formatDurationPaddedTimeUnit(1001, MeasureUnit.MILLISECOND));
+    assertEquals("2m 00s 000ms", NlsMessages.formatDurationPaddedTimeUnit(TimeUnit.MINUTES.toMillis(2), MeasureUnit.MILLISECOND));
+    assertEquals("2h 00m 00s 000ms", NlsMessages.formatDurationPaddedTimeUnit(TimeUnit.HOURS.toMillis(2), MeasureUnit.MILLISECOND));
+    assertEquals("2d 00h 00m 00s 000ms", NlsMessages.formatDurationPaddedTimeUnit(TimeUnit.DAYS.toMillis(2), MeasureUnit.MILLISECOND));
+    assertEquals("204,978w 6d 16h 13m 50s 987ms", NlsMessages.formatDurationPaddedTimeUnit(123971271230987L, MeasureUnit.MILLISECOND));
+
+    assertEquals("1w", NlsMessages.formatDurationPaddedTimeUnit(1, MeasureUnit.WEEK));
+
+    assertEquals("1m 00s 100ms", NlsMessages.formatDurationPaddedTimeUnit(60100, MeasureUnit.MILLISECOND));
   }
 }
