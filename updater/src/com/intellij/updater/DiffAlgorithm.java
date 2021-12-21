@@ -76,7 +76,7 @@ public abstract class DiffAlgorithm {
     @Override
     public void writeDiff(InputStream oldFileIn, InputStream newFileIn, OutputStream diffFileOut) throws IOException {
       ByteArrayOutputStream diffOutput = new OpenByteArrayOutputStream();
-      byte[] newerFileBuffer = JBDiff.bsdiff(oldFileIn, newFileIn, diffOutput);
+      byte[] newerFileBuffer = JBDiff.bsdiff(oldFileIn, newFileIn, diffOutput, 0);
       diffOutput.close();
 
       if (diffOutput.size() < newerFileBuffer.length) {
