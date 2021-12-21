@@ -16,7 +16,10 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 
 @Service(Service.Level.PROJECT)
-@State(name = "ReaderModeSettings", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+@State(name = "ReaderModeSettings", storages = [
+  Storage(StoragePathMacros.PRODUCT_WORKSPACE_FILE),
+  Storage(StoragePathMacros.WORKSPACE_FILE, deprecated = true)
+])
 class ReaderModeSettings : PersistentStateComponentWithModificationTracker<ReaderModeSettings.State> {
   companion object {
     private val EP_READER_MODE_PROVIDER = ExtensionPointName<ReaderModeProvider>("com.intellij.readerModeProvider")
