@@ -418,19 +418,19 @@ public class JBDiff {
     I = null;
 
     /* Write diff block */
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") GZIPOutputStream dbOut = new GZIPOutputStream(diffOut);
+    GZIPOutputStream dbOut = new GZIPOutputStream(diffOut);
     dbOut.write(db, 0, dbLen);
     dbOut.finish();
     int diffBlockLen = diffOut.size() - ctrlBlockLen;
 
     /* Write extra block */
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") GZIPOutputStream ebOut = new GZIPOutputStream(diffOut);
+    GZIPOutputStream ebOut = new GZIPOutputStream(diffOut);
     ebOut.write(eb, 0, ebLen);
     ebOut.finish();
 
     diffOut.close();
 
-    @SuppressWarnings("IOResourceOpenedButNotSafelyClosed") DataOutputStream headerStream = new DataOutputStream(diffFileOut);
+    DataOutputStream headerStream = new DataOutputStream(diffFileOut);
     headerStream.writeLong(ctrlBlockLen);  // ctrlBlockLen (compressed)
     headerStream.writeLong(diffBlockLen);  // diffBlockLen (compressed)
     headerStream.writeLong(newSize);

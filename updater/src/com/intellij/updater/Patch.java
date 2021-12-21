@@ -282,7 +282,7 @@ public class Patch {
   }
 
   private static String mapPath(String path) {
-    if (!Runner.isCaseSensitiveFs()) {
+    if (!isCaseSensitiveFs()) {
       path = path.toLowerCase(Locale.getDefault());
     }
     if (path.endsWith("/")) {
@@ -370,7 +370,7 @@ public class Patch {
     }
 
     try {
-      // on macOS, we need to update bundle timestamp to reset Info.plist caches
+      // on macOS, we need to update the bundle timestamp to reset Info.plist caches
       Files.setLastModifiedTime(toDir.toPath(), FileTime.from(Instant.now()));
     }
     catch (IOException e) {

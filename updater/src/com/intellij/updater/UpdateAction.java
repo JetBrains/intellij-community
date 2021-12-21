@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.updater;
 
 import java.io.*;
@@ -30,8 +30,8 @@ public class UpdateAction extends BaseUpdateAction {
       FileType type = getFileType(newerFile);
       if (type == FileType.SYMLINK) throw new IOException("Unexpected symlink: " + newerFile);
       writeFileType(patchOutput, type);
-      try (BufferedInputStream olderFileIn = new BufferedInputStream(Utils.newFileInputStream(olderFile, myPatch.isNormalized()));
-           BufferedInputStream newerFileIn = new BufferedInputStream(new FileInputStream(newerFile))) {
+      try (InputStream olderFileIn = new BufferedInputStream(Utils.newFileInputStream(olderFile, myPatch.isNormalized()));
+           InputStream newerFileIn = new BufferedInputStream(new FileInputStream(newerFile))) {
         writeDiff(olderFileIn, newerFileIn, patchOutput);
       }
 

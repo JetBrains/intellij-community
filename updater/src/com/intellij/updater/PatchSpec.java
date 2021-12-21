@@ -30,7 +30,6 @@ public class PatchSpec {
   private boolean myIsStrict;
   private List<String> myIgnoredFiles = Collections.emptyList();
   private List<String> myCriticalFiles = Collections.emptyList();
-
   // A conflict in an essential file makes a patch update impossible; the IDE must be reinstalled from scratch.
   private List<String> myStrictFiles = Collections.emptyList();
   private List<String> myOptionalFiles = Collections.emptyList();

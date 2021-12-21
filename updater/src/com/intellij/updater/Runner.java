@@ -284,10 +284,10 @@ public class Runner {
       "    delete: A set of regular expressions for paths that is safe to delete without user confirmation.\n" +
       "  <flags>: Can be:\n" +
       "    --zip_as_binary: Zip and jar files will be treated as binary files and not inspected internally.\n" +
-      "    --strict: The created patch will contain extra information to fully validate an installation. A strict\n" +
-      "              patch will only be applied if it is guaranteed that the patched version will match exactly\n" +
-      "              the source of the patch. This means that unexpected files will be deleted and all existing files\n" +
-      "              will be validated\n" +
+      "    --strict:     The created patch will contain extra information to fully validate an installation. A strict\n" +
+      "                  patch will only be applied if it is guaranteed that the patched version will match exactly\n" +
+      "                  the source of the patch. This means that unexpected files will be deleted and all existing files\n" +
+      "                  will be validated\n" +
       "    --root=<dir>: Sets dir as the root directory of the patch. The root directory is the directory where the patch should be\n" +
       "                  applied to. For example on Mac, you can diff the two .app folders and set Contents as the root.\n" +
       "                  The root directory is relative to <old_folder> and uses forwards-slashes as separators.\n" +
