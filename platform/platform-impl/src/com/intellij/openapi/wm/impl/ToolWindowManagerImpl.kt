@@ -400,7 +400,7 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         ApplicationManager.getApplication().invokeLater(
           {
             focusManager.doWhenFocusSettlesDown(ExpirableRunnable.forProject(project) {
-              if (!FileEditorManager.getInstance(project).hasOpenFiles()) {
+              if (!project.isDisposed && !FileEditorManager.getInstance(project).hasOpenFiles()) {
                 focusToolWindowByDefault()
               }
             })
