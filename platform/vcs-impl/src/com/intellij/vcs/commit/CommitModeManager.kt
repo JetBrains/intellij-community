@@ -168,6 +168,11 @@ sealed class CommitMode {
       // Enable 'Commit' toolwindow before vcses are activated
       return CommitModeManager.isNonModalInSettings()
     }
+
+    override fun disableDefaultCommitAction(): Boolean {
+      // Disable `Commit` action until vcses are activated
+      return true
+    }
   }
 
   object ModalCommitMode : CommitMode() {
