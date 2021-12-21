@@ -55,7 +55,7 @@ internal object ListUtils {
    */
   fun Document.getLineIndentSpaces(lineNumber: Int, file: PsiFile? = null): String? {
     val psiFile = file ?: run {
-      val virtualFile = FileDocumentManager.getInstance().getFile(this)
+      val virtualFile = FileDocumentManager.getInstance().getFile(this) ?: return null
       val project = guessProjectForFile(virtualFile) ?: return null
       PsiDocumentManager.getInstance(project).getPsiFile(this) ?: return null
     }

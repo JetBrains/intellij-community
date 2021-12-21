@@ -264,7 +264,20 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
 
   @Nullable
   private static Project guessProject(@Nullable VirtualFile virtualFile) {
-    return ProjectLocator.getInstance().guessProjectForFile(virtualFile);
+    Project project = virtualFile == null ? null : ProjectLocator.getInstance().guessProjectForFile(virtualFile);
+    if (project != null) {
+      return project;
+    }
+    ProjectManager projectManager = ProjectManager.getInstanceIfCreated();
+    if (projectManager == null) {
+      return null;
+    }
+
+    Project[] openProjects = projectManager.getOpenProjects();
+    if (openProjects.length == 1) {
+      return openProjects[0];
+    }
+    return null;
   }
 
   @Override
