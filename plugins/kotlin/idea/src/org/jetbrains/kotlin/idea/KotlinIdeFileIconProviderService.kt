@@ -11,6 +11,8 @@ import javax.swing.Icon
 class KotlinIdeFileIconProviderService : KotlinIconProviderService() {
     override fun getFileIcon(): Icon = KotlinIcons.FILE
 
+    override fun getBuiltInFileIcon(): Icon = KotlinIcons.FILE
+
     override fun getLightVariableIcon(element: PsiModifierListOwner, flags: Int): Icon {
         val iconManager = IconManager.getInstance()
         val elementFlags = ElementPresentationUtil.getFlags(element, false)
