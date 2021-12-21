@@ -4,6 +4,7 @@ package com.intellij.ui.dsl.builder.components
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook
+import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
@@ -50,9 +51,9 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
     })
 
     val actionLeft = DumbAwareAction.create { moveSelection(-1) }
-    actionLeft.registerCustomShortcutSet(ActionManager.getInstance().getAction("SegmentedButton-left").shortcutSet, this)
+    actionLeft.registerCustomShortcutSet(ActionUtil.getShortcutSet("SegmentedButton-left"), this)
     val actionRight = DumbAwareAction.create { moveSelection(1) }
-    actionRight.registerCustomShortcutSet(ActionManager.getInstance().getAction("SegmentedButton-right").shortcutSet, this)
+    actionRight.registerCustomShortcutSet(ActionUtil.getShortcutSet("SegmentedButton-right"), this)
   }
 
   override fun setEnabled(enabled: Boolean) {
