@@ -153,6 +153,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
     private HeavyProcessLatch.Type heavyProcessType;
     private boolean fullInspect = true;  // by default, full inspect mode is expected
 
+    public DaemonCodeAnalyzerStatus() {
+    }
+
     @Override
     public String toString() {
       String s = "DS: finished=" + errorAnalyzingFinished
