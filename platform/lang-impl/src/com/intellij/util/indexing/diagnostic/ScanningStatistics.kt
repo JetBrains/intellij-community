@@ -74,7 +74,7 @@ class ScanningStatistics(val fileSetName: String) {
 
   fun setProviderRoots(provider: IndexableFilesIterator, project: Project) {
     if(!IndexDiagnosticDumper.shouldDumpProviderRootPaths) return
-    val rootUrls = provider.rootUrls
+    val rootUrls = provider.getRootUrls(project)
     if (rootUrls.isEmpty()) return
     val basePath = project.basePath
     if (basePath == null) {

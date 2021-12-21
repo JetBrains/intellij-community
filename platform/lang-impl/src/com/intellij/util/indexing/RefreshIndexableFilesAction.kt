@@ -1,8 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing
 
 import com.intellij.ide.actions.SynchronizeCurrentFileAction
-import com.intellij.ide.actions.cache.*
+import com.intellij.ide.actions.cache.CacheInconsistencyProblem
+import com.intellij.ide.actions.cache.FilesRecoveryScope
+import com.intellij.ide.actions.cache.RecoveryAction
+import com.intellij.ide.actions.cache.RecoveryScope
 import com.intellij.lang.LangBundle
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.util.Disposer
@@ -41,7 +44,7 @@ class RefreshIndexableFilesAction : RecoveryAction {
         files = recoveryScope.files
       } else {
         val fileBasedIndex = FileBasedIndex.getInstance() as FileBasedIndexImpl
-        val rootUrls = fileBasedIndex.getIndexableFilesProviders(project).flatMap { it.rootUrls }
+        val rootUrls = fileBasedIndex.getIndexableFilesProviders(project).flatMap { it.getRootUrls(project) }
         files = rootUrls.mapNotNull { VirtualFileManager.getInstance().refreshAndFindFileByUrl(it) }
       }
       SynchronizeCurrentFileAction.synchronizeFiles(files, project, false)
