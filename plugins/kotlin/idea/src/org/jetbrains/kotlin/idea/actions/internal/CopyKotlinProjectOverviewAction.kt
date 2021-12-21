@@ -15,9 +15,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.util.ui.EmptyClipboardOwner
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinPluginUtil
+import org.jetbrains.kotlin.idea.compiler.configuration.KotlinJpsPluginSettings
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.util.application.isApplicationInternalMode
-import org.jetbrains.kotlin.idea.util.buildNumber
 import java.awt.Toolkit
 import java.awt.datatransfer.StringSelection
 
@@ -98,7 +98,7 @@ class CopyKotlinProjectOverviewAction : AnAction() {
         return sequence {
             for (module in modules) {
                 val compilerVersion = if (module.getBuildSystemType() == BuildSystemType.JPS) {
-                    buildNumber
+                    KotlinJpsPluginSettings.getInstance(project).settings.version
                 } else {
                     module.externalCompilerVersion
                 }
