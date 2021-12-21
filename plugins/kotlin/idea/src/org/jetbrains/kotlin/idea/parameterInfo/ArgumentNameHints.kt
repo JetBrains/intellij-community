@@ -56,7 +56,8 @@ private fun getArgumentNameHintsForCallCandidate(
     }
 
     if (resultingDescriptor.valueParameters.size == 1
-        && resultingDescriptor.name == resultingDescriptor.valueParameters.single().name) {
+        && resultingDescriptor.name == resultingDescriptor.valueParameters.single().name
+    ) {
         // method name equals to single parameter name
         return emptyList()
     }
@@ -69,6 +70,12 @@ private fun getArgumentNameHintsForCallCandidate(
         if (resultingDescriptor is FunctionInvokeDescriptor &&
             valueParam.type.extractParameterNameFromFunctionTypeArgument() == null
         ) {
+            return@mapNotNull null
+        }
+
+        if (resolvedArg == resolvedCall.valueArgumentsByIndex?.firstOrNull()
+            && resultingDescriptor.valueParameters.firstOrNull()?.name == resultingDescriptor.name) {
+            // first argument with the same name as method name
             return@mapNotNull null
         }
 
