@@ -267,7 +267,7 @@ class YAMLFormattingContext {
     else if (YAMLElementTypes.BRACKETS.contains(nodeType)) {
       return SAME_AS_INDENTED_ANCESTOR_INDENT;
     }
-    else if (nodeType == YAMLTokenTypes.TEXT || nodeType == YAMLTokenTypes.SCALAR_DSTRING || nodeType == YAMLTokenTypes.SCALAR_STRING) {
+    else if (YAMLElementTypes.TEXT_SCALAR_ITEMS.contains(nodeType)) {
       if (grandParentType == YAMLElementTypes.DOCUMENT) {
         return SAME_AS_PARENT_INDENT;
       }
