@@ -14,6 +14,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.parameterInfo.HintsTypeRenderer
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -64,7 +65,7 @@ class KotlinCallChainHintsProvider : AbstractCallChainHintsProvider<KtQualifiedE
     }
 
     override fun getTypeComputationContext(topmostDotQualifiedExpression: KtQualifiedExpression): BindingContext {
-        return topmostDotQualifiedExpression.analyze(BodyResolveMode.PARTIAL_NO_ADDITIONAL)
+        return topmostDotQualifiedExpression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL_NO_ADDITIONAL)
     }
 
     override fun PsiElement.getType(context: BindingContext): KotlinType? {
