@@ -29,23 +29,6 @@ import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-@Deprecated("To be removed during 2022.1")
-@FunctionalInterface
-fun interface NewToolbarPaneListener {
-
-  companion object {
-
-    @JvmField
-    val TOPIC: Topic<NewToolbarPaneListener> = Topic(
-      NewToolbarPaneListener::class.java,
-      Topic.BroadcastDirection.NONE,
-      true,
-    )
-  }
-
-  fun stateChanged()
-}
-
 @FunctionalInterface
 fun interface ExperimentalToolbarStateListener {
   companion object {
@@ -65,46 +48,38 @@ fun interface ExperimentalToolbarStateListener {
 }
 
 @Service
-class NewToolbarRootPaneManager(private val project: Project) : SimpleModificationTracker(),
-                                                                Disposable {
+class NewToolbarRootPaneManager(private val project: Project) : SimpleModificationTracker(), Disposable {
   companion object {
     private val logger = logger<NewToolbarRootPaneManager>()
     fun getInstance(project: Project): NewToolbarRootPaneManager = project.service()
   }
 
-  private val runWidgetAvailabilityManager = RunWidgetAvailabilityManager.getInstance(project)
-  private val runWidgetListener = RunWidgetAvailabilityManager.RunWidgetAvailabilityListener {
-    logger.info("New toolbar: run widget availability changed $it")
-    NewToolbarRootPaneExtension.getInstance(project)?.let { rootPane ->
-      startUpdateActionGroups(rootPane)
-    }
-  }
-
   init {
-    runWidgetAvailabilityManager.addListener(runWidgetListener)
+    RunWidgetAvailabilityManager.getInstance(project).addListener(this, RunWidgetAvailabilityManager.RunWidgetAvailabilityListener {
+      logger.info("New toolbar: run widget availability changed $it")
+
+      IdeRootPaneNorthExtension.EP_NAME.findExtension(NewToolbarRootPaneExtension::class.java, project)?.let { extension ->
+        startUpdateActionGroups(extension)
+      }
+    })
   }
 
   override fun dispose() {
-    runWidgetAvailabilityManager.removeListener(runWidgetListener)
   }
 
-  internal fun startUpdateActionGroups(rootPane: NewToolbarRootPaneExtension) {
+  internal fun startUpdateActionGroups(extension: NewToolbarRootPaneExtension) {
     incModificationCount()
 
-    val panel = rootPane.panel
-    if (ToolbarSettings.Instance.isEnabled && panel.isEnabled && panel.isVisible) {
-      CompletableFuture.supplyAsync(
-        ::correctedToolbarActions,
-        AppExecutorUtil.getAppExecutorService(),
-      ).thenAcceptAsync(
-        Consumer {
-          applyTo(it, panel, rootPane.layout)
-        },
-        EdtExecutorService.getInstance(),
-      ).exceptionally {
-        thisLogger().error(it)
-        null
-      }
+    val panel = extension.panel
+    if (panel.isEnabled && panel.isVisible && ToolbarSettings.getInstance().isEnabled) {
+      CompletableFuture.supplyAsync(::correctedToolbarActions, AppExecutorUtil.getAppExecutorService())
+        .thenAcceptAsync(Consumer {
+          applyTo(it, panel, extension.layout)
+        }, EdtExecutorService.getInstance())
+        .exceptionally {
+          thisLogger().error(it)
+          null
+        }
     }
   }
 
@@ -115,7 +90,7 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
     return mapOf(
       "LeftToolbarSideGroup" to BorderLayout.WEST,
       IdeActions.GROUP_EXPERIMENTAL_TOOLBAR to BorderLayout.CENTER,
-      (if (runWidgetAvailabilityManager.isAvailable()) "RightToolbarSideGroup" else "RightToolbarSideGroupNoRunWidget") to BorderLayout.EAST,
+      (if (RunWidgetAvailabilityManager.getInstance(project).isAvailable()) "RightToolbarSideGroup" else "RightToolbarSideGroupNoRunWidget") to BorderLayout.EAST,
     ).mapKeys { (actionId, _) ->
       val action = actionsSchema.getCorrectedAction(actionId)
       action as? ActionGroup ?: throw IllegalArgumentException("Action group '$actionId' not found; actual action: $action")
@@ -159,12 +134,12 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
 
     private val logger = logger<NewToolbarRootPaneExtension>()
 
-    internal fun getInstance(project: Project): NewToolbarRootPaneExtension? {
-      return EP_NAME.getExtensionsIfPointIsRegistered(project)
-        .asSequence()
-        .filterIsInstance<NewToolbarRootPaneExtension>()
-        .firstOrNull()
-    }
+    //internal fun getInstance(project: Project): NewToolbarRootPaneExtension? {
+    //  return EP_NAME.getExtensionsIfPointIsRegistered(project)
+    //    .asSequence()
+    //    .filterIsInstance<NewToolbarRootPaneExtension>()
+    //    .firstOrNull()
+    //}
   }
 
   internal val layout = NewToolbarBorderLayout()
@@ -188,9 +163,9 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
 
   override fun uiSettingsChanged(settings: UISettings) {
     logger.info("Show old main toolbar: ${settings.showMainToolbar}; show old navigation bar: ${settings.showNavigationBar}")
-    logger.info("Show new main toolbar: ${ToolbarSettings.Instance.isVisible}")
+    logger.info("Show new main toolbar: ${ToolbarSettings.getInstance().isVisible}")
 
-    val toolbarSettings = ToolbarSettings.Instance
+    val toolbarSettings = ToolbarSettings.getInstance()
     panel.isEnabled = toolbarSettings.isEnabled
     panel.isVisible = toolbarSettings.isVisible && !settings.presentationMode
     project.messageBus.syncPublisher(ExperimentalToolbarStateListener.TOPIC).refreshVisibility()

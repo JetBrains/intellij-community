@@ -2,13 +2,14 @@
 package com.intellij.openapi.wm;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
 public abstract class IdeRootPaneNorthExtension {
-  public static final ExtensionPointName<IdeRootPaneNorthExtension> EP_NAME = new ExtensionPointName<>("com.intellij.ideRootPaneNorth");
+  public static final ProjectExtensionPointName<IdeRootPaneNorthExtension> EP_NAME =
+    new ProjectExtensionPointName<>("com.intellij.ideRootPaneNorth");
 
   @NotNull
   public abstract String getKey();

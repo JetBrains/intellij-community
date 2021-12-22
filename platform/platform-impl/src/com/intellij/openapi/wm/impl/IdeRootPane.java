@@ -381,13 +381,13 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   protected void installNorthComponents(@NotNull Project project) {
     UISettings uiSettings = UISettings.getShadowInstance();
     if (ExperimentalUI.isNewToolbar()) {
-      myStatusBarCentralWidget = IdeRootPaneNorthExtension.EP_NAME.findFirstSafe(it -> it instanceof StatusBarCentralWidget);
+      myStatusBarCentralWidget = IdeRootPaneNorthExtension.EP_NAME.findFirstSafe(project, it -> it instanceof StatusBarCentralWidget);
       if (myStatusBarCentralWidget != null) {
         myStatusBarCentralWidget.uiSettingsChanged(uiSettings);
       }
     }
     else {
-      myNorthComponents.addAll(IdeRootPaneNorthExtension.EP_NAME.getExtensionList(project));
+      myNorthComponents.addAll(IdeRootPaneNorthExtension.EP_NAME.getExtensions(project));
       if (myNorthComponents.isEmpty()) {
         return;
       }

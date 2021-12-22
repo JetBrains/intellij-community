@@ -215,7 +215,7 @@ class UISettings @NonInjectable constructor(private val notRoamableOptions: NotR
     set(value) {
       state.showMainToolbar = value
 
-      val toolbarSettingsState = ToolbarSettings.Instance.state!!
+      val toolbarSettingsState = ToolbarSettings.getInstance().state!!
       toolbarSettingsState.showNewMainToolbar = !value && toolbarSettingsState.showNewMainToolbar
     }
 
