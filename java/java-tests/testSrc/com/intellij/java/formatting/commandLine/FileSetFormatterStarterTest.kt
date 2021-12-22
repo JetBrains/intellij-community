@@ -40,7 +40,7 @@ class FileSetFormatterStarterTest : LightPlatformTestCase() {
       assertInstanceOf(processor, FileSetFormatter::class.java)
       assertFalse(processor.isRecursive)
       assertEmpty(processor.getFileMasks())
-      assertEquals(CodeStyleSettingsManager.getInstance().createSettings(), processor.codeStyleSettings)
+      assertEquals(CodeStyleSettingsManager.getInstance().createSettings(), processor.defaultCodeStyle)
       assertEquals(1, processor.getEntries().size)
       assertEquals(File(".").absolutePath, processor.getEntries()[0].absolutePath)
     }

@@ -124,9 +124,15 @@ Usage: format [-h] [-r|-R] [-d|-dry] [-s|-settings settingsPath] [-charset chars
   path<n>        A path to a file or a directory.  
 """
 
+fun readSettings(settingsFile: File): CodeStyleSettings? =
+  VfsUtil.findFileByIoFile(settingsFile, true)
+    ?.let {
+      it.refresh(false, false)
+      CodeStyleSettingsLoader().loadSettings(it)
+    }
+
 private fun readSettings(settingsPath: String): CodeStyleSettings? =
-  VfsUtil.findFileByIoFile(File(settingsPath), true)
-    ?.let { CodeStyleSettingsLoader().loadSettings(it) }
+  readSettings(File(settingsPath))
 
 
 private val appInfo: String =

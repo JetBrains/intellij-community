@@ -13,7 +13,7 @@ private val LOG = Logger.getInstance(CodeStyleProcessorBuilder::class.java)
 class CodeStyleProcessorBuilder(val messageOutput: MessageOutput) {
   var isDryRun = false
   var isRecursive = false
-  var codeStyleSettings = CodeStyleSettingsManager.getInstance().createSettings()
+  var codeStyleSettings: CodeStyleSettings? = null
   var fileMasks = emptyList<Regex>()
   val entries = arrayListOf<File>()
   var charset: Charset? = null
@@ -56,10 +56,10 @@ class CodeStyleProcessorBuilder(val messageOutput: MessageOutput) {
   }
 
   private fun buildFormatter() =
-    FileSetFormatter(codeStyleSettings, messageOutput, isRecursive, charset).configure()
+    FileSetFormatter(messageOutput, isRecursive, charset, codeStyleSettings).configure()
 
   private fun buildFormatValidator() =
-    FileSetFormatValidator(codeStyleSettings, messageOutput, isRecursive, charset).configure()
+    FileSetFormatValidator(messageOutput, isRecursive, charset, codeStyleSettings).configure()
 
   fun build(): FileSetCodeStyleProcessor =
     if (isDryRun) buildFormatValidator() else buildFormatter()
