@@ -237,7 +237,7 @@ final class ProjectStructureMapping {
     writer.writeObjectFieldStart("dependentModules")
     for (Map.Entry<String, List<String>> pluginAndModules : data.dependentModules.entrySet()) {
       writer.writeArrayFieldStart(pluginAndModules.key)
-      for (String moduleName : pluginAndModules.value) {
+      for (String moduleName : pluginAndModules.value.toSorted()) {
         writer.writeString(moduleName)
       }
       writer.writeEndArray()
