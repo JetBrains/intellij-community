@@ -52,6 +52,7 @@ class KotlinGradleSourceSetData @PropertyMapping("sourceSetName") constructor(va
     lateinit var cachedArgsInfo: CachedExtractedArgsInfo
 
     var isProcessed: Boolean = false
+    var kotlinPluginVersion: String? = null
 
     @Suppress("DEPRECATION")
     @Deprecated("Use cachedArgsInfo instead", level = DeprecationLevel.ERROR)
