@@ -50,9 +50,9 @@ class FileSetFormatter(
   messageOutput: MessageOutput,
   isRecursive: Boolean,
   charset: Charset? = null,
-  highPriorityCodeStyle: CodeStyleSettings? = null,
+  primaryCodeStyle: CodeStyleSettings? = null,
   defaultCodeStyle: CodeStyleSettings? = null
-) : FileSetCodeStyleProcessor(messageOutput, isRecursive, charset, highPriorityCodeStyle, defaultCodeStyle) {
+) : FileSetCodeStyleProcessor(messageOutput, isRecursive, charset, primaryCodeStyle, defaultCodeStyle) {
 
   override val operationContinuous = "Formatting"
   override val operationPerfect = "formatted"
@@ -117,9 +117,9 @@ class FileSetFormatValidator(
   messageOutput: MessageOutput,
   isRecursive: Boolean,
   charset: Charset? = null,
-  highPriorityCodeStyle: CodeStyleSettings? = null,
+  primaryCodeStyle: CodeStyleSettings? = null,
   defaultCodeStyle: CodeStyleSettings? = null
-) : FileSetCodeStyleProcessor(messageOutput, isRecursive, charset, highPriorityCodeStyle, defaultCodeStyle) {
+) : FileSetCodeStyleProcessor(messageOutput, isRecursive, charset, primaryCodeStyle, defaultCodeStyle) {
 
   override val operationContinuous = "Checking"
   override val operationPerfect = "checked"
@@ -181,13 +181,11 @@ abstract class FileSetCodeStyleProcessor(
   isRecursive: Boolean,
   charset: Charset? = null,
   val primaryCodeStyle: CodeStyleSettings? = null,
-  defaultCodeStyle: CodeStyleSettings? = null
+  val defaultCodeStyle: CodeStyleSettings? = null
 ) : FileSetProcessor(messageOutput, isRecursive, charset), Closeable {
 
-  val defaultCodeStyle = defaultCodeStyle ?: CodeStyleSettingsManager.getInstance().createSettings()
-
   private val projectUID = UUID.randomUUID().toString()
-  protected val project = createProject(projectUID, primaryCodeStyle ?: this.defaultCodeStyle)
+  protected val project = createProject(projectUID)
 
   abstract val operationContinuous: String
   abstract val operationPerfect: String
@@ -208,7 +206,16 @@ abstract class FileSetCodeStyleProcessor(
 
   override fun processVirtualFile(virtualFile: VirtualFile, projectSettings: CodeStyleSettings?) {
     messageOutput.info("$operationContinuous ${virtualFile.canonicalPath}...")
-    withStyleSettings(projectSettings) {
+
+    val style = listOfNotNull(primaryCodeStyle, projectSettings, defaultCodeStyle).firstOrNull()
+
+    if (style == null) {
+      messageOutput.error("No style for ${virtualFile.canonicalPath}, skipping...")
+      statistics.fileProcessed(true)
+      return
+    }
+
+    withStyleSettings(style) {
       VfsUtil.markDirtyAndRefresh(false, false, false, virtualFile)
       val resultMessage =
         if (virtualFile.fileType.isBinary) {
@@ -221,16 +228,14 @@ abstract class FileSetCodeStyleProcessor(
     }
   }
 
-  private fun <T> withStyleSettings(localSettings: CodeStyleSettings?, body: () -> T): T {
-    if (primaryCodeStyle != null || localSettings == null) {
-      return body()
-    }
-
+  private fun <T> withStyleSettings(style: CodeStyleSettings, body: () -> T): T {
+    val cssManager = CodeStyleSettingsManager.getInstance(project)
+    val tmp = cssManager.mainProjectCodeStyle!!
     try {
-      CodeStyle.setMainProjectSettings(project, localSettings)
+      CodeStyle.setMainProjectSettings(project, style)
       return body()
     } finally {
-      CodeStyle.setMainProjectSettings(project, defaultCodeStyle)
+      CodeStyle.setMainProjectSettings(project, tmp)
     }
   }
 
@@ -246,10 +251,12 @@ private fun createProjectDir(projectUID: String) = FileUtil
   .resolve(PathMacroUtil.DIRECTORY_STORE_NAME)
   .also { Files.createDirectories(it) }
 
-private fun createProject(projectUID: String, codeStyleSettings: CodeStyleSettings) =
+private fun createProject(projectUID: String) =
   ProjectManagerEx.getInstanceEx()
     .openProject(createProjectDir(projectUID), newProject())
-    ?.also { CodeStyle.setMainProjectSettings(it, codeStyleSettings) }
+    ?.also {
+      CodeStyle.setMainProjectSettings(it, CodeStyleSettingsManager.getInstance().createSettings())
+    }
   ?: throw RuntimeException("Failed to create temporary project $projectUID")
 
 private fun PsiFile.isFormattingSupported(): Boolean {

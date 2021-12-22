@@ -98,6 +98,7 @@ fun createFormatter(args: Array<String>, messageOutput: MessageOutput = StdIoMes
                 .onFailure { messageOutput.error("Ignoring charset setting: ${it.message}") }
               skipFlag.skip()
             }
+            "-allowDefaults" -> allowFactoryDefaults()
             else -> {
               if (arg.startsWith("-")) throw ArgumentsException("Unknown option $arg")
               withEntry(arg)
@@ -109,13 +110,17 @@ fun createFormatter(args: Array<String>, messageOutput: MessageOutput = StdIoMes
 
 
 private const val usageInfo = """
-Usage: format [-h] [-r|-R] [-d|-dry] [-s|-settings settingsPath] [-charset charsetName] path1 path2...
-  -h|-help       Show a help message and exit.
-  -s|-settings   A path to Intellij IDEA code style settings .xml file.
-  -r|-R          Scan directories recursively.
-  -d|-dry        Perform a dry run: no file modifications, only exit status.
-  -m|-mask       A comma-separated list of file masks.
-  -charset       Force charset to use when reading and writing files. 
+Usage: format [-h] [-r|-R] [-d|-dry] [-s|-settings settingsPath] [-charset charsetName] [-allowDefaults] path1 path2...
+  -h|-help         Show a help message and exit.
+  -s|-settings     A path to Intellij IDEA code style settings .xml file. This setting will be
+                   be used as a primary one regardless to the surrounding project settings
+  -r|-R            Scan directories recursively.
+  -d|-dry          Perform a dry run: no file modifications, only exit status.
+  -m|-mask         A comma-separated list of file masks.
+  -charset         Force charset to use when reading and writing files.
+  -allowDefaults   Use factory defaults when style is not defined for a given file. I.e. when -s
+                   is not not set and file doesn't belong to any IDEA project. Otherwise file will
+                   be ignored.
   path<n>        A path to a file or a directory.  
 """
 

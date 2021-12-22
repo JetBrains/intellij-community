@@ -13,7 +13,7 @@ import kotlin.text.Charsets.UTF_8
 class FileSetFormatterTest : FileSetCodeStyleProcessorTestBase() {
 
   private fun simpleTest(settings: CodeStyleSettings? = null) {
-    FileSetFormatter(messageOutput!!, true, highPriorityCodeStyle = settings, defaultCodeStyle = codeStyleSettings).use {
+    FileSetFormatter(messageOutput!!, true, primaryCodeStyle = settings, defaultCodeStyle = codeStyleSettings).use {
       it.addFileMask(Regex(".*\\.java"))
       val sourceDir = createSourceDir("${getTestName(true)}/original")
       it.addEntry(sourceDir.canonicalPath)
@@ -59,6 +59,5 @@ class FileSetFormatterTest : FileSetCodeStyleProcessorTestBase() {
   fun testCustomEncodingOk() {
     testCustomEncoding(Charset.forName("ISO-8859-15"))
   }
-
 
 }
