@@ -15,6 +15,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.StatusBarCentralWidget;
@@ -260,19 +261,21 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   private @Nullable ToolbarHolder getToolbarHolderDelegate() {
-    UISettings settings = UISettings.getShadowInstance();
-    if (ExperimentalUI.isNewToolbar() && MainToolbarKt.isToolbarInHeader(settings)) {
+    if (ExperimentalUI.isNewToolbar() && MainToolbarKt.isToolbarInHeader(UISettings.getShadowInstance())) {
       return (ToolbarHolder)myCustomFrameTitlePane;
     }
-
     return null;
   }
 
   private static void disposeIfNeeded(JComponent comp) {
-    if (!(comp instanceof Disposable)) return;
+    if (!(comp instanceof Disposable)) {
+      return;
+    }
 
     Disposable d = (Disposable)comp;
-    if (!Disposer.isDisposed(d)) Disposer.dispose(d);
+    if (!Disposer.isDisposed(d)) {
+      Disposer.dispose(d);
+    }
   }
 
   protected void updateNorthComponents() {
@@ -299,7 +302,9 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   private static @NotNull JComponent createToolbar() {
-    if (ExperimentalUI.isNewToolbar()) return createExperimentalToolbar();
+    if (ExperimentalUI.isNewToolbar()) {
+      return createExperimentalToolbar();
+    }
 
     ActionGroup group = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_TOOLBAR);
     ActionToolbar toolBar = ActionManagerEx.getInstanceEx()
@@ -359,7 +364,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       return;
     }
 
-    boolean globalMenuVisible = SystemInfo.isLinux && GlobalMenuLinux.isPresented();
+    boolean globalMenuVisible = SystemInfoRt.isLinux && GlobalMenuLinux.isPresented();
     // don't show swing-menu when global (system) menu presented
     boolean visible = SystemInfo.isMacSystemMenu || (!globalMenuVisible && uiSettings.getShowMainMenu());
     if (visible != menuBar.isVisible()) {
@@ -374,16 +379,15 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   protected void installNorthComponents(@NotNull Project project) {
-    var extensions = IdeRootPaneNorthExtension.EP_NAME.getExtensionList(project);
     UISettings uiSettings = UISettings.getShadowInstance();
     if (ExperimentalUI.isNewToolbar()) {
-      myStatusBarCentralWidget = ContainerUtil.find(extensions, e -> e instanceof StatusBarCentralWidget);
+      myStatusBarCentralWidget = IdeRootPaneNorthExtension.EP_NAME.findFirstSafe(it -> it instanceof StatusBarCentralWidget);
       if (myStatusBarCentralWidget != null) {
         myStatusBarCentralWidget.uiSettingsChanged(uiSettings);
       }
     }
     else {
-      myNorthComponents.addAll(extensions);
+      myNorthComponents.addAll(IdeRootPaneNorthExtension.EP_NAME.getExtensionList(project));
       if (myNorthComponents.isEmpty()) {
         return;
       }
@@ -444,7 +448,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
-  private class MyRootLayout extends RootLayout {
+  private final class MyRootLayout extends RootLayout {
     @Override
     public Dimension preferredLayoutSize(Container parent) {
       Dimension rd;

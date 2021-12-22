@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar.experimental
 
 import com.intellij.ide.ui.ToolbarSettings
@@ -153,10 +153,8 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
   }
 }
 
-class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNorthExtension() {
-
+internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNorthExtension() {
   companion object {
-
     private const val NEW_TOOLBAR_KEY = "NEW_TOOLBAR_KEY"
 
     private val logger = logger<NewToolbarRootPaneExtension>()
@@ -171,7 +169,6 @@ class NewToolbarRootPaneExtension(private val project: Project) : IdeRootPaneNor
 
   internal val layout = NewToolbarBorderLayout()
   internal val panel: JPanel = object : JPanel(layout) {
-
     init {
       isOpaque = true
       border = BorderFactory.createEmptyBorder(0, JBUI.scale(4), 0, JBUI.scale(4))

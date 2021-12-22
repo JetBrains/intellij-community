@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.components.panels.HorizontalLayout
 import java.awt.event.ComponentAdapter
@@ -14,8 +14,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.UIManager
 
-class MainToolbar: JPanel(HorizontalLayout(10)) {
-
+internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   private val layoutMap = mapOf(
     Position.Left to HorizontalLayout.LEFT,
     Position.Right to HorizontalLayout.RIGHT,
@@ -82,7 +81,6 @@ class MainToolbar: JPanel(HorizontalLayout(10)) {
 }
 
 private class VisibleComponentsPool {
-
   val elements = mapOf<Position, MutableList<JComponent>>(
     Pair(Position.Left, mutableListOf()),
     Pair(Position.Right, mutableListOf()),
@@ -98,12 +96,12 @@ private class VisibleComponentsPool {
   }
 
   fun nextToHide(): JComponent? {
-    return elements[Position.Left]!!.lastOrNull() { it.isVisible }
-           ?: elements[Position.Right]!!.lastOrNull() { it.isVisible }
-           ?: elements[Position.Center]!!.lastOrNull() { it.isVisible }
+    return elements[Position.Left]!!.lastOrNull { it.isVisible }
+           ?: elements[Position.Right]!!.lastOrNull { it.isVisible }
+           ?: elements[Position.Center]!!.lastOrNull { it.isVisible }
   }
 }
 
 internal fun isToolbarInHeader(settings : UISettings) : Boolean {
-  return SystemInfo.isWindows && !settings.separateMainMenu
+  return SystemInfoRt.isWindows && !settings.separateMainMenu
 }

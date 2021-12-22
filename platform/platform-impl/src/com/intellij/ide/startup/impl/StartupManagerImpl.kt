@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.startup.impl
 
 import com.intellij.diagnostic.*
@@ -163,7 +163,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
     LOG.assertTrue(!isStartupActivitiesPassed)
     runActivity("project startup") {
       runActivities(startupActivities, indicator = indicator)
-      val extensionPoint = (ApplicationManager.getApplication().extensionArea as ExtensionsAreaImpl)
+      val extensionPoint = (app.extensionArea as ExtensionsAreaImpl)
         .getExtensionPoint<StartupActivity>("com.intellij.startupActivity")
 
       // use processImplementations to not even create extension if not allow-listed
@@ -193,6 +193,7 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       }
       if (app.isUnitTestMode) {
         LOG.assertTrue(app.isDispatchThread)
+        @Suppress("TestOnlyProblems")
         waitAndProcessInvocationEventsInIdeEventQueue(this)
       }
     }
@@ -277,7 +278,9 @@ open class StartupManagerImpl(private val project: Project) : StartupManagerEx()
       }
     }
     catch (t: Throwable) {
-      if (ApplicationManager.getApplication().isUnitTestMode) postStartupActivitiesPassed = -1
+      if (ApplicationManager.getApplication().isUnitTestMode) {
+        postStartupActivitiesPassed = -1
+      }
       else throw t
     }
   }
