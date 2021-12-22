@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.config
 
 import com.intellij.CommonBundle
@@ -29,6 +29,7 @@ import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.*
 import com.intellij.util.download.DownloadableFileSetVersions.FileSetVersionsCallback
 import org.jetbrains.plugins.groovy.GroovyBundle
+import org.jetbrains.plugins.groovy.config.GroovyNewProjectWizardUsageCollector.DistributionType
 import java.awt.KeyboardFocusManager.getCurrentKeyboardFocusManager
 import java.nio.file.Path
 import java.nio.file.Paths
@@ -141,6 +142,7 @@ class GroovyNewProjectWizard : LanguageNewProjectWizard {
     }
 
     override fun setupProject(project: Project) {
+      reportFeature()
       val groovyModuleBuilder = GroovyAwareModuleBuilder().apply {
         contentEntryPath = FileUtil.toSystemDependentName(contentRoot)
         name = moduleName
@@ -158,6 +160,18 @@ class GroovyNewProjectWizard : LanguageNewProjectWizard {
       })
 
       groovyModuleBuilder.commit(project)
+    }
+
+    private fun reportFeature() {
+      val (distributionType, version) = when(val distr = distribution) {
+        is FrameworkLibraryDistributionInfo -> DistributionType.MAVEN to distr.version.versionString
+        is LocalDistributionInfo -> DistributionType.LOCAL to GroovyConfigUtils.getInstance().getSDKVersionOrNull(distr.path)
+        else -> return
+      }
+      if (version == null) {
+        return
+      }
+      GroovyNewProjectWizardUsageCollector.logGroovyLibrarySelected(context, distributionType, version)
     }
 
     private fun createCompositionSettings(project: Project, container: LibrariesContainer): LibraryCompositionSettings? {

@@ -355,6 +355,8 @@
     <registryKey key="groovy.process.nested.dfa" defaultValue="true"
                  description="Allows to run nested DFA inside the outer one"/>
 
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.groovy.config.GroovyNewProjectWizardUsageCollector"/>
+
     <additionalTextAttributes scheme="Default" file="colorSchemes/GroovyDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
 
