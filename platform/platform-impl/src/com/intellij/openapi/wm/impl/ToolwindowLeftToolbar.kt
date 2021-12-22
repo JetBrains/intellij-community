@@ -1,22 +1,31 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
-import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.VerticalFlowLayout
-import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
+import java.awt.Point
+import java.awt.Rectangle
+import javax.swing.JComponent
 import javax.swing.JPanel
 
 class ToolwindowLeftToolbar : ToolwindowToolbar() {
-  private val topPane = JPanel(VerticalFlowLayout(0, 0))
-  private val bottomPane = JPanel(VerticalFlowLayout(0, 0))
-  lateinit var moreButton: MoreSquareStripeButton
+  private val topPane = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
+    override fun getAnchor(): ToolWindowAnchor = ToolWindowAnchor.LEFT
+    override fun getButtonFor(toolWindowId: String): JComponent? = this@ToolwindowLeftToolbar.getButtonFor(toolWindowId)
+  }
+
+  private val bottomPane = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
+    override fun getAnchor(): ToolWindowAnchor = ToolWindowAnchor.BOTTOM
+    override fun getButtonFor(toolWindowId: String): JComponent? = this@ToolwindowLeftToolbar.getButtonFor(toolWindowId)
+  }
+
+  val moreButton = MoreSquareStripeButton(this, topPane)
 
   init {
     border = JBUI.Borders.customLine(JBUI.CurrentTheme.ToolWindow.borderColor(), 1, 0, 0, 1)
-    moreButton = MoreSquareStripeButton(this)
     topPane.background = JBUI.CurrentTheme.ToolWindow.background()
     bottomPane.background = JBUI.CurrentTheme.ToolWindow.background()
 
@@ -27,19 +36,19 @@ class ToolwindowLeftToolbar : ToolwindowToolbar() {
     add(bottomPane, BorderLayout.SOUTH)
   }
 
-  override fun removeStripeButton(project: Project, toolWindow: ToolWindow, anchor: ToolWindowAnchor) {
-    when (anchor) {
-      ToolWindowAnchor.LEFT -> remove(topPane, toolWindow)
-      ToolWindowAnchor.BOTTOM -> remove(bottomPane, toolWindow)
-    }
+  override fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe = when (anchor) {
+    ToolWindowAnchor.LEFT -> topPane
+    ToolWindowAnchor.BOTTOM -> bottomPane
+    else -> throw IllegalArgumentException("Wrong anchor $anchor")
   }
 
-  override fun addStripeButton(project: Project, anchor: ToolWindowAnchor, toolWindow: ToolWindow) {
-    when (anchor) {
-      ToolWindowAnchor.LEFT -> rebuildStripe(project, topPane, toolWindow)
-      ToolWindowAnchor.BOTTOM -> rebuildStripe(project, bottomPane, toolWindow, addToBeginning = true)
-    }
+  override fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? = if (isVisible && moreButton.isVisible) {
+    if (Rectangle(topPane.locationOnScreen, topPane.size).contains(screenPoint)) topPane
+    else if (!Rectangle(moreButton.locationOnScreen, moreButton.size).contains(screenPoint) &&
+             Rectangle(locationOnScreen, size).also{ JBInsets.removeFrom(it, insets)}.contains(screenPoint)) bottomPane
+    else null
   }
+  else null
 
   override fun reset() {
     topPane.removeAll()
@@ -48,8 +57,7 @@ class ToolwindowLeftToolbar : ToolwindowToolbar() {
     bottomPane.revalidate()
   }
 
-  override fun getButtonFor(toolWindowId: String): SquareStripeButton? {
-    topPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id == toolWindowId}?.let { return it }
-    return bottomPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id == toolWindowId}
-  }
+  override fun getButtonFor(toolWindowId: String): SquareStripeButton? =
+    topPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id == toolWindowId} ?:
+     bottomPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id == toolWindowId}
 }

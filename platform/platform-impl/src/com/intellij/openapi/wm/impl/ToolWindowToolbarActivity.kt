@@ -21,6 +21,6 @@ private class ToolwindowToolbarListener(val project: Project) : ToolWindowManage
     }
 
     toolWindow.isVisibleOnLargeStripe = true
-    toolWindow.largeStripeAnchor = toolWindow.anchor
+    toolWindow.setLargeStripeAnchor(toolWindow.largeStripeAnchor, -1)
   }
 }

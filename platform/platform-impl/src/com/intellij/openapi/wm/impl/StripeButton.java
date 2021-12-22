@@ -29,6 +29,8 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.awt.image.BufferedImage;
 
+import static com.intellij.openapi.wm.impl.ToolWindowDragHelperKt.createDragImage;
+
 /**
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
@@ -46,7 +48,7 @@ public class StripeButton extends AnchoredButton implements DataProvider {
   final ToolWindowImpl toolWindow;
   private JLabel myDragButtonImage;
   private Point myPressedPoint;
-  private Stripe myLastStripe;
+  private AbstractDroppableStripe myLastStripe;
   private KeyEventDispatcher myDragKeyEventDispatcher;
   private boolean myDragCancelled = false;
 
@@ -197,7 +199,7 @@ public class StripeButton extends AnchoredButton implements DataProvider {
         return;
       }
 
-      BufferedImage image = createDragImage();
+      BufferedImage image = createDragImage(this);
       myDragButtonImage = new JLabel(IconUtil.createImageIcon((Image)image)) {
         @Override
         public String toString() {
@@ -235,7 +237,7 @@ public class StripeButton extends AnchoredButton implements DataProvider {
 
     SwingUtilities.convertPointToScreen(xy, myDragPane);
 
-    Stripe stripe = pane.getStripeFor(xy, (Stripe)getParent());
+    var stripe = pane.getStripeFor(xy, (Stripe)getParent());
     if (stripe == null) {
       if (myLastStripe != null) {
         myLastStripe.resetDrop();
@@ -249,28 +251,6 @@ public class StripeButton extends AnchoredButton implements DataProvider {
     }
 
     myLastStripe = stripe;
-  }
-
-  @NotNull
-  BufferedImage createDragImage() {
-    Rectangle initialBounds = getBounds();
-    try {
-      if (initialBounds.isEmpty()) {
-        setSize(getPreferredSize());
-      }
-      int width = getWidth() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor == ToolWindowAnchor.LEFT)
-      int height = getHeight() - 1; // -1 because StripeButtonUI.paint will not paint 1 pixel in case (anchor.isHorizontal())
-      BufferedImage image = UIUtil.createImage(this, width, height, BufferedImage.TYPE_INT_RGB);
-      Graphics graphics = image.getGraphics();
-      graphics.setColor(UIUtil.getBgFillColor(getParent()));
-      graphics.fillRect(0, 0, width, height);
-      paint(graphics);
-      graphics.dispose();
-      return image;
-    }
-    finally {
-      setBounds(initialBounds);
-    }
   }
 
   public @NotNull ToolWindowImpl getToolWindow() {

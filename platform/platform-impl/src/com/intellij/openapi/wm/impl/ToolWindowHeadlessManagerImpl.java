@@ -267,7 +267,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public void setLargeStripeAnchor(@NotNull ToolWindowAnchor anchor) { }
+    public void setLargeStripeAnchor(@NotNull ToolWindowAnchor anchor, int order) { }
 
     @Override
     public void setAnchor(@NotNull ToolWindowAnchor anchor, @Nullable Runnable runnable) {

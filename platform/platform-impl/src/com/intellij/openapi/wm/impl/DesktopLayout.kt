@@ -9,6 +9,7 @@ import com.intellij.openapi.util.JDOMUtil
 import com.intellij.openapi.wm.RegisterToolWindowTask
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowInfo
+import com.intellij.ui.ExperimentalUI
 import com.intellij.util.xmlb.XmlSerializer
 import org.jdom.Element
 import org.jetbrains.annotations.NonNls
@@ -64,19 +65,20 @@ class DesktopLayout(private val idToInfo: MutableMap<String, WindowInfoImpl> = H
       newOrder = getMaxOrder(idToInfo.values, newAnchor) + 1
     }
 
-    val oldAnchor = info.anchor
+    val oldAnchor = if (ExperimentalUI.isNewToolWindowsStripes()) info.largeStripeAnchor else info.anchor
     // shift order to the right in the target stripe
     val infos = getAllInfos(idToInfo.values, newAnchor)
-    for (i in infos.size - 1 downTo -1 + 1) {
-      val info2 = infos[i]
-      if (newOrder <= info2.order) {
-        info2.order = info2.order + 1
-      }
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      infos.reversed().forEach { if (newOrder <= it.orderOnLargeStripe) it.orderOnLargeStripe++ }
+      info.orderOnLargeStripe = newOrder
+      info.largeStripeAnchor = newAnchor
+    }
+    else {
+      infos.reversed().forEach { if (newOrder <= it.order) it.order++ }
+      info.order = newOrder
+      info.anchor = newAnchor
     }
 
-    // "move" window into the target position
-    info.anchor = newAnchor
-    info.order = newOrder
     // normalize orders in the source and target stripes
     normalizeOrder(getAllInfos(idToInfo.values, oldAnchor))
     if (oldAnchor != newAnchor) {
@@ -161,18 +163,32 @@ private fun getAnchorWeight(anchor: ToolWindowAnchor): Int {
   }
 }
 
-internal val windowInfoComparator: Comparator<WindowInfo> = Comparator { o1, o2 ->
-  val anchorWeight = getAnchorWeight(o1.anchor) - getAnchorWeight(o2.anchor)
-  if (anchorWeight == 0) o1.order - o2.order else anchorWeight
-}
+internal val windowInfoComparator: Comparator<WindowInfo> =
+  if (ExperimentalUI.isNewToolWindowsStripes())
+    Comparator { o1, o2 ->
+      val weightDiff = getAnchorWeight(o1.largeStripeAnchor) - getAnchorWeight(o2.largeStripeAnchor)
+      if (weightDiff != 0) weightDiff else o1.orderOnLargeStripe - o2.orderOnLargeStripe
+    }
+  else
+    Comparator { o1, o2 ->
+      val weightDiff = getAnchorWeight(o1.anchor) - getAnchorWeight(o2.anchor)
+      if (weightDiff != 0) weightDiff else o1.order - o2.order
+  }
 
 /**
  * Normalizes order of windows in the passed array. Note, that array should be
  * sorted by order (by ascending). Order of first window will be `0`.
  */
 private fun normalizeOrder(infos: List<WindowInfoImpl>) {
-  for (i in infos.indices) {
-    infos.get(i).order = i
+  if (ExperimentalUI.isNewToolWindowsStripes()) {
+    for (i in infos.indices) {
+      infos.get(i).orderOnLargeStripe = i
+    }
+  }
+  else {
+    for (i in infos.indices) {
+      infos.get(i).order = i
+    }
   }
 }
 
@@ -181,27 +197,22 @@ private fun normalizeOrder(infos: List<WindowInfoImpl>) {
  * @return maximum ordinal number in the specified stripe. Returns `-1`
  * if there is no tool window with the specified anchor.
  */
-private fun getMaxOrder(list: Collection<WindowInfoImpl>, anchor: ToolWindowAnchor): Int {
-  var result = -1
-  for (info in list) {
-    if (anchor == info.anchor && result < info.order) {
-      result = info.order
-    }
+private fun getMaxOrder(list: Collection<WindowInfoImpl>, anchor: ToolWindowAnchor) =
+  if (ExperimentalUI.isNewToolWindowsStripes()) {
+    list.filter { anchor == it.largeStripeAnchor }.maxOf { it.orderOnLargeStripe }
   }
-  return result
-}
+  else {
+    list.filter { anchor == it.anchor }.maxOf { it.order }
+  }
 
 /**
  * @return all (registered and not unregistered) `WindowInfos` for the specified `anchor`.
  * Returned infos are sorted by order.
  */
-private fun getAllInfos(list: Collection<WindowInfoImpl>, anchor: ToolWindowAnchor): List<WindowInfoImpl> {
-  val result = mutableListOf<WindowInfoImpl>()
-  for (info in list) {
-    if (anchor == info.anchor) {
-      result.add(info)
-    }
+private fun getAllInfos(list: Collection<WindowInfoImpl>, anchor: ToolWindowAnchor) =
+  if (ExperimentalUI.isNewToolWindowsStripes()) {
+    list.filter { anchor == it.largeStripeAnchor }.sortedWith(windowInfoComparator)
   }
-  result.sortWith(windowInfoComparator)
-  return result
-}
+  else {
+    list.filter { anchor == it.anchor }.sortedWith(windowInfoComparator)
+  }

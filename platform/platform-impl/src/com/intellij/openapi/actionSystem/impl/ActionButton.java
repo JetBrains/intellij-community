@@ -457,8 +457,6 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
 
       case MouseEvent.MOUSE_RELEASED:
         if (skipPress || !isEnabled()) return;
-        myMouseDown = false;
-        ourGlobalMouseDown = false;
         onMouseReleased(e);
         if (myRollover) {
           performAction(e);
@@ -482,7 +480,13 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     }
   }
 
+  protected void resetMouseState() {
+    myMouseDown = false;
+    ourGlobalMouseDown = false;
+  }
+
   protected void onMouseReleased(@NotNull MouseEvent e) {
+    resetMouseState();
     // Extension point
   }
 

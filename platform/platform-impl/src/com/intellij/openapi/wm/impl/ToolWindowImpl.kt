@@ -277,8 +277,8 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
 
   override fun getLargeStripeAnchor() = windowInfo.largeStripeAnchor
 
-  override fun setLargeStripeAnchor(anchor: ToolWindowAnchor) {
-    toolWindowManager.setLargeStripeAnchor(id, anchor)
+  override fun setLargeStripeAnchor(anchor: ToolWindowAnchor, order: Int) {
+    toolWindowManager.setLargeStripeAnchor(id, anchor, order)
   }
 
   override fun isVisibleOnLargeStripe() = windowInfo.isVisibleOnLargeStripe

@@ -793,6 +793,12 @@ public class JBUI {
         return insets("ToolWindow.HeaderTab.leftRightInsets", insets(0, 8, 0, 8));
       }
 
+      public interface DragAndDrop {
+        Color STRIPE_BACKGROUND = JBColor.namedColor("ToolWindow.Button.DragAndDrop.stripeBackground", CurrentTheme.DragAndDrop.Area.BACKGROUND);
+        Color BUTTON_DROP_BACKGROUND = JBColor.namedColor("ToolWindow.Button.DragAndDrop.buttonDropBackground", CurrentTheme.DragAndDrop.Area.BACKGROUND);
+        Color BUTTON_FLOATING_BACKGROUND = JBColor.namedColor("ToolWindow.Button.DragAndDrop.buttonFloatingBackground", ActionButton.pressedBackground());
+      }
+
       /**
        * @deprecated obsolete UI
        */

@@ -31,6 +31,8 @@ import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.IJSwingUtilities;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -246,10 +248,11 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   void addDecorator(@NotNull JComponent decorator, @NotNull WindowInfo info, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
     if (info.isDocked()) {
       boolean side = !info.isSplit();
-      WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), side);
+      ToolWindowAnchor anchor = ExperimentalUI.isNewToolWindowsStripes() ? info.getLargeStripeAnchor() : info.getAnchor();
+
+      WindowInfo sideInfo = manager.getDockedInfoAt(anchor, side);
       if (sideInfo == null) {
-        ToolWindowAnchor anchor = info.getAnchor();
-        setComponent(decorator, anchor, normalizeWeigh(info.getWeight()));
+        setComponent(decorator, anchor, normalizeWeight(info.getWeight()));
         if (!dirtyMode) {
           layeredPane.validate();
           layeredPane.repaint();
@@ -270,12 +273,12 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   void removeDecorator(@NotNull WindowInfo info, @Nullable JComponent component, boolean dirtyMode, @NotNull ToolWindowManagerImpl manager) {
     if (info.getType() == ToolWindowType.DOCKED) {
       if (component != null && component.isShowing()) {
-        WindowInfo sideInfo = manager.getDockedInfoAt(info.getAnchor(), !info.isSplit());
+        ToolWindowAnchor anchor = ExperimentalUI.isNewToolWindowsStripes() ? info.getLargeStripeAnchor() : info.getAnchor();
+        WindowInfo sideInfo = manager.getDockedInfoAt(anchor, !info.isSplit());
         if (sideInfo == null) {
-          setComponent(null, info.getAnchor(), 0);
+          setComponent(null, anchor, 0);
         }
         else {
-          ToolWindowAnchor anchor = info.getAnchor();
           JComponent c = getComponentAt(anchor);
           if (c instanceof Splitter) {
             Splitter splitter = (Splitter)c;
@@ -421,36 +424,43 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   @NotNull
-  Stripe getStripeFor(@NotNull ToolWindowAnchor anchor) {
+  AbstractDroppableStripe getStripeFor(@NotNull ToolWindowAnchor anchor) {
     if (ToolWindowAnchor.TOP == anchor) {
       return topStripe;
     }
     if (ToolWindowAnchor.BOTTOM == anchor) {
-      return bottomStripe;
+      return ExperimentalUI.isNewToolWindowsStripes() && myLeftToolbar != null ? myLeftToolbar.getStripeFor(anchor) : bottomStripe;
     }
     if (ToolWindowAnchor.LEFT == anchor) {
-      return leftStripe;
+      return ExperimentalUI.isNewToolWindowsStripes() && myLeftToolbar != null ? myLeftToolbar.getStripeFor(anchor) : leftStripe;
     }
     if (ToolWindowAnchor.RIGHT == anchor) {
-      return rightStripe;
+      return ExperimentalUI.isNewToolWindowsStripes() && myRightToolbar != null ? myRightToolbar.getStripeFor(anchor) : rightStripe;
     }
 
     throw new IllegalArgumentException("Anchor=" + anchor);
   }
 
   @Nullable
-  Stripe getStripeFor(@NotNull Point screenPoint, @NotNull Stripe preferred) {
-    if (!new Rectangle(getLocationOnScreen(), getSize()).contains(screenPoint)) {
-      return null;
-    }
+  AbstractDroppableStripe getStripeFor(@NotNull Point screenPoint, @NotNull AbstractDroppableStripe preferred) {
+    if (ExperimentalUI.isNewToolWindowsStripes() && myLeftToolbar != null && myRightToolbar != null) {
+      if (preferred.containsPoint(screenPoint)) {
+        return preferred;
+      }
 
-    if (preferred.containsPoint(screenPoint)) {
-      return preferred;
+      return ObjectUtils.chooseNotNull(myLeftToolbar.getStripeFor(screenPoint), myRightToolbar.getStripeFor(screenPoint));
     }
+    else {
+      if (new Rectangle(getLocationOnScreen(), getSize()).contains(screenPoint)) {
+        if (preferred.containsPoint(screenPoint)) {
+          return preferred;
+        }
 
-    for (Stripe stripe : stripes) {
-      if (stripe.containsPoint(screenPoint)) {
-        return stripe;
+        for (Stripe stripe : stripes) {
+          if (stripe.containsPoint(screenPoint)) {
+            return stripe;
+          }
+        }
       }
     }
     return null;
@@ -465,14 +475,26 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
   }
 
   void startDrag() {
-    for (Stripe each : stripes) {
-      each.startDrag();
+    ContainerUtil.filter(stripes, s -> s.isVisible()).forEach(s -> s.startDrag());
+
+    if (myRightToolbar != null && myRightToolbar.isVisible()) {
+      myRightToolbar.startDrag();
+    }
+
+    if (myLeftToolbar != null && myLeftToolbar.isVisible()) {
+      myLeftToolbar.startDrag();
     }
   }
 
   void stopDrag() {
-    for (Stripe stripe : stripes) {
-      stripe.stopDrag();
+    ContainerUtil.filter(stripes, s -> s.isVisible()).forEach(s -> s.stopDrag());
+
+    if (myRightToolbar != null && myRightToolbar.isVisible()) {
+      myRightToolbar.stopDrag();
+    }
+
+    if (myLeftToolbar != null && myLeftToolbar.isVisible()) {
+      myLeftToolbar.stopDrag();
     }
   }
 
@@ -630,7 +652,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     revalidate();
   }
 
-  void onStripeButtonRemoved(@NotNull Project project, @NotNull ToolWindow toolWindow) {
+  void onStripeButtonRemoved(@NotNull ToolWindow toolWindow) {
     if (!isSquareStripeUI()) return;
     if (myLeftToolbar == null || myRightToolbar == null) return;
 
@@ -639,10 +661,10 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
     ToolWindowAnchor anchor = toolWindow.getLargeStripeAnchor();
     if (ToolWindowAnchor.LEFT.equals(anchor) || ToolWindowAnchor.BOTTOM.equals(anchor)) {
-      myLeftToolbar.removeStripeButton(project, toolWindow, anchor);
+      myLeftToolbar.removeStripeButton(toolWindow, anchor);
     }
     else if (ToolWindowAnchor.RIGHT.equals(anchor)) {
-      myRightToolbar.removeStripeButton(project, toolWindow, anchor);
+      myRightToolbar.removeStripeButton(toolWindow, anchor);
     }
   }
 
@@ -874,30 +896,30 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
       if (info.isSplit()) {
         splitter.setFirstComponent(oldComponent);
         splitter.setSecondComponent(newComponent);
-        float proportion = state.getPreferredSplitProportion(Objects.requireNonNull(oldInfo.getId()), normalizeWeigh(
+        float proportion = state.getPreferredSplitProportion(Objects.requireNonNull(oldInfo.getId()), normalizeWeight(
           oldInfo.getSideWeight() / (oldInfo.getSideWeight() + info.getSideWeight())));
         splitter.setProportion(proportion);
         if (!anchor.isHorizontal() && !anchor.isSplitVertically()) {
-          newWeight = normalizeWeigh(oldInfo.getWeight() + info.getWeight());
+          newWeight = normalizeWeight(oldInfo.getWeight() + info.getWeight());
         }
         else {
-          newWeight = normalizeWeigh(oldInfo.getWeight());
+          newWeight = normalizeWeight(oldInfo.getWeight());
         }
       }
       else {
         splitter.setFirstComponent(newComponent);
         splitter.setSecondComponent(oldComponent);
-        splitter.setProportion(normalizeWeigh(info.getSideWeight()));
+        splitter.setProportion(normalizeWeight(info.getSideWeight()));
         if (!anchor.isHorizontal() && !anchor.isSplitVertically()) {
-          newWeight = normalizeWeigh(oldInfo.getWeight() + info.getWeight());
+          newWeight = normalizeWeight(oldInfo.getWeight() + info.getWeight());
         }
         else {
-          newWeight = normalizeWeigh(info.getWeight());
+          newWeight = normalizeWeight(info.getWeight());
         }
       }
     }
     else {
-      newWeight = normalizeWeigh(info.getWeight());
+      newWeight = normalizeWeight(info.getWeight());
     }
     setComponent(splitter, anchor, newWeight);
 
@@ -1134,7 +1156,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     updateToolStripesVisibility(UISettings.getInstance());
   }
 
-  private static float normalizeWeigh(final float weight) {
+  private static float normalizeWeight(final float weight) {
     if (weight <= 0) return WindowInfoImpl.DEFAULT_WEIGHT;
     if (weight >= 1) return 1 - WindowInfoImpl.DEFAULT_WEIGHT;
     return weight;

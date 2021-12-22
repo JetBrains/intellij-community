@@ -14,11 +14,16 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
+import com.intellij.ui.MouseDragHelper
 import com.intellij.ui.PopupHandler
 import com.intellij.ui.ToggleActionButton
 import com.intellij.ui.UIBundle
+import com.intellij.util.ui.JBInsets
+import com.intellij.util.ui.JBUI
 import java.awt.Component
 import java.awt.Dimension
+import java.awt.Graphics
+import java.awt.Rectangle
 import java.util.function.Supplier
 
 class SquareStripeButton(val project: Project, val button: StripeButton) :
@@ -31,6 +36,7 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
         showPopup(component, x, y)
       }
     })
+    MouseDragHelper.setComponentDraggable(this, true)
   }
 
   override fun updateUI() {
@@ -45,6 +51,25 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
   fun isHovered() = myRollover
 
   fun isFocused() = button.toolWindow.isActive
+
+  fun resetDrop() = resetMouseState()
+
+  fun paintDraggingButton(g: Graphics) {
+    val areaSize = size.also {
+      JBInsets.removeFrom(it, insets)
+      JBInsets.removeFrom(it, SquareStripeButtonLook.ICON_PADDING)
+    }
+
+    val rect = Rectangle(areaSize)
+    buttonLook.paintLookBackground(g, rect, JBUI.CurrentTheme.ActionButton.pressedBackground())
+    icon.let{
+      val x = (areaSize.width - it.iconWidth) / 2
+      val y = (areaSize.height - it.iconHeight) / 2
+      buttonLook.paintIcon(g, this, it, x, y)
+    }
+
+    buttonLook.paintLookBorder(g, rect, JBUI.CurrentTheme.ActionButton.pressedBorder())
+  }
 
   override fun updateToolTipText() {
     HelpTooltip().
@@ -111,9 +136,9 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
   private class MoveToAction(val toolWindowsPane: ToolWindowsPane, val toolWindow: ToolWindow, val anchor: ToolWindowAnchor) :
     AnAction(anchor.capitalizedDisplayName), DumbAware {
     override fun actionPerformed(e: AnActionEvent) {
-      toolWindowsPane.onStripeButtonRemoved(e.project!!, toolWindow)
+      toolWindowsPane.onStripeButtonRemoved(toolWindow)
       toolWindow.isVisibleOnLargeStripe = true
-      toolWindow.largeStripeAnchor = anchor
+      toolWindow.setLargeStripeAnchor(anchor, if (anchor == ToolWindowAnchor.BOTTOM) 0 else -1)
     }
 
     override fun update(e: AnActionEvent) {
@@ -124,7 +149,7 @@ class SquareStripeButton(val project: Project, val button: StripeButton) :
   private class HideAction(val toolWindowsPane: ToolWindowsPane, val toolWindow: ToolWindow) :
     AnAction(UIBundle.message("tool.window.new.stripe.hide.action.name")), DumbAware {
     override fun actionPerformed(e: AnActionEvent) {
-      toolWindowsPane.onStripeButtonRemoved(e.project!!, toolWindow)
+      toolWindowsPane.onStripeButtonRemoved(toolWindow)
       toolWindow.isVisibleOnLargeStripe = false
       (toolWindow as? ToolWindowImpl)?.toolWindowManager?.hideToolWindow(toolWindow.id, false, true, ToolWindowEventSource.SquareStripeButton)
     }

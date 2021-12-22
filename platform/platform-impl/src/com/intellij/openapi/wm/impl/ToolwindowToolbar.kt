@@ -11,6 +11,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
+import java.awt.Point
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -24,36 +25,50 @@ abstract class ToolwindowToolbar : JPanel() {
     background = JBUI.CurrentTheme.ToolWindow.background()
   }
 
+  abstract fun getStripeFor(anchor: ToolWindowAnchor): AbstractDroppableStripe
+
   abstract fun getButtonFor(toolWindowId: String): SquareStripeButton?
 
-  abstract fun removeStripeButton(project: Project, toolWindow: ToolWindow, anchor: ToolWindowAnchor)
+  abstract fun getStripeFor(screenPoint: Point): AbstractDroppableStripe?
 
-  abstract fun addStripeButton(project: Project, anchor: ToolWindowAnchor, toolWindow: ToolWindow)
+  fun removeStripeButton(toolWindow: ToolWindow, anchor: ToolWindowAnchor) {
+    remove(getStripeFor(anchor), toolWindow)
+  }
+
+  fun addStripeButton(project: Project, anchor: ToolWindowAnchor, toolWindow: ToolWindow) {
+    rebuildStripe(project, getStripeFor(anchor), toolWindow)
+  }
 
   abstract fun reset()
 
-  fun rebuildStripe(project: Project, panel: JPanel, toolWindow: ToolWindow, addToBeginning: Boolean = false) {
+  fun startDrag() {
+    revalidate()
+    repaint()
+  }
+
+  fun stopDrag() = startDrag()
+
+  fun rebuildStripe(project: Project, panel: AbstractDroppableStripe, toolWindow: ToolWindow) {
     if (toolWindow !is ToolWindowImpl) return
 
     if (toolWindow.orderOnLargeStripe == -1) {
-      if (addToBeginning) {
-        toolWindow.orderOnLargeStripe = 0
-        panel.components
-          .filterIsInstance(SquareStripeButton::class.java)
-          .forEach { it.button.toolWindow.orderOnLargeStripe++ }
-      } else {
         toolWindow.orderOnLargeStripe = panel.components.filterIsInstance(SquareStripeButton::class.java).count()
-      }
     }
 
     //temporary add new button
-    panel.add(SquareStripeButton(project, StripeButton(toolwindowPane, toolWindow).also { it.updatePresentation() }))
+    if (panel.buttons.filterIsInstance(SquareStripeButton::class.java).find { it.button.id == toolWindow.id } == null) {
+      panel.add(SquareStripeButton(project, StripeButton(toolwindowPane, toolWindow).also { it.updatePresentation() }))
+    }
+
     val sortedSquareButtons = panel.components.filterIsInstance(SquareStripeButton::class.java)
       .map { it.button.toolWindow }
       .sortedWith(Comparator.comparingInt<ToolWindow> { (it as? ToolWindowImpl)?.windowInfo?.orderOnLargeStripe ?: -1 })
     panel.removeAll()
+    panel.buttons.clear()
     sortedSquareButtons.forEach {
-      panel.add(SquareStripeButton(project, StripeButton(toolwindowPane, it).also { button -> button.updatePresentation() }))
+      val button = SquareStripeButton(project, StripeButton(toolwindowPane, it).also { button -> button.updatePresentation() })
+      panel.add(button)
+      panel.buttons.add(button)
     }
   }
 
@@ -64,7 +79,7 @@ abstract class ToolwindowToolbar : JPanel() {
       panel.repaint()
     }
 
-    fun remove(panel: JPanel, toolWindow: ToolWindow) {
+    fun remove(panel: AbstractDroppableStripe, toolWindow: ToolWindow) {
       val components = panel.components
       val index = components.filterIsInstance(SquareStripeButton::class.java).indexOfFirst { it.button.id == toolWindow.id }
       // shift all button indexes beneath
@@ -72,7 +87,13 @@ abstract class ToolwindowToolbar : JPanel() {
         .filterIsInstance(SquareStripeButton::class.java)
         .map { it.button.toolWindow }
         .forEach { it.orderOnLargeStripe-- }
-      components[index]?.let { panel.remove(it); panel.revalidate(); panel.repaint() }
+
+      components[index]?.let {
+        panel.remove(it)
+        panel.buttons.remove(it)
+        panel.revalidate()
+        panel.repaint()
+      }
     }
   }
 

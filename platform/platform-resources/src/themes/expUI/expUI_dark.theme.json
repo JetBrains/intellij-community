@@ -256,6 +256,13 @@
       "Header": {
         "inactiveBackground": "Grey2",
         "font.size.offset": 0
+      },
+
+      "Button": {
+        "DragAndDrop" : {
+          "stripeBackground" : "#2E436E",
+          "buttonDropBackground": "#35538F"
+        }
       }
     },
 

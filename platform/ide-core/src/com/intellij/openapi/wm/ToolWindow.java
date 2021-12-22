@@ -91,7 +91,7 @@ public interface ToolWindow extends BusyObject {
   @NotNull
   ToolWindowAnchor getLargeStripeAnchor();
 
-  void setLargeStripeAnchor(@NotNull ToolWindowAnchor anchor);
+  void setLargeStripeAnchor(@NotNull ToolWindowAnchor anchor, int order);
 
   /**
    * @throws IllegalStateException if tool window isn't installed.
