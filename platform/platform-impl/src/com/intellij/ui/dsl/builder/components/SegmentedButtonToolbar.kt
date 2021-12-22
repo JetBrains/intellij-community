@@ -186,6 +186,7 @@ private fun paintBorder(g: Graphics2D, r: Rectangle) {
   g.fill(border)
 }
 
+@ApiStatus.Internal
 class SegmentedButtonBorder : Border {
 
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
