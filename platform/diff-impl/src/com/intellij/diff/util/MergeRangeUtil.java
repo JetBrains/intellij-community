@@ -7,13 +7,13 @@ import com.intellij.diff.comparison.ComparisonUtil;
 import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.tools.util.text.LineOffsets;
-import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 import java.util.function.BiPredicate;
+import java.util.function.BooleanSupplier;
 
 import static com.intellij.diff.util.DiffRangeUtil.getLinesContent;
 
@@ -22,7 +22,7 @@ public class MergeRangeUtil {
   public static MergeConflictType getMergeType(@NotNull Condition<? super ThreeSide> emptiness,
                                                @NotNull BiPredicate<? super ThreeSide, ? super ThreeSide> equality,
                                                @Nullable BiPredicate<? super ThreeSide, ? super ThreeSide> trueEquality,
-                                               @NotNull BooleanGetter conflictResolver) {
+                                               @NotNull BooleanSupplier conflictResolver) {
     boolean isLeftEmpty = emptiness.value(ThreeSide.LEFT);
     boolean isBaseEmpty = emptiness.value(ThreeSide.BASE);
     boolean isRightEmpty = emptiness.value(ThreeSide.RIGHT);
@@ -69,7 +69,7 @@ public class MergeRangeUtil {
           return new MergeConflictType(MergeConflictType.Type.MODIFIED, true, true);
         }
         else {
-          boolean canBeResolved = !isLeftEmpty && !isRightEmpty && conflictResolver.get();
+          boolean canBeResolved = !isLeftEmpty && !isRightEmpty && conflictResolver.getAsBoolean();
           return new MergeConflictType(MergeConflictType.Type.CONFLICT, true, true, canBeResolved);
         }
       }
@@ -146,7 +146,7 @@ public class MergeRangeUtil {
     return getMergeType((side) -> isWordMergeIntervalEmpty(fragment, side),
                         (side1, side2) -> compareWordMergeContents(fragment, texts, policy, side1, side2),
                         null,
-                        BooleanGetter.FALSE);
+                        () -> false);
   }
 
   public static boolean compareWordMergeContents(@NotNull MergeWordFragment fragment,
