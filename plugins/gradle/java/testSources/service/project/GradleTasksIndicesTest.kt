@@ -1,19 +1,20 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.service.project
 
-import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilder.Companion.settingsScript
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
+import org.jetbrains.plugins.gradle.importing.createBuildFile
+import org.jetbrains.plugins.gradle.importing.createSettingsFile
+import org.jetbrains.plugins.gradle.importing.importProject
 import org.junit.Test
 
 class GradleTasksIndicesTest : GradleTasksIndicesTestCase() {
 
   @Test
   fun `test test tasks matching`() {
-    importProject(buildscript {
+    importProject {
       withTask("myTask")
       withTask("myTask1")
       withTask("myTask2")
-    })
+    }
 
     findTasks("Task").assertTasks()
     findTasks(":Task").assertTasks()
@@ -29,21 +30,21 @@ class GradleTasksIndicesTest : GradleTasksIndicesTestCase() {
 
   @Test
   fun `test task finding`() {
-    createProjectSubFile("build.gradle", buildscript { withJavaPlugin() })
-    createProjectSubFile("settings.gradle", settingsScript("project") {
+    createBuildFile { withJavaPlugin() }
+    createSettingsFile {
       include("module")
       include("module:sub-module")
       includeBuild("composite")
       includeBuild("../composite-flat")
-    })
-    createProjectSubFile("module/build.gradle", buildscript { withJavaPlugin() })
-    createProjectSubFile("module/sub-module/build.gradle", buildscript { withJavaPlugin() })
-    createProjectSubFile("composite/build.gradle", buildscript { withJavaPlugin() })
-    createProjectSubFile("composite/module/build.gradle", buildscript { withJavaPlugin() })
-    createProjectSubFile("composite/settings.gradle", settingsScript("composite") { include("module") })
-    createProjectSubFile("../composite-flat/build.gradle", buildscript { withJavaPlugin() })
-    createProjectSubFile("../composite-flat/module/build.gradle", buildscript { withJavaPlugin() })
-    createProjectSubFile("../composite-flat/settings.gradle", settingsScript("composite-flat") { include("module")  })
+    }
+    createBuildFile("module") { withJavaPlugin() }
+    createBuildFile("module/sub-module") { withJavaPlugin() }
+    createBuildFile("composite") { withJavaPlugin() }
+    createBuildFile("composite/module") { withJavaPlugin() }
+    createSettingsFile("composite") { include("module") }
+    createBuildFile("../composite-flat") { withJavaPlugin() }
+    createBuildFile("../composite-flat/module") { withJavaPlugin() }
+    createSettingsFile("../composite-flat") { include("module") }
     importProject()
 
     findTasks("test").assertTasks(":test", ":module:test", ":module:sub-module:test")

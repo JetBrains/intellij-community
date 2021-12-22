@@ -3,6 +3,9 @@ package org.jetbrains.plugins.gradle.execution
 
 import com.intellij.openapi.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
+import org.jetbrains.plugins.gradle.importing.createBuildFile
+import org.jetbrains.plugins.gradle.importing.createSettingsFile
+import org.jetbrains.plugins.gradle.importing.importProject
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions
 import org.junit.Test
 import java.io.File
@@ -186,7 +189,7 @@ class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
 
   @Test
   @TargetVersions("4.9+")
-  fun `test task configuration avoidance during debug`() {
+  fun `test tasks configuration avoidance during debug`() {
     createPrintArgsClass()
     val projectArgsFile = createArgsFile()
 
@@ -215,7 +218,7 @@ class GradleDebuggingIntegrationTest : GradleDebuggingIntegrationTestCase() {
 
   @Test
   @TargetVersions("3.1+")
-  fun `test task debugging for composite build`() {
+  fun `test tasks debugging for composite build`() {
     createPrintArgsClass()
     createPrintArgsClass("module")
     createPrintArgsClass("composite")

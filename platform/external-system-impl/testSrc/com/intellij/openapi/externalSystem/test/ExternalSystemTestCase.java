@@ -357,7 +357,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
   }
 
-  protected VirtualFile createProjectSubFile(String relativePath) throws IOException {
+  public VirtualFile createProjectSubFile(String relativePath) throws IOException {
     File f = new File(getProjectPath(), relativePath);
     FileUtil.ensureExists(f.getParentFile());
     FileUtil.ensureCanCreateFile(f);
@@ -401,12 +401,11 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     target.close();
   }
 
-  protected VirtualFile createProjectSubFile(String relativePath, String content) throws IOException {
+  public VirtualFile createProjectSubFile(String relativePath, String content) throws IOException {
     VirtualFile file = createProjectSubFile(relativePath);
     setFileContent(file, content, false);
     return file;
   }
-
 
   protected void compileModules(final String... moduleNames) {
     if (useProjectTaskManager) {
@@ -539,7 +538,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     fs.assertFileEqual(file);
   }
 
-  protected static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) {
+  public static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) {
     try {
       WriteAction.runAndWait(() -> {
         if (advanceStamps) {
