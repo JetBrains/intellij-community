@@ -15,10 +15,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.systemIndependentPath
 import org.assertj.core.api.Assertions.assertThat
 import org.jetbrains.plugins.gradle.importing.GradleImportingTestCase
-import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilder
-import org.jetbrains.plugins.gradle.importing.GradleSettingScriptBuilder.Companion.settingsScript
 import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder
-import org.jetbrains.plugins.gradle.importing.TestGradleBuildScriptBuilder.Companion.buildscript
 import org.jetbrains.plugins.gradle.service.execution.GradleRunConfiguration
 import java.io.File
 import java.util.concurrent.CountDownLatch
@@ -81,23 +78,6 @@ abstract class GradleDebuggingIntegrationTestCase : GradleImportingTestCase() {
       assign("main", "pack.AClass")
       call("args", argsFile.systemIndependentPath)
     }
-  }
-
-  fun createSettingsFile(configure: GradleSettingScriptBuilder.() -> Unit) {
-    createSettingsFile(settingsScript("project", configure))
-  }
-
-  fun createSettingsFile(relativeModulePath: String, configure: GradleSettingScriptBuilder.() -> Unit) {
-    val projectName = File(relativeModulePath).name
-    createProjectSubFile("$relativeModulePath/settings.gradle", settingsScript(projectName, configure))
-  }
-
-  fun createBuildFile(relativeModulePath: String, configure: TestGradleBuildScriptBuilder.() -> Unit) {
-    createProjectSubFile("$relativeModulePath/build.gradle", buildscript(configure))
-  }
-
-  fun importProject(configure: TestGradleBuildScriptBuilder.() -> Unit) {
-    importProject(buildscript(configure))
   }
 
   fun assertDebugJvmArgs(
