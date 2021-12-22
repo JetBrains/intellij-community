@@ -74,7 +74,8 @@ class ChangesViewContentManager(private val project: Project) : ChangesViewConte
           }
         }
       })
-    project.messageBus.connect().subscribe(CommitModeManager.COMMIT_MODE_TOPIC, object : CommitModeManager.CommitModeListener {
+    val projectBusConnection = project.messageBus.connect()
+    CommitModeManager.subscribeOnCommitModeChange(projectBusConnection, object : CommitModeManager.CommitModeListener {
       override fun commitModeChanged() = updateToolWindowMapping()
     })
   }

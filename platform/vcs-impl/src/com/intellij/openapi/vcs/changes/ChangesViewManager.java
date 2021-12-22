@@ -114,7 +114,8 @@ public class ChangesViewManager implements ChangesViewEx,
     myProject = project;
     ChangesViewModifier.KEY.addChangeListener(project, this::refreshImmediately, this);
 
-    project.getMessageBus().connect(this).subscribe(CommitModeManager.COMMIT_MODE_TOPIC, () -> updateCommitWorkflow());
+    MessageBusConnection busConnection = project.getMessageBus().connect(this);
+    CommitModeManager.subscribeOnCommitModeChange(busConnection, () -> updateCommitWorkflow());
     // invokeLater to avoid potential cyclic dependency with ChangesViewCommitPanel constructor
     ApplicationManager.getApplication().invokeLater(() -> updateCommitWorkflow(), myProject.getDisposed());
   }

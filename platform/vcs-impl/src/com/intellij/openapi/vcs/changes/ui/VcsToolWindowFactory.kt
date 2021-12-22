@@ -48,7 +48,7 @@ abstract class VcsToolWindowFactory : ToolWindowFactory, DumbAware {
         window.contentManagerIfCreated?.selectFirstContent()
       }
     })
-    connection.subscribe(CommitModeManager.COMMIT_MODE_TOPIC, object : CommitModeManager.CommitModeListener {
+    CommitModeManager.subscribeOnCommitModeChange(connection, object : CommitModeManager.CommitModeListener {
       override fun commitModeChanged() {
         updateState(project, window)
         window.contentManagerIfCreated?.selectFirstContent()

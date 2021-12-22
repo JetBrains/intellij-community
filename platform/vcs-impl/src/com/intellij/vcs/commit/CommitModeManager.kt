@@ -23,6 +23,8 @@ import com.intellij.openapi.vcs.impl.VcsEP
 import com.intellij.openapi.vcs.impl.VcsInitObject
 import com.intellij.openapi.vcs.impl.VcsStartupActivity
 import com.intellij.util.concurrency.annotations.RequiresEdt
+import com.intellij.util.messages.MessageBusConnection
+import com.intellij.util.messages.SimpleMessageBusConnection
 import com.intellij.util.messages.Topic
 import com.intellij.vcs.commit.NonModalCommitUsagesCollector.logStateChanged
 import java.util.*
@@ -135,8 +137,12 @@ class CommitModeManager(private val project: Project) {
     @JvmField
     val SETTINGS: Topic<SettingsListener> = Topic(SettingsListener::class.java, Topic.BroadcastDirection.TO_DIRECT_CHILDREN, true)
 
-    @JvmField
-    val COMMIT_MODE_TOPIC: Topic<CommitModeListener> = Topic(CommitModeListener::class.java, Topic.BroadcastDirection.NONE, true)
+    private val COMMIT_MODE_TOPIC: Topic<CommitModeListener> = Topic(CommitModeListener::class.java, Topic.BroadcastDirection.NONE, true)
+
+    @JvmStatic
+    fun subscribeOnCommitModeChange(connection: SimpleMessageBusConnection, listener: CommitModeListener) {
+      connection.subscribe(COMMIT_MODE_TOPIC, listener)
+    }
 
     @JvmStatic
     fun getInstance(project: Project): CommitModeManager = project.service()
