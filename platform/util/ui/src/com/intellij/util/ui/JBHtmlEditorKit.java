@@ -49,7 +49,7 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
    */
   @Deprecated
   public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
-    this(ExtendableHTMLViewFactory.DEFAULT, StyleSheetUtil.createJBDefaultStyleSheet(), false);
+    this(ExtendableHTMLViewFactory.DEFAULT, StyleSheetUtil.getDefaultStyleSheet(), false);
     if (noGapsBetweenParagraphs) getStyleSheet().addStyleSheet(UIUtil.NO_GAPS_BETWEEN_PARAGRAPHS_STYLE);
   }
 

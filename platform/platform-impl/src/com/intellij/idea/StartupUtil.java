@@ -13,6 +13,7 @@ import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.StartupAbortedException;
+import com.intellij.ide.ui.html.GlobalStyleSheetHolder;
 import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.jna.JnaLoader;
@@ -38,7 +39,6 @@ import com.intellij.util.PlatformUtils;
 import com.intellij.util.lang.Java11Shim;
 import com.intellij.util.lang.ZipFilePool;
 import com.intellij.util.ui.StartupUiUtil;
-import com.intellij.util.ui.StyleSheetUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import org.apache.log4j.ConsoleAppender;
 import org.apache.log4j.Level;
@@ -50,8 +50,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.BuiltInServer;
 import sun.awt.AWTAutoShutdown;
+import sun.awt.AppContext;
 
 import javax.swing.*;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.dnd.DragSource;
 import java.io.File;
@@ -253,9 +256,12 @@ public final class StartupUtil {
         if (!isHeadless) {
           // not important
           EventQueue.invokeLater(() -> {
-            // may be expensive (~200 ms), so configure only after showing the splash and as invokeLater
-            // (to allow other queued events to be executed)
-            StyleSheetUtil.configureCustomLabelStyle();
+            // patch html styles
+            // create a separate copy for each case
+            UIDefaults uiDefaults = UIManager.getDefaults();
+            uiDefaults.put("javax.swing.JLabel.userStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet());
+            uiDefaults.put("HTMLEditorKit.jbStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet());
+
             //noinspection ResultOfMethodCallIgnored
             WeakFocusStackManager.getInstance();
           });

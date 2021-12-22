@@ -115,7 +115,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
 
       StartupUiUtil.initInputMapDefaults(defaults);
       initIdeaDefaults(defaults);
-      patchStyledEditorKit(defaults);
       patchComboBox(metalDefaults, defaults);
       defaults.remove("Spinner.arrowButtonBorder");
       defaults.put("Spinner.arrowButtonSize", JBUI.size(16, 5).asUIResource());
@@ -143,28 +142,6 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
     defaults.remove("ComboBox.actionMap");
     defaults.put("ComboBox.ancestorInputMap", metalDefaults.get("ComboBox.ancestorInputMap"));
     defaults.put("ComboBox.actionMap", metalDefaults.get("ComboBox.actionMap"));
-  }
-
-  private void patchStyledEditorKit(UIDefaults defaults) {
-    String relativePath = getPrefix() + (JBUIScale.isUsrHiDPI() ? "@2x.css" : ".css");
-    try {
-      byte[] dataBytes = ResourceUtil.getResourceAsBytes(relativePath, DarculaLaf.class.getClassLoader());
-      if (dataBytes == null) {
-        Logger.getInstance(DarculaLaf.class).error("Cannot find " + relativePath + " file");
-        return;
-      }
-
-      StyleSheet styleSheet = new StyleSheet();
-      styleSheet.loadRules(new StringReader(new String(dataBytes, StandardCharsets.UTF_8)), null);
-      defaults.put("StyledEditorKit.JBDefaultStyle", styleSheet);
-
-      Object defaultStylesKey = MethodHandles.privateLookupIn(HTMLEditorKit.class, MethodHandles.lookup())
-        .findStaticGetter(HTMLEditorKit.class, "DEFAULT_STYLES_KEY", Object.class).invokeExact();
-      AppContext.getAppContext().put(defaultStylesKey, styleSheet);
-    }
-    catch (Throwable e) {
-      Logger.getInstance(DarculaLaf.class).warn(relativePath + " loading failed", e);
-    }
   }
 
   protected @NotNull String getPrefix() {

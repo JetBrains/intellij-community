@@ -47,7 +47,7 @@ class HTMLEditorKitBuilder {
    * This stylesheet will be used by default in all documents created via [HTMLEditorKit.createDefaultDocument]
    * Generally - a default stylesheet for [javax.swing.JEditorPane] unless you override the document manually
    *
-   * By default [StyleSheetUtil.createJBDefaultStyleSheet] is used
+   * By default [StyleSheetUtil.getDefaultStyleSheet] is used
    */
   fun withStyleSheet(styleSheet: StyleSheet) = apply {
     overriddenRootStyle = styleSheet
@@ -87,7 +87,7 @@ class HTMLEditorKitBuilder {
   }
 
   private fun createHtmlStyleSheet(): StyleSheet {
-    val sheet = StyleSheetUtil.createJBDefaultStyleSheet()
+    val sheet = StyleSheetUtil.getDefaultStyleSheet()
     if (!needGapsBetweenParagraphs) sheet.addStyleSheet(UIUtil.NO_GAPS_BETWEEN_PARAGRAPHS_STYLE)
     return sheet
   }
