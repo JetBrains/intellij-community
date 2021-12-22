@@ -115,8 +115,6 @@ public class ClassesFromCompileInc {
         final Path outputPart = BuildDependenciesDownloader.downloadFileToCacheLocation(communityRoot, outputPartUri);
         final Path outputPartExtracted = BuildDependenciesDownloader.extractFileToCacheLocation(communityRoot, outputPart);
 
-        System.out.println(modulePrefix + " = " + outputPartExtracted);
-
         return Pair.pair(modulePrefix, outputPartExtracted);
       };
       tasks.add(c);
