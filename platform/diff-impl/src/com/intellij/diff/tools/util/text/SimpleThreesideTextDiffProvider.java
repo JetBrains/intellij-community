@@ -79,12 +79,12 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
                                             @NotNull MergeLineFragment fragment) {
     switch (myColorsMode) {
       case MERGE_CONFLICT:
-        return DiffUtil.getLineThreeWayDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
+        return MergeRangeUtil.getLineThreeWayDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
       case MERGE_RESULT:
-        MergeConflictType conflictType = DiffUtil.getLineThreeWayDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
+        MergeConflictType conflictType = MergeRangeUtil.getLineThreeWayDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
         return invertConflictType(conflictType);
       case LEFT_TO_RIGHT:
-        return DiffUtil.getLineLeftToRightThreeSideDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
+        return MergeRangeUtil.getLineLeftToRightThreeSideDiffType(fragment, sequences, lineOffsets, comparisonPolicy);
       default:
         throw new IllegalStateException(myColorsMode.name());
     }

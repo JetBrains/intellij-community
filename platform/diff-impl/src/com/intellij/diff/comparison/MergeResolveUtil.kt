@@ -158,12 +158,12 @@ private class SimpleHelper(val leftText: CharSequence, val baseText: CharSequenc
   }
 
   private fun getConflictType(range: MergeRange, policy: ComparisonPolicy): MergeConflictType {
-    return DiffUtil.getWordMergeType(MergeWordFragmentImpl(range), texts, policy)
+    return MergeRangeUtil.getWordMergeType(MergeWordFragmentImpl(range), texts, policy)
   }
 
   private fun isUnchangedRange(range: MergeRange, policy: ComparisonPolicy): Boolean {
-    return DiffUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSide.BASE, ThreeSide.LEFT) &&
-           DiffUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSide.BASE, ThreeSide.RIGHT)
+    return MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSide.BASE, ThreeSide.LEFT) &&
+           MergeRangeUtil.compareWordMergeContents(MergeWordFragmentImpl(range), texts, policy, ThreeSide.BASE, ThreeSide.RIGHT)
   }
 }
 

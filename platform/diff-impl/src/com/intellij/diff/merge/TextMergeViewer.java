@@ -463,7 +463,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
                                                                    ignorePolicy.getComparisonPolicy(), indicator);
 
         List<MergeConflictType> conflictTypes = ContainerUtil.map(lineFragments, fragment ->
-          DiffUtil.getLineMergeType(fragment, sequences, lineOffsets, ignorePolicy.getComparisonPolicy()));
+          MergeRangeUtil.getLineMergeType(fragment, sequences, lineOffsets, ignorePolicy.getComparisonPolicy()));
 
         FoldingModelSupport.Data foldingState = myFoldingModel.createState(lineFragments, lineOffsets, getFoldingModelSettings());
 
