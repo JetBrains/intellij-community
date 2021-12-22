@@ -173,21 +173,21 @@ public class n<F, S> {
       while(true) {
          char var10004 = var4[var10003];
          byte var10005;
-         switch(var1 % 5) {
-         case 0:
-            var10005 = 74;
-            break;
-         case 1:
-            var10005 = 60;
-            break;
-         case 2:
-            var10005 = 116;
-            break;
-         case 3:
-            var10005 = 28;
-            break;
-         default:
-            var10005 = 38;
+         switch (var1 % 5) {
+            case 0:
+               var10005 = 74;
+               break;
+            case 1:
+               var10005 = 60;
+               break;
+            case 2:
+               var10005 = 116;
+               break;
+            case 3:
+               var10005 = 28;
+               break;
+            default:
+               var10005 = 38;
          }
 
          var4[var10003] = (char)(var10004 ^ var10005);

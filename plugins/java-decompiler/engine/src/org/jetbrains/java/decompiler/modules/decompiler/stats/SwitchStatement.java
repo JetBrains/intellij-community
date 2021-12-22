@@ -88,10 +88,10 @@ public final class SwitchStatement extends Statement {
       List<Exprent> values = caseValues.get(i);
       for (int j = 0; j < edges.size(); j++) {
         if (edges.get(j) == defaultEdge) {
-          buf.appendIndent(indent).append("default:").appendLineSeparator();
+          buf.appendIndent(indent + 1).append("default:").appendLineSeparator();
         }
         else {
-          buf.appendIndent(indent).append("case ");
+          buf.appendIndent(indent + 1).append("case ");
           Exprent value = values.get(j);
           if (value instanceof ConstExprent) {
             value = value.copy();
@@ -107,7 +107,7 @@ public final class SwitchStatement extends Statement {
         }
         tracer.incrementCurrentSourceLine();
       }
-      buf.append(ExprProcessor.jmpWrapper(stat, indent + 1, false, tracer));
+      buf.append(ExprProcessor.jmpWrapper(stat, indent + 2, false, tracer));
     }
     buf.appendIndent(indent).append("}").appendLineSeparator();
     tracer.incrementCurrentSourceLine();
