@@ -14,7 +14,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.util.Consumer;
 import com.intellij.util.IntPair;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.diff.DiffConfig;
 import com.intellij.util.text.CharSequenceSubSequence;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -174,7 +174,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
 
       try {
         // Do not try to build fine blocks after few fails
-        boolean tryComputeDifferences = tooBigChunksCount < FilesTooBigForDiffException.MAX_BAD_LINES;
+        boolean tryComputeDifferences = tooBigChunksCount < DiffConfig.MAX_BAD_LINES;
         result.addAll(createInnerFragments(fragment, text1, text2, policy, fragmentsPolicy, indicator, tryComputeDifferences));
       }
       catch (DiffTooBigException e) {

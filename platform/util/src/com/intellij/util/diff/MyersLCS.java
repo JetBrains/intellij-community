@@ -89,7 +89,7 @@ class MyersLCS {
 
   public void executeWithThreshold() throws FilesTooBigForDiffException {
     int threshold = Math.max(20000 + 10 * (int)Math.sqrt(myCount1 + myCount2),
-                             FilesTooBigForDiffException.DELTA_THRESHOLD_SIZE);
+                             DiffConfig.DELTA_THRESHOLD_SIZE);
     execute(threshold, true);
   }
 

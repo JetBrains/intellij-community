@@ -6,10 +6,10 @@ import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.PeekableIterator;
 import com.intellij.util.containers.PeekableIteratorWrapper;
+import com.intellij.util.diff.DiffConfig;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -180,7 +180,7 @@ public final class ComparisonMergeUtil {
   public static CharSequence tryResolveConflict(@NotNull CharSequence leftText,
                                                 @NotNull CharSequence baseText,
                                                 @NotNull CharSequence rightText) {
-    if (Registry.is("diff.merge.resolve.conflict.action.use.greedy.approach")) {
+    if (DiffConfig.USE_GREEDY_MERGE_MAGIC_RESOLVE) {
       return MergeResolveUtil.tryGreedyResolve(leftText, baseText, rightText);
     }
     else {

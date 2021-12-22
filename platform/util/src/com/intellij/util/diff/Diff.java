@@ -3,7 +3,6 @@ package com.intellij.util.diff;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Enumerator;
@@ -88,7 +87,7 @@ public final class Diff {
     }
 
     BitSet[] changes;
-    if (Registry.is("diff.patience.alg", false)) {
+    if (DiffConfig.USE_PATIENCE_ALG) {
       PatienceIntLCS patienceIntLCS = new PatienceIntLCS(discarded[0], discarded[1]);
       patienceIntLCS.execute();
       changes = patienceIntLCS.getChanges();
