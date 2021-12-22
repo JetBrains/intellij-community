@@ -1,46 +1,13 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.comparison;
 
-import com.intellij.diff.comparison.iterables.DiffIterable;
-import com.intellij.diff.comparison.iterables.DiffIterableUtil;
-import com.intellij.diff.tools.util.text.LineOffsets;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.Range;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
-
 public final class ComparisonUtil {
   private static final int UNIMPORTANT_LINE_CHAR_COUNT = Registry.intValue("diff.unimportant.line.char.count");
-
-  public static boolean isValidRanges(@NotNull CharSequence content1,
-                                      @NotNull CharSequence content2,
-                                      @NotNull LineOffsets lineOffsets1,
-                                      @NotNull LineOffsets lineOffsets2,
-                                      @NotNull List<Range> lineRanges) {
-    if (ContainerUtil.exists(lineRanges, range -> !isValidLineRange(lineOffsets1, range.start1, range.end1) ||
-                                                  !isValidLineRange(lineOffsets2, range.start2, range.end2))) {
-      return false;
-    }
-
-    DiffIterable iterable = DiffIterableUtil.create(lineRanges, lineOffsets1.getLineCount(), lineOffsets2.getLineCount());
-    for (Range range : iterable.iterateUnchanged()) {
-      List<String> lines1 = DiffUtil.getLines(content1, lineOffsets1, range.start1, range.end1);
-      List<String> lines2 = DiffUtil.getLines(content2, lineOffsets2, range.start2, range.end2);
-      if (!lines1.equals(lines2)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  private static boolean isValidLineRange(LineOffsets lineOffsets, int start, int end) {
-    return start >= 0 && start <= end && end <= lineOffsets.getLineCount();
-  }
 
   @Contract(pure = true)
   public static boolean isEquals(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull ComparisonPolicy policy) {

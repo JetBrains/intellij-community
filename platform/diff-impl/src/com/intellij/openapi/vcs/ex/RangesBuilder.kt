@@ -28,7 +28,6 @@ import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.progress.DumbProgressIndicator
-import java.util.*
 import kotlin.math.max
 
 fun createRanges(current: List<String>,
@@ -201,6 +200,32 @@ private fun fastCompareLines(lines1: List<String>, lines2: List<String>, compari
                      { line1, line2 -> ComparisonUtil.isEquals(line1, line2, comparisonPolicy) })
   val ranges = if (range.isEmpty) emptyList() else listOf(range)
   return fair(DiffIterableUtil.create(ranges, lines1.size, lines2.size))
+}
+
+fun isValidRanges(content1: CharSequence,
+                  content2: CharSequence,
+                  lineOffsets1: LineOffsets,
+                  lineOffsets2: LineOffsets,
+                  lineRanges: List<Range>): Boolean {
+  val allRangesValid = lineRanges.all {
+    isValidLineRange(lineOffsets1, it.start1, it.end1) &&
+    isValidLineRange(lineOffsets2, it.start2, it.end2)
+  }
+  if (!allRangesValid) return false
+
+  val iterable = DiffIterableUtil.create(lineRanges, lineOffsets1.lineCount, lineOffsets2.lineCount)
+  for (range in iterable.iterateUnchanged()) {
+    val lines1 = DiffUtil.getLines(content1, lineOffsets1, range.start1, range.end1)
+    val lines2 = DiffUtil.getLines(content2, lineOffsets2, range.start2, range.end2)
+    if (lines1 != lines2) {
+      return false
+    }
+  }
+  return true
+}
+
+private fun isValidLineRange(lineOffsets: LineOffsets, start: Int, end: Int): Boolean {
+  return start in 0..end && end <= lineOffsets.lineCount
 }
 
 

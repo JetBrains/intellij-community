@@ -1,7 +1,6 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ex
 
-import com.intellij.diff.comparison.ComparisonUtil
 import com.intellij.diff.comparison.iterables.DiffIterable
 import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.comparison.trimStart
@@ -276,7 +275,7 @@ class DocumentTracker(
     if (isDisposed) return false
 
     LOCK.write {
-      if (!ComparisonUtil.isValidRanges(content1, content2, content1.lineOffsets, content2.lineOffsets, lineRanges)) return false
+      if (!isValidRanges(content1, content2, content1.lineOffsets, content2.lineOffsets, lineRanges)) return false
 
       freezeHelper.setFrozenContent(Side.LEFT, content1)
       freezeHelper.setFrozenContent(Side.RIGHT, content2)
@@ -294,7 +293,7 @@ class DocumentTracker(
     LOCK.write {
       val content1 = getContent(Side.LEFT)
       val content2 = getContent(Side.RIGHT)
-      if (!ComparisonUtil.isValidRanges(content1, content2, content1.lineOffsets, content2.lineOffsets, lineRanges)) return false
+      if (!isValidRanges(content1, content2, content1.lineOffsets, content2.lineOffsets, lineRanges)) return false
 
       tracker.setRanges(lineRanges, true)
 
