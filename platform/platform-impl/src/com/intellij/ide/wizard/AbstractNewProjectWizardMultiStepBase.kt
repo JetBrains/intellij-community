@@ -80,7 +80,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
           panelBuilder.setVisible(panel, key == step)
         }
       }
-      step = stepProperty.get()
+      step = stepProperty.get().ifBlank { steps.value.keys.first() }
     }
   }
 
