@@ -102,7 +102,7 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
       int endLine = fragment.getEndLine(side);
       if (startLine == endLine) return null;
 
-      return DiffUtil.getLinesContent(side.select(sequences), side.select(lineOffsets), startLine, endLine);
+      return DiffRangeUtil.getLinesContent(side.select(sequences), side.select(lineOffsets), startLine, endLine);
     });
   }
 

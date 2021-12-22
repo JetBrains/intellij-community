@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 import java.util.function.BiPredicate;
 
-import static com.intellij.diff.util.DiffUtil.getLinesContent;
+import static com.intellij.diff.util.DiffRangeUtil.getLinesContent;
 
 public class MergeRangeUtil {
   @NotNull

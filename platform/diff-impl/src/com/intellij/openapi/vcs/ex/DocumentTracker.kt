@@ -5,6 +5,7 @@ import com.intellij.diff.comparison.iterables.DiffIterable
 import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.comparison.trimStart
 import com.intellij.diff.tools.util.text.LineOffsets
+import com.intellij.diff.util.DiffRangeUtil
 import com.intellij.diff.util.DiffUtil
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
@@ -959,8 +960,8 @@ private class BlocksRefresher(val handlers: List<Handler>,
   }
 
   private fun isWhitespaceOnlySeparated(block1: Block, block2: Block): Boolean {
-    val range1 = DiffUtil.getLinesRange(lineOffsets1, block1.range.start1, block1.range.end1, false)
-    val range2 = DiffUtil.getLinesRange(lineOffsets1, block2.range.start1, block2.range.end1, false)
+    val range1 = DiffRangeUtil.getLinesRange(lineOffsets1, block1.range.start1, block1.range.end1, false)
+    val range2 = DiffRangeUtil.getLinesRange(lineOffsets1, block2.range.start1, block2.range.end1, false)
     val start = range1.endOffset
     val end = range2.startOffset
     return trimStart(text1, start, end) == end

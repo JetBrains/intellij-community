@@ -23,7 +23,7 @@ import com.intellij.diff.comparison.iterables.DiffIterableUtil.fair
 import com.intellij.diff.comparison.iterables.FairDiffIterable
 import com.intellij.diff.tools.util.text.LineOffsets
 import com.intellij.diff.tools.util.text.LineOffsetsUtil
-import com.intellij.diff.util.DiffUtil
+import com.intellij.diff.util.DiffRangeUtil
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.Document
@@ -80,8 +80,8 @@ fun compareLines(lineRange: Range,
                  text2: CharSequence,
                  lineOffsets1: LineOffsets,
                  lineOffsets2: LineOffsets): FairDiffIterable {
-  val lines1 = DiffUtil.getLines(text1, lineOffsets1, lineRange.start1, lineRange.end1)
-  val lines2 = DiffUtil.getLines(text2, lineOffsets2, lineRange.start2, lineRange.end2)
+  val lines1 = DiffRangeUtil.getLines(text1, lineOffsets1, lineRange.start1, lineRange.end1)
+  val lines2 = DiffRangeUtil.getLines(text2, lineOffsets2, lineRange.start2, lineRange.end2)
   return compareLines(lines1, lines2)
 }
 
@@ -90,8 +90,8 @@ fun tryCompareLines(lineRange: Range,
                     text2: CharSequence,
                     lineOffsets1: LineOffsets,
                     lineOffsets2: LineOffsets): FairDiffIterable? {
-  val lines1 = DiffUtil.getLines(text1, lineOffsets1, lineRange.start1, lineRange.end1)
-  val lines2 = DiffUtil.getLines(text2, lineOffsets2, lineRange.start2, lineRange.end2)
+  val lines1 = DiffRangeUtil.getLines(text1, lineOffsets1, lineRange.start1, lineRange.end1)
+  val lines2 = DiffRangeUtil.getLines(text2, lineOffsets2, lineRange.start2, lineRange.end2)
   return tryCompareLines(lines1, lines2)
 }
 
@@ -100,8 +100,8 @@ fun fastCompareLines(lineRange: Range,
                      text2: CharSequence,
                      lineOffsets1: LineOffsets,
                      lineOffsets2: LineOffsets): FairDiffIterable {
-  val lines1 = DiffUtil.getLines(text1, lineOffsets1, lineRange.start1, lineRange.end1)
-  val lines2 = DiffUtil.getLines(text2, lineOffsets2, lineRange.start2, lineRange.end2)
+  val lines1 = DiffRangeUtil.getLines(text1, lineOffsets1, lineRange.start1, lineRange.end1)
+  val lines2 = DiffRangeUtil.getLines(text2, lineOffsets2, lineRange.start2, lineRange.end2)
   return fastCompareLines(lines1, lines2)
 }
 
@@ -111,8 +111,8 @@ fun createInnerRanges(lineRange: Range,
                       text2: CharSequence,
                       lineOffsets1: LineOffsets,
                       lineOffsets2: LineOffsets): List<LstInnerRange> {
-  val lines1 = DiffUtil.getLines(text1, lineOffsets1, lineRange.start1, lineRange.end1)
-  val lines2 = DiffUtil.getLines(text2, lineOffsets2, lineRange.start2, lineRange.end2)
+  val lines1 = DiffRangeUtil.getLines(text1, lineOffsets1, lineRange.start1, lineRange.end1)
+  val lines2 = DiffRangeUtil.getLines(text2, lineOffsets2, lineRange.start2, lineRange.end2)
   return createInnerRanges(lines1, lines2)
 }
 
@@ -215,8 +215,8 @@ fun isValidRanges(content1: CharSequence,
 
   val iterable = DiffIterableUtil.create(lineRanges, lineOffsets1.lineCount, lineOffsets2.lineCount)
   for (range in iterable.iterateUnchanged()) {
-    val lines1 = DiffUtil.getLines(content1, lineOffsets1, range.start1, range.end1)
-    val lines2 = DiffUtil.getLines(content2, lineOffsets2, range.start2, range.end2)
+    val lines1 = DiffRangeUtil.getLines(content1, lineOffsets1, range.start1, range.end1)
+    val lines2 = DiffRangeUtil.getLines(content2, lineOffsets2, range.start2, range.end2)
     if (lines1 != lines2) {
       return false
     }

@@ -1074,7 +1074,7 @@ public final class DiffUtil {
         int lastLine = 0;
 
         for (Range range : ranges) {
-          CharSequence newChunkContent = getLinesContent(otherText, otherLineOffsets, range.start2, range.end2);
+          CharSequence newChunkContent = DiffRangeUtil.getLinesContent(otherText, otherLineOffsets, range.start2, range.end2);
 
           appendOriginal(lastLine, range.start1);
           append(newChunkContent, range.end2 - range.start2);
@@ -1088,7 +1088,7 @@ public final class DiffUtil {
       }
 
       private void appendOriginal(int start, int end) {
-        append(getLinesContent(text, lineOffsets, start, end), end - start);
+        append(DiffRangeUtil.getLinesContent(text, lineOffsets, start, end), end - start);
       }
 
       private void append(CharSequence content, int lineCount) {
@@ -1117,18 +1117,6 @@ public final class DiffUtil {
     return getLinesRange(document, line1, line2, includeNewLine).subSequence(document.getImmutableCharSequence());
   }
 
-  @NotNull
-  public static CharSequence getLinesContent(@NotNull CharSequence sequence, @NotNull LineOffsets lineOffsets, int line1, int line2) {
-    return getLinesContent(sequence, lineOffsets, line1, line2, false);
-  }
-
-  @NotNull
-  public static CharSequence getLinesContent(@NotNull CharSequence sequence, @NotNull LineOffsets lineOffsets, int line1, int line2,
-                                             boolean includeNewline) {
-    assert sequence.length() == lineOffsets.getTextLength();
-    return getLinesRange(lineOffsets, line1, line2, includeNewline).subSequence(sequence);
-  }
-
   /**
    * Return affected range, without non-internal newlines
    * <p/>
@@ -1141,21 +1129,7 @@ public final class DiffUtil {
 
   @NotNull
   public static TextRange getLinesRange(@NotNull Document document, int line1, int line2, boolean includeNewline) {
-    return getLinesRange(LineOffsetsUtil.create(document), line1, line2, includeNewline);
-  }
-
-  @NotNull
-  public static TextRange getLinesRange(@NotNull LineOffsets lineOffsets, int line1, int line2, boolean includeNewline) {
-    if (line1 == line2) {
-      int lineStartOffset = line1 < lineOffsets.getLineCount() ? lineOffsets.getLineStart(line1) : lineOffsets.getTextLength();
-      return new TextRange(lineStartOffset, lineStartOffset);
-    }
-    else {
-      int startOffset = lineOffsets.getLineStart(line1);
-      int endOffset = lineOffsets.getLineEnd(line2 - 1);
-      if (includeNewline && endOffset < lineOffsets.getTextLength()) endOffset++;
-      return new TextRange(startOffset, endOffset);
-    }
+    return DiffRangeUtil.getLinesRange(LineOffsetsUtil.create(document), line1, line2, includeNewline);
   }
 
 
@@ -1184,29 +1158,8 @@ public final class DiffUtil {
   }
 
   @NotNull
-  public static List<String> getLines(@NotNull CharSequence text, @NonNls LineOffsets lineOffsets) {
-    return getLines(text, lineOffsets, 0, lineOffsets.getLineCount());
-  }
-
-  @NotNull
   public static List<String> getLines(@NotNull Document document, int startLine, int endLine) {
-    return getLines(document.getCharsSequence(), LineOffsetsUtil.create(document), startLine, endLine);
-  }
-
-  @NotNull
-  public static List<String> getLines(@NotNull CharSequence text, @NonNls LineOffsets lineOffsets, int startLine, int endLine) {
-    if (startLine < 0 || startLine > endLine || endLine > lineOffsets.getLineCount()) {
-      throw new IndexOutOfBoundsException(String.format("Wrong line range: [%d, %d); lineCount: '%d'",
-                                                        startLine, endLine, lineOffsets.getLineCount()));
-    }
-
-    List<String> result = new ArrayList<>();
-    for (int i = startLine; i < endLine; i++) {
-      int start = lineOffsets.getLineStart(i);
-      int end = lineOffsets.getLineEnd(i);
-      result.add(text.subSequence(start, end).toString());
-    }
-    return result;
+    return DiffRangeUtil.getLines(document.getCharsSequence(), LineOffsetsUtil.create(document), startLine, endLine);
   }
 
   public static int bound(int value, int lowerBound, int upperBound) {
