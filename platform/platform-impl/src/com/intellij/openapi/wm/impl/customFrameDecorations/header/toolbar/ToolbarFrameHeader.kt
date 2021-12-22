@@ -3,6 +3,7 @@ package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
+import com.intellij.ide.IdeBundle
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.UISettingsListener
 import com.intellij.openapi.actionSystem.ActionGroup
@@ -159,6 +160,8 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     button.border = JBUI.Borders.empty()
     button.putClientProperty("JButton.backgroundColor", CustomFrameDecorations.titlePaneBackground())
     button.putClientProperty("ActionToolbar.smallVariant", true)
+
+    button.toolTipText = IdeBundle.message("main.toolbar.menu.button")
 
     return button
   }
