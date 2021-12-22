@@ -23,6 +23,10 @@ public class WrapDerivedVariableInstruction extends EvalInstruction {
     myDerivedVariableDescriptor = field;
   }
 
+  public DerivedVariableDescriptor getDerivedVariableDescriptor() {
+    return myDerivedVariableDescriptor;
+  }
+
   @Override
   public @NotNull DfaValue eval(@NotNull DfaValueFactory factory,
                                 @NotNull DfaMemoryState state,
