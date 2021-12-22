@@ -171,6 +171,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
 
   private JComponent myReplacePanel;
   private SwitchAction mySwitchAction;
+  private final ArrayList<JComponent> myComponentsWithEditorBackground = new ArrayList<>();
+  private final ArrayList<JComponent> myComponentsWithEditorBorder = new ArrayList<>();
 
   public StructuralSearchDialog(@NotNull SearchContext searchContext, boolean replace) {
     this(searchContext, replace, false);
@@ -233,6 +235,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
         }
       }
     });
+    connection.subscribe(EditorColorsManager.TOPIC, uiSettings -> updateColors());
     myConfiguration = createConfiguration(null);
     setTitle(getDefaultTitle());
 
@@ -268,7 +271,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     textField.setFont(EditorFontType.getGlobalPlainFont());
     textField.setPreferredSize(new Dimension(550, 150));
     textField.setMinimumSize(new Dimension(200, 50));
-    textField.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
+    myComponentsWithEditorBackground.add(textField);
     return textField;
   }
 
@@ -379,17 +382,16 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   @Override
   protected JComponent createCenterPanel() {
     final var searchPanel = new JPanel(new MigLayout("fill, ins 0, hidemode 3", "[grow 0]0[grow 0]0[grow 0]0[grow 0][]", "[grow 100]0[grow 0]"));
-    searchPanel.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
 
     mySearchEditorPanel = new OnePixelSplitter(false, 1.0f);
     mySearchEditorPanel.setLackOfSpaceStrategy(Splitter.LackOfSpaceStrategy.HONOR_THE_SECOND_MIN_SIZE);
     mySearchCriteriaEdit = createEditor(false);
     searchPanel.add(mySearchCriteriaEdit, "grow, span, wrap");
     mySearchEditorPanel.setFirstComponent(searchPanel);
+    myComponentsWithEditorBackground.add(searchPanel);
 
     final JPanel wrapper = new JPanel(new BorderLayout()); // needed for border
-    final Color color = UIManager.getColor("Borders.ContrastBorderColor");
-    wrapper.setBorder(IdeBorderFactory.createBorder(color));
+    myComponentsWithEditorBorder.add(wrapper);
     wrapper.add(mySearchEditorPanel, BorderLayout.CENTER);
 
     myTargetComboBox = new LinkComboBox(SSRBundle.message("complete.match.variable.name"));
@@ -431,6 +433,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     myFilterPanel.setConstraintChangedCallback(() -> initValidation());
     myFilterPanel.getComponent().setMinimumSize(new Dimension(300, 50));
     mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
+    myComponentsWithEditorBackground.add(myFilterPanel.getTable());
 
     myScopePanel = new ScopePanel(getProject(), myDisposable);
     if (!myEditConfigOnly) {
@@ -451,7 +454,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     centerPanel.add(myReplacePanel, "grow, span, wrap");
     centerPanel.add(myScopePanel, "grow 100 0, gap 8 8 6 3");
 
-    myScopePanel.invalidate();
+    updateColors();
     return centerPanel;
   }
 
@@ -494,9 +497,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     replaceEditorPanel.setFirstComponent(myReplaceCriteriaEdit);
 
     final JPanel wrapper = new JPanel(new MigLayout("ins 0, fill, hidemode 3", "[grow 0]0[grow 0]0[grow 0][]", "[grow 100]8[grow 0]8"));
-    final Color color = UIManager.getColor("Borders.ContrastBorderColor");
-    wrapper.setBackground(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground());
-    wrapper.setBorder(IdeBorderFactory.createBorder(color));
+    myComponentsWithEditorBackground.add(wrapper);
+    myComponentsWithEditorBorder.add(wrapper);
     wrapper.add(replaceEditorPanel, "grow 100, span, wrap");
     wrapper.add(shortenFqn, "grow 0, gapleft 8, gapright 10");
     wrapper.add(staticImport, "gapright 10");
@@ -1208,6 +1210,22 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     return "find.structuredSearch";
   }
 
+  private void updateCenterPanelRowConstraints() {
+    myCenterPanelLayout.setRowConstraints(myReplace ? "[grow 100]14[grow 100]0[grow 0]" : "[grow 100]0[grow 0]");
+  }
+
+  private void updateColors() {
+    final var scheme = EditorColorsManager.getInstance().getGlobalScheme();
+    myComponentsWithEditorBackground.forEach(component -> {
+      component.setBackground(scheme.getDefaultBackground());
+    });
+
+    final Color color = UIManager.getColor("Borders.ContrastBorderColor");
+    myComponentsWithEditorBorder.forEach(component -> {
+      component.setBorder(IdeBorderFactory.createBorder(color));
+    });
+  }
+
   private static class ErrorBorder implements Border {
     private final Border myErrorBorder;
 
@@ -1273,10 +1291,6 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
                                       : new CompositeShortcutSet(replaceShortcutSet, searchShortcutSet);
       registerCustomShortcutSet(shortcutSet, getRootPane());
     }
-  }
-
-  private void updateCenterPanelRowConstraints() {
-    myCenterPanelLayout.setRowConstraints(myReplace ? "[grow 100]14[grow 100]0[grow 0]" : "[grow 100]0[grow 0]");
   }
 
   private class CopyConfigurationAction extends AnAction implements DumbAware {

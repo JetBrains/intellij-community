@@ -307,6 +307,10 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
     return myConstraintChangedCallback;
   }
 
+  public JBTable getTable() {
+    return myFilterTable.getTable();
+  }
+
   private class Header implements Filter {
 
     private final SimpleColoredComponent myLabel = new SimpleColoredComponent();
