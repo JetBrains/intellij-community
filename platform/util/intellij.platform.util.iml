@@ -39,6 +39,7 @@
     <orderEntry type="library" name="kotlin-stdlib-jdk8" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.base" exported="" />
     <orderEntry type="module" module-name="intellij.platform.util.text.matching" exported="" />
+    <orderEntry type="module" module-name="intellij.platform.util.diff" />
     <orderEntry type="library" name="aalto-xml" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.xmlDom" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />

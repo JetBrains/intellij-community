@@ -209,6 +209,7 @@ final class PlatformModules {
       "intellij.platform.util",
       "intellij.platform.util.text.matching",
       "intellij.platform.util.base",
+      "intellij.platform.util.diff",
       "intellij.platform.util.xmlDom",
       "intellij.platform.extensions",
       "intellij.platform.tracing.rt",

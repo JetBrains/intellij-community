@@ -483,6 +483,10 @@ public final class ByWord {
     return Couple.of(ranges1, ranges2);
   }
 
+  public static boolean isWordChunk(@NotNull InlineChunk chunk) {
+    return chunk instanceof WordChunk;
+  }
+
   //
   // Whitespaces matching
   //
@@ -866,6 +870,7 @@ public final class ByWord {
 
   public interface InlineChunk {
     int getOffset1();
+
     int getOffset2();
   }
 

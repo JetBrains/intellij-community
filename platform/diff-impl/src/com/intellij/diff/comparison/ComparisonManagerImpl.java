@@ -711,7 +711,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                                              @NotNull BitSet ignored) {
     int offset = lineOffsets.getLineStart(index);
     List<ByWord.InlineChunk> innerChunks = ByWord.getInlineChunks(getLineContent(index, text, lineOffsets));
-    return ContainerUtil.filter(innerChunks, it -> it instanceof ByWord.WordChunk &&
+    return ContainerUtil.filter(innerChunks, it -> ByWord.isWordChunk(it) &&
                                                    !isIgnoredRange(ignored, offset + it.getOffset1(), offset + it.getOffset2()));
   }
 

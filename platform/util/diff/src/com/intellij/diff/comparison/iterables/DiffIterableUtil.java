@@ -133,7 +133,7 @@ public final class DiffIterableUtil {
 
   @NotNull
   public static Iterable<Pair<Range, Boolean>> iterateAll(@NotNull final DiffIterable iterable) {
-    return () -> new Iterator<>() {
+    return () -> new Iterator<Pair<Range, Boolean>>() {
       @NotNull private final Iterator<Range> myChanges = iterable.changes();
       @NotNull private final Iterator<Range> myUnchanged = iterable.unchanged();
 
