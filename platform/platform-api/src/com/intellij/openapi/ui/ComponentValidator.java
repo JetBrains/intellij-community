@@ -235,6 +235,10 @@ public class ComponentValidator {
       reset();
     }
     else if (hasNewInfo) {
+      if (validationInfo != null && info.warning != validationInfo.warning) {
+        reset();
+      }
+
       validationInfo = info;
 
       if (popup != null && popup.isVisible() && tipComponent != null) {
