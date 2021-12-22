@@ -18,6 +18,7 @@ import com.intellij.openapi.keymap.impl.ActionProcessor;
 import com.intellij.openapi.progress.*;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.Ref;
@@ -56,7 +57,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
+@ApiStatus.Internal
 public final class Utils extends DataContextUtils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
 
@@ -142,9 +145,13 @@ public final class Utils extends DataContextUtils {
                                                           @NotNull PresentationFactory presentationFactory,
                                                           @NotNull DataContext context,
                                                           @NotNull String place) {
-    return expandActionGroupImpl(isInModalContext, group, presentationFactory, context,
-                                 place, ActionPlaces.isPopupPlace(place), null, null);
-
+    RelativePoint point = PlatformCoreDataKeys.CONTEXT_COMPONENT.getData(context) == null ? null :
+                          JBPopupFactory.getInstance().guessBestPopupLocation(context);
+    Runnable removeIcon = addLoadingIcon(point, place);
+    return computeWithRetries(
+      () -> expandActionGroupImpl(isInModalContext, group, presentationFactory,
+                                  context, place, ActionPlaces.isPopupPlace(place), removeIcon, null),
+      null, removeIcon);
   }
 
   private static int ourExpandActionGroupImplEDTLoopLevel;
@@ -184,7 +191,12 @@ public final class Utils extends DataContextUtils {
       IdeEventQueue queue = IdeEventQueue.getInstance();
       CancellablePromise<List<AnAction>> promise = expander.expandActionGroupAsync(
         project, place, group, group instanceof CompactActionGroup, updater::expandActionGroupAsync);
-      if (onProcessed != null) promise.onProcessed(__ -> onProcessed.run());
+      if (onProcessed != null) {
+        promise.onSuccess(__ -> onProcessed.run());
+        promise.onError(ex -> {
+          if (!canRetryOnThisException(ex)) onProcessed.run();
+        });
+      }
       try (AccessToken ignore = cancelOnUserActivityInside(promise, PlatformDataKeys.CONTEXT_COMPONENT.getData(context), menuItem)) {
         ourExpandActionGroupImplEDTLoopLevel++;
         list = runLoopAndWaitForFuture(promise, Collections.emptyList(), true, () -> {
@@ -270,21 +282,25 @@ public final class Utils extends DataContextUtils {
                        @NotNull String place,
                        boolean isWindowMenu,
                        boolean useDarkIcons,
-                       @Nullable RelativePoint relativePoint) {
+                       @Nullable RelativePoint progressPoint,
+                       @Nullable BooleanSupplier expire) {
     if (ApplicationManagerEx.getApplicationEx().isWriteActionInProgress()) {
       throw new ProcessCanceledException();
     }
-    Runnable removeIcon = addLoadingIcon(relativePoint, context, place);
-    List<AnAction> list = expandActionGroupImpl(LaterInvocator.isInModalContext(), group, presentationFactory, context, place, true,
-                                                removeIcon, component);
+    Runnable removeIcon = addLoadingIcon(progressPoint, place);
+    List<AnAction> list = computeWithRetries(
+      () -> expandActionGroupImpl(LaterInvocator.isInModalContext(), group, presentationFactory,
+                                  context, place, true, removeIcon, component),
+      expire, removeIcon);
     boolean checked = group instanceof CheckedActionGroup;
     fillMenuInner(component, list, checked, enableMnemonics, presentationFactory, context, place, isWindowMenu, useDarkIcons);
   }
 
-  static @NotNull Runnable addLoadingIcon(@Nullable RelativePoint point, @NotNull DataContext context, @NotNull String place) {
+  private static @NotNull Runnable addLoadingIcon(@Nullable RelativePoint point, @NotNull String place) {
+    if (!Registry.is("actionSystem.update.actions.async")) return EmptyRunnable.getInstance();
     JRootPane rootPane = point == null ? null : UIUtil.getRootPane(point.getComponent());
     JComponent glassPane = rootPane == null ? null : (JComponent)rootPane.getGlassPane();
-    if (glassPane == null || !isAsyncDataContext(context)) return EmptyRunnable.getInstance();
+    if (glassPane == null) return EmptyRunnable.getInstance();
     Component comp = point.getOriginalComponent();
     if (comp instanceof ActionMenu && comp.getParent() instanceof IdeMenuBar ||
         ActionPlaces.EDITOR_GUTTER_POPUP.equals(place) && comp instanceof EditorGutterComponentEx &&
@@ -612,19 +628,17 @@ public final class Utils extends DataContextUtils {
     return result[0];
   }
 
-  static void performWithRetries(@NotNull Runnable runnable, @NotNull BooleanSupplier expire) {
-    Utils.ProcessCanceledWithReasonException lastCancellation = null;
+  private static <T> T computeWithRetries(@NotNull Supplier<T> computable, @Nullable BooleanSupplier expire, @Nullable Runnable onProcessed) {
+    ProcessCanceledWithReasonException lastCancellation = null;
     int retries = Math.max(1, Registry.intValue("actionSystem.update.actions.max.retries", 20));
     for (int i = 0; i < retries; i++) {
       try {
-        runnable.run();
-        return;
+        return computable.get();
       }
       catch (Utils.ProcessCanceledWithReasonException ex) {
         lastCancellation = ex;
-        String reasonStr = ex.reason instanceof String ? (String)ex.reason : "";
-        if (reasonStr.contains("write-action") || reasonStr.contains("fast-track")) {
-          if (expire.getAsBoolean()) return;
+        if (canRetryOnThisException(ex) &&
+            (expire == null || !expire.getAsBoolean())) {
           continue;
         }
         throw ex;
@@ -632,11 +646,23 @@ public final class Utils extends DataContextUtils {
       catch (Throwable ex) {
         ExceptionUtil.rethrow(ex);
       }
+      finally {
+        if (onProcessed != null) {
+          onProcessed.run();
+        }
+      }
     }
     if (retries > 1) {
       LOG.warn("Maximum number of retries to show a menu reached (" + retries + "): " + lastCancellation.reason);
     }
     throw Objects.requireNonNull(lastCancellation);
+  }
+
+  private static boolean canRetryOnThisException(Throwable ex) {
+    Object reason = ex instanceof ProcessCanceledWithReasonException ? ((ProcessCanceledWithReasonException)ex).reason : null;
+    String reasonStr = reason instanceof String ? (String)reason : "";
+    return reasonStr.contains("write-action") ||
+           reasonStr.contains("fast-track") && StringUtil.containsIgnoreCase(reasonStr, "toolbar");
   }
 
   static class ProcessCanceledWithReasonException extends ProcessCanceledException {
