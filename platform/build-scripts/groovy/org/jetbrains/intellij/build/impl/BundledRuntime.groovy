@@ -48,7 +48,7 @@ final class BundledRuntime {
     else if (context.options.bundledRuntimePrefix != null) {
       prefix = context.options.bundledRuntimePrefix
     }
-    def path = extract(prefix, OsFamily.currentOs, JvmArchitecture.currentArch)
+    def path = extract(prefix, OsFamily.currentOs, JvmArchitecture.currentJvmArch)
 
     Path home
     if (OsFamily.currentOs == OsFamily.MACOS) {
