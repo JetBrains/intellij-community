@@ -191,6 +191,10 @@ abstract class ImplementAbstractMemberIntentionBase : SelfTargetingRangeIntentio
         return true
     }
 
+    override fun preparePsiElementForWriteIfNeeded(target: KtNamedDeclaration): Boolean {
+        return true
+    }
+
     override fun applyTo(element: KtNamedDeclaration, editor: Editor?) {
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
         val project = element.project

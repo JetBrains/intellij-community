@@ -73,6 +73,10 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
         return true
     }
 
+    override fun preparePsiElementForWriteIfNeeded(target: KtClass): Boolean {
+        return true
+    }
+
     override fun applyTo(element: KtClass, editor: Editor?) {
         if (editor == null) throw IllegalArgumentException("This intention requires an editor")
 
@@ -139,6 +143,7 @@ class CreateKotlinSubClassIntention : SelfTargetingRangeIntention<KtClass>(
             }
             chooseAndImplementMethods(project, klass, CodeInsightUtil.positionCursor(project, file, klass) ?: editor)
         } else {
+            if (!super.preparePsiElementForWriteIfNeeded(baseClass)) return
             val klass = runWriteAction {
                 val builder = buildClassHeader(
                     targetNameWithoutConflicts(baseName, baseClass.containingClassOrObject),

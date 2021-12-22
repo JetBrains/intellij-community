@@ -146,7 +146,7 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
      *
      * Otherwise, we have to call it ourselves (see javadoc for [getElementToMakeWritable]).
      */
-    private fun preparePsiElementForWriteIfNeeded(target: TElement): Boolean {
+    protected open fun preparePsiElementForWriteIfNeeded(target: TElement): Boolean {
         if (startInWriteAction()) return true
         return FileModificationService.getInstance().preparePsiElementForWrite(target)
     }
