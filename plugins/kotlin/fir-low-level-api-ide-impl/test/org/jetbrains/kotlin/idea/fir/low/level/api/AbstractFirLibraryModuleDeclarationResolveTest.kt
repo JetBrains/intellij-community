@@ -39,7 +39,11 @@ abstract class AbstractFirLibraryModuleDeclarationResolveTest : KotlinLightCodeI
 
         val ktFile = myFixture.configureByFile(testDataFile.name) as KtFile
 
-        val caretResolutionTarget = myFixture.elementAtCaret
+        val caretResolutionTarget = ktFile.findReferenceAt(myFixture.caretOffset)?.resolve()
+
+        require(caretResolutionTarget != null) {
+            "No reference at caret."
+        }
 
         require(caretResolutionTarget is KtDeclaration) {
             "Element at caret should be referencing some declaration, but referenced ${caretResolutionTarget::class} instead"
