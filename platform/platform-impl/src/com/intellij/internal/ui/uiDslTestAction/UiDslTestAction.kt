@@ -52,6 +52,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     result.addTab("Text MaxLine", createTextMaxLinePanel())
     result.addTab("Groups", JScrollPane(GroupsPanel().panel))
     result.addTab("Segmented Button", SegmentedButtonPanel().panel)
+    result.addTab("Deprectaed Segmented Button", DeprecatedSegmentedButtonPanel().panel)
     result.addTab("Visible/Enabled", createVisibleEnabled())
     result.addTab("Cells With Sub-Panels", createCellsWithPanels())
     result.addTab("Placeholder", PlaceholderPanel(myDisposable).panel)

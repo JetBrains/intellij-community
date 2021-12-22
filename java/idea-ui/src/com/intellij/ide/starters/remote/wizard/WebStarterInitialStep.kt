@@ -1,20 +1,19 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.starters.remote.wizard
 
+import com.intellij.icons.AllIcons
+import com.intellij.ide.BrowserUtil
 import com.intellij.ide.starters.JavaStartersBundle
+import com.intellij.ide.starters.local.StarterModuleBuilder
 import com.intellij.ide.starters.remote.*
 import com.intellij.ide.starters.shared.*
 import com.intellij.ide.starters.shared.ValidationFunctions.*
-import com.intellij.icons.AllIcons
-import com.intellij.ide.BrowserUtil
-import com.intellij.ide.starters.local.StarterModuleBuilder
 import com.intellij.ide.util.PropertiesComponent
 import com.intellij.ide.util.projectWizard.ModuleNameGenerator
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.ide.wizard.AbstractWizard
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
@@ -24,8 +23,8 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.observable.properties.map
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.projectRoots.Sdk
-import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel
+import com.intellij.openapi.roots.ui.configuration.sdkComboBox
 import com.intellij.openapi.roots.ui.configuration.validateJavaVersion
 import com.intellij.openapi.roots.ui.configuration.validateSdk
 import com.intellij.openapi.ui.DialogPanel
@@ -39,7 +38,6 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
-import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
 import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.AsyncProcessIcon
@@ -96,9 +94,9 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
   private val languageLevelsModel: DefaultComboBoxModel<StarterLanguageLevel> = DefaultComboBoxModel<StarterLanguageLevel>()
   private val applicationTypesModel: DefaultComboBoxModel<StarterAppType> = DefaultComboBoxModel<StarterAppType>()
 
-  private lateinit var projectTypesSelector: SegmentedButtonToolbar
-  private lateinit var packagingTypesSelector: SegmentedButtonToolbar
-  private lateinit var languagesSelector: SegmentedButtonToolbar
+  private lateinit var projectTypesSelector: SegmentedButton<StarterProjectType?>
+  private lateinit var packagingTypesSelector: SegmentedButton<StarterAppPackaging?>
+  private lateinit var languagesSelector: SegmentedButton<StarterLanguage>
 
   private var languages: List<StarterLanguage> = starterSettings.languages
   private var applicationTypes: List<StarterAppType> = starterSettings.applicationTypes
@@ -540,9 +538,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       if (types.isNotEmpty() && types != this.projectTypes && ::projectTypesSelector.isInitialized) {
         val correspondingOption = types.find { it.id == projectTypeProperty.get()?.id }
         projectTypeProperty.set(correspondingOption ?: types.first())
-        val actionGroup = projectTypesSelector.actionGroup as DefaultActionGroup
-        actionGroup.removeAll()
-        actionGroup.addAll(types.map { ButtonSelectorAction(it, projectTypeProperty, it.title, it.description) })
+        projectTypesSelector.rebuild(types)
         this.projectTypes = types
       }
     }
@@ -558,9 +554,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       if (types.isNotEmpty() && types != this.packagingTypes && ::packagingTypesSelector.isInitialized) {
         val correspondingOption = types.find { it.id == packagingProperty.get()?.id }
         packagingProperty.set(correspondingOption ?: types.first())
-        val actionGroup = packagingTypesSelector.actionGroup as DefaultActionGroup
-        actionGroup.removeAll()
-        actionGroup.addAll(types.map { ButtonSelectorAction(it, packagingProperty, it.title, it.description) })
+        packagingTypesSelector.rebuild(types)
         this.packagingTypes = types
       }
     }
@@ -568,9 +562,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       if (languages.isNotEmpty() && languages != this.languages && ::languagesSelector.isInitialized) {
         val correspondingOption = languages.find { it.id == languageProperty.get().id }
         languageProperty.set(correspondingOption ?: languages.first())
-        val actionGroup = languagesSelector.actionGroup as DefaultActionGroup
-        actionGroup.removeAll()
-        actionGroup.addAll(languages.map { ButtonSelectorAction(it, languageProperty, it.title, it.description) })
+        languagesSelector.rebuild(languages)
         this.languages = languages
       }
     }
