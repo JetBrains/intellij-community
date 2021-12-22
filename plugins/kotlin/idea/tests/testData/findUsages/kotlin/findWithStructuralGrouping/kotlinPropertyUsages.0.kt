@@ -19,3 +19,5 @@ open class B : A<String>() {
             super<A>.foo = value
         }
 }
+
+// FIR_COMPARISON
