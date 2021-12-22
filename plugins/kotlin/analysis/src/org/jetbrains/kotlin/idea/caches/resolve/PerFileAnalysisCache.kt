@@ -127,8 +127,11 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
             // step 3: perform analyze of analyzableParent as nothing has been cached yet
             val result = try {
               analyze(analyzableParent, null, localCallback)
-            } catch (e: InvalidModuleException) {
-                throw ProcessCanceledException(e)
+            } catch (e: Throwable) {
+                e.throwAsInvalidModuleException {
+                    ProcessCanceledException(it)
+                }
+                throw e
             }
 
             // some diagnostics could be not handled with a callback - send out the rest
@@ -187,10 +190,11 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
 
                     analysisResult
                 }
-            } catch (e: InvalidModuleException) {
-                clearFileResultCache()
-                throw ProcessCanceledException(e)
             } catch (e: Throwable) {
+                e.throwAsInvalidModuleException {
+                    clearFileResultCache()
+                    ProcessCanceledException(it)
+                }
                 if (e !is ControlFlowException) {
                     clearFileResultCache()
                 }
@@ -284,9 +288,9 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
             throw e
         } catch (e: IndexNotReadyException) {
             throw e
-        } catch (e: InvalidModuleException) {
-            throw e
         } catch (e: Throwable) {
+            e.throwAsInvalidModuleException()
+
             DiagnosticUtils.throwIfRunningOnServer(e)
             LOG.error(e)
 
@@ -297,6 +301,24 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
     private fun clearFileResultCache() {
         file.clearInBlockModifications()
         fileResult = null
+    }
+}
+
+private fun Throwable.asInvalidModuleException(): InvalidModuleException? {
+    return when (this) {
+        is InvalidModuleException -> this
+        is AssertionError ->
+            // temporary workaround till 1.6.0 / KT-48977
+            if (message?.contains("contained in his own dependencies, this is probably a misconfiguration") == true)
+                InvalidModuleException(message!!)
+            else null
+        else -> cause?.takeIf { it != this }?.asInvalidModuleException()
+    }
+}
+
+private inline fun Throwable.throwAsInvalidModuleException(crossinline action: (InvalidModuleException) -> Throwable = { it }) {
+    asInvalidModuleException()?.let {
+        throw action(it)
     }
 }
 
@@ -530,13 +552,13 @@ private object KotlinResolveDataProvider {
             }
 
             return AnalysisResult.success(trace.bindingContext, moduleDescriptor)
-        } catch (e: InvalidModuleException) {
-            throw e
         } catch (e: ProcessCanceledException) {
             throw e
         } catch (e: IndexNotReadyException) {
             throw e
         } catch (e: Throwable) {
+            e.throwAsInvalidModuleException()
+
             DiagnosticUtils.throwIfRunningOnServer(e)
             LOG.error(e)
 
