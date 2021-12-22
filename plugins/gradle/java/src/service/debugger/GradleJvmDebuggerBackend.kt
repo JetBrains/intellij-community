@@ -39,7 +39,6 @@ class GradleJvmDebuggerBackend : DebuggerBackendExtension {
         return rootProject.allprojects.find { it.projectDir.path == currentPath }
     }
     
-
     static def removePrefix(def string, def prefix) {
         if (string.startsWith(prefix)) {
             return string.minus(prefix)
