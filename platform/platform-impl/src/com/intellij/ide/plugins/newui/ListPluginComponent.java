@@ -60,9 +60,9 @@ public final class ListPluginComponent extends JPanel {
   private final JLabel myNameComponent = new JLabel();
   private final JLabel myIconComponent = new JLabel(AllIcons.Plugins.PluginLogo);
   private final BaselineLayout myLayout = new BaselineLayout();
-  protected JButton myRestartButton;
-  protected InstallButton myInstallButton;
-  protected JButton myUpdateButton;
+  JButton myRestartButton;
+  InstallButton myInstallButton;
+  JButton myUpdateButton;
   private JComponent myEnableDisableButton;
   private JCheckBox myChooseUpdateButton;
   private JComponent myAlignButton;
@@ -77,7 +77,7 @@ public final class ListPluginComponent extends JPanel {
   private ErrorComponent myErrorComponent;
   private OneLineProgressIndicator myIndicator;
   private EventHandler myEventHandler;
-  protected @NotNull EventHandler.SelectionType mySelection = EventHandler.SelectionType.NONE;
+  @NotNull private EventHandler.SelectionType mySelection = EventHandler.SelectionType.NONE;
 
   public ListPluginComponent(@NotNull MyPluginModel pluginModel,
                              @NotNull IdeaPluginDescriptor plugin,
@@ -496,13 +496,13 @@ public final class ListPluginComponent extends JPanel {
     eventHandler.addAll(this);
   }
 
-  protected void updateColors(@NotNull EventHandler.SelectionType type) {
+  void updateColors(@NotNull EventHandler.SelectionType type) {
     updateColors(GRAY_COLOR, type == EventHandler.SelectionType.NONE
                              ? PluginManagerConfigurable.MAIN_BG_COLOR
                              : (type == EventHandler.SelectionType.HOVER ? HOVER_COLOR : SELECTION_COLOR));
   }
 
-  protected void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
+  private void updateColors(@NotNull Color grayedFg, @NotNull Color background) {
     setBackground(background);
 
     Color nameForeground = null;
@@ -592,7 +592,7 @@ public final class ListPluginComponent extends JPanel {
     }
   }
 
-  protected void updateIcon(boolean errors, boolean disabled) {
+  private void updateIcon(boolean errors, boolean disabled) {
     myIconComponent.setIcon(myPluginModel.getIcon(myPlugin, false, errors, disabled));
   }
 
@@ -868,18 +868,18 @@ public final class ListPluginComponent extends JPanel {
     }
   }
 
-  protected void fullRepaint() {
+  private void fullRepaint() {
     Container parent = getParent();
     parent.doLayout();
     parent.revalidate();
     parent.repaint();
   }
 
-  public final @NotNull IdeaPluginDescriptor getPluginDescriptor() {
+  public @NotNull IdeaPluginDescriptor getPluginDescriptor() {
     return myPlugin;
   }
 
-  public final void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {
+  public void setPluginDescriptor(@NotNull IdeaPluginDescriptor plugin) {
     myPlugin = plugin;
   }
 
