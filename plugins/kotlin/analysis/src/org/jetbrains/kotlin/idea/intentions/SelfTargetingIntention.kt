@@ -1,10 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.intentions
 
 import com.intellij.codeInsight.FileModificationService
 import com.intellij.codeInsight.intention.FileModifier
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.codeInspection.IntentionWrapper
 import com.intellij.codeInspection.util.IntentionFamilyName
 import com.intellij.codeInspection.util.IntentionName
@@ -63,7 +64,17 @@ abstract class SelfTargetingIntention<TElement : PsiElement>(
 
     protected open val isKotlinOnlyIntention: Boolean = true
 
+    /**
+     * Override if the action should be available on library sources.
+     * It means that it won't modify the code of the current file e.g., it implements the interface in project code or change some settings
+     */
+    protected open fun checkFile(file: PsiFile): Boolean {
+        return BaseIntentionAction.canModify(file)
+    }
+    
     fun getTarget(offset: Int, file: PsiFile): TElement? {
+        if (!checkFile(file)) return null
+       
         val leaf1 = file.findElementAt(offset)
         val leaf2 = file.findElementAt(offset - 1)
         val commonParent = if (leaf1 != null && leaf2 != null) PsiTreeUtil.findCommonParent(leaf1, leaf2) else null
