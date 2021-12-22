@@ -89,7 +89,7 @@ final class BuildDependenciesDownloader {
     return targetFile;
   }
 
-  static synchronized Path extractFileToCacheLocation(Path communityRoot, Path archiveFile) {
+  static Path extractFileToCacheLocation(Path communityRoot, Path archiveFile) {
     try {
       Path cachePath = getDownloadCachePath(communityRoot);
 
