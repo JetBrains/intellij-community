@@ -3,6 +3,7 @@ package com.intellij.openapi.vcs.changes
 
 import com.intellij.diff.chains.DiffRequestChain
 import com.intellij.diff.chains.SimpleDiffRequestChain
+import com.intellij.diff.editor.DiffEditorEscapeAction
 import com.intellij.diff.editor.DiffEditorTabFilesManager
 import com.intellij.diff.editor.DiffVirtualFile
 import com.intellij.diff.impl.DiffRequestProcessor
@@ -168,7 +169,7 @@ abstract class EditorTabPreview(protected val diffProcessor: DiffRequestProcesso
   }
 }
 
-internal class EditorTabPreviewEscapeAction(private val escapeHandler: Runnable) : DumbAwareAction() {
+internal class EditorTabPreviewEscapeAction(private val escapeHandler: Runnable) : DumbAwareAction(), DiffEditorEscapeAction {
   override fun actionPerformed(e: AnActionEvent) = escapeHandler.run()
 }
 
