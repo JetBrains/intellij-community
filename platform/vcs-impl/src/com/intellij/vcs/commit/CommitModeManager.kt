@@ -7,6 +7,8 @@ import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager.getApplication
 import com.intellij.openapi.application.ConfigImportHelper.isNewUser
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.components.service
 import com.intellij.openapi.options.advanced.AdvancedSettings
@@ -66,8 +68,12 @@ class CommitModeManager(private val project: Project) {
 
   private var commitMode: CommitMode = CommitMode.PendingCommitMode
 
+  private fun scheduleUpdateCommitMode() {
+    invokeLater(ModalityState.NON_MODAL) { updateCommitMode() }
+  }
+
   @RequiresEdt
-  fun updateCommitMode() {
+  private fun updateCommitMode() {
     if (project.isDisposed) return
 
     val newCommitMode = getNewCommitMode()
@@ -108,21 +114,21 @@ class CommitModeManager(private val project: Project) {
     if (project.isDisposed) return
 
     isForceNonModalCommit.addListener(object : RegistryValueListener {
-      override fun afterValueChanged(value: RegistryValue) = updateCommitMode()
+      override fun afterValueChanged(value: RegistryValue) = scheduleUpdateCommitMode()
     }, project)
     getApplication().messageBus.connect(project).subscribe(AdvancedSettingsChangeListener.TOPIC, object : AdvancedSettingsChangeListener {
       override fun advancedSettingChanged(id: String, oldValue: Any, newValue: Any) {
         if (id == TOGGLE_COMMIT_UI) {
-          updateCommitMode()
+          scheduleUpdateCommitMode()
         }
       }
     })
     SETTINGS.subscribe(project, object : SettingsListener {
-      override fun settingsChanged() = updateCommitMode()
+      override fun settingsChanged() = scheduleUpdateCommitMode()
     })
 
-    VcsEP.EP_NAME.addChangeListener(Runnable { updateCommitMode() }, project)
-    project.messageBus.connect().subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { runInEdt { updateCommitMode() } })
+    VcsEP.EP_NAME.addChangeListener(Runnable { scheduleUpdateCommitMode() }, project)
+    project.messageBus.connect().subscribe(VCS_CONFIGURATION_CHANGED, VcsListener { scheduleUpdateCommitMode() })
   }
 
   companion object {
