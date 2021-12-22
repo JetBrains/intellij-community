@@ -1,14 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
-import com.intellij.diagnostic.LoadingState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ContextFutureTask;
 import com.intellij.openapi.progress.ContextRunnable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -143,7 +141,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
 
     @Override
     protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-      if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.propagate.context")) {
+      if (AppExecutorUtil.propagateThreadContext()) {
         return ContextFutureTask.contextRunnableFuture(callable);
       }
       else {
@@ -153,7 +151,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
 
     @Override
     public void execute(@NotNull Runnable command) {
-      if (LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.propagate.context")) {
+      if (AppExecutorUtil.propagateThreadContext()) {
         super.execute(ContextRunnable.contextRunnable(command));
       }
       else {
