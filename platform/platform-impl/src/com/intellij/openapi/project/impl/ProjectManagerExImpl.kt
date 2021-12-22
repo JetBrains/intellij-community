@@ -462,7 +462,6 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
 
     ProjectManagerImpl.LOG.debug("projectOpened")
 
-    LifecycleUsageTriggerCollector.onProjectOpened(project)
     val activity = StartUpMeasurer.startActivity("project opened callbacks")
 
     runActivity("projectOpened event executing") {
@@ -488,13 +487,14 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
     }
 
     activity.end()
-    ProjectImpl.ourClassesAreLoaded = true
   }
+  ProjectImpl.ourClassesAreLoaded = true
 
   if (runStartUpActivities) {
     (StartupManager.getInstance(project) as StartupManagerImpl).projectOpened(indicator)
   }
 
+  LifecycleUsageTriggerCollector.onProjectOpened(project)
   return CompletableFuture.completedFuture(null)
 }
 
