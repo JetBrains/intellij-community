@@ -197,7 +197,7 @@ private fun tryCompareLines(lines1: List<String>, lines2: List<String>, comparis
 
 private fun fastCompareLines(lines1: List<String>, lines2: List<String>, comparisonPolicy: ComparisonPolicy): FairDiffIterable {
   val range = expand(lines1, lines2, 0, 0, lines1.size, lines2.size,
-                     { line1, line2 -> ComparisonUtil.isEquals(line1, line2, comparisonPolicy) })
+                     { line1, line2 -> ComparisonUtil.isEqualTexts(line1, line2, comparisonPolicy) })
   val ranges = if (range.isEmpty) emptyList() else listOf(range)
   return fair(DiffIterableUtil.create(ranges, lines1.size, lines2.size))
 }

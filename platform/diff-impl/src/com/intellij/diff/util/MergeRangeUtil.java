@@ -129,7 +129,7 @@ public class MergeRangeUtil {
 
       CharSequence content1 = getLinesContent(sequence1, offsets1, line1, line1 + 1);
       CharSequence content2 = getLinesContent(sequence2, offsets2, line2, line2 + 1);
-      if (!ComparisonUtil.isEquals(content1, content2, policy)) return false;
+      if (!ComparisonUtil.isEqualTexts(content1, content2, policy)) return false;
     }
 
     return true;
@@ -164,7 +164,7 @@ public class MergeRangeUtil {
 
     CharSequence content1 = document1.subSequence(start1, end1);
     CharSequence content2 = document2.subSequence(start2, end2);
-    return ComparisonUtil.isEquals(content1, content2, policy);
+    return ComparisonUtil.isEqualTexts(content1, content2, policy);
   }
 
   private static boolean isWordMergeIntervalEmpty(@NotNull MergeWordFragment fragment, @NotNull ThreeSide side) {

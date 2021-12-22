@@ -228,14 +228,14 @@ fun isEquals(text1: CharSequence, text2: CharSequence,
              range: Range): Boolean {
   val sequence1 = text1.subSequence(range.start1, range.end1)
   val sequence2 = text2.subSequence(range.start2, range.end2)
-  return ComparisonUtil.isEquals(sequence1, sequence2, ComparisonPolicy.DEFAULT)
+  return ComparisonUtil.isEqualTexts(sequence1, sequence2, ComparisonPolicy.DEFAULT)
 }
 
 fun isEqualsIgnoreWhitespaces(text1: CharSequence, text2: CharSequence,
                               range: Range): Boolean {
   val sequence1 = text1.subSequence(range.start1, range.end1)
   val sequence2 = text2.subSequence(range.start2, range.end2)
-  return ComparisonUtil.isEquals(sequence1, sequence2, ComparisonPolicy.IGNORE_WHITESPACES)
+  return ComparisonUtil.isEqualTexts(sequence1, sequence2, ComparisonPolicy.IGNORE_WHITESPACES)
 }
 
 fun isEquals(text1: CharSequence, text2: CharSequence, text3: CharSequence,
@@ -243,8 +243,8 @@ fun isEquals(text1: CharSequence, text2: CharSequence, text3: CharSequence,
   val sequence1 = text1.subSequence(range.start1, range.end1)
   val sequence2 = text2.subSequence(range.start2, range.end2)
   val sequence3 = text3.subSequence(range.start3, range.end3)
-  return ComparisonUtil.isEquals(sequence2, sequence1, ComparisonPolicy.DEFAULT) &&
-         ComparisonUtil.isEquals(sequence2, sequence3, ComparisonPolicy.DEFAULT)
+  return ComparisonUtil.isEqualTexts(sequence2, sequence1, ComparisonPolicy.DEFAULT) &&
+         ComparisonUtil.isEqualTexts(sequence2, sequence3, ComparisonPolicy.DEFAULT)
 }
 
 fun isEqualsIgnoreWhitespaces(text1: CharSequence, text2: CharSequence, text3: CharSequence,
@@ -252,8 +252,8 @@ fun isEqualsIgnoreWhitespaces(text1: CharSequence, text2: CharSequence, text3: C
   val sequence1 = text1.subSequence(range.start1, range.end1)
   val sequence2 = text2.subSequence(range.start2, range.end2)
   val sequence3 = text3.subSequence(range.start3, range.end3)
-  return ComparisonUtil.isEquals(sequence2, sequence1, ComparisonPolicy.IGNORE_WHITESPACES) &&
-         ComparisonUtil.isEquals(sequence2, sequence3, ComparisonPolicy.IGNORE_WHITESPACES)
+  return ComparisonUtil.isEqualTexts(sequence2, sequence1, ComparisonPolicy.IGNORE_WHITESPACES) &&
+         ComparisonUtil.isEqualTexts(sequence2, sequence3, ComparisonPolicy.IGNORE_WHITESPACES)
 }
 
 //

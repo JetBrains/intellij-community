@@ -204,7 +204,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
 
     if (fragment.getStartLine1() == fragment.getEndLine1() ||
         fragment.getStartLine2() == fragment.getEndLine2()) { // Insertion / Deletion
-      if (ComparisonUtil.isEquals(subSequence1, subSequence2, policy)) {
+      if (ComparisonUtil.isEqualTexts(subSequence1, subSequence2, policy)) {
         return singletonList(new LineFragmentImpl(fragment, Collections.emptyList()));
       }
       else {
@@ -309,7 +309,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
 
   @Override
   public boolean isEquals(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull ComparisonPolicy policy) {
-    return ComparisonUtil.isEquals(text1, text2, policy);
+    return ComparisonUtil.isEqualTexts(text1, text2, policy);
   }
 
   //

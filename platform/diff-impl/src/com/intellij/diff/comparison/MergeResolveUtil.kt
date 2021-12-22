@@ -246,7 +246,7 @@ private class GreedyHelper(val leftText: CharSequence, val baseText: CharSequenc
         continue
       }
 
-      if (ComparisonUtil.isEquals(inserted1, inserted2, policy)) {
+      if (ComparisonUtil.isEqualTexts(inserted1, inserted2, policy)) {
         val inserted = if (inserted1.length <= inserted2.length) inserted1 else inserted2
         newContent.append(inserted)
         continue

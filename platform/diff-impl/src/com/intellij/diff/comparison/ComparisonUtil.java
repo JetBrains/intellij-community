@@ -10,7 +10,7 @@ public final class ComparisonUtil {
   private static final int UNIMPORTANT_LINE_CHAR_COUNT = Registry.intValue("diff.unimportant.line.char.count");
 
   @Contract(pure = true)
-  public static boolean isEquals(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull ComparisonPolicy policy) {
+  public static boolean isEqualTexts(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull ComparisonPolicy policy) {
     switch (policy) {
       case DEFAULT:
         return StringUtil.equals(text1, text2);
@@ -23,6 +23,12 @@ public final class ComparisonUtil {
     }
   }
 
+  /**
+   * Method is different from {@link StringUtil#equalsTrimWhitespaces(CharSequence, CharSequence)}.
+   * <p>
+   * Here, leading/trailing whitespaces for *inner* lines will be ignored as well.
+   * Ex: "\nXY\n" and "\n XY \n" strings are equal, "\nXY\n" and "\nX Y\n" strings are different.
+   */
   @Contract(pure = true)
   public static boolean equalsTrimWhitespaces(@NotNull CharSequence s1, @NotNull CharSequence s2) {
     int index1 = 0;

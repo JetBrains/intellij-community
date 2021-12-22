@@ -871,7 +871,7 @@ public final class DiffUtil {
                                         @NotNull ComparisonPolicy comparisonPolicy) {
     if (chunk1 == null) chunk1 = "";
     if (chunk2 == null) chunk2 = "";
-    return ComparisonUtil.isEquals(chunk1, chunk2, comparisonPolicy);
+    return ComparisonUtil.isEqualTexts(chunk1, chunk2, comparisonPolicy);
   }
 
   public static <T> int @NotNull [] getSortedIndexes(@NotNull List<? extends T> values, @NotNull Comparator<? super T> comparator) {
