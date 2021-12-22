@@ -6,7 +6,6 @@ import com.intellij.diff.fragments.MergeLineFragment;
 import com.intellij.diff.fragments.MergeLineFragmentImpl;
 import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -26,7 +25,7 @@ public final class ByLine {
   public static FairDiffIterable compare(@NotNull List<? extends CharSequence> lines1,
                                          @NotNull List<? extends CharSequence> lines2,
                                          @NotNull ComparisonPolicy policy,
-                                         @NotNull ProgressIndicator indicator) {
+                                         @NotNull CancellationChecker indicator) {
     indicator.checkCanceled();
     return doCompare(getLines(lines1, policy), getLines(lines2, policy), policy, indicator);
   }
@@ -36,7 +35,7 @@ public final class ByLine {
                                          @NotNull List<? extends CharSequence> lines2,
                                          @NotNull List<? extends CharSequence> lines3,
                                          @NotNull ComparisonPolicy policy,
-                                         @NotNull ProgressIndicator indicator) {
+                                         @NotNull CancellationChecker indicator) {
     indicator.checkCanceled();
     return doCompare(getLines(lines1, policy), getLines(lines2, policy), getLines(lines3, policy), policy, indicator, false);
   }
@@ -46,7 +45,7 @@ public final class ByLine {
                                        @NotNull List<? extends CharSequence> lines2,
                                        @NotNull List<? extends CharSequence> lines3,
                                        @NotNull ComparisonPolicy policy,
-                                       @NotNull ProgressIndicator indicator) {
+                                       @NotNull CancellationChecker indicator) {
     indicator.checkCanceled();
     return doCompare(getLines(lines1, policy), getLines(lines2, policy), getLines(lines3, policy), policy, indicator, true);
   }
@@ -59,7 +58,7 @@ public final class ByLine {
   static FairDiffIterable doCompare(@NotNull List<? extends Line> lines1,
                                     @NotNull List<? extends Line> lines2,
                                     @NotNull ComparisonPolicy policy,
-                                    @NotNull ProgressIndicator indicator) {
+                                    @NotNull CancellationChecker indicator) {
     indicator.checkCanceled();
 
     if (policy == IGNORE_WHITESPACES) {
@@ -85,7 +84,7 @@ public final class ByLine {
                                     @NotNull List<? extends Line> lines2,
                                     @NotNull List<? extends Line> lines3,
                                     @NotNull ComparisonPolicy policy,
-                                    @NotNull ProgressIndicator indicator,
+                                    @NotNull CancellationChecker indicator,
                                     boolean keepIgnoredChanges) {
     indicator.checkCanceled();
 
@@ -309,7 +308,7 @@ public final class ByLine {
   private static FairDiffIterable optimizeLineChunks(@NotNull List<? extends Line> lines1,
                                                      @NotNull List<? extends Line> lines2,
                                                      @NotNull FairDiffIterable iterable,
-                                                     @NotNull ProgressIndicator indicator) {
+                                                     @NotNull CancellationChecker indicator) {
     return new ChunkOptimizer.LineChunkOptimizer(lines1, lines2, iterable, indicator).build();
   }
 
@@ -321,7 +320,7 @@ public final class ByLine {
   @NotNull
   private static FairDiffIterable compareSmart(@NotNull List<? extends Line> lines1,
                                                @NotNull List<? extends Line> lines2,
-                                               @NotNull ProgressIndicator indicator) {
+                                               @NotNull CancellationChecker indicator) {
     int threshold = ComparisonUtil.getUnimportantLineCharCount();
     if (threshold == 0) return diff(lines1, lines2, indicator);
 

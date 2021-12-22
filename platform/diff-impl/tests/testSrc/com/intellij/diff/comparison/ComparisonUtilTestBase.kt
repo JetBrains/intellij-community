@@ -48,7 +48,7 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
     val before = text.data1
     val base = text.data2
     val after = text.data3
-    val fragments = ByWord.compare(before.charsSequence, base.charsSequence, after.charsSequence, policy, INDICATOR)
+    val fragments = ByWord.compare(before.charsSequence, base.charsSequence, after.charsSequence, policy, CANCELLATION)
     checkConsistency(fragments)
 
     if (matchings != null) checkMergeMatching(fragments, matchings)
@@ -67,7 +67,7 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
   private fun doCharRawTest(text: Couple<Document>, matchings: Couple<BitSet>?, expected: List<Couple<IntPair>>?) {
     val before = text.first
     val after = text.second
-    val iterable = ByChar.compare(before.charsSequence, after.charsSequence, INDICATOR)
+    val iterable = ByChar.compare(before.charsSequence, after.charsSequence, CANCELLATION)
     val fragments = ByWord.convertIntoDiffFragments(iterable)
     checkConsistency(fragments, before, after)
     if (matchings != null) checkDiffMatching(fragments, matchings)

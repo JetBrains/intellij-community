@@ -8,6 +8,7 @@ import com.intellij.diff.DiffContentFactory;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.comparison.ByWord;
 import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.comparison.IndicatorCancellationChecker;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.DocumentContent;
 import com.intellij.diff.fragments.DiffFragment;
@@ -172,7 +173,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     int currentStartOffset = getCurrentTextRange(range).getStartOffset();
 
     List<DiffFragment> wordDiff = BackgroundTaskUtil.tryComputeFast(
-      indicator -> ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, indicator), 200);
+      indicator -> ByWord.compare(vcsContent, currentContent, ComparisonPolicy.DEFAULT, new IndicatorCancellationChecker(indicator)), 200);
     if (wordDiff == null) return;
 
     LineStatusMarkerPopupPanel.installMasterEditorWordHighlighters(editor, currentStartOffset, wordDiff, disposable);

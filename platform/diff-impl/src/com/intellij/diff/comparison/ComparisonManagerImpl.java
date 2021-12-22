@@ -68,7 +68,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     List<CharSequence> lineTexts1 = getLineContents(range.start1, range.end1, text1, lineOffsets1);
     List<CharSequence> lineTexts2 = getLineContents(range.start2, range.end2, text2, lineOffsets2);
 
-    FairDiffIterable iterable = ByLine.compare(lineTexts1, lineTexts2, policy, indicator);
+    FairDiffIterable iterable = ByLine.compare(lineTexts1, lineTexts2, policy, new IndicatorCancellationChecker(indicator));
     return convertIntoLineFragments(range, lineOffsets1, lineOffsets2, iterable);
   }
 
@@ -83,7 +83,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     List<CharSequence> lineTexts2 = getLineContents(text2);
     List<CharSequence> lineTexts3 = getLineContents(text3);
 
-    List<MergeRange> ranges = ByLine.compare(lineTexts1, lineTexts2, lineTexts3, policy, indicator);
+    List<MergeRange> ranges = ByLine.compare(lineTexts1, lineTexts2, lineTexts3, policy, new IndicatorCancellationChecker(indicator));
     return ByLine.convertIntoMergeLineFragments(ranges);
   }
 
@@ -98,7 +98,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     List<CharSequence> lineTexts2 = getLineContents(text2);
     List<CharSequence> lineTexts3 = getLineContents(text3);
 
-    List<MergeRange> ranges = ByLine.merge(lineTexts1, lineTexts2, lineTexts3, policy, indicator);
+    List<MergeRange> ranges = ByLine.merge(lineTexts1, lineTexts2, lineTexts3, policy, new IndicatorCancellationChecker(indicator));
     return ByLine.convertIntoMergeLineFragments(ranges);
   }
 
@@ -230,7 +230,8 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                                              @NotNull CharSequence subSequence2,
                                                              @NotNull ComparisonPolicy policy,
                                                              @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    List<ByWord.LineBlock> lineBlocks = ByWord.compareAndSplit(subSequence1, subSequence2, policy, indicator);
+    List<ByWord.LineBlock> lineBlocks = ByWord.compareAndSplit(subSequence1, subSequence2, policy,
+                                                               new IndicatorCancellationChecker(indicator));
     assert lineBlocks.size() != 0;
 
     int startOffset1 = fragment.getStartOffset1();
@@ -276,13 +277,13 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                                    @NotNull ProgressIndicator indicator) {
     DiffIterable iterable;
     if (policy == ComparisonPolicy.DEFAULT) {
-      iterable = ByChar.compareTwoStep(text1, text2, indicator);
+      iterable = ByChar.compareTwoStep(text1, text2, new IndicatorCancellationChecker(indicator));
     }
     else if (policy == ComparisonPolicy.TRIM_WHITESPACES) {
-      iterable = ByChar.compareTrimWhitespaces(text1, text2, indicator);
+      iterable = ByChar.compareTrimWhitespaces(text1, text2, new IndicatorCancellationChecker(indicator));
     }
     else {
-      iterable = ByChar.compareIgnoreWhitespaces(text1, text2, indicator);
+      iterable = ByChar.compareIgnoreWhitespaces(text1, text2, new IndicatorCancellationChecker(indicator));
     }
 
     return ByWord.convertIntoDiffFragments(iterable);
@@ -294,7 +295,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
                                          @NotNull CharSequence text2,
                                          @NotNull ComparisonPolicy policy,
                                          @NotNull ProgressIndicator indicator) throws DiffTooBigException {
-    return ByWord.compare(text1, text2, policy, indicator);
+    return ByWord.compare(text1, text2, policy, new IndicatorCancellationChecker(indicator));
   }
 
   @NotNull
@@ -575,7 +576,8 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     List<CharSequence> lineTexts1 = getNotIgnoredLineContents(range.start1, range.end1, text1, lineOffsets1, ignored1);
     List<CharSequence> lineTexts2 = getNotIgnoredLineContents(range.start2, range.end2, text2, lineOffsets2, ignored2);
 
-    FairDiffIterable iterable = ByLine.compare(lineTexts1, lineTexts2, ComparisonPolicy.DEFAULT, indicator);
+    FairDiffIterable iterable = ByLine.compare(lineTexts1, lineTexts2, ComparisonPolicy.DEFAULT,
+                                               new IndicatorCancellationChecker(indicator));
 
     FairDiffIterable correctedIterable = correctIgnoredRangesSecondStep(range, iterable, text1, text2, lineOffsets1, lineOffsets2,
                                                                         ignored1, ignored2);

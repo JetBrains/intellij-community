@@ -5,7 +5,6 @@ import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.containers.PeekableIterator;
 import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.diff.DiffConfig;
@@ -19,7 +18,7 @@ public final class ComparisonMergeUtil {
   @NotNull
   public static List<MergeRange> buildSimple(@NotNull FairDiffIterable fragments1,
                                              @NotNull FairDiffIterable fragments2,
-                                             @NotNull ProgressIndicator indicator) {
+                                             @NotNull CancellationChecker indicator) {
     assert fragments1.getLength1() == fragments2.getLength1();
     return new FairMergeBuilder().execute(fragments1, fragments2);
   }
@@ -28,7 +27,7 @@ public final class ComparisonMergeUtil {
   public static List<MergeRange> buildMerge(@NotNull FairDiffIterable fragments1,
                                             @NotNull FairDiffIterable fragments2,
                                             @NotNull SideEquality trueEquality,
-                                            @NotNull ProgressIndicator indicator) {
+                                            @NotNull CancellationChecker indicator) {
     assert fragments1.getLength1() == fragments2.getLength1();
     return new FairMergeBuilder(trueEquality).execute(fragments1, fragments2);
   }

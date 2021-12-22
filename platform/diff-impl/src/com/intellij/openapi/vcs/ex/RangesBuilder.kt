@@ -27,7 +27,6 @@ import com.intellij.diff.util.DiffRangeUtil
 import com.intellij.diff.util.Range
 import com.intellij.diff.util.Side
 import com.intellij.openapi.editor.Document
-import com.intellij.openapi.progress.DumbProgressIndicator
 import kotlin.math.max
 
 fun createRanges(current: List<String>,
@@ -188,7 +187,7 @@ private fun safeCompareLines(lines1: List<String>, lines2: List<String>, compari
 
 private fun tryCompareLines(lines1: List<String>, lines2: List<String>, comparisonPolicy: ComparisonPolicy): FairDiffIterable? {
   try {
-    return ByLine.compare(lines1, lines2, comparisonPolicy, DumbProgressIndicator.INSTANCE)
+    return ByLine.compare(lines1, lines2, comparisonPolicy, CancellationChecker.EMPTY)
   }
   catch (e: DiffTooBigException) {
     return null

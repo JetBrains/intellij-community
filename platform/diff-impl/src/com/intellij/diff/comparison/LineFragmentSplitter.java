@@ -19,7 +19,6 @@ import com.intellij.diff.comparison.ByWord.InlineChunk;
 import com.intellij.diff.comparison.ByWord.NewlineChunk;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
-import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -35,16 +34,16 @@ class LineFragmentSplitter {
   @NotNull private final List<? extends InlineChunk> myWords1;
   @NotNull private final List<? extends InlineChunk> myWords2;
   @NotNull private final FairDiffIterable myIterable;
-  @NotNull private final ProgressIndicator myIndicator;
+  @NotNull private final CancellationChecker myIndicator;
 
   @NotNull private final List<WordBlock> myResult = new ArrayList<>();
 
   LineFragmentSplitter(@NotNull CharSequence text1,
-                              @NotNull CharSequence text2,
-                              @NotNull List<? extends InlineChunk> words1,
-                              @NotNull List<? extends InlineChunk> words2,
-                              @NotNull FairDiffIterable iterable,
-                              @NotNull ProgressIndicator indicator) {
+                       @NotNull CharSequence text2,
+                       @NotNull List<? extends InlineChunk> words1,
+                       @NotNull List<? extends InlineChunk> words2,
+                       @NotNull FairDiffIterable iterable,
+                       @NotNull CancellationChecker indicator) {
     myText1 = text1;
     myText2 = text2;
     myWords1 = words1;

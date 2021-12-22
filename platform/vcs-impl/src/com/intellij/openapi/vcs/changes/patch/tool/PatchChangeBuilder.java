@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.changes.patch.tool;
 
 import com.intellij.diff.comparison.ByWord;
+import com.intellij.diff.comparison.CancellationChecker;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.fragments.DiffFragment;
@@ -11,7 +12,6 @@ import com.intellij.diff.tools.util.text.LineOffsetsUtil;
 import com.intellij.diff.util.DiffRangeUtil;
 import com.intellij.diff.util.LineRange;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.AppliedSplitPatchHunk;
 import com.intellij.openapi.vcs.changes.patch.AppliedTextPatch.HunkStatus;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
@@ -142,7 +142,7 @@ public final class PatchChangeBuilder {
       CharSequence deleted = DiffRangeUtil.getLinesContent(patchContent, lineOffsets, deletionRange.start, deletionRange.end);
       CharSequence inserted = DiffRangeUtil.getLinesContent(patchContent, lineOffsets, insertionRange.start, insertionRange.end);
 
-      return ByWord.compare(deleted, inserted, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
+      return ByWord.compare(deleted, inserted, ComparisonPolicy.DEFAULT, CancellationChecker.EMPTY);
     }
     catch (DiffTooBigException ignore) {
       return null;

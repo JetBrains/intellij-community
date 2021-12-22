@@ -5,7 +5,6 @@ import com.intellij.diff.comparison.ByLine.Line;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.IntPair;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
@@ -25,14 +24,14 @@ abstract class ChangeCorrector {
   private final int myLength2;
   @NotNull private final FairDiffIterable myChanges;
 
-  @NotNull protected final ProgressIndicator myIndicator;
+  @NotNull protected final CancellationChecker myIndicator;
 
   @NotNull protected final DiffIterableUtil.ChangeBuilder myBuilder;
 
   ChangeCorrector(int length1,
                          int length2,
                          @NotNull FairDiffIterable changes,
-                         @NotNull ProgressIndicator indicator) {
+                         @NotNull CancellationChecker indicator) {
     myLength1 = length1;
     myLength2 = length2;
     myChanges = changes;
@@ -94,7 +93,7 @@ abstract class ChangeCorrector {
                                       @NotNull CharSequence text1,
                                       @NotNull CharSequence text2,
                                       @NotNull FairDiffIterable changes,
-                                      @NotNull ProgressIndicator indicator) {
+                                      @NotNull CancellationChecker indicator) {
       super(text1.length(), text2.length(), changes, indicator);
       myCodePoints1 = codePoints1;
       myCodePoints2 = codePoints2;
@@ -139,7 +138,7 @@ abstract class ChangeCorrector {
                                     @NotNull List<? extends Line> lines1,
                                     @NotNull List<? extends Line> lines2,
                                     @NotNull FairDiffIterable changes,
-                                    @NotNull ProgressIndicator indicator) {
+                                    @NotNull CancellationChecker indicator) {
       super(lines1.size(), lines2.size(), changes, indicator);
       myIndexes1 = indexes1;
       myIndexes2 = indexes2;

@@ -16,13 +16,13 @@
 package com.intellij.diff;
 
 import com.intellij.diff.comparison.ByLine;
+import com.intellij.diff.comparison.CancellationChecker;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -63,7 +63,7 @@ public class Block {
   public Block createPreviousBlock(String @NotNull [] prevContent) {
     try {
       FairDiffIterable iterable = ByLine.compare(Arrays.asList(prevContent), Arrays.asList(mySource),
-                                                 ComparisonPolicy.IGNORE_WHITESPACES, DumbProgressIndicator.INSTANCE);
+                                                 ComparisonPolicy.IGNORE_WHITESPACES, CancellationChecker.EMPTY);
 
       // empty range should not be transferred to the non-empty range
       boolean greedy = myStart != myEnd;

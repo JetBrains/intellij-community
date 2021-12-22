@@ -1,11 +1,11 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.comparison.iterables;
 
+import com.intellij.diff.comparison.CancellationChecker;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.comparison.TrimUtil;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.util.Range;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.diff.Diff;
@@ -26,12 +26,12 @@ public final class DiffIterableUtil {
    * Compare two integer arrays
    */
   @NotNull
-  public static FairDiffIterable diff(int @NotNull [] data1, int @NotNull [] data2, @NotNull ProgressIndicator indicator)
+  public static FairDiffIterable diff(int @NotNull [] data1, int @NotNull [] data2, @NotNull CancellationChecker indicator)
     throws DiffTooBigException {
     indicator.checkCanceled();
 
     try {
-      // TODO: use ProgressIndicator inside
+      // TODO: use CancellationChecker inside
       Diff.Change change = Diff.buildChanges(data1, data2);
       return fair(create(change, data1.length, data2.length));
     }
@@ -44,12 +44,12 @@ public final class DiffIterableUtil {
    * Compare two arrays, basing on equals() and hashCode() of it's elements
    */
   @NotNull
-  public static <T> FairDiffIterable diff(T @NotNull [] data1, T @NotNull [] data2, @NotNull ProgressIndicator indicator)
+  public static <T> FairDiffIterable diff(T @NotNull [] data1, T @NotNull [] data2, @NotNull CancellationChecker indicator)
     throws DiffTooBigException {
     indicator.checkCanceled();
 
     try {
-      // TODO: use ProgressIndicator inside
+      // TODO: use CancellationChecker inside
       Diff.Change change = Diff.buildChanges(data1, data2);
       return fair(create(change, data1.length, data2.length));
     }
@@ -62,7 +62,7 @@ public final class DiffIterableUtil {
    * Compare two lists, basing on equals() and hashCode() of it's elements
    */
   @NotNull
-  public static <T> FairDiffIterable diff(@NotNull List<? extends T> objects1, @NotNull List<? extends T> objects2, @NotNull ProgressIndicator indicator)
+  public static <T> FairDiffIterable diff(@NotNull List<? extends T> objects1, @NotNull List<? extends T> objects2, @NotNull CancellationChecker indicator)
     throws DiffTooBigException {
     // TODO: compare lists instead of arrays in Diff
     return diff(objects1.toArray(), objects2.toArray(), indicator);

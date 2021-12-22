@@ -21,7 +21,6 @@ import com.intellij.diff.util.*
 import com.intellij.diff.util.MergeConflictType.Type
 import com.intellij.diff.util.Side.LEFT
 import com.intellij.diff.util.Side.RIGHT
-import com.intellij.openapi.progress.DumbProgressIndicator
 import com.intellij.util.text.MergingCharSequence
 
 object MergeResolveUtil {
@@ -85,7 +84,7 @@ private class SimpleHelper(val leftText: CharSequence, val baseText: CharSequenc
   private val texts = listOf(leftText, baseText, rightText)
 
   fun execute(policy: ComparisonPolicy): CharSequence? {
-    val changes = ByWord.compare(leftText, baseText, rightText, policy, DumbProgressIndicator.INSTANCE)
+    val changes = ByWord.compare(leftText, baseText, rightText, policy, CancellationChecker.EMPTY)
 
     for (fragment in changes) {
       val baseRange = nextMergeRange(fragment.getStartOffset(ThreeSide.LEFT),
@@ -176,8 +175,8 @@ private class GreedyHelper(val leftText: CharSequence, val baseText: CharSequenc
   private var index2 = 0
 
   fun execute(policy: ComparisonPolicy): CharSequence? {
-    val fragments1 = ByWord.compare(baseText, leftText, policy, DumbProgressIndicator.INSTANCE)
-    val fragments2 = ByWord.compare(baseText, rightText, policy, DumbProgressIndicator.INSTANCE)
+    val fragments1 = ByWord.compare(baseText, leftText, policy, CancellationChecker.EMPTY)
+    val fragments2 = ByWord.compare(baseText, rightText, policy, CancellationChecker.EMPTY)
 
     while (true) {
       val changeStart1 = fragments1.getOrNull(index1)?.startOffset1 ?: -1

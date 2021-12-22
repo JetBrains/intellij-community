@@ -4,7 +4,6 @@ package com.intellij.diff.comparison;
 import com.intellij.diff.comparison.iterables.DiffIterable;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -21,7 +20,7 @@ public final class ByChar {
   @NotNull
   public static FairDiffIterable compare(@NotNull CharSequence text1,
                                          @NotNull CharSequence text2,
-                                         @NotNull ProgressIndicator indicator) {
+                                         @NotNull CancellationChecker indicator) {
     indicator.checkCanceled();
 
     int[] codePoints1 = getAllCodePoints(text1);
@@ -55,7 +54,7 @@ public final class ByChar {
   @NotNull
   public static FairDiffIterable compareTwoStep(@NotNull CharSequence text1,
                                                 @NotNull CharSequence text2,
-                                                @NotNull ProgressIndicator indicator) {
+                                                @NotNull CancellationChecker indicator) {
     indicator.checkCanceled();
 
     CodePointsOffsets codePoints1 = getNonSpaceCodePoints(text1);
@@ -68,7 +67,7 @@ public final class ByChar {
   @NotNull
   public static DiffIterable compareTrimWhitespaces(@NotNull CharSequence text1,
                                                     @NotNull CharSequence text2,
-                                                    @NotNull ProgressIndicator indicator) {
+                                                    @NotNull CancellationChecker indicator) {
     FairDiffIterable iterable = compareTwoStep(text1, text2, indicator);
     return new ByWord.TrimSpacesCorrector(iterable, text1, text2, indicator).build();
   }
@@ -76,7 +75,7 @@ public final class ByChar {
   @NotNull
   public static DiffIterable compareIgnoreWhitespaces(@NotNull CharSequence text1,
                                                       @NotNull CharSequence text2,
-                                                      @NotNull ProgressIndicator indicator) {
+                                                      @NotNull CancellationChecker indicator) {
     indicator.checkCanceled();
 
     CodePointsOffsets codePoints1 = getNonSpaceCodePoints(text1);
@@ -92,7 +91,7 @@ public final class ByChar {
   @NotNull
   public static FairDiffIterable comparePunctuation(@NotNull CharSequence text1,
                                                     @NotNull CharSequence text2,
-                                                    @NotNull ProgressIndicator indicator) {
+                                                    @NotNull CancellationChecker indicator) {
     indicator.checkCanceled();
 
     CodePointsOffsets chars1 = getPunctuationChars(text1);
@@ -112,7 +111,7 @@ public final class ByChar {
                                                       @NotNull final CharSequence text1,
                                                       @NotNull final CharSequence text2,
                                                       @NotNull final FairDiffIterable changes,
-                                                      @NotNull final ProgressIndicator indicator) {
+                                                      @NotNull final CancellationChecker indicator) {
     ChangeBuilder builder = new ChangeBuilder(text1.length(), text2.length());
 
     for (Range range : changes.iterateUnchanged()) {
@@ -140,7 +139,7 @@ public final class ByChar {
                                                         @NotNull final CharSequence text1,
                                                         @NotNull final CharSequence text2,
                                                         @NotNull final FairDiffIterable changes,
-                                                        @NotNull final ProgressIndicator indicator) {
+                                                        @NotNull final CancellationChecker indicator) {
     return new ChangeCorrector.DefaultCharChangeCorrector(codePoints1, codePoints2, text1, text2, changes, indicator).build();
   }
 

@@ -21,7 +21,6 @@ import com.intellij.diff.comparison.ByWord.NewlineChunk;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
-import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,14 +38,14 @@ abstract class ChunkOptimizer<T> {
   @NotNull protected final List<? extends T> myData2;
   @NotNull private final FairDiffIterable myIterable;
 
-  @NotNull protected final ProgressIndicator myIndicator;
+  @NotNull protected final CancellationChecker myIndicator;
 
   @NotNull private final List<Range> myRanges;
 
   ChunkOptimizer(@NotNull List<? extends T> data1,
-                        @NotNull List<? extends T> data2,
-                        @NotNull FairDiffIterable iterable,
-                        @NotNull ProgressIndicator indicator) {
+                 @NotNull List<? extends T> data2,
+                 @NotNull FairDiffIterable iterable,
+                 @NotNull CancellationChecker indicator) {
     myData1 = data1;
     myData2 = data2;
     myIterable = iterable;
@@ -144,7 +143,7 @@ abstract class ChunkOptimizer<T> {
                               @NotNull CharSequence text1,
                               @NotNull CharSequence text2,
                               @NotNull FairDiffIterable changes,
-                              @NotNull ProgressIndicator indicator) {
+                              @NotNull CancellationChecker indicator) {
       super(words1, words2, changes, indicator);
       myText1 = text1;
       myText2 = text2;
@@ -217,7 +216,7 @@ abstract class ChunkOptimizer<T> {
     public LineChunkOptimizer(@NotNull List<? extends Line> lines1,
                               @NotNull List<? extends Line> lines2,
                               @NotNull FairDiffIterable changes,
-                              @NotNull ProgressIndicator indicator) {
+                              @NotNull CancellationChecker indicator) {
       super(lines1, lines2, changes, indicator);
     }
 

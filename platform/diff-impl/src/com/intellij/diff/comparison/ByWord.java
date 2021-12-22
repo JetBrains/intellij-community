@@ -10,7 +10,6 @@ import com.intellij.diff.fragments.MergeWordFragment;
 import com.intellij.diff.fragments.MergeWordFragmentImpl;
 import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.util.text.MergingCharSequence;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +27,7 @@ public final class ByWord {
   public static List<DiffFragment> compare(@NotNull CharSequence text1,
                                            @NotNull CharSequence text2,
                                            @NotNull ComparisonPolicy policy,
-                                           @NotNull ProgressIndicator indicator) {
+                                           @NotNull CancellationChecker indicator) {
     indicator.checkCanceled();
 
     List<InlineChunk> words1 = getInlineChunks(text1);
@@ -41,7 +40,7 @@ public final class ByWord {
   public static List<DiffFragment> compare(@NotNull CharSequence text1, @NotNull List<? extends InlineChunk> words1,
                                            @NotNull CharSequence text2, @NotNull List<? extends InlineChunk> words2,
                                            @NotNull ComparisonPolicy policy,
-                                           @NotNull ProgressIndicator indicator) {
+                                           @NotNull CancellationChecker indicator) {
     FairDiffIterable wordChanges = diff(words1, words2, indicator);
     wordChanges = optimizeWordChunks(text1, text2, words1, words2, wordChanges, indicator);
 
@@ -56,7 +55,7 @@ public final class ByWord {
                                                 @NotNull CharSequence text2,
                                                 @NotNull CharSequence text3,
                                                 @NotNull ComparisonPolicy policy,
-                                                @NotNull ProgressIndicator indicator) {
+                                                @NotNull CancellationChecker indicator) {
     indicator.checkCanceled();
 
     List<InlineChunk> words1 = getInlineChunks(text1);
@@ -81,7 +80,7 @@ public final class ByWord {
   public static List<LineBlock> compareAndSplit(@NotNull CharSequence text1,
                                                 @NotNull CharSequence text2,
                                                 @NotNull ComparisonPolicy policy,
-                                                @NotNull ProgressIndicator indicator) {
+                                                @NotNull CancellationChecker indicator) {
     indicator.checkCanceled();
 
     // TODO: figure out, what do we exactly want from 'Split' logic
@@ -147,7 +146,7 @@ public final class ByWord {
                                                      @NotNull List<? extends InlineChunk> words1,
                                                      @NotNull List<? extends InlineChunk> words2,
                                                      @NotNull FairDiffIterable iterable,
-                                                     @NotNull ProgressIndicator indicator) {
+                                                     @NotNull CancellationChecker indicator) {
     return new ChunkOptimizer.WordChunkOptimizer(words1, words2, text1, text2, iterable, indicator).build();
   }
 
@@ -157,7 +156,7 @@ public final class ByWord {
                                                             @NotNull List<? extends InlineChunk> words1,
                                                             @NotNull List<? extends InlineChunk> words2,
                                                             @NotNull FairDiffIterable changes,
-                                                            @NotNull ProgressIndicator indicator) {
+                                                            @NotNull CancellationChecker indicator) {
     return matchAdjustmentDelimiters(text1, text2, words1, words2, changes, 0, 0, indicator);
   }
 
@@ -169,7 +168,7 @@ public final class ByWord {
                                                             @NotNull FairDiffIterable changes,
                                                             int startShift1,
                                                             int startShift2,
-                                                            @NotNull ProgressIndicator indicator) {
+                                                            @NotNull CancellationChecker indicator) {
     return new AdjustmentPunctuationMatcher(text1, text2, words1, words2, startShift1, startShift2, changes, indicator).build();
   }
 
@@ -178,7 +177,7 @@ public final class ByWord {
                                                          @NotNull CharSequence text2,
                                                          @NotNull FairDiffIterable iterable,
                                                          @NotNull ComparisonPolicy policy,
-                                                         @NotNull ProgressIndicator indicator) {
+                                                         @NotNull CancellationChecker indicator) {
     switch (policy) {
       case DEFAULT:
         return new DefaultCorrector(iterable, text1, text2, indicator).build();
@@ -198,7 +197,7 @@ public final class ByWord {
                                                              @NotNull CharSequence text3,
                                                              @NotNull List<? extends MergeRange> conflicts,
                                                              @NotNull ComparisonPolicy policy,
-                                                             @NotNull ProgressIndicator indicator) {
+                                                             @NotNull CancellationChecker indicator) {
     switch (policy) {
       case DEFAULT:
         return new MergeDefaultCorrector(conflicts, text1, text2, text3, indicator).build();
@@ -243,7 +242,7 @@ public final class ByWord {
     @NotNull private final List<? extends InlineChunk> myWords1;
     @NotNull private final List<? extends InlineChunk> myWords2;
     @NotNull private final FairDiffIterable myChanges;
-    @NotNull private final ProgressIndicator myIndicator;
+    @NotNull private final CancellationChecker myIndicator;
 
     private final int myStartShift1;
     private final int myStartShift2;
@@ -260,7 +259,7 @@ public final class ByWord {
                                  int startShift1,
                                  int startShift2,
                                  @NotNull FairDiffIterable changes,
-                                 @NotNull ProgressIndicator indicator) {
+                                 @NotNull CancellationChecker indicator) {
       myText1 = text1;
       myText2 = text2;
       myWords1 = words1;
@@ -453,7 +452,7 @@ public final class ByWord {
   private static Couple<FairDiffIterable> comparePunctuation2Side(@NotNull CharSequence text1,
                                                                   @NotNull CharSequence text21,
                                                                   @NotNull CharSequence text22,
-                                                                  @NotNull ProgressIndicator indicator) {
+                                                                  @NotNull CancellationChecker indicator) {
     CharSequence text2 = new MergingCharSequence(text21, text22);
     FairDiffIterable changes = ByChar.comparePunctuation(text1, text2, indicator);
 
@@ -492,14 +491,14 @@ public final class ByWord {
     @NotNull private final DiffIterable myIterable;
     @NotNull private final CharSequence myText1;
     @NotNull private final CharSequence myText2;
-    @NotNull private final ProgressIndicator myIndicator;
+    @NotNull private final CancellationChecker myIndicator;
 
     @NotNull private final List<Range> myChanges;
 
     DefaultCorrector(@NotNull DiffIterable iterable,
                      @NotNull CharSequence text1,
                      @NotNull CharSequence text2,
-                     @NotNull ProgressIndicator indicator) {
+                     @NotNull CancellationChecker indicator) {
       myIterable = iterable;
       myText1 = text1;
       myText2 = text2;
@@ -534,7 +533,7 @@ public final class ByWord {
     @NotNull private final CharSequence myText1;
     @NotNull private final CharSequence myText2;
     @NotNull private final CharSequence myText3;
-    @NotNull private final ProgressIndicator myIndicator;
+    @NotNull private final CancellationChecker myIndicator;
 
     @NotNull private final List<MergeRange> myChanges;
 
@@ -542,7 +541,7 @@ public final class ByWord {
                           @NotNull CharSequence text1,
                           @NotNull CharSequence text2,
                           @NotNull CharSequence text3,
-                          @NotNull ProgressIndicator indicator) {
+                          @NotNull CancellationChecker indicator) {
       myIterable = iterable;
       myText1 = text1;
       myText2 = text2;
@@ -579,14 +578,14 @@ public final class ByWord {
     @NotNull private final DiffIterable myIterable;
     @NotNull private final CharSequence myText1;
     @NotNull private final CharSequence myText2;
-    @NotNull private final ProgressIndicator myIndicator;
+    @NotNull private final CancellationChecker myIndicator;
 
     @NotNull private final List<Range> myChanges;
 
     IgnoreSpacesCorrector(@NotNull DiffIterable iterable,
                           @NotNull CharSequence text1,
                           @NotNull CharSequence text2,
-                          @NotNull ProgressIndicator indicator) {
+                          @NotNull CancellationChecker indicator) {
       myIterable = iterable;
       myText1 = text1;
       myText2 = text2;
@@ -617,7 +616,7 @@ public final class ByWord {
     @NotNull private final CharSequence myText1;
     @NotNull private final CharSequence myText2;
     @NotNull private final CharSequence myText3;
-    @NotNull private final ProgressIndicator myIndicator;
+    @NotNull private final CancellationChecker myIndicator;
 
     @NotNull private final List<MergeRange> myChanges;
 
@@ -625,7 +624,7 @@ public final class ByWord {
                                @NotNull CharSequence text1,
                                @NotNull CharSequence text2,
                                @NotNull CharSequence text3,
-                               @NotNull ProgressIndicator indicator) {
+                               @NotNull CancellationChecker indicator) {
       myIterable = iterable;
       myText1 = text1;
       myText2 = text2;
@@ -655,14 +654,14 @@ public final class ByWord {
     @NotNull private final DiffIterable myIterable;
     @NotNull private final CharSequence myText1;
     @NotNull private final CharSequence myText2;
-    @NotNull private final ProgressIndicator myIndicator;
+    @NotNull private final CancellationChecker myIndicator;
 
     @NotNull private final List<Range> myChanges;
 
     TrimSpacesCorrector(@NotNull DiffIterable iterable,
                         @NotNull CharSequence text1,
                         @NotNull CharSequence text2,
-                        @NotNull ProgressIndicator indicator) {
+                        @NotNull CancellationChecker indicator) {
       myIterable = iterable;
       myText1 = text1;
       myText2 = text2;
@@ -709,7 +708,7 @@ public final class ByWord {
     @NotNull private final CharSequence myText1;
     @NotNull private final CharSequence myText2;
     @NotNull private final CharSequence myText3;
-    @NotNull private final ProgressIndicator myIndicator;
+    @NotNull private final CancellationChecker myIndicator;
 
     @NotNull private final List<MergeRange> myChanges;
 
@@ -717,7 +716,7 @@ public final class ByWord {
                              @NotNull CharSequence text1,
                              @NotNull CharSequence text2,
                              @NotNull CharSequence text3,
-                             @NotNull ProgressIndicator indicator) {
+                             @NotNull CancellationChecker indicator) {
       myIterable = iterable;
       myText1 = text1;
       myText2 = text2;

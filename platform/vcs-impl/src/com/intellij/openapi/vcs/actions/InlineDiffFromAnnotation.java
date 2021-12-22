@@ -2,6 +2,7 @@
 package com.intellij.openapi.vcs.actions;
 
 import com.intellij.diff.comparison.ByWord;
+import com.intellij.diff.comparison.CancellationChecker;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.iterables.DiffIterable;
 import com.intellij.diff.comparison.iterables.DiffIterableUtil;
@@ -22,7 +23,6 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
-import com.intellij.openapi.progress.DumbProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
@@ -200,7 +200,7 @@ final class InlineDiffFromAnnotation implements EditorMouseListener, EditorMouse
                                                           @NotNull List<InnerChange> changes) {
     if (contentAfter.equals(currentContent)) return changes;
 
-    List<DiffFragment> delta = ByWord.compare(contentAfter, currentContent, ComparisonPolicy.DEFAULT, DumbProgressIndicator.INSTANCE);
+    List<DiffFragment> delta = ByWord.compare(contentAfter, currentContent, ComparisonPolicy.DEFAULT, CancellationChecker.EMPTY);
     DiffIterable iterable = DiffIterableUtil.createFragments(delta, contentAfter.length(), currentContent.length());
 
     LineNumberConvertor.Builder builder = new LineNumberConvertor.Builder();

@@ -198,7 +198,7 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
         val chunk2 = DiffUtil.getLinesContent(text2, f.startLine2, f.endLine2)
         val chunk3 = DiffUtil.getLinesContent(text3, f.startLine3, f.endLine3)
 
-        val wordFragments = ByWord.compare(chunk1, chunk2, chunk3, policy, INDICATOR)
+        val wordFragments = ByWord.compare(chunk1, chunk2, chunk3, policy, CANCELLATION)
         Pair(f, wordFragments)
       }
       debugData.put("Fragments", fineFragments)
@@ -222,7 +222,7 @@ class ComparisonUtilAutoTest : HeavyDiffTestCase() {
         val chunk2 = DiffUtil.getLinesContent(text2, f.startLine2, f.endLine2)
         val chunk3 = DiffUtil.getLinesContent(text3, f.startLine3, f.endLine3)
 
-        val wordFragments = ByWord.compare(chunk1, chunk2, chunk3, policy, INDICATOR)
+        val wordFragments = ByWord.compare(chunk1, chunk2, chunk3, policy, CANCELLATION)
         Pair(f, wordFragments)
       }
       debugData.put("Fragments", fineFragments)
