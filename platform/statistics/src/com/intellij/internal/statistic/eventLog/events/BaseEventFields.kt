@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.internal.statistic.eventLog.FeatureUsageData
@@ -150,7 +150,7 @@ data class EnumEventField<T : Enum<*>>(override val name: String,
   }
 
   override val validationRule: List<String>
-    get() = listOf("{enum:${enumClass.enumConstants.map(transform).joinToString("|")}}")
+    get() = listOf("{enum:${enumClass.enumConstants.joinToString("|", transform = transform)}}")
 }
 
 data class LongListEventField(override val name: String): ListEventField<Long>() {
@@ -163,7 +163,6 @@ data class LongListEventField(override val name: String): ListEventField<Long>()
 }
 
 abstract class StringListEventField(override val name: String) : ListEventField<String>() {
-
   override fun addData(fuData: FeatureUsageData, value: List<String>) {
     fuData.addData(name, value)
   }

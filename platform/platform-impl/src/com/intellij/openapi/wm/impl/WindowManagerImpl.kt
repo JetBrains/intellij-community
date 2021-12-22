@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
 
 package com.intellij.openapi.wm.impl
@@ -15,7 +15,6 @@ import com.intellij.openapi.components.Storage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.impl.createNewProjectFrame
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.*
@@ -244,7 +243,7 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
   }
 
   override fun getFrame(project: Project?): IdeFrameImpl? {
-    // no assert! otherwise WindowWatcher.suggestParentWindow fails for default project
+    // no assert! otherwise, WindowWatcher.suggestParentWindow fails for default project
     //LOG.assertTrue(myProject2Frame.containsKey(project));
     return getFrameHelper(project)?.frame
   }
@@ -375,11 +374,11 @@ class WindowManagerImpl : WindowManagerEx(), PersistentStateComponentWithModific
     }
   }
 
-  fun <T> runWithFrameReuseEnabled(task: Computable<T>): T {
+  fun <T> runWithFrameReuseEnabled(task: Supplier<T>): T {
     val savedValue = frameReuseEnabled
     frameReuseEnabled = true
     try {
-      return task.compute()
+      return task.get()
     }
     finally {
       frameReuseEnabled = savedValue

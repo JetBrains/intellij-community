@@ -11,7 +11,7 @@ import java.util.function.Supplier;
  * Clearable version: {@link ClearableLazyValue}.
  */
 @ApiStatus.NonExtendable
-public abstract class NotNullLazyValue<T> {
+public abstract class NotNullLazyValue<T> implements Supplier<T> {
   private T myValue;
 
   /** @deprecated Use {@link NotNullLazyValue#lazy(Supplier)} */
@@ -21,6 +21,11 @@ public abstract class NotNullLazyValue<T> {
   protected NotNullLazyValue() { }
 
   protected abstract @NotNull T compute();
+
+  @Override
+  public final T get() {
+    return getValue();
+  }
 
   public @NotNull T getValue() {
     T result = myValue;

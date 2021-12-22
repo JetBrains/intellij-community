@@ -428,8 +428,9 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
     return result
   }
 
-  private fun closeAndDisposeKeepingFrame(project: Project) =
-    (WindowManager.getInstance() as WindowManagerImpl).runWithFrameReuseEnabled { closeAndDispose(project) }
+  private fun closeAndDisposeKeepingFrame(project: Project): Boolean {
+    return (WindowManager.getInstance() as WindowManagerImpl).runWithFrameReuseEnabled { closeAndDispose(project) }
+  }
 }
 
 @NlsSafe
@@ -474,7 +475,7 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
       ProgressManager.checkCanceled()
       try {
         val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
-          pluginDescriptor.pluginId.idString)
+                                                              pluginDescriptor.pluginId.idString)
         component.projectOpened()
         componentActivity.end()
       }
@@ -529,7 +530,7 @@ private fun toCanonicalName(filePath: String): Path {
       return file.toRealPath(LinkOption.NOFOLLOW_LINKS)
     }
   }
-  catch (e: InvalidPathException) {
+  catch (ignore: InvalidPathException) {
   }
   catch (e: IOException) {
     // OK. File does not yet exist, so its canonical path will be equal to its original path.
