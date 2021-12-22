@@ -453,41 +453,53 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
     indicator.isIndeterminate = true
   }
 
+  var pce: ProcessCanceledException? = null
   // invokeLater cannot be used for now
   ApplicationManager.getApplication().invokeAndWait {
-    waitEdtActivity.end()
-    if (indicator != null && ApplicationManager.getApplication().isInternal) {
-      indicator.text = "Running project opened tasks..."  // NON-NLS (internal mode)
-    }
+    try {
+      waitEdtActivity.end()
 
-    ProjectManagerImpl.LOG.debug("projectOpened")
+      indicator?.checkCanceled()
 
-    val activity = StartUpMeasurer.startActivity("project opened callbacks")
-
-    runActivity("projectOpened event executing") {
-      ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
-    }
-
-    @Suppress("DEPRECATION")
-    (project as ComponentManagerEx)
-      .processInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java) { component, pluginDescriptor ->
-      ProgressManager.checkCanceled()
-      try {
-        val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
-                                                              pluginDescriptor.pluginId.idString)
-        component.projectOpened()
-        componentActivity.end()
+      if (indicator != null && ApplicationManager.getApplication().isInternal) {
+        indicator.text = "Running project opened tasks..."  // NON-NLS (internal mode)
       }
-      catch (e: ProcessCanceledException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        ProjectManagerImpl.LOG.error(e)
-      }
-    }
 
-    activity.end()
+      ProjectManagerImpl.LOG.debug("projectOpened")
+
+      val activity = StartUpMeasurer.startActivity("project opened callbacks")
+
+      runActivity("projectOpened event executing") {
+        ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
+      }
+
+      @Suppress("DEPRECATION")
+      (project as ComponentManagerEx)
+        .processInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java) { component, pluginDescriptor ->
+          indicator?.checkCanceled()
+          try {
+            val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
+                                                                  pluginDescriptor.pluginId.idString)
+            component.projectOpened()
+            componentActivity.end()
+          }
+          catch (e: ProcessCanceledException) {
+            throw e
+          }
+          catch (e: Throwable) {
+            ProjectManagerImpl.LOG.error(e)
+          }
+        }
+
+      activity.end()
+    }
+    catch (e: ProcessCanceledException) {
+      pce = e
+    }
   }
+
+  pce?.let { throw it }
+
   ProjectImpl.ourClassesAreLoaded = true
 
   if (runStartUpActivities) {
