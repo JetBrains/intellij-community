@@ -1361,8 +1361,18 @@
     <listener class="com.intellij.ui.ExperimentalUI$NewUiRegistryListener" topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
     <listener class="com.intellij.ui.ExperimentalUI$NewUiLafManagerListener" topic="com.intellij.ide.ui.LafManagerListener"/>
   </applicationListeners>
+  <projectListeners>
+    <listener class="com.intellij.openapi.wm.impl.ToolwindowToolbarListener"
+              activeInHeadlessMode="false"
+              activeInTestMode="false"
+              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
+    <listener class="com.intellij.notification.impl.widget.NotificationWidgetListener"
+              activeInHeadlessMode="false"
+              activeInTestMode="false"
+              topic="com.intellij.openapi.wm.ex.ToolWindowManagerListener"/>
+  </projectListeners>
 
-  <xi:include href="/META-INF/RemoteDevUtil.xml" xpointer="xpointer(/idea-plugin/*)">
+  <xi:include href="/META-INF/RemoteDevUtil.xml">
     <xi:fallback/>
   </xi:include>
 </idea-plugin>
