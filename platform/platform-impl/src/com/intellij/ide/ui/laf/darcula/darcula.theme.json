@@ -542,10 +542,16 @@
     "MainToolbar": {
       "background": "#3c3f41",
       "icon": {
-        "borderInsets": "10,10,10,10"
+        "borderInsets": "10,10,10,10",
+        "background": "#3C3F41",
+        "hoverBackground": "#4C5052",
+        "pressedBackground": "#4C5052"
       },
       "dropdown": {
-        "borderInsets": "12,6,12,6"
+        "borderInsets": "12,6,12,6",
+        "background": "#3C3F41",
+        "hoverBackground": "#4C5052",
+        "pressedBackground": "#4C5052"
       }
     }
   },

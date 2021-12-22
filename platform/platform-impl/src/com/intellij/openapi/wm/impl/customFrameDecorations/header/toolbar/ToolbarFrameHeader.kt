@@ -21,7 +21,7 @@ import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.ui.IconManager
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
-import com.intellij.ui.hover.HoverStateListener
+import com.intellij.ui.hover.addHoverAndPressStateListener
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
@@ -146,20 +146,27 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     }
 
     button.isOpaque = false
-    val hoverStateListener = object : HoverStateListener() {
-      override fun hoverChanged(component: Component, hovered: Boolean) {
-        if (hovered) {
-          button.putClientProperty("JButton.backgroundColor", UIManager.getColor ("MainToolbar.icon.hoverBackground"))
-          button.isOpaque = true
-        }
-        else {
-          button.putClientProperty("JButton.backgroundColor", UIManager.getColor ("MainToolbar.icon.background"))
-          button.isOpaque = false
-        }
-      }
-    }
-
-    hoverStateListener.addTo(button)
+    addHoverAndPressStateListener(button,
+                                  hoveredStateCallback = { cmp, hovered ->
+                                    if (cmp !is JComponent) return@addHoverAndPressStateListener
+                                    if (hovered) {
+                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.icon.hoverBackground"))
+                                      cmp.isOpaque = true
+                                    }
+                                    else {
+                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.icon.background"))
+                                      cmp.isOpaque = false
+                                    }
+                                  },
+                                  pressedStateCallback = { cmp, pressed ->
+                                    if (cmp !is JComponent) return@addHoverAndPressStateListener
+                                    if (pressed) {
+                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.icon.pressedBackground"))
+                                    }
+                                    else {
+                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.icon.hoverBackground"))
+                                    }
+                                  })
 
     button.addActionListener {
       DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200)?.let { context ->

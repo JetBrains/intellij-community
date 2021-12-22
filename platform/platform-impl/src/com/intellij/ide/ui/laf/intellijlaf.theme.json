@@ -904,8 +904,18 @@
 
     "MainToolbar": {
       "background": "#f2f2f2",
-      "icon.borderInsets": "10,10,10,10",
-      "dropdown.borderInsets": "12,6,12,6"
+      "icon": {
+        "borderInsets": "10,10,10,10",
+        "background": "#f2f2f2",
+        "hoverBackground": "#dfdfdf",
+        "pressedBackground": "#dfdfdf"
+      },
+      "dropdown": {
+        "borderInsets": "12,6,12,6",
+        "background": "#f2f2f2",
+        "hoverBackground": "#dfdfdf",
+        "pressedBackground": "#dfdfdf"
+      }
     },
 
     "Tag": {
