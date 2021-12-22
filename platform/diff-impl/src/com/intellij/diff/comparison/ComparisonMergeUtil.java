@@ -6,7 +6,6 @@ import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.diff.util.Side;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.PeekableIterator;
 import com.intellij.util.containers.PeekableIteratorWrapper;
 import com.intellij.util.diff.DiffConfig;
@@ -140,7 +139,7 @@ public final class ComparisonMergeUtil {
 
     @Override
     protected void processChange(int start1, int start2, int start3, int end1, int end2, int end3) {
-      MergeRange lastChange = ContainerUtil.getLastItem(myChanges);
+      MergeRange lastChange = myChanges.isEmpty() ? null : myChanges.get(myChanges.size() - 1);
       int unchangedStart1 = lastChange != null ? lastChange.end1 : 0;
       int unchangedStart2 = lastChange != null ? lastChange.end2 : 0;
       int unchangedStart3 = lastChange != null ? lastChange.end3 : 0;

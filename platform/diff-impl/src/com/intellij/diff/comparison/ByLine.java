@@ -8,13 +8,13 @@ import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.intellij.diff.comparison.ComparisonPolicy.DEFAULT;
 import static com.intellij.diff.comparison.ComparisonPolicy.IGNORE_WHITESPACES;
@@ -367,7 +367,8 @@ public final class ByLine {
 
   @NotNull
   private static List<Line> getLines(@NotNull List<? extends CharSequence> text, @NotNull ComparisonPolicy policy) {
-    return ContainerUtil.map(text, (line) -> new Line(line, policy));
+    //noinspection SSBasedInspection - Can't use ContainerUtil
+    return text.stream().map(line -> new Line(line, policy)).collect(Collectors.toList());
   }
 
   @NotNull
@@ -384,7 +385,8 @@ public final class ByLine {
 
   @NotNull
   public static List<MergeLineFragment> convertIntoMergeLineFragments(@NotNull List<? extends MergeRange> conflicts) {
-    return ContainerUtil.map(conflicts, ch -> new MergeLineFragmentImpl(ch));
+    //noinspection SSBasedInspection - Can't use ContainerUtil
+    return conflicts.stream().map(ch -> new MergeLineFragmentImpl(ch)).collect(Collectors.toList());
   }
 
   static class Line {

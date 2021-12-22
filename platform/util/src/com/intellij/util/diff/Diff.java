@@ -4,7 +4,6 @@ package com.intellij.util.diff;
 import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.LineTokenizer;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Enumerator;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -165,7 +164,11 @@ public final class Diff {
   }
 
   private static String @NotNull [] trim(String @NotNull [] lines) {
-    return ContainerUtil.map2Array(lines, String.class, String::trim);
+    String[] result = new String[lines.length];
+    for (int i = 0; i < lines.length; i++) {
+      result[i] = lines[i].trim();
+    }
+    return result;
   }
 
   /**

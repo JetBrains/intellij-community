@@ -12,12 +12,12 @@ import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.intellij.diff.comparison.TrimUtil.*;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
@@ -214,7 +214,8 @@ public final class ByWord {
 
   @NotNull
   public static List<MergeWordFragment> convertIntoMergeWordFragments(@NotNull List<? extends MergeRange> conflicts) {
-    return ContainerUtil.map(conflicts, ch -> new MergeWordFragmentImpl(ch));
+    //noinspection SSBasedInspection - Can't use ContainerUtil
+    return conflicts.stream().map(ch -> new MergeWordFragmentImpl(ch)).collect(Collectors.toList());
   }
 
   @NotNull
