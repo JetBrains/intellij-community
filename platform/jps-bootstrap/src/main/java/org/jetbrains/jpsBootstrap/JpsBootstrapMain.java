@@ -4,10 +4,12 @@ package org.jetbrains.jpsBootstrap;
 
 import com.intellij.util.ExceptionUtil;
 import org.apache.commons.cli.*;
+import org.apache.commons.codec.digest.DigestUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.jps.model.JpsModel;
 import org.jetbrains.jps.model.module.JpsModule;
 
+import java.io.File;
 import java.io.IOException;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
@@ -161,9 +163,31 @@ public class JpsBootstrapMain {
     }
   }
 
+  private static String urlDebugInfo(URL url) {
+    try {
+      File file = new File(url.toURI());
+
+      if (file.exists()) {
+        if (file.isDirectory()) {
+          return url + " directory";
+        }
+        else {
+          long length = file.length();
+          String sha256 = DigestUtils.sha256Hex(Files.readAllBytes(file.toPath()));
+          return url + " file length " + length + " sha256 " + sha256;
+        }
+      }
+      else {
+        return url + " missing file";
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+  }
+
   private static void runMainFromModuleRuntimeClasspath(String className, String[] args, JpsModule module) throws Throwable {
     List<URL> moduleRuntimeClasspath = JpsProjectUtils.getModuleRuntimeClasspath(module);
-    verbose("Module " + module.getName() + " classpath:\n  " + moduleRuntimeClasspath.stream().map(URL::toString).collect(Collectors.joining("\n  ")));
+    verbose("Module " + module.getName() + " classpath:\n  " + moduleRuntimeClasspath.stream().map(JpsBootstrapMain::urlDebugInfo).collect(Collectors.joining("\n  ")));
 
     info("Running class " + className + " from module " + module.getName());
     try (URLClassLoader classloader = new URLClassLoader(moduleRuntimeClasspath.toArray(new URL[0]), ClassLoader.getPlatformClassLoader())) {
