@@ -14,4 +14,3 @@ fun main(a: A) {
 }
 
 // for KT-3769 Find usages gives no result for overrides
-// FIR_COMPARISON

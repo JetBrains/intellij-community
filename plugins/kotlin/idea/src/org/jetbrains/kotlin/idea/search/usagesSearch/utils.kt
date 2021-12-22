@@ -240,7 +240,7 @@ fun <T : PsiNamedElement> List<T>.filterDataClassComponentsIfDisabled(kotlinOpti
 
         if (!Name.isValidIdentifier(name)) return false
         val nameIdentifier = Name.identifier(name)
-        if (!DataClassDescriptorResolver.isComponentLike(nameIdentifier)) return false
+        if (!DataClassResolver.isComponentLike(nameIdentifier)) return false
 
         return true
     }

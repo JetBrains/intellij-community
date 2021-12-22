@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOn
 import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
+import org.jetbrains.kotlin.idea.search.usagesSearch.filterDataClassComponentsIfDisabled
 import org.jetbrains.kotlin.idea.search.usagesSearch.getDefaultImports
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
@@ -55,7 +56,7 @@ class KotlinSearchUsagesSupportFirImpl : KotlinSearchUsagesSupport {
         elements: List<T>,
         kotlinOptions: KotlinReferencesSearchOptions
     ): List<T> {
-        return emptyList()
+        return elements.filterDataClassComponentsIfDisabled(kotlinOptions)
     }
 
     override fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean {
