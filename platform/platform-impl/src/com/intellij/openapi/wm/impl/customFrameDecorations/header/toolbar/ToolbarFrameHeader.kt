@@ -21,15 +21,13 @@ import com.intellij.openapi.wm.impl.headertoolbar.isToolbarInHeader
 import com.intellij.ui.IconManager
 import com.intellij.ui.awt.RelativeRectangle
 import com.intellij.ui.components.panels.NonOpaquePanel
+import com.intellij.ui.hover.HoverStateListener
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.CurrentTheme.CustomFrameDecorations
 import java.awt.*
 import java.awt.GridBagConstraints.*
-import javax.swing.AbstractButton
-import javax.swing.Box
-import javax.swing.JFrame
-import javax.swing.JPanel
+import javax.swing.*
 import kotlin.math.roundToInt
 
 private enum class ShowMode {
@@ -141,12 +139,28 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
   private fun createToolbar(): MainToolbar = MainToolbar().apply { isOpaque = false }
 
   private fun createMenuButton(): AbstractButton {
-    val button = FixedSizeButton(20)
+    val button = FixedSizeButton(36)
     val icon = IconManager.getInstance().getIcon("expui/general/windowsMenu.svg", AllIcons::class.java)
     if (icon is ScalableIcon) {
       button.icon = IconLoader.loadCustomVersionOrScale(icon, 20f) //todo change to precompiled icon later
     }
+
     button.isOpaque = false
+    val hoverStateListener = object : HoverStateListener() {
+      override fun hoverChanged(component: Component, hovered: Boolean) {
+        if (hovered) {
+          button.putClientProperty("JButton.backgroundColor", UIManager.getColor ("MainToolbar.icon.hoverBackground"))
+          button.isOpaque = true
+        }
+        else {
+          button.putClientProperty("JButton.backgroundColor", UIManager.getColor ("MainToolbar.icon.background"))
+          button.isOpaque = false
+        }
+      }
+    }
+
+    hoverStateListener.addTo(button)
+
     button.addActionListener {
       DataManager.getInstance().dataContextFromFocusAsync.blockingGet(200)?.let { context ->
         val mainMenu = ActionManager.getInstance().getAction(IdeActions.GROUP_MAIN_MENU) as ActionGroup
