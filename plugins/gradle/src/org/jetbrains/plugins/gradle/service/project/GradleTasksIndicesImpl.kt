@@ -15,36 +15,42 @@ import org.jetbrains.plugins.gradle.util.getGradleTasks
 
 class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices {
 
-  private fun getExternalProjectPath(modulePath: String): String? {
-    return ExternalSystemUtil.getExternalProjectInfo(project, GradleConstants.SYSTEM_ID, modulePath)
-      ?.externalProjectPath
-  }
-
-  private fun getGradleModulePath(externalProjectPath: String, modulePath: String): String? {
-    val moduleNode = CachedModuleDataFinder.findModuleData(project, modulePath)
-    return when {
-      moduleNode == null -> null
-      externalProjectPath == modulePath -> ""
-      else -> moduleNode.data.id.removePrefix(":")
-    }
-  }
-
   override fun findTasks(modulePath: String): List<GradleTaskData> {
-    val externalProjectPath = getExternalProjectPath(modulePath) ?: return emptyList()
+    return moduleContext(modulePath).findTasks()
+  }
+
+  override fun findTasks(modulePath: String, matcher: String): List<GradleTaskData> {
+    return moduleContext(modulePath).findTasks(matcher)
+  }
+
+  override fun isMatchedTask(task: GradleTaskData, modulePath: String, matcher: String): ThreeState {
+    return taskContext(task, modulePath).isMatchedTask(matcher)
+  }
+
+  override fun getPossibleTaskNames(task: GradleTaskData, modulePath: String): Set<String> {
+    return taskContext(task, modulePath).getPossibleTaskNames()
+  }
+
+  private fun moduleContext(modulePath: String) = ModuleResolutionContext(project, modulePath)
+
+  private fun taskContext(task: GradleTaskData, modulePath: String) = TaskResolutionContext(moduleContext(modulePath), task)
+
+  private fun ModuleResolutionContext.taskContext(task: GradleTaskData) = TaskResolutionContext(this, task)
+
+  private fun ModuleResolutionContext.findTasks(): List<GradleTaskData> {
+    val externalProjectPath = externalProjectPath ?: return emptyList()
     val projectTasks = getGradleTasks(project)[externalProjectPath] ?: return emptyList()
     return projectTasks.values().toList()
   }
 
-  override fun findTasks(modulePath: String, matcher: String): List<GradleTaskData> {
-    val tasks = findTasks(modulePath)
-    val tasksMatchStatus = tasks.map { it to isMatchedTask(it, modulePath, matcher) }
-    val matchedTasks = tasksMatchStatus.filter { it.second == ThreeState.YES }.map { it.first }
-    val partiallyMatchedTasks = tasksMatchStatus.filter { it.second == ThreeState.UNSURE }.map { it.first }
-    return matchedTasks.nullize() ?: partiallyMatchedTasks
+  private fun ModuleResolutionContext.findTasks(matcher: String): List<GradleTaskData> {
+    val tasksMatchStatus = findTasks().map { it to taskContext(it).isMatchedTask(matcher) }
+    return tasksMatchStatus.filter { it.second == ThreeState.YES }.map { it.first }.nullize()
+           ?: tasksMatchStatus.filter { it.second == ThreeState.UNSURE }.map { it.first }
   }
 
-  override fun isMatchedTask(task: GradleTaskData, modulePath: String, matcher: String): ThreeState {
-    val possibleNames = getPossibleTaskNames(task, modulePath)
+  private fun TaskResolutionContext.isMatchedTask(matcher: String): ThreeState {
+    val possibleNames = getPossibleTaskNames()
     return when {
       matcher in possibleNames -> ThreeState.YES
       possibleNames.any { it.startsWith(matcher) } -> ThreeState.UNSURE
@@ -52,24 +58,24 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
     }
   }
 
-  override fun getPossibleTaskNames(task: GradleTaskData, modulePath: String): Set<String> {
-    val taskName = task.name
-    val taskPath = getTaskPathUnderModuleProject(task, modulePath)
-    if (!isTaskFromModuleProject(task, modulePath)) {
-      if (isModuleFromCompositeProject(modulePath) &&
-          !isTaskFromCompositeProject(task)) {
+  private fun TaskResolutionContext.getPossibleTaskNames(): Set<String> {
+    val taskName = name
+    val taskPath = pathUnderModuleProject
+    if (!isFromModuleProject) {
+      if (moduleContext.isFromCompositeProject &&
+          !isFromCompositeProject) {
         return setOf()
       }
       return setOf(taskPath)
     }
-    val relativeTaskPath = getTaskPathUnderModule(task, modulePath)
+    val relativeTaskPath = pathUnderModule
     if (relativeTaskPath == null) {
       return setOf(taskPath)
     }
-    if (task.isInherited) {
+    if (isInherited) {
       return setOf(taskName)
     }
-    return setOf(task.name, taskPath, relativeTaskPath)
+    return setOf(taskName, taskPath, relativeTaskPath)
   }
 
   override fun getTasksCompletionVariances(modulePath: String): Map<String, List<GradleTaskData>> {
@@ -81,48 +87,58 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
       .mapValues { it.value.map { (_, task) -> task } }
   }
 
-  private fun getModuleCompositeProject(modulePath: String): BuildParticipant? {
-    val settings = GradleSettings.getInstance(project)
-    val projectSettings = settings.getLinkedProjectSettings(modulePath)
-    val compositeBuild = projectSettings?.compositeBuild
-    val buildParticipants = compositeBuild?.compositeParticipants
-    return buildParticipants?.find { modulePath in it.projects }
-  }
-
-  private fun getTaskCompositeProject(task: GradleTaskData): BuildParticipant? {
-    val moduleData = task.node.parent?.data as? ModuleData ?: return null
-    return getModuleCompositeProject(moduleData.linkedExternalProjectPath)
-  }
-
-  private fun isTaskFromModuleProject(task: GradleTaskData, modulePath: String): Boolean {
-    return getTaskCompositeProject(task)?.rootPath == getModuleCompositeProject(modulePath)?.rootPath
-  }
-
-  private fun isTaskFromCompositeProject(task: GradleTaskData): Boolean {
-    return getTaskCompositeProject(task) != null
-  }
-
-  private fun isModuleFromCompositeProject(modulePath: String): Boolean {
-    return getModuleCompositeProject(modulePath) != null
-  }
-
-  private fun getTaskPathUnderModuleProject(task: GradleTaskData, modulePath: String): String {
-    val taskFqnPath = task.getFqnTaskName()
-    if (!isTaskFromModuleProject(task, modulePath)) return taskFqnPath
-    val buildParticipant = getTaskCompositeProject(task) ?: return taskFqnPath
-    val buildParticipantName = buildParticipant.rootProjectName
-    return taskFqnPath.removePrefix(":$buildParticipantName")
-  }
-
-  private fun getTaskPathUnderModule(task: GradleTaskData, modulePath: String): String? {
-    val externalProjectPath = getExternalProjectPath(modulePath) ?: return null
-    val gradleModulePath = getGradleModulePath(externalProjectPath, modulePath) ?: return null
-    val surroundedModulePath = if (gradleModulePath.isEmpty()) ":" else ":$gradleModulePath:"
-    val taskFqnPath = task.getFqnTaskName()
-    if (taskFqnPath.startsWith(surroundedModulePath)) {
-      return taskFqnPath.removePrefix(surroundedModulePath)
+  private class ModuleResolutionContext(val project: Project, val path: String) {
+    val externalProjectPath by lazy {
+      ExternalSystemUtil.getExternalProjectInfo(project, GradleConstants.SYSTEM_ID, path)
+        ?.externalProjectPath
     }
-    return null
+
+    val gradlePath by lazy {
+      val moduleNode = CachedModuleDataFinder.findModuleData(project, path)
+      when {
+        moduleNode == null -> null
+        externalProjectPath == null -> null
+        externalProjectPath == path -> ""
+        else -> moduleNode.data.id.removePrefix(":")
+      }
+    }
+
+    val compositeProject by lazy { getModuleCompositeProject(project, path) }
+
+    val isFromCompositeProject by lazy { compositeProject != null }
+  }
+
+  private class TaskResolutionContext(val moduleContext: ModuleResolutionContext, val task: GradleTaskData) {
+    val compositeProject by lazy {
+      val moduleData = task.node.parent?.data as? ModuleData ?: return@lazy null
+      return@lazy getModuleCompositeProject(moduleContext.project, moduleData.linkedExternalProjectPath)
+    }
+
+    val isFromCompositeProject by lazy { compositeProject != null }
+
+    val isFromModuleProject by lazy { compositeProject?.rootPath == moduleContext.compositeProject?.rootPath }
+
+    val isInherited by lazy { task.isInherited }
+
+    val name by lazy { task.name }
+
+    val fqnPath by lazy { task.getFqnTaskName() }
+
+    val pathUnderModuleProject by lazy {
+      if (!isFromModuleProject) return@lazy fqnPath
+      val compositeProject = compositeProject ?: return@lazy fqnPath
+      val compositeProjectName = compositeProject.rootProjectName
+      return@lazy fqnPath.removePrefix(":$compositeProjectName")
+    }
+
+    val pathUnderModule by lazy {
+      val gradleModulePath = moduleContext.gradlePath ?: return@lazy null
+      val surroundedModulePath = if (gradleModulePath.isEmpty()) ":" else ":$gradleModulePath:"
+      if (fqnPath.startsWith(surroundedModulePath)) {
+        return@lazy fqnPath.removePrefix(surroundedModulePath)
+      }
+      return@lazy null
+    }
   }
 
   companion object {
@@ -140,6 +156,14 @@ class GradleTasksIndicesImpl(private val project: Project) : GradleTasksIndices 
         o1.startsWith(":") -> 1
         else -> o1.compareTo(o2)
       }
+    }
+
+    private fun getModuleCompositeProject(project: Project, modulePath: String): BuildParticipant? {
+      val settings = GradleSettings.getInstance(project)
+      val projectSettings = settings.getLinkedProjectSettings(modulePath)
+      val compositeBuild = projectSettings?.compositeBuild
+      val buildParticipants = compositeBuild?.compositeParticipants
+      return buildParticipants?.find { modulePath in it.projects }
     }
   }
 }
