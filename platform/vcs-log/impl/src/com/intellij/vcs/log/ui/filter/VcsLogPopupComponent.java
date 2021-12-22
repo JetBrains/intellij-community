@@ -4,6 +4,7 @@ package com.intellij.vcs.log.ui.filter;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ActionGroupUtil;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -166,7 +167,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
   @NotNull
   protected ListPopup createPopupMenu() {
     return JBPopupFactory.getInstance().
-      createActionGroupPopup(null, createActionGroup(), DataManager.getInstance().getDataContext(this),
+      createActionGroupPopup(null, ActionGroupUtil.forceRecursiveUpdateInBackground(createActionGroup()), DataManager.getInstance().getDataContext(this),
                              JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false);
   }
 
