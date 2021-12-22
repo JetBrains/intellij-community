@@ -8,7 +8,6 @@ import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
@@ -119,7 +118,8 @@ public final class ByLine {
     CharSequence content1 = lines1.get(index1).getContent();
     CharSequence content2 = lines2.get(index2).getContent();
     CharSequence content3 = lines3.get(index3).getContent();
-    return StringUtil.equals(content2, content1) && StringUtil.equals(content2, content3);
+    return ComparisonUtil.isEquals(content2, content1, DEFAULT) &&
+           ComparisonUtil.isEquals(content2, content3, DEFAULT);
   }
 
   @NotNull
@@ -169,7 +169,7 @@ public final class ByLine {
             Line line1 = lines1.get(index1);
             Line line2 = lines2.get(index2);
 
-            if (!StringUtil.equalsIgnoreWhitespaces(sample, line1.getContent())) {
+            if (!ComparisonUtil.isEquals(sample, line1.getContent(), IGNORE_WHITESPACES)) {
               if (line1.equals(line2)) {
                 flush(index1, index2);
                 builder.markEqual(index1, index2);
@@ -193,13 +193,13 @@ public final class ByLine {
         IntList subLines1=new IntArrayList();
         IntList subLines2=new IntArrayList();
         for (int i = start1; i < line1; i++) {
-          if (StringUtil.equalsIgnoreWhitespaces(sample, lines1.get(i).getContent())) {
+          if (ComparisonUtil.isEquals(sample, lines1.get(i).getContent(), IGNORE_WHITESPACES)) {
             subLines1.add(i);
             last1 = i + 1;
           }
         }
         for (int i = start2; i < line2; i++) {
-          if (StringUtil.equalsIgnoreWhitespaces(sample, lines2.get(i).getContent())) {
+          if (ComparisonUtil.isEquals(sample, lines2.get(i).getContent(), IGNORE_WHITESPACES)) {
             subLines2.add(i);
             last2 = i + 1;
           }

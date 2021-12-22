@@ -12,7 +12,6 @@ import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
 import org.jetbrains.annotations.NotNull;
@@ -907,7 +906,7 @@ public final class ByWord {
 
       if (myHash != word.myHash) return false;
 
-      return StringUtil.equals(getContent(), word.getContent());
+      return ComparisonUtil.isEquals(getContent(), word.getContent(), ComparisonPolicy.DEFAULT);
     }
 
     @Override

@@ -20,7 +20,6 @@ import com.intellij.diff.comparison.ByWord.NewlineChunk;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -148,7 +147,7 @@ class LineFragmentSplitter {
   private boolean isEqualsIgnoreWhitespace(@NotNull WordBlock block) {
     CharSequence sequence1 = myText1.subSequence(block.offsets.start1, block.offsets.end1);
     CharSequence sequence2 = myText2.subSequence(block.offsets.start2, block.offsets.end2);
-    return StringUtil.equalsIgnoreWhitespaces(sequence1, sequence2);
+    return ComparisonUtil.isEquals(sequence1, sequence2, ComparisonPolicy.IGNORE_WHITESPACES);
   }
 
   private boolean hasWordsInside(@NotNull WordBlock block) {

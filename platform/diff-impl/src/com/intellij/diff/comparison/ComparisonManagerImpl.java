@@ -11,7 +11,6 @@ import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.IntPair;
 import com.intellij.util.containers.ContainerUtil;
@@ -422,7 +421,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
         CharSequenceSubSequence sequence2 = new CharSequenceSubSequence(text2, fragment.getStartOffset2(), fragment.getEndOffset2());
 
         if ((fragment.getInnerFragments() == null || !fragment.getInnerFragments().isEmpty()) &&
-            !StringUtil.equalsIgnoreWhitespaces(sequence1, sequence2)) {
+            !ComparisonUtil.isEquals(sequence1, sequence2, ComparisonPolicy.IGNORE_WHITESPACES)) {
           break;
         }
         start++;
@@ -433,7 +432,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
         CharSequenceSubSequence sequence2 = new CharSequenceSubSequence(text2, fragment.getStartOffset2(), fragment.getEndOffset2());
 
         if ((fragment.getInnerFragments() == null || !fragment.getInnerFragments().isEmpty()) &&
-            !StringUtil.equalsIgnoreWhitespaces(sequence1, sequence2)) {
+            !ComparisonUtil.isEquals(sequence1, sequence2, ComparisonPolicy.IGNORE_WHITESPACES)) {
           break;
         }
         end--;
@@ -697,7 +696,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     for (int i = 0; i < words1.size(); i++) {
       CharSequence word1 = getWordContent(index1, text1, lineOffsets1, words1.get(i));
       CharSequence word2 = getWordContent(index2, text2, lineOffsets2, words2.get(i));
-      if (!StringUtil.equals(word1, word2)) return false;
+      if (!ComparisonUtil.isEquals(word1, word2, ComparisonPolicy.DEFAULT)) return false;
     }
 
     return true;
