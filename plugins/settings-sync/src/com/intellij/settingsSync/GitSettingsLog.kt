@@ -1,13 +1,9 @@
 package com.intellij.settingsSync
 
-import com.intellij.configurationStore.getExportableComponentsMap
-import com.intellij.configurationStore.getExportableItemsFromLocalStorage
 import com.intellij.openapi.Disposable
-import com.intellij.openapi.components.RoamingType
-import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.util.io.NioFiles
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.*
 import org.eclipse.jgit.api.Git
@@ -16,15 +12,15 @@ import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import java.io.File
-import java.nio.file.Path
+import java.nio.file.*
+import java.nio.file.attribute.BasicFileAttributes
 import kotlin.io.path.relativeTo
 
 internal class GitSettingsLog(private val settingsSyncStorage: Path,
                               private val rootConfigPath: Path,
                               parentDisposable: Disposable,
-                              private val componentStore: IComponentStore,
-                              private val shareableSettings: ShareableSettings) : SettingsLog, Disposable {
+                              private val collectFilesToExportFromSettings: () -> Collection<Path>
+) : SettingsLog, Disposable {
 
   private val repository: Repository get() = _repository.value
   lateinit var remoteBranch: RevCommit
@@ -49,18 +45,20 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   private fun copyExistingSettings(repository: Repository) {
     val copiedFileSpecs = mutableListOf<String>()
 
-    val fileToItems = getExportableItemsFromLocalStorage(getExportableComponentsMap(false), componentStore.storageManager)
-    for ((path, items) in fileToItems) {
+    val filesToExport = collectFilesToExportFromSettings()
+    for (path in filesToExport) {
       val fileSpec = path.relativeTo(rootConfigPath).toString()
-      if (shareableSettings.isComponentShareable(fileSpec) && items.none { it.roamingType == RoamingType.DISABLED }) {
-        if (path.isFile()) {
-          FileUtil.copy(path.toFile(), File(settingsSyncStorage.toFile(), fileSpec))
-        }
-        else {
-          FileUtil.copyDirContent(path.toFile(), settingsSyncStorage.toFile())
-        }
-        copiedFileSpecs.add(fileSpec)
+      if (path.isFile()) {
+        // 'path' is e.g. 'ROOT_CONFIG/options/editor.xml'
+        val target = settingsSyncStorage.resolve(fileSpec)
+        NioFiles.createDirectories(target.parent)
+        Files.copy(path, target, LinkOption.NOFOLLOW_LINKS)
       }
+      else {
+        // 'path' is e.g. 'ROOT_CONFIG/keymaps/'
+        copyDirectory(path, settingsSyncStorage)
+      }
+      copiedFileSpecs.add(fileSpec)
     }
 
     if (copiedFileSpecs.isNotEmpty()) {
@@ -72,6 +70,17 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       addCommand.call()
       git.commit().setMessage("copy existing configs").call()
     }
+  }
+
+  private fun copyDirectory(dirToCopy: Path, targetDir: Path) {
+    Files.walkFileTree(dirToCopy, object : SimpleFileVisitor<Path>() {
+      override fun visitFile(file: Path, attrs: BasicFileAttributes): FileVisitResult {
+        val target = targetDir.resolve(dirToCopy.parent.relativize(file))  // file is mykeymap.xml => target is keymaps/mykeymap.xml
+        NioFiles.createDirectories(target.parent)
+        Files.copy(file, target, LinkOption.NOFOLLOW_LINKS)
+        return FileVisitResult.CONTINUE
+      }
+    })
   }
 
   private fun initRepository(repository: Repository?) {

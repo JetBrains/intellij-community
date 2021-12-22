@@ -1,6 +1,8 @@
 package com.intellij.settingsSync
 
 import com.intellij.configurationStore.ComponentStoreImpl
+import com.intellij.configurationStore.getExportableComponentsMap
+import com.intellij.configurationStore.getExportableItemsFromLocalStorage
 import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
@@ -61,7 +63,9 @@ internal class SettingsSyncMain : ApplicationLoadListener {
       // todo migrate from cloud config or settings-repository
       // todo set provider only if connected
 
-      val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable, componentStore, AllShareableSettings())
+      val settingsLog = GitSettingsLog(settingsSyncStorage, appConfigPath, parentDisposable) {
+        getExportableItemsFromLocalStorage(getExportableComponentsMap(false), componentStore.storageManager).keys
+      }
       val pusher = SettingsSyncPusher(settingsLog, remoteCommunicator)
       val bridge = SettingsSyncBridge(application, parentDisposable, settingsLog, pusher)
       SettingsSyncIdeUpdater(application, componentStore, appConfigPath)
