@@ -19,6 +19,8 @@ import java.util.function.Supplier
 
 @SkipSlowTestLocally
 class KotlinCodeInsightSanityTest : KotlinLightCodeInsightFixtureTestCase() {
+    private val seed: String? = System.getProperty("seed")
+
     override fun setUp() {
         super.setUp()
         RecursionManager.disableMissedCacheAssertions(testRootDisposable)
@@ -50,6 +52,10 @@ class KotlinCodeInsightSanityTest : KotlinLightCodeInsightFixtureTestCase() {
             )
         }
         PropertyChecker
+            .customized()
+            .run {
+                seed?.let { this.rechecking(it) } ?: this
+            }
             .checkScenarios(actionSupplier)
     }
 
