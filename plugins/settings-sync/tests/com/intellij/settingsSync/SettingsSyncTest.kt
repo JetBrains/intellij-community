@@ -6,17 +6,20 @@ import com.intellij.configurationStore.getDefaultStoragePathSpec
 import com.intellij.configurationStore.serializeStateInto
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
-import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
-import com.intellij.openapi.application.ex.ApplicationEx
+import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.StateStorage
+import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
+import com.intellij.openapi.keymap.impl.KeymapImpl
+import com.intellij.openapi.keymap.impl.KeymapManagerImpl
 import com.intellij.testFramework.ApplicationRule
 import com.intellij.testFramework.DisposableRule
 import com.intellij.testFramework.TemporaryDirectory
+import com.intellij.testFramework.replaceService
 import com.intellij.util.io.createDirectories
 import com.intellij.util.toByteArray
 import com.intellij.util.xmlb.Constants
@@ -45,7 +48,7 @@ internal class SettingsSyncTest {
   private val disposableRule = DisposableRule()
   @Rule @JvmField val ruleChain: RuleChain = RuleChain.outerRule(tempDirManager).around(appRule).around(disposableRule)
 
-  private lateinit var application: Application
+  private lateinit var application: ApplicationImpl
   private lateinit var configDir: Path
   private lateinit var componentStore: TestComponentStore
   private lateinit var remoteCommunicator: TestRemoteCommunicator
@@ -54,11 +57,13 @@ internal class SettingsSyncTest {
 
   @Before
   fun setup() {
-    application = ApplicationManager.getApplication() as ApplicationEx
+    application = ApplicationManager.getApplication() as ApplicationImpl
     val mainDir = tempDirManager.createDir()
     configDir = mainDir.resolve("rootconfig").createDirectories()
     componentStore = TestComponentStore(configDir)
     remoteCommunicator = TestRemoteCommunicator()
+
+    application.replaceService(IComponentStore::class.java, componentStore, disposableRule.disposable)
   }
 
   @After
@@ -87,6 +92,23 @@ internal class SettingsSyncTest {
           isSaveOnFrameDeactivation = false
         }
       }
+    }
+  }
+
+  @Test
+  fun `scheme changes are logged`() {
+    initSettingsSync()
+
+    val keymap = KeymapImpl()
+    val name = "SettingsSyncTestKeyMap"
+    keymap.name = name
+
+    KeymapManagerImpl().schemeManager.addScheme(keymap, false)
+
+    runBlocking { componentStore.save() }
+
+    assertSettingsPushed {
+      fileState(FileState("keymaps/$name.xml", keymap.writeScheme().toByteArray() , 0))
     }
   }
 
@@ -207,6 +229,11 @@ internal class SettingsSyncTest {
     assertFalse(EditorSettingsExternalizable.getInstance().isShowIntentionBulb)
   }
 
+  //@Test
+  fun `only changed components should be reloaded`() {
+    TODO()
+  }
+
   private fun waitForSettingsToBeApplied(vararg componentsToReinit: PersistentStateComponent<*>) {
     val cdl = CountDownLatch(1)
     componentStore.reinitLatch = cdl
@@ -291,6 +318,10 @@ internal class SettingsSyncTest {
     fun fileState(function: () -> PersistentStateComponent<*>) {
       val component : PersistentStateComponent<*> = function()
       fileStates.add(component.toFileState())
+    }
+
+    fun fileState(fileState: FileState) {
+      fileStates.add(fileState)
     }
   }
 

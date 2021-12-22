@@ -1,6 +1,7 @@
 package com.intellij.settingsSync
 
-import com.intellij.configurationStore.*
+import com.intellij.configurationStore.StreamProvider
+import com.intellij.configurationStore.getPerOsSettingsStorageFolderName
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.components.RoamingType
@@ -23,7 +24,17 @@ internal class SettingsSyncStreamProvider(private val application: Application,
   }
 
   override fun write(fileSpec: String, content: ByteArray, size: Int, roamingType: RoamingType) {
-    val file = PathManager.OPTIONS_DIRECTORY + "/" + fileSpec
+    // For PersistentStateComponents the fileSpec is passed without the 'options' folder, e.g. 'editor.xml' or 'mac/keymaps.xml'
+    // OTOH for schemas it is passed together with the containing folder, e.g. 'keymaps/mykeymap.xml'
+    val file: String =
+      if (!fileSpec.contains("/") || fileSpec.startsWith(getPerOsSettingsStorageFolderName() + "/")) {
+        PathManager.OPTIONS_DIRECTORY + "/" + fileSpec
+      }
+      else {
+        fileSpec
+      }
+
+    // todo can we call default "stream provider" instead of duplicating logic?
     rootConfig.resolve(file).write(content, 0, size)
 
     if (roamingType == RoamingType.DISABLED) {
