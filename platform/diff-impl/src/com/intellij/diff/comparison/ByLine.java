@@ -19,8 +19,6 @@ import java.util.List;
 
 import static com.intellij.diff.comparison.ComparisonPolicy.DEFAULT;
 import static com.intellij.diff.comparison.ComparisonPolicy.IGNORE_WHITESPACES;
-import static com.intellij.diff.comparison.TrimUtil.trimEnd;
-import static com.intellij.diff.comparison.TrimUtil.trimStart;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isWhiteSpace;
 
@@ -398,7 +396,7 @@ public final class ByLine {
     Line(@NotNull CharSequence text, @NotNull ComparisonPolicy policy) {
       myText = text;
       myPolicy = policy;
-      myHash = hashCode(text, policy);
+      myHash = ComparisonUtil.hashCode(text, policy);
       myNonSpaceChars = countNonSpaceChars(text);
     }
 
@@ -421,7 +419,7 @@ public final class ByLine {
 
       if (hashCode() != line.hashCode()) return false;
 
-      return equals(getContent(), line.getContent(), myPolicy);
+      return ComparisonUtil.isEquals(getContent(), line.getContent(), myPolicy);
     }
 
     @Override
@@ -442,34 +440,6 @@ public final class ByLine {
       }
 
       return nonSpace;
-    }
-
-    private static boolean equals(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull ComparisonPolicy policy) {
-      switch (policy) {
-        case DEFAULT:
-          return StringUtil.equals(text1, text2);
-        case TRIM_WHITESPACES:
-          return StringUtil.equalsTrimWhitespaces(text1, text2);
-        case IGNORE_WHITESPACES:
-          return StringUtil.equalsIgnoreWhitespaces(text1, text2);
-        default:
-          throw new IllegalArgumentException(policy.toString());
-      }
-    }
-
-    private static int hashCode(@NotNull CharSequence text, @NotNull ComparisonPolicy policy) {
-      switch (policy) {
-        case DEFAULT:
-          return StringUtil.stringHashCode(text);
-        case TRIM_WHITESPACES:
-          int offset1 = trimStart(text, 0, text.length());
-          int offset2 = trimEnd(text, offset1, text.length());
-          return StringUtil.stringHashCode(text, offset1, offset2);
-        case IGNORE_WHITESPACES:
-          return StringUtil.stringHashCodeIgnoreWhitespaces(text);
-        default:
-          throw new IllegalArgumentException(policy.name());
-      }
     }
   }
 }

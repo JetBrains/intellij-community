@@ -5,9 +5,44 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.diff.comparison.TrimUtil.trimEnd;
+import static com.intellij.diff.comparison.TrimUtil.trimStart;
 
 public final class ComparisonUtil {
   private static final int UNIMPORTANT_LINE_CHAR_COUNT = Registry.intValue("diff.unimportant.line.char.count");
+
+  public static boolean isEquals(@Nullable CharSequence text1, @Nullable CharSequence text2, @NotNull ComparisonPolicy policy) {
+    if (text1 == text2) return true;
+    if (text1 == null || text2 == null) return false;
+
+    switch (policy) {
+      case DEFAULT:
+        return StringUtil.equals(text1, text2);
+      case TRIM_WHITESPACES:
+        return StringUtil.equalsTrimWhitespaces(text1, text2);
+      case IGNORE_WHITESPACES:
+        return StringUtil.equalsIgnoreWhitespaces(text1, text2);
+      default:
+        throw new IllegalArgumentException(policy.toString());
+    }
+  }
+
+  public static int hashCode(@NotNull CharSequence text, @NotNull ComparisonPolicy policy) {
+    switch (policy) {
+      case DEFAULT:
+        return StringUtil.stringHashCode(text);
+      case TRIM_WHITESPACES:
+        int offset1 = trimStart(text, 0, text.length());
+        int offset2 = trimEnd(text, offset1, text.length());
+        return StringUtil.stringHashCode(text, offset1, offset2);
+      case IGNORE_WHITESPACES:
+        return StringUtil.stringHashCodeIgnoreWhitespaces(text);
+      default:
+        throw new IllegalArgumentException(policy.name());
+    }
+  }
 
   @Contract(pure = true)
   public static boolean isEqualTexts(@NotNull CharSequence text1, @NotNull CharSequence text2, @NotNull ComparisonPolicy policy) {
