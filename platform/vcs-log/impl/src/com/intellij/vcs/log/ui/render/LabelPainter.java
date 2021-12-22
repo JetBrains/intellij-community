@@ -1,6 +1,8 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.vcs.log.ui.render;
 
+import com.intellij.ide.ui.AntialiasingType;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
@@ -283,7 +285,9 @@ public class LabelPainter {
   public void paint(@NotNull Graphics2D g2, int x, int y, int height) {
     if (myLabels.isEmpty()) return;
 
-    GraphicsConfig config = GraphicsUtil.setupAAPainting(g2);
+    GraphicsConfig config = GraphicsUtil.setupAAPainting(g2)
+      .setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, getFractionalMetricsValue())
+      .setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, getTextAntiAliasingValue());
     g2.setFont(getReferenceFont());
     g2.setStroke(new BasicStroke(1.5f));
 
@@ -323,6 +327,16 @@ public class LabelPainter {
     }
 
     config.restore();
+  }
+
+  private Object getTextAntiAliasingValue() {
+    return Objects.requireNonNullElse(myComponent.getClientProperty(RenderingHints.KEY_TEXT_ANTIALIASING),
+                                      AntialiasingType.getKeyForCurrentScope(false));
+  }
+
+  private Object getFractionalMetricsValue() {
+    return Objects.requireNonNullElse(myComponent.getClientProperty(RenderingHints.KEY_FRACTIONALMETRICS),
+                                      UISettings.Companion.getPreferredFractionalMetricsValue());
   }
 
   public Dimension getSize() {
