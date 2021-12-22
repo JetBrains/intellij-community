@@ -36,8 +36,8 @@ abstract class AbstractNewProjectWizardMultiStepBase(
 
   protected open val additionalSteps: ResettableLazy<List<AnAction>>? = null
 
-  val stepProperty = propertyGraph.graphProperty { "" }
-    .apply { bindWithStorage("NEW_PROJECT_WIZARD_STEP-${this@AbstractNewProjectWizardMultiStepBase.javaClass.name}") }
+  val stepProperty = propertyGraph.graphProperty { "" }.bindWithStorage("${javaClass.name}.selectedStep")
+
   var step by stepProperty
 
   private lateinit var stepsPanel: Placeholder
