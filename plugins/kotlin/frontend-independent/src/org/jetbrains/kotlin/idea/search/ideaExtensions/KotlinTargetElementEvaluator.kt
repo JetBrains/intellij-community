@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.search.ideaExtensions
 
@@ -10,51 +10,24 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiReference
 import com.intellij.util.BitUtil
-import org.jetbrains.kotlin.descriptors.CallableDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
-import org.jetbrains.kotlin.idea.refactoring.rename.RenameKotlinImplicitLambdaParameter.Companion.isAutoCreatedItUsage
 import org.jetbrains.kotlin.idea.references.KtDestructuringDeclarationReference
 import org.jetbrains.kotlin.idea.references.KtSimpleNameReference
 import org.jetbrains.kotlin.idea.references.mainReference
-import org.jetbrains.kotlin.idea.references.resolveMainReferenceToDescriptors
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.*
-import org.jetbrains.kotlin.resolve.descriptorUtil.isExtension
-import org.jetbrains.kotlin.resolve.source.getPsi
 
-class KotlinTargetElementEvaluator : TargetElementEvaluatorEx, TargetElementUtilExtender {
+abstract class KotlinTargetElementEvaluator : TargetElementEvaluatorEx, TargetElementUtilExtender {
     companion object {
         const val DO_NOT_UNWRAP_LABELED_EXPRESSION = 0x100
         const val BYPASS_IMPORT_ALIAS = 0x200
-
-        // Place caret after the open curly brace in lambda for generated 'it'
-        fun findLambdaOpenLBraceForGeneratedIt(ref: PsiReference): PsiElement? {
-            val element: PsiElement = ref.element
-            if (element.text != "it") return null
-
-            if (element !is KtNameReferenceExpression || !isAutoCreatedItUsage(element)) return null
-
-            val itDescriptor = element.resolveMainReferenceToDescriptors().singleOrNull() ?: return null
-            val descriptorWithSource = itDescriptor.containingDeclaration as? DeclarationDescriptorWithSource ?: return null
-            val lambdaExpression = descriptorWithSource.source.getPsi()?.parent as? KtLambdaExpression ?: return null
-            return lambdaExpression.leftCurlyBrace.treeNext?.psi
-        }
-
-        // Navigate to receiver element for this in extension declaration
-        fun findReceiverForThisInExtensionFunction(ref: PsiReference): PsiElement? {
-            val element: PsiElement = ref.element
-            if (element.text != "this") return null
-
-            if (element !is KtNameReferenceExpression) return null
-            val callableDescriptor = element.resolveMainReferenceToDescriptors().singleOrNull() as? CallableDescriptor ?: return null
-
-            if (!callableDescriptor.isExtension) return null
-            val callableDeclaration = callableDescriptor.source.getPsi() as? KtCallableDeclaration ?: return null
-
-            return callableDeclaration.receiverTypeReference
-        }
     }
+
+    // Place caret after the open curly brace in lambda for generated 'it'
+    abstract fun findLambdaOpenLBraceForGeneratedIt(ref: PsiReference): PsiElement?
+
+    // Navigate to receiver element for this in extension declaration
+    abstract fun findReceiverForThisInExtensionFunction(ref: PsiReference): PsiElement?
 
     override fun getAdditionalDefinitionSearchFlags() = 0
 

@@ -632,9 +632,9 @@
 
     <targetElementEvaluator
         language="kotlin"
-        implementationClass="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinTargetElementEvaluator" />
+        implementationClass="org.jetbrains.kotlin.idea.search.ideaExtensions.FE10KotlinTargetElementEvaluator" />
 
-    <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinTargetElementEvaluator"/>
+    <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FE10KotlinTargetElementEvaluator"/>
 
     <refactoring.pullUpHelperFactory
         language="kotlin"

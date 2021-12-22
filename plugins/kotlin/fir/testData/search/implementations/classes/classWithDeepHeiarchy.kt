@@ -1,4 +1,4 @@
-open class X<caret>()
+open class <caret>X()
 
 open class A : X()
 
