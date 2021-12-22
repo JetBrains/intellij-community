@@ -24,5 +24,6 @@
 
   <content>
     <module name="intellij.notebooks.visualization"/>
+    <module name="intellij.platform.feedback"/>
   </content>
 </idea-plugin>
