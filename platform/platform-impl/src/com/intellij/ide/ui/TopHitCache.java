@@ -13,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+import java.util.Collections;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -66,7 +67,7 @@ public class TopHitCache implements Disposable {
         result = ((OptionsSearchTopHitProvider.ApplicationLevelProvider)provider).getOptions();
       }
       else {
-        result = ((OptionsTopHitProvider)provider).getOptions(project);
+        return Collections.emptyList();
       }
 
       ActivityCategory category = project == null ? ActivityCategory.APP_OPTIONS_TOP_HIT_PROVIDER : ActivityCategory.PROJECT_OPTIONS_TOP_HIT_PROVIDER;

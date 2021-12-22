@@ -32,22 +32,12 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
   public static final ExtensionPointName<OptionsSearchTopHitProvider.ProjectLevelProvider>
     PROJECT_LEVEL_EP = new ExtensionPointName<>("com.intellij.search.projectOptionsTopHitProvider");
 
-  /**
-   * @deprecated Use {@link OptionsSearchTopHitProvider.ApplicationLevelProvider} or {@link OptionsSearchTopHitProvider.ProjectLevelProvider}
-   * <p>
-   * ConfigurableOptionsTopHitProvider will be refactored later.
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public abstract @NotNull Collection<OptionDescription> getOptions(@Nullable Project project);
-
   private static @NotNull Collection<OptionDescription> getCachedOptions(@NotNull OptionsSearchTopHitProvider provider,
                                                                          @Nullable Project project,
                                                                          @Nullable PluginDescriptor pluginDescriptor) {
     TopHitCache cache = project == null || provider instanceof ApplicationLevelProvider
        ? TopHitCache.getInstance()
        : ProjectTopHitCache.getInstance(project);
-
     return cache.getCachedOptions(provider, project, pluginDescriptor);
   }
 
@@ -194,15 +184,18 @@ public abstract class OptionsTopHitProvider implements OptionsSearchTopHitProvid
       });
 
       if (project != null) {
+        TopHitCache cache = ProjectTopHitCache.getInstance(project);
         PROJECT_LEVEL_EP.processWithPluginDescriptor((provider, pluginDescriptor) -> {
           if (indicator != null) {
             indicator.checkCanceled();
           }
           try {
-            getCachedOptions(provider, project, pluginDescriptor);
+            cache.getCachedOptions(provider, project, pluginDescriptor);
           }
           catch (Exception e) {
-            if (e instanceof ControlFlowException) throw e;
+            if (e instanceof ControlFlowException) {
+              throw e;
+            }
             Logger.getInstance(OptionsTopHitProvider.class).error(e);
           }
         });
