@@ -68,7 +68,7 @@ abstract class ComparisonUtilTestBase : DiffTestCase() {
     val before = text.first
     val after = text.second
     val iterable = ByChar.compare(before.charsSequence, after.charsSequence, INDICATOR)
-    val fragments = ComparisonManagerImpl.convertIntoDiffFragments(iterable)
+    val fragments = ByWord.convertIntoDiffFragments(iterable)
     checkConsistency(fragments, before, after)
     if (matchings != null) checkDiffMatching(fragments, matchings)
     if (expected != null) checkDiffChanges(fragments, expected)

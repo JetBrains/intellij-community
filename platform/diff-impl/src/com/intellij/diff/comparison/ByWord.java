@@ -5,20 +5,21 @@ import com.intellij.diff.comparison.LineFragmentSplitter.WordBlock;
 import com.intellij.diff.comparison.iterables.DiffIterable;
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
 import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.diff.fragments.DiffFragmentImpl;
 import com.intellij.diff.fragments.MergeWordFragment;
+import com.intellij.diff.fragments.MergeWordFragmentImpl;
 import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.MergingCharSequence;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.diff.comparison.ComparisonManagerImpl.convertIntoDiffFragments;
-import static com.intellij.diff.comparison.ComparisonManagerImpl.convertIntoMergeWordFragments;
 import static com.intellij.diff.comparison.TrimUtil.*;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
 import static com.intellij.openapi.util.text.StringUtil.isWhiteSpace;
@@ -210,6 +211,20 @@ public final class ByWord {
       default:
         throw new IllegalArgumentException(policy.name());
     }
+  }
+
+  @NotNull
+  public static List<MergeWordFragment> convertIntoMergeWordFragments(@NotNull List<? extends MergeRange> conflicts) {
+    return ContainerUtil.map(conflicts, ch -> new MergeWordFragmentImpl(ch));
+  }
+
+  @NotNull
+  public static List<DiffFragment> convertIntoDiffFragments(@NotNull DiffIterable changes) {
+    final List<DiffFragment> fragments = new ArrayList<>();
+    for (Range ch : changes.iterateChanges()) {
+      fragments.add(new DiffFragmentImpl(ch.start1, ch.end1, ch.start2, ch.end2));
+    }
+    return fragments;
   }
 
   //

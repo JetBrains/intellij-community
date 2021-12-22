@@ -85,7 +85,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     List<CharSequence> lineTexts3 = getLineContents(text3);
 
     List<MergeRange> ranges = ByLine.compare(lineTexts1, lineTexts2, lineTexts3, policy, indicator);
-    return convertIntoMergeLineFragments(ranges);
+    return ByLine.convertIntoMergeLineFragments(ranges);
   }
 
   @NotNull
@@ -100,7 +100,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
     List<CharSequence> lineTexts3 = getLineContents(text3);
 
     List<MergeRange> ranges = ByLine.merge(lineTexts1, lineTexts2, lineTexts3, policy, indicator);
-    return convertIntoMergeLineFragments(ranges);
+    return ByLine.convertIntoMergeLineFragments(ranges);
   }
 
   @NotNull
@@ -286,7 +286,7 @@ public final class ComparisonManagerImpl extends ComparisonManager {
       iterable = ByChar.compareIgnoreWhitespaces(text1, text2, indicator);
     }
 
-    return convertIntoDiffFragments(iterable);
+    return ByWord.convertIntoDiffFragments(iterable);
   }
 
   @NotNull
@@ -315,15 +315,6 @@ public final class ComparisonManagerImpl extends ComparisonManager {
   //
   // Fragments
   //
-
-  @NotNull
-  public static List<DiffFragment> convertIntoDiffFragments(@NotNull DiffIterable changes) {
-    final List<DiffFragment> fragments = new ArrayList<>();
-    for (Range ch : changes.iterateChanges()) {
-      fragments.add(new DiffFragmentImpl(ch.start1, ch.end1, ch.start2, ch.end2));
-    }
-    return fragments;
-  }
 
   @NotNull
   public static List<LineFragment> convertIntoLineFragments(@NotNull LineOffsets lineOffsets1,
@@ -372,16 +363,6 @@ public final class ComparisonManagerImpl extends ComparisonManager {
       int offset2 = lineOffsets.getLineEnd(endIndex - 1, true);
       return new IntPair(offset1, offset2);
     }
-  }
-
-  @NotNull
-  public static List<MergeLineFragment> convertIntoMergeLineFragments(@NotNull List<? extends MergeRange> conflicts) {
-    return ContainerUtil.map(conflicts, ch -> new MergeLineFragmentImpl(ch));
-  }
-
-  @NotNull
-  public static List<MergeWordFragment> convertIntoMergeWordFragments(@NotNull List<? extends MergeRange> conflicts) {
-    return ContainerUtil.map(conflicts, ch -> new MergeWordFragmentImpl(ch));
   }
 
   //

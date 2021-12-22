@@ -2,6 +2,8 @@
 package com.intellij.diff.comparison;
 
 import com.intellij.diff.comparison.iterables.FairDiffIterable;
+import com.intellij.diff.fragments.MergeLineFragment;
+import com.intellij.diff.fragments.MergeLineFragmentImpl;
 import com.intellij.diff.util.MergeRange;
 import com.intellij.diff.util.Range;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -380,6 +382,11 @@ public final class ByLine {
       result.add(newLine);
     }
     return result;
+  }
+
+  @NotNull
+  public static List<MergeLineFragment> convertIntoMergeLineFragments(@NotNull List<? extends MergeRange> conflicts) {
+    return ContainerUtil.map(conflicts, ch -> new MergeLineFragmentImpl(ch));
   }
 
   static class Line {
