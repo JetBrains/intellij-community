@@ -81,6 +81,11 @@ public class JpsBootstrapMain {
     moduleNameToRun = freeArgs.get(0);
     classNameToRun = freeArgs.get(1);
 
+    if (!classNameToRun.endsWith("BuildTarget")) {
+      fatal("Class name must end with 'BuildTarget': " + classNameToRun +
+        "\nThis is just a convention helping to find build targets in the monorepo");
+    }
+
     String verboseEnv = System.getenv(JPS_BOOTSTRAP_VERBOSE);
     JpsBootstrapUtil.setVerboseEnabled(cmdline.hasOption(ARG_VERBOSE) || (verboseEnv != null && toBooleanChecked(verboseEnv)));
 
