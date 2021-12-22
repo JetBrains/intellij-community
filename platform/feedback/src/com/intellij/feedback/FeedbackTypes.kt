@@ -7,7 +7,6 @@ import com.intellij.feedback.dialog.ProjectCreationFeedbackDialog
 import com.intellij.feedback.notification.RequestFeedbackNotification
 import com.intellij.feedback.state.projectCreation.ProjectCreationInfoService
 import com.intellij.feedback.state.projectCreation.ProjectCreationInfoState
-import com.intellij.feedback.statistics.ProjectCreationFeedbackCountCollector
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationAction
 import com.intellij.openapi.application.ex.ApplicationInfoEx
@@ -88,14 +87,8 @@ enum class FeedbackTypes {
     val notification = createNotification(forTest)
     notification.addAction(
       NotificationAction.createSimpleExpiring(FeedbackBundle.message("notification.request.feedback.action.respond.text")) {
-        if (!forTest) {
-          ProjectCreationFeedbackCountCollector.logNotificationActionCalled()
-        }
         val dialog = createFeedbackDialog(project, forTest)
         dialog.show()
-        if (!forTest && dialog.exitCode == DialogWrapper.CLOSE_EXIT_CODE) {
-          ProjectCreationFeedbackCountCollector.logDialogClosed()
-        }
       }
     )
     notification.addAction(
