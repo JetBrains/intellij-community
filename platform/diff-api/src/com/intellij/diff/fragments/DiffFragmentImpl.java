@@ -15,11 +15,11 @@
  */
 package com.intellij.diff.fragments;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.LoggerRt;
 import org.jetbrains.annotations.NonNls;
 
 public class DiffFragmentImpl implements DiffFragment {
-  private static final Logger LOG = Logger.getInstance(DiffFragmentImpl.class);
+  private static final LoggerRt LOG = LoggerRt.getInstance(DiffFragmentImpl.class);
 
   private final int myStartOffset1;
   private final int myEndOffset1;

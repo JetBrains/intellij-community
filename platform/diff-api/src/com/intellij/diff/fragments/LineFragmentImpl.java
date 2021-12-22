@@ -15,7 +15,7 @@
  */
 package com.intellij.diff.fragments;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.LoggerRt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +23,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class LineFragmentImpl implements LineFragment {
-  private static final Logger LOG = Logger.getInstance(LineFragmentImpl.class);
+  private static final LoggerRt LOG = LoggerRt.getInstance(LineFragmentImpl.class);
 
   private final int myStartLine1;
   private final int myEndLine1;

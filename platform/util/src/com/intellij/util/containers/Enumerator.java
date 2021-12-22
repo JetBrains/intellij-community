@@ -1,14 +1,14 @@
 // Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.containers;
 
-import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.LoggerRt;
 import com.intellij.util.ArrayUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import org.jetbrains.annotations.NotNull;
 
 public class Enumerator<T> {
-  private static final Logger LOG = Logger.getInstance(Enumerator.class);
+  private static final LoggerRt LOG = LoggerRt.getInstance(Enumerator.class);
   private final Object2IntMap<T> myNumbers;
   private int myNextNumber = 1;
 
