@@ -15,6 +15,7 @@ import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.api.GlobalOptions;
 import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
@@ -44,6 +45,7 @@ public final class JarsBuilder {
   private Map<JarInfo, File> myBuiltJars;
   private final BuildOutputConsumer myOutputConsumer;
   private final ArtifactOutputToSourceMapping myOutSrcMapping;
+  private final @Nullable Long buildDateInMillis;
 
   public JarsBuilder(Set<JarInfo> jarsToBuild, CompileContext context, BuildOutputConsumer outputConsumer,
                      ArtifactOutputToSourceMapping outSrcMapping) {
@@ -55,6 +57,11 @@ public final class JarsBuilder {
     }
     myJarsToBuild = evaluator.getJars();
     myContext = context;
+    String buildDateInSeconds = context.getBuilderParameter(GlobalOptions.BUILD_DATE_IN_SECONDS);
+    if (buildDateInSeconds == null) {
+      buildDateInSeconds = System.getenv(GlobalOptions.BUILD_DATE_IN_SECONDS);
+    }
+    buildDateInMillis = buildDateInSeconds != null ? Long.valueOf(buildDateInSeconds) * 1000 : null;
   }
 
   public boolean buildJars() throws IOException, ProjectBuildException {
@@ -282,7 +289,7 @@ public final class JarsBuilder {
   private void extractFileAndAddToJar(final JarOutputStream jarOutputStream, final JarBasedArtifactRootDescriptor root,
                                       final String relativeOutputPath, final Set<? super String> writtenPaths)
     throws IOException {
-    final long timestamp = FSOperations.lastModified(root.getRootFile());
+    final long timestamp = buildDateInMillis != null ? buildDateInMillis : FSOperations.lastModified(root.getRootFile());
     root.processEntries(new JarBasedArtifactRootDescriptor.EntryProcessor() {
       @Override
       public void process(@Nullable InputStream inputStream, @NotNull String relativePath, ZipEntry entry) throws IOException {
@@ -369,7 +376,7 @@ public final class JarsBuilder {
   }
 
 
-  private static String addParentDirectories(JarOutputStream jarOutputStream, Set<? super String> writtenPaths, String relativePath) throws IOException {
+  private String addParentDirectories(JarOutputStream jarOutputStream, Set<? super String> writtenPaths, String relativePath) throws IOException {
     while (StringUtil.startsWithChar(relativePath, '/')) {
       relativePath = relativePath.substring(1);
     }
@@ -384,10 +391,13 @@ public final class JarsBuilder {
     return relativePath;
   }
 
-  private static void addDirectoryEntry(final ZipOutputStream output, @NonNls final String relativePath, Set<? super String> writtenPaths) throws IOException {
+  private void addDirectoryEntry(final ZipOutputStream output, @NonNls final String relativePath, Set<? super String> writtenPaths) throws IOException {
     if (!writtenPaths.add(relativePath)) return;
 
     ZipEntry e = new ZipEntry(relativePath);
+    if (buildDateInMillis != null) {
+      e.setTime(buildDateInMillis);
+    }
     e.setMethod(ZipEntry.STORED);
     e.setSize(0);
     e.setCrc(0);
