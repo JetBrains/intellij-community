@@ -33,6 +33,7 @@
         <entry key="kotlinc.parcelize-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.sam-with-receiver-compiler-plugin" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.symbol-light-classes" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-jps-common" value="kotlin.util.compiler-classpath" />
       </map>
     </option>
   </component>
