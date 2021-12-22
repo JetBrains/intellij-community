@@ -18,3 +18,4 @@ open class B: A<String>() {
 }
 
 // DISABLE-ERRORS
+// FIR_COMPARISON

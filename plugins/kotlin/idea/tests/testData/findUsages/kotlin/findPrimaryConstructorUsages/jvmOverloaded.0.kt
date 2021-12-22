@@ -5,3 +5,4 @@ public class A @JvmOverloads <caret>constructor (
         public val y: Double = 0.0,
         public val z: String = "0"
 )
+// FIR_COMPARISON

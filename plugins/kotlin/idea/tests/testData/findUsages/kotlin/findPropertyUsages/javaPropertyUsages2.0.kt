@@ -15,4 +15,4 @@ open class B: A<String>("") {
         }
 }
 
-// FIR_IGNORE
+// FIR_COMPARISON
