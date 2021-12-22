@@ -22,6 +22,7 @@
         <entry key="kotlinc.low-level-api-fir" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.analysis-api-providers" value="kotlin.util.compiler-classpath" />
         <entry key="kotlinc.symbol-light-classes" value="kotlin.util.compiler-classpath" />
+        <entry key="kotlinc.kotlin-jps-common" value="kotlin.util.compiler-classpath" />
       </map>
     </option>
   </component>
