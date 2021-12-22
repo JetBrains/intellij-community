@@ -107,7 +107,7 @@ public final class NewProjectUtil {
   }
 
   private static void recordProjectCreatedFromWizard(@NotNull AbstractProjectWizard wizard) {
-    if (Registry.is("platform.feedback")) {
+    if (Registry.is("platform.feedback", true)) {
       final ProjectBuilder projectBuilder = wizard.getWizardContext().getProjectBuilder();
       if (projectBuilder instanceof AbstractModuleBuilder) {
         final PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(projectBuilder.getClass());
