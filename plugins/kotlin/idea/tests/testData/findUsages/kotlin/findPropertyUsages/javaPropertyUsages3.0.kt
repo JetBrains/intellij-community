@@ -2,3 +2,4 @@
 // OPTIONS: usages
 class Test(@JvmField val <caret>foo: String) {
 }
+// FIR_COMPARISON
