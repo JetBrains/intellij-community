@@ -26,6 +26,7 @@ import com.intellij.diff.tools.util.FoldingModelSupport;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.tools.util.base.TextDiffViewerUtil;
 import com.intellij.diff.tools.util.text.*;
+import com.intellij.diff.util.MergeConflictType.Type;
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -1317,6 +1318,22 @@ public final class DiffUtil {
   }
 
   @NotNull
+  public static TextDiffType getDiffType(@NotNull MergeConflictType conflictType) {
+    Type type = conflictType.getType();
+    switch (type) {
+      case INSERTED:
+        return TextDiffType.INSERTED;
+      case DELETED:
+        return TextDiffType.DELETED;
+      case MODIFIED:
+        return TextDiffType.MODIFIED;
+      case CONFLICT:
+        return TextDiffType.CONFLICT;
+    }
+    throw new IllegalStateException(type.name());
+  }
+
+  @NotNull
   public static MergeConflictType getMergeType(@NotNull Condition<? super ThreeSide> emptiness,
                                                @NotNull BiPredicate<? super ThreeSide, ? super ThreeSide> equality,
                                                @Nullable BiPredicate<? super ThreeSide, ? super ThreeSide> trueEquality,
@@ -1328,24 +1345,24 @@ public final class DiffUtil {
 
     if (isBaseEmpty) {
       if (isLeftEmpty) { // --=
-        return new MergeConflictType(TextDiffType.INSERTED, false, true);
+        return new MergeConflictType(Type.INSERTED, false, true);
       }
       else if (isRightEmpty) { // =--
-        return new MergeConflictType(TextDiffType.INSERTED, true, false);
+        return new MergeConflictType(Type.INSERTED, true, false);
       }
       else { // =-=
         boolean equalModifications = equality.test(ThreeSide.LEFT, ThreeSide.RIGHT);
         if (equalModifications) {
-          return new MergeConflictType(TextDiffType.INSERTED, true, true);
+          return new MergeConflictType(Type.INSERTED, true, true);
         }
         else {
-          return new MergeConflictType(TextDiffType.CONFLICT, true, true, false);
+          return new MergeConflictType(Type.CONFLICT, true, true, false);
         }
       }
     }
     else {
       if (isLeftEmpty && isRightEmpty) { // -=-
-        return new MergeConflictType(TextDiffType.DELETED, true, true);
+        return new MergeConflictType(Type.DELETED, true, true);
       }
       else { // -==, ==-, ===
         boolean unchangedLeft = equality.test(ThreeSide.BASE, ThreeSide.LEFT);
@@ -1356,19 +1373,19 @@ public final class DiffUtil {
           boolean trueUnchangedLeft = trueEquality.test(ThreeSide.BASE, ThreeSide.LEFT);
           boolean trueUnchangedRight = trueEquality.test(ThreeSide.BASE, ThreeSide.RIGHT);
           assert !trueUnchangedLeft || !trueUnchangedRight;
-          return new MergeConflictType(TextDiffType.MODIFIED, !trueUnchangedLeft, !trueUnchangedRight);
+          return new MergeConflictType(Type.MODIFIED, !trueUnchangedLeft, !trueUnchangedRight);
         }
 
-        if (unchangedLeft) return new MergeConflictType(isRightEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, false, true);
-        if (unchangedRight) return new MergeConflictType(isLeftEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, true, false);
+        if (unchangedLeft) return new MergeConflictType(isRightEmpty ? Type.DELETED : Type.MODIFIED, false, true);
+        if (unchangedRight) return new MergeConflictType(isLeftEmpty ? Type.DELETED : Type.MODIFIED, true, false);
 
         boolean equalModifications = equality.test(ThreeSide.LEFT, ThreeSide.RIGHT);
         if (equalModifications) {
-          return new MergeConflictType(TextDiffType.MODIFIED, true, true);
+          return new MergeConflictType(Type.MODIFIED, true, true);
         }
         else {
           boolean canBeResolved = !isLeftEmpty && !isRightEmpty && conflictResolver.get();
-          return new MergeConflictType(TextDiffType.CONFLICT, true, true, canBeResolved);
+          return new MergeConflictType(Type.CONFLICT, true, true, canBeResolved);
         }
       }
     }
@@ -1488,18 +1505,18 @@ public final class DiffUtil {
 
     if (isBaseEmpty) {
       if (isLeftEmpty) { // --=
-        return new MergeConflictType(TextDiffType.INSERTED, false, true);
+        return new MergeConflictType(Type.INSERTED, false, true);
       }
       else if (isRightEmpty) { // =--
-        return new MergeConflictType(TextDiffType.DELETED, true, false);
+        return new MergeConflictType(Type.DELETED, true, false);
       }
       else { // =-=
-        return new MergeConflictType(TextDiffType.MODIFIED, true, true);
+        return new MergeConflictType(Type.MODIFIED, true, true);
       }
     }
     else {
       if (isLeftEmpty && isRightEmpty) { // -=-
-        return new MergeConflictType(TextDiffType.MODIFIED, true, true);
+        return new MergeConflictType(Type.MODIFIED, true, true);
       }
       else { // -==, ==-, ===
         boolean unchangedLeft = equality.test(ThreeSide.BASE, ThreeSide.LEFT);
@@ -1507,13 +1524,13 @@ public final class DiffUtil {
         assert !unchangedLeft || !unchangedRight;
 
         if (unchangedLeft) {
-          return new MergeConflictType(isRightEmpty ? TextDiffType.DELETED : TextDiffType.MODIFIED, false, true);
+          return new MergeConflictType(isRightEmpty ? Type.DELETED : Type.MODIFIED, false, true);
         }
         if (unchangedRight) {
-          return new MergeConflictType(isLeftEmpty ? TextDiffType.INSERTED : TextDiffType.MODIFIED, true, false);
+          return new MergeConflictType(isLeftEmpty ? Type.INSERTED : Type.MODIFIED, true, false);
         }
 
-        return new MergeConflictType(TextDiffType.MODIFIED, true, true);
+        return new MergeConflictType(Type.MODIFIED, true, true);
       }
     }
   }

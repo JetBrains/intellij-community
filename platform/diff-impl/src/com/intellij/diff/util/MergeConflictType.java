@@ -18,16 +18,16 @@ package com.intellij.diff.util;
 import org.jetbrains.annotations.NotNull;
 
 public class MergeConflictType {
-  @NotNull private final TextDiffType myType;
+  @NotNull private final Type myType;
   private final boolean myLeftChange;
   private final boolean myRightChange;
   private final boolean myCanBeResolved;
 
-  public MergeConflictType(@NotNull TextDiffType type, boolean leftChange, boolean rightChange) {
+  public MergeConflictType(@NotNull Type type, boolean leftChange, boolean rightChange) {
     this(type, leftChange, rightChange, true);
   }
 
-  public MergeConflictType(@NotNull TextDiffType type, boolean leftChange, boolean rightChange, boolean canBeResolved) {
+  public MergeConflictType(@NotNull Type type, boolean leftChange, boolean rightChange, boolean canBeResolved) {
     myType = type;
     myLeftChange = leftChange;
     myRightChange = rightChange;
@@ -35,7 +35,7 @@ public class MergeConflictType {
   }
 
   @NotNull
-  public TextDiffType getDiffType() {
+  public Type getType() {
     return myType;
   }
 
@@ -59,4 +59,6 @@ public class MergeConflictType {
         throw new IllegalArgumentException(side.toString());
     }
   }
+
+  public enum Type {INSERTED, DELETED, MODIFIED, CONFLICT}
 }

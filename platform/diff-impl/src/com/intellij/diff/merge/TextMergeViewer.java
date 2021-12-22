@@ -30,6 +30,7 @@ import com.intellij.diff.tools.util.text.LineOffsetsUtil;
 import com.intellij.diff.tools.util.text.MergeInnerDifferences;
 import com.intellij.diff.tools.util.text.TextDiffProviderBase;
 import com.intellij.diff.util.*;
+import com.intellij.diff.util.MergeConflictType.Type;
 import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
@@ -897,7 +898,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
 
         TextMergeChange mergeChange = myAllMergeChanges.get(index);
         if (mergeChange.getStartLine() == mergeChange.getEndLine() &&
-            mergeChange.getDiffType() == TextDiffType.DELETED && !mergeChange.isResolved()) {
+            mergeChange.getConflictType().getType() == Type.DELETED && !mergeChange.isResolved()) {
           myViewer.markChangeResolved(mergeChange);
         }
 
@@ -946,7 +947,7 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
     public boolean canResolveChangeAutomatically(@NotNull TextMergeChange change, @NotNull ThreeSide side) {
       if (change.isConflict()) {
         return side == ThreeSide.BASE &&
-               change.getType().canBeResolved() &&
+               change.getConflictType().canBeResolved() &&
                !change.isResolved(Side.LEFT) && !change.isResolved(Side.RIGHT) &&
                !isChangeRangeModified(change);
       }

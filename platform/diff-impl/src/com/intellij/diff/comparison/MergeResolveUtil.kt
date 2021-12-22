@@ -18,6 +18,7 @@ package com.intellij.diff.comparison
 import com.intellij.diff.fragments.DiffFragment
 import com.intellij.diff.fragments.MergeWordFragmentImpl
 import com.intellij.diff.util.*
+import com.intellij.diff.util.MergeConflictType.Type
 import com.intellij.diff.util.Side.LEFT
 import com.intellij.diff.util.Side.RIGHT
 import com.intellij.openapi.progress.DumbProgressIndicator
@@ -136,7 +137,7 @@ private class SimpleHelper(val leftText: CharSequence, val baseText: CharSequenc
 
   private fun appendConflict(range: MergeRange, policy: ComparisonPolicy): Boolean {
     val type = getConflictType(range, policy)
-    if (type.diffType == TextDiffType.CONFLICT) return false
+    if (type.type == Type.CONFLICT) return false
 
     if (type.isChange(Side.LEFT)) {
       append(range, ThreeSide.LEFT)

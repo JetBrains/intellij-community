@@ -8,6 +8,7 @@ import com.intellij.diff.tools.util.base.HighlightPolicy;
 import com.intellij.diff.tools.util.base.IgnorePolicy;
 import com.intellij.diff.tools.util.base.TextDiffSettingsHolder.TextDiffSettings;
 import com.intellij.diff.util.*;
+import com.intellij.diff.util.MergeConflictType.Type;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.util.containers.ContainerUtil;
@@ -107,13 +108,13 @@ public class SimpleThreesideTextDiffProvider extends TextDiffProviderBase {
 
   @NotNull
   private static MergeConflictType invertConflictType(@NotNull MergeConflictType oldConflictType) {
-    TextDiffType oldDiffType = oldConflictType.getDiffType();
+    Type oldDiffType = oldConflictType.getType();
 
-    if (oldDiffType != TextDiffType.INSERTED && oldDiffType != TextDiffType.DELETED) {
+    if (oldDiffType != Type.INSERTED && oldDiffType != Type.DELETED) {
       return oldConflictType;
     }
 
-    return new MergeConflictType(oldDiffType == TextDiffType.DELETED ? TextDiffType.INSERTED : TextDiffType.DELETED,
+    return new MergeConflictType(oldDiffType == Type.DELETED ? Type.INSERTED : Type.DELETED,
                                  oldConflictType.isChange(Side.LEFT), oldConflictType.isChange(Side.RIGHT),
                                  oldConflictType.canBeResolved());
   }
