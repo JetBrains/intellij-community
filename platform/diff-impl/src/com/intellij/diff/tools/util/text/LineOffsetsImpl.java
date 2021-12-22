@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.util.text;
 
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import it.unimi.dsi.fastutil.ints.IntArrayList;
 import it.unimi.dsi.fastutil.ints.IntList;
 import org.jetbrains.annotations.NotNull;
@@ -15,7 +15,7 @@ final class LineOffsetsImpl implements LineOffsets {
 
     int index = 0;
     while (true) {
-      int lineEnd = StringUtil.indexOf(text, '\n', index);
+      int lineEnd = Strings.indexOf(text, '\n', index);
       if (lineEnd != -1) {
         ends.add(lineEnd);
         index = lineEnd + 1;

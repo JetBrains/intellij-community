@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 import static com.intellij.diff.comparison.ComparisonPolicy.DEFAULT;
 import static com.intellij.diff.comparison.ComparisonPolicy.IGNORE_WHITESPACES;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.*;
-import static com.intellij.openapi.util.text.StringUtil.isWhiteSpace;
+import static com.intellij.openapi.util.text.Strings.isWhiteSpace;
 
 public final class ByLine {
   @NotNull

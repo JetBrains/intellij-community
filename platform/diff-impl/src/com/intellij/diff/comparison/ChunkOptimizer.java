@@ -32,7 +32,7 @@ import static com.intellij.diff.comparison.TrimUtil.expandBackward;
 import static com.intellij.diff.comparison.TrimUtil.expandForward;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.createUnchanged;
 import static com.intellij.diff.comparison.iterables.DiffIterableUtil.fair;
-import static com.intellij.openapi.util.text.StringUtil.isWhiteSpace;
+import static com.intellij.openapi.util.text.Strings.isWhiteSpace;
 
 abstract class ChunkOptimizer<T> {
   @NotNull protected final List<? extends T> myData1;

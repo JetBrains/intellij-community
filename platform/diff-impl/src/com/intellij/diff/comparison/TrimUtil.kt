@@ -6,7 +6,7 @@ package com.intellij.diff.comparison
 
 import com.intellij.diff.util.MergeRange
 import com.intellij.diff.util.Range
-import com.intellij.openapi.util.text.StringUtil.isWhiteSpace
+import com.intellij.openapi.util.text.Strings.isWhiteSpace
 import java.util.*
 
 fun isPunctuation(c: Char): Boolean {
