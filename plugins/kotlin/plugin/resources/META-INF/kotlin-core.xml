@@ -503,9 +503,9 @@
 
     <importFilteringRule implementation="org.jetbrains.kotlin.idea.findUsages.KotlinImportFilteringRule"/>
 
-    <targetElementEvaluator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinTargetElementEvaluator" />
+    <targetElementEvaluator language="kotlin" implementationClass="org.jetbrains.kotlin.idea.search.ideaExtensions.FE10KotlinTargetElementEvaluator" />
 
-    <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinTargetElementEvaluator"/>
+    <targetElementUtilExtender implementation="org.jetbrains.kotlin.idea.search.ideaExtensions.FE10KotlinTargetElementEvaluator"/>
 
     <structuralsearch.profile implementation="org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchProfile"/>
     <structuralsearch.filterProvider implementation="org.jetbrains.kotlin.idea.structuralsearch.filters.KotlinFilterProvider"/>
