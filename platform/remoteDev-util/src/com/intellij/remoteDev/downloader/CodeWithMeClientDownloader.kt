@@ -435,7 +435,7 @@ object CodeWithMeClientDownloader {
         if (i < MAX_ATTEMPTS) {
           LOG.warn("Attempt $i of $MAX_ATTEMPTS to download from $url to ${path.absolutePathString()} failed, retrying in $delayMs ms", e)
           Thread.sleep(delayMs)
-          delayMs *= 1.5.toLong()
+          delayMs = (delayMs * 1.5).toLong()
         } else {
           LOG.warn("Failed to download from $url to ${path.absolutePathString()} in $MAX_ATTEMPTS attempts", e)
           throw e
