@@ -17,6 +17,22 @@ class KotlinIconProviderTest: KotlinLightCodeInsightFixtureTestCase() {
         createFileAndCheckIcon("Foo.kt", "fun foo() = TODO()", "org/jetbrains/kotlin/idea/icons/kotlin_file.svg")
     }
 
+    fun testClassAndPrivateFunction() {
+        val fileBody = """
+            class Foo
+            private fun bar() {}
+        """.trimIndent()
+        createFileAndCheckIcon("Foo.kt", fileBody, "org/jetbrains/kotlin/idea/icons/classKotlin.svg", "nodes/c_public.svg")
+    }
+
+    fun testClassAndInternalFunction() {
+        val fileBody = """
+            class Foo
+            internal fun bar() {}
+        """.trimIndent()
+        createFileAndCheckIcon("Foo.kt", fileBody, "org/jetbrains/kotlin/idea/icons/kotlin_file.svg")
+    }
+
     private fun createFileAndCheckIcon(fileName: String, fileBody: String, vararg icons: String) {
         val psiFile = myFixture.configureByText(fileName, fileBody)
         val icon = PsiIconUtil.getProvidersIcon(psiFile, Iconable.ICON_FLAG_VISIBILITY or Iconable.ICON_FLAG_READ_STATUS)
