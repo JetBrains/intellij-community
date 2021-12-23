@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.daemon.impl
 
 import com.intellij.diff.DiffContentFactory
@@ -7,6 +7,7 @@ import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
@@ -19,8 +20,10 @@ import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.LightColors
 import com.intellij.util.diff.Diff
+import java.util.function.Function
+import javax.swing.JComponent
 
-class LibrarySourceNotificationProvider : EditorNotificationProvider<EditorNotificationPanel> {
+class LibrarySourceNotificationProvider : EditorNotificationProvider {
 
   private companion object {
 
@@ -39,7 +42,7 @@ class LibrarySourceNotificationProvider : EditorNotificationProvider<EditorNotif
   override fun collectNotificationData(
     project: Project,
     file: VirtualFile,
-  ): EditorNotificationProvider.ComponentProvider<EditorNotificationPanel> {
+  ): Function<in FileEditor, out JComponent?> {
     if (file.fileType is LanguageFileType && ProjectRootManager.getInstance(project).fileIndex.isInLibrarySource(file)) {
       val psiFile = PsiManager.getInstance(project).findFile(file)
       if (psiFile is PsiJavaFile) {
@@ -47,9 +50,9 @@ class LibrarySourceNotificationProvider : EditorNotificationProvider<EditorNotif
         if (offender != null) {
           val clsFile = offender.originalElement.containingFile?.virtualFile
           if (clsFile != null && !clsFile.path.matches(ANDROID_SDK_PATTERN)) {
-            return EditorNotificationProvider.ComponentProvider { _ ->
+            return Function {
               val panel = EditorNotificationPanel(LightColors.RED)
-              panel.setText(JavaUiBundle.message("library.source.mismatch", offender.name))
+              panel.text = JavaUiBundle.message("library.source.mismatch", offender.name)
               panel.createActionLabel(JavaUiBundle.message("library.source.open.class")) {
                 if (!project.isDisposed && clsFile.isValid) {
                   PsiNavigationSupport.getInstance().createNavigatable(project, clsFile, -1).navigate(true)
@@ -63,14 +66,14 @@ class LibrarySourceNotificationProvider : EditorNotificationProvider<EditorNotif
                 }
               }
               logMembers(offender)
-              return@ComponentProvider panel
+              return@Function panel
             }
           }
         }
       }
     }
 
-    return EditorNotificationProvider.ComponentProvider.getDummy()
+    return EditorNotificationProvider.CONST_NULL
   }
 
   private fun differs(src: PsiClass): Boolean {

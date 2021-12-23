@@ -15,7 +15,7 @@ private val GROUP = EventLogGroup(
   version = 3,
 )
 
-private val PROVIDER_CLASS_FIELD = object : PrimitiveEventField<EditorNotificationProvider<*>>() {
+private val PROVIDER_CLASS_FIELD = object : PrimitiveEventField<EditorNotificationProvider>() {
 
   private val delegate = Class("provider_class")
 
@@ -27,7 +27,7 @@ private val PROVIDER_CLASS_FIELD = object : PrimitiveEventField<EditorNotificati
 
   override fun addData(
     fuData: FeatureUsageData,
-    value: EditorNotificationProvider<*>,
+    value: EditorNotificationProvider,
   ) {
     delegate.addData(fuData, value.javaClass)
   }
@@ -47,7 +47,7 @@ private val HANDLER_INVOKED_EVENT = GROUP.registerEvent(
 @Internal
 internal fun logNotificationShown(
   project: Project,
-  provider: EditorNotificationProvider<*>,
+  provider: EditorNotificationProvider,
 ) {
   NOTIFICATION_SHOWN_EVENT.log(project, provider)
 }
@@ -55,7 +55,7 @@ internal fun logNotificationShown(
 @Internal
 internal fun logHandlerInvoked(
   project: Project,
-  provider: EditorNotificationProvider<*>,
+  provider: EditorNotificationProvider,
   handlerClass: Class<*>,
 ) {
   HANDLER_INVOKED_EVENT.log(project, provider, handlerClass)

@@ -5,6 +5,7 @@ import com.intellij.ide.lightEdit.LightEditService;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.ApiStatus;
@@ -12,6 +13,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.function.Function;
 
 public abstract class EditorNotifications {
 
@@ -21,7 +23,7 @@ public abstract class EditorNotifications {
     }
 
     @Override
-    public void updateNotifications(@NotNull EditorNotificationProvider<?> provider) {
+    public void updateNotifications(@NotNull EditorNotificationProvider provider) {
     }
 
     @Override
@@ -29,8 +31,8 @@ public abstract class EditorNotifications {
     }
 
     @Override
-    public void logNotificationActionInvocation(@NotNull EditorNotificationProvider<?> provider,
-                                                @NotNull Class<?> runnableClass) {
+    public void logNotificationActionInvocation(@NotNull EditorNotificationProvider provider,
+                                                @NotNull Class<?> handlerClass) {
     }
   };
 
@@ -38,13 +40,11 @@ public abstract class EditorNotifications {
    * @deprecated Please use {@link EditorNotificationProvider} instead.
    */
   @Deprecated
-  public abstract static class Provider<T extends JComponent> implements EditorNotificationProvider<T> {
+  public abstract static class Provider<T extends JComponent> implements EditorNotificationProvider {
 
-    /**
-     * @deprecated Override {@link #createNotificationPanel(VirtualFile, FileEditor, Project)}
-     */
-    @SuppressWarnings({"unused"})
-    @Deprecated
+    @Override
+    public abstract @NotNull Key<T> getKey();
+
     @RequiresEdt
     public @Nullable T createNotificationPanel(@NotNull VirtualFile file,
                                                @NotNull FileEditor fileEditor) {
@@ -59,8 +59,8 @@ public abstract class EditorNotifications {
     }
 
     @Override
-    public @NotNull ComponentProvider<T> collectNotificationData(@NotNull Project project,
-                                                                 @NotNull VirtualFile file) {
+    public @NotNull Function<? super @NotNull FileEditor, @Nullable T> collectNotificationData(@NotNull Project project,
+                                                                                               @NotNull VirtualFile file) {
       return fileEditor -> createNotificationPanel(file, fileEditor, project);
     }
   }
@@ -71,13 +71,13 @@ public abstract class EditorNotifications {
 
   public abstract void updateNotifications(@NotNull VirtualFile file);
 
-  public abstract void updateNotifications(@NotNull EditorNotificationProvider<?> provider);
+  public abstract void updateNotifications(@NotNull EditorNotificationProvider provider);
 
   public abstract void updateAllNotifications();
 
   @ApiStatus.Internal
-  public abstract void logNotificationActionInvocation(@NotNull EditorNotificationProvider<?> provider,
-                                                       @NotNull Class<?> runnableClass);
+  public abstract void logNotificationActionInvocation(@NotNull EditorNotificationProvider provider,
+                                                       @NotNull Class<?> handlerClass);
 
   public static void updateAll() {
     Project[] projects = ProjectManager.getInstance().getOpenProjects();

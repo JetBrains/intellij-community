@@ -42,7 +42,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
    * @deprecated Please use {@link EditorNotificationProvider#EP_NAME} instead.
    */
   @Deprecated
-  public static final ProjectExtensionPointName<EditorNotificationProvider<?>> EP_PROJECT = EditorNotificationProvider.EP_NAME;
+  public static final ProjectExtensionPointName<EditorNotificationProvider> EP_PROJECT = EditorNotificationProvider.EP_NAME;
   private static final Key<Boolean> PENDING_UPDATE = Key.create("pending.notification.update");
 
   private final @NotNull MergingUpdateQueue myUpdateMerger;
@@ -93,21 +93,21 @@ public final class EditorNotificationsImpl extends EditorNotifications {
       .getPoint(project)
       .addExtensionPointListener(new ExtensionPointListener<>() {
         @Override
-        public void extensionAdded(@NotNull EditorNotificationProvider<?> extension,
-                                   @NotNull PluginDescriptor pluginDescriptor) {
+        public void extensionAdded(@NotNull EditorNotificationProvider extension,
+                                   @NotNull PluginDescriptor descriptor) {
           updateAllNotifications();
         }
 
         @Override
-        public void extensionRemoved(@NotNull EditorNotificationProvider<?> extension,
-                                     @NotNull PluginDescriptor pluginDescriptor) {
+        public void extensionRemoved(@NotNull EditorNotificationProvider extension,
+                                     @NotNull PluginDescriptor descriptor) {
           updateNotifications(extension);
         }
       }, false, null);
   }
 
   @Override
-  public void updateNotifications(@NotNull EditorNotificationProvider<?> provider) {
+  public void updateNotifications(@NotNull EditorNotificationProvider provider) {
     for (VirtualFile file : FileEditorManager.getInstance(myProject).getOpenFilesWithRemotes()) {
       List<FileEditor> editors = getEditors(file);
 
@@ -155,7 +155,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
       return;
     }
 
-    for (EditorNotificationProvider<?> provider : EditorNotificationProvider.EP_NAME.getExtensions(myProject)) {
+    for (EditorNotificationProvider provider : EditorNotificationProvider.EP_NAME.getExtensions(myProject)) {
       ReadAction.nonBlocking(() -> provider.collectNotificationData(myProject, file))
         .expireWith(myProject)
         .expireWhen(() -> !file.isValid() || DumbService.isDumb(myProject) && !DumbService.isDumbAware(provider))
@@ -168,7 +168,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
   }
 
   private void updateNotification(@NotNull FileEditor editor,
-                                  @NotNull EditorNotificationProvider<?> provider,
+                                  @NotNull EditorNotificationProvider provider,
                                   @Nullable JComponent component) {
     @SuppressWarnings("unchecked") Key<JComponent> key = (Key<JComponent>)provider.getKey();
     JComponent old = editor.getUserData(key);
@@ -190,7 +190,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
   }
 
   @Override
-  public void logNotificationActionInvocation(@NotNull EditorNotificationProvider<?> provider,
+  public void logNotificationActionInvocation(@NotNull EditorNotificationProvider provider,
                                               @NotNull Class<?> runnableClass) {
     EditorNotificationUsagesCollectorKt.logHandlerInvoked(myProject,
                                                           provider,

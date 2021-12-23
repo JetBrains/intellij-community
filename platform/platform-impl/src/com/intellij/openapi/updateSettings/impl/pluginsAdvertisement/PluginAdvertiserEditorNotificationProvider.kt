@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.execution.process.ProcessIOExecutorService
@@ -26,9 +26,11 @@ import com.intellij.ui.EditorNotifications
 import com.intellij.ui.HyperlinkLabel
 import org.jetbrains.annotations.VisibleForTesting
 import java.awt.BorderLayout
+import java.util.function.Function
+import javax.swing.JComponent
 import javax.swing.JLabel
 
-class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider<EditorNotificationPanel>,
+class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
                                                    DumbAware {
 
   override fun getKey(): Key<EditorNotificationPanel> = KEY
@@ -36,7 +38,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider<Ed
   override fun collectNotificationData(
     project: Project,
     file: VirtualFile,
-  ): EditorNotificationProvider.ComponentProvider<EditorNotificationPanel> {
+  ): Function<in FileEditor, out JComponent?> {
     val suggestionData = getSuggestionData(project, ApplicationInfo.getInstance().build.productCode, file.name, file.fileType)
 
     if (suggestionData == null) {
@@ -60,7 +62,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider<Ed
         LOG.debug("Tried to update extensions cache for file '${file.name}'. shouldUpdateNotifications=$shouldUpdateNotifications")
       }
 
-      return EditorNotificationProvider.ComponentProvider.getDummy()
+      return EditorNotificationProvider.CONST_NULL
     }
 
     return suggestionData
@@ -72,7 +74,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider<Ed
     dataSet: Set<PluginData>,
     jbPluginsIds: Set<String>,
     val suggestedIdes: List<SuggestedIde>,
-  ) : EditorNotificationProvider.ComponentProvider<EditorNotificationPanel> {
+  ) : Function<FileEditor, EditorNotificationPanel?> {
 
     private var disabledPlugin: IdeaPluginDescriptor? = null
     private val jbProduced = mutableSetOf<PluginId>()

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.codeInsight.intention.PriorityAction;
@@ -7,29 +7,51 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.EditorNotificationPanel;
+import com.intellij.ui.EditorNotificationProvider;
 import com.intellij.ui.HyperlinkLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Function;
 
-public final class UnknownSdkEditorPanel extends EditorNotificationPanel {
+final class UnknownSdkEditorPanel extends EditorNotificationPanel {
+
+  private static final EditorNotificationProvider PROVIDER = new EditorNotificationProvider() {
+
+    private final Key<? extends JComponent> myKey = Key.create("SdkSetupNotificationNew");
+
+    @Override
+    public @NotNull Key<? extends JComponent> getKey() {
+      return myKey;
+    }
+
+    @Override
+    public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
+                                                                                                                  @NotNull VirtualFile file) {
+      return CONST_NULL;
+    }
+  };
+
   private final AtomicBoolean myIsRunning = new AtomicBoolean(false);
-  private static final Key<?> EDITOR_NOTIFICATIONS_KEY = Key.create("SdkSetupNotificationNew");
 
   private final @NotNull UnknownSdkFix myFix;
   private final @Nullable UnknownSdkFixAction myAction;
 
-  public UnknownSdkEditorPanel(@NotNull Project project, @NotNull FileEditor fileEditor, @NotNull UnknownSdkFix fix) {
+  UnknownSdkEditorPanel(@NotNull Project project,
+                        @NotNull FileEditor fileEditor,
+                        @NotNull UnknownSdkFix fix) {
     super(fileEditor);
     myFix = fix;
     myAction = myFix.getSuggestedFixAction();
 
     setProject(project);
-    setProviderKey(EDITOR_NOTIFICATIONS_KEY);
+    setProvider(PROVIDER);
     setText(fix.getNotificationText());
 
     if (myAction != null) {

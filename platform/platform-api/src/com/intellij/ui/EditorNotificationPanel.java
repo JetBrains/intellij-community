@@ -57,7 +57,7 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
   protected final @Nullable Color myBackgroundColor;
   protected final @NotNull ColorKey myBackgroundColorKey;
 
-  private @Nullable EditorNotificationProvider<?> myProvider;
+  private @Nullable EditorNotificationProvider myProvider;
   private @Nullable Project myProject;
 
   public EditorNotificationPanel(@Nullable Color backgroundColor) {
@@ -154,19 +154,20 @@ public class EditorNotificationPanel extends JPanel implements IntentionActionPr
     return UIUtil.getToolTipBackground();
   }
 
+  @ApiStatus.Internal
   public void setProject(@Nullable Project project) {
     myProject = project;
   }
 
   /**
-   * @deprecated Please use either {@link #setProvider(EditorNotificationProvider)} or a constuctor.
+   * @deprecated Please use {@link #setProvider(EditorNotificationProvider)}.
    */
   @Deprecated
   public void setProviderKey(@Nullable Key<?> key) {
   }
 
   @ApiStatus.Internal
-  public void setProvider(@Nullable EditorNotificationProvider<?> provider) {
+  public void setProvider(@Nullable EditorNotificationProvider provider) {
     myProvider = provider;
   }
 
