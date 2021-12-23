@@ -73,7 +73,6 @@ class MarkdownJCEFHtmlPanel(
     )
 
   private fun buildIndexContent(): String {
-    reloadExtensions()
     // language=HTML
     return """
       <!DOCTYPE html>
@@ -90,6 +89,7 @@ class MarkdownJCEFHtmlPanel(
   }
 
   private fun loadIndexContent() {
+    reloadExtensions()
     loadURL(PreviewStaticServer.getStaticUrl(resourceProvider, pageBaseName))
   }
 
