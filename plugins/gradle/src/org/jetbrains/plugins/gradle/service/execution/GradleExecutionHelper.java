@@ -47,6 +47,8 @@ import org.jetbrains.plugins.gradle.settings.DistributionType;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.tooling.internal.init.Init;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleProperties;
+import org.jetbrains.plugins.gradle.util.GradlePropertiesUtil;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.*;
@@ -455,14 +457,13 @@ public class GradleExecutionHelper {
     if (buildEnvironment == null) {
       return;
     }
-    File gradlePropsFile = new File(buildEnvironment.getBuildIdentifier().getRootDir(), "gradle.properties");
-    if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it)) &&
-        gradlePropsFile.exists()) {
-      try (FileInputStream fis = new FileInputStream(gradlePropsFile)) {
-        Properties gradleProps = new Properties();
-        gradleProps.load(fis);
-        @NonNls String gradleLogLevel = gradleProps.getProperty(LoggingConfigurationBuildOptions.LogLevelOption.GRADLE_PROPERTY);
-        if (gradleLogLevel != null) {
+    GradleProperties properties = GradlePropertiesUtil.getGradleProperties(settings.getServiceDirectory(),
+                                                                           buildEnvironment.getBuildIdentifier().getRootDir().toPath());
+    GradleProperties.GradleProperty<String> loggingLevelProperty = properties.getGradleLoggingLevel();
+    @NonNls String gradleLogLevel = loggingLevelProperty != null ? loggingLevelProperty.getValue() : null;
+
+    if (!ContainerUtil.exists(optionsNames, it -> arguments.contains(it))
+        && gradleLogLevel != null) {
           try {
             LogLevel logLevel = LogLevel.valueOf(gradleLogLevel.toUpperCase());
             switch(logLevel) {
@@ -471,13 +472,9 @@ public class GradleExecutionHelper {
               case WARN: settings.withArgument("-w"); break;
               case QUIET: settings.withArgument("-q"); break;
             }
-          } catch (IllegalArgumentException var4) {
+          } catch (IllegalArgumentException e) {
             LOG.warn("org.gradle.logging.level must be one of quiet, warn, lifecycle, info, or debug");
           }
-        }
-      } catch (IOException e) {
-        LOG.debug("Failed to load gradle.properties file", e);
-      }
     }
 
     // Default logging level for integration tests
