@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
-import com.intellij.openapi.application.ThreadContext;
+import com.intellij.concurrency.ThreadContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Executor;

@@ -1,8 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress;
 
+import com.intellij.concurrency.ThreadContext;
 import com.intellij.openapi.application.AccessToken;
-import com.intellij.openapi.application.ThreadContext;
 import kotlin.coroutines.CoroutineContext;
 import kotlinx.coroutines.CompletableDeferred;
 import org.jetbrains.annotations.ApiStatus.Internal;

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.openapi.application
+package com.intellij.concurrency
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.timeoutRunBlocking
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ApplicationExtension
@@ -11,7 +12,6 @@ import org.junit.jupiter.api.BeforeAll
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.concurrent.ExecutorService
-import kotlin.Result
 import kotlin.test.assertSame
 
 class ThreadContextPropagationTest {

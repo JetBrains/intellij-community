@@ -2,8 +2,9 @@
 @file:JvmName("ThreadContext")
 @file:Experimental
 
-package com.intellij.openapi.application
+package com.intellij.concurrency
 
+import com.intellij.openapi.application.AccessToken
 import org.jetbrains.annotations.ApiStatus.Experimental
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
