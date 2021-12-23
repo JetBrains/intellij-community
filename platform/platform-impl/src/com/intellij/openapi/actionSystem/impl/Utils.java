@@ -83,7 +83,7 @@ public final class Utils extends DataContextUtils {
   }
 
   private static @NotNull DataContext newPreCachedDataContext(@Nullable Component component) {
-    return new PreCachedDataContext2(component);
+    return new PreCachedDataContext(component);
   }
 
   public static @NotNull DataContext wrapDataContext(@NotNull DataContext dataContext) {
@@ -93,7 +93,7 @@ public final class Utils extends DataContextUtils {
 
   @ApiStatus.Internal
   public static @NotNull DataContext freezeDataContext(@NotNull DataContext dataContext, @Nullable Consumer<? super String> missedKeys) {
-    return dataContext instanceof PreCachedDataContext2 ? ((PreCachedDataContext2)dataContext).frozenCopy(missedKeys) :
+    return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).frozenCopy(missedKeys) :
            dataContext;
   }
 
@@ -103,14 +103,14 @@ public final class Utils extends DataContextUtils {
 
   @ApiStatus.Internal
   public static @Nullable Object getRawDataIfCached(@NotNull DataContext dataContext, @NotNull String dataId) {
-    return dataContext instanceof PreCachedDataContext2 ? ((PreCachedDataContext2)dataContext).getRawDataIfCached(dataId) :
+    return dataContext instanceof PreCachedDataContext ? ((PreCachedDataContext)dataContext).getRawDataIfCached(dataId) :
            dataContext instanceof EdtDataContext ? ((EdtDataContext)dataContext).getRawDataIfCached(dataId) : null;
   }
 
   static void clearAllCachesAndUpdates() {
     ActionUpdater.cancelAllUpdates("clear-all-caches-and-updates requested");
     ActionUpdater.waitForAllUpdatesToFinish();
-    PreCachedDataContext2.clearAllCaches();
+    PreCachedDataContext.clearAllCaches();
   }
 
   @ApiStatus.Internal

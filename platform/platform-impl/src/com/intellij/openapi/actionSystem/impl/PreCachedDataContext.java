@@ -50,13 +50,13 @@ import static com.intellij.ide.impl.DataManagerImpl.getDataProviderEx;
 /**
  * @author gregsh
  */
-class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActionEvent.InjectedDataContextSupplier, FreezingDataContext {
+class PreCachedDataContext implements AsyncDataContext, UserDataHolder, AnActionEvent.InjectedDataContextSupplier, FreezingDataContext {
 
-  private static final Logger LOG = Logger.getInstance(PreCachedDataContext2.class);
+  private static final Logger LOG = Logger.getInstance(PreCachedDataContext.class);
 
   private static int ourPrevMapEventCount;
   private static final Map<Component, FList<ProviderData>> ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap();
-  private static final Collection<PreCachedDataContext2> ourInstances = new UnsafeWeakList<>();
+  private static final Collection<PreCachedDataContext> ourInstances = new UnsafeWeakList<>();
   private static final Map<String, Integer> ourDataKeysIndices = new ConcurrentHashMap<>();
   private static final AtomicInteger ourDataKeysCount = new AtomicInteger();
   private static final Object ourExplicitNull = ObjectUtils.sentinel("explicit.null");
@@ -67,7 +67,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
   private final Consumer<? super String> myMissedKeysIfFrozen;
   private final int myDataKeysCount;
 
-  PreCachedDataContext2(@Nullable Component component) {
+  PreCachedDataContext(@Nullable Component component) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myComponentRef = new ComponentRef(component);
     myMissedKeysIfFrozen = null;
@@ -108,11 +108,11 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
     }
   }
 
-  private PreCachedDataContext2(@NotNull ComponentRef compRef,
-                                @NotNull FList<ProviderData> cachedData,
-                                @NotNull AtomicReference<KeyFMap> userData,
-                                @Nullable Consumer<? super String> missedKeys,
-                                int dataKeysCount) {
+  private PreCachedDataContext(@NotNull ComponentRef compRef,
+                               @NotNull FList<ProviderData> cachedData,
+                               @NotNull AtomicReference<KeyFMap> userData,
+                               @Nullable Consumer<? super String> missedKeys,
+                               int dataKeysCount) {
     myComponentRef = compRef;
     myCachedData = cachedData;
     myUserData = userData;
@@ -120,11 +120,11 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
     myDataKeysCount = dataKeysCount;
   }
 
-  final @NotNull PreCachedDataContext2 frozenCopy(@Nullable Consumer<? super String> missedKeys) {
+  final @NotNull PreCachedDataContext frozenCopy(@Nullable Consumer<? super String> missedKeys) {
     Consumer<? super String> missedKeysNotNull = missedKeys == null ? s -> { } : missedKeys;
     return this instanceof InjectedDataContext
            ? new InjectedDataContext(myComponentRef, myCachedData, myUserData, missedKeysNotNull, myDataKeysCount)
-           : new PreCachedDataContext2(myComponentRef, myCachedData, myUserData, missedKeysNotNull, myDataKeysCount);
+           : new PreCachedDataContext(myComponentRef, myCachedData, myUserData, missedKeysNotNull, myDataKeysCount);
   }
 
   @Override
@@ -138,14 +138,14 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
     return myMissedKeysIfFrozen != null;
   }
 
-  @NotNull PreCachedDataContext2 prependProvider(@NotNull DataProvider dataProvider) {
+  @NotNull PreCachedDataContext prependProvider(@NotNull DataProvider dataProvider) {
     DataKey<?>[] keys = DataKey.allKeys();
     DataManagerImpl dataManager = (DataManagerImpl)DataManager.getInstance();
     ProviderData cachedData = new ProviderData();
     Component component = SoftReference.dereference(myComponentRef.ref);
     doPreGetAllData(dataProvider, cachedData, component, dataManager, keys, myCachedData.getHead());
-    return new PreCachedDataContext2(myComponentRef, myCachedData.prepend(cachedData),
-                                     new AtomicReference<>(KeyFMap.EMPTY_MAP), myMissedKeysIfFrozen, myDataKeysCount);
+    return new PreCachedDataContext(myComponentRef, myCachedData.prepend(cachedData),
+                                    new AtomicReference<>(KeyFMap.EMPTY_MAP), myMissedKeysIfFrozen, myDataKeysCount);
   }
 
   @Override
@@ -220,7 +220,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
       for (ProviderData map : list) map.clear();
     }
     ourPrevMaps.clear();
-    for (PreCachedDataContext2 context : ourInstances) {
+    for (PreCachedDataContext context : ourInstances) {
       for (ProviderData map : context.myCachedData) map.clear();
     }
     ourInstances.clear();
@@ -311,7 +311,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
     }
   }
 
-  private static class InjectedDataContext extends PreCachedDataContext2 {
+  private static class InjectedDataContext extends PreCachedDataContext {
     InjectedDataContext(@NotNull ComponentRef compRef,
                         @NotNull FList<ProviderData> cachedData,
                         @NotNull AtomicReference<KeyFMap> userData,
