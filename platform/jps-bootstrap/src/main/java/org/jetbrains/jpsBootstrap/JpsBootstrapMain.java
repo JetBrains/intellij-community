@@ -140,31 +140,33 @@ public class JpsBootstrapMain {
   }
 
   private void loadClasses(JpsModule module, JpsModel model) throws Throwable {
-    String fromJpsBuildEnvValue = System.getenv(ClassesFromJpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME);
-    boolean jpsBuild = fromJpsBuildEnvValue != null && JpsBootstrapUtil.toBooleanChecked(fromJpsBuildEnvValue);
+    String fromJpsBuildEnvValue = System.getenv(JpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME);
+    boolean runJpsBuild = fromJpsBuildEnvValue != null && JpsBootstrapUtil.toBooleanChecked(fromJpsBuildEnvValue);
 
     String manifestJsonUrl = System.getenv(ClassesFromCompileInc.MANIFEST_JSON_URL_ENV_NAME);
 
-    if (jpsBuild && manifestJsonUrl != null) {
+    if (runJpsBuild && manifestJsonUrl != null) {
       throw new IllegalStateException("Both env. variables are set, choose only one: " +
-        ClassesFromJpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME + " " +
+        JpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME + " " +
         ClassesFromCompileInc.MANIFEST_JSON_URL_ENV_NAME);
     }
 
-    if (!jpsBuild && manifestJsonUrl == null) {
+    if (!runJpsBuild && manifestJsonUrl == null) {
       // Nothing specified. It's ok locally, but on buildserver we must be sure
       if (underTeamCity) {
         throw new IllegalStateException("On buildserver one of the following env. variables must be set: " +
-          ClassesFromJpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME + " " +
+          JpsBuild.CLASSES_FROM_JPS_BUILD_ENV_NAME + " " +
           ClassesFromCompileInc.MANIFEST_JSON_URL_ENV_NAME);
       }
     }
 
+    JpsBuild jpsBuild = new JpsBuild(ideaHomePath, model, jpsBootstrapWorkDir);
     if (manifestJsonUrl != null) {
+      jpsBuild.resolveProjectDependencies();
       info("Downloading project classes from " + manifestJsonUrl);
       ClassesFromCompileInc.downloadProjectClasses(model.getProject(), communityHome);
     } else {
-      ClassesFromJpsBuild.buildModule(module, ideaHomePath, model, jpsBootstrapWorkDir);
+      jpsBuild.buildModule(module);
     }
   }
 
