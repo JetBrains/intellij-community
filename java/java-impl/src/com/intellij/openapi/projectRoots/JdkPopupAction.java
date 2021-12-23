@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.execution.ExecutionException;
@@ -36,7 +36,7 @@ public class JdkPopupAction extends AnAction {
   private static final Logger LOG = Logger.getInstance(JdkPopupAction.class);
 
   public JdkPopupAction() {
-    super(JavaBundle.messagePointer("action.text.show.quick.list"), () -> "", AllIcons.General.AddJdk);
+    super(JavaBundle.message("action.text.show.quick.list"), "", AllIcons.General.AddJdk);
   }
 
   @Override
@@ -85,9 +85,9 @@ public class JdkPopupAction extends AnAction {
   }
 
   private static void showPopupMenu(AnActionEvent e,
-                             final ArrayList<? extends Pair<File, String>> jdkLocations,
-                             boolean showInMiddle,
-                             JComponent component) {
+                                    List<? extends Pair<File, String>> jdkLocations,
+                                    boolean showInMiddle,
+                                    JComponent component) {
     ActionPopupMenu menu =
       ActionManager.getInstance().createActionPopupMenu(e.getPlace(), new ActionGroup() {
         @Override
@@ -96,7 +96,7 @@ public class JdkPopupAction extends AnAction {
           for (final Pair<File, @NlsSafe String> homes : jdkLocations) {
             result.add(new FileChooserAction("", null, null) {
               @Override
-              protected void update(FileSystemTree fileChooser, AnActionEvent e) {
+              protected void update(@NotNull FileSystemTree fileChooser, @NotNull AnActionEvent e) {
                 e.getPresentation().setText(homes.getSecond(), false);
                 boolean selected = false;
                 VirtualFile selectedFile = fileChooser.getSelectedFile();
@@ -107,7 +107,7 @@ public class JdkPopupAction extends AnAction {
               }
 
               @Override
-              protected void actionPerformed(FileSystemTree fileChooser, AnActionEvent e) {
+              protected void actionPerformed(@NotNull FileSystemTree fileChooser, @NotNull AnActionEvent e) {
                 fileChooser.select(VfsUtil.findFileByIoFile(homes.getFirst(), true), null);
               }
             });

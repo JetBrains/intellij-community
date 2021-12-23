@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.IdeBundle;
@@ -123,13 +123,9 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     return myChosenFiles;
   }
 
-
   @Override
   public VirtualFile @NotNull [] choose(final @Nullable VirtualFile toSelect, final @Nullable Project project) {
-    if (toSelect == null) {
-      return choose(project);
-    }
-    return choose(project, toSelect);
+    return toSelect == null ? choose(project) : choose(project, toSelect);
   }
 
   @Override
@@ -444,9 +440,8 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     public void treeExpanded(TreeExpansionEvent event) {
       final Object[] path = event.getPath().getPath();
       if (path.length == 2 && path[1] instanceof DefaultMutableTreeNode) {
-        // top node has been expanded => watch disk recursively
-        final DefaultMutableTreeNode node = (DefaultMutableTreeNode)path[1];
-        Object userObject = node.getUserObject();
+        // the top node has been expanded => watch disk recursively
+        final Object userObject = ((DefaultMutableTreeNode)path[1]).getUserObject();
         if (userObject instanceof FileNodeDescriptor) {
           final VirtualFile file = ((FileNodeDescriptor)userObject).getElement().getFile();
           if (file != null && file.isDirectory()) {
@@ -463,8 +458,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
     }
 
     @Override
-    public void treeCollapsed(TreeExpansionEvent event) {
-    }
+    public void treeCollapsed(TreeExpansionEvent event) { }
   }
 
   private final class FileTreeSelectionListener implements TreeSelectionListener {
