@@ -33,7 +33,6 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
   ActionToolbarImpl("ButtonSelector", actionGroup, true, true) {
 
   init {
-    isFocusable = true
     border = SegmentedButtonBorder()
     setForceMinimumSize(true)
     // Buttons preferred size is calculated in SegmentedButton.getPreferredSize, so reset default size
