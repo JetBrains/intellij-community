@@ -439,14 +439,7 @@ public class MavenProjectImporter {
       doRefreshFiles(files);
     }
     else {
-      postTasks.add(new MavenProjectsProcessorTask() {
-        @Override
-        public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator)
-          throws MavenProcessCanceledException {
-          indicator.setText(MavenProjectBundle.message("progress.text.refreshing.files"));
-          doRefreshFiles(files);
-        }
-      });
+      postTasks.add(new RefreshingFilesTask(files));
     }
   }
 
@@ -709,5 +702,19 @@ public class MavenProjectImporter {
 
   public List<Module> getCreatedModules() {
     return myCreatedModules;
+  }
+
+  private static class RefreshingFilesTask implements MavenProjectsProcessorTask {
+    private final Set<File> myFiles;
+
+    private RefreshingFilesTask(Set<File> files) {
+      myFiles = files;
+    }
+
+    @Override
+    public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator) {
+      indicator.setText(MavenProjectBundle.message("progress.text.refreshing.files"));
+      doRefreshFiles(myFiles);
+    }
   }
 }
