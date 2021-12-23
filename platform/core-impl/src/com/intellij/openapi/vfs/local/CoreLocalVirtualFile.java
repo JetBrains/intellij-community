@@ -49,6 +49,10 @@ public class CoreLocalVirtualFile extends VirtualFile {
     myAttributes = attributes;
   }
 
+  protected @NotNull Path getFile() {
+    return myFile;
+  }
+
   @Override
   public @NotNull VirtualFileSystem getFileSystem() {
     return myFileSystem;
