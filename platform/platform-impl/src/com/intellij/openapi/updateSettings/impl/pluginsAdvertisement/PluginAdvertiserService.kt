@@ -255,11 +255,20 @@ open class PluginAdvertiserService {
         )
       }
       else {
-        IdeBundle.message(
-          "plugins.advertiser.missing.feature.dependency",
-          pluginsNumber,
-          feature.value.joinToString()
-        )
+        if (feature.value.size <= 1) {
+          IdeBundle.message(
+            "plugins.advertiser.missing.feature.dependency",
+            pluginsNumber,
+            feature.value.joinToString()
+          )
+        }
+        else {
+          IdeBundle.message(
+            "plugins.advertiser.missing.features.dependency",
+            pluginsNumber,
+            feature.value.joinToString()
+          )
+        }
       }
     }
     else {
