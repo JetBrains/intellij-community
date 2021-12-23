@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.stubindex
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
@@ -46,6 +47,7 @@ class SubpackagesIndexService(private val project: Project) {
 
         fun hasSubpackages(fqName: FqName, scope: GlobalSearchScope): Boolean {
             return fqNameByPrefix[fqName].any { packageWithFilesFqName ->
+                ProgressManager.checkCanceled()
                 PackageIndexUtil.containsFilesWithExactPackage(packageWithFilesFqName, scope, project)
             }
         }
@@ -57,6 +59,7 @@ class SubpackagesIndexService(private val project: Project) {
             val existingSubPackagesShortNames = HashSet<Name>()
             val len = fqName.pathSegments().size
             for (filesFqName in possibleFilesFqNames) {
+                ProgressManager.checkCanceled()
                 val candidateSubPackageShortName = filesFqName.pathSegments()[len]
                 if (candidateSubPackageShortName in existingSubPackagesShortNames || !nameFilter(candidateSubPackageShortName)) continue
 
