@@ -191,8 +191,10 @@ options:${getExtractOptionsShortString(options)}\n""".getBytes(StandardCharsets.
   }
 
   static void extractFile(Path archiveFile, Path target, BuildDependenciesCommunityRoot communityRoot, BuildDependenciesExtractOptions... options) {
+    // Extracting different archive files into the same target should overwrite target each time
+    // That's why flagFile should be dependent only on target location
     Path flagFile = getProjectLocalDownloadCache(communityRoot)
-      .resolve((archiveFile.toString() + target.toString()).sha256().substring(0, 6) + "-" + archiveFile.fileName.toString() + ".flag.txt")
+      .resolve(target.toString().sha256().substring(0, 6) + "-" + target.fileName.toString() + ".flag.txt")
     extractFileWithFlagFileLocation(archiveFile, target, flagFile, options)
   }
 
