@@ -21,7 +21,6 @@ operator fun Any?.get(methodName: String, vararg params: Any): Any? {
 operator fun Any?.get(methodName: String, paramTypes: List<Class<*>>, params: List<Any?>): Any? {
     if (this == null) return null
     return this::class.java.getMethodOrNull(methodName, *paramTypes.toTypedArray())
-        ?.apply { trySetAccessible() }
         ?.invoke(this, *params.toTypedArray())
 }
 
@@ -39,4 +38,5 @@ fun Project.getTargets(): Collection<Named>? = project.extensions.findByName("ko
 val Named.compilations: Collection<Named>?
     get() = (this["getCompilations"] as? NamedDomainObjectContainer<Named>)?.asMap?.values
 
-fun Named.getCompileKotlinTaskName(project: Project): Task? = (this["getCompileKotlinTaskName"] as? String)?.let { project.tasks.findByName(it) }
+fun Named.getCompileKotlinTaskName(project: Project): Task? =
+    (this["getCompileKotlinTaskName"] as? String)?.let { project.tasks.findByName(it) }

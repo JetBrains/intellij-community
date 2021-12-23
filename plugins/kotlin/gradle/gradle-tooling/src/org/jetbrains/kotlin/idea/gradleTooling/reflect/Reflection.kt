@@ -7,7 +7,6 @@ import org.gradle.api.logging.Logger
 import org.gradle.api.logging.Logging
 import kotlin.reflect.KClass
 import kotlin.reflect.KType
-import kotlin.reflect.jvm.jvmErasure
 import kotlin.reflect.typeOf
 
 internal inline fun <reified T> returnType(): TypeToken<T> = TypeToken.create()
@@ -116,8 +115,7 @@ internal inline fun <reified T> Any.callReflective(
     return returnValue as T
 }
 
-internal fun Any.callReflectiveAnyGetter(methodName: String, logger: ReflectionLogger): Any? =
-    callReflective(methodName, parameters(), returnType<Any>(), logger)
+internal fun Any.callReflectiveAnyGetter(methodName: String, logger: ReflectionLogger): Any? = callReflectiveGetter<Any>(methodName, logger)
 
 internal inline fun <reified T> Any.callReflectiveGetter(methodName: String, logger: ReflectionLogger): T? =
     callReflective(methodName, parameters(), returnType<T>(), logger)

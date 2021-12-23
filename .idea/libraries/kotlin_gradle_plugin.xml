@@ -1,0 +1,56 @@
+<component name="libraryTable">
+  <library name="kotlin.gradle.plugin" type="repository">
+    <properties maven-id="org.jetbrains.kotlin:kotlin-gradle-plugin:1.6.0" />
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin/1.6.0/kotlin-gradle-plugin-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-api/1.6.0/kotlin-gradle-plugin-api-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-native-utils/1.6.0/kotlin-native-utils-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.6.0/kotlin-gradle-plugin-model-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-util-klib/1.6.0/kotlin-util-klib-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-util-io/1.6.0/kotlin-util-io-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-klib-commonizer-api/1.6.0/kotlin-klib-commonizer-api-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-metadata/1.6.0/kotlin-tooling-metadata-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-project-model/1.6.0/kotlin-project-model-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/checkerframework/checker-qual/2.11.1/checker-qual-2.11.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/de/undercouch/gradle-download-task/4.1.1/gradle-download-task-4.1.1.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/gundy/semver4j/0.16.4/semver4j-0.16.4-nodeps.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-embeddable/1.6.0/kotlin-compiler-embeddable-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-daemon-embeddable/1.6.0/kotlin-daemon-embeddable-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-annotation-processing-gradle/1.6.0/kotlin-annotation-processing-gradle-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-android-extensions/1.6.0/kotlin-android-extensions-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-runner/1.6.0/kotlin-compiler-runner-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common/1.6.0/kotlin-build-common-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-daemon-client/1.6.0/kotlin-daemon-client-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-embeddable/1.6.0/kotlin-scripting-compiler-embeddable-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl-embeddable/1.6.0/kotlin-scripting-compiler-impl-embeddable-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.6.0/kotlin-scripting-common-1.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.6.0/kotlin-scripting-jvm-1.6.0.jar!/" />
+    </CLASSES>
+    <JAVADOC>
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin/1.6.0/kotlin-gradle-plugin-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-api/1.6.0/kotlin-gradle-plugin-api-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-native-utils/1.6.0/kotlin-native-utils-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-gradle-plugin-model/1.6.0/kotlin-gradle-plugin-model-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-util-klib/1.6.0/kotlin-util-klib-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-util-io/1.6.0/kotlin-util-io-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-klib-commonizer-api/1.6.0/kotlin-klib-commonizer-api-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-tooling-metadata/1.6.0/kotlin-tooling-metadata-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-project-model/1.6.0/kotlin-project-model-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/checkerframework/checker-qual/2.11.1/checker-qual-2.11.1-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/de/undercouch/gradle-download-task/4.1.1/gradle-download-task-4.1.1-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/github/gundy/semver4j/0.16.4/semver4j-0.16.4-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-embeddable/1.6.0/kotlin-compiler-embeddable-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-daemon-embeddable/1.6.0/kotlin-daemon-embeddable-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-annotation-processing-gradle/1.6.0/kotlin-annotation-processing-gradle-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-android-extensions/1.6.0/kotlin-android-extensions-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-compiler-runner/1.6.0/kotlin-compiler-runner-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-build-common/1.6.0/kotlin-build-common-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-daemon-client/1.6.0/kotlin-daemon-client-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-embeddable/1.6.0/kotlin-scripting-compiler-embeddable-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-compiler-impl-embeddable/1.6.0/kotlin-scripting-compiler-impl-embeddable-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-common/1.6.0/kotlin-scripting-common-1.6.0-javadoc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/kotlin-scripting-jvm/1.6.0/kotlin-scripting-jvm-1.6.0-javadoc.jar!/" />
+    </JAVADOC>
+    <SOURCES />
+  </library>
+</component>

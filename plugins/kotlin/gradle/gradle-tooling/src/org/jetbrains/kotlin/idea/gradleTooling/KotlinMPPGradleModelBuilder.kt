@@ -143,7 +143,7 @@ class KotlinMPPGradleModelBuilder : AbstractModelBuilderService() {
         projectTargets: Collection<Named>
     ): Collection<KotlinTarget> {
         return projectTargets.mapNotNull {
-            KotlinTargetBuilder.buildComponent(it, importingContext)
+            KotlinTargetBuilder.buildComponent(KotlinTargetReflection(it), importingContext)
         }
     }
 

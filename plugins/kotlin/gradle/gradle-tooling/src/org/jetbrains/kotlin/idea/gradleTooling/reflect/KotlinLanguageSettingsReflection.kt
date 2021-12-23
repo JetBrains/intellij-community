@@ -34,15 +34,13 @@ private class KotlinLanguageSettingsReflectionImpl(private val instance: Any) : 
     }
 
     override val enabledLanguageFeatures: Set<String>? by lazy {
-        val enabledLanguageFeatures: Iterable<String>? = instance.callReflectiveGetter("getEnabledLanguageFeatures", logger)
-        enabledLanguageFeatures?.toSet()
+        instance.callReflective("getEnabledLanguageFeatures", parameters(), returnType<Iterable<String>>(), logger)?.toSet()
     }
 
     override val optInAnnotationsInUse: Set<String>? by lazy {
         val getterName = if (instance::class.memberProperties.any { it.name == "optInAnnotationsInUse" }) "getOptInAnnotationsInUse"
         else "getExperimentalAnnotationsInUse"
-        val annotationsInUse: Iterable<String>? = instance.callReflectiveGetter(getterName, logger)
-        annotationsInUse?.toSet()
+        instance.callReflective(getterName, parameters(), returnType<Iterable<String>>(), logger)?.toSet()
     }
 
     override val compilerPluginArguments: List<String>? by lazy {
@@ -54,8 +52,7 @@ private class KotlinLanguageSettingsReflectionImpl(private val instance: Any) : 
     }
 
     override val freeCompilerArgs: List<String>? by lazy {
-        val freeCompilerArgs: Iterable<String>? = instance.callReflectiveGetter("getFreeCompilerArgs", logger)
-        freeCompilerArgs?.toList()
+        instance.callReflective("getFreeCompilerArgs", parameters(), returnType<Iterable<String>>(), logger)?.toList()
     }
 
     companion object {

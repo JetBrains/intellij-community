@@ -16,7 +16,10 @@ interface KotlinModelComponentBuilderBase<TOrigin, TRet> : KotlinModelComponentB
     fun buildComponent(origin: TOrigin): TRet?
 }
 
-interface KotlinMultiplatformComponentBuilder<TRet> :
+interface KotlinMultiplatformComponentBuilder<TOrigin, TRet> :
+    KotlinModelComponentBuilder<TOrigin, MultiplatformModelImportingContext, TRet>
+
+interface KotlinMultiplatformComponentBuilderBase<TRet> :
     KotlinModelComponentBuilder<Any, MultiplatformModelImportingContext, TRet>
 
 interface KotlinProjectModelComponentBuilder<TOrigin, TRet> :
