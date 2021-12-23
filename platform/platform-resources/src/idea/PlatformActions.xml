@@ -1069,6 +1069,8 @@
               icon="AllIcons.Actions.Refresh" use-shortcut-of="Synchronize"/>
       <action id="FileChooser.ShowHidden" class="com.intellij.openapi.fileChooser.actions.ToggleVisibilityAction"
               icon="AllIcons.Actions.ShowHiddens"/>
+      <action id="FileChooser.TogglePathBar" class="com.intellij.openapi.fileChooser.actions.TogglePathShowingAction"
+              icon="AllIcons.Debugger.Console"/>
 
       <add-to-group group-id="Other.KeymapGroup"/>
     </group>
