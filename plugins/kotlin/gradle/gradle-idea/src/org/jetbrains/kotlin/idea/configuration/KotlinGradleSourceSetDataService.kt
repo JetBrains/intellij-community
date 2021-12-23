@@ -162,6 +162,7 @@ class KotlinGradleLibraryDataService : AbstractProjectDataService<LibraryData, V
     ) {
         if (toImport.isEmpty()) return
         val projectDataNode = toImport.first().parent!!
+
         @Suppress("UNCHECKED_CAST")
         val moduleDataNodes = projectDataNode.children.filter { it.data is ModuleData } as List<DataNode<ModuleData>>
         val anyNonJvmModules = moduleDataNodes
@@ -255,7 +256,7 @@ fun configureFacetByGradleModule(
         return null
     }
 
-    val compilerVersion = moduleNode.findAll(BuildScriptClasspathData.KEY).firstOrNull()?.data?.let(::findKotlinPluginVersion)
+    val compilerVersion = sourceSetName?.let { moduleNode.kotlinTaskPropertiesBySourceSet.getValue(it).pluginVersion }
         ?: return null
     val platformKind = detectPlatformKindByPlugin(moduleNode) ?: detectPlatformByLibrary(moduleNode)
 

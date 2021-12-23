@@ -38,6 +38,8 @@ var DataNode<ModuleData>.hasKotlinPlugin
         by NotNullableCopyableDataNodeUserDataProperty(Key.create<Boolean>("HAS_KOTLIN_PLUGIN"), false)
 var DataNode<ModuleData>.compilerArgumentsBySourceSet
         by CopyableDataNodeUserDataProperty(Key.create<CompilerArgumentsBySourceSet>("CURRENT_COMPILER_ARGUMENTS"))
+var DataNode<ModuleData>.kotlinTaskPropertiesBySourceSet
+        by CopyableDataNodeUserDataProperty(Key.create<KotlinTaskPropertiesBySourceSet>("CURRENT_COMPILER_ARGUMENTS"))
 var DataNode<ModuleData>.coroutines
         by CopyableDataNodeUserDataProperty(Key.create<String>("KOTLIN_COROUTINES"))
 var DataNode<out ModuleData>.isHmpp
@@ -225,6 +227,7 @@ class KotlinGradleProjectResolverExtension : AbstractProjectResolverExtension() 
         ideModule.isResolved = true
         ideModule.hasKotlinPlugin = gradleModel.hasKotlinPlugin
         ideModule.compilerArgumentsBySourceSet = gradleModel.compilerArgumentsBySourceSet.deepCopy()
+        ideModule.kotlinTaskPropertiesBySourceSet = gradleModel.kotlinTaskProperties
         ideModule.coroutines = gradleModel.coroutines
         ideModule.platformPluginId = gradleModel.platformPluginId
 
