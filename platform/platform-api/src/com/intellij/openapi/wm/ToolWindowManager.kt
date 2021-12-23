@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm
 
 import com.intellij.openapi.Disposable
@@ -139,16 +139,25 @@ abstract class ToolWindowManager {
    */
   abstract fun invokeLater(runnable: Runnable)
 
-  abstract fun notifyByBalloon(toolWindowId: String, type: MessageType, @NlsContexts.NotificationContent htmlBody: String)
+  fun notifyByBalloon(toolWindowId: String, type: MessageType, @NlsContexts.NotificationContent htmlBody: String) {
+    @Suppress("SSBasedInspection")
+    notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId = toolWindowId,
+                                                 type = type,
+                                                 htmlBody = htmlBody,
+                                                 icon = null,
+                                                 listener = null))
+  }
 
   fun notifyByBalloon(toolWindowId: String,
                       type: MessageType,
                       @NlsContexts.PopupContent htmlBody: String,
                       icon: Icon?,
                       listener: HyperlinkListener?) {
+    @Suppress("SSBasedInspection")
     notifyByBalloon(ToolWindowBalloonShowOptions(toolWindowId = toolWindowId, type = type, htmlBody = htmlBody, icon = icon, listener = listener))
   }
 
+  @Suppress("SSBasedInspection")
   abstract fun notifyByBalloon(options: ToolWindowBalloonShowOptions)
 
   abstract fun getToolWindowBalloon(id: String): Balloon?

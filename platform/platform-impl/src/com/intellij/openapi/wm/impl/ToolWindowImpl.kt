@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
@@ -14,14 +14,12 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.FusAwareAction
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.ui.SimpleToolWindowPanel
-import com.intellij.openapi.util.ActionCallback
-import com.intellij.openapi.util.BusyObject
-import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.NlsContexts
+import com.intellij.openapi.util.*
 import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi
@@ -37,11 +35,13 @@ import com.intellij.ui.content.impl.ContentImpl
 import com.intellij.ui.content.impl.ContentManagerImpl
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Consumer
+import com.intellij.util.ModalityUiUtil
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.*
 import com.intellij.util.ui.update.Activatable
 import com.intellij.util.ui.update.UiNotifyConnector
 import org.jetbrains.annotations.ApiStatus
+import java.awt.AWTEvent
 import java.awt.Color
 import java.awt.Component
 import java.awt.Rectangle
@@ -93,7 +93,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     }
   }
 
-  private var toolWindowFocusWatcher: ToolWindowManagerImpl.ToolWindowFocusWatcher? = null
+  private var toolWindowFocusWatcher: ToolWindowFocusWatcher? = null
 
   private var additionalGearActions: ActionGroup? = null
 
@@ -176,7 +176,7 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
       }
     })
 
-    toolWindowFocusWatcher = ToolWindowManagerImpl.ToolWindowFocusWatcher(this, decorator)
+    toolWindowFocusWatcher = ToolWindowFocusWatcher(toolWindow = this, component = decorator)
 
     // after init, as it was before contentManager creation was changed to be lazy
     pendingContentManagerListeners?.let { list ->
@@ -512,9 +512,6 @@ internal class ToolWindowImpl(val toolWindowManager: ToolWindowManagerImpl,
     toolWindowManager.hideToolWindow(id, true, true, source)
   }
 
-  val popupGroup: ActionGroup?
-    get() = createPopupGroup()
-
   override fun setDefaultState(anchor: ToolWindowAnchor?, type: ToolWindowType?, floatingBounds: Rectangle?) {
     toolWindowManager.setDefaultState(this, anchor, type, floatingBounds)
   }
@@ -778,7 +775,7 @@ private fun addSorted(main: DefaultActionGroup, group: ActionGroup) {
 }
 
 private fun addContentNotInHierarchyComponents(contentUi: ToolWindowContentUi) {
-  UIUtil.putClientProperty(contentUi.component, UIUtil.NOT_IN_HIERARCHY_COMPONENTS, object : Iterable<JComponent> {
+  contentUi.component.putClientProperty(UIUtil.NOT_IN_HIERARCHY_COMPONENTS, object : Iterable<JComponent> {
     override fun iterator(): Iterator<JComponent> {
       val contentManager = contentUi.contentManager
       if (contentManager.contentCount == 0) {
@@ -802,4 +799,40 @@ private fun addContentNotInHierarchyComponents(contentUi: ToolWindowContentUi) {
         .iterator()
     }
   })
+}
+
+/**
+ * Notifies window manager about focus traversal in a tool window
+ */
+private class ToolWindowFocusWatcher(private val toolWindow: ToolWindowImpl, component: JComponent) : FocusWatcher() {
+  private val id = toolWindow.id
+
+  init {
+    install(component)
+    Disposer.register(toolWindow.disposable, Disposable { deinstall(component) })
+  }
+
+  override fun isFocusedComponentChangeValid(component: Component?, cause: AWTEvent?) = component != null
+
+  override fun focusedComponentChanged(component: Component?, cause: AWTEvent?) {
+    if (component == null || !toolWindow.isActive) {
+      return
+    }
+
+    val toolWindowManager = toolWindow.toolWindowManager
+    toolWindowManager.focusManager
+      .doWhenFocusSettlesDown(ExpirableRunnable.forProject(toolWindowManager.project) {
+        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.defaultModalityState(), toolWindowManager.project.disposed) {
+          val entry = toolWindowManager.getEntry(id) ?: return@invokeLaterIfNeeded
+          val windowInfo = entry.readOnlyWindowInfo
+          if (!windowInfo.isVisible) {
+            return@invokeLaterIfNeeded
+          }
+
+          toolWindowManager.activateToolWindow(entry = entry,
+                                               info = toolWindowManager.getRegisteredMutableInfoOrLogError(entry.id),
+                                               autoFocusContents = false)
+        }
+      })
+  }
 }
