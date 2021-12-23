@@ -161,7 +161,8 @@ internal open class FirCallableCompletionContributor(
         val symbol = explicitReceiver.reference()?.resolveToSymbol()
         when {
             symbol is KtPackageSymbol -> collectDotCompletionForPackageReceiver(symbol, context, visibilityChecker)
-            symbol is KtNamedClassOrObjectSymbol && symbol.classKind == KtClassKind.ENUM_CLASS -> {
+
+            symbol is KtNamedClassOrObjectSymbol && symbol.hasImportantStaticMemberScope -> {
                 collectNonExtensions(symbol.getStaticMemberScope(), visibilityChecker, scopeNameFilter).forEach { memberSymbol ->
                     addCallableSymbolToCompletion(
                         context,
@@ -170,14 +171,23 @@ internal open class FirCallableCompletionContributor(
                     )
                 }
             }
-            symbol is KtNamedClassOrObjectSymbol && !symbol.classKind.isObject && symbol.companionObject == null -> {
+
+            symbol is KtNamedClassOrObjectSymbol && !symbol.canBeUsedAsReceiver -> {
                 // symbol cannot be used as callable receiver
             }
+
             else -> {
                 collectDotCompletionForCallableReceiver(implicitScopes, explicitReceiver, context, extensionChecker, visibilityChecker)
             }
         }
     }
+
+    private val KtNamedClassOrObjectSymbol.hasImportantStaticMemberScope: Boolean
+        get() = classKind == KtClassKind.ENUM_CLASS ||
+                origin == KtSymbolOrigin.JAVA
+
+    private val KtNamedClassOrObjectSymbol.canBeUsedAsReceiver: Boolean
+        get() = classKind.isObject || companionObject != null
 
     private fun KtAnalysisSession.collectDotCompletionForPackageReceiver(
         packageSymbol: KtPackageSymbol,
