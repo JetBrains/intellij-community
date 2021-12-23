@@ -41,6 +41,7 @@ import org.jetbrains.kotlin.idea.gradle.configuration.GradlePropertiesFileFacade
 import org.jetbrains.kotlin.idea.gradle.configuration.klib.KotlinNativeLibraryNameUtil.KOTLIN_NATIVE_LIBRARY_PREFIX
 import org.jetbrains.kotlin.idea.gradle.statistics.KotlinGradleFUSLogger
 import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl
+import org.jetbrains.kotlin.idea.gradleJava.KotlinGradleFacadeImpl.findKotlinPluginVersion
 import org.jetbrains.kotlin.idea.gradleJava.inspections.getResolvedVersionByModuleData
 import org.jetbrains.kotlin.idea.gradleTooling.ArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.CompilerArgumentsBySourceSet
@@ -55,6 +56,7 @@ import org.jetbrains.kotlin.platform.impl.isCommon
 import org.jetbrains.kotlin.platform.impl.isJavaScript
 import org.jetbrains.kotlin.platform.impl.isJvm
 import org.jetbrains.kotlin.psi.UserDataProperty
+import org.jetbrains.plugins.gradle.model.data.BuildScriptClasspathData
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
 import org.jetbrains.plugins.gradle.util.GradleConstants
 import java.io.File
@@ -265,7 +267,8 @@ fun configureFacetByGradleModule(
         return null
     }
 
-    val compilerVersion = KotlinGradleFacadeImpl.findKotlinPluginVersion(moduleNode) ?: return null
+    val compilerVersion = sourceSetName?.let { moduleNode.kotlinTaskPropertiesBySourceSet.getValue(it).pluginVersion }
+        ?: return null
     val platformKind = detectPlatformKindByPlugin(moduleNode) ?: detectPlatformByLibrary(moduleNode)
 
     // TODO there should be a way to figure out the correct platform version
