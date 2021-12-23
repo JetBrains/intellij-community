@@ -999,20 +999,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    /*testGroup("fir", testDataPath = AdditionalKotlinArtifacts.compilerTestData("compiler/testData")) {
-        testClass<AbstractFirLightClassTest> {
-            model("asJava/lightClasses", excludedDirectories = listOf("delegation", "script"), pattern = KT_WITHOUT_DOTS)
-        }
-
-        testClass<AbstractFirClassLoadingTest> {
-            model("asJava/ultraLightClasses", pattern = KT_OR_KTS)
-        }
-
-        testClass<AbstractFirLightFacadeClassTest> {
-            model("asJava/ultraLightFacades", pattern = KT_OR_KTS)
-        }
-    }*/
-
     /*testGroup("analysis-api-providers-ide-impl") {
         testClass<AbstractProjectWideOutOfBlockKotlinModificationTrackerTest> {
             model("outOfBlockProjectWide")
