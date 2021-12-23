@@ -9,6 +9,7 @@ import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.util.PropertiesComponent
+import com.intellij.idea.ActionsBundle
 import com.intellij.notification.ActionCenter
 import com.intellij.notification.EventLog
 import com.intellij.notification.LogModel
@@ -21,6 +22,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.project.DumbAware
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.Divider
 import com.intellij.openapi.ui.NullableComponent
@@ -38,6 +40,7 @@ import com.intellij.openapi.wm.ToolWindow
 import com.intellij.openapi.wm.ToolWindowFactory
 import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.openapi.wm.WindowManager
+import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
@@ -62,6 +65,7 @@ import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
 import javax.swing.*
+import javax.swing.event.DocumentEvent
 import javax.swing.text.JTextComponent
 
 /**
@@ -146,34 +150,37 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
 
 private class NotificationContent(val project: Project,
                                   val toolWindow: ToolWindow) : Disposable, ToolWindowManagerListener, LafManagerListener {
+  private val myMainPanel = JBPanelWithEmptyText(BorderLayout())
+
   private val myNotifications = ArrayList<Notification>()
   private val myIconNotifications = ArrayList<Notification>()
 
   private val suggestions: NotificationGroupComponent
   private val timeline: NotificationGroupComponent
+  private val searchController: SearchController
 
   private val singleSelectionHandler = SingleTextSelectionHandler()
 
   private var myVisible = true
 
+  private val mySearchUpdateAlarm = Alarm()
+
   init {
-    val panel = JBPanelWithEmptyText(BorderLayout())
-    panel.background = NotificationComponent.BG_COLOR
+    myMainPanel.background = NotificationComponent.BG_COLOR
+    setEmptyState()
 
-    panel.emptyText.appendLine(IdeBundle.message("notifications.toolwindow.empty.text.first.line"))
-    @Suppress("DialogTitleCapitalization")
-    panel.emptyText.appendLine(IdeBundle.message("notifications.toolwindow.empty.text.second.line"))
+    suggestions = NotificationGroupComponent(this, true, project)
+    timeline = NotificationGroupComponent(this, false, project)
+    searchController = SearchController(this, suggestions, timeline)
 
-    suggestions = NotificationGroupComponent(panel, true, project)
-
-    timeline = NotificationGroupComponent(panel, false, project)
+    myMainPanel.add(createSearchComponent(toolWindow), BorderLayout.NORTH)
 
     val splitter = MySplitter()
     splitter.firstComponent = suggestions
     splitter.secondComponent = timeline
-    panel.add(splitter)
+    myMainPanel.add(splitter)
 
-    val content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false)
+    val content = ContentFactory.SERVICE.getInstance().createContent(myMainPanel, "", false)
 
     content.putUserData(NotificationsToolWindowFactory.ADD_KEY, Consumer(::add))
     content.putUserData(NotificationsToolWindowFactory.EXPIRE_KEY, Consumer(::expire))
@@ -205,6 +212,68 @@ private class NotificationContent(val project: Project,
     ApplicationManager.getApplication().messageBus.connect(toolWindow.disposable).subscribe(LafManagerListener.TOPIC, this)
   }
 
+  private fun createSearchComponent(toolWindow: ToolWindow): SearchTextField {
+    val searchField = object : SearchTextField() {
+      override fun updateUI() {
+        super.updateUI()
+        textEditor?.border = null
+      }
+
+      override fun preprocessEventForTextField(event: KeyEvent): Boolean {
+        if (event.keyCode == KeyEvent.VK_ESCAPE && event.id == KeyEvent.KEY_PRESSED) {
+          isVisible = false
+          searchController.cancelSearch()
+          return true
+        }
+        return super.preprocessEventForTextField(event)
+      }
+    }
+    searchField.textEditor.border = null
+    searchField.border = JBUI.Borders.customLineBottom(JBColor.border())
+    searchField.isVisible = false
+
+    searchController.searchField = searchField
+
+    searchField.addDocumentListener(object : DocumentAdapter() {
+      override fun textChanged(e: DocumentEvent) {
+        mySearchUpdateAlarm.cancelAllRequests()
+        mySearchUpdateAlarm.addRequest(searchController::doSearch, 100, ModalityState.stateForComponent(searchField))
+      }
+    })
+
+    val gearAction = object : DumbAwareAction() {
+      override fun actionPerformed(e: AnActionEvent) {
+        searchField.isVisible = true
+        searchField.selectText()
+        searchField.requestFocus()
+        searchController.startSearch()
+      }
+    }
+
+    val findAction = ActionManager.getInstance().getAction(IdeActions.ACTION_FIND)
+    if (findAction == null) {
+      gearAction.templatePresentation.text = ActionsBundle.actionText(IdeActions.ACTION_FIND)
+    }
+    else {
+      gearAction.copyFrom(findAction)
+      gearAction.registerCustomShortcutSet(findAction.shortcutSet, myMainPanel)
+    }
+
+    (toolWindow as ToolWindowEx).setAdditionalGearActions(DefaultActionGroup(gearAction))
+
+    return searchField
+  }
+
+  fun setEmptyState() {
+    myMainPanel.emptyText.appendLine(IdeBundle.message("notifications.toolwindow.empty.text.first.line"))
+    @Suppress("DialogTitleCapitalization")
+    myMainPanel.emptyText.appendLine(IdeBundle.message("notifications.toolwindow.empty.text.second.line"))
+  }
+
+  fun clearEmptyState() {
+    myMainPanel.emptyText.clear()
+  }
+
   private fun add(notification: Notification) {
     if (!NotificationsConfigurationImpl.getSettings(notification.groupId).isShouldLog) {
       return
@@ -217,6 +286,7 @@ private class NotificationContent(val project: Project,
     }
     myNotifications.add(notification)
     myIconNotifications.add(notification)
+    searchController.update()
     setStatusMessage(notification)
     updateIcon()
   }
@@ -229,6 +299,7 @@ private class NotificationContent(val project: Project,
       myIconNotifications.clear()
       suggestions.clear()
       timeline.clear()
+      searchController.update()
       setStatusMessage(null)
       updateIcon()
 
@@ -250,6 +321,7 @@ private class NotificationContent(val project: Project,
     }
     myNotifications.remove(notification)
     myIconNotifications.remove(notification)
+    searchController.update()
     setStatusMessage()
     updateIcon()
   }
@@ -257,6 +329,7 @@ private class NotificationContent(val project: Project,
   private fun clear(notifications: List<Notification>) {
     myNotifications.removeAll(notifications)
     myIconNotifications.removeAll(notifications)
+    searchController.update()
     setStatusMessage()
     updateIcon()
   }
@@ -304,6 +377,13 @@ private class NotificationContent(val project: Project,
     synchronized(NotificationsToolWindowFactory.myLock) {
       NotificationsToolWindowFactory.myToolWindowList.remove(toolWindow)
     }
+    Disposer.dispose(mySearchUpdateAlarm)
+  }
+
+  fun fullRepaint() {
+    myMainPanel.doLayout()
+    myMainPanel.revalidate()
+    myMainPanel.repaint()
   }
 }
 
@@ -337,7 +417,60 @@ private fun JComponent.smallFontFunction() {
   putClientProperty(NotificationGroupComponent.FONT_KEY, f)
 }
 
-private class NotificationGroupComponent(private val myMainPanel: JPanel,
+private class SearchController(private val mainContent: NotificationContent,
+                               private val suggestions: NotificationGroupComponent,
+                               private val timeline: NotificationGroupComponent) {
+  lateinit var searchField: SearchTextField
+
+  fun startSearch() {
+    mainContent.clearEmptyState()
+
+    if (searchField.text.isNotEmpty()) {
+      doSearch()
+    }
+  }
+
+  fun doSearch() {
+    val query = searchField.text
+
+    if (query.isEmpty()) {
+      searchField.textEditor.background = UIUtil.getTextFieldBackground()
+      clearSearch()
+      return
+    }
+
+    var result = false
+    val function: (NotificationComponent) -> Unit = {
+      if (it.applySearchQuery(query)) {
+        result = true
+      }
+    }
+    suggestions.iterateComponents(function)
+    timeline.iterateComponents(function)
+    searchField.textEditor.background = if (result) UIUtil.getTextFieldBackground() else LightColors.RED
+    mainContent.fullRepaint()
+  }
+
+  fun update() {
+    if (searchField.isVisible && searchField.text.isNotEmpty()) {
+      doSearch()
+    }
+  }
+
+  fun cancelSearch() {
+    mainContent.setEmptyState()
+    clearSearch()
+  }
+
+  private fun clearSearch() {
+    val function: (NotificationComponent) -> Unit = { it.applySearchQuery(null) }
+    suggestions.iterateComponents(function)
+    timeline.iterateComponents(function)
+    mainContent.fullRepaint()
+  }
+}
+
+private class NotificationGroupComponent(private val myMainContent: NotificationContent,
                                          private val mySuggestionType: Boolean,
                                          private val myProject: Project) :
   JPanel(BorderLayout()), NullableComponent {
@@ -407,7 +540,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
       panel.add(LinkLabel<Any>(IdeBundle.message("notifications.toolwindow.suggestion.gotit.link"), null) { _, _ ->
         mySuggestionGotItPanel.isVisible = false
         myTitle.isVisible = true
-        fullRepaint()
+        myMainContent.fullRepaint()
       }, BorderLayout.NORTH)
 
       myTitle.border = JBUI.Borders.emptyLeft(10)
@@ -567,10 +700,10 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
         (value as (JComponent) -> Unit).invoke(it)
       }
     }
-    fullRepaint()
+    myMainContent.fullRepaint()
   }
 
-  private inline fun iterateComponents(f: (NotificationComponent) -> Unit) {
+  inline fun iterateComponents(f: (NotificationComponent) -> Unit) {
     val count = myList.componentCount
     for (i in 0 until count) {
       f.invoke(myList.getComponent(i) as NotificationComponent)
@@ -596,7 +729,7 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
       }.run()
     }
 
-    fullRepaint()
+    myMainContent.fullRepaint()
   }
 
   private fun formatPrettyDateTime(time: Long): @NlsSafe String {
@@ -624,14 +757,16 @@ private class NotificationGroupComponent(private val myMainPanel: JPanel,
     return DateFormatUtil.formatDate(time)
   }
 
-  private fun fullRepaint() {
-    myMainPanel.doLayout()
-    myMainPanel.revalidate()
-    myMainPanel.repaint()
-  }
-
   override fun isVisible(): Boolean {
-    return super.isVisible() && myList.componentCount > 0
+    if (super.isVisible()) {
+      val count = myList.componentCount
+      for (i in 0 until count) {
+        if (myList.getComponent(i).isVisible) {
+          return true
+        }
+      }
+    }
+    return false
   }
 
   override fun isNull(): Boolean = !isVisible
@@ -994,6 +1129,37 @@ private class NotificationComponent(val notification: Notification,
       g.fillRoundRect(0, 0, width, height, cornerRadius, cornerRadius)
       config.restore()
     }
+  }
+
+  fun applySearchQuery(query: String?): Boolean {
+    if (query == null) {
+      isVisible = true
+      return true
+    }
+
+    val result = matchQuery(query)
+    isVisible = result
+    return result
+  }
+
+  private fun matchQuery(query: @NlsSafe String): Boolean {
+    if (notification.title.contains(query, true)) {
+      return true
+    }
+    val subtitle = notification.subtitle
+    if (subtitle != null && subtitle.contains(query, true)) {
+      return true
+    }
+    if (notification.content.contains(query, true)) {
+      return true
+    }
+    for (action in notification.actions) {
+      val text = action.templateText
+      if (text != null && text.contains(query, true)) {
+        return true
+      }
+    }
+    return false
   }
 }
 
