@@ -160,6 +160,8 @@ final class BuildDependenciesUtil {
           Files.createDirectories(entryPath)
         }
         else {
+          Files.createDirectories(entryPath.parent)
+
           zipFile.getInputStream(entry).withCloseable { entryInputStream ->
             Files.copy(entryInputStream, entryPath)
           }
@@ -188,6 +190,8 @@ final class BuildDependenciesUtil {
           Files.createDirectories(entryPath)
         }
         else {
+          Files.createDirectories(entryPath.parent)
+
           Files.copy(archive, entryPath)
 
           if (isPosix && (entry.mode & 0111) != 0) {
