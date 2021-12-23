@@ -92,6 +92,10 @@ public class JpsBuild {
 
     JpsMessageHandler messageHandler = new JpsMessageHandler();
 
+    if (!myModuleNames.contains(moduleName)) {
+      throw new IllegalStateException("Module '" + moduleName + "' was not found");
+    }
+
     Standalone.runBuild(
       () -> myModel,
       myDataStorageRoot,
