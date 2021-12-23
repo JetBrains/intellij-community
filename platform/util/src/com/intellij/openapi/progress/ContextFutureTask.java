@@ -55,6 +55,7 @@ public final class ContextFutureTask<V> extends FutureTask<V> {
     @NotNull Callable<? extends V> callable
   ) {
     return () -> {
+      ThreadContext.checkUninitializedThreadContext();
       try (AccessToken ignored = ThreadContext.resetThreadContext(parentContext)) {
         V result = withJob(deferred, callable::call);
         deferred.complete(result);

@@ -11,6 +11,12 @@ import kotlin.coroutines.coroutineContext
 
 private val tlCoroutineContext: ThreadLocal<CoroutineContext?> = ThreadLocal()
 
+internal fun checkUninitializedThreadContext() {
+  check(tlCoroutineContext.get() == null) {
+    "Thread context was already set"
+  }
+}
+
 /**
  * @return current thread context
  */
@@ -68,8 +74,8 @@ fun withThreadContext(coroutineContext: CoroutineContext): AccessToken {
 private fun updateThreadContext(
   update: (CoroutineContext) -> CoroutineContext
 ): AccessToken {
-  val previousContext = tlCoroutineContext.get() ?: EmptyCoroutineContext
-  val newContext = update(previousContext)
+  val previousContext = tlCoroutineContext.get()
+  val newContext = update(previousContext ?: EmptyCoroutineContext)
   tlCoroutineContext.set(newContext)
   return object : AccessToken() {
     override fun finish() {

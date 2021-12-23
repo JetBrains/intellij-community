@@ -28,6 +28,7 @@ public final class ContextRunnable implements Runnable {
 
   @Override
   public void run() {
+    ThreadContext.checkUninitializedThreadContext();
     try (AccessToken ignored = ThreadContext.resetThreadContext(myParentContext)) {
       withJob(myJob, () -> {
         myRunnable.run();
@@ -48,9 +49,6 @@ public final class ContextRunnable implements Runnable {
    * @see ContextFutureTask#contextCallable
    */
   public static @NotNull Runnable contextRunnable(@NotNull Runnable runnable) {
-    if (runnable instanceof ContextFutureTask) {
-      return runnable;
-    }
     return new ContextRunnable(runnable);
   }
 }

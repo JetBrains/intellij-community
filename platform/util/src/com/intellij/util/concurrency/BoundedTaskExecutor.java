@@ -5,7 +5,6 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ContextFutureTask;
-import com.intellij.openapi.progress.ContextRunnable;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
@@ -20,6 +19,8 @@ import java.util.List;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static com.intellij.util.concurrency.AppScheduledExecutorService.handleCommand;
 
 /**
  * ExecutorService which limits the number of tasks running simultaneously.
@@ -142,12 +143,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
 
   @Override
   public void execute(@NotNull Runnable command) {
-    if (AppExecutorUtil.propagateThreadContext()) {
-      executeRaw(ContextRunnable.contextRunnable(command));
-    }
-    else {
-      executeRaw(command);
-    }
+    executeRaw(handleCommand(command));
   }
 
   private void executeRaw(@NotNull Runnable task) {
@@ -201,7 +197,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
   private void wrapAndExecute(@NotNull Runnable firstTask, long status) {
     try {
       AtomicReference<Runnable> currentTask = new AtomicReference<>(firstTask);
-      myBackendExecutor.execute(new Runnable() {
+      Runnable command = new Runnable() {
         @Override
         public void run() {
           if (myChangeThreadName) {
@@ -230,7 +226,13 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
         public String toString() {
           return String.valueOf(info(currentTask.get()));
         }
-      });
+      };
+      if (myBackendExecutor instanceof ContextPropagatingExecutor) {
+        ((ContextPropagatingExecutor)myBackendExecutor).executeRaw(command);
+      }
+      else {
+        myBackendExecutor.execute(command);
+      }
     }
     catch (Error | RuntimeException e) {
       myStatus.decrementAndGet();

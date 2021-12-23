@@ -127,11 +127,22 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     ((BackendThreadPoolExecutor)backendExecutorService).superSetCorePoolSize(size);
   }
 
-  static class BackendThreadPoolExecutor extends ThreadPoolExecutor {
+  static class BackendThreadPoolExecutor extends ThreadPoolExecutor implements ContextPropagatingExecutor {
+
     BackendThreadPoolExecutor(@NotNull ThreadFactory factory,
                               long keepAliveTime,
                               @NotNull TimeUnit unit) {
       super(1, Integer.MAX_VALUE, keepAliveTime, unit, new SynchronousQueue<>(), factory);
+    }
+
+    @Override
+    public void executeRaw(@NotNull Runnable command) {
+      super.execute(command);
+    }
+
+    @Override
+    public void execute(@NotNull Runnable command) {
+      executeRaw(handleCommand(command));
     }
 
     @Override
@@ -146,16 +157,6 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
       }
       else {
         return super.newTaskFor(callable);
-      }
-    }
-
-    @Override
-    public void execute(@NotNull Runnable command) {
-      if (AppExecutorUtil.propagateThreadContext()) {
-        super.execute(ContextRunnable.contextRunnable(command));
-      }
-      else {
-        super.execute(command);
       }
     }
 
@@ -229,5 +230,19 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
   void waitForLowMemoryWatcherManagerInit(int timeout, @NotNull TimeUnit unit)
     throws InterruptedException, ExecutionException, TimeoutException {
     myLowMemoryWatcherManager.waitForInitComplete(timeout, unit);
+  }
+
+  static Runnable handleCommand(@NotNull Runnable command) {
+    if (!AppExecutorUtil.propagateThreadContext()) {
+      return command;
+    }
+    if (command instanceof FutureTask) {
+      // FutureTask.callable should handle propagation/cancellation.
+      // Known implementations:
+      // - ContextFutureTask is created in newTaskFor;
+      // - java.util.concurrent.ExecutorCompletionService.QueueingFuture (wraps ContextFutureTask) is created in invokeAny
+      return command;
+    }
+    return ContextRunnable.contextRunnable(command);
   }
 }
