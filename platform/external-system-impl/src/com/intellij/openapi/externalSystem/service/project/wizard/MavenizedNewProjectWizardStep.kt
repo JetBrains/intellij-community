@@ -73,13 +73,6 @@ abstract class MavenizedNewProjectWizardStep<Data : Any, ParentStep>(val parentS
           .validationOnApply { validateArtifactId() }
           .validationOnInput { validateArtifactId() }
       }.bottomGap(BottomGap.SMALL)
-      row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.label")) {
-        textField()
-          .bindText(versionProperty)
-          .columns(COLUMNS_MEDIUM)
-          .validationOnApply { validateVersion() }
-          .validationOnInput { validateVersion() }
-      }.bottomGap(BottomGap.SMALL)
     }
   }
 

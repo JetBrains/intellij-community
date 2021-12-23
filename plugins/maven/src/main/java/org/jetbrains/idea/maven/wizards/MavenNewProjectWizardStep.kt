@@ -86,7 +86,6 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
     return null
   }
 
-
   class MavenDataView(override val data: MavenProject) : DataView<MavenProject>() {
     override val location: String = data.directory
     override val icon: Icon = OpenapiIcons.RepositoryLibraryLogo
