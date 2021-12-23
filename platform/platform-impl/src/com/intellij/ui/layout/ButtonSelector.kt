@@ -36,8 +36,8 @@ fun <T> Row.segmentedButton(options: Collection<T>, property: GraphProperty<T>, 
   if (ScreenReader.isActive()) {
     val model = DefaultComboBoxModel<T>()
     model.addAll(options)
-    return ComboBoxSegmentedButton(comboBox(model, property, listCellRenderer { value, _, _ -> text = renderer(value) }).component,
-                                   property)
+    val comboBox = comboBox(model, property, listCellRenderer { value, _, _ -> text = renderer(value) })
+    return ComboBoxSegmentedButton(comboBox.component, property)
   }
 
   val result = SegmentedButtonImpl(options, property, renderer)
