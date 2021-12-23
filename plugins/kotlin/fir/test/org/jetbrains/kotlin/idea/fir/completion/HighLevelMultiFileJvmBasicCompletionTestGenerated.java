@@ -335,6 +335,16 @@ public class HighLevelMultiFileJvmBasicCompletionTestGenerated extends AbstractH
         runTest("idea/idea-completion/testData/basic/multifile/PropertyKeysWithPrefix/");
     }
 
+    @TestMetadata("StaticMembersOfImportedClassFromJava")
+    public void testStaticMembersOfImportedClassFromJava() throws Exception {
+        runTest("../completion/tests/testData/basic/multifile/StaticMembersOfImportedClassFromJava/");
+    }
+
+    @TestMetadata("StaticMembersOfImportedInterfaceFromJava")
+    public void testStaticMembersOfImportedInterfaceFromJava() throws Exception {
+        runTest("../completion/tests/testData/basic/multifile/StaticMembersOfImportedInterfaceFromJava/");
+    }
+
     @TestMetadata("StaticMembersOfNotImportedClassFromJava")
     public void testStaticMembersOfNotImportedClassFromJava() throws Exception {
         runTest("idea/idea-completion/testData/basic/multifile/StaticMembersOfNotImportedClassFromJava/");
