@@ -76,7 +76,10 @@ public class CoreLocalVirtualFile extends VirtualFile {
   @Override
   public boolean is(@NotNull VFileProperty property) {
     BasicFileAttributes attrs = getAttributes(true);
-    if (property == VFileProperty.HIDDEN) return attrs instanceof DosFileAttributes && ((DosFileAttributes)attrs).isHidden();
+    if (property == VFileProperty.HIDDEN) {
+      return attrs instanceof DosFileAttributes && ((DosFileAttributes)attrs).isHidden() ||
+             NioFiles.getFileName(myFile).startsWith(".");
+    }
     if (property == VFileProperty.SYMLINK) return attrs != null && attrs.isSymbolicLink();
     if (property == VFileProperty.SPECIAL) return attrs != null && attrs.isOther();
     return super.is(property);
