@@ -40,18 +40,6 @@ apply from: 'setupVulnerabilitySearchPlugin.gradle'
 task setupDependencies(dependsOn: ['setupJdks', 'setupBundledMaven'], group: 'dependencies')
 clean.dependsOn('cleanSetupJdks', 'cleanSetupBundledMaven')
 
-task dependenciesFile() {
-  description = 'Creates file with all dependencies version, even those that were overloaded by system or env properties'
-  def outputFile = "$project.buildDir/dependencies.properties"
-  outputs.upToDateWhen { false }
-  outputs.file(outputFile)
-  doFirst {
-    def properties = new Properties()
-    file('gradle.properties').withInputStream { properties.load(it) }
-    file(outputFile).text = properties.stringPropertyNames().collect { "$it=${project.ext[it]}" }.join('\n')
-  }
-}
-
 wrapper {
   gradleVersion = '5.5'
   distributionUrl = "https://cache-redirector.jetbrains.com/services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
