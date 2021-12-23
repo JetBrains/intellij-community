@@ -2,12 +2,9 @@ package com.intellij.settingsSync
 
 import com.intellij.configurationStore.ApplicationStoreImpl
 import com.intellij.configurationStore.StateLoadPolicy
-import com.intellij.configurationStore.getDefaultStoragePathSpec
-import com.intellij.configurationStore.serializeStateInto
 import com.intellij.ide.GeneralSettings
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
@@ -22,9 +19,7 @@ import com.intellij.testFramework.TemporaryDirectory
 import com.intellij.testFramework.replaceService
 import com.intellij.util.io.createDirectories
 import com.intellij.util.toByteArray
-import com.intellij.util.xmlb.Constants
 import kotlinx.coroutines.runBlocking
-import org.jdom.Element
 import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
@@ -33,7 +28,6 @@ import org.junit.Test
 import org.junit.rules.RuleChain
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
-import java.nio.charset.StandardCharsets.UTF_8
 import java.nio.file.Path
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
@@ -282,46 +276,6 @@ internal class SettingsSyncTest {
       pushedSnap.assertSettingsSnapshot {
         build()
       }
-    }
-  }
-
-  private fun SettingsSnapshot.assertSettingsSnapshot(build: SettingsSnapshotBuilder.() -> Unit) {
-    val settingsSnapshotBuilder = SettingsSnapshotBuilder()
-    settingsSnapshotBuilder.build()
-    val actualMap = this.fileStates.associate { it.file to String(it.content, UTF_8) }
-    val expectedMap = settingsSnapshotBuilder.fileStates.associate { it.file to String(it.content, UTF_8) }
-    assertEquals(expectedMap, actualMap)
-  }
-
-  private val <T> PersistentStateComponent<T>.name: String
-    get() = (this::class.annotations.find { it is State } as? State)?.name!!
-
-  private fun PersistentStateComponent<*>.serialize(): ByteArray {
-    val compElement = Element("component")
-    compElement.setAttribute(Constants.NAME, this.name)
-    serializeStateInto(this, compElement)
-
-    val appElement = Element("application")
-    appElement.addContent(compElement)
-    return appElement.toByteArray()
-  }
-
-  fun PersistentStateComponent<*>.toFileState() : FileState {
-    val file = OPTIONS_DIRECTORY + "/" + getDefaultStoragePathSpec(this::class.java)
-    val content = this.serialize()
-    return FileState(file, content, content.size)
-  }
-
-  internal inner class SettingsSnapshotBuilder {
-    val fileStates = mutableListOf<FileState>()
-
-    fun fileState(function: () -> PersistentStateComponent<*>) {
-      val component : PersistentStateComponent<*> = function()
-      fileStates.add(component.toFileState())
-    }
-
-    fun fileState(fileState: FileState) {
-      fileStates.add(fileState)
     }
   }
 
