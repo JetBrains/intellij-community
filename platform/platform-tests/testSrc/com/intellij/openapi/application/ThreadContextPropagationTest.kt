@@ -1,10 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application
 
+import com.intellij.openapi.progress.timeoutRunBlocking
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ApplicationExtension
 import com.intellij.util.concurrency.AppExecutorUtil
-import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.jupiter.api.AfterAll
 import org.junit.jupiter.api.BeforeAll
@@ -36,36 +36,36 @@ class ThreadContextPropagationTest {
   }
 
   @Test
-  fun `executeOnPooledThread(Runnable)`(): Unit = runBlocking {
+  fun `executeOnPooledThread(Runnable)`(): Unit = timeoutRunBlocking {
     doTest {
       ApplicationManager.getApplication().executeOnPooledThread(it.runnable())
     }
   }
 
   @Test
-  fun `executeOnPooledThread(Callable)`(): Unit = runBlocking {
+  fun `executeOnPooledThread(Callable)`(): Unit = timeoutRunBlocking {
     doTest {
       ApplicationManager.getApplication().executeOnPooledThread(it.callable())
     }
   }
 
   @Test
-  fun appExecutorService(): Unit = runBlocking {
+  fun appExecutorService(): Unit = timeoutRunBlocking {
     doExecutorServiceTest(AppExecutorUtil.getAppExecutorService())
   }
 
   @Test
-  fun appScheduledExecutorService(): Unit = runBlocking {
+  fun appScheduledExecutorService(): Unit = timeoutRunBlocking {
     doExecutorServiceTest(AppExecutorUtil.getAppScheduledExecutorService())
   }
 
   @Test
-  fun boundedApplicationPoolExecutor(): Unit = runBlocking {
+  fun boundedApplicationPoolExecutor(): Unit = timeoutRunBlocking {
     doExecutorServiceTest(AppExecutorUtil.createBoundedApplicationPoolExecutor("Bounded", 1))
   }
 
   @Test
-  fun boundedScheduledExecutorService(): Unit = runBlocking {
+  fun boundedScheduledExecutorService(): Unit = timeoutRunBlocking {
     doExecutorServiceTest(AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled", 1))
   }
 

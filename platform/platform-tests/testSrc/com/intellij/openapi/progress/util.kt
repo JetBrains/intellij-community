@@ -16,6 +16,12 @@ import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
 const val TEST_TIMEOUT_MS: Long = 1000
 
+internal fun timeoutRunBlocking(action: suspend CoroutineScope.() -> Unit) {
+  runBlocking {
+    withTimeout(TEST_TIMEOUT_MS, action)
+  }
+}
+
 fun submitTasks(service: ExecutorService, task: () -> Unit) {
   service.execute(task)
   service.submit(task)
