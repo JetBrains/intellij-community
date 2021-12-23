@@ -5,7 +5,6 @@ import com.intellij.CommonBundle;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
-import com.intellij.ide.impl.DataContextUtils;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
@@ -60,7 +59,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 @ApiStatus.Internal
-public final class Utils extends DataContextUtils {
+public final class Utils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
 
   public static final AnAction EMPTY_MENU_FILLER = new EmptyAction();
