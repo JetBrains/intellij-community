@@ -2,6 +2,8 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.event.EditorMouseEvent;
+import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.editor.ex.FoldingListener;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -9,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class CustomFoldRegionTest extends AbstractEditorTest {
@@ -247,6 +251,20 @@ public class CustomFoldRegionTest extends AbstractEditorTest {
     assertNotNull(addCustomFoldRegion(1, 1));
     backspace();
     checkResultByText("line1\n<caret>\nline4");
+  }
+
+  public void testOverText() {
+    initText("text");
+    assertNotNull(addCustomFoldRegion(0, 0, 321, 123));
+    List<Boolean> results = new ArrayList<>();
+    getEditor().addEditorMouseMotionListener(new EditorMouseMotionListener() {
+      @Override
+      public void mouseMoved(@NotNull EditorMouseEvent e) {
+        results.add(e.isOverText());
+      }
+    });
+    mouse().moveToXY(400, 100);
+    assertEquals(List.of(Boolean.FALSE), results);
   }
 
   private void checkOverlapWithNormalRegion(int regionStartOffset,
