@@ -6,6 +6,7 @@ import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileChooser.FileChooserPanel;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.SystemInfo;
@@ -23,10 +24,29 @@ import java.nio.file.Path;
 import static com.intellij.openapi.util.NullableLazyValue.lazyNullable;
 
 public final class GotoDesktopDirAction extends FileChooserAction implements LightEditCompatible {
-  private final NullableLazyValue<VirtualFile> myDesktopDirectory = lazyNullable(() -> {
+  private final NullableLazyValue<Path> myDesktopPath = lazyNullable(() -> {
     Path path = getDesktopDirectory();
-    return Files.isDirectory(path) ? LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path) : null;
+    return Files.isDirectory(path) ? path : null;
   });
+
+  private final NullableLazyValue<VirtualFile> myDesktopDirectory = lazyNullable(() -> {
+    Path path = myDesktopPath.getValue();
+    return path != null ? LocalFileSystem.getInstance().refreshAndFindFileByNioFile(path) : null;
+  });
+
+  @Override
+  protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
+    Path path = myDesktopPath.getValue();
+    e.getPresentation().setEnabled(path != null);
+  }
+
+  @Override
+  protected void actionPerformed(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
+    Path path = myDesktopPath.getValue();
+    if (path != null) {
+      panel.load(path);
+    }
+  }
 
   @Override
   protected void update(@NotNull FileSystemTree tree, @NotNull AnActionEvent e) {
