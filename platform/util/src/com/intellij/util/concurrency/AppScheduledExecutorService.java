@@ -2,8 +2,6 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ContextFutureTask;
-import com.intellij.openapi.progress.ContextRunnable;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.LowMemoryWatcherManager;
@@ -16,6 +14,8 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.List;
 import java.util.concurrent.*;
 import java.util.function.BiConsumer;
+
+import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
 
 /**
  * A ThreadPoolExecutor which also implements {@link ScheduledExecutorService} by awaiting scheduled tasks in a separate thread
@@ -152,12 +152,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
 
     @Override
     protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-      if (AppExecutorUtil.propagateThreadContext()) {
-        return ContextFutureTask.contextRunnableFuture(callable);
-      }
-      else {
-        return super.newTaskFor(callable);
-      }
+      return handleTask(callable);
     }
 
     @Override
@@ -232,17 +227,24 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
     myLowMemoryWatcherManager.waitForInitComplete(timeout, unit);
   }
 
-  static Runnable handleCommand(@NotNull Runnable command) {
-    if (!AppExecutorUtil.propagateThreadContext()) {
-      return command;
-    }
+  static @NotNull Runnable handleCommand(@NotNull Runnable command) {
     if (command instanceof FutureTask) {
       // FutureTask.callable should handle propagation/cancellation.
       // Known implementations:
-      // - ContextFutureTask is created in newTaskFor;
-      // - java.util.concurrent.ExecutorCompletionService.QueueingFuture (wraps ContextFutureTask) is created in invokeAny
+      // - CancellationFutureTask is created in newTaskFor;
+      // - java.util.concurrent.ExecutorCompletionService$QueueingFuture (wraps CancellationFutureTask) is created in invokeAny
       return command;
     }
-    return ContextRunnable.contextRunnable(command);
+    if (!propagateContextOrCancellation()) {
+      return command;
+    }
+    return Propagation.handleCommand(command);
+  }
+
+  static <T> @NotNull FutureTask<T> handleTask(Callable<T> callable) {
+    if (!propagateContextOrCancellation()) {
+      return new FutureTask<>(callable);
+    }
+    return Propagation.handleTask(callable);
   }
 }

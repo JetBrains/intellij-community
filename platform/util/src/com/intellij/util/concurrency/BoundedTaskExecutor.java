@@ -4,7 +4,6 @@ package com.intellij.util.concurrency;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.ControlFlowException;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.ContextFutureTask;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
@@ -21,6 +20,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.util.concurrency.AppScheduledExecutorService.handleCommand;
+import static com.intellij.util.concurrency.AppScheduledExecutorService.handleTask;
 
 /**
  * ExecutorService which limits the number of tasks running simultaneously.
@@ -133,12 +133,7 @@ public final class BoundedTaskExecutor extends AbstractExecutorService {
 
   @Override
   protected <T> RunnableFuture<T> newTaskFor(Callable<T> callable) {
-    if (AppExecutorUtil.propagateThreadContext()) {
-      return ContextFutureTask.contextRunnableFuture(callable);
-    }
-    else {
-      return super.newTaskFor(callable);
-    }
+    return handleTask(callable);
   }
 
   @Override

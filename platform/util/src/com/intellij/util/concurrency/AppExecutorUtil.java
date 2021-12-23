@@ -109,7 +109,10 @@ public final class AppExecutorUtil {
     ((AppScheduledExecutorService)AppScheduledExecutorService.getInstance()).shutdownAppScheduledExecutorService();
   }
 
-  static boolean propagateThreadContext() {
-    return LoadingState.APP_STARTED.isOccurred() && Registry.is("ide.propagate.context");
+  static boolean propagateContextOrCancellation() {
+    return LoadingState.APP_STARTED.isOccurred() && (
+      Registry.is("ide.propagate.context") ||
+      Registry.is("ide.propagate.cancellation")
+    );
   }
 }

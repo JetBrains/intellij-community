@@ -32,7 +32,7 @@ class CancellationPropagationTest {
 
     @RegisterExtension
     @JvmField
-    val registryKeyExtension = RegistryKeyExtension("ide.propagate.context", true)
+    val registryKeyExtension = RegistryKeyExtension("ide.propagate.cancellation", true)
   }
 
   private val service = AppExecutorUtil.getAppExecutorService()
