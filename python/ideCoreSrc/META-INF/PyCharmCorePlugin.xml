@@ -5,6 +5,7 @@
 
   <content>
     <module name="intellij.notebooks.visualization"/>
+    <module name="intellij.platform.images.copyright"/>
   </content>
 
   <xi:include href="/META-INF/pycharm-core.xml" xpointer="xpointer(/idea-plugin/*)"/>
