@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 /*
  * Checks and Highlights problems with classes
@@ -1209,7 +1209,7 @@ public final class HighlightClassUtil {
               }
               holder.add(info);
             }
-            else if (currentModule != null && currentModule != JavaModuleGraphUtil.findDescriptorByElement(inheritorClass)) {
+            else if (currentModule != null && !areModulesTheSame(currentModule, JavaModuleGraphUtil.findDescriptorByElement(inheritorClass))) {
               holder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
                            .range(permitted)
                            .descriptionAndTooltip(JavaErrorBundle.message("class.not.allowed.to.extend.sealed.class.from.another.module"))
@@ -1233,6 +1233,10 @@ public final class HighlightClassUtil {
         }
       }
     }
+  }
+
+  private static boolean areModulesTheSame(PsiJavaModule module, PsiJavaModule module1) {
+    return module != null && module1 != null ? module.getOriginalElement() == module1.getOriginalElement() : module == module1;
   }
 
   public static @Nullable HighlightInfo checkSealedClassInheritors(PsiClass psiClass) {
