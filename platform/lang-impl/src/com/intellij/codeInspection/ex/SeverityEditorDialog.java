@@ -63,7 +63,7 @@ public final class SeverityEditorDialog extends DialogWrapper {
                           @Nullable HighlightSeverity selectedSeverity,
                           @NotNull SeverityRegistrar severityRegistrar,
                           boolean closeDialogWhenSettingsShown,
-                          @Nullable Consumer<? super HighlightSeverity> chosenSeverityCallback) {
+                          @Nullable Consumer<? super @NotNull HighlightSeverity> chosenSeverityCallback) {
     final SeverityEditorDialog dialog = new SeverityEditorDialog(project, selectedSeverity, severityRegistrar, closeDialogWhenSettingsShown);
     if (dialog.showAndGet()) {
       final HighlightInfoType type = dialog.getSelectedType();
