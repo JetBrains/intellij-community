@@ -82,8 +82,6 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
                 }.bottomGap(BottomGap.SMALL)
             }
         }
-
-        override fun setupProject(project: Project) {}
     }
 
     class Step(parent: CommentStep) :

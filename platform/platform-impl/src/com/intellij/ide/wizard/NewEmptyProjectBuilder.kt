@@ -6,7 +6,6 @@ import com.intellij.openapi.module.GeneralModuleType
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
-import com.intellij.ui.dsl.builder.Panel
 import com.intellij.util.ui.EmptyIcon
 import javax.swing.Icon
 
@@ -22,8 +21,6 @@ class NewEmptyProjectBuilder : AbstractNewProjectWizardBuilder() {
     CommentNewProjectWizardStep(parent,  UIBundle.message("label.project.wizard.empty.project.generator.full.description"))
 
   private class Step(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent) {
-    override fun setupUI(builder: Panel) {}
-
     override fun setupProject(project: Project) {
       val moduleType = ModuleTypeManager.getInstance().findByID(GeneralModuleType.TYPE_ID)
       moduleType.createModuleBuilder().commit(project)

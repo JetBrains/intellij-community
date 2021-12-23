@@ -56,10 +56,12 @@ interface NewProjectWizardStep {
    * ```
    * See also: `https://plugins.jetbrains.com/docs/intellij/kotlin-ui-dsl.html`
    */
-  fun setupUI(builder: Panel)
+  @JvmDefault
+  fun setupUI(builder: Panel) {}
 
   /**
    * Applies data from UI into project model or settings.
    */
-  fun setupProject(project: Project)
+  @JvmDefault
+  fun setupProject(project: Project) {}
 }
