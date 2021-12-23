@@ -5,6 +5,8 @@ package com.intellij.codeInsight.daemon.impl.analysis;
 import com.intellij.codeInsight.actions.VcsFacade;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.DaemonCodeAnalyzerImpl;
+import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
 import com.intellij.lang.Language;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
@@ -126,6 +128,13 @@ public class HighlightingSettingsPerFile extends HighlightingLevelManager implem
     }
 
     myBus.syncPublisher(FileHighlightingSettingListener.SETTING_CHANGE).settingChanged(root, setting);
+
+    // Update statistics
+    FeatureUsageData data = new FeatureUsageData().
+      addProject(root.getProject()).
+      addLanguage(root.getLanguage()).
+      addData("level", FileHighlightingSetting.toInspectionsLevel(setting).name());
+    FUCounterUsageLogger.getInstance().logEvent("inspection.widget", "highlight.level.changed", data);
   }
 
   @Override
