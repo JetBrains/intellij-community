@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.annotations.Nullable
 import org.jetbrains.groovy.compiler.rt.GroovyRtConstants
 import org.jetbrains.intellij.build.CompilationContext
-import org.jetbrains.intellij.build.impl.retry.Retry
 import org.jetbrains.jps.api.CmdlineRemoteProto
 import org.jetbrains.jps.api.GlobalOptions
 import org.jetbrains.jps.build.Standalone
@@ -92,15 +91,7 @@ final class JpsCompilationRunner {
   }
 
   void resolveProjectDependencies() {
-    new Retry(context.messages, context.options.resolveDependenciesMaxAttempts, context.options.resolveDependenciesDelayMs).call {
-      try {
-        runBuild(Collections.<String>emptyList(), false, Collections.<String>emptyList(), false, true)
-      }
-      catch (BuildException e) {
-        compilationData.projectDependenciesResolved = false
-        throw e
-      }
-    }
+    runBuild(Collections.<String>emptyList(), false, Collections.<String>emptyList(), false, true)
   }
 
   void buildModuleTests(JpsModule module) {
