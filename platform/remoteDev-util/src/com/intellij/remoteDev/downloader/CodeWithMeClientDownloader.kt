@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessEvent
 import com.intellij.internal.statistic.StructuredIdeActivity
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.ControlFlowException
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -422,6 +423,8 @@ object CodeWithMeClientDownloader {
         return
       }
       catch (e: Throwable) {
+        if (e is ControlFlowException) throw e
+
         if (e is HttpStatusException) {
           if (e.statusCode in 400..500) {
             LOG.warn("Received ${e.statusCode} with message ${e.message}, will not retry")
