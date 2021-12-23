@@ -1,5 +1,5 @@
-from tkinter import Canvas, PhotoImage
-from typing import Any, Callable, Dict, Sequence, Tuple, TypeVar, Union, overload
+from tkinter import Canvas, Frame, PhotoImage
+from typing import Any, Callable, ClassVar, Dict, Sequence, Tuple, TypeVar, Union, overload
 
 # Note: '_Color' is the alias we use for arguments and _AnyColor is the
 # alias we use for return types. Really, these two aliases should be the
@@ -17,6 +17,8 @@ _PolygonCoords = Sequence[Tuple[float, float]]
 # TODO: Type this more accurately
 # Vec2D is actually a custom subclass of 'tuple'.
 Vec2D = Tuple[float, float]
+
+class ScrolledCanvas(Frame): ...
 
 class TurtleScreenBase(object):
     cv: Canvas
@@ -178,7 +180,7 @@ class TPen(object):
     def isvisible(self) -> bool: ...
     # Note: signatures 1 and 2 overlap unsafely when no arguments are provided
     @overload
-    def pen(self) -> _PenState: ...  # type: ignore
+    def pen(self) -> _PenState: ...  # type: ignore[misc]
     @overload
     def pen(
         self,
@@ -206,6 +208,8 @@ class TPen(object):
 _T = TypeVar("_T")
 
 class RawTurtle(TPen, TNavigator):
+    screen: TurtleScreen
+    screens: ClassVar[list[TurtleScreen]]
     def __init__(
         self, canvas: Canvas | TurtleScreen | None = ..., shape: str = ..., undobuffersize: int = ..., visible: bool = ...
     ) -> None: ...
@@ -220,7 +224,7 @@ class RawTurtle(TPen, TNavigator):
     def shape(self, name: str) -> None: ...
     # Unsafely overlaps when no arguments are provided
     @overload
-    def shapesize(self) -> tuple[float, float, float]: ...  # type: ignore
+    def shapesize(self) -> tuple[float, float, float]: ...  # type: ignore[misc]
     @overload
     def shapesize(
         self, stretch_wid: float | None = ..., stretch_len: float | None = ..., outline: float | None = ...
@@ -231,7 +235,7 @@ class RawTurtle(TPen, TNavigator):
     def shearfactor(self, shear: float) -> None: ...
     # Unsafely overlaps when no arguments are provided
     @overload
-    def shapetransform(self) -> tuple[float, float, float, float]: ...  # type: ignore
+    def shapetransform(self) -> tuple[float, float, float, float]: ...  # type: ignore[misc]
     @overload
     def shapetransform(
         self, t11: float | None = ..., t12: float | None = ..., t21: float | None = ..., t22: float | None = ...
@@ -449,7 +453,7 @@ def isvisible() -> bool: ...
 
 # Note: signatures 1 and 2 overlap unsafely when no arguments are provided
 @overload
-def pen() -> _PenState: ...  # type: ignore
+def pen() -> _PenState: ...  # type: ignore[misc]
 @overload
 def pen(
     pen: _PenState | None = ...,
@@ -485,7 +489,7 @@ def shape(name: str) -> None: ...
 
 # Unsafely overlaps when no arguments are provided
 @overload
-def shapesize() -> tuple[float, float, float]: ...  # type: ignore
+def shapesize() -> tuple[float, float, float]: ...  # type: ignore[misc]
 @overload
 def shapesize(stretch_wid: float | None = ..., stretch_len: float | None = ..., outline: float | None = ...) -> None: ...
 @overload
@@ -495,7 +499,7 @@ def shearfactor(shear: float) -> None: ...
 
 # Unsafely overlaps when no arguments are provided
 @overload
-def shapetransform() -> tuple[float, float, float, float]: ...  # type: ignore
+def shapetransform() -> tuple[float, float, float, float]: ...  # type: ignore[misc]
 @overload
 def shapetransform(
     t11: float | None = ..., t12: float | None = ..., t21: float | None = ..., t22: float | None = ...

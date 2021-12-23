@@ -1,17 +1,20 @@
 import sys
+from sre_constants import *
 from sre_constants import _NamedIntConstant as _NIC, error as _Error
-from typing import Any, FrozenSet, Iterable, List, Match, Optional, Pattern as _Pattern, Tuple, Union, overload
+from typing import Any, Iterable, List, Match, Optional, Pattern as _Pattern, Tuple, Union, overload
 
 SPECIAL_CHARS: str
 REPEAT_CHARS: str
-DIGITS: FrozenSet[str]
-OCTDIGITS: FrozenSet[str]
-HEXDIGITS: FrozenSet[str]
-ASCIILETTERS: FrozenSet[str]
-WHITESPACE: FrozenSet[str]
+DIGITS: frozenset[str]
+OCTDIGITS: frozenset[str]
+HEXDIGITS: frozenset[str]
+ASCIILETTERS: frozenset[str]
+WHITESPACE: frozenset[str]
 ESCAPES: dict[str, tuple[_NIC, int]]
 CATEGORIES: dict[str, tuple[_NIC, _NIC] | tuple[_NIC, list[tuple[_NIC, _NIC]]]]
 FLAGS: dict[str, int]
+if sys.version_info >= (3, 7):
+    TYPE_FLAGS: int
 GLOBAL_FLAGS: int
 
 class Verbose(Exception): ...
@@ -24,7 +27,7 @@ class _State:
     def __init__(self) -> None: ...
     @property
     def groups(self) -> int: ...
-    def opengroup(self, name: str = ...) -> int: ...
+    def opengroup(self, name: str | None = ...) -> int: ...
     def closegroup(self, gid: int, p: SubPattern) -> None: ...
     def checkgroup(self, gid: int) -> bool: ...
     def checklookbehindgroup(self, gid: int, source: Tokenizer) -> None: ...

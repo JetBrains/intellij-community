@@ -1,10 +1,17 @@
-from typing import NamedTuple
+from _typeshed import structseq
+from typing import Any, List, Optional, Tuple
+from typing_extensions import final
 
-class struct_group(NamedTuple):
-    gr_name: str
-    gr_passwd: str | None
-    gr_gid: int
-    gr_mem: list[str]
+@final
+class struct_group(structseq[Any], Tuple[str, Optional[str], int, List[str]]):
+    @property
+    def gr_name(self) -> str: ...
+    @property
+    def gr_passwd(self) -> str | None: ...
+    @property
+    def gr_gid(self) -> int: ...
+    @property
+    def gr_mem(self) -> list[str]: ...
 
 def getgrall() -> list[struct_group]: ...
 def getgrgid(id: int) -> struct_group: ...
