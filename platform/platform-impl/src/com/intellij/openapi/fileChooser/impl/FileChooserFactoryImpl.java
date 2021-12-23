@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.openapi.Disposable;
@@ -36,6 +36,9 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
     else if (useNativeWinChooser(descriptor)) {
       return new WinPathChooserDialog(descriptor, parent, project);
     }
+    else if (useNewChooser()) {
+      return new NewFileChooserDialogImpl(descriptor, parent, project);
+    }
     else if (parent != null) {
       return new FileChooserDialogImpl(descriptor, parent, project);
     }
@@ -66,12 +69,19 @@ public class FileChooserFactoryImpl extends FileChooserFactory {
     if (chooser != null) {
       return chooser;
     }
+    else if (useNewChooser()) {
+      return new NewFileChooserDialogImpl(descriptor, parent, project);
+    }
     else if (parent != null) {
       return new FileChooserDialogImpl(descriptor, parent, project);
     }
     else {
       return new FileChooserDialogImpl(descriptor, project);
     }
+  }
+
+  private static boolean useNewChooser() {
+    return Registry.is("ide.ui.new.chooser");
   }
 
   private static boolean useNativeWinChooser(FileChooserDescriptor descriptor) {

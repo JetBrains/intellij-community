@@ -3,6 +3,7 @@ package com.intellij.openapi.fileChooser.actions;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.fileChooser.FileChooserPanel;
 import com.intellij.openapi.fileChooser.FileSystemTree;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.util.NlsActions;
@@ -22,8 +23,13 @@ public abstract class FileChooserAction extends AnAction implements DumbAware {
 
   @Override
   public final void update(@NotNull AnActionEvent e) {
-    FileSystemTree tree = e.getData(FileSystemTree.DATA_KEY);
-    if (tree != null) {
+    FileChooserPanel panel;
+    FileSystemTree tree;
+    if ((panel = e.getData(FileChooserPanel.DATA_KEY)) != null) {
+      e.getPresentation().setEnabled(true);
+      update(panel, e);
+    }
+    else if ((tree = e.getData(FileSystemTree.DATA_KEY)) != null) {
       e.getPresentation().setEnabled(true);
       update(tree, e);
     }
@@ -34,11 +40,21 @@ public abstract class FileChooserAction extends AnAction implements DumbAware {
 
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
-    FileSystemTree tree = e.getData(FileSystemTree.DATA_KEY);
-    if (tree != null) {
+    FileChooserPanel panel;
+    FileSystemTree tree;
+    if ((panel = e.getData(FileChooserPanel.DATA_KEY)) != null) {
+      actionPerformed(panel, e);
+    }
+    else if ((tree = e.getData(FileSystemTree.DATA_KEY)) != null) {
       actionPerformed(tree, e);
     }
   }
+
+  protected void update(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) {
+    e.getPresentation().setEnabledAndVisible(false);
+  }
+
+  protected void actionPerformed(@NotNull FileChooserPanel panel, @NotNull AnActionEvent e) { }
 
   protected abstract void update(@NotNull FileSystemTree fileChooser, @NotNull AnActionEvent e);
 
