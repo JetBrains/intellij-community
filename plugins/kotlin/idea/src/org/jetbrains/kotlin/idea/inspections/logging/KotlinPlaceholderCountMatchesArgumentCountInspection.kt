@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.inspections.logging
 
 import com.intellij.codeInspection.ProblemsHolder
+import org.jetbrains.kotlin.builtins.DefaultBuiltIns
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.StandardNames.FqNames.throwable
 import org.jetbrains.kotlin.idea.KotlinBundle
@@ -12,11 +13,7 @@ import org.jetbrains.kotlin.idea.core.resolveType
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
 import org.jetbrains.kotlin.idea.intentions.receiverType
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
-import org.jetbrains.kotlin.psi.KtCallExpression
-import org.jetbrains.kotlin.psi.KtExpression
-import org.jetbrains.kotlin.psi.KtValueArgument
-import org.jetbrains.kotlin.psi.callExpressionVisitor
-import org.jetbrains.kotlin.resolve.calls.callUtil.getType
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.resolve.constants.evaluate.ConstantExpressionEvaluator
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -26,7 +23,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinPlaceholderCountMatchesArgumentCountInspection : AbstractKotlinInspection() {
 
-    enum class LoggerType {
+    private enum class LoggerType {
         SLF4J_LOGGER, LOG4J_LOGGER, LOG4J_BUILDER
     }
 
@@ -41,7 +38,7 @@ class KotlinPlaceholderCountMatchesArgumentCountInspection : AbstractKotlinInspe
     }
 
     override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = callExpressionVisitor(fun(call) {
-        val name = call.calleeExpression?.text
+        val name = call.calleeExpression.safeAs<KtSimpleNameExpression>()?.getReferencedName()
         if (name == null || !LOGGING_METHODS.contains(name)) {
             return
         }
@@ -57,29 +54,35 @@ class KotlinPlaceholderCountMatchesArgumentCountInspection : AbstractKotlinInspe
         if (valueParameters.isEmpty()) {
             return
         }
-        val indexString: Int
+        val patternIndex: Int
+        //first case: pattern has index 0
+        //example: public void info(String format, Object... arguments);
         if (KotlinBuiltIns.isString(valueParameters[0]?.type)) {
-            indexString = 0
+            patternIndex = 0
         } else {
             if (valueParameters.size < 2 || !KotlinBuiltIns.isString(valueParameters[1]?.type)) {
                 return
             }
-            indexString = 1
+            //second case: pattern has index 1
+            //example: public void info(Marker marker, String format, Object... arguments)
+            patternIndex = 1
         }
 
         val valueArguments = call.valueArguments
-        val patternArgument = valueArguments[indexString] ?: return
+        val patternArgument = valueArguments.getOrNull(patternIndex) ?: return
         val pattern = patternArgument.getArgumentExpression() ?: return
 
-        var argumentsCount = valueArguments.size - 1 - indexString
+        var argumentsCount = valueArguments.size - 1 - patternIndex
         var lastArgumentIsException = valueArguments.lastOrNull()?.getArgumentExpression()?.resolveType().isThrowable()
 
+        //consider case like logger.debug("test {} {}", *arrayOf(1, 2, 3)), which can occur when we use auto-conversion from Java
+        //other sources of arrayOf is not considered, because they are not popular
         if (argumentsCount == 1) {
-            val ktValueOneArgument = valueArguments[indexString + 1] ?: return
-            val oneArgument = ktValueOneArgument.getArgumentExpression()
-            val resolveType = oneArgument?.resolveType()
-            if (resolveType != null && KotlinBuiltIns.isArray(resolveType) && ktValueOneArgument.isSpread) {
-                val callExpression = oneArgument.safeAs<KtCallExpression>() ?: return
+            val ktValueOneArgument = valueArguments.getOrNull(patternIndex + 1) ?: return
+            val singleArgument = ktValueOneArgument.getArgumentExpression()
+            val singleArgumentType = singleArgument?.resolveType()
+            if (singleArgumentType != null && KotlinBuiltIns.isArray(singleArgumentType) && ktValueOneArgument.isSpread) {
+                val callExpression = singleArgument.safeAs<KtCallExpression>() ?: return
                 if (callExpression.resolveToCall()?.resultingDescriptor?.fqNameSafe?.asString() == "kotlin.arrayOf") {
                     val arrayArguments = callExpression.valueArguments
                     argumentsCount = arrayArguments.size
@@ -156,8 +159,8 @@ class KotlinPlaceholderCountMatchesArgumentCountInspection : AbstractKotlinInspe
 
     private fun countPlaceHolders(pattern: KtExpression, loggerType: LoggerType): Int? {
         val bindingContext = pattern.analyze(BodyResolveMode.PARTIAL)
-        val expectedType = pattern.getType(bindingContext) ?: return null
-        val constant = ConstantExpressionEvaluator.getConstant(pattern, bindingContext)?.toConstantValue(expectedType) ?: return null
+        val constant = ConstantExpressionEvaluator.getConstant(pattern, bindingContext)
+            ?.toConstantValue(DefaultBuiltIns.Instance.stringType) ?: return null
         val text = constant.value?.toString() ?: return null
         var count = 0
         var placeHolder = false
