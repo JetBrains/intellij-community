@@ -152,10 +152,11 @@ class GroovyNewProjectWizard : LanguageNewProjectWizard {
         moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
       }
 
+      val librariesContainer = LibrariesContainerFactory.createContainer(project)
+      val compositionSettings = createCompositionSettings(project, librariesContainer)
+
       groovyModuleBuilder.addModuleConfigurationUpdater(object : ModuleConfigurationUpdater() {
         override fun update(module: Module, rootModel: ModifiableRootModel) {
-          val librariesContainer = LibrariesContainerFactory.createContainer(project)
-          val compositionSettings = createCompositionSettings(project, librariesContainer)
           compositionSettings?.addLibraries(rootModel, mutableListOf(), librariesContainer)
         }
       })
