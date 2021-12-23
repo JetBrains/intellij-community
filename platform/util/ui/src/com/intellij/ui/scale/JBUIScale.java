@@ -37,7 +37,7 @@ public final class JBUIScale {
   private static final float DISCRETE_SCALE_RESOLUTION = 0.25f;
 
   @SuppressWarnings("StaticNonFinalField")
-  public static float DEF_SYSTEM_FONT_SIZE = SystemInfo.isMac? 13f : 12f;
+  public static float DEF_SYSTEM_FONT_SIZE = 12f;
 
   public static void addUserScaleChangeListener(@NotNull PropertyChangeListener listener) {
     PROPERTY_CHANGE_SUPPORT.addPropertyChangeListener(USER_SCALE_FACTOR_PROPERTY, listener);
@@ -68,6 +68,7 @@ public final class JBUIScale {
       // text family should be used for relatively small sizes (<20pt), don't change to Display
       // see more about SF https://medium.com/@mach/the-secret-of-san-francisco-fonts-4b5295d9a745#.2ndr50z2v
       font = new Font(".SF NS Text", Font.PLAIN, 13);
+      DEF_SYSTEM_FONT_SIZE = font.getSize();
     }
     else {
       font = uiDefaults == null ? UIManager.getFont("Label.font") : uiDefaults.get().getFont("Label.font");
