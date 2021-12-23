@@ -75,6 +75,9 @@ final class ActionUpdater {
   private final Consumer<Runnable> myLaterInvocator;
   private final int myTestDelayMillis;
 
+  private int myEDTCallsCount;
+  private long myEDTWaitNanos;
+
   ActionUpdater(boolean isInModalContext,
                 @NotNull PresentationFactory presentationFactory,
                 @NotNull DataContext dataContext,
@@ -179,9 +182,14 @@ final class ActionUpdater {
 
     ProgressIndicator progress = Objects.requireNonNull(ProgressIndicatorProvider.getGlobalProgressIndicator());
     return computeOnEdt(() -> {
-      long elapsed0 = TimeoutUtil.getDurationMillis(start0);
-      if (elapsed0 > 200) {
-        LOG.warn(elapsed0 + " ms to grab EDT for " + operationName);
+      {
+        long curNanos = System.nanoTime();
+        myEDTCallsCount++;
+        myEDTWaitNanos += curNanos - start0;
+        long elapsed = TimeUnit.NANOSECONDS.toMillis(curNanos - start0);
+        if (elapsed > 200) {
+          LOG.warn(elapsed + " ms to grab EDT for " + operationName);
+        }
       }
       long start = System.nanoTime();
       myInEDTActionOperation = operationName;
@@ -265,6 +273,16 @@ final class ActionUpdater {
       indicator.cancel();
       ApplicationManager.getApplication().invokeLater(
         this::applyPresentationChanges, ModalityState.any(), disposableParent.getDisposed());
+    });
+    myEDTCallsCount = 0;
+    myEDTWaitNanos = 0;
+    promise.onProcessed(__ -> {
+      long edtWaitMillis = TimeUnit.NANOSECONDS.toMillis(myEDTWaitNanos);
+      if (myLaterInvocator == null && (myEDTCallsCount > 500 || edtWaitMillis > 3000)) {
+        boolean noFqn = group.getClass() == DefaultActionGroup.class;
+        LOG.warn(edtWaitMillis + " ms total to grab EDT " + myEDTCallsCount + " times at '" + myPlace + "' to expand " +
+                 group.getClass().getSimpleName() + (noFqn ? "" : " (" + group.getClass().getName() + ")") + " - use UpdateInBackground.");
+      }
     });
 
     if (myLaterInvocator != null && SlowOperations.isInsideActivity(SlowOperations.FAST_TRACK)) {
