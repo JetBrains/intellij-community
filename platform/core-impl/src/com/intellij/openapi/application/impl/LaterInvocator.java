@@ -316,10 +316,6 @@ public final class LaterInvocator {
     ApplicationManager.getApplication().assertIsDispatchThread();
   }
 
-  private static boolean isWriteThread() {
-    return ApplicationManager.getApplication().isWriteThread();
-  }
-
   static boolean isFlushNow(@NotNull Runnable runnable) {
     return ourEdtQueue.isFlushNow(runnable);
   }
