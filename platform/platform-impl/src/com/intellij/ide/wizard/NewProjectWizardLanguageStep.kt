@@ -30,7 +30,7 @@ class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
   override var language by ::step
 
   override val additionalSteps: ResettableLazy<List<AnAction>> = resettableLazy {
-    (languages.map { it } - steps.value.map { it.key }.toSet()).map { LanguageAction(it) } + Separator() + MoreLanguageAction()
+    (languages.map { it } - steps.value.map { it.key }.toSet()).map { LanguageAction(it) }
   }
 
   init {
@@ -56,12 +56,6 @@ class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
           Consumer {
             it.openMarketplaceTab(language)
           })
-      }
-    }
-
-    private class MoreLanguageAction : AnAction(Supplier { UIBundle.message("new.project.wizard.get.more.languages") }) {
-      override fun actionPerformed(e: AnActionEvent) {
-        PluginManagerConfigurable.showPluginConfigurable(null, listOf())
       }
     }
   }
