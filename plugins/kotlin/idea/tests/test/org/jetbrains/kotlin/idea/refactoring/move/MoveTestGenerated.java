@@ -788,6 +788,11 @@ public class MoveTestGenerated extends AbstractMoveTest {
         runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveSealedClassWithNestedImplsToAnotherPackage/moveSealedClassWithNestedImplsToAnotherPackage.test");
     }
 
+    @TestMetadata("kotlin/moveTopLevelDeclarations/moveTypealiasToFile/moveTypealiasToFile.test")
+    public void testKotlin_moveTopLevelDeclarations_moveTypealiasToFile_MoveTypealiasToFile() throws Exception {
+        runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/moveTypealiasToFile/moveTypealiasToFile.test");
+    }
+
     @TestMetadata("kotlin/moveTopLevelDeclarations/objectAlreadyInaccessible/objectAlreadyInaccessible.test")
     public void testKotlin_moveTopLevelDeclarations_objectAlreadyInaccessible_ObjectAlreadyInaccessible() throws Exception {
         runTest("testData/refactoring/move/kotlin/moveTopLevelDeclarations/objectAlreadyInaccessible/objectAlreadyInaccessible.test");
