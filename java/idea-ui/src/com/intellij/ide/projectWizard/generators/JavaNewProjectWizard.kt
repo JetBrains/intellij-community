@@ -5,7 +5,7 @@ import com.intellij.ide.JavaUiBundle
 import com.intellij.ide.wizard.*
 
 class JavaNewProjectWizard : LanguageNewProjectWizard {
-  override val name: String = "Java"
+  override val name: String = JAVA
 
   override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
@@ -24,5 +24,9 @@ class JavaNewProjectWizard : LanguageNewProjectWizard {
     init {
       data.putUserData(BuildSystemJavaNewProjectWizardData.KEY, this)
     }
+  }
+
+  companion object {
+    const val JAVA = "Java"
   }
 }

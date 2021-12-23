@@ -2,6 +2,7 @@
 package com.intellij.ide.wizard
 
 import com.intellij.ide.util.projectWizard.WizardContext
+import com.intellij.ide.wizard.util.CommentNewProjectWizardStep
 import com.intellij.openapi.module.GeneralModuleType
 import com.intellij.openapi.module.ModuleTypeManager
 import com.intellij.openapi.project.Project
@@ -15,10 +16,11 @@ class NewEmptyProjectBuilder : AbstractNewProjectWizardBuilder() {
   override fun getNodeIcon(): Icon = EmptyIcon.ICON_0
 
   override fun createStep(context: WizardContext) =
-    RootNewProjectWizardStep(context).chain(::DescriptionStep, ::NewProjectWizardBaseStep, ::GitNewProjectWizardStep, ::Step)
+    RootNewProjectWizardStep(context).chain(::CommentStep, ::NewProjectWizardBaseStep, ::GitNewProjectWizardStep, ::Step)
 
-  private class DescriptionStep(parent: NewProjectWizardStep) :
-    CommentNewProjectWizardStep(parent,  UIBundle.message("label.project.wizard.empty.project.generator.full.description"))
+  private class CommentStep(parent: NewProjectWizardStep) : CommentNewProjectWizardStep(parent) {
+    override val comment: String = UIBundle.message("label.project.wizard.empty.project.generator.full.description")
+  }
 
   private class Step(parent: NewProjectWizardStep) : AbstractNewProjectWizardStep(parent) {
     override fun setupProject(project: Project) {

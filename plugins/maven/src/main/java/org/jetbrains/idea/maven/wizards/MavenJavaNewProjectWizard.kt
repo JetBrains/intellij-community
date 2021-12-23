@@ -35,6 +35,7 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   }
 
   companion object {
-    private val MAVEN = MavenUtil.SYSTEM_ID.readableName
+    @JvmField
+    val MAVEN = MavenUtil.SYSTEM_ID.readableName
   }
 }

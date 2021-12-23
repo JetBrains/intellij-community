@@ -67,6 +67,7 @@ import java.awt.*;
 import java.net.URL;
 import java.util.List;
 import java.util.*;
+import java.util.function.Consumer;
 
 /**
  * @author Dmitry Avdeev
@@ -111,10 +112,11 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     myContext = context;
     myContext.addContextListener(new WizardContext.Listener() {
       @Override
-      public void switchToRequested(@NotNull String placeId) {
+      public void switchToRequested(@NotNull String placeId, @NotNull Consumer<Step> configure) {
         TemplatesGroup groupToSelect = ContainerUtil.find(myTemplatesMap.keySet(), group -> group.getId().equals(placeId));
         if (groupToSelect != null) {
           myProjectTypeList.setSelectedValue(groupToSelect, true);
+          configure.accept(getCustomStep());
         }
       }
     });
@@ -371,14 +373,20 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     }
 
     if (isNewWizard()) {
+      var newWizardGroups = new ArrayList<TemplatesGroup>();
+      var newWizardUserGroups = new ArrayList<TemplatesGroup>();
       if (context.isCreatingNewProject()) {
-        groups.add(0, new TemplatesGroup(new NewEmptyProjectBuilder()));
-        groups.add(0, new TemplatesGroup(new NewProjectBuilder()));
-        groups.addAll(getUserTemplatesMap(context));
+        newWizardGroups.add(new TemplatesGroup(new NewProjectBuilder()));
+        newWizardGroups.add(new TemplatesGroup(new NewEmptyProjectBuilder()));
+        newWizardUserGroups.addAll(getUserTemplatesMap(context));
       }
       else {
-        groups.add(0, new TemplatesGroup(new NewModuleBuilder()));
+        newWizardGroups.add(new TemplatesGroup(new NewModuleBuilder()));
       }
+      groups.addAll(0, newWizardGroups);
+      groups.addAll(newWizardUserGroups);
+      newWizardGroups.forEach(it -> myTemplatesMap.put(it, new ArrayList<>()));
+      newWizardUserGroups.forEach(it -> myTemplatesMap.put(it, new ArrayList<>()));
     }
 
     return groups;
