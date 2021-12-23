@@ -7,7 +7,6 @@ import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,16 +28,19 @@ public class CoreLocalVirtualFile extends VirtualFile {
     this(fileSystem, ioFile.toPath());
   }
 
-  /** @deprecated use {@link CoreLocalVirtualFile#CoreLocalVirtualFile(CoreLocalFileSystem, Path, BasicFileAttributes)} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
-  public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile, @SuppressWarnings("unused") boolean isDirectory) {
-    this(fileSystem, ioFile.toPath());
+  public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull File ioFile, boolean isDirectory) {
+    this(fileSystem, ioFile.toPath(), isDirectory);
   }
 
   public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull Path file) {
     myFileSystem = fileSystem;
     myFile = file;
+  }
+
+  public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull Path file, boolean isDirectory) {
+    myFileSystem = fileSystem;
+    myFile = file;
+    myAttributes = isDirectory ? new IncompleteDirectoryAttributes() : null;
   }
 
   public CoreLocalVirtualFile(@NotNull CoreLocalFileSystem fileSystem, @NotNull Path file, @NotNull BasicFileAttributes attributes) {
