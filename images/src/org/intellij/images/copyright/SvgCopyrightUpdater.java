@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.intellij.images.copyright;
 
 import com.intellij.openapi.fileTypes.FileType;
@@ -15,7 +15,6 @@ import org.intellij.images.fileTypes.impl.SvgFileType;
  * @author Konstantin Bulenkov
  */
 final class SvgCopyrightUpdater extends UpdateCopyrightsProvider {
-
   @Override
   public UpdateCopyright createInstance(Project project,
                                         Module module,
@@ -26,7 +25,6 @@ final class SvgCopyrightUpdater extends UpdateCopyrightsProvider {
   }
 
   private static final class UpdateSvgFileCopyright extends UpdateXmlCopyrightsProvider.UpdateXmlFileCopyright {
-
     UpdateSvgFileCopyright(Project project,
                            Module module,
                            VirtualFile file,
