@@ -41,6 +41,7 @@ final class JavaPluginLayout {
           spec.withModule(moduleName, "javac2.jar")
         }
 
+        // api modules
         for (String moduleName in List.of(
           "intellij.java.compiler",
           "intellij.java.debugger",
@@ -54,7 +55,7 @@ final class JavaPluginLayout {
           "intellij.jsp",
           "intellij.platform.uast"
         )) {
-          spec.withModule(moduleName, "java-api.jar")
+          spec.withModule(moduleName, mainJarName)
         }
 
         for (String moduleName in List.of(
