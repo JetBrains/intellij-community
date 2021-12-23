@@ -26,6 +26,7 @@ import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
+import com.intellij.util.containers.UnsafeWeakList;
 import com.intellij.util.keyFMap.KeyFMap;
 import com.intellij.util.ui.EDT;
 import com.intellij.util.ui.UIUtil;
@@ -36,6 +37,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -54,6 +56,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
 
   private static int ourPrevMapEventCount;
   private static final Map<Component, FList<ProviderData>> ourPrevMaps = ContainerUtil.createWeakKeySoftValueMap();
+  private static final Collection<PreCachedDataContext2> ourInstances = new UnsafeWeakList<>();
   private static final Map<String, Integer> ourDataKeysIndices = new ConcurrentHashMap<>();
   private static final AtomicInteger ourDataKeysCount = new AtomicInteger();
   private static final Object ourExplicitNull = ObjectUtils.sentinel("explicit.null");
@@ -98,6 +101,7 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
           }
         }
         myCachedData = preGetAllData(components, initial, keys);
+        ourInstances.add(this);
       }
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       ourPrevMapEventCount = count;
@@ -213,11 +217,13 @@ class PreCachedDataContext2 implements AsyncDataContext, UserDataHolder, AnActio
 
   static void clearAllCaches() {
     for (FList<ProviderData> list : ourPrevMaps.values()) {
-      for (ProviderData map : list) {
-        map.clear();
-      }
+      for (ProviderData map : list) map.clear();
     }
     ourPrevMaps.clear();
+    for (PreCachedDataContext2 context : ourInstances) {
+      for (ProviderData map : context.myCachedData) map.clear();
+    }
+    ourInstances.clear();
   }
 
   private static @NotNull FList<ProviderData> preGetAllData(@NotNull List<Component> components,
