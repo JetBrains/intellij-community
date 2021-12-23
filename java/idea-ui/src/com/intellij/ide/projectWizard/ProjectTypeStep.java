@@ -373,7 +373,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
     if (isNewWizard()) {
       if (context.isCreatingNewProject()) {
         groups.add(0, new TemplatesGroup(new NewEmptyProjectBuilder()));
-        groups.add(0, new TemplatesGroup(new NewMultiModuleProjectBuilder()));
         groups.add(0, new TemplatesGroup(new NewProjectBuilder()));
         groups.addAll(getUserTemplatesMap(context));
       }
