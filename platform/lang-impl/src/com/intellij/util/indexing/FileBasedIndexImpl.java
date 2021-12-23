@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -1565,11 +1565,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @Nullable("null in case index update is not necessary or the update has failed")
   SingleIndexUpdateStats updateSingleIndex(@NotNull ID<?, ?> indexId, @Nullable VirtualFile file, int inputId, @Nullable FileContent currentFC) {
     if (doTraceStubUpdates(indexId)) {
-      if (file == null) {
-        LOG.info("index " + indexId + " deletion requested for " + inputId);
+      String fileInfo = file == null ? String.valueOf(inputId) : file.getName();
+      if (currentFC == null) {
+        LOG.info("index " + indexId + " deletion requested for " + fileInfo);
       }
       else {
-        LOG.info("index " + indexId + " update requested for " + file.getName());
+        LOG.info("index " + indexId + " update requested for " + fileInfo);
       }
     }
     if (!myRegisteredIndexes.isExtensionsDataLoaded()) reportUnexpectedAsyncInitState();
@@ -1628,11 +1629,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
       if (runUpdateForPersistentData(storageUpdate)) {
         if (doTraceStubUpdates(indexId)) {
-          if (file == null) {
-            LOG.info("index " + indexId + " deletion finished for " + inputId);
+          String fileInfo = file == null ? String.valueOf(inputId) : file.getName();
+          if (currentFC == null) {
+            LOG.info("index " + indexId + " deletion finished for " + fileInfo);
           }
           else {
-            LOG.info("index " + indexId + " update finished for " + file.getName());
+            LOG.info("index " + indexId + " update finished for " + fileInfo);
           }
         }
         ConcurrencyUtil.withLock(myReadLock, () -> {
