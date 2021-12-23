@@ -1001,6 +1001,7 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon Tibero = load("providers/tibero.svg", -1201793474, 2);
     /** 16x16 */ public static final @NotNull Icon Trino = load("providers/trino.svg", 245019578, 2);
     /** 16x16 */ public static final @NotNull Icon Vertica = load("providers/vertica.svg", -1457002626, 2);
+    /** 16x16 */ public static final @NotNull Icon Yugabyte = load("providers/yugabyte.svg", -1054474169, 2);
   }
 
   public static final class RunConfigurations {
