@@ -12,6 +12,10 @@ import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.vcs.log.VcsFullCommitDetails
+import git4idea.history.GitHistoryUtils
+import git4idea.push.GitPushSource
+import git4idea.push.GitPushTarget
+import git4idea.repo.GitRepositoryImpl
 import org.jetbrains.idea.devkit.DevKitBundle
 import org.jetbrains.idea.devkit.util.PsiUtil
 import java.nio.file.Path
@@ -55,19 +59,45 @@ class KotlinPluginPrePushHandler(private val project: Project) : PrePushHandler 
     if (!commitsShouldBeChecked())
       return PrePushHandler.Result.OK
 
-    val commitsToWarnAbout = pushDetails
-      .flatMap { it.commits }
+    val atLeastOneHasCommitsToEdit = pushDetails.any { hasCommitsToEdit(it, indicator.modalityState) }
+
+    if (atLeastOneHasCommitsToEdit)
+      return PrePushHandler.Result.ABORT_AND_CLOSE
+
+    return PrePushHandler.Result.OK
+  }
+
+  private fun hasCommitsToEdit(pushInfo: PushInfo, modalityState: ModalityState): Boolean {
+    val pushSpec = pushInfo.pushSpec
+    val sourceBranchName = (pushSpec.source as GitPushSource).branch.name
+    val remoteName = (pushSpec.target as GitPushTarget).branch.remote.name
+    val gitRepository = pushInfo.repository as GitRepositoryImpl
+
+    // We don't want bother people reminding them of commits which are already on remote. Being there means being on the safe side.
+    // This is the case when, for example, one rebased his dev branch on recent master and has now to push not only his/her commits but
+    // those that came from master as well.
+
+    val commitHashesOfInterest =
+      GitHistoryUtils.history(project, gitRepository.root, sourceBranchName, "--not", "--remotes=$remoteName", "--max-count=1000")
+        .map { it.id.toShortString() }.toSet()
+
+    val commitsToPush = pushInfo.commits // is a subset of those of interest (user decides what to push)
+
+    val commitsToWarnAbout = commitsToPush.asSequence()
+      .filter { it.id.toShortString() in commitHashesOfInterest }
       .filter(::breaksKotlinPluginMessageRules)
       .map { it.id.toShortString() to it.subject }
+      .toList()
 
     if (commitsToWarnAbout.isEmpty())
-      return PrePushHandler.Result.OK
+      return false
 
     val commitsInfo = commitsToWarnAbout.joinToString("<br/>") { hashAndSubject ->
       "${hashAndSubject.first}: ${hashAndSubject.second}"
     }
 
-    val commitAsIs = invokeAndWait(indicator.modalityState) {
+    val commitAsIs = invokeAndWait(modalityState) {
+      @Suppress("DialogTitleCapitalization")
       MessageDialogBuilder.yesNo(
         DevKitBundle.message("push.commit.message.lacks.issue.reference.title"),
         DevKitBundle.message("push.commit.message.lacks.issue.reference.body", commitsInfo)
@@ -79,9 +109,9 @@ class KotlinPluginPrePushHandler(private val project: Project) : PrePushHandler 
     }
 
     if (commitAsIs)
-      return PrePushHandler.Result.OK
+      return false
 
-    return PrePushHandler.Result.ABORT_AND_CLOSE
+    return true
   }
 
   private fun commitsShouldBeChecked(): Boolean =
