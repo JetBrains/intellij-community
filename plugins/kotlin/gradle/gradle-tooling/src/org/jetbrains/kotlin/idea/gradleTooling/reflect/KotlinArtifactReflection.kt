@@ -22,9 +22,15 @@ interface KonanArtifactReflection {
 }
 
 private class KonanArtifactReflectionImpl(private val instance: Any) : KonanArtifactReflection {
-    override val executableName: String? by lazy { instance.callReflectiveGetter("getBaseName", logger) }
-    private val linkTask: Task? by lazy { instance.callReflectiveGetter("getLinkTask", logger) }
-    override val linkTaskPath: String? by lazy { linkTask?.path }
+    override val executableName: String? by lazy {
+        instance.callReflectiveGetter("getBaseName", logger)
+    }
+    private val linkTask: Task? by lazy {
+        instance.callReflectiveGetter("getLinkTask", logger)
+    }
+    override val linkTaskPath: String? by lazy {
+        linkTask?.path
+    }
     override val runTask: Exec? by lazy {
         if (instance.javaClass.classLoader.loadClassOrNull(NATIVE_EXECUTABLE_CLASS)?.isInstance(instance) == true)
             instance.callReflectiveGetter("getRunTask", logger)
@@ -45,7 +51,9 @@ private class KonanArtifactReflectionImpl(private val instance: Any) : KonanArti
         linkTask?.callReflectiveAnyGetter("getOutputKind", logger)
             ?.callReflectiveGetter("name", logger)
     }
-    override val konanTargetName: String? by lazy { linkTask?.callReflectiveGetter("getTarget", logger) }
+    override val konanTargetName: String? by lazy {
+        linkTask?.callReflectiveGetter("getTarget", logger)
+    }
     override val outputFile: File? by lazy {
         when (val outputFile = instance.callReflective("getOutputFile", parameters(), returnType<Any>(), logger)) {
             is Provider<*> -> outputFile.orNull as? File
@@ -53,7 +61,9 @@ private class KonanArtifactReflectionImpl(private val instance: Any) : KonanArti
             else -> null
         }
     }
-    override val isTests: Boolean? by lazy { linkTask?.callReflectiveGetter("getProcessTests", logger) }
+    override val isTests: Boolean? by lazy {
+        linkTask?.callReflectiveGetter("getProcessTests", logger)
+    }
 
     override val freeCompilerArgs: Collection<String>? by lazy {
         linkTask?.callReflectiveAnyGetter("getKotlinOptions", logger)

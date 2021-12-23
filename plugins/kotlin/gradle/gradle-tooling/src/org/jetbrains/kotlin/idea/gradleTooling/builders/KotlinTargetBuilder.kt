@@ -14,27 +14,26 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
 import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.kotlin.idea.projectModel.KotlinTestRunTask
 
-object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTarget> {
-    override fun buildComponent(origin: Any, importingContext: MultiplatformModelImportingContext): KotlinTarget? {
-        val kotlinTargetReflection = KotlinTargetReflection(origin)
+object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetReflection, KotlinTarget> {
+    override fun buildComponent(origin: KotlinTargetReflection, importingContext: MultiplatformModelImportingContext): KotlinTarget? {
         /* Loading class safely to still support Kotlin Gradle Plugin 1.3.30 */
-        if (kotlinTargetReflection.isMetadataTargetClass) return null
+        if (origin.isMetadataTargetClass) return null
 
-        val name = kotlinTargetReflection.targetName ?: return null
-        val platformId = kotlinTargetReflection.platformType ?: return null
+        val name = origin.targetName
+        val platformId = origin.platformType ?: return null
         val platform = KotlinPlatform.byId(platformId) ?: return null
-        val disambiguationClassifier = kotlinTargetReflection.disambiguationClassifier ?: return null
-        val targetPresetName: String? = kotlinTargetReflection.presetName
+        val disambiguationClassifier = origin.disambiguationClassifier ?: return null
+        val targetPresetName: String? = origin.presetName
 
-        val compilations = kotlinTargetReflection.compilations?.mapNotNull {
+        val compilations = origin.compilations?.mapNotNull {
             KotlinCompilationBuilder(platform, disambiguationClassifier).buildComponent(it, importingContext)
         } ?: return null
-        val jar = kotlinTargetReflection.artifactsTaskName
+        val jar = origin.artifactsTaskName
             ?.let { importingContext.project.tasks.findByName(it) }
             ?.let { KotlinTargetJarReflection(it) }
             ?.let { KotlinTargetJarImpl(it.archiveFile) }
         val nativeMainRunTasks =
-            if (platform == KotlinPlatform.NATIVE) kotlinTargetReflection.nativeMainRunTasks.orEmpty().mapNotNull { nativeMainRunReflection ->
+            if (platform == KotlinPlatform.NATIVE) origin.nativeMainRunTasks.orEmpty().mapNotNull { nativeMainRunReflection ->
                 val taskName = nativeMainRunReflection.taskName ?: return@mapNotNull null
                 val compilationName = nativeMainRunReflection.compilationName ?: return@mapNotNull null
                 val entryPoint = nativeMainRunReflection.entryPoint ?: return@mapNotNull null
@@ -43,11 +42,11 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTarget> {
             }
             else emptyList()
 
-        val artifacts = kotlinTargetReflection.konanArtifacts?.mapNotNull {
+        val artifacts = origin.konanArtifacts?.mapNotNull {
             KonanArtifactModelBuilder.buildComponent(it, importingContext)
-        } .orEmpty()
+        }.orEmpty()
 
-        val testRunTasks =  buildTestRunTasks(importingContext.project, origin as Named)
+        val testRunTasks = buildTestRunTasks(importingContext.project, origin.gradleTarget)
         val target = KotlinTargetImpl(
             name,
             targetPresetName,
@@ -75,6 +74,7 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTarget> {
         null
     }
 
+    @Suppress("UNCHECKED_CAST")
     private fun buildTestRunTasks(project: Project, gradleTarget: Named): Collection<KotlinTestRunTask> {
         val getTestRunsMethod = gradleTarget.javaClass.getMethodOrNull("getTestRuns")
         if (getTestRunsMethod != null) {
@@ -83,11 +83,11 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTarget> {
                 val testReports =
                     testRuns.mapNotNull { (it.javaClass.getMethodOrNull("getExecutionTask")?.invoke(it) as? TaskProvider<Task>)?.get() }
                 val testTasks = testReports.flatMap {
-                    ((it.javaClass.getMethodOrNull("getTestTasks")?.invoke(it) as? Collection<Any>)?.mapNotNull {
+                    ((it.javaClass.getMethodOrNull("getTestTasks")?.invoke(it) as? Collection<Any>)?.mapNotNull { testTask ->
                         //TODO(auskov): getTestTasks should return collection of TaskProviders without mixing with Tasks
-                        when (it) {
-                            is Provider<*> -> it.get() as? Task
-                            is Task -> it
+                        when (testTask) {
+                            is Provider<*> -> testTask.get() as? Task
+                            is Task -> testTask
                             else -> null
                         }
                     }) ?: listOf(it)
@@ -135,7 +135,7 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTarget> {
             task.name.takeIf {
                 targetDisambiguationClassifier.isNullOrEmpty() ||
                         testTaskDisambiguationClassifier != null &&
-                        testTaskDisambiguationClassifier.startsWith(targetDisambiguationClassifier.orEmpty())
+                        testTaskDisambiguationClassifier.startsWith(targetDisambiguationClassifier)
             }
         }.map { KotlinTestRunTaskImpl(it, KotlinCompilation.TEST_COMPILATION_NAME) }
     }

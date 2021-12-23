@@ -16,8 +16,7 @@ interface KotlinTargetJarReflection {
 private class KotlinTargetJarReflectionImpl(private val instance: Any) : KotlinTargetJarReflection {
     override val archiveFile: File? by lazy {
         if (instance.javaClass.getMethodOrNull("getArchiveFile") != null) {
-            val regularFile: Provider<RegularFile>? = instance.callReflectiveGetter("getArchiveFile", logger)
-            return@lazy regularFile?.orNull?.asFile
+            instance.callReflective("getArchiveFile", parameters(), returnType<Provider<RegularFile>>(), logger)?.orNull?.asFile
         } else null
     }
 

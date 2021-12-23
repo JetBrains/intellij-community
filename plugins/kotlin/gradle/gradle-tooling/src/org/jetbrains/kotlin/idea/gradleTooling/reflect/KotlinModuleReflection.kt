@@ -15,7 +15,9 @@ interface KotlinModuleReflection {
 }
 
 private class KotlinModuleReflectionImpl(private val instance: Any) : KotlinModuleReflection {
-    override val name: String? by lazy { instance.callReflectiveGetter("getName", logger) }
+    override val name: String? by lazy {
+        instance.callReflectiveGetter("getName", logger)
+    }
 
     override val moduleClassifier: String? by lazy {
         instance.callReflective("getModuleClassifier", parameters(), returnType<String?>(), logger)
@@ -28,13 +30,13 @@ private class KotlinModuleReflectionImpl(private val instance: Any) : KotlinModu
     }
 
     override val fragments: List<KotlinFragmentReflection>? by lazy {
-        val fragments: Iterable<Any>? = instance.callReflectiveGetter("getFragments", logger)
-        fragments?.map { fragment -> KotlinFragmentReflection(fragment) }
+        instance.callReflective("getFragments", parameters(), returnType<Iterable<Any>>(), logger)
+            ?.map { fragment -> KotlinFragmentReflection(fragment) }
     }
 
     override val variants: List<KotlinVariantReflection>? by lazy {
-        val variants: Iterable<Any>? = instance.callReflectiveGetter("getVariants", logger)
-        variants?.map { variant -> KotlinVariantReflection(variant) }
+        instance.callReflective("getVariants", parameters(), returnType<Iterable<Any>>(), logger)
+            ?.map { variant -> KotlinVariantReflection(variant) }
     }
 
     companion object {

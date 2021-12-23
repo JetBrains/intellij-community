@@ -16,10 +16,11 @@ private class KotlinVariantReflectionImpl(private val instance: Any) :
     KotlinFragmentReflection by KotlinFragmentReflection(instance) {
 
     override val variantAttributes: Map<String, String>? by lazy {
-        val variantAttributesMap: Map<Any, String>? = instance.callReflectiveGetter("getVariantAttributes", logger)
-        variantAttributesMap?.mapKeys { (key, _) ->
-            key.callReflective("getUniqueName", parameters(), returnType<String>(), logger) ?: return@lazy null
-        }
+        instance.callReflective("getVariantAttributes", parameters(), returnType<Map<Any, String>>(), logger)
+            ?.mapNotNull { (key, value) ->
+                key.callReflective("getUniqueName", parameters(), returnType<String>(), logger)?.let { it to value }
+                    ?: return@mapNotNull null
+            }?.toMap()
     }
 
     override val compilationOutputs: KotlinCompilationOutputReflection? by lazy {

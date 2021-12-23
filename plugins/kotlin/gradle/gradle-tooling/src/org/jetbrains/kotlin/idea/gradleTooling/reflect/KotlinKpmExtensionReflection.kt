@@ -26,8 +26,8 @@ private class KotlinKpmExtensionReflectionImpl(
     }
 
     override val modules: List<KotlinModuleReflection>? by lazy {
-        val modules: Iterable<Any>? = instance.callReflectiveGetter("getModules", logger)
-        modules?.map { module -> KotlinModuleReflection(module) }
+        instance.callReflective("getModules", parameters(), returnType<Iterable<Any>>(), logger)
+            ?.map { module -> KotlinModuleReflection(module) }
     }
 
     companion object {

@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.gradleTooling.reflect
 
-import org.gradle.api.Task
-import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
-import org.jetbrains.kotlin.idea.gradleTooling.get
 import java.io.File
 
 fun KotlinNativeCompileReflection(compileKotlinTask: Any): KotlinNativeCompileReflection =

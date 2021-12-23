@@ -1,10 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradleTooling.builders
 
-import org.gradle.api.Named
 import org.gradle.api.Task
 import org.gradle.api.logging.Logging
-import org.gradle.api.provider.Property
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.buildCachedArgsInfo
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.buildSerializedArgsInfo
@@ -14,27 +12,26 @@ import org.jetbrains.kotlin.idea.gradleTooling.reflect.KotlinNativeCompileReflec
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilationOutput
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform
-import java.io.File
 
 class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: String?) :
-    KotlinMultiplatformComponentBuilder<KotlinCompilation> {
+    KotlinModelComponentBuilder<KotlinCompilationReflection, MultiplatformModelImportingContext, KotlinCompilation> {
 
-    override fun buildComponent(origin: Any, importingContext: MultiplatformModelImportingContext): KotlinCompilationImpl? {
-        val kotlinCompilationReflection = KotlinCompilationReflection(origin)
-        origin as Named
-
-        @Suppress("UNCHECKED_CAST")
-        val kotlinGradleSourceSets = kotlinCompilationReflection.kotlinGradleSourceSets ?: return null
+    override fun buildComponent(
+        origin: KotlinCompilationReflection,
+        importingContext: MultiplatformModelImportingContext
+    ): KotlinCompilationImpl? {
+        val compilationName = origin.compilationName
+        val kotlinGradleSourceSets = origin.sourceSets ?: return null
         val kotlinSourceSets = kotlinGradleSourceSets.mapNotNull { importingContext.sourceSetByName(it.name) }
-        val compileKotlinTask = kotlinCompilationReflection.compileKotlinTaskName
+        val compileKotlinTask = origin.compileKotlinTaskName
             ?.let { importingContext.project.tasks.findByName(it) }
             ?: return null
 
-        val output = kotlinCompilationReflection.compilationOutput?.let { buildCompilationOutput(it, compileKotlinTask) } ?: return null
+        val output = origin.compilationOutput?.let { buildCompilationOutput(it, compileKotlinTask) } ?: return null
         val dependencies = buildCompilationDependencies(importingContext, origin, classifier)
         val kotlinTaskProperties = getKotlinTaskProperties(compileKotlinTask, classifier)
 
-        val nativeExtensions = kotlinCompilationReflection.konanTargetName?.let(::KotlinNativeCompilationExtensionsImpl)
+        val nativeExtensions = origin.konanTargetName?.let(::KotlinNativeCompilationExtensionsImpl)
 
         val allSourceSets = kotlinSourceSets
             .flatMap { sourceSet -> importingContext.resolveAllDependsOnSourceSets(sourceSet) }
@@ -47,7 +44,7 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
 
         @Suppress("DEPRECATION_ERROR")
         return KotlinCompilationImpl(
-            name = origin.name,
+            name = compilationName,
             allSourceSets = allSourceSets,
             declaredSourceSets = if (platform == KotlinPlatform.ANDROID) allSourceSets else kotlinSourceSets,
             dependencies = dependencies.map { importingContext.dependencyMapper.getId(it) }.distinct().toTypedArray(),
@@ -77,14 +74,15 @@ class KotlinCompilationBuilder(val platform: KotlinPlatform, val classifier: Str
 
         private fun buildCompilationDependencies(
             importingContext: MultiplatformModelImportingContext,
-            gradleCompilation: Named,
+            compilationReflection: KotlinCompilationReflection,
             classifier: String?
         ): Set<KotlinDependency> {
             return LinkedHashSet<KotlinDependency>().apply {
-                this += compileDependenciesBuilder.buildComponent(gradleCompilation, importingContext)
-                this += runtimeDependenciesBuilder.buildComponent(gradleCompilation, importingContext).onlyNewDependencies(this)
+                this += compileDependenciesBuilder.buildComponent(compilationReflection.gradleCompilation, importingContext)
+                this += runtimeDependenciesBuilder.buildComponent(compilationReflection.gradleCompilation, importingContext)
+                    .onlyNewDependencies(this)
 
-                val sourceSet = importingContext.sourceSetByName(compilationFullName(gradleCompilation.name, classifier))
+                val sourceSet = importingContext.sourceSetByName(compilationFullName(compilationReflection.compilationName, classifier))
                 this += sourceSet?.dependencies?.mapNotNull { importingContext.dependencyMapper.getDependency(it) } ?: emptySet()
             }
         }

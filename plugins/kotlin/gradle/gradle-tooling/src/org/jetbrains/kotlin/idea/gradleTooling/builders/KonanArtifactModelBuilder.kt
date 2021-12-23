@@ -1,20 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.kotlin.idea.gradleTooling.builders
 
-import org.gradle.api.Task
-import org.gradle.api.provider.Provider
-import org.gradle.api.tasks.Exec
 import org.jetbrains.kotlin.idea.gradleTooling.KonanArtifactModelImpl
 import org.jetbrains.kotlin.idea.gradleTooling.KonanRunConfigurationModelImpl
 import org.jetbrains.kotlin.idea.gradleTooling.MultiplatformModelImportingContext
-import org.jetbrains.kotlin.idea.gradleTooling.get
 import org.jetbrains.kotlin.idea.gradleTooling.reflect.KonanArtifactReflection
 import org.jetbrains.kotlin.idea.projectModel.KonanArtifactModel
-import org.jetbrains.kotlin.idea.projectModel.KonanRunConfigurationModel
-import org.jetbrains.kotlin.idea.projectModel.KotlinDependencyId
-import java.io.File
 
-object KonanArtifactModelBuilder : KotlinMultiplatformComponentBuilder<KonanArtifactModel> {
+object KonanArtifactModelBuilder : KotlinMultiplatformComponentBuilderBase<KonanArtifactModel> {
     override fun buildComponent(origin: Any, importingContext: MultiplatformModelImportingContext): KonanArtifactModel? {
         val konanArtifactReflection = KonanArtifactReflection(origin)
         val executableName = konanArtifactReflection.executableName ?: ""

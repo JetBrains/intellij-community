@@ -12,7 +12,8 @@ import org.jetbrains.plugins.gradle.model.DefaultExternalLibraryDependency
 import org.jetbrains.plugins.gradle.model.DefaultFileCollectionDependency
 import java.io.File
 
-class KotlinSourceSetProtoBuilder(val androidDeps: Map<String, List<Any>>?) : KotlinMultiplatformComponentBuilder<KotlinSourceSetProto> {
+class KotlinSourceSetProtoBuilder(val androidDeps: Map<String, List<Any>>?) :
+    KotlinMultiplatformComponentBuilderBase<KotlinSourceSetProto> {
     override fun buildComponent(origin: Any, importingContext: MultiplatformModelImportingContext): KotlinSourceSetProto? {
         val gradleSourceSet = origin as Named
 

@@ -19,13 +19,17 @@ sealed interface KotlinFragmentReflection {
 private class KotlinFragmentReflectionImpl(
     private val instance: Any
 ) : KotlinFragmentReflection {
-    override val fragmentName: String? by lazy { instance.callReflectiveGetter("getFragmentName", logger) }
+    override val fragmentName: String? by lazy {
+        instance.callReflectiveGetter("getFragmentName", logger)
+    }
 
     override val containingModule: KotlinModuleReflection? by lazy {
         instance.callReflectiveAnyGetter("getContainingModule", logger)?.let { module -> KotlinModuleReflection(module) }
     }
 
-    override val kotlinSourceSourceRoots: SourceDirectorySet? by lazy { instance.callReflectiveGetter("getKotlinSourceRoots", logger) }
+    override val kotlinSourceSourceRoots: SourceDirectorySet? by lazy {
+        instance.callReflectiveGetter("getKotlinSourceRoots", logger)
+    }
 
     override val directRefinesDependencies: List<KotlinFragmentReflection>? by lazy {
         instance.callReflective("getDirectRefinesDependencies", parameters(), returnType<Iterable<Any>>(), logger)?.let { fragments ->

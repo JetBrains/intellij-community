@@ -13,8 +13,9 @@ import org.jetbrains.plugins.gradle.model.*
 import java.io.File
 import java.lang.reflect.Method
 
-abstract class KotlinMultiplatformDependenciesBuilder : KotlinMultiplatformComponentBuilder<Collection<KotlinDependency>> {
+abstract class KotlinMultiplatformDependenciesBuilder : KotlinMultiplatformComponentBuilderBase<Collection<KotlinDependency>> {
     protected abstract val configurationNameAccessor: String
+
     //TODO replace with enum (COMPILE, RUNTIME)
     protected abstract val scope: String
 

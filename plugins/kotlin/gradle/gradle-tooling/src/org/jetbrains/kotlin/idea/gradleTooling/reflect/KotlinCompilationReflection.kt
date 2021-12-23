@@ -2,34 +2,43 @@
 package org.jetbrains.kotlin.idea.gradleTooling.reflect
 
 import org.gradle.api.Named
+import org.jetbrains.kotlin.idea.gradleTooling.getMethodOrNull
 
 fun KotlinCompilationReflection(kotlinCompilation: Any): KotlinCompilationReflection =
     KotlinCompilationReflectionImpl(kotlinCompilation)
 
 interface KotlinCompilationReflection {
-    val compilationName: String?
-    val kotlinGradleSourceSets: Collection<Named>?
+    val compilationName: String
+    val gradleCompilation: Named
+    val sourceSets: Collection<Named>?
     val compilationOutput: KotlinCompilationOutputReflection?
     val konanTargetName: String?
     val compileKotlinTaskName: String?
 }
 
 private class KotlinCompilationReflectionImpl(private val instance: Any) : KotlinCompilationReflection {
-    override val compilationName: String? by lazy { instance.callReflectiveGetter("getName", logger) }
-    override val kotlinGradleSourceSets: Collection<Named>? by lazy { instance.callReflectiveGetter("getKotlinSourceSets", logger) }
+    override val gradleCompilation: Named
+        get() = instance as Named
+
+    override val compilationName: String by lazy {
+        gradleCompilation.name
+    }
+    override val sourceSets: Collection<Named>? by lazy {
+        instance.callReflectiveGetter("getKotlinSourceSets", logger)
+    }
     override val compilationOutput: KotlinCompilationOutputReflection? by lazy {
         instance.callReflectiveAnyGetter("getOutput", logger)?.let { gradleOutput -> KotlinCompilationOutputReflection(gradleOutput) }
     }
 
     // Get konanTarget (for native compilations only).
     override val konanTargetName: String? by lazy {
-        if (!instance.javaClass.classLoader.loadClass(NATIVE_COMPILATION_CLASS).isInstance(instance))
-            null
-        else
-            instance.callReflectiveAnyGetter("getKonanTarget", logger)
-                ?.callReflectiveGetter("getName", logger)
+        if (instance.javaClass.getMethodOrNull("getKonanTarget") == null) null
+        else instance.callReflectiveAnyGetter("getKonanTarget", logger)
+            ?.callReflectiveGetter("getName", logger)
     }
-    override val compileKotlinTaskName: String? by lazy { instance.callReflectiveGetter("getCompileKotlinTaskName", logger) }
+    override val compileKotlinTaskName: String? by lazy {
+        instance.callReflectiveGetter("getCompileKotlinTaskName", logger)
+    }
 
     companion object {
         private val logger: ReflectionLogger = ReflectionLogger(KotlinCompilationReflection::class.java)
