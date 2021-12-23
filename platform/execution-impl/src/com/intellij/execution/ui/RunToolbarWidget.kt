@@ -13,11 +13,17 @@ import com.intellij.execution.runners.ExecutionUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ActivityTracker
 import com.intellij.ide.DataManager
-import com.intellij.ide.ui.customization.*
+import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.ide.ui.customization.CustomizableActionGroupProvider
+import com.intellij.ide.ui.customization.CustomizationUtil
+import com.intellij.ide.ui.customization.CustomizeActionGroupPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.PersistentStateComponent
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
@@ -32,8 +38,8 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.UserDataHolder
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.ToolWindowId
+import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarProjectWidgetFactory
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory
 import com.intellij.ui.AnimatedIcon
 import com.intellij.ui.ColorUtil
@@ -46,17 +52,15 @@ import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
 import com.intellij.util.xmlb.annotations.*
 import org.jetbrains.annotations.Nls
 import java.awt.*
-import java.awt.event.*
+import java.awt.event.ActionEvent
+import java.awt.event.MouseEvent
 import java.awt.geom.Area
 import java.awt.geom.Line2D
 import java.awt.geom.Rectangle2D
 import java.awt.geom.RoundRectangle2D
-import java.beans.PropertyChangeEvent
-import java.beans.PropertyChangeListener
 import java.util.concurrent.locks.ReentrantLock
 import java.util.function.Predicate
 import java.util.function.Supplier
@@ -68,8 +72,8 @@ import javax.swing.plaf.basic.BasicGraphicsUtils
 import kotlin.concurrent.withLock
 import kotlin.properties.Delegates
 
-object RunToolbarWidgetFactory : MainToolbarWidgetFactory {
-  override fun createWidget(): JComponent = RunToolbarWidget()
+object RunToolbarWidgetFactory : MainToolbarProjectWidgetFactory {
+  override fun createWidget(project: Project): JComponent = RunToolbarWidget(project)
   override fun getPosition() = MainToolbarWidgetFactory.Position.Right
 }
 
@@ -81,14 +85,18 @@ class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableActionGroupP
   }
 }
 
-internal class RunToolbarWidget : JBPanel<RunToolbarWidget>(VerticalLayout(0)) {
+internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget>(VerticalLayout(0)) {
 
   init {
     isOpaque = false
     add(createRunActionToolbar().component.apply {
       isOpaque = false
     }, VerticalLayout.CENTER)
-    registerProcessListenerWhenActionAdded()
+    ExecutionReasonableHistory(
+      project,
+      onHistoryChanged = createProcessHistoryListener(),
+      onAnyChange = createConfigurationHistoryStateUpdater()
+    )
   }
 
   private fun createRunActionToolbar(): ActionToolbar {
@@ -102,33 +110,6 @@ internal class RunToolbarWidget : JBPanel<RunToolbarWidget>(VerticalLayout(0)) {
       setReservePlaceAutoPopupIcon(false)
       layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
     }
-  }
-
-  private fun registerProcessListenerWhenActionAdded() {
-    addPropertyChangeListener("ancestor", object : PropertyChangeListener {
-      var watcher: ExecutionReasonableHistory? = null
-
-      override fun propertyChange(evt: PropertyChangeEvent) {
-        if (evt.newValue != null) {
-          val project = findProject(evt.newValue as JComponent)
-          watcher = ExecutionReasonableHistory(
-            project,
-            onHistoryChanged = createProcessHistoryListener(),
-            onAnyChange = createConfigurationHistoryStateUpdater()
-          )
-        }
-        else {
-          watcher?.let(Disposer::dispose)
-          watcher = null
-        }
-      }
-
-      private fun findProject(source: JComponent): Project {
-        val ideFrame = (UIUtil.findUltimateParent(source) as? IdeFrame)
-                       ?: error("Widget must be added into IdeFrame")
-        return ideFrame.project ?: error("Cannot find project")
-      }
-    })
   }
 
   private fun createProcessHistoryListener(): (ReasonableHistory.Elem<ExecutionEnvironment, RunState>?) -> Unit {

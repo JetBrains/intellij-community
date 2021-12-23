@@ -467,7 +467,8 @@
 
     <extensionPoint name="fragments.dsl.builder.extender" interface="com.intellij.execution.ui.utils.FragmentsDslBuilderExtender" dynamic="true"/>
 
-    <extensionPoint name="toolbarWidget" interface="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory" dynamic="true"/>
+    <extensionPoint name="projectToolbarWidget" interface="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarProjectWidgetFactory" dynamic="true"/>
+    <extensionPoint name="appToolbarWidget" interface="com.intellij.openapi.wm.impl.headertoolbar.MainToolbarAppWidgetFactory" dynamic="true"/>
 
     <extensionPoint name="fsRootDataLoader" interface="com.intellij.openapi.vfs.newvfs.persistent.FsRootDataLoader"/>
     <extensionPoint name="semanticRootProvider" interface="com.intellij.openapi.vfs.newvfs.persistent.RootSemanticAddressProvider"/>

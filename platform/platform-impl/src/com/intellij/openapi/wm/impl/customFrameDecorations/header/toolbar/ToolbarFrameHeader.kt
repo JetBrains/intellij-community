@@ -13,6 +13,8 @@ import com.intellij.openapi.ui.FixedSizeButton
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
+import com.intellij.openapi.wm.IdeFrame
+import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.AbstractMenuFrameHeader
@@ -136,7 +138,12 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     layout.show(myHeaderContent, myMode.name)
   }
 
-  private fun createToolbar(): MainToolbar = MainToolbar().apply { isOpaque = false }
+  private fun createToolbar(): MainToolbar {
+    val project = (frame as? IdeFrame)?.project
+    val toolbar = MainToolbar(project)
+    toolbar.isOpaque = false
+    return toolbar
+  }
 
   private fun createMenuButton(): AbstractButton {
     val button = FixedSizeButton(36)

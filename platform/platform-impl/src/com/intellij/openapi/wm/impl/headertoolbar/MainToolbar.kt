@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -14,7 +15,7 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.UIManager
 
-internal class MainToolbar: JPanel(HorizontalLayout(10)) {
+internal class MainToolbar(val project: Project?): JPanel(HorizontalLayout(10)) {
   private val layoutMap = mapOf(
     Position.Left to HorizontalLayout.LEFT,
     Position.Right to HorizontalLayout.RIGHT,
@@ -25,8 +26,14 @@ internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   init {
     background = UIManager.getColor("MainToolbar.background")
     isOpaque = true
-    for (factory in MainToolbarWidgetFactory.EP_NAME.extensionList) {
+    for (factory in MainToolbarAppWidgetFactory.EP_NAME.extensionList) {
       addWidget(factory.createWidget(), factory.getPosition())
+    }
+
+    project?.let { prj ->
+      for (factory in MainToolbarProjectWidgetFactory.EP_NAME.extensionList) {
+        addWidget(factory.createWidget(prj), factory.getPosition())
+      }
     }
 
     createActionsBar()?.let { addWidget(it, Position.Right) }

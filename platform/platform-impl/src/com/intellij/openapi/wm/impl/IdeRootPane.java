@@ -295,13 +295,14 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     }
   }
 
-  private static @NotNull JComponent createExperimentalToolbar() {
-    MainToolbar toolbar = new MainToolbar();
+  private @NotNull JComponent createExperimentalToolbar() {
+    IdeFrame frame = ComponentUtil.getParentOfType(IdeFrameImpl.class, this);
+    MainToolbar toolbar = new MainToolbar(frame == null ? null : frame.getProject());
     toolbar.setBorder(JBUI.Borders.empty(0, 10));
     return toolbar;
   }
 
-  private static @NotNull JComponent createToolbar() {
+  private @NotNull JComponent createToolbar() {
     if (ExperimentalUI.isNewToolbar()) {
       return createExperimentalToolbar();
     }
