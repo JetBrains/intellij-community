@@ -1,6 +1,6 @@
 <idea-plugin>
   <actions>
-    <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirectory"
+    <action id="FileChooser.GotoModule" class="com.intellij.openapi.fileChooser.actions.GotoModuleDirAction"
             icon="AllIcons.Actions.ModuleDirectory">
       <add-to-group group-id="FileChooserToolbar" anchor="after" relative-to-action="FileChooser.GotoProject"/>
     </action>
@@ -657,4 +657,3 @@
     </action>
   </actions>
 </idea-plugin>
-

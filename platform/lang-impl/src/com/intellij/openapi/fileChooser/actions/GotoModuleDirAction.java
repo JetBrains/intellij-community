@@ -10,7 +10,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public final class GotoModuleDirectory extends FileChooserAction {
+public final class GotoModuleDirAction extends FileChooserAction {
   @Override
   protected void update(@NotNull FileSystemTree fileSystemTree, @NotNull AnActionEvent e) {
     VirtualFile moduleDir = getModuleDir(e);
