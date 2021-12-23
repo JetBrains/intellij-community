@@ -6,7 +6,9 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiDocumentManager
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.util.reformatted
+import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaContext
+import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaHelper
+import org.jetbrains.kotlin.idea.formatter.trailingComma.TrailingCommaState
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
@@ -41,7 +43,11 @@ abstract class AbstractJoinListIntention<TList : KtElement, TElement : KtElement
         val project = element.project
         val documentManager = PsiDocumentManager.getInstance(project)
         documentManager.commitDocument(document)
-        pointer.element?.reformatted()
+
+        val listElement = pointer.element as? KtElement
+        if (listElement != null && TrailingCommaContext.create(listElement).state == TrailingCommaState.REDUNDANT) {
+            TrailingCommaHelper.trailingCommaOrLastElement(listElement)?.delete()
+        }
     }
 
 }

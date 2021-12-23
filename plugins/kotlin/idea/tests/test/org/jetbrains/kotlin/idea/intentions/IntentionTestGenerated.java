@@ -11822,6 +11822,11 @@ public abstract class IntentionTestGenerated extends AbstractIntentionTest {
             runTest("testData/intentions/joinParameterList/hasLineBreaksWithTrailingComma.kt");
         }
 
+        @TestMetadata("longParameters.kt")
+        public void testLongParameters() throws Exception {
+            runTest("testData/intentions/joinParameterList/longParameters.kt");
+        }
+
         @TestMetadata("noLineBreak.kt")
         public void testNoLineBreak() throws Exception {
             runTest("testData/intentions/joinParameterList/noLineBreak.kt");
