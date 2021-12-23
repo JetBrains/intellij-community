@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ApplicationLoader")
 @file:ApiStatus.Internal
 package com.intellij.idea
@@ -58,55 +58,62 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) 
 
   val initAppActivity = StartupUtil.startupStart.endAndStart(Activities.INIT_APP)
   val loadAndInitPluginFutureActivity = initAppActivity.startChild("plugin descriptor init waiting")
-  val loadAndInitPluginFuture = PluginManagerCore.initPlugins(StartupUtil::class.java.classLoader)
-  loadAndInitPluginFuture.thenRun(loadAndInitPluginFutureActivity::end)
+  val loadAndInitPluginFuture = PluginManagerCore.initPlugins().thenApply {
+    loadAndInitPluginFutureActivity.end()
+    it
+  }
 
-  prepareUiFuture.thenComposeAsync({
-    val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
-    val app = ApplicationImpl(isInternal, false, Main.isHeadless(), Main.isCommandLine())
-    (UIManager.getLookAndFeel() as? DarculaLaf)?.appCreated(app)
-     ApplicationImpl.preventAwtAutoShutdown(app)
-     if (isInternal) {
+  val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
+  if (isInternal) {
+    prepareUiFuture.thenRunAsync {
       BundleBase.assertOnMissedKeys(true)
     }
+  }
 
-    loadAndInitPluginFuture
-      .thenAccept { pluginSet ->
-        runActivity("app component registration") {
-          app.registerComponents(modules = pluginSet.getEnabledModules(),
-                                 app = app,
-                                 precomputedExtensionModel = null,
-                                 listenerCallbacks = null)
-        }
+  prepareUiFuture.thenComposeAsync(
+    {
+      val app = ApplicationImpl(isInternal, false, Main.isHeadless(), Main.isCommandLine())
+      (UIManager.getLookAndFeel() as? DarculaLaf)?.appCreated(app)
+      ApplicationImpl.preventAwtAutoShutdown(app)
+      loadAndInitPluginFuture
+        .thenAccept { pluginSet ->
+          runActivity("app component registration") {
+            app.registerComponents(modules = pluginSet.getEnabledModules(),
+                                   app = app,
+                                   precomputedExtensionModel = null,
+                                   listenerCallbacks = null)
+          }
 
-        if (args.isEmpty()) {
-          startApp(app, IdeStarter(), initAppActivity, pluginSet, args)
-        }
-        else {
-          // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
-          findCustomAppStarterAndStart(pluginSet, args, app, initAppActivity)
-        }
+          if (args.isEmpty()) {
+            startApp(app, IdeStarter(), initAppActivity, pluginSet, args)
+          }
+          else {
+            // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
+            findCustomAppStarterAndStart(pluginSet, args, app, initAppActivity)
+          }
 
-        if (!Main.isHeadless()) {
-          ForkJoinPool.commonPool().execute {
-            runActivity("icons preloading") {
-              if (isInternal) {
-                IconLoader.setStrictGlobally(true)
+          if (!Main.isHeadless()) {
+            ForkJoinPool.commonPool().execute {
+              runActivity("icons preloading") {
+                if (isInternal) {
+                  IconLoader.setStrictGlobally(true)
+                }
+
+                AsyncProcessIcon("")
+                AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
+                AnimatedIcon.FS()
               }
 
-              AsyncProcessIcon("")
-              AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
-              AnimatedIcon.FS()
-            }
-
-            runActivity("migLayout") {
-              // IDEA-170295
-              PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
+              runActivity("migLayout") {
+                // IDEA-170295
+                PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
+              }
             }
           }
         }
-      }
-  }, Executor { if (EDT.isCurrentThreadEdt()) ForkJoinPool.commonPool().execute(it) else it.run() } )
+    },
+    Executor { if (EDT.isCurrentThreadEdt()) ForkJoinPool.commonPool().execute(it) else it.run() }
+  )
     .exceptionally {
       StartupAbortedException.processException(it)
       null

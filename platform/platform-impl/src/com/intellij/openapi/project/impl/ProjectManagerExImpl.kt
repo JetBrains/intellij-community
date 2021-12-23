@@ -445,6 +445,24 @@ private fun message(e: Throwable): String {
   return "$message (cause: $causeMessage)"
 }
 
+private inline fun executeInEdtWithProgress(indicator: ProgressIndicator?, crossinline task: () -> Unit) {
+  var pce: ProcessCanceledException? = null
+  ApplicationManager.getApplication().invokeAndWait {
+    try {
+       if (indicator == null) {
+        task()
+      }
+      else {
+        ProgressManager.getInstance().executeProcessUnderProgress({ task() }, indicator)
+      }
+    }
+    catch (e: ProcessCanceledException) {
+      pce = e
+    }
+  }
+  pce?.let { throw it }
+}
+
 private fun openProject(project: Project, indicator: ProgressIndicator?, runStartUpActivities: Boolean): CompletableFuture<*> {
   val waitEdtActivity = StartUpMeasurer.startActivity("placing calling projectOpened on event queue")
   if (indicator != null) {
@@ -453,52 +471,44 @@ private fun openProject(project: Project, indicator: ProgressIndicator?, runStar
     indicator.isIndeterminate = true
   }
 
-  var pce: ProcessCanceledException? = null
   // invokeLater cannot be used for now
-  ApplicationManager.getApplication().invokeAndWait {
-    try {
-      waitEdtActivity.end()
+  executeInEdtWithProgress(indicator) {
+    waitEdtActivity.end()
 
-      indicator?.checkCanceled()
+    indicator?.checkCanceled()
 
-      if (indicator != null && ApplicationManager.getApplication().isInternal) {
-        indicator.text = "Running project opened tasks..."  // NON-NLS (internal mode)
-      }
+    if (indicator != null && ApplicationManager.getApplication().isInternal) {
+      indicator.text = "Running project opened tasks..."  // NON-NLS (internal mode)
+    }
 
-      ProjectManagerImpl.LOG.debug("projectOpened")
+    ProjectManagerImpl.LOG.debug("projectOpened")
 
-      val activity = StartUpMeasurer.startActivity("project opened callbacks")
+    val activity = StartUpMeasurer.startActivity("project opened callbacks")
 
-      runActivity("projectOpened event executing") {
-        ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
-      }
+    runActivity("projectOpened event executing") {
+      ApplicationManager.getApplication().messageBus.syncPublisher(ProjectManager.TOPIC).projectOpened(project)
+    }
 
-      @Suppress("DEPRECATION")
-      (project as ComponentManagerEx)
-        .processInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java) { component, pluginDescriptor ->
-          indicator?.checkCanceled()
-          try {
-            val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
-                                                                  pluginDescriptor.pluginId.idString)
-            component.projectOpened()
-            componentActivity.end()
-          }
-          catch (e: ProcessCanceledException) {
-            throw e
-          }
-          catch (e: Throwable) {
-            ProjectManagerImpl.LOG.error(e)
-          }
+    @Suppress("DEPRECATION")
+    (project as ComponentManagerEx)
+      .processInitializedComponents(com.intellij.openapi.components.ProjectComponent::class.java) { component, pluginDescriptor ->
+        indicator?.checkCanceled()
+        try {
+          val componentActivity = StartUpMeasurer.startActivity(component.javaClass.name, ActivityCategory.PROJECT_OPEN_HANDLER,
+                                                                pluginDescriptor.pluginId.idString)
+          component.projectOpened()
+          componentActivity.end()
         }
+        catch (e: ProcessCanceledException) {
+          throw e
+        }
+        catch (e: Throwable) {
+          ProjectManagerImpl.LOG.error(e)
+        }
+      }
 
-      activity.end()
-    }
-    catch (e: ProcessCanceledException) {
-      pce = e
-    }
+    activity.end()
   }
-
-  pce?.let { throw it }
 
   ProjectImpl.ourClassesAreLoaded = true
 

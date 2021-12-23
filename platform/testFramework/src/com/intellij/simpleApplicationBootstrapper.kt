@@ -12,7 +12,6 @@ import com.intellij.idea.Main
 import com.intellij.idea.callAppInitialized
 import com.intellij.idea.initConfigurationStore
 import com.intellij.idea.preloadServices
-import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.util.RecursionManager
 import com.intellij.openapi.util.registry.Registry
@@ -49,7 +48,7 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
   IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
 
   PluginManagerCore.scheduleDescriptorLoading()
-  val loadedModuleFuture = PluginManagerCore.initPlugins(PathManager::class.java.classLoader)
+  val loadedModuleFuture = PluginManagerCore.initPlugins()
 
   setupEventQueue()
 

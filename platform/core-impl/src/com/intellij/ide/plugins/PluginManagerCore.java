@@ -96,7 +96,7 @@ public final class PluginManagerCore {
   private static Set<PluginId> shadowedBundledPlugins;
 
   private static Boolean isRunningFromSources;
-  private static volatile CompletableFuture<DescriptorListLoadingContext> descriptorListFuture;
+  private static volatile CompletableFuture<PluginSet> initFuture;
 
   private static BuildNumber ourBuildNumber;
 
@@ -420,9 +420,9 @@ public final class PluginManagerCore {
   public static synchronized void invalidatePlugins() {
     pluginSet = null;
 
-    CompletableFuture<DescriptorListLoadingContext> future = descriptorListFuture;
+    CompletableFuture<PluginSet> future = initFuture;
     if (future != null) {
-      descriptorListFuture = null;
+      initFuture = null;
       future.cancel(false);
     }
     DisabledPluginsState.invalidate();
@@ -599,8 +599,8 @@ public final class PluginManagerCore {
     getOrScheduleLoading();
   }
 
-  private static synchronized @NotNull CompletableFuture<DescriptorListLoadingContext> getOrScheduleLoading() {
-    CompletableFuture<DescriptorListLoadingContext> future = descriptorListFuture;
+  private static synchronized @NotNull CompletableFuture<PluginSet> getOrScheduleLoading() {
+    CompletableFuture<PluginSet> future = initFuture;
     if (future != null) {
       return future;
     }
@@ -609,9 +609,9 @@ public final class PluginManagerCore {
       Activity activity = StartUpMeasurer.startActivity("plugin descriptor loading", ActivityCategory.DEFAULT);
       DescriptorListLoadingContext context = PluginDescriptorLoader.loadDescriptors(isUnitTestMode, isRunningFromSources());
       activity.end();
-      return context;
+      return loadAndInitializePlugins(context, PluginManagerCore.class.getClassLoader());
     }, ForkJoinPool.commonPool());
-    descriptorListFuture = future;
+    initFuture = future;
     return future;
   }
 
@@ -620,18 +620,16 @@ public final class PluginManagerCore {
    */
   @ApiStatus.Internal
   public static @NotNull CompletableFuture<List<IdeaPluginDescriptorImpl>> getEnabledPluginRawList() {
-    return getOrScheduleLoading().thenApply(it -> it.result.getEnabledPlugins());
+    return getOrScheduleLoading().thenApply(it -> it.enabledPlugins);
   }
 
   @ApiStatus.Internal
-  public static @NotNull CompletableFuture<PluginSet> initPlugins(@NotNull ClassLoader coreClassLoader) {
-    CompletableFuture<DescriptorListLoadingContext> future = descriptorListFuture;
+  public static @NotNull CompletableFuture<PluginSet> initPlugins() {
+    CompletableFuture<PluginSet> future = initFuture;
     if (future == null) {
       throw new IllegalStateException("Call scheduleDescriptorLoading() first");
     }
-    return future.thenApply(context -> {
-      return loadAndInitializePlugins(context, coreClassLoader);
-    });
+    return future;
   }
 
   public static @NotNull BuildNumber getBuildNumber() {
@@ -794,8 +792,8 @@ public final class PluginManagerCore {
                                                        boolean checkEssentialPlugins,
                                                        @Nullable Activity parentActivity) {
     PluginLoadingResult loadingResult = context.result;
-    Map<PluginId, PluginLoadingError> pluginErrorsById = new HashMap<>(loadingResult.getPluginErrors$intellij_platform_core_impl());
-    List<Supplier<String>> globalErrors = loadingResult.getGlobalErrors();
+    Map<PluginId, PluginLoadingError> pluginErrorsById = loadingResult.copyPluginErrors$intellij_platform_core_impl();
+    List<Supplier<String>> globalErrors = loadingResult.copyGlobalErrors$intellij_platform_core_impl();
 
     if (loadingResult.duplicateModuleMap != null) {
       for (Map.Entry<PluginId, List<IdeaPluginDescriptorImpl>> entry : loadingResult.duplicateModuleMap.entrySet()) {
@@ -808,11 +806,11 @@ public final class PluginManagerCore {
 
     Map<PluginId, IdeaPluginDescriptorImpl> idMap = loadingResult.idMap;
     if (checkEssentialPlugins && !idMap.containsKey(CORE_ID)) {
-      throw new EssentialPluginMissingException(
-        Collections.singletonList(CORE_ID + " (platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")"));
+      throw new EssentialPluginMissingException(Collections.singletonList(CORE_ID + " (platform prefix: " +
+                                                                          System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY) + ")"));
     }
 
-    Activity activity = parentActivity != null ? parentActivity.startChild("3rd-party plugins consent") : null;
+    Activity activity = parentActivity == null ? null : parentActivity.startChild("3rd-party plugins consent");
     Collection<? extends IdeaPluginDescriptor> aliens = get3rdPartyPlugins(idMap);
     if (!aliens.isEmpty()) {
       check3rdPartyPluginsPrivacyConsent(aliens);
