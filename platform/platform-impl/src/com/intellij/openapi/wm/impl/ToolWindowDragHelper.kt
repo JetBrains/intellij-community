@@ -454,28 +454,7 @@ internal class ToolWindowDragHelper(parent: @NotNull Disposable,
       val preferred = pane.getStripeFor(anchor)
       pane.getStripeFor(screenPoint, preferred) ?:
       if (getToolWindow()!!.getBoundsOnScreen(anchor, screenPoint).contains(screenPoint)) preferred else null
-      //{
-      //  //val component = getComponentAtPoint(RelativePoint(screenPoint))
-      //  //if (component is AbstractDroppableStripe) component
-      //  //else if (component is SquareStripeButton && component.parent is AbstractDroppableStripe) component.parent as AbstractDroppableStripe
-      //  //else if (component is MoreSquareStripeButton) component.stripe
-      //  //else null
-      //}
     }
-
-    //
-    //var stripe = pane.getStripeFor(screenPoint, pane.getStripeFor(myInitialAnchor!!))
-    //if (stripe == null && getToolWindow()!!.getBoundsOnScreen(myInitialAnchor!!, screenPoint).contains(screenPoint)) {
-    //  stripe = pane.getStripeFor(myInitialAnchor!!)
-    //}
-    //
-    //if (stripe == null) {
-    //  val component = getComponentAtPoint(RelativePoint(screenPoint))
-    //  if (component is SquareStripeButton && component.parent is AbstractDroppableStripe) {
-    //    stripe = component.parent as AbstractDroppableStripe
-    //  }
-    //}
-    //
     return if (stripe?.getAnchor() == TOP) null else stripe
   }
 

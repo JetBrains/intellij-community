@@ -37,7 +37,13 @@ class ToolwindowRightToolbar : ToolwindowToolbar() {
   }
 
   override fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? = if (isVisible) {
-    val toolBarRect = Rectangle(topPane.locationOnScreen, topPane.size)
+    val toolBarRect = Rectangle(topPane.locationOnScreen, topPane.size).also {
+      if (it.width == 0) {
+        it.width = SHADOW_WIDTH
+        it.x -= SHADOW_WIDTH
+      }
+    }
+
     if (toolBarRect.contains(screenPoint)) topPane else null
   }
   else null
@@ -49,4 +55,8 @@ class ToolwindowRightToolbar : ToolwindowToolbar() {
 
   override fun getButtonFor(toolWindowId: String): SquareStripeButton? =
     topPane.components.filterIsInstance(SquareStripeButton::class.java).find {it.button.id == toolWindowId}
+
+  companion object {
+    val SHADOW_WIDTH = JBUI.scale(40)
+  }
 }
