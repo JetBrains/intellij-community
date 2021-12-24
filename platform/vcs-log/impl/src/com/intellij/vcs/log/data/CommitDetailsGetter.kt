@@ -26,7 +26,7 @@ class CommitDetailsGetter internal constructor(storage: VcsLogStorage,
   private val placeholdersCache = Caffeine.newBuilder()
     .maximumSize(1000)
     .weakValues()
-    .build<Int, LoadingDetailsImpl> { LoadingDetailsImpl({ storage.getCommitId(it)!! }, 0) }
+    .build<Int, LoadingDetailsImpl> { LoadingDetailsImpl(storage, it, 0) }
 
   init {
     LowMemoryWatcher.register({ cache.invalidateAll() }, this)

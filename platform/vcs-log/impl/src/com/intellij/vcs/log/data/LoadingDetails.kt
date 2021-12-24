@@ -6,7 +6,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.impl.VcsUserImpl
 import org.jetbrains.annotations.ApiStatus
-import java.util.function.Supplier
 
 /**
  * Marker interface for [VcsShortCommitDetails] and [VcsFullCommitDetails] instances to indicate
@@ -18,8 +17,8 @@ import java.util.function.Supplier
 interface LoadingDetails
 
 @ApiStatus.Internal
-open class LoadingDetailsImpl(private val commitIdComputable: Supplier<out CommitId>, val loadingTaskIndex: Long) : VcsFullCommitDetails, LoadingDetails {
-  private val commitId: CommitId by lazy(LazyThreadSafetyMode.PUBLICATION) { commitIdComputable.get() }
+open class LoadingDetailsImpl(storage: VcsLogStorage, commitIndex: Int, val loadingTaskIndex: Long) : VcsFullCommitDetails, LoadingDetails {
+  private val commitId: CommitId by lazy(LazyThreadSafetyMode.PUBLICATION) { storage.getCommitId(commitIndex)!! }
 
   override fun getId(): Hash = commitId.hash
   override fun getRoot(): VirtualFile = commitId.root

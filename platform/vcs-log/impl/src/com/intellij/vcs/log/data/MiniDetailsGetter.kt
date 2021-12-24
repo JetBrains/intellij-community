@@ -170,7 +170,7 @@ class MiniDetailsGetter internal constructor(project: Project,
       IndexedDetails(dataGetter, storage, commit, taskNumber)
     }
     else {
-      LoadingDetailsImpl({ storage.getCommitId(commit)!! }, taskNumber)
+      LoadingDetailsImpl(storage, commit, taskNumber)
     }
   }
 
