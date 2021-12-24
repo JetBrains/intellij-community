@@ -10,7 +10,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileTypeRegistry
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.projectImport.ProjectImportProvider
 import com.intellij.ui.EditorNotificationPanel
@@ -30,8 +29,6 @@ import java.util.function.Function
 import javax.swing.JComponent
 
 internal class GradleScriptNotificationProvider : EditorNotificationProvider {
-
-    override fun getKey(): Key<EditorNotificationPanel> = KEY
 
     override fun collectNotificationData(
         project: Project,
@@ -233,9 +230,5 @@ internal class GradleScriptNotificationProvider : EditorNotificationProvider {
         helpIcon.icon = AllIcons.General.ContextHelp
         helpIcon.setUseIconAsLink(true)
         helpIcon.toolTipText = text
-    }
-
-    companion object {
-        private val KEY = Key.create<EditorNotificationPanel>("GradleScriptOutOfSourceNotification")
     }
 }

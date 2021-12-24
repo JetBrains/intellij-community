@@ -42,7 +42,9 @@ public abstract class EditorNotifications {
   @Deprecated
   public abstract static class Provider<T extends JComponent> implements EditorNotificationProvider {
 
-    @Override
+    /**
+     * A unique key.
+     */
     public abstract @NotNull Key<T> getKey();
 
     @RequiresEdt

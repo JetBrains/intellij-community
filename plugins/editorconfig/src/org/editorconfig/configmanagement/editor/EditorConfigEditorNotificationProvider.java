@@ -6,7 +6,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.EditorNotificationPanel;
@@ -21,13 +20,6 @@ import javax.swing.*;
 import java.util.function.Function;
 
 final class EditorConfigEditorNotificationProvider implements EditorNotificationProvider {
-
-  private static final Key<EditorNotificationPanel> KEY = Key.create("org.editorconfig.config.management.editor.notification.provider");
-
-  @Override
-  public @NotNull Key<EditorNotificationPanel> getKey() {
-    return KEY;
-  }
 
   @Override
   public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,

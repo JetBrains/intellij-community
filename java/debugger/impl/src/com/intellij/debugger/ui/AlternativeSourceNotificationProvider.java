@@ -42,12 +42,6 @@ import java.util.function.Function;
 public final class AlternativeSourceNotificationProvider implements EditorNotificationProvider {
 
   private static final Key<Boolean> FILE_PROCESSED_KEY = Key.create("AlternativeSourceCheckDone");
-  private static final Key<EditorNotificationPanel> KEY = Key.create("AlternativeSource");
-
-  @Override
-  public @NotNull Key<EditorNotificationPanel> getKey() {
-    return KEY;
-  }
 
   @Override
   public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,

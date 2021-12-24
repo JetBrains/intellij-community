@@ -11,7 +11,6 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ProjectRootManager
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiExtensibleClass
@@ -28,7 +27,6 @@ class LibrarySourceNotificationProvider : EditorNotificationProvider {
   private companion object {
 
     private val LOG = logger<LibrarySourceNotificationProvider>()
-    private val KEY = Key.create<EditorNotificationPanel>("library.source.mismatch.panel")
     private val ANDROID_SDK_PATTERN = ".*/platforms/android-\\d+/android.jar!/.*".toRegex()
 
     private const val FIELD = SHOW_NAME or SHOW_TYPE or SHOW_FQ_CLASS_NAMES or SHOW_RAW_TYPE
@@ -36,8 +34,6 @@ class LibrarySourceNotificationProvider : EditorNotificationProvider {
     private const val PARAMETER = SHOW_TYPE or SHOW_FQ_CLASS_NAMES or SHOW_RAW_TYPE
     private const val CLASS = SHOW_NAME or SHOW_FQ_CLASS_NAMES or SHOW_EXTENDS_IMPLEMENTS or SHOW_RAW_TYPE
   }
-
-  override fun getKey(): Key<EditorNotificationPanel> = KEY
 
   override fun collectNotificationData(
     project: Project,

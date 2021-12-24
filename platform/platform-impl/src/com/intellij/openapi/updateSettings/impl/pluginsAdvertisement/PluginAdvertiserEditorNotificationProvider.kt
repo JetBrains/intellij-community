@@ -18,7 +18,6 @@ import com.intellij.openapi.fileTypes.PlainTextLikeFileType
 import com.intellij.openapi.fileTypes.ex.DetectedByContentFileType
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
@@ -32,8 +31,6 @@ import javax.swing.JLabel
 
 class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
                                                    DumbAware {
-
-  override fun getKey(): Key<EditorNotificationPanel> = KEY
 
   override fun collectNotificationData(
     project: Project,
@@ -186,7 +183,6 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
 
   companion object {
 
-    private val KEY = Key.create<EditorNotificationPanel>("file.type.associations.detected")
     private val LOG = logger<PluginAdvertiserEditorNotificationProvider>()
 
     @VisibleForTesting

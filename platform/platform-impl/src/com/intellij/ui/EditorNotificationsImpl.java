@@ -17,6 +17,7 @@ import com.intellij.openapi.roots.AdditionalLibraryRootsListener;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.KeyWithDefaultValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -32,9 +33,13 @@ import com.intellij.util.ui.update.Update;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.annotations.VisibleForTesting;
 
 import javax.swing.*;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.WeakHashMap;
 
 public final class EditorNotificationsImpl extends EditorNotifications {
 
@@ -43,6 +48,9 @@ public final class EditorNotificationsImpl extends EditorNotifications {
    */
   @Deprecated
   public static final ProjectExtensionPointName<EditorNotificationProvider> EP_PROJECT = EditorNotificationProvider.EP_NAME;
+
+  private static final Key<Map<Class<? extends EditorNotificationProvider>, JComponent>> EDITOR_NOTIFICATION_PROVIDER =
+    KeyWithDefaultValue.create("editor.notification.provider", WeakHashMap::new);
   private static final Key<Boolean> PENDING_UPDATE = Key.create("pending.notification.update");
 
   private final @NotNull MergingUpdateQueue myUpdateMerger;
@@ -170,23 +178,26 @@ public final class EditorNotificationsImpl extends EditorNotifications {
   private void updateNotification(@NotNull FileEditor editor,
                                   @NotNull EditorNotificationProvider provider,
                                   @Nullable JComponent component) {
-    @SuppressWarnings("unchecked") Key<JComponent> key = (Key<JComponent>)provider.getKey();
-    JComponent old = editor.getUserData(key);
+    Map<Class<? extends EditorNotificationProvider>, JComponent> map = getMap(editor);
+    Class<? extends EditorNotificationProvider> providerClass = provider.getClass();
+
+    JComponent old = map.get(providerClass);
     if (old != null) {
       FileEditorManager.getInstance(myProject).removeTopComponent(editor, old);
     }
 
     if (component != null) {
       if (component instanceof EditorNotificationPanel) {
-        ((EditorNotificationPanel)component).setProvider(provider);
-        ((EditorNotificationPanel)component).setProject(myProject);
+        EditorNotificationPanel panel = (EditorNotificationPanel)component;
+        panel.setProvider(provider);
+        panel.setProject(myProject);
       }
 
       EditorNotificationUsagesCollectorKt.logNotificationShown(myProject, provider);
       FileEditorManager.getInstance(myProject).addTopComponent(editor, component);
     }
 
-    editor.putUserData(key, component);
+    map.put(providerClass, component);
   }
 
   @Override
@@ -242,9 +253,13 @@ public final class EditorNotificationsImpl extends EditorNotifications {
     }
   }
 
+  @VisibleForTesting
+  public static @NotNull Map<Class<? extends EditorNotificationProvider>, JComponent> getMap(@NotNull FileEditor editor) {
+    return Objects.requireNonNull(editor.getUserData(EDITOR_NOTIFICATION_PROVIDER));
+  }
+
   @TestOnly
   public static void completeAsyncTasks() {
     NonBlockingReadActionImpl.waitForAsyncTaskCompletion();
   }
-
 }

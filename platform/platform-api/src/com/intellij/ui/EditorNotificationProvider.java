@@ -4,7 +4,6 @@ package com.intellij.ui;
 import com.intellij.openapi.extensions.ProjectExtensionPointName;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.annotations.RequiresReadLock;
 import org.jetbrains.annotations.ApiStatus;
@@ -30,11 +29,6 @@ public interface EditorNotificationProvider {
     new ProjectExtensionPointName<>("com.intellij.editorNotificationProvider");
 
   Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> CONST_NULL = __ -> null;
-
-  /**
-   * A unique key.
-   */
-  @NotNull Key<? extends JComponent> getKey();
 
   @RequiresReadLock
   @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -12,7 +12,9 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.annotations.RequiresEdt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.util.Collections;
@@ -51,6 +53,7 @@ public final class UnknownSdkEditorNotification {
     return myNotifications.get().isEmpty();
   }
 
+  @TestOnly
   public @NotNull List<UnknownSdkFix> getNotifications() {
     return List.copyOf(myNotifications.get());
   }
@@ -70,6 +73,7 @@ public final class UnknownSdkEditorNotification {
     });
   }
 
+  @RequiresEdt
   private void updateEditorNotifications(@NotNull FileEditor editor) {
     if (!editor.isValid()) return;
 

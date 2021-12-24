@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.debugger
 
@@ -8,13 +8,13 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl
 import com.intellij.debugger.impl.DebuggerSession
 import com.intellij.debugger.impl.DebuggerUtilsEx
 import com.intellij.debugger.settings.DebuggerSettings
+import com.intellij.debugger.ui.AlternativeSourceNotificationProvider
 import com.intellij.ide.util.ModuleRendererFactory
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
@@ -29,15 +29,11 @@ import org.jetbrains.kotlin.platform.isCommon
 import org.jetbrains.kotlin.platform.js.isJs
 import org.jetbrains.kotlin.platform.jvm.isJvm
 import org.jetbrains.kotlin.platform.konan.isNative
-import com.intellij.debugger.ui.AlternativeSourceNotificationProvider
 import org.jetbrains.kotlin.psi.KtFile
 import java.util.function.Function
 import javax.swing.JComponent
 
 class KotlinAlternativeSourceNotificationProvider : EditorNotificationProvider {
-    override fun getKey(): Key<out JComponent> {
-        return KEY
-    }
 
     override fun collectNotificationData(project: Project, file: VirtualFile): Function<in FileEditor, out JComponent?> {
         if (!DebuggerSettings.getInstance().SHOW_ALTERNATIVE_SOURCE) {
@@ -78,17 +74,18 @@ class KotlinAlternativeSourceNotificationProvider : EditorNotificationProvider {
             else -> null
         }
 
-        return Function<FileEditor, JComponent?> {
-            AlternativeSourceNotificationPanel(currentFirstAlternatives, project, file, locationDeclName)
+        return Function {
+            AlternativeSourceNotificationPanel(it, project, currentFirstAlternatives, file, locationDeclName)
         }
     }
 
     private class AlternativeSourceNotificationPanel(
-        alternatives: Collection<KtFile>,
+        fileEditor: FileEditor,
         project: Project,
+        alternatives: Collection<KtFile>,
         file: VirtualFile,
         locationDeclName: String?,
-    ) : EditorNotificationPanel() {
+    ) : EditorNotificationPanel(fileEditor) {
         private class ComboBoxFileElement(val ktFile: KtFile) {
             private val label: String by lazy(LazyThreadSafetyMode.NONE) {
                 val factory = ModuleRendererFactory.findInstance(ktFile)
@@ -145,10 +142,6 @@ class KotlinAlternativeSourceNotificationProvider : EditorNotificationProvider {
                 }
             }
         }
-    }
-
-    companion object {
-        private val KEY = Key.create<EditorNotificationPanel>("KotlinAlternativeSource")
     }
 }
 

@@ -1,13 +1,12 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.projectRoots.impl;
 
+import com.intellij.codeInsight.daemon.impl.SdkSetupNotificationProvider;
 import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectBundle;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.EditorNotificationProvider;
@@ -15,28 +14,10 @@ import com.intellij.ui.HyperlinkLabel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Function;
 
 final class UnknownSdkEditorPanel extends EditorNotificationPanel {
-
-  private static final EditorNotificationProvider PROVIDER = new EditorNotificationProvider() {
-
-    private final Key<? extends JComponent> myKey = Key.create("SdkSetupNotificationNew");
-
-    @Override
-    public @NotNull Key<? extends JComponent> getKey() {
-      return myKey;
-    }
-
-    @Override
-    public @NotNull Function<? super @NotNull FileEditor, ? extends @Nullable JComponent> collectNotificationData(@NotNull Project project,
-                                                                                                                  @NotNull VirtualFile file) {
-      return CONST_NULL;
-    }
-  };
 
   private final AtomicBoolean myIsRunning = new AtomicBoolean(false);
 
@@ -51,7 +32,7 @@ final class UnknownSdkEditorPanel extends EditorNotificationPanel {
     myAction = myFix.getSuggestedFixAction();
 
     setProject(project);
-    setProvider(PROVIDER);
+    setProvider(EditorNotificationProvider.EP_NAME.findExtension(SdkSetupNotificationProvider.class, project));
     setText(fix.getNotificationText());
 
     if (myAction != null) {
