@@ -33,7 +33,7 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
 
   val sdk by sdkProperty
 
-  override fun setupUI(builder: Panel) {
+  override fun setupSettingsUI(builder: Panel) {
     with(builder) {
       row(JavaUiBundle.message("label.project.wizard.new.project.jdk")) {
         val sdkTypeFilter = { it: SdkTypeId -> it is JavaSdkType && it !is DependentSdkType }
@@ -41,7 +41,7 @@ abstract class MavenNewProjectWizardStep<ParentStep>(parent: ParentStep) :
           .columns(COLUMNS_MEDIUM)
       }
     }
-    super.setupUI(builder)
+    super.setupSettingsUI(builder)
   }
 
   override fun createView(data: MavenProject) = MavenDataView(data)

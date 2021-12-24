@@ -15,7 +15,6 @@ class MavenJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
   override fun createStep(parent: JavaNewProjectWizard.Step) = Step(parent)
 
   class Step(parent: JavaNewProjectWizard.Step) : MavenNewProjectWizardStep<JavaNewProjectWizard.Step>(parent) {
-
     override fun setupProject(project: Project) {
       val builder = InternalMavenModuleBuilder().apply {
         moduleJdk = sdk
