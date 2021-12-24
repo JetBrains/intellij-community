@@ -5,7 +5,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.createNonCoalescingXmlStreamReader
 import com.intellij.util.lang.UrlClassLoader
 import org.codehaus.stax2.XMLStreamReader2
-import java.nio.file.Files
 
 internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, val isRunningFromSources: Boolean) : PathResolver {
   override val isFlat: Boolean
@@ -61,30 +60,17 @@ internal class ClassPathXmlPathResolver(private val classLoader: ClassLoader, va
         return descriptor
       }
 
-      if (isRunningFromSources && path.startsWith("intellij.")) {
-        if (dataLoader is LocalFsDataLoader) {
-          try {
-            resource = Files.readAllBytes(dataLoader.basePath.parent.resolve("${path.substring(0, path.length - 4)}/$path"))
-          }
-          catch (e: Exception) {
-            throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). " +
-                                             "Please ensure that project is built (Build -> Build Project).", e)
-          }
-        }
-        else if (dataLoader.emptyDescriptorIfCannotResolve) {
-          Logger.getInstance(ClassPathXmlPathResolver::class.java).warn(
-            "Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). " +
-            "Please ensure that project is built (Build -> Build Project)."
-          )
-          val descriptor = RawPluginDescriptor()
-          descriptor.`package` = "unresolved.${path.removeSuffix(".xml")}"
-          return descriptor
-        }
+      if (isRunningFromSources && path.startsWith("intellij.") && dataLoader.emptyDescriptorIfCannotResolve) {
+        Logger.getInstance(ClassPathXmlPathResolver::class.java).warn(
+          "Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader). " +
+          "Please ensure that project is built (Build -> Build Project)."
+        )
+        val descriptor = RawPluginDescriptor()
+        descriptor.`package` = "unresolved.${path.removeSuffix(".xml")}"
+        return descriptor
       }
 
-      if (resource == null) {
-        throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader)")
-      }
+      throw RuntimeException("Cannot resolve $path (dataLoader=$dataLoader, classLoader=$classLoader)")
     }
 
     return readModuleDescriptor(input = resource,
