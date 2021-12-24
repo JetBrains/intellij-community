@@ -15,9 +15,11 @@ import org.jetbrains.kotlin.idea.references.KtReference
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.util.isPrimaryConstructorOfDataClass
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.addRemoveModifier.setModifierList
 import org.jetbrains.kotlin.psi.psiUtil.quoteIfNeeded
+import org.jetbrains.kotlin.renderer.render
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.calls.callUtil.getResolvedCall
@@ -104,6 +106,7 @@ class KotlinParameterInfo(
     }
 
     fun getInheritedName(inheritedCallable: KotlinCallableDefinitionUsage<*>): String {
+        val name = Name.identifier(name).render()
         if (!inheritedCallable.isInherited) return name
 
         val baseFunction = inheritedCallable.baseFunction
@@ -116,8 +119,8 @@ class KotlinParameterInfo(
             || originalIndex >= inheritedParameterDescriptors.size
         ) return name
 
-        val inheritedParamName = inheritedParameterDescriptors[originalIndex].name.asString()
-        val oldParamName = baseFunctionDescriptor.valueParameters[originalIndex].name.asString()
+        val inheritedParamName = inheritedParameterDescriptors[originalIndex].name.render()
+        val oldParamName = baseFunctionDescriptor.valueParameters[originalIndex].name.render()
 
         return when {
             oldParamName == inheritedParamName && inheritedFunctionDescriptor !is AnonymousFunctionDescriptor -> name
