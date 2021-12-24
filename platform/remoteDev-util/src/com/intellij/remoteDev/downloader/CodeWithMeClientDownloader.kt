@@ -24,7 +24,6 @@ import com.intellij.util.application
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.EdtScheduledExecutorService
 import com.intellij.util.io.*
-import com.intellij.util.io.HttpRequests.HttpStatusException
 import com.intellij.util.system.CpuArch
 import com.intellij.util.text.VersionComparatorUtil
 import com.jetbrains.infra.pgpVerifier.JetBrainsPgpConstants
@@ -162,12 +161,8 @@ object CodeWithMeClientDownloader {
     LOG.info("Downloading from $clientJdkDownloadUrl")
 
     val tempFile = Files.createTempFile("jdk-build", "txt")
-    val jdkBuild = try {
-      downloadWithRetries(URI(clientJdkDownloadUrl), tempFile, EmptyProgressIndicator()).let {
-        tempFile.readText()
-      }
-    } finally {
-      Files.delete(tempFile)
+    val jdkBuild = downloadWithRetries(URI(clientJdkDownloadUrl), tempFile, EmptyProgressIndicator()).let {
+      tempFile.readText()
     }
 
     val sessionInfo = createSessionInfo(clientBuildVersion, jdkBuild, true)
@@ -408,7 +403,7 @@ object CodeWithMeClientDownloader {
     require(application.isUnitTestMode || !application.isDispatchThread) { "This method should not be called on UI thread" }
 
     val MAX_ATTEMPTS = 5
-    val BACKOFF_INITIAL_DELAY_MS = 500L
+    val BACKOFF_INITIAL_DELAY_MS = 2000L
 
     var delayMs = BACKOFF_INITIAL_DELAY_MS
 
@@ -422,17 +417,10 @@ object CodeWithMeClientDownloader {
         return
       }
       catch (e: Throwable) {
-        if (e is HttpStatusException) {
-          if (e.statusCode in 400..500) {
-            LOG.warn("Received ${e.statusCode} with message ${e.message}, will not retry")
-            throw e
-          }
-        }
-
         if (i < MAX_ATTEMPTS) {
           LOG.warn("Attempt $i of $MAX_ATTEMPTS to download from $url to ${path.absolutePathString()} failed, retrying in $delayMs ms", e)
           Thread.sleep(delayMs)
-          delayMs *= 1.5.toLong()
+          delayMs *= 2
         } else {
           LOG.warn("Failed to download from $url to ${path.absolutePathString()} in $MAX_ATTEMPTS attempts", e)
           throw e
