@@ -27,6 +27,7 @@ import com.intellij.vcs.log.util.PersistentUtil;
 import com.intellij.vcs.log.util.StopWatch;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.io.IOException;
 import java.util.Collection;
@@ -364,9 +365,11 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @NotNull
   public VcsLogIndex getIndex() {
+    //noinspection TestOnlyProblems
     return getModifiableIndex();
   }
 
+  @TestOnly
   @NotNull
   VcsLogModifiableIndex getModifiableIndex() {
     return myIndex;
