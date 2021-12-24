@@ -1001,4 +1001,13 @@ class Foo {
     assert elements[3].as(JavaPsiClassReferenceElement).getQualifiedName() == "Cls.TestImport"
     assert weights[3].contains("explicitlyImported=CLASS_DECLARED_IN_SAME_PACKAGE_NESTED,") // same package but nested class not imported
   }
+
+  @NeedsIndex.Full
+  void "test discourage experimental"() {
+    myFixture.addClass("package org.jetbrains.annotations;public class ApiStatus{public @interface Experimental {}}");
+    myFixture.addClass("class Cls {@org.jetbrains.annotations.ApiStatus.Experimental public void methodA() {} public void methodB() {}}")
+    myFixture.configureByText("a.java", "class Test {void t(Cls cls) {cls.me<caret>}}")
+    myFixture.completeBasic()
+    assert myFixture.lookupElementStrings == ["methodB", "methodA"]
+  }
 }
