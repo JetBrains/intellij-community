@@ -729,7 +729,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
     return balloon;
   }
 
-  private static void setTextAccessibleName(@NotNull JComponent component, @NotNull String htmlContent) {
+  public static void setTextAccessibleName(@NotNull JComponent component, @NotNull String htmlContent) {
     component.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY,
                                 StringUtil.unescapeXmlEntities(StringUtil.stripHtml(htmlContent, " ")));
   }

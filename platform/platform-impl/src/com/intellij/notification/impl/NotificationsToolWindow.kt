@@ -853,6 +853,8 @@ private class NotificationComponent(val notification: Notification,
         }
       }.setCopyable(true)
 
+      NotificationsManagerImpl.setTextAccessibleName(title, titleContent)
+
       val editor = UIUtil.findComponentOfType(title, JEditorPane::class.java)
       if (editor != null) {
         singleSelectionHandler.add(editor, true)
@@ -872,6 +874,8 @@ private class NotificationComponent(val notification: Notification,
     if (notification.hasContent()) {
       val textContent = NotificationsUtil.buildHtml(notification, null, true, null, NotificationsUtil.getFontStyle())
       val text = createTextComponent(textContent)
+
+      NotificationsManagerImpl.setTextAccessibleName(text, textContent)
 
       singleSelectionHandler.add(text, true)
 
