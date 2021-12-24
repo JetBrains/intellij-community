@@ -12,9 +12,9 @@ import java.util.List;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public interface ConfigurablesModificator {
+public interface ConfigurablesPatcher {
 
-  ExtensionPointName<ConfigurablesModificator> EP_NAME = ExtensionPointName.create("com.intellij.configurablesModificator");
+  ExtensionPointName<ConfigurablesPatcher> EP_NAME = ExtensionPointName.create("com.intellij.configurablesModificator");
 
   void modifyOriginalConfigurablesList(@NotNull List<Configurable> originalConfigurables,
                                        @Nullable Project project);

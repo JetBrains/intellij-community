@@ -2,7 +2,7 @@
 package com.intellij.openapi.options.ex;
 
 import com.intellij.BundleBase;
-import com.intellij.ide.actions.ConfigurablesModificator;
+import com.intellij.ide.actions.ConfigurablesPatcher;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -116,8 +116,8 @@ public final class ConfigurableExtensionPointUtil {
       targetProject,
       () -> {
         List<Configurable> configurables = getConfigurables(targetProject, withIdeSettings);
-        List<ConfigurablesModificator> modificators = ConfigurablesModificator.EP_NAME.getExtensionList();
-        for (ConfigurablesModificator modificator : modificators) {
+        List<ConfigurablesPatcher> modificators = ConfigurablesPatcher.EP_NAME.getExtensionList();
+        for (ConfigurablesPatcher modificator : modificators) {
           modificator.modifyOriginalConfigurablesList(configurables, targetProject);
         }
         return getConfigurableGroup(configurables, targetProject);

@@ -36,7 +36,7 @@
                     dynamic="true"/>
 
     <extensionPoint name="configurablesModificator"
-                    interface="com.intellij.ide.actions.ConfigurablesModificator"
+                    interface="com.intellij.ide.actions.ConfigurablesPatcher"
                     dynamic="true"/>
 
     <extensionPoint name="fileType"
