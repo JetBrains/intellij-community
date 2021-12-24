@@ -1,37 +1,33 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
-import com.intellij.testFramework.RegistryKeyRule
-import com.intellij.testFramework.UncaughtExceptionsRule
-import com.intellij.testFramework.fixtures.BasePlatformTestCase
+import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.RegistryKeyExtension
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
-import org.junit.ClassRule
-import org.junit.Rule
-import org.junit.Test
-import org.junit.runner.RunWith
-import org.junit.runners.JUnit4
+import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
 
-@RunWith(JUnit4::class)
-class CancellationPropagationTest : BasePlatformTestCase() {
+class CancellationPropagationTest {
 
   companion object {
 
-    @ClassRule
+    @RegisterExtension
     @JvmField
-    val uncaughtExceptionsRule = UncaughtExceptionsRule()
-  }
+    val applicationExtension = ApplicationExtension()
 
-  @Rule
-  @JvmField
-  val initRegistryKeyRule = RegistryKeyRule("ide.propagate.context", true)
+    @RegisterExtension
+    @JvmField
+    val registryKeyExtension = RegistryKeyExtension("ide.propagate.context", true)
+  }
 
   private val service = AppExecutorUtil.getAppExecutorService()
   private val scheduledService = AppExecutorUtil.getAppScheduledExecutorService()
@@ -173,7 +169,7 @@ class CancellationPropagationTest : BasePlatformTestCase() {
         lock.up()
         cancelled.timeoutWaitUp()
         try {
-          ProgressManager.checkCanceled()
+          Cancellation.checkCancelled()
           fail()
         }
         catch (e: ProcessCanceledException) {
@@ -238,7 +234,7 @@ class CancellationPropagationTest : BasePlatformTestCase() {
       childFuture2 = service.submit {
         lock.up()
         childFuture2CanFinish.timeoutWaitUp()
-        ProgressManager.checkCanceled()
+        Cancellation.checkCancelled()
       }
       lock.up()
     }

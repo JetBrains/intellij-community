@@ -36,7 +36,7 @@ fun submitTasksBlocking(service: ExecutorService, task: () -> Unit) {
 
 fun neverEndingStory(): Nothing {
   while (true) {
-    ProgressManager.checkCanceled()
+    Cancellation.checkCancelled()
     Thread.sleep(1)
   }
 }
