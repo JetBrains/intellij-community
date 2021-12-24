@@ -29,4 +29,6 @@ object KotlinArtifactNames {
     const val NOARG_COMPILER_PLUGIN = "noarg-compiler-plugin.jar"
     const val SAM_WITH_RECEIVER_COMPILER_PLUGIN = "sam-with-receiver-compiler-plugin.jar"
     const val KOTLINX_SERIALIZATION_COMPILER_PLUGIN = "kotlinx-serialization-compiler-plugin.jar"
+    const val PARCELIZE_RUNTIME = "parcelize-runtime.jar"
+    const val ANDROID_EXTENSIONS_RUNTIME = "android-extensions-runtime.jar"
 }

@@ -21,7 +21,7 @@ class KotlinArtifacts private constructor(val kotlincDirectory: File) {
         }
     }
 
-    val kotlincLibDirectory = File(kotlincDirectory, "lib")
+    private val kotlincLibDirectory = File(kotlincDirectory, "lib")
 
     val jetbrainsAnnotations = File(kotlincLibDirectory, KotlinArtifactNames.JETBRAINS_ANNOTATIONS)
     val kotlinStdlib = File(kotlincLibDirectory, KotlinArtifactNames.KOTLIN_STDLIB)
@@ -50,6 +50,8 @@ class KotlinArtifacts private constructor(val kotlincDirectory: File) {
     val noargCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.NOARG_COMPILER_PLUGIN)
     val samWithReceiverCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.SAM_WITH_RECEIVER_COMPILER_PLUGIN)
     val kotlinxSerializationCompilerPlugin = File(kotlincLibDirectory, KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)
+    val parcelizeRuntime = File(kotlincLibDirectory, KotlinArtifactNames.PARCELIZE_RUNTIME)
+    val androidExtensionsRuntime = File(kotlincLibDirectory, KotlinArtifactNames.ANDROID_EXTENSIONS_RUNTIME)
 }
 
 fun lazyUnpackJar(jar: File, destination: File): File {
@@ -70,6 +72,3 @@ fun resolveMavenArtifactInMavenRepo(mavenRepo: File, groupId: String, artifactId
         .resolve(artifactId)
         .resolve(version)
         .resolve("$artifactId-$version.jar")
-
-fun getMavenArtifactJarPath(groupId: String, artifactId: String, version: String) =
-    resolveMavenArtifactInMavenRepo(JarRepositoryManager.getLocalRepositoryPath(), groupId, artifactId, version)
