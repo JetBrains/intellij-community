@@ -62,7 +62,8 @@ import static java.util.Objects.requireNonNull;
 public final class VcsProjectLog implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsProjectLog.class);
   public static final Topic<ProjectLogListener> VCS_PROJECT_LOG_CHANGED = new Topic<>(ProjectLogListener.class,
-                                                                                      Topic.BroadcastDirection.TO_CHILDREN, true);
+                                                                                      Topic.BroadcastDirection.NONE,
+                                                                                      true);
   private static final int RECREATE_LOG_TRIES = 5;
   @NotNull private final Project myProject;
   @NotNull private final MessageBus myMessageBus;
