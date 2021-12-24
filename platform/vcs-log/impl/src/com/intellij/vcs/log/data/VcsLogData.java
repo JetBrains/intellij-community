@@ -131,15 +131,15 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
 
   @NotNull
   private VcsLogStorage createStorage() {
-    VcsLogStorage hashMap;
+    VcsLogStorage vcsLogStorage;
     try {
-      hashMap = new VcsLogStorageImpl(myProject, myLogProviders, myFatalErrorsConsumer, this);
+      vcsLogStorage = new VcsLogStorageImpl(myProject, myLogProviders, myFatalErrorsConsumer, this);
     }
     catch (IOException e) {
-      hashMap = new InMemoryStorage();
+      vcsLogStorage = new InMemoryStorage();
       LOG.error("Falling back to in-memory hashes", e);
     }
-    return hashMap;
+    return vcsLogStorage;
   }
 
   public void initialize() {
