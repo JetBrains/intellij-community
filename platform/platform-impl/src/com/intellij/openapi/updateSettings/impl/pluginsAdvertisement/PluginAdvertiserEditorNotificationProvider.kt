@@ -10,7 +10,7 @@ import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.marketplace.MarketplaceRequests
 import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileTypes.FileType
@@ -187,7 +187,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
   companion object {
 
     private val KEY = Key.create<EditorNotificationPanel>("file.type.associations.detected")
-    private val LOG: Logger = Logger.getInstance(PluginAdvertiserEditorNotificationProvider::class.java)
+    private val LOG = logger<PluginAdvertiserEditorNotificationProvider>()
 
     @VisibleForTesting
     fun getSuggestionData(
