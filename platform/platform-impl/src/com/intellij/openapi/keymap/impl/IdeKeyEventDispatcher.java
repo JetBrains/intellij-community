@@ -623,8 +623,7 @@ public final class IdeKeyEventDispatcher {
 
       if (!myContext.getSecondStrokeActions().contains(chosen.first)) {
         AnActionEvent actionEvent = chosen.second.withDataContext(wrappedContext); // use not frozen data context
-        if (Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once") &&
-            !ActionUtil.lastUpdateAndCheckDumb(chosen.first, actionEvent, false)) {
+        if (!ActionUtil.lastUpdateAndCheckDumb(chosen.first, actionEvent, false)) {
           LOG.warn("Action '" + actionEvent.getPresentation().getText() + "' (" + chosen.first.getClass() + ") " +
                    "has become disabled in `beforeActionPerformedUpdate` right after successful `update`");
           logTimeMillis(chosen.third, chosen.first);

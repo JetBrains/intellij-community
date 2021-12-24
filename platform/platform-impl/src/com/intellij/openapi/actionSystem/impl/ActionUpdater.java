@@ -108,30 +108,24 @@ final class ActionUpdater {
     myLaterInvocator = laterInvocator;
     myPreCacheSlowDataKeys = Utils.isAsyncDataContext(dataContext) && !Registry.is("actionSystem.update.actions.suppress.dataRules.on.edt");
     myForceAsync = Registry.is("actionSystem.update.actions.async.unsafe");
-    Op updateOp = myEventTransform == null || Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once") ?
-                  Op.update : Op.beforeActionPerformedUpdate;
     myRealUpdateStrategy = new UpdateStrategy(
-      action -> updateActionReal(action, updateOp),
+      action -> updateActionReal(action),
       group -> callAction(group, Op.getChildren, () -> doGetChildren(group, createActionEvent(orDefault(group, myUpdatedPresentations.get(group))))),
       group -> callAction(group, Op.canBePerformed, () -> doCanBePerformed(group, myDataContext)));
     myCheapStrategy = new UpdateStrategy(myPresentationFactory::getPresentation, group -> doGetChildren(group, null), group -> true);
-
-    LOG.assertTrue(updateOp != Op.beforeActionPerformedUpdate || ActionPlaces.isShortcutPlace(myPlace),
-                   "beforeActionPerformed requested in '" + myPlace + "'");
 
     myTestDelayMillis = ActionPlaces.ACTION_SEARCH.equals(myPlace) || ActionPlaces.isShortcutPlace(myPlace) ?
                         0 : Registry.intValue("actionSystem.update.actions.async.test.delay", 0);
   }
 
-  private @Nullable Presentation updateActionReal(@NotNull AnAction action, @NotNull Op operation) {
+  private @Nullable Presentation updateActionReal(@NotNull AnAction action) {
     // clone the presentation to avoid partially changing the cached one if update is interrupted
     Presentation presentation = myPresentationFactory.getPresentation(action).clone();
-    boolean isBeforePerformed = operation == Op.beforeActionPerformedUpdate;
     if (!ActionPlaces.isShortcutPlace(myPlace)) presentation.setEnabledAndVisible(true);
     boolean wasPopup = action instanceof ActionGroup && ((ActionGroup)action).isPopup(myPlace);
     presentation.setPopupGroup(action instanceof ActionGroup && (presentation.isPopupGroup() || wasPopup));
-    Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(presentation), isBeforePerformed);
-    boolean success = callAction(action, operation, doUpdate);
+    Supplier<Boolean> doUpdate = () -> doUpdate(myModalContext, action, createActionEvent(presentation));
+    boolean success = callAction(action, Op.update, doUpdate);
     if (success) assertActionGroupPopupStateIsNotChanged(action, myPlace, wasPopup, presentation);
     return success ? presentation : null;
   }
@@ -632,16 +626,13 @@ final class ActionUpdater {
   }
 
   // returns false if exception was thrown and handled
-  static boolean doUpdate(boolean isInModalContext,
-                          AnAction action,
-                          AnActionEvent e,
-                          boolean beforeActionPerformed) {
+  static boolean doUpdate(boolean isInModalContext, @NotNull AnAction action, @NotNull AnActionEvent e) {
     if (ApplicationManager.getApplication().isDisposed()) return false;
     try {
-      return !ActionUtil.performDumbAwareUpdate(isInModalContext, action, e, beforeActionPerformed);
+      return !ActionUtil.performDumbAwareUpdate(isInModalContext, action, e, false);
     }
     catch (Throwable ex) {
-      handleException(beforeActionPerformed ? Op.beforeActionPerformedUpdate : Op.update, action, e, ex);
+      handleException(Op.update, action, e, ex);
       return false;
     }
   }

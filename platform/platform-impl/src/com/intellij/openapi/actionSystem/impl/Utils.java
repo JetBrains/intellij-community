@@ -543,11 +543,10 @@ public final class Utils {
               sessionRef.set(slowSession);
             }
           };
-          boolean inReadAction = Registry.is("actionSystem.update.actions.call.beforeActionPerformedUpdate.once");
           ProgressIndicator indicator = parentIndicator == null ? new EmptyProgressIndicator() : new SensitiveProgressWrapper(parentIndicator);
           promise.onError(__ -> indicator.cancel());
           ProgressManager.getInstance().computePrioritized(() -> {
-            ProgressManager.getInstance().executeProcessUnderProgress(!inReadAction ? runnable : () ->
+            ProgressManager.getInstance().executeProcessUnderProgress(() ->
               ProgressIndicatorUtils.runActionAndCancelBeforeWrite(
                 applicationEx,
                 () -> ActionUpdater.cancelPromise(promise, "nested write-action requested"),
