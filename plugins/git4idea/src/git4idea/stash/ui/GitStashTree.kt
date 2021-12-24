@@ -54,7 +54,8 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
     val modelBuilder = TreeModelBuilder(project, groupingSupport.grouping)
     val stashesMap = stashTracker.stashes
     for ((root, stashesList) in stashesMap) {
-      val rootNode = if (stashesMap.size > 1) {
+      val rootNode = if (stashesMap.size > 1 &&
+                         !(stashesList is GitStashTracker.Stashes.Loaded && stashesList.stashes.isEmpty())) {
         createRootNode(root).also { modelBuilder.insertSubtreeRoot(it) }
       }
       else {
