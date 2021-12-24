@@ -2,15 +2,23 @@
 
 package org.jetbrains.kotlin.idea.completion
 
+import com.intellij.psi.PsiElement
 import com.intellij.util.PlatformIcons
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.analysis.api.symbols.*
 import org.jetbrains.kotlin.analysis.api.symbols.markers.*
+import org.jetbrains.kotlin.psi.KtElement
 import javax.swing.Icon
 
 internal object KotlinFirIconProvider {
     fun getIconFor(symbol: KtSymbol): Icon? {
+        symbol.psi?.let { referencedPsi ->
+            if (referencedPsi !is KtElement) {
+                return getIconForJavaDeclaration(referencedPsi)
+            }
+        }
+
         if (symbol is KtFunctionSymbol) {
             val isAbstract = symbol.modality == Modality.ABSTRACT
 
@@ -51,5 +59,10 @@ internal object KotlinFirIconProvider {
         if (symbol is KtEnumEntrySymbol) return KotlinIcons.ENUM
 
         return null
+    }
+
+    private fun getIconForJavaDeclaration(declaration: PsiElement): Icon? {
+        val defaultIconFlags = 0
+        return declaration.getIcon(defaultIconFlags)
     }
 }
