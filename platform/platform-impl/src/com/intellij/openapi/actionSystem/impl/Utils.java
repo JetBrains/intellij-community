@@ -14,7 +14,11 @@ import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.keymap.impl.ActionProcessor;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -543,7 +547,7 @@ public final class Utils {
               sessionRef.set(slowSession);
             }
           };
-          ProgressIndicator indicator = parentIndicator == null ? new EmptyProgressIndicator() : new SensitiveProgressWrapper(parentIndicator);
+          ProgressIndicator indicator = parentIndicator == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(parentIndicator);
           promise.onError(__ -> indicator.cancel());
           ProgressManager.getInstance().computePrioritized(() -> {
             ProgressManager.getInstance().executeProcessUnderProgress(() ->

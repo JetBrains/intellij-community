@@ -2,6 +2,7 @@
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.codeWithMe.ClientId;
+import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ProhibitAWTEvents;
 import com.intellij.openapi.Disposable;
@@ -16,8 +17,12 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.progress.*;
+import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
+import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.project.DumbService;
@@ -275,9 +280,10 @@ final class ActionUpdater {
   @NotNull
   CancellablePromise<List<AnAction>> expandActionGroupAsync(ActionGroup group, boolean hideDisabled) {
     ComponentManager disposableParent = myProject != null ? myProject : ApplicationManager.getApplication();
+    ProgressIndicator parentIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
+    ProgressIndicator indicator = parentIndicator == null ? new ProgressIndicatorBase() : new SensitiveProgressWrapper(parentIndicator);
 
     AsyncPromise<List<AnAction>> promise = newPromise(myPlace);
-    ProgressIndicator indicator = new EmptyProgressIndicator();
     promise.onError(__ -> {
       indicator.cancel();
       ApplicationManager.getApplication().invokeLater(
