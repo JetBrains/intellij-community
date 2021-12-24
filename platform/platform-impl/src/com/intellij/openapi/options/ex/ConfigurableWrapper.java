@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.*;
 
-public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchableConfigurable {
+public class ConfigurableWrapper implements SearchableConfigurable, Weighted, HierarchicalConfigurable {
   static final Logger LOG = Logger.getInstance(ConfigurableWrapper.class);
 
   @Nullable

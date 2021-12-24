@@ -8,10 +8,9 @@ import org.jetbrains.annotations.Nullable;
 
 @ApiStatus.Experimental
 @ApiStatus.Internal
-public interface HierarchableConfigurable extends ConfigurableWithId {
+public interface HierarchicalConfigurable extends ConfigurableWithId {
 
   @Nullable String getParentId();
 
-  HierarchableConfigurable addChild(Configurable configurable);
-
+  HierarchicalConfigurable addChild(Configurable configurable);
 }
