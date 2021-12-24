@@ -35,12 +35,25 @@ internal class SettingsSyncBridge(private val application: Application,
   }
 
   init {
+    queue.queue(object: Update(0) {
+      override fun run() {
+        initializeLog()
+      }
+    })
+
     application.messageBus.connect(parentDisposable).subscribe(SETTINGS_CHANGED_TOPIC, object : SettingsChangeListener {
       override fun settingChanged(event: SettingsChangeEvent) {
         pendingEvents.add(event)
         queue.queue(updateObject)
       }
     })
+  }
+
+  private fun initializeLog() {
+    val newRepository = settingsLog.initialize()
+    if (newRepository) {
+      push()
+    }
   }
 
   @RequiresBackgroundThread

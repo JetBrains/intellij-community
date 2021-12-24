@@ -8,6 +8,16 @@ import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 internal interface SettingsLog {
 
   /**
+   * Initializes the log, either from scratch (if the settings sync was not enabled for this IDE yet),
+   * or from the existing data on disk (if the log was already used in previous IDE sessions).
+   * This method must be called before any operation with the log.
+   *
+   * @return true if the repository was created from scratch;
+   * false if the data was already there, and we've just created internal structures.
+   */
+  fun initialize(): Boolean
+
+  /**
    * Records the current local state of the settings.
    */
   @RequiresBackgroundThread

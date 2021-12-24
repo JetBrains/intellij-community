@@ -22,24 +22,27 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
                               private val collectFilesToExportFromSettings: () -> Collection<Path>
 ) : SettingsLog, Disposable {
 
-  private val repository: Repository get() = _repository.value
-  lateinit var remoteBranch: RevCommit
+  private lateinit var repository: Repository
+  private lateinit var remoteBranch: RevCommit
 
   init {
     Disposer.register(parentDisposable, this)
   }
 
-  private val _repository = lazy {
+  override fun initialize(): Boolean {
     val dotGit = settingsSyncStorage.resolve(".git")
-    val repository = FileRepositoryBuilder.create(dotGit.toFile())
+    repository = FileRepositoryBuilder.create(dotGit.toFile())
 
-    if (!dotGit.exists()) {
+    val newRepository = !dotGit.exists()
+    if (newRepository) {
       repository.create()
       initRepository(repository)
       copyExistingSettings(repository)
     }
+
     remoteBranch = repository.headCommit()
-    repository
+
+    return newRepository
   }
 
   private fun copyExistingSettings(repository: Repository) {
@@ -133,8 +136,6 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   }
 
   override fun applyRemoteState(snapshot: SettingsSnapshot): Boolean { // todo improve return result API
-    repository // make sure the repository is initialized // todo remove these dumb getters
-
     // todo check repository consistency before each operation: that we're on master, than rb is deleted, that there're no uncommitted changes
 
     val git = Git(repository)
@@ -164,7 +165,6 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
           throw IllegalStateException("Unexpected merge result status: " + mergeResult.mergeStatus) //todo
         }
       }
-
     }
     finally {
       try {
@@ -182,8 +182,6 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   }
 
   override fun collectCurrentSnapshot(): SettingsSnapshot {   // todo check if there are uncommitted changes (should be none)
-    repository // make sure the repository is initialized
-
     val files = settingsSyncStorage.toFile().walkTopDown()
       .onEnter { it.name != ".git" }
       .filter { it.isFile && it.name != ".gitignore" }

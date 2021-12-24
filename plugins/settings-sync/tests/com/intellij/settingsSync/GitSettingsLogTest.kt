@@ -43,6 +43,7 @@ internal class GitSettingsLogTest {
     val settingsLog = GitSettingsLog(settingsSyncStorage, configDir, disposableRule.disposable) {
       listOf(keymapsFolder, editorXml)
     }
+    settingsLog.initialize()
 
     settingsLog.collectCurrentSnapshot().assertSettingsSnapshot {
       fileState("keymaps/mykeymap.xml", keymapContent)
