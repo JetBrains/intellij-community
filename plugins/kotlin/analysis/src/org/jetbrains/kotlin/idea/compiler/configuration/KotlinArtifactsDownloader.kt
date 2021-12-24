@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_LOCATION_PREFIX
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
-import org.jetbrains.kotlin.idea.artifacts.getMavenArtifactJarPath
 import org.jetbrains.kotlin.idea.artifacts.lazyUnpackJar
 import java.awt.EventQueue
 import java.io.File
@@ -35,7 +34,9 @@ object KotlinArtifactsDownloader {
             return true
         }
         val unpackedTimestamp = getUnpackedKotlinDistPath(version).lastModified()
-        val mavenJarTimestamp = getMavenArtifactJarPath(KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, version).lastModified()
+        val mavenJarTimestamp = KotlinMavenUtils.findArtifactOrFail(KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, version)
+            .toFile().lastModified()
+
         return unpackedTimestamp != 0L && mavenJarTimestamp != 0L && unpackedTimestamp >= mavenJarTimestamp
     }
 
@@ -43,11 +44,8 @@ object KotlinArtifactsDownloader {
         if (IdeKotlinVersion.get(version) == KotlinPluginLayout.instance.standaloneCompilerVersion) {
             return KotlinPluginLayout.instance.jpsPluginJar
         }
-        return getMavenArtifactJarPath(
-            KOTLIN_MAVEN_GROUP_ID,
-            KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
-            version
-        )
+
+        return KotlinMavenUtils.findArtifactOrFail(KOTLIN_MAVEN_GROUP_ID, KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID, version).toFile()
     }
 
     fun lazyDownloadAndUnpackKotlincDist(
@@ -81,7 +79,7 @@ object KotlinArtifactsDownloader {
                 return KotlinPluginLayout.instance.kotlinc
             }
         }
-        val expectedMavenArtifactJarPath = getMavenArtifactJarPath(KOTLIN_MAVEN_GROUP_ID, artifactId, version)
+        val expectedMavenArtifactJarPath = KotlinMavenUtils.findArtifactOrFail(KOTLIN_MAVEN_GROUP_ID, artifactId, version).toFile()
         expectedMavenArtifactJarPath.takeIf { it.exists() }?.let {
             return it
         }

@@ -3,22 +3,13 @@ package org.jetbrains.kotlin.idea.compiler.configuration
 
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.project.Project
-import com.intellij.util.io.URLUtil
-import com.intellij.util.xml.dom.readXmlAsModel
 import org.jetbrains.kotlin.config.KotlinCompilerVersion
-import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
+import org.jetbrains.kotlin.idea.artifacts.*
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_DIST_ARTIFACT_ID
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts.Companion.KOTLIN_MAVEN_GROUP_ID
-import org.jetbrains.kotlin.idea.artifacts.getMavenArtifactJarPath
-import org.jetbrains.kotlin.idea.artifacts.lazyUnpackJar
-import org.jetbrains.kotlin.idea.artifacts.resolveMavenArtifactInMavenRepo
-import org.jetbrains.kotlin.psi.KtElement
 import java.io.File
 import java.nio.file.Files
-import java.nio.file.Path
 import java.nio.file.Paths
-import kotlin.io.path.inputStream
-import kotlin.io.path.nameWithoutExtension
 
 sealed class KotlinPluginLayout {
     /**
@@ -53,7 +44,7 @@ sealed class KotlinPluginLayout {
             val ideaDirectory = Paths.get(PathManager.getHomePath(), Project.DIRECTORY_STORE_FOLDER)
 
             val layout = if (Files.isDirectory(ideaDirectory) && !System.getProperty("idea.use.dev.build.server", "false").toBoolean()) {
-                KotlinPluginLayoutWhenRunFromSources(ideaDirectory)
+                KotlinPluginLayoutWhenRunFromSources()
             } else {
                 val jarInsideLib = PathManager.getJarPathForClass(KotlinPluginLayout::class.java)
                     ?.let { File(it) }
@@ -86,58 +77,22 @@ private class KotlinPluginLayoutWhenRunInProduction(private val kotlinPluginRoot
     private fun resolve(path: String) = kotlinPluginRoot.resolve(path).also { check(it.exists()) { "$it doesn't exist" } }
 }
 
-private class KotlinPluginLayoutWhenRunFromSources(private val ideaDirectory: Path) : KotlinPluginLayout() {
+private class KotlinPluginLayoutWhenRunFromSources : KotlinPluginLayout() {
     private val bundledJpsVersion by lazy {
-        val distLibraryFile = ideaDirectory.resolve("libraries/kotlinc_kotlin_dist.xml")
-        require(Files.isRegularFile(distLibraryFile)) { "${distLibraryFile.nameWithoutExtension} library is not found in $ideaDirectory" }
-
-        val distLibraryElement = distLibraryFile.inputStream().use(::readXmlAsModel).getChild("library")
-            ?: error("Can't find the 'library' element in ${distLibraryFile}")
-
-        val propertiesElement = distLibraryElement.getChild("properties")
-        if (propertiesElement != null) {
-            propertiesElement.getAttributeValue("maven-id")
-                ?.split(':')
-                ?.takeIf { it.size == 3 }
-                ?.last()
-                ?: error("${distLibraryFile} is not a valid Maven library")
-        } else {
-            // In cooperative mode, Kotlin compiler artifacts are not Maven libraries
-            val rootUrl = distLibraryElement.getChild("CLASSES")?.getChild("root")
-                ?.getAttributeValue("url")
-                ?: error("Can't find a valid 'CLASSES' root in ${distLibraryFile}")
-
-            val rootPath = URLUtil.splitJarUrl(rootUrl)?.first ?: error("Root URL (${rootUrl}) is not a valid JAR URL")
-            val rootPathChunks = rootPath.split('/').asReversed()
-            check(rootPathChunks.size > 3 && rootPathChunks[0].startsWith(rootPathChunks[2] + "-" + rootPathChunks[1])) {
-                "Unsupported root path, expected a path inside a Maven repository: $rootPathChunks"
-            }
-
-            rootPathChunks[1] // artifact version
-        }
+        KotlinMavenUtils.findLibraryVersion("kotlinc_kotlin_dist.xml")
+            ?: error("Cannot find version of kotlin-dist library")
     }
 
     override val kotlinc: File by lazy {
-        val stdlibFile = PathManager.getJarPathForClass(KtElement::class.java)?.let { File(it) }
-            ?: error("Can't find kotlin-stdlib.jar in Maven Local")
-
-        // Such a weird algorithm because you can't use getMavenArtifactJarPath in this code. That's the only reliable way to find a
-        // maven artifact in Maven local
-        val packedDist = generateSequence(stdlibFile) { it.parentFile }
-            .map { resolveMavenArtifactInMavenRepo(it, KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, bundledJpsVersion) }
-            .firstOrNull { it.exists() }
-            ?: error(
-                "Can't find artifact '$KOTLIN_MAVEN_GROUP_ID:$KOTLIN_DIST_ARTIFACT_ID:$bundledJpsVersion' in Maven Local"
-            )
-
-        lazyUnpackJar(packedDist, KotlinArtifacts.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources"))
+        val distJar = KotlinMavenUtils.findArtifactOrFail(KOTLIN_MAVEN_GROUP_ID, KOTLIN_DIST_ARTIFACT_ID, bundledJpsVersion)
+        lazyUnpackJar(distJar.toFile(), KotlinArtifacts.KOTLIN_DIST_LOCATION_PREFIX.resolve("kotlinc-dist-for-ide-from-sources"))
     }
 
     override val jpsPluginJar: File by lazy {
-        getMavenArtifactJarPath(
+        KotlinMavenUtils.findArtifactOrFail(
             KOTLIN_MAVEN_GROUP_ID,
             KotlinArtifacts.KOTLIN_JPS_PLUGIN_CLASSPATH_ARTIFACT_ID,
             bundledJpsVersion
-        )
+        ).toFile()
     }
 }
