@@ -426,7 +426,7 @@ object CodeWithMeClientDownloader {
         if (e is ControlFlowException) throw e
 
         if (e is HttpStatusException) {
-          if (e.statusCode in 400..499) {
+          if (e.statusCode in 400..500) {
             LOG.warn("Received ${e.statusCode} with message ${e.message}, will not retry")
             throw e
           }
