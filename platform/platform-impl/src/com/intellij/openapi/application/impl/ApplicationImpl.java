@@ -134,7 +134,6 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     // reset back to null only when all components already disposed
     ApplicationManager.setApplication(this, myLastDisposable);
 
-    Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation", ActivityCategory.DEFAULT);
     AtomicReference<Thread> edtThread = new AtomicReference<>();
     EdtInvocationManager.invokeAndWaitIfNeeded(() -> {
       preventAwtAutoShutdown(this);
@@ -145,9 +144,38 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     if (!USE_SEPARATE_WRITE_THREAD || isUnitTestMode) {
       EdtInvocationManager.invokeAndWaitIfNeeded(() -> acquireWriteIntentLock(getClass().getName()));
     }
+
+    NoSwingUnderWriteAction.watchForEvents(this);
+  }
+
+  // this constructor must be called only by ApplicationLoader
+  public ApplicationImpl(boolean isInternal, boolean isHeadless, boolean isCommandLine, @NotNull Thread edtThread) {
+    super(null);
+
+    registerServiceInstance(TransactionGuard.class, myTransactionGuard, ComponentManagerImpl.fakeCorePluginDescriptor);
+    registerServiceInstance(ApplicationInfo.class, ApplicationInfoImpl.getShadowInstance(), ComponentManagerImpl.fakeCorePluginDescriptor);
+    registerServiceInstance(Application.class, this, ComponentManagerImpl.fakeCorePluginDescriptor);
+
+    myIsInternal = isInternal;
+    myTestModeFlag = false;
+    myHeadlessMode = isHeadless;
+    myCommandLineMode = isCommandLine;
+    if (!isHeadless) {
+      mySaveAllowed = true;
+    }
+
+    Activity activity = StartUpMeasurer.startActivity("AppDelayQueue instantiation", ActivityCategory.DEFAULT);
+    myLock = new ReadMostlyRWLock(edtThread);
+    // Acquire IW lock on EDT indefinitely in legacy mode
+    if (!USE_SEPARATE_WRITE_THREAD) {
+      EventQueue.invokeLater(() -> acquireWriteIntentLock(getClass().getName()));
+    }
     activity.end();
 
     NoSwingUnderWriteAction.watchForEvents(this);
+
+    // reset back to null only when all components already disposed
+    ApplicationManager.setApplication(this, myLastDisposable);
   }
 
   public static void preventAwtAutoShutdown(@NotNull Disposable parentDisposable) {
@@ -345,7 +373,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public final void load() {
     PluginManagerCore.scheduleDescriptorLoading();
-    Sequence<IdeaPluginDescriptorImpl> modules = PluginManagerCore.initPlugins().join().getEnabledModules();
+    Sequence<IdeaPluginDescriptorImpl> modules = PluginManagerCore.getInitPluginFuture().join().getEnabledModules();
 
     registerComponents(modules, this, null, null);
     ApplicationLoader.initConfigurationStore(this);

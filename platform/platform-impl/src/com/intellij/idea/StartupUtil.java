@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.accessibility.AccessibilityUtils;
@@ -50,11 +50,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.BuiltInServer;
 import sun.awt.AWTAutoShutdown;
-import sun.awt.AppContext;
 
 import javax.swing.*;
-import javax.swing.text.html.HTMLEditorKit;
-import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.dnd.DragSource;
 import java.io.File;
@@ -64,6 +61,7 @@ import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.management.ManagementFactory;
 import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
@@ -287,12 +285,7 @@ public final class StartupUtil {
 
         if (!isHeadless && configImportNeeded) {
           prepareUiFuture.join();
-          try {
-            importConfig(Arrays.asList(args), log, appStarter, agreementDialogWasShown);
-          }
-          catch (Exception e) {
-            throw new CompletionException(e);
-          }
+          importConfig(Arrays.asList(args), log, appStarter, agreementDialogWasShown);
         }
         return appStarter.start(Arrays.asList(args), prepareUiFuture);
       })
@@ -403,7 +396,7 @@ public final class StartupUtil {
     }
   }
 
-  private static void importConfig(List<String> args, Logger log, AppStarter appStarter, CompletableFuture<Boolean> agreementShown) throws Exception {
+  private static void importConfig(List<String> args, Logger log, AppStarter appStarter, CompletableFuture<Boolean> agreementShown) {
     Activity activity = StartUpMeasurer.startActivity("screen reader checking");
     try {
       EventQueue.invokeAndWait(AccessibilityUtils::enableScreenReaderSupportIfNecessary);
@@ -414,7 +407,15 @@ public final class StartupUtil {
     activity = activity.endAndStart("config importing");
     appStarter.beforeImportConfigs();
     Path newConfigDir = PathManager.getConfigDir();
-    EventQueue.invokeAndWait(() -> ConfigImportHelper.importConfigsTo(agreementShown.join(), newConfigDir, args, log));
+    try {
+      EventQueue.invokeAndWait(() -> ConfigImportHelper.importConfigsTo(agreementShown.join(), newConfigDir, args, log));
+    }
+    catch (InvocationTargetException e) {
+      throw new CompletionException(e.getCause());
+    }
+    catch (InterruptedException e) {
+      throw new CompletionException(e);
+    }
     appStarter.importFinished(newConfigDir);
 
     activity.end();
@@ -508,8 +509,6 @@ public final class StartupUtil {
         StartUpMeasurer.setCurrentState(LoadingState.LAF_INITIALIZED);
 
         activity = activity.endAndStart("awt thread busy notification");
-        activity.end();
-
         /*
           Make EDT to always persist while the main thread is alive. Otherwise, it's possible to have EDT being
           terminated by {@link AWTAutoShutdown}, which will break a `ReadMostlyRWLock` instance.
@@ -517,6 +516,7 @@ public final class StartupUtil {
           and thus will effectively disable auto shutdown behavior for this application.
          */
         AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread);
+        activity.end();
       }, it -> EventQueue.invokeLater(it) /* don't use a method reference here (`EventQueue` class must be loaded on demand) */);
 
     if (isUsingSeparateWriteThread()) {

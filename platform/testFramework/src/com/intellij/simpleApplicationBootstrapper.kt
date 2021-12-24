@@ -48,7 +48,7 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
   IdeaForkJoinWorkerThreadFactory.setupForkJoinCommonPool(true)
 
   PluginManagerCore.scheduleDescriptorLoading()
-  val loadedModuleFuture = PluginManagerCore.initPlugins()
+  val loadedModuleFuture = PluginManagerCore.getInitPluginFuture()
 
   setupEventQueue()
 

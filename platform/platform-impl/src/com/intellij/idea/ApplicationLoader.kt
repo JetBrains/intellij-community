@@ -22,6 +22,7 @@ import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
 import com.intellij.openapi.ui.DialogEarthquakeShaker
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
 import com.intellij.openapi.wm.WindowManager
@@ -53,15 +54,11 @@ private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED
 @Suppress("SSBasedInspection")
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
+// for non-technical reasons this method cannot return CompletableFuture
 fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) {
   val args = processProgramArguments(rawArgs)
 
   val initAppActivity = StartupUtil.startupStart.endAndStart(Activities.INIT_APP)
-  val loadAndInitPluginFutureActivity = initAppActivity.startChild("plugin descriptor init waiting")
-  val loadAndInitPluginFuture = PluginManagerCore.initPlugins().thenApply {
-    loadAndInitPluginFutureActivity.end()
-    it
-  }
 
   val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
   if (isInternal) {
@@ -70,54 +67,56 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) 
     }
   }
 
-  prepareUiFuture.thenComposeAsync(
-    {
-      val app = ApplicationImpl(isInternal, false, Main.isHeadless(), Main.isCommandLine())
-      (UIManager.getLookAndFeel() as? DarculaLaf)?.appCreated(app)
-      ApplicationImpl.preventAwtAutoShutdown(app)
-      loadAndInitPluginFuture
-        .thenAccept { pluginSet ->
-          runActivity("app component registration") {
-            app.registerComponents(modules = pluginSet.getEnabledModules(),
-                                   app = app,
-                                   precomputedExtensionModel = null,
-                                   listenerCallbacks = null)
-          }
+  if (isInternal || Disposer.isDebugDisposerOn()) {
+    Disposer.setDebugMode(true)
+  }
 
-          if (args.isEmpty()) {
-            startApp(app, IdeStarter(), initAppActivity, pluginSet, args)
-          }
-          else {
-            // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
-            findCustomAppStarterAndStart(pluginSet, args, app, initAppActivity)
-          }
+  // event queue is replaced as part of this task - application must be created only after that
+  initAppActivity.runChild("prepare ui waiting") {
+    (prepareUiFuture as CompletableFuture<*>).join()
+  }
 
-          if (!Main.isHeadless()) {
-            ForkJoinPool.commonPool().execute {
-              runActivity("icons preloading") {
-                if (isInternal) {
-                  IconLoader.setStrictGlobally(true)
-                }
+  val app = ApplicationImpl(isInternal, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())
+  (UIManager.getLookAndFeel() as? DarculaLaf)?.appCreated(app)
+  ApplicationImpl.preventAwtAutoShutdown(app)
 
-                AsyncProcessIcon("")
-                AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
-                AnimatedIcon.FS()
-              }
+  val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
+    PluginManagerCore.getInitPluginFuture().join()
+  }
 
-              runActivity("migLayout") {
-                // IDEA-170295
-                PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
-              }
-            }
-          }
+  runActivity("app component registration") {
+    app.registerComponents(modules = pluginSet.getEnabledModules(),
+                           app = app,
+                           precomputedExtensionModel = null,
+                           listenerCallbacks = null)
+  }
+
+  if (args.isEmpty()) {
+    startApp(app, IdeStarter(), initAppActivity, pluginSet, args)
+  }
+  else {
+    // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
+    findCustomAppStarterAndStart(pluginSet, args, app, initAppActivity)
+  }
+
+  if (!Main.isHeadless()) {
+    ForkJoinPool.commonPool().execute {
+      runActivity("icons preloading") {
+        if (isInternal) {
+          IconLoader.setStrictGlobally(true)
         }
-    },
-    Executor { if (EDT.isCurrentThreadEdt()) ForkJoinPool.commonPool().execute(it) else it.run() }
-  )
-    .exceptionally {
-      StartupAbortedException.processException(it)
-      null
+
+        AsyncProcessIcon("")
+        AnimatedIcon.Blinking(AllIcons.Ide.FatalError)
+        AnimatedIcon.FS()
+      }
+
+      runActivity("migLayout") {
+        // IDEA-170295
+        PlatformDefaults.setLogicalPixelBase(PlatformDefaults.BASE_FONT_SIZE)
+      }
     }
+  }
 }
 
 private fun startApp(app: ApplicationImpl,
@@ -186,29 +185,24 @@ private fun startApp(app: ApplicationImpl,
         it.run()
       }
     })
-    .thenRun {
-      addActivateAndWindowsCliListeners()
-      initAppActivity.end()
+    .join()
 
-      PluginManagerMain.checkThirdPartyPluginsAllowed()
+    addActivateAndWindowsCliListeners()
+    initAppActivity.end()
 
-      if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
-        starter.main(args)
-        // no need to use pool once plugins are loaded
-        ZipFilePool.POOL = null
-      }
-      else {
-        // backward compatibility
-        ApplicationManager.getApplication().invokeLater {
-          (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-            starter.main(args)
-          }
+    PluginManagerMain.checkThirdPartyPluginsAllowed()
+
+    if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
+      starter.main(args)
+      // no need to use pool once plugins are loaded
+      ZipFilePool.POOL = null
+    }
+    else {
+      ApplicationManager.getApplication().invokeLater {
+        (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+          starter.main(args)
         }
       }
-    }
-    .exceptionally {
-      StartupAbortedException.processException(it)
-      null
     }
 }
 

@@ -624,7 +624,7 @@ public final class PluginManagerCore {
   }
 
   @ApiStatus.Internal
-  public static @NotNull CompletableFuture<PluginSet> initPlugins() {
+  public static @NotNull CompletableFuture<PluginSet> getInitPluginFuture() {
     CompletableFuture<PluginSet> future = initFuture;
     if (future == null) {
       throw new IllegalStateException("Call scheduleDescriptorLoading() first");
