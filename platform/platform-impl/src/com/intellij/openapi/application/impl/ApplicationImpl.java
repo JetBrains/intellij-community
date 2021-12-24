@@ -377,7 +377,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
     registerComponents(modules, this, null, null);
     ApplicationLoader.initConfigurationStore(this);
-    preloadServices(modules, "", false).getSecond().join();
+    preloadServices(modules, "", false).sync.join();
     loadComponents(null);
     ForkJoinTask.invokeAll(ApplicationLoader.callAppInitialized(this));
   }

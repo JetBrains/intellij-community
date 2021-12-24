@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("DeprecatedCallableAddReplaceWith", "ReplaceNegatedIsEmptyWithIsNotEmpty", "ReplaceGetOrSet", "ReplacePutWithAssignment")
 package com.intellij.serviceContainer
 
@@ -969,9 +969,11 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
 
   open fun activityNamePrefix(): String? = null
 
+  class PreloadServicesResult(@JvmField val sync: CompletableFuture<*>, @JvmField val async: CompletableFuture<*>)
+
   open fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
                            activityPrefix: String,
-                           onlyIfAwait: Boolean = false): Pair<CompletableFuture<Void?>, CompletableFuture<Void?>> {
+                           onlyIfAwait: Boolean = false): PreloadServicesResult {
     val asyncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
     val syncPreloadedServices = mutableListOf<ForkJoinTask<*>>()
     for (plugin in modules) {
@@ -1027,17 +1029,17 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
       }
     }
 
-    return Pair(
-      CompletableFuture.runAsync({
-        runActivity("${activityPrefix}service async preloading") {
-          ForkJoinTask.invokeAll(asyncPreloadedServices)
-        }
-      }, ForkJoinPool.commonPool()),
-      CompletableFuture.runAsync({
-        runActivity("${activityPrefix}service sync preloading") {
-          ForkJoinTask.invokeAll(syncPreloadedServices)
-        }
-      }, ForkJoinPool.commonPool())
+    return PreloadServicesResult(
+      sync = CompletableFuture.runAsync({
+                                          runActivity("${activityPrefix}service sync preloading") {
+                                            ForkJoinTask.invokeAll(syncPreloadedServices)
+                                          }
+                                        }, ForkJoinPool.commonPool()),
+      async = CompletableFuture.runAsync({
+                                           runActivity("${activityPrefix}service async preloading") {
+                                             ForkJoinTask.invokeAll(asyncPreloadedServices)
+                                           }
+                                         }, ForkJoinPool.commonPool())
     )
   }
 

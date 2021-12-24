@@ -249,10 +249,10 @@ internal fun createAppLocatorFile() {
 fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
                     container: ComponentManagerImpl,
                     activityPrefix: String,
-                    onlyIfAwait: Boolean = false): CompletableFuture<Void?> {
+                    onlyIfAwait: Boolean = false): CompletableFuture<*> {
   val result = container.preloadServices(modules, activityPrefix, onlyIfAwait)
 
-  fun logError(future: CompletableFuture<Void?>): CompletableFuture<Void?> {
+  fun logError(future: CompletableFuture<*>): CompletableFuture<*> {
     return future
       .whenComplete { _, error ->
         if (error != null && error !is ProcessCanceledException) {
@@ -261,8 +261,8 @@ fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
       }
   }
 
-  logError(result.first)
-  return logError(result.second)
+  logError(result.async)
+  return logError(result.sync)
 }
 
 private fun addActivateAndWindowsCliListeners() {
