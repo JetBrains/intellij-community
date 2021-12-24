@@ -1,6 +1,10 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
+import com.intellij.concurrency.callable
+import com.intellij.concurrency.resetThreadContext
+import com.intellij.concurrency.runnable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testFramework.ApplicationExtension
 import com.intellij.testFramework.RegistryKeyExtension
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -8,7 +12,7 @@ import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.Job
+import kotlinx.coroutines.suspendCancellableCoroutine
 import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
@@ -33,53 +37,68 @@ class CancellationPropagationTest {
   private val scheduledService = AppExecutorUtil.getAppScheduledExecutorService()
 
   @Test
-  fun `job tree`() {
-    val b1 = AppExecutorUtil.createBoundedApplicationPoolExecutor("Bounded-1", 1)
-    val b2 = AppExecutorUtil.createBoundedApplicationPoolExecutor("Bounded-2", 2)
-    val bs1 = AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled-1", 1)
-    val bs2 = AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled-2", 2)
-    val boundedServices = listOf(b1, b2, bs1, bs2)
-    val services = listOf(service, scheduledService) + boundedServices
+  fun `executeOnPooledThread(Runnable)`(): Unit = timeoutRunBlocking {
+    doTest {
+      ApplicationManager.getApplication().executeOnPooledThread(it.runnable())
+    }
+  }
 
-    fun tasks(executingService: ExecutorService?, task: (ExecutorService) -> Unit) {
-      for (service in services) {
-        val serviceTask = {
-          task(service)
-        }
-        submitTasks(service, serviceTask)
-        if (executingService !in boundedServices) {
-          // don't block bounded services
-          submitTasksBlocking(service, serviceTask)
+  @Test
+  fun `executeOnPooledThread(Callable)`(): Unit = timeoutRunBlocking {
+    doTest {
+      ApplicationManager.getApplication().executeOnPooledThread(it.callable())
+    }
+  }
+
+  @Test
+  fun appExecutorService(): Unit = timeoutRunBlocking {
+    doExecutorServiceTest(service)
+  }
+
+  @Test
+  fun appScheduledExecutorService(): Unit = timeoutRunBlocking {
+    doExecutorServiceTest(scheduledService)
+  }
+
+  @Test
+  fun boundedApplicationPoolExecutor(): Unit = timeoutRunBlocking {
+    doExecutorServiceTest(AppExecutorUtil.createBoundedApplicationPoolExecutor("Bounded", 1))
+  }
+
+  @Test
+  fun boundedScheduledExecutorService(): Unit = timeoutRunBlocking {
+    doExecutorServiceTest(AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled", 1))
+  }
+
+  private suspend fun doTest(submit: (() -> Unit) -> Unit) {
+    resetThreadContext().use {
+      suspendCancellableCoroutine<Unit> { continuation ->
+        val parentJob = checkNotNull(Cancellation.currentJob())
+        submit { // switch to another thread
+          val result: Result<Unit> = runCatching {
+            assertCurrentJobIsChildOf(parentJob)
+          }
+          continuation.resumeWith(result)
         }
       }
     }
+  }
 
-    var failureTrace by AtomicReference<Throwable?>()
-
-    fun assertCurrentJob(parent: Job): Job {
-      try {
-        return assertCurrentJobIsChildOf(parent)
-      }
-      catch (e: CancellationException) {
-        throw e
-      }
-      catch (e: Throwable) {
-        failureTrace = e
-        throw e
-      }
+  private suspend fun doExecutorServiceTest(service: ExecutorService) {
+    doTest {
+      service.execute(it.runnable())
     }
-
-    withRootJob { rootJob ->
-      tasks(executingService = null) { service ->
-        val child = assertCurrentJob(parent = rootJob)
-        tasks(executingService = service) {
-          assertCurrentJob(parent = child)
-        }
-      }
-    }.timeoutJoinBlocking()
-
-    failureTrace?.let {
-      throw it
+    doTest {
+      service.submit(it.runnable())
+    }
+    doTest {
+      service.submit(it.callable())
+    }
+    doTest {
+      service.invokeAny(listOf(it.callable()))
+    }
+    doTest {
+      service.invokeAll(listOf(it.callable()))
     }
   }
 

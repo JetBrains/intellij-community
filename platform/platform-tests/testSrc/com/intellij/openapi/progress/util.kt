@@ -8,8 +8,10 @@ import com.intellij.util.getValue
 import com.intellij.util.setValue
 import junit.framework.TestCase.*
 import kotlinx.coroutines.*
-import java.util.concurrent.*
 import java.util.concurrent.CancellationException
+import java.util.concurrent.ExecutionException
+import java.util.concurrent.Future
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Semaphore as KSemaphore
@@ -20,18 +22,6 @@ internal fun timeoutRunBlocking(action: suspend CoroutineScope.() -> Unit) {
   runBlocking {
     withTimeout(TEST_TIMEOUT_MS, action)
   }
-}
-
-fun submitTasks(service: ExecutorService, task: () -> Unit) {
-  service.execute(task)
-  service.submit(task)
-}
-
-fun submitTasksBlocking(service: ExecutorService, task: () -> Unit) {
-  val callable = Callable(task)
-  val callables = listOf(callable, callable)
-  service.invokeAny(callables) // one of callables may not be executed
-  service.invokeAll(callables)
 }
 
 fun neverEndingStory(): Nothing {
