@@ -1539,8 +1539,8 @@ public final class EditorPainter implements TextDrawingCallback {
                                 visualLineEndOffset == offset ? visualLineEndOffset
                                                               : DocumentUtil.getPreviousCodePointOffset(myDocument, visualLineEndOffset),
                                 visualLineEndOffset,
-                                !visLineIterator.isCustomFoldRegionLine() || Registry.is("highlight.caret.line.at.custom.fold")
-                                ? myCaretData : null,
+                                IterationState.CaretData.copyOf(myCaretData, visLineIterator.isCustomFoldRegionLine() &&
+                                                                             !Registry.is("highlight.caret.line.at.custom.fold")),
                                 false, false, false, false);
       }
       if (!it.atEnd()) {
