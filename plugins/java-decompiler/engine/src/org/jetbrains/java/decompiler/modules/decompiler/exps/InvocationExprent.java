@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.modules.decompiler.exps;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.ClassesProcessor.ClassNode;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -414,6 +415,11 @@ public class InvocationExprent extends Exprent {
     }
 
     return false;
+  }
+
+  public boolean isInstanceCall(@NotNull String className, @NotNull String methodName, int parametersCount) {
+    return invocationType == INVOKE_VIRTUAL &&
+           this.className.equals(className) && methodName.equals(name) && parameters.size() == parametersCount;
   }
 
   public void markUsingBoxingResult() {

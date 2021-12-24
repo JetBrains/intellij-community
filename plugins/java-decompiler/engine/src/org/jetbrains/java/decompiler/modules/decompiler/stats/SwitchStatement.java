@@ -71,7 +71,7 @@ public final class SwitchStatement extends Statement {
   @Override
   @NotNull
   public TextBuffer toJava(int indent, @NotNull BytecodeMappingTracer tracer) {
-    SwitchHelper.simplify(this);
+    SwitchHelper.simplifySwitchOnEnum(this);
     TextBuffer buf = new TextBuffer();
     buf.append(ExprProcessor.listToJava(varDefinitions, indent, tracer));
     buf.append(first.toJava(indent, tracer));
