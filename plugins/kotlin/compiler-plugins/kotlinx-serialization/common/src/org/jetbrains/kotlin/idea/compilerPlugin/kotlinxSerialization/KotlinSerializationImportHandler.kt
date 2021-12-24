@@ -3,18 +3,16 @@
 package org.jetbrains.kotlin.idea.compilerPlugin.kotlinxSerialization
 
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifactNames
+import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
 import org.jetbrains.kotlin.idea.facet.KotlinFacet
-import org.jetbrains.kotlin.utils.PathUtil
 import java.io.File
 
 object KotlinSerializationImportHandler {
-    private const val pluginJpsJarName = "kotlinx-serialization-compiler-plugin.jar"
-
-    val PLUGIN_JPS_JAR: String
-        get() = File(PathUtil.kotlinPathsForIdeaPlugin.libPath, pluginJpsJarName).absolutePath
+    val PLUGIN_JPS_JAR: String by lazy { KotlinArtifacts.instance.kotlinxSerializationCompilerPlugin.absolutePath }
 
     fun isPluginJarPath(path: String): Boolean {
-        return path.endsWith(pluginJpsJarName)
+        return path.endsWith(KotlinArtifactNames.KOTLINX_SERIALIZATION_COMPILER_PLUGIN)
     }
 
     fun modifyCompilerArguments(facet: KotlinFacet, buildSystemPluginJar: String) {
