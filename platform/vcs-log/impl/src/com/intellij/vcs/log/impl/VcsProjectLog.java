@@ -61,6 +61,7 @@ import static java.util.Objects.requireNonNull;
 @Service(Service.Level.PROJECT)
 public final class VcsProjectLog implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsProjectLog.class);
+  @Topic.ProjectLevel
   public static final Topic<ProjectLogListener> VCS_PROJECT_LOG_CHANGED = new Topic<>(ProjectLogListener.class,
                                                                                       Topic.BroadcastDirection.NONE,
                                                                                       true);
