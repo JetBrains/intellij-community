@@ -1,12 +1,12 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.CommonBundle
-import com.intellij.openapi.util.Computable
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.vcs.log.*
 import com.intellij.vcs.log.impl.VcsUserImpl
 import org.jetbrains.annotations.ApiStatus
+import java.util.function.Supplier
 
 /**
  * Marker interface for [VcsShortCommitDetails] and [VcsFullCommitDetails] instances to indicate
@@ -18,8 +18,8 @@ import org.jetbrains.annotations.ApiStatus
 interface LoadingDetails
 
 @ApiStatus.Internal
-open class LoadingDetailsImpl(private val commitIdComputable: Computable<out CommitId>, val loadingTaskIndex: Long) : VcsFullCommitDetails, LoadingDetails {
-  private val commitId: CommitId by lazy(LazyThreadSafetyMode.PUBLICATION) { commitIdComputable.compute() }
+open class LoadingDetailsImpl(private val commitIdComputable: Supplier<out CommitId>, val loadingTaskIndex: Long) : VcsFullCommitDetails, LoadingDetails {
+  private val commitId: CommitId by lazy(LazyThreadSafetyMode.PUBLICATION) { commitIdComputable.get() }
 
   override fun getId(): Hash = commitId.hash
   override fun getRoot(): VirtualFile = commitId.root

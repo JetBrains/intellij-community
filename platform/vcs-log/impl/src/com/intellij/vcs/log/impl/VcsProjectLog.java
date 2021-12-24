@@ -22,7 +22,6 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.ShutDownTracker;
@@ -52,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Supplier;
 
 import static com.intellij.vcs.log.VcsLogProvider.LOG_PROVIDER_EP;
 import static com.intellij.vcs.log.impl.CustomVcsLogUiFactoryProvider.LOG_CUSTOM_UI_FACTORY_PROVIDER_EP;
@@ -265,9 +265,9 @@ public final class VcsProjectLog implements Disposable {
   public void dispose() {
   }
 
-  private static <T> T invokeAndWait(@NotNull Computable<T> computable) {
+  private static <T> T invokeAndWait(@NotNull Supplier<T> computable) {
     Ref<T> result = new Ref<>();
-    ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.compute()), getModality());
+    ApplicationManager.getApplication().invokeAndWait(() -> result.set(computable.get()), getModality());
     return result.get();
   }
 
