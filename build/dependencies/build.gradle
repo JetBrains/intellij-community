@@ -33,7 +33,6 @@ apply from: 'setupBundledMaven.gradle'
 apply from: 'setupCidr.gradle'
 apply from: 'setupRpluginDeps.gradle'
 apply from: 'setupAndroidStudio.gradle'
-apply from: 'setupVulnerabilitySearchPlugin.gradle'
 
 task setupDependencies(dependsOn: ['setupJdks', 'setupBundledMaven'], group: 'dependencies')
 clean.dependsOn('cleanSetupJdks', 'cleanSetupBundledMaven')
