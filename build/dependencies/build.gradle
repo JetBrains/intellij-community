@@ -31,7 +31,6 @@ apply from: 'setupJdk.gradle'
 apply from: 'setupAndroidSdk.gradle'
 apply from: 'setupBundledMaven.gradle'
 apply from: 'setupCidr.gradle'
-apply from: 'setupAndroidStudio.gradle'
 
 task setupDependencies(dependsOn: ['setupJdks', 'setupBundledMaven'], group: 'dependencies')
 clean.dependsOn('cleanSetupJdks', 'cleanSetupBundledMaven')
