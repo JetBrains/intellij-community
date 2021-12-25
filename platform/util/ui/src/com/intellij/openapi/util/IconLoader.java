@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import com.intellij.diagnostic.StartUpMeasurer;
@@ -110,7 +110,7 @@ public final class IconLoader {
             return newIcon;
           }
         }
-        catch (MalformedURLException e) {
+        catch (MalformedURLException ignore) {
         }
       }
     }
@@ -233,6 +233,7 @@ public final class IconLoader {
       return (Icon)LOOKUP.findStaticGetter(aClass, fieldName, Icon.class).invoke();
     }
     catch (Throwable e) {
+      LOG.warn("Cannot get reflective icon (path=" + path + ")", e);
       return null;
     }
   }
@@ -1122,7 +1123,8 @@ public final class IconLoader {
     }
   }
 
-  private static final class ImageDataResolverImpl implements ImageDataLoader {
+  @ApiStatus.Internal
+  public static final class ImageDataResolverImpl implements ImageDataLoader {
     private static final URL UNRESOLVED_URL;
 
     static {
@@ -1152,7 +1154,7 @@ public final class IconLoader {
       this.useCacheOnLoad = useCacheOnLoad;
     }
 
-    ImageDataResolverImpl(@NotNull URL url, @NotNull String path, @Nullable ClassLoader classLoader, boolean useCacheOnLoad) {
+    public ImageDataResolverImpl(@NotNull URL url, @NotNull String path, @Nullable ClassLoader classLoader, boolean useCacheOnLoad) {
       ownerClass = null;
       overriddenPath = path;
       this.classLoader = classLoader;

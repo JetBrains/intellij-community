@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui;
 
 import com.fasterxml.jackson.jr.ob.JSON;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
@@ -556,11 +555,12 @@ public final class UITheme {
     else if (key.endsWith("grayFilter")) {
       return parseGrayFilter(value);
     }
+    else if (value.startsWith("AllIcons.")) {
+      return new IconUIResource(IconLoader.createLazy(() -> {
+        return Objects.requireNonNull(IconLoader.getReflectiveIcon(value, UITheme.class.getClassLoader()));
+      }));
+    }
     else {
-      Icon icon = value.startsWith("AllIcons.") ? IconLoader.getReflectiveIcon(value, AllIcons.class.getClassLoader()) : null;
-      if (icon != null) {
-        return new IconUIResource(icon);
-      }
       Color color = parseColor(value);
       if (color != null) {
         return new ColorUIResource(color);
