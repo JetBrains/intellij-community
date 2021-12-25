@@ -514,17 +514,15 @@ idea.fatal.error.notification=disabled
                 context.messages.error("Toolbox Lite-Gen version is not specified!")
               }
               else {
-                String[] liteGenArgs = [
-                  'runToolboxLiteGen',
-                  "-Pintellij.build.toolbox.litegen.version=${toolboxLiteGenVersion}",
-                  //NOTE[jo]: right now we assume all installer files are created under the same path
-                  "-Pintellij.build.artifacts=${context.paths.artifacts}",
-                  "-Pintellij.build.productCode=${context.applicationInfo.productCode}",
-                  "-Pintellij.build.isEAP=${context.applicationInfo.isEAP}",
-                  "-Pintellij.build.output=${context.paths.buildOutputRoot}/toolbox-lite-gen",
-                ]
-
-                context.gradle.run('Run Toolbox LiteGen', liteGenArgs)
+                ToolboxLiteGen.runToolboxLiteGen(
+                  context.paths.buildDependenciesCommunityRoot,
+                  context.messages,
+                  toolboxLiteGenVersion,
+                  "/artifacts-dir=${context.paths.artifacts}",
+                  "/product-code=${context.applicationInfo.productCode}",
+                  "/isEAP=${context.applicationInfo.isEAP}",
+                  "/output-dir=${context.paths.buildOutputRoot}/toolbox-lite-gen"
+                )
               }
             }
           })
