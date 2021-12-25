@@ -532,14 +532,14 @@ public final class UITheme {
                                                            Integer.parseInt(ints[3])));
         }
         Color color = ColorHexUtil.fromHexOrNull(value);
-        if (color != null) {
-          return JBUI.asUIResource(JBUI.Borders.customLine(color, 1));
-        }
-        else {
+        if (color == null) {
           Class<?> aClass = classLoader.loadClass(value);
           Constructor<?> constructor = aClass.getDeclaredConstructor();
           constructor.setAccessible(true);
           return constructor.newInstance();
+        }
+        else {
+          return JBUI.asUIResource(JBUI.Borders.customLine(color, 1));
         }
       }
       catch (Exception e) {

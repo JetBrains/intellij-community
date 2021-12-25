@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.icons;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,7 +70,10 @@ public final class IconTransform {
         continue;
       }
 
-      LOG.debug("replace '" + path + "' with '" + newPath + "'");
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("replace '" + path + "' with '" + newPath + "'");
+      }
+
       ClassLoader contextClassLoader = patcher.getContextClassLoader(path, classLoader);
       if (contextClassLoader == null) {
         //noinspection deprecation

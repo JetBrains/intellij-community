@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.BundleBase;
@@ -117,9 +117,7 @@ public final class NotificationGroupEP implements PluginAware {
   }
 
   public @Nullable Icon getIcon(@NotNull PluginDescriptor pluginDescriptor) {
-    return icon != null ?
-           IconLoader.findIcon(icon, pluginDescriptor.getClassLoader()) :
-           null;
+    return icon == null ? null : IconLoader.findIcon(icon, pluginDescriptor.getClassLoader());
   }
 
   //@Transient

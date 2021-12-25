@@ -159,15 +159,6 @@ public final class IconLoader {
     updateTransform(transform -> transform.withoutPathPatcher(patcher));
   }
 
-  /**
-   * @deprecated use {@link JBImageIcon}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull Icon getIcon(@NotNull Image image) {
-    return new JBImageIcon(image);
-  }
-
   public static void setUseDarkIcons(boolean useDarkIcons) {
     updateTransform(transform -> transform.withDark(useDarkIcons));
   }
@@ -377,9 +368,10 @@ public final class IconLoader {
     if (storeToCache) {
       return iconCache.computeIfAbsent(key, __ -> new CachedImageIcon(url, true));
     }
-
-    CachedImageIcon icon = iconCache.get(key);
-    return icon == null ? new CachedImageIcon(url, false) : icon;
+    else {
+      CachedImageIcon icon = iconCache.get(key);
+      return icon == null ? new CachedImageIcon(url, false) : icon;
+    }
   }
 
   @SuppressWarnings("DuplicatedCode")
