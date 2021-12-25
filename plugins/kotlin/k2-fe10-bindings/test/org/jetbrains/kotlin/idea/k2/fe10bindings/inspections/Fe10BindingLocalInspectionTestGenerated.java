@@ -1538,6 +1538,11 @@ public abstract class Fe10BindingLocalInspectionTestGenerated extends AbstractFe
             runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/invokingByQualified.kt");
         }
 
+        @TestMetadata("nullableFunctionType.kt")
+        public void testNullableFunctionType() throws Exception {
+            runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/nullableFunctionType.kt");
+        }
+
         @TestMetadata("override.kt")
         public void testOverride() throws Exception {
             runTest("../idea/tests/testData/inspectionsLocal/redundantSuspend/override.kt");

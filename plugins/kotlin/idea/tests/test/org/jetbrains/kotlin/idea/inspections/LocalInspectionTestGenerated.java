@@ -10078,6 +10078,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
             runTest("testData/inspectionsLocal/redundantSuspend/invokingByQualified.kt");
         }
 
+        @TestMetadata("nullableFunctionType.kt")
+        public void testNullableFunctionType() throws Exception {
+            runTest("testData/inspectionsLocal/redundantSuspend/nullableFunctionType.kt");
+        }
+
         @TestMetadata("override.kt")
         public void testOverride() throws Exception {
             runTest("testData/inspectionsLocal/redundantSuspend/override.kt");
