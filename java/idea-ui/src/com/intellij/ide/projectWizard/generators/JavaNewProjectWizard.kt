@@ -10,7 +10,7 @@ class JavaNewProjectWizard : LanguageNewProjectWizard {
   override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
   class Step(parent: NewProjectWizardLanguageStep) :
-    AbstractNewProjectWizardMultiStep<Step>(parent, BuildSystemJavaNewProjectWizard.EP_NAME),
+    AbstractNewProjectWizardMultiStep<Step, BuildSystemJavaNewProjectWizard>(parent, BuildSystemJavaNewProjectWizard.EP_NAME),
     LanguageNewProjectWizardData by parent,
     BuildSystemJavaNewProjectWizardData {
 

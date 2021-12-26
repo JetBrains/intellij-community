@@ -87,7 +87,7 @@ class KotlinNewProjectWizard : LanguageNewProjectWizard {
     }
 
     class Step(parent: CommentStep) :
-        AbstractNewProjectWizardMultiStep<Step>(parent, BuildSystemKotlinNewProjectWizard.EP_NAME),
+        AbstractNewProjectWizardMultiStep<Step, BuildSystemKotlinNewProjectWizard>(parent, BuildSystemKotlinNewProjectWizard.EP_NAME),
         LanguageNewProjectWizardData by parent,
         BuildSystemKotlinNewProjectWizardData {
 

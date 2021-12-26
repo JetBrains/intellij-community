@@ -18,8 +18,6 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.Key
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.util.ResettableLazy
-import com.intellij.util.resettableLazy
 import com.jetbrains.python.PyBundle
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.newProject.steps.ProjectSpecificSettingsStep
@@ -152,9 +150,9 @@ class PythonSdkStep<P>(parent: P)
 
   override val label: String = PyBundle.message("python.sdk.new.project.environment")
 
-  override val steps: ResettableLazy<Map<String, NewProjectWizardStep>> = resettableLazy {
+  override fun initSteps(): Map<String, NewProjectWizardStep> {
     val existingSdkPanel = PyAddExistingSdkPanel(null, null, existingSdks(context), projectPath.toString(), null)
-    mapOf(
+    return mapOf(
       "New" to NewEnvironmentStep(this),
       // TODO: Handle remote project creation for remote SDKs
       "Existing" to PythonSdkPanelAdapterStep(this, existingSdkPanel),
@@ -192,7 +190,7 @@ private class NewEnvironmentStep<P>(parent: P)
 
   override val label: String = PyBundle.message("python.sdk.new.project.environment.type")
 
-  override val steps: ResettableLazy<Map<String, NewProjectWizardStep>> = resettableLazy {
+  override fun initSteps(): Map<String, PythonSdkPanelAdapterStep<NewEnvironmentStep<P>>> {
     val sdks = existingSdks(context)
     val newProjectPath = projectPath.toString()
     val basePanels = listOf(
@@ -203,7 +201,7 @@ private class NewEnvironmentStep<P>(parent: P)
       .map { it.createNewEnvironmentPanel(null, null, sdks, newProjectPath, context) }
       .toList()
     val panels = basePanels + providedPanels
-    panels
+    return panels
       .associateBy { it.envName }
       .mapValues { (_, v) -> PythonSdkPanelAdapterStep(this, v) }
   }
@@ -211,7 +209,7 @@ private class NewEnvironmentStep<P>(parent: P)
   override fun setupUI(builder: Panel) {
     super.setupUI(builder)
     val preferred = PySdkSettings.instance.preferredEnvironmentType
-    step = if (preferred != null && preferred in steps.value.keys) preferred else steps.value.keys.first()
+    step = if (preferred != null && preferred in steps.keys) preferred else steps.keys.first()
   }
 
   override fun setupProject(project: Project) {

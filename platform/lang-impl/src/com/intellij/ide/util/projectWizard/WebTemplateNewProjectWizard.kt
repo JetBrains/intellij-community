@@ -5,7 +5,6 @@ import com.intellij.ide.wizard.*
 import com.intellij.openapi.module.WebModuleBuilder
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.UIBundle
-import com.intellij.util.resettableLazy
 import javax.swing.Icon
 
 abstract class WebTemplateNewProjectWizardBase : GeneratorNewProjectWizard {
@@ -33,7 +32,8 @@ abstract class MultiWebTemplateNewProjectWizard(protected val templates: List<We
     return object : AbstractNewProjectWizardMultiStepBase(parent) {
       override val label: String
         get() = UIBundle.message("label.project.wizard.new.project.project.type")
-      override val steps = resettableLazy { templates.associateBy({ it.name }, { WebTemplateProjectWizardStep(parent, it) }) }
+
+      override fun initSteps() = templates.associateBy({ it.name }, { WebTemplateProjectWizardStep(parent, it) })
     }
   }
 }
