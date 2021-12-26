@@ -10,12 +10,12 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsActions
+import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.impl.DialogPanelConfig
-import com.intellij.util.ui.accessibility.ScreenReader
+import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.Dimension
 import java.util.function.Supplier
-import javax.swing.DefaultComboBoxModel
 
 @ScheduledForRemoval(inVersion = "2022.2")
 @Deprecated("Use Kotlin UI DSL Version 2")
@@ -33,15 +33,15 @@ fun <T> Row.buttonSelector(options: Collection<T>, property: GraphProperty<T>, r
  */
 @Deprecated("Use Kotlin UI DSL Version 2")
 fun <T> Row.segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): SegmentedButton<T> {
-  if (ScreenReader.isActive()) {
-    val model = DefaultComboBoxModel<T>()
-    model.addAll(options)
-    val comboBox = comboBox(model, property, listCellRenderer { value, _, _ -> text = renderer(value) })
-    return ComboBoxSegmentedButton(comboBox.component, property)
+  lateinit var result: SegmentedButton<T>
+  val panel = com.intellij.ui.dsl.builder.panel {
+    row {
+      result = segmentedButton(options, renderer)
+        .bind(property)
+    }
   }
-
-  val result = SegmentedButtonImpl(options, property, renderer)
-  component(result.toolbar)
+  panel.border = JBUI.Borders.empty(3, 3)
+  component(panel)
   return result
 }
 

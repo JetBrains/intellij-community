@@ -38,6 +38,7 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.SimpleListCellRenderer
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.ui.AsyncProcessIcon
@@ -538,7 +539,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       if (types.isNotEmpty() && types != this.projectTypes && ::projectTypesSelector.isInitialized) {
         val correspondingOption = types.find { it.id == projectTypeProperty.get()?.id }
         projectTypeProperty.set(correspondingOption ?: types.first())
-        projectTypesSelector.rebuild(types)
+        projectTypesSelector.options(types)
         this.projectTypes = types
       }
     }
@@ -554,7 +555,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       if (types.isNotEmpty() && types != this.packagingTypes && ::packagingTypesSelector.isInitialized) {
         val correspondingOption = types.find { it.id == packagingProperty.get()?.id }
         packagingProperty.set(correspondingOption ?: types.first())
-        packagingTypesSelector.rebuild(types)
+        packagingTypesSelector.options(types)
         this.packagingTypes = types
       }
     }
@@ -562,7 +563,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       if (languages.isNotEmpty() && languages != this.languages && ::languagesSelector.isInitialized) {
         val correspondingOption = languages.find { it.id == languageProperty.get().id }
         languageProperty.set(correspondingOption ?: languages.first())
-        languagesSelector.rebuild(languages)
+        languagesSelector.options(languages)
         this.languages = languages
       }
     }

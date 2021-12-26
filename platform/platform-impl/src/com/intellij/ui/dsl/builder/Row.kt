@@ -205,7 +205,14 @@ interface Row {
                     @NonNls actionPlace: String = ActionPlaces.UNKNOWN,
                     icon: Icon = AllIcons.General.GearPlain): Cell<ActionButton>
 
+  @Deprecated("Use overloaded method")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
   fun <T> segmentedButton(options: Collection<T>, property: GraphProperty<T>, renderer: (T) -> String): Cell<SegmentedButtonToolbar>
+
+  /**
+   * @see [SegmentedButton]
+   */
+  fun <T> segmentedButton(options: Collection<T>, renderer: (T) -> String): SegmentedButton<T>
 
   fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider>
 

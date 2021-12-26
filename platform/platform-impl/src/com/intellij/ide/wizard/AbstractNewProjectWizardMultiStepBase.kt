@@ -10,11 +10,8 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
-import com.intellij.ui.dsl.builder.bindItem
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
-import com.intellij.util.ui.accessibility.ScreenReader
-import javax.swing.JComponent
 
 
 abstract class AbstractNewProjectWizardMultiStepBase(
@@ -33,10 +30,10 @@ abstract class AbstractNewProjectWizardMultiStepBase(
 
   open fun setupSwitcherUi(builder: Row) {
     with(builder) {
-      val stepsPanel = placeholder()
-      stepsPanel.component = createSwitcherUI()
+      val segmentedButton = segmentedButton(steps.keys, { it })
+        .bind(stepProperty)
       stepsProperty.afterChange {
-        stepsPanel.component = createSwitcherUI()
+        segmentedButton.options(steps.keys)
       }
     }
   }
@@ -84,15 +81,6 @@ abstract class AbstractNewProjectWizardMultiStepBase(
           action()
         }
       }, disposable)
-    }
-  }
-
-  private fun Row.createSwitcherUI(): JComponent {
-    return if (steps.size > 6 || ScreenReader.isActive()) {
-      comboBox(steps.map { it.key }).bindItem(stepProperty).component
-    }
-    else {
-      segmentedButton(steps.map { it.key }, stepProperty) { it }.component
     }
   }
 }

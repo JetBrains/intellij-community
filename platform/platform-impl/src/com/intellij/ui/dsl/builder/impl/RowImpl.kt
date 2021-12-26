@@ -25,6 +25,7 @@ import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
+import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.components.SegmentedButtonAction
@@ -229,6 +230,13 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     val toolbar = SegmentedButtonToolbar(actionGroup, dialogPanelConfig.spacing)
     toolbar.targetComponent = null // any data context is supported, suppress warning
     return cell(toolbar)
+  }
+
+  override fun <T> segmentedButton(options: Collection<T>, renderer: (T) -> String): SegmentedButton<T> {
+    val result = SegmentedButtonImpl(this, renderer)
+    result.options(options)
+    cells.add(result)
+    return result
   }
 
   override fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider> {

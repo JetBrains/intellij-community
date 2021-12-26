@@ -46,7 +46,6 @@ fun interface HyperlinkEventAction {
     /**
      * Opens URL in a browser
      */
-
     val HTML_HYPERLINK_INSTANCE = HyperlinkEventAction { e -> BrowserUtil.browse(e.url) }
   }
 

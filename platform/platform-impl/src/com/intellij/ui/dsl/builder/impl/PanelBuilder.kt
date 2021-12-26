@@ -204,7 +204,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         val gaps = cell.customGaps ?: getComponentGaps(leftGap, rightGap, cell.component)
         builder.cell(cell.viewComponent, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
           resizableColumn = cell.resizableColumn,
-          gaps = gaps, visualPaddings = cell.visualPaddings)
+          gaps = gaps, visualPaddings = getVisualPaddings(cell.viewComponent.origin))
       }
       is PanelImpl -> {
         // todo visualPaddings
@@ -224,7 +224,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
           dialogPanelConfig.spacing = prevSpacingConfiguration
         }
       }
-      is PlaceholderImpl -> {
+      is PlaceholderBaseImpl -> {
         val gaps = Gaps(left = leftGap, right = rightGap)
         val constraints = builder.constraints(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
                                               gaps = gaps)
@@ -233,6 +233,9 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
           builder.resizableColumns += constraints.x
         }
         builder.skip(width)
+        if (cell is SegmentedButtonImpl<*>) {
+          cell.rebuild(true)
+        }
       }
       null -> {
         builder.skip(1)

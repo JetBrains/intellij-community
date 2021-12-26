@@ -7,9 +7,11 @@ import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
+import com.intellij.ui.dsl.gridLayout.Gaps
 import org.jetbrains.annotations.ApiStatus
 import javax.swing.*
 import javax.swing.text.JTextComponent
@@ -57,6 +59,12 @@ internal val JComponent.origin: JComponent
       else -> this
     }
   }
+
+internal fun getVisualPaddings(component: JComponent): Gaps {
+  val insets = component.insets
+  val customGaps = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS) as? Gaps
+  return customGaps ?: Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
+}
 
 internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, action: HyperlinkEventAction): DslLabel {
   val result = DslLabel(DslLabelType.COMMENT)

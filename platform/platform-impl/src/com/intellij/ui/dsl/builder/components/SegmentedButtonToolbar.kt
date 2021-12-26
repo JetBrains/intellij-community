@@ -105,22 +105,38 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
     updateActionsImmediately(true)
   }
 
+  @ApiStatus.Internal
+  internal fun getSelectedOption(): Any? {
+    val selectedButton = getSelectedButton()
+    return if (selectedButton == null) null else (selectedButton.action as? SegmentedButtonAction<*>)?.option
+  }
+
   private fun moveSelection(step: Int) {
     if (components.isEmpty()) {
       return
     }
 
-    val selectedIndex = components.indexOfFirst { (it as? SegmentedButton)?.isSelected == true }
+    val selectedButton = getSelectedButton()
+    val selectedIndex = components.indexOf(selectedButton)
     val newSelectedIndex = if (selectedIndex < 0) 0 else (selectedIndex + step).coerceIn(0, components.size - 1)
     if (selectedIndex != newSelectedIndex) {
       (components.getOrNull(selectedIndex) as? SegmentedButton)?.isSelected = false
       (components[newSelectedIndex] as? SegmentedButton)?.click()
     }
   }
+
+  private fun getSelectedButton(): SegmentedButton? {
+    for (component in components) {
+      if ((component as? SegmentedButton)?.isSelected == true) {
+        return component
+      }
+    }
+    return null
+  }
 }
 
 @ApiStatus.Experimental
-internal class SegmentedButtonAction<T>(private val option: T,
+internal class SegmentedButtonAction<T>(val option: T,
                                         private val property: GraphProperty<T>,
                                         @NlsActions.ActionText optionText: String,
                                         @NlsActions.ActionDescription optionDescription: String? = null)

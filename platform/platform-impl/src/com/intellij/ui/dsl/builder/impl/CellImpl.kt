@@ -5,8 +5,10 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.components.Label
-import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
+import com.intellij.ui.dsl.builder.HyperlinkEventAction
+import com.intellij.ui.dsl.builder.LabelPosition
+import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
@@ -38,8 +40,6 @@ internal class CellImpl<T : JComponent>(
 
   var customGaps: Gaps? = null
     private set
-
-  val visualPaddings = getViewComponentVisualPaddings()
 
   private var property: GraphProperty<*>? = null
   private var applyIfEnabled = false
@@ -217,12 +217,5 @@ internal class CellImpl<T : JComponent>(
     viewComponent.isEnabled = isEnabled
     comment?.let { it.isEnabled = isEnabled }
     label?.let { it.isEnabled = isEnabled }
-  }
-
-  private fun getViewComponentVisualPaddings(): Gaps {
-    val origin = viewComponent.origin
-    val insets = origin.insets
-    val customGaps = origin.getClientProperty(DslComponentProperty.VISUAL_PADDINGS) as? Gaps
-    return customGaps ?: Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
   }
 }
