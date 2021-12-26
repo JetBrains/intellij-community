@@ -93,11 +93,15 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
           override fun ancestorAdded(event: AncestorEvent?) {
             rootPane?.addComponentListener(object : ComponentAdapter() {
               override fun componentResized(e: ComponentEvent?) {
-                checkIfEnoughSpace()
+                shouldShow = true
               }
             })
           }
         })
+      }
+
+      override fun getPreferredSize(): Dimension {
+        return Dimension(super.getPreferredSize().width, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE.height)
       }
 
       override fun updateToolTipText() {

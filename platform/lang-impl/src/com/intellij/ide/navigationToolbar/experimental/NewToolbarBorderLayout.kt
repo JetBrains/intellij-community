@@ -38,18 +38,7 @@ class NewToolbarBorderLayout : BorderLayout() {
       var left = insets.left
       var right = target.width - insets.right
       var c: Component?
-      if (getLayoutComponent(NORTH).also { c = it } != null) {
-        c!!.setSize(right - left, c!!.height)
-        val d = c!!.preferredSize
-        c!!.setBounds(left, top, right - left, d.height)
-        top += d.height + vgap
-      }
-      if (getLayoutComponent(SOUTH).also { c = it } != null) {
-        c!!.setSize(right - left, c!!.height)
-        val d = c!!.preferredSize
-        c!!.setBounds(left, bottom - d.height, right - left, d.height)
-        bottom -= d.height + vgap
-      }
+
       if (getLayoutComponent(EAST).also { c = it } != null) {
         c!!.setSize(c!!.width, bottom - top)
         val d = c!!.preferredSize
