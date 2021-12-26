@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.jetbrains.python.console.pythonCommandQueue;
 
 import com.intellij.core.CoreBundle;
@@ -25,7 +25,7 @@ import java.awt.event.MouseEvent;
 /**
  * Panel for one command (CommandQueue)
  */
-public class QueueElementPanel {
+public final class QueueElementPanel {
   private final QueueElementButton myCancelButton = createCancelButton();
   private final JBLabel myText = new JBLabel();
   private final Item myItem;
@@ -144,7 +144,7 @@ public class QueueElementPanel {
   }
 
   public void setButtonColor() {
-    buttonPanel.setBackground(new JBColor(UIUtil::getListBackground));
+    buttonPanel.setBackground(JBColor.lazy(UIUtil::getListBackground));
   }
 
   public void selectPanel() {
@@ -152,7 +152,7 @@ public class QueueElementPanel {
     myText.setForeground(UIUtil.getListSelectionForeground(true));
   }
 
-  private static class Item extends ContentChooser.Item {
+  private static final class Item extends ContentChooser.Item {
     Item(String longText) {
       super(0, longText);
     }

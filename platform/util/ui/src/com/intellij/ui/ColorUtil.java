@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.diagnostic.Checks;
@@ -9,6 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.function.Supplier;
 
 /**
  * @author max
@@ -21,7 +22,7 @@ public final class ColorUtil {
 
   @NotNull
   public static Color marker(@NotNull final String name) {
-    return new JBColor(() -> {
+    return JBColor.lazy(() -> {
       throw new AssertionError(name);
     }) {
       @Override
@@ -141,8 +142,8 @@ public final class ColorUtil {
     });
   }
 
-  private static Color wrap(@NotNull Color color, NotNullProducer<? extends Color> func) {
-    return color instanceof JBColor ? new JBColor(func) : func.produce();
+  private static Color wrap(@NotNull Color color, Supplier<? extends Color> func) {
+    return color instanceof JBColor ? JBColor.lazy(func) : func.produce();
   }
 
   private static int shift(int colorComponent, double d) {
@@ -264,7 +265,7 @@ public final class ColorUtil {
   public static Color mix(@NotNull final Color c1, @NotNull final Color c2, double balance) {
     if (balance <= 0) return c1;
     if (balance >= 1) return c2;
-    NotNullProducer<Color> func = new MixedColorProducer(c1, c2, balance);
-    return c1 instanceof JBColor || c2 instanceof JBColor ? new JBColor(func) : func.produce();
+    Supplier<Color> func = new MixedColorProducer(c1, c2, balance);
+    return c1 instanceof JBColor || c2 instanceof JBColor ? JBColor.lazy(func) : func.get();
   }
 }

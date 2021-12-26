@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.roots.ui.configuration;
 
@@ -51,11 +51,11 @@ import java.util.Map;
  */
 public abstract class ContentRootPanel extends JPanel {
   private static final Color EXCLUDED_COLOR = new JBColor(new Color(0x992E00), DarculaColors.RED);
-  private static final Color SELECTED_HEADER_COLOR = new JBColor(
+  private static final Color SELECTED_HEADER_COLOR = JBColor.lazy(
     () -> StartupUiUtil.isUnderDarcula() ? UIUtil.getPanelBackground().darker() : new Color(0xDEF2FF));
   private static final Color HEADER_COLOR = new JBColor(new Color(0xF5F5F5), Gray._82);
   private static final Color SELECTED_CONTENT_COLOR = new Color(0xF0F9FF);
-  private static final Color CONTENT_COLOR = new JBColor(() -> StartupUiUtil.isUnderDarcula() ? UIUtil.getPanelBackground() : Gray._255);
+  private static final Color CONTENT_COLOR = JBColor.lazy(() -> StartupUiUtil.isUnderDarcula() ? UIUtil.getPanelBackground() : Gray._255);
   private static final Color UNSELECTED_TEXT_COLOR = Gray._51;
 
   protected final ActionCallback myCallback;

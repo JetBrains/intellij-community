@@ -1,7 +1,8 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.ui.scale.JBUIScale;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.plaf.UIResource;
@@ -12,7 +13,12 @@ import java.awt.*;
  */
 public class JBInsets extends Insets {
   private final Insets unscaled;
-  
+
+  @ApiStatus.Internal
+  public JBInsets(int all) {
+    this(all, all, all, all);
+  }
+
   /**
    * Creates and initializes a new {@code Insets} object with the
    * specified top, left, bottom, and right insets.
@@ -68,7 +74,7 @@ public class JBInsets extends Insets {
     return new JBInsetsUIResource(this);
   }
 
-  public static class JBInsetsUIResource extends JBInsets implements UIResource {
+  public static final class JBInsetsUIResource extends JBInsets implements UIResource {
     public JBInsetsUIResource(JBInsets insets) {
       super(0, 0, 0, 0);
       top = insets.top;

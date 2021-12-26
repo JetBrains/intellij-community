@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.Disposable;
@@ -26,7 +26,7 @@ import java.util.function.Supplier;
  * @author Konstantin Bulenkov
  */
 public class OnePixelDivider extends Divider {
-  public static final Color BACKGROUND = new JBColor(() -> {
+  public static final Color BACKGROUND = JBColor.lazy(() -> {
     final Color bg = UIManager.getColor("OnePixelDivider.background");
     return bg != null ? bg : JBColor.border();
   });

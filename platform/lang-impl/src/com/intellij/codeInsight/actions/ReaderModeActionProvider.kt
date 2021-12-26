@@ -27,7 +27,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.GotItTooltip
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.NotNullProducer
 import com.intellij.util.ui.EmptyIcon
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
@@ -92,7 +91,7 @@ private class ReaderModeActionProvider : InspectionWidgetActionProvider {
           }
         }
       }.also {
-        it.foreground = JBColor(NotNullProducer { editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor })
+        it.foreground = JBColor.lazy { editor.colorsScheme.getColor(FOREGROUND) ?: FOREGROUND.defaultColor }
         if (!SystemInfo.isWindows) {
           it.font = FontUIResource(it.font.deriveFont(it.font.style, it.font.size - JBUIScale.scale(2).toFloat()))
         }

@@ -32,6 +32,9 @@ import java.util.Map;
  */
 @SuppressWarnings("UseJBColor")
 public final class JBUI {
+  static {
+    int f = 3;
+  }
   /**
    * Returns the pixel scale factor, corresponding to the default monitor device.
    */
@@ -110,7 +113,7 @@ public final class JBUI {
   }
 
   public static @NotNull JBInsets insets(int all) {
-    return new JBInsets(all, all, all, all);
+    return new JBInsets(all);
   }
 
   public static @NotNull JBInsets insets(@NonNls @NotNull String propName, @NotNull JBInsets defaultValue) {
@@ -258,7 +261,7 @@ public final class JBUI {
     }
 
     public static @NotNull Border customLine(Color color, int top, int left, int bottom, int right) {
-      return new CustomLineBorder(color, insets(top, left, bottom, right));
+      return new CustomLineBorder(color, new JBInsets(top, left, bottom, right));
     }
 
     public static @NotNull Border customLine(Color color, int thickness) {
