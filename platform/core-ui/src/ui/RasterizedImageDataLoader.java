@@ -3,7 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.ImageDataByUrlLoader;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.icons.IconLoadMeasurer;
 import com.intellij.ui.icons.IconTransform;
@@ -92,8 +92,7 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
   @Override
   public @Nullable ImageDataLoader patch(@NotNull String originalPath, @NotNull IconTransform transform) {
     ClassLoader classLoader = classLoaderRef.get();
-    String pathWithLeadingSlash = originalPath.charAt(0) == '/' ? originalPath : ('/' + originalPath);
-    Pair<String, ClassLoader> patched = transform.patchPath(pathWithLeadingSlash, classLoader);
+    Pair<String, ClassLoader> patched = transform.patchPath(originalPath, classLoader);
     if (patched == null) {
       if (path != this.originalPath && this.originalPath.equals(normalizePath(originalPath))) {
         return new RasterizedImageDataLoader(this.originalPath, this.originalClassLoaderRef,
@@ -106,7 +105,7 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
     if (patched.first.startsWith("file:/")) {
       ClassLoader effectiveClassLoader = patched.second == null ? classLoader : patched.second;
       try {
-        return new IconLoader.ImageDataResolverImpl(new URL(patched.first), patched.first, effectiveClassLoader, false);
+        return new ImageDataByUrlLoader(new URL(patched.first), patched.first, effectiveClassLoader, false);
       }
       catch (MalformedURLException e) {
         throw new RuntimeException(e);

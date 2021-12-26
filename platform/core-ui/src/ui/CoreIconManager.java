@@ -208,21 +208,21 @@ public final class CoreIconManager implements IconManager, CoreAwareIconManager 
   }
 
   private static final class IconDescriptionLoader implements Supplier<String> {
-    private final String myPath;
-    private String myResult;
-    private boolean myCalculated;
+    private final String path;
+    private String result;
+    private boolean isCalculated;
 
     private IconDescriptionLoader(String path) {
-      myPath = path;
+      this.path = path;
     }
 
     @Override
     public String get() {
-      if (!myCalculated) {
-        myResult = findIconDescription(myPath);
-        myCalculated = true;
+      if (!isCalculated) {
+        result = findIconDescription(path);
+        isCalculated = true;
       }
-      return myResult;
+      return result;
     }
   }
 

@@ -498,13 +498,7 @@ public final class StartupUtil {
         }
 
         activity = activity.endAndStart("LaF initialization");
-        try {
-          // required even in a headless mode, because some tests create configurables and our LaF is expected
-          UIManager.setLookAndFeel(new IntelliJLaf(baseLaF));
-        }
-        catch (UnsupportedLookAndFeelException e) {
-          throw new CompletionException(e);
-        }
+        initializeLaF(baseLaF);
 
         StartUpMeasurer.setCurrentState(LoadingState.LAF_INITIALIZED);
 
@@ -532,6 +526,17 @@ public final class StartupUtil {
     }
     else {
       return initUiFuture;
+    }
+  }
+
+  // separate method for easier profiling
+  private static void initializeLaF(LookAndFeel baseLaF) {
+    try {
+      // required even in a headless mode, because some tests create configurables and our LaF is expected
+      UIManager.setLookAndFeel(new IntelliJLaf(baseLaF));
+    }
+    catch (UnsupportedLookAndFeelException e) {
+      throw new CompletionException(e);
     }
   }
 

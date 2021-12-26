@@ -4,6 +4,7 @@ package com.intellij.ide.ui;
 import com.fasterxml.jackson.jr.ob.JSON;
 import com.intellij.ide.plugins.cl.PluginAwareClassLoader;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.ui.ImageDataByPathLoader;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -174,9 +175,8 @@ public final class UITheme {
 
     if (theme.icons != null && !theme.icons.isEmpty()) {
       theme.patcher = new IconPathPatcher() {
-        @Nullable
         @Override
-        public String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
+        public @Nullable String patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
           if (classLoader instanceof PluginAwareClassLoader) {
             String pluginId = ((PluginAwareClassLoader)classLoader).getPluginId().getIdString();
             Object icons = theme.icons.get(pluginId);
@@ -360,8 +360,7 @@ public final class UITheme {
     return id;
   }
 
-  @Nullable
-  public String getEditorScheme() {
+  public @Nullable String getEditorScheme() {
     return editorScheme;
   }
 
@@ -453,11 +452,11 @@ public final class UITheme {
     }
   }
 
-  @NotNull
-  private static String createUIKey(String key, String propertyName) {
+  private static @NotNull String createUIKey(String key, String propertyName) {
     if ("UI".equals(propertyName)) {
       return key + propertyName;
-    } else {
+    }
+    else {
       return key + "." + propertyName;
     }
   }
@@ -509,7 +508,7 @@ public final class UITheme {
     }
 
     if (value.endsWith(".png") || value.endsWith(".svg")) {
-      Icon icon = IconLoader.findIcon(value, classLoader);
+      Icon icon = ImageDataByPathLoader.findIconFromThemePath(value, classLoader);
       if (icon != null) {
         return icon;
       }

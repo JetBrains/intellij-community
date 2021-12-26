@@ -53,10 +53,11 @@ public final class IconTransform {
   }
 
   public @Nullable Pair<String, ClassLoader> patchPath(@NotNull String path, @Nullable ClassLoader classLoader) {
+    String pathWithLeadingSlash = path.charAt(0) == '/' ? path : ('/' + path);
     for (IconPathPatcher patcher : patchers) {
       String newPath;
       try {
-        newPath = patcher.patchPath(path, classLoader);
+        newPath = patcher.patchPath(pathWithLeadingSlash, classLoader);
       }
       catch (ProcessCanceledException e) {
         throw e;
@@ -74,10 +75,10 @@ public final class IconTransform {
         LOG.debug("replace '" + path + "' with '" + newPath + "'");
       }
 
-      ClassLoader contextClassLoader = patcher.getContextClassLoader(path, classLoader);
+      ClassLoader contextClassLoader = patcher.getContextClassLoader(pathWithLeadingSlash, classLoader);
       if (contextClassLoader == null) {
         //noinspection deprecation
-        Class<?> contextClass = patcher.getContextClass(path);
+        Class<?> contextClass = patcher.getContextClass(pathWithLeadingSlash);
         if (contextClass != null) {
           contextClassLoader = contextClass.getClassLoader();
         }
