@@ -10,12 +10,14 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class JBEmptyBorder extends EmptyBorder {
+  static final JBEmptyBorder SHARED_EMPTY_INSTANCE = new JBEmptyBorder(0);
+
   public JBEmptyBorder(int top, int left, int bottom, int right) {
     super(new JBInsets(top, left, bottom, right));
   }
 
   public JBEmptyBorder(Insets insets) {
-    super(JBUI.insets(insets));
+    super(JBInsets.create(insets));
   }
 
   public JBEmptyBorder(int offset) {

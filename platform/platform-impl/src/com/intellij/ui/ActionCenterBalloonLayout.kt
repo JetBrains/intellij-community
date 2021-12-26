@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui
 
 import com.intellij.ide.DataManager
@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.ToolWindowManager
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.util.ui.JBFont
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.Nls
 import java.awt.*
@@ -233,7 +234,7 @@ class ActionCenterBalloonLayout(parent: JRootPane, insets: Insets) : BalloonLayo
         .setHideOnKeyOutside(false)
         .setHideOnFrameResize(false)
         .setBorderColor(NotificationsManagerImpl.BORDER_COLOR)
-        .setBorderInsets(JBUI.emptyInsets())
+        .setBorderInsets(JBInsets.emptyInsets())
 
       balloon = builder.createBalloon()
 

@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
+import com.intellij.diagnostic.LoadingState;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.ui.ColorUtil;
@@ -33,8 +34,9 @@ import java.util.Map;
 @SuppressWarnings("UseJBColor")
 public final class JBUI {
   static {
-    int f = 3;
+    LoadingState.LAF_INITIALIZED.checkOccurred();
   }
+
   /**
    * Returns the pixel scale factor, corresponding to the default monitor device.
    */
@@ -101,11 +103,7 @@ public final class JBUI {
   }
 
   public static @NotNull JBDimension size(Dimension size) {
-    if (size instanceof JBDimension) {
-      JBDimension newSize = ((JBDimension)size).newSize();
-      return size instanceof UIResource ? newSize.asUIResource() : newSize;
-    }
-    return new JBDimension(size.width, size.height);
+    return JBDimension.size(size);
   }
 
   public static @NotNull JBInsets insets(int top, int left, int bottom, int right) {
@@ -126,7 +124,7 @@ public final class JBUI {
   }
 
   public static @NotNull JBInsets emptyInsets() {
-    return new JBInsets(0, 0, 0, 0);
+    return JBInsets.emptyInsets();
   }
 
   public static @NotNull JBInsets insetsTop(int t) {
@@ -217,13 +215,11 @@ public final class JBUI {
     }
   }
 
-  private static final JBEmptyBorder SHARED_EMPTY_INSTANCE = new JBEmptyBorder(0);
-
   @SuppressWarnings("UseDPIAwareBorders")
   public static final class Borders {
     public static @NotNull JBEmptyBorder empty(int top, int left, int bottom, int right) {
       if (top == 0 && left == 0 && bottom == 0 && right == 0) {
-        return SHARED_EMPTY_INSTANCE;
+        return JBEmptyBorder.SHARED_EMPTY_INSTANCE;
       }
       return new JBEmptyBorder(top, left, bottom, right);
     }
@@ -625,7 +621,7 @@ public final class JBUI {
         JBValue CHEVRON_INSET = new JBValue.UIInteger("StatusBar.Breadcrumbs.chevronInset", 0);
 
         static Insets floatingBorderInsets() {
-          return insets("StatusBar.Breadcrumbs.floatingToolbarInsets", emptyInsets());
+          return insets("StatusBar.Breadcrumbs.floatingToolbarInsets", JBInsets.emptyInsets());
         }
       }
     }

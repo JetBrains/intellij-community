@@ -15,7 +15,7 @@ import com.intellij.ui.TableActions;
 import com.intellij.ui.scale.ScaleContext;
 import com.intellij.util.Alarm;
 import com.intellij.util.ResourceUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.MultiResolutionImageProvider;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -111,7 +111,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       initIdeaDefaults(defaults);
       patchComboBox(metalDefaults, defaults);
       defaults.remove("Spinner.arrowButtonBorder");
-      defaults.put("Spinner.arrowButtonSize", JBUI.size(16, 5).asUIResource());
+      defaults.put("Spinner.arrowButtonSize", new JBDimension(16, 5).asUIResource());
       if (SystemInfoRt.isMac) {
         defaults.put("RootPane.defaultButtonWindowKeyBindings", new Object[]{
           "ENTER", "press",

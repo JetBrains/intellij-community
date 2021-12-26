@@ -26,6 +26,7 @@ import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
@@ -91,7 +92,7 @@ public abstract class ContentRootPanel extends JPanel {
     myBottom = new JPanel(new BorderLayout());
     myBottom.add(Box.createVerticalStrut(3), BorderLayout.NORTH);
     this.add(myBottom, new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1.0, 1.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                              JBUI.emptyInsets(), 0, 0));
+                                              JBInsets.emptyInsets(), 0, 0));
 
     setSelected(false);
   }

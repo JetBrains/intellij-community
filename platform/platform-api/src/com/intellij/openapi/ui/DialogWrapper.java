@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.CommonBundle;
@@ -625,7 +625,7 @@ public abstract class DialogWrapper {
     JComponent doNotAskCheckbox = createDoNotAskCheckbox();
 
     JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
-    Insets insets = JBUI.emptyInsets();
+    Insets insets = JBInsets.emptyInsets();
 
     if (!rightSideButtons.isEmpty() || !leftSideButtons.isEmpty()) {
       GridBag bag = new GridBag().setDefaultInsets(insets);
@@ -2052,7 +2052,7 @@ public abstract class DialogWrapper {
     }
 
     private static @NotNull Border createErrorTextBorder(@Nullable Border contentBorder) {
-      Insets contentInsets = contentBorder != null ? contentBorder.getBorderInsets(null) : JBUI.emptyInsets();
+      Insets contentInsets = contentBorder != null ? contentBorder.getBorderInsets(null) : JBInsets.emptyInsets();
       Insets baseInsets = JBInsets.create(16, 13);
 
       //noinspection UseDPIAwareBorders: Insets are already scaled, so use raw version.

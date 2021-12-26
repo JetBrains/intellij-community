@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -6,7 +6,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.MathUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -745,7 +745,7 @@ public class Splitter extends JPanel implements Splittable {
 
       Icon glueIcon = isVerticalSplit ? SplitGlueV : SplitGlueH;
       add(new JLabel(glueIcon), new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.CENTER, GridBagConstraints.NONE,
-                                                       JBUI.emptyInsets(), 0, 0));
+                                                       JBInsets.emptyInsets(), 0, 0));
 
       revalidate();
       repaint();

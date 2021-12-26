@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.roots.ui.distribution
 
 import com.intellij.openapi.application.ex.ClipboardUtil
@@ -6,15 +6,11 @@ import com.intellij.openapi.fileChooser.FileChooserFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.distribution.DistributionComboBox.Item
-import com.intellij.openapi.ui.whenItemSelected
-import com.intellij.openapi.ui.whenTextModified
-import com.intellij.openapi.ui.BrowseFolderRunnable
-import com.intellij.openapi.ui.ComboBox
-import com.intellij.openapi.ui.TextComponentAccessor
+import com.intellij.openapi.ui.*
 import com.intellij.ui.*
 import com.intellij.ui.components.fields.ExtendableTextField
 import com.intellij.util.lockOrSkip
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBInsets
 import java.awt.event.ActionEvent
 import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
@@ -140,7 +136,7 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
       selected: Boolean,
       hasFocus: Boolean
     ) {
-      ipad = JBUI.emptyInsets()
+      ipad = JBInsets.emptyInsets()
       myBorder = null
 
       when (value) {

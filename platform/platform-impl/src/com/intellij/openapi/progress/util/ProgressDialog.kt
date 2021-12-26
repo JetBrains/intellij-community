@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress.util
 
 import com.intellij.CommonBundle
@@ -27,7 +27,8 @@ import com.intellij.uiDesigner.core.GridLayoutManager
 import com.intellij.util.Alarm
 import com.intellij.util.SingleAlarm
 import com.intellij.util.ui.DialogUtil
-import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.EdtInvocationManager
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Contract
 import org.jetbrains.annotations.Nls
@@ -98,17 +99,17 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
   }
 
   private fun setupUI() {
-    myPanel.layout = GridLayoutManager(2, 1, JBUI.emptyInsets(), -1, -1, false, false)
+    myPanel.layout = GridLayoutManager(2, 1, JBInsets.emptyInsets(), -1, -1, false, false)
 
     val panel = JPanel()
-    panel.layout = GridLayoutManager(1, 2, JBUI.insets(6, 10, 10, 10), -1, -1, false, false)
+    panel.layout = GridLayoutManager(1, 2, JBInsets(6, 10, 10, 10), -1, -1, false, false)
     panel.isOpaque = false
     myPanel.add(panel, GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_BOTH,
                                        GridConstraints.SIZEPOLICY_CAN_GROW or GridConstraints.SIZEPOLICY_CAN_SHRINK,
                                        GridConstraints.SIZEPOLICY_CAN_GROW or GridConstraints.SIZEPOLICY_CAN_SHRINK, null, null, null))
 
     val innerPanel = JPanel()
-    innerPanel.layout = GridLayoutManager(3, 2, JBUI.emptyInsets(), -1, -1, false, false)
+    innerPanel.layout = GridLayoutManager(3, 2, JBInsets.emptyInsets(), -1, -1, false, false)
     innerPanel.preferredSize = Dimension(if (SystemInfo.isMac) 350 else JBUIScale.scale(450), -1)
     panel.add(innerPanel, GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                           GridConstraints.SIZEPOLICY_CAN_SHRINK or GridConstraints.SIZEPOLICY_CAN_GROW or
@@ -139,7 +140,7 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
                                    GridConstraints.SIZEPOLICY_FIXED, null, null, null))
 
     val buttonPanel = JPanel()
-    buttonPanel.layout = GridLayoutManager(2, 1, JBUI.emptyInsets(), -1, -1, false, false)
+    buttonPanel.layout = GridLayoutManager(2, 1, JBInsets.emptyInsets(), -1, -1, false, false)
     panel.add(buttonPanel, GridConstraints(0, 1, 1, 1, GridConstraints.ANCHOR_CENTER, GridConstraints.FILL_HORIZONTAL,
                                            GridConstraints.SIZEPOLICY_CAN_SHRINK, GridConstraints.SIZEPOLICY_CAN_GROW, null, null,
                                            null))
@@ -271,12 +272,12 @@ class ProgressDialog(private val myProgressWindow: ProgressWindow,
     if (myRepaintedFlag) {
       if (System.currentTimeMillis() > myLastTimeDrawn + UPDATE_INTERVAL) {
         myRepaintedFlag = false
-        UIUtil.invokeLaterIfNeeded(myRepaintRunnable)
+        EdtInvocationManager.invokeLaterIfNeeded(myRepaintRunnable)
       }
       else {
         // later to avoid concurrent dispose/addRequest
         if (!myUpdateAlarm.isDisposed && myUpdateAlarm.isEmpty) {
-          UIUtil.invokeLaterIfNeeded {
+          EdtInvocationManager.invokeLaterIfNeeded {
             if (!myUpdateAlarm.isDisposed) {
               myUpdateAlarm.request(myProgressWindow.modalityState)
             }

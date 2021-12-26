@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceVariable;
 
 import com.intellij.java.refactoring.JavaRefactoringBundle;
@@ -20,6 +20,7 @@ import com.intellij.refactoring.ui.*;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 
 import javax.swing.*;
@@ -181,7 +182,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
     gbConstraints.gridwidth = 1;
     gbConstraints.gridx = 0;
     gbConstraints.gridy = 0;
-    gbConstraints.insets = JBUI.emptyInsets();
+    gbConstraints.insets = JBInsets.emptyInsets();
 
     if (myOccurrencesCount > 1) {
       myCbReplaceAll = new NonFocusableCheckBox();
@@ -213,7 +214,7 @@ class IntroduceVariableDialog extends DialogWrapper implements IntroduceVariable
                      JavaCodeStyleSettings.getInstance(myFile).GENERATE_FINAL_LOCALS :
                      createFinals.booleanValue();
 
-    gbConstraints.insets = JBUI.emptyInsets();
+    gbConstraints.insets = JBInsets.emptyInsets();
     gbConstraints.gridy++;
     panel.add(myCbFinal, gbConstraints);
     myFinalListener = new ItemListener() {

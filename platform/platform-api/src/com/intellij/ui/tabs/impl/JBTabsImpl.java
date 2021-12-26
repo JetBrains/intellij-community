@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.tabs.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -97,7 +97,7 @@ public class JBTabsImpl extends JComponent
   public final NonOpaquePanel myTitleWrapper = new NonOpaquePanel();
   public Dimension myHeaderFitSize;
 
-  private Insets myInnerInsets = JBUI.emptyInsets();
+  private Insets myInnerInsets = JBInsets.emptyInsets();
 
   private final List<EventListener> myTabMouseListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<TabsListener> myTabListeners = ContainerUtil.createLockFreeCopyOnWriteList();

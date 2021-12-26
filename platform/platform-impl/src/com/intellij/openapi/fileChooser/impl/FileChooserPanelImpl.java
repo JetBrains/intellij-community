@@ -32,6 +32,7 @@ import com.intellij.ui.SortedListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
@@ -141,9 +142,9 @@ final class FileChooserPanelImpl extends JBPanel<FileChooserPanelImpl> implement
       BorderFactory.createLineBorder(UIUtil.getBoundsColor()),
       BorderFactory.createEmptyBorder(pathBorder.top, pathBorder.left, pathBorder.bottom, pathBorder.right)));
 
-    add(label, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.01, CENTER, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
-    add(toolBar.getComponent(), new GridBagConstraints(0, 1, 1, 1, 1.0, 0.01, CENTER, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
-    add(myPath, new GridBagConstraints(0, 2, 1, 1, 1.0, 0.01, CENTER, HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+    add(label, new GridBagConstraints(0, 0, 1, 1, 1.0, 0.01, CENTER, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
+    add(toolBar.getComponent(), new GridBagConstraints(0, 1, 1, 1, 1.0, 0.01, CENTER, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
+    add(myPath, new GridBagConstraints(0, 2, 1, 1, 1.0, 0.01, CENTER, HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
     add(scrollPane, new GridBagConstraints(0, 3, 1, 1, 1.0, 0.98, CENTER, BOTH, scrollInsets, 0, 0));
   }
 

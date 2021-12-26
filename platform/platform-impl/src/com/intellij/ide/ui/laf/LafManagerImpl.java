@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
@@ -915,12 +915,12 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
       String key = entry.getKey().toString();
       if (value instanceof Dimension) {
         if (value instanceof UIResource || myDimensionKeys.contains(key)) {
-          entry.setValue(JBUI.size((Dimension)value).asUIResource());
+          entry.setValue(JBDimension.size((Dimension)value).asUIResource());
         }
       }
       else if (value instanceof Insets) {
         if (value instanceof UIResource) {
-          entry.setValue(JBUI.insets(((Insets)value)).asUIResource());
+          entry.setValue(JBInsets.create(((Insets)value)).asUIResource());
         }
       }
       else if (value instanceof Integer) {
@@ -953,9 +953,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   }
 
   /**
-   * The following code is a trick! By default Swing uses lightweight and "medium" weight
+   * The following code is a trick! By default, Swing uses lightweight and "medium" weight
    * popups to show JPopupMenu. The code below force the creation of real heavyweight menus -
-   * this increases speed of popups and allows to get rid of some drawing artifacts.
+   * this increases speed of popups and allows getting rid of some drawing artifacts.
    */
   private static void fixPopupWeight() {
     int popupWeight = OurPopupFactory.WEIGHT_MEDIUM;
@@ -1178,7 +1178,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     private static Point fixPopupLocation(final Component contents, final int x, int y) {
       if (!(contents instanceof JToolTip)) {
         if (IdeaPopupMenuUI.isUnderPopup(contents)) {
-          int topBorder = JBUI.insets("PopupMenu.borderInsets", JBUI.emptyInsets()).top;
+          int topBorder = JBUI.insets("PopupMenu.borderInsets", JBInsets.emptyInsets()).top;
           Component invoker = ((JPopupMenu)contents).getInvoker();
           if (invoker instanceof ActionMenu) {
             y -= topBorder / 2;

@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.wizard;
 
 import com.intellij.CommonBundle;
@@ -20,7 +20,7 @@ import com.intellij.ui.components.panels.OpaquePanel;
 import com.intellij.ui.mac.touchbar.Touchbar;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -80,7 +80,7 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     myPreviousButton = new JButton(IdeBundle.message("button.wizard.previous"));
     myNextButton = new JButton(IdeBundle.message("button.wizard.next"));
     myCancelButton = new JButton(CommonBundle.getCancelButtonText());
-    myHelpButton = isNewWizard() ? createHelpButton(JBUI.emptyInsets()) : new JButton(CommonBundle.getHelpButtonText());
+    myHelpButton = isNewWizard() ? createHelpButton(JBInsets.emptyInsets()) : new JButton(CommonBundle.getHelpButtonText());
     myContentPanel = new JPanel(new JBCardLayout());
 
     myIcon = new TallImageComponent(null);

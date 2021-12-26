@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.components;
 
 import com.intellij.openapi.util.NlsContexts;
@@ -8,7 +8,6 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,8 +59,8 @@ public class JBTextArea extends JTextArea implements ComponentWithEmptyText {
 
       @Override
       protected Rectangle getTextComponentBound() {
-        Insets insets = ObjectUtils.notNull(getInsets(), JBUI.emptyInsets());
-        Insets margin = ObjectUtils.notNull(getMargin(), JBUI.emptyInsets());
+        Insets insets = ObjectUtils.notNull(getInsets(), JBInsets.emptyInsets());
+        Insets margin = ObjectUtils.notNull(getMargin(), JBInsets.emptyInsets());
         Insets ipad = getComponent().getIpad();
         Dimension size = getSize();
         int left = insets.left + margin.left - ipad.left - 1;

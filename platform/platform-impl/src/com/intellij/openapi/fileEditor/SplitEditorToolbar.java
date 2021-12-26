@@ -1,9 +1,9 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,7 +27,7 @@ public class SplitEditorToolbar extends EditorHeaderComponent {
 
     final JPanel centerPanel = new JPanel(new BorderLayout());
     add(centerPanel, new GridBagConstraints(2, 0, 1, 1, 1.0, 1.0,
-                                            GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBUI.emptyInsets(), 0, 0));
+                                            GridBagConstraints.CENTER, GridBagConstraints.BOTH, JBInsets.emptyInsets(), 0, 0));
 
     add(myRightToolbar.getComponent());
   }

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package training.ui.views
 
 import com.intellij.icons.AllIcons
@@ -11,6 +11,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
 import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.VerticalBox
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import org.intellij.lang.annotations.Language
@@ -138,7 +139,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     lessonMessagePane.isFocusable = false
     lessonMessagePane.isOpaque = false
     lessonMessagePane.alignmentX = Component.LEFT_ALIGNMENT
-    lessonMessagePane.margin = JBUI.emptyInsets()
+    lessonMessagePane.margin = JBInsets.emptyInsets()
     lessonMessagePane.border = EmptyBorder(0, 0, JBUI.scale(20), JBUI.scale(14))
 
     lessonPanel.add(scaledRigid(UISettings.instance.panelWidth - 2 * UISettings.instance.learnPanelSideOffset, JBUI.scale(19)))
@@ -294,7 +295,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
     nextButton = nextLesson?.let { createNavigationButton(nextLesson, isNext = true) }
 
     for (button in listOfNotNull(prevButton, nextButton)) {
-      button.margin = JBUI.emptyInsets()
+      button.margin = JBInsets.emptyInsets()
       button.isFocusable = false
       button.isEnabled = true
       button.isOpaque = false

@@ -313,7 +313,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   public void setIconInsets(@Nullable Insets insets) {
-    myInsets = insets != null ? JBUI.insets(insets) : JBUI.emptyInsets();
+    myInsets = insets != null ? JBInsets.create(insets) : JBInsets.emptyInsets();
   }
 
   @Override

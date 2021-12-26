@@ -28,6 +28,7 @@ import com.intellij.ui.GotItTooltip
 import com.intellij.ui.JBColor
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.ui.EmptyIcon
+import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.Insets
@@ -81,7 +82,7 @@ private class ReaderModeActionProvider : InspectionWidgetActionProvider {
         }
 
         override fun getInsets(): Insets = JBUI.insets(2)
-        override fun getMargins(): Insets = if (myPresentation.icon == AllIcons.General.ReaderMode) JBUI.emptyInsets()
+        override fun getMargins(): Insets = if (myPresentation.icon == AllIcons.General.ReaderMode) JBInsets.emptyInsets()
         else JBUI.insetsRight(5)
 
         override fun updateUI() {

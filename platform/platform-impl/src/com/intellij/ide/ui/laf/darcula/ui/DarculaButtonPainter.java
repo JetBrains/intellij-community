@@ -1,4 +1,4 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ui.JBColor;
@@ -120,7 +120,7 @@ public class DarculaButtonPainter implements Border, UIResource {
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return isGotItButton(c) ? JBUI.emptyInsets().asUIResource() :
+    return isGotItButton(c) ? JBInsets.emptyInsets().asUIResource() :
             isSmallVariant(c) ? JBUI.insets(1, 2).asUIResource() : JBUI.insets(3).asUIResource();
   }
 

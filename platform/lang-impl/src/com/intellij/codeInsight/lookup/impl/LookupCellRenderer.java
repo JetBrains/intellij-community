@@ -32,6 +32,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -107,11 +108,11 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
     myNameComponent.setMyBorder(null);
 
     myTailComponent = new MySimpleColoredComponent();
-    myTailComponent.setIpad(JBUI.emptyInsets());
+    myTailComponent.setIpad(JBInsets.emptyInsets());
     myTailComponent.setBorder(JBUI.Borders.emptyRight(10));
 
     myTypeLabel = new MySimpleColoredComponent();
-    myTypeLabel.setIpad(JBUI.emptyInsets());
+    myTypeLabel.setIpad(JBInsets.emptyInsets());
     myTypeLabel.setBorder(JBUI.Borders.emptyRight(10));
 
     myPanel = new LookupPanel();

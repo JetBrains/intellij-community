@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.codeInsight.hint;
 
@@ -26,6 +26,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.Function;
 import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.DumbModeAccessType;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -151,7 +152,7 @@ public class ParameterInfoComponent extends JPanel {
       myPanels[i] = new OneElementComponent();
       myMainPanel.add(myPanels[i], new GridBagConstraints(0, i, 1, 1, 1, 0,
                                                           GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL,
-                                                          JBUI.emptyInsets(), 0, 0));
+                                                          JBInsets.emptyInsets(), 0, 0));
     }
   }
 
@@ -390,7 +391,7 @@ public class ParameterInfoComponent extends JPanel {
     private OneLineComponent getOneLineComponent(int index) {
       for (int i = getComponentCount(); i <= index; i++) {
         add(new OneLineComponent(),
-            new GridBagConstraints(0, i, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0));
+            new GridBagConstraints(0, i, 1, 1, 1, 0, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0));
       }
       return (OneLineComponent)getComponent(index);
     }
@@ -522,7 +523,7 @@ public class ParameterInfoComponent extends JPanel {
       if (myRequestFocus)
         myLabel.setFocusable(true);
 
-      add(myLabel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBUI.emptyInsets(), 0, 0));
+      add(myLabel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE, JBInsets.emptyInsets(), 0, 0));
     }
 
     @Override

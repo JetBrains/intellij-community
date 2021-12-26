@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.refactoring.introduceField;
 
 import com.intellij.codeInsight.TargetElementUtil;
@@ -18,7 +18,7 @@ import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManagerImpl;
 import com.intellij.refactoring.util.occurrences.OccurrenceManager;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBInsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +53,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
 
 
     GridBagConstraints gc =
-      new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(), 0, 0);
+      new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(), 0, 0);
     myWholePanel.add(getPreviewComponent(), gc);
 
     gc.gridy = 1;
@@ -79,7 +79,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
     final JPanel right = new JPanel(new GridBagLayout());
     final GridBagConstraints rgc =
       new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL,
-                             JBUI.emptyInsets(), 0, 0);
+                             JBInsets.emptyInsets(), 0, 0);
     myReplaceAllCb = new JCheckBox(RefactoringBundle.message("replace.all.occurences.checkbox"));
     myReplaceAllCb.setMnemonic('a');
     myReplaceAllCb.setFocusable(false);
@@ -96,7 +96,7 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
     myMoveToAnotherClassCb.setMnemonic('m');
     myMoveToAnotherClassCb.setFocusable(false);
     left.add(myMoveToAnotherClassCb,
-             new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, JBUI.emptyInsets(),
+             new GridBagConstraints(0, 0, 1, 1, 1, 0, GridBagConstraints.NORTHWEST, GridBagConstraints.HORIZONTAL, JBInsets.emptyInsets(),
                                     0, 0));
     return left;
   }

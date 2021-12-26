@@ -19,6 +19,11 @@ public class JBInsets extends Insets {
     this(all, all, all, all);
   }
 
+  @ApiStatus.Internal
+  public static @NotNull JBInsets emptyInsets() {
+    return new JBInsets(0, 0, 0, 0);
+  }
+
   /**
    * Creates and initializes a new {@code Insets} object with the
    * specified top, left, bottom, and right insets.
