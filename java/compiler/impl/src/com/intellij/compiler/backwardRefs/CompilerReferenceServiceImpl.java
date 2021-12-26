@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerReferenceService;
@@ -273,7 +273,7 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
     }
   }
 
-  static final class InitializationActivity implements StartupActivity.DumbAware {
+  static final class InitializationActivity implements StartupActivity {
     @Override
     public void runActivity(@NotNull Project project) {
       CompilerReferenceService.getInstanceIfEnabled(project);
