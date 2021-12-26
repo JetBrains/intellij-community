@@ -8,6 +8,7 @@ import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.jetbrains.packagesearch.intellij.plugin.ui.components.BrowsableLinkLabel
@@ -118,13 +119,13 @@ internal object PackageSearchUI {
     }
 
     internal fun createLabel(@Nls text: String? = null, init: JLabel.() -> Unit = {}) = JLabel().apply {
-        font = UIUtil.getLabelFont()
+        font = StartupUiUtil.getLabelFont()
         if (text != null) this.text = text
         init()
     }
 
     internal fun createLabelWithLink(init: BrowsableLinkLabel.() -> Unit = {}) = BrowsableLinkLabel().apply {
-        font = UIUtil.getLabelFont()
+        font = StartupUiUtil.getLabelFont()
         init()
     }
 

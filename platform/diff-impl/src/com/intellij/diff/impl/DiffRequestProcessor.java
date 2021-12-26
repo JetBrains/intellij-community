@@ -55,6 +55,7 @@ import com.intellij.util.EventDispatcher;
 import com.intellij.util.concurrency.annotations.RequiresEdt;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
@@ -1001,7 +1002,7 @@ public abstract class DiffRequestProcessor implements Disposable {
     return new HintHint(component, point)
       .setPreferredPosition(above ? Balloon.Position.above : Balloon.Position.below)
       .setAwtTooltip(true)
-      .setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD))
+      .setFont(StartupUiUtil.getLabelFont().deriveFont(Font.BOLD))
       .setTextBg(HintUtil.getInformationColor())
       .setShowImmediately(true);
   }

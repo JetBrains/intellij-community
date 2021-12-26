@@ -13,7 +13,7 @@ import com.intellij.ui.components.labels.LinkListener
 import com.intellij.ui.components.panels.VerticalBox
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
-import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.StartupUiUtil
 import org.intellij.lang.annotations.Language
 import training.lang.LangManager
 import training.learn.CourseManager
@@ -384,7 +384,7 @@ internal class LearnPanel(val learnToolWindow: LearnToolWindow) : JPanel() {
 
 private class LinkLabelWithBackArrow<T>(linkListener: LinkListener<T>) : LinkLabel<T>("", null, linkListener) {
   init {
-    font = UIUtil.getLabelFont()
+    font = StartupUiUtil.getLabelFont()
   }
 
   override fun paint(g: Graphics?) {

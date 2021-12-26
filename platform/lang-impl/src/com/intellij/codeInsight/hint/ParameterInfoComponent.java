@@ -28,6 +28,7 @@ import com.intellij.util.SlowOperations;
 import com.intellij.util.indexing.DumbModeAccessType;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -119,7 +120,7 @@ public class ParameterInfoComponent extends JPanel {
 
     NORMAL_FONT = editor != null && Registry.is("parameter.info.editor.font")
                   ? editor.getColorsScheme().getFont(EditorFontType.PLAIN)
-                  : UIUtil.getLabelFont();
+                  : StartupUiUtil.getLabelFont();
     BOLD_FONT = editor != null && Registry.is("parameter.info.editor.font")
                 ? editor.getColorsScheme().getFont(EditorFontType.BOLD)
                 : NORMAL_FONT.deriveFont(Font.BOLD);
@@ -173,7 +174,7 @@ public class ParameterInfoComponent extends JPanel {
         ? CodeInsightBundle.message("parameter.info.switch.overload.shortcuts.single", upShortcut.isEmpty() ? downShortcut : upShortcut)
         : CodeInsightBundle.message("parameter.info.switch.overload.shortcuts", upShortcut, downShortcut));
       myShortcutLabel.setForeground(CONTEXT_HELP_FOREGROUND);
-      Font labelFont = UIUtil.getLabelFont();
+      Font labelFont = StartupUiUtil.getLabelFont();
       myShortcutLabel.setFont(labelFont.deriveFont(labelFont.getSize2D() - (SystemInfo.isWindows ? 1 : 2)));
       myShortcutLabel.setBorder(JBUI.Borders.empty(6, 10, 0, 10));
       add(myShortcutLabel, BorderLayout.SOUTH);

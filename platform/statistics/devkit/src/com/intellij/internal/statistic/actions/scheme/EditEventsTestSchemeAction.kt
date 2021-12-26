@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.actions.scheme
 
 import com.intellij.icons.AllIcons
@@ -25,6 +25,7 @@ import com.intellij.ui.LayeredIcon
 import com.intellij.ui.TextIcon
 import com.intellij.ui.components.dialog
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.jetbrains.fus.reporting.model.metadata.EventGroupRemoteDescriptors
 import java.awt.Font
@@ -90,7 +91,7 @@ class EditEventsTestSchemeAction(private val recorderId: String = StatisticsDevK
     val testSchemeSize = ValidationTestRulesPersistedStorage.getTestStorage(recorderId, true)?.size() ?: 0
     val text = if (testSchemeSize < 100) testSchemeSize.toString() else "99+"
     val sizeCountIcon = TextIcon(text, JBColor.DARK_GRAY, UIUtil.getLabelBackground(), 1)
-    sizeCountIcon.setFont(Font(UIUtil.getLabelFont().name, Font.BOLD, JBUIScale.scale(9)))
+    sizeCountIcon.setFont(Font(StartupUiUtil.getLabelFont().name, Font.BOLD, JBUIScale.scale(9)))
     sizeCountIcon.setInsets(1, 1, 0, 0)
     ICON.setIcon(sizeCountIcon, 1, JBUIScale.scale(10), JBUIScale.scale(10))
     e.presentation.icon = ICON

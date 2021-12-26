@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
@@ -873,7 +873,7 @@ public final class EditorWindow {
       String switchShortcuts = String.format(IdeBundle.message("split.with.chooser.switch.tab"), getShortcut.apply("SplitChooser.NextWindow"));
 
       // Adjust default width to info text
-      Font font = UIUtil.getLabelFont();
+      Font font = StartupUiUtil.getLabelFont();
       FontMetrics fontMetrics = g.getFontMetrics(font);
       int openShortcutsWidth = fontMetrics.stringWidth(openShortcuts);
       int switchShortcutsWidth = fontMetrics.stringWidth(switchShortcuts);

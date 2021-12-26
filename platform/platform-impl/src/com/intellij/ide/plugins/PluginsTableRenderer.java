@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
@@ -57,7 +57,7 @@ public class PluginsTableRenderer extends DefaultTableCellRenderer {
     myPluginsView = !showFullInfo;
 
     Font smallFont = UIUtil.getLabelFont(UIUtil.FontSize.MINI);
-    myName.setFont(UIUtil.getLabelFont().deriveFont((float)UISettings.getInstance().getFontSize()));
+    myName.setFont(StartupUiUtil.getLabelFont().deriveFont((float)UISettings.getInstance().getFontSize()));
     myStatus.setFont(smallFont);
     myCategory.setFont(smallFont);
     myDownloads.setFont(smallFont);

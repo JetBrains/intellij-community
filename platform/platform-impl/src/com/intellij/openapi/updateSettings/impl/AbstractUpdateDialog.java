@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl;
 
 import com.intellij.CommonBundle;
@@ -12,6 +12,7 @@ import com.intellij.openapi.util.text.HtmlBuilder;
 import com.intellij.openapi.util.text.HtmlChunk;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.StartupUiUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -54,7 +55,7 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
     String messageBody = myEnableLink ? IdeBundle.message("updates.configure.label") : "";
     HtmlChunk.Element html = new HtmlBuilder()
       .append(HtmlChunk.head()
-                .addRaw(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont()))
+                .addRaw(UIUtil.getCssFontDeclaration(StartupUiUtil.getLabelFont()))
                 .child(HtmlChunk.styleTag("body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}")))
       .append(HtmlChunk.body().addRaw(messageBody))
       .wrapWith("html");

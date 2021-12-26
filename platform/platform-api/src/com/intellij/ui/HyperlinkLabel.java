@@ -303,7 +303,7 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   private void applyFont() {
-    setFont(myFontSize == null ? UIUtil.getLabelFont() : UIUtil.getLabelFont(myFontSize));
+    setFont(myFontSize == null ? StartupUiUtil.getLabelFont() : UIUtil.getLabelFont(myFontSize));
   }
 
   @Override

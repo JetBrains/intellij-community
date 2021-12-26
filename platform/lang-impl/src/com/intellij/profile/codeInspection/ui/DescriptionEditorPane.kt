@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.profile.codeInspection.ui
 
 import com.intellij.codeInsight.hint.HintUtil
@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.ui.ColorUtil
 import com.intellij.ui.HintHint
 import com.intellij.util.ObjectUtils
+import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import java.awt.Color
@@ -49,6 +50,6 @@ fun JEditorPane.readHTML(text: String) {
 
 fun JEditorPane.toHTML(text: @Nls String?, miniFontSize: Boolean): String {
   val hintHint = HintHint(this, Point(0, 0))
-  hintHint.setFont(if (miniFontSize) UIUtil.getLabelFont(UIUtil.FontSize.SMALL) else UIUtil.getLabelFont())
+  hintHint.setFont(if (miniFontSize) UIUtil.getLabelFont(UIUtil.FontSize.SMALL) else StartupUiUtil.getLabelFont())
   return HintUtil.prepareHintText(text!!, hintHint)
 }
