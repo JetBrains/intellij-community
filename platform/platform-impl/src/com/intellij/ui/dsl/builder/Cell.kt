@@ -29,6 +29,8 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
 
   override fun gap(rightGap: RightGap): Cell<T>
 
+  override fun customize(customGaps: Gaps): Cell<T>
+
   /**
    * Component that occupies the cell
    */
@@ -135,10 +137,5 @@ interface Cell<out T : JComponent> : CellBase<Cell<T>> {
    * Registers [callback] that will be called for [component] from [DialogPanel.isModified] method
    */
   fun onIsModified(callback: () -> Boolean): Cell<T>
-
-  /**
-   * Overrides all gaps around cell by [customGaps]. Should be used for very specific cases
-   */
-  fun customize(customGaps: Gaps): Cell<T>
 
 }

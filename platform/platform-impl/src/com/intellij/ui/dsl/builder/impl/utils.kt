@@ -4,10 +4,13 @@ package com.intellij.ui.dsl.builder.impl
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.util.NlsContexts
+import com.intellij.ui.TitledSeparator
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.dsl.UiDslException
 import com.intellij.ui.dsl.builder.HyperlinkEventAction
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.DslComponentProperty
+import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.builder.components.DslLabel
 import com.intellij.ui.dsl.builder.components.DslLabelType
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
@@ -33,6 +36,15 @@ internal enum class DslComponentPropertyInternal {
    */
   CELL_LABEL
 }
+
+/**
+ * [JPanel] descendants that should use default vertical gaps around similar to other standard components like labels, text fields etc
+ */
+private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
+  SegmentedButtonToolbar::class,
+  TextFieldWithBrowseButton::class,
+  TitledSeparator::class
+)
 
 /**
  * Throws exception instead of logging warning. Useful while forms building to avoid layout mistakes
@@ -62,8 +74,29 @@ internal val JComponent.origin: JComponent
 
 internal fun getVisualPaddings(component: JComponent): Gaps {
   val insets = component.insets
-  val customGaps = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS) as? Gaps
-  return customGaps ?: Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
+  val customVisualPaddings = component.getClientProperty(DslComponentProperty.VISUAL_PADDINGS) as? Gaps
+  return customVisualPaddings ?: Gaps(top = insets.top, left = insets.left, bottom = insets.bottom, right = insets.right)
+}
+
+internal fun getComponentGaps(left: Int, right: Int, component: JComponent, spacing: SpacingConfiguration): Gaps {
+  val top = getDefaultVerticalGap(component, spacing)
+  var bottom = top
+  if (component is JLabel && component.getClientProperty(DslComponentPropertyInternal.LABEL_NO_BOTTOM_GAP) == true) {
+    bottom = 0
+  }
+  return Gaps(top = top, left = left, bottom = bottom, right = right)
+}
+
+/**
+ * Returns default top and bottom gap for [component]. All non [JPanel] components or
+ * [DEFAULT_VERTICAL_GAP_COMPONENTS] have default vertical gap, zero otherwise
+ */
+internal fun getDefaultVerticalGap(component: JComponent, spacing: SpacingConfiguration): Int {
+  val noDefaultVerticalGap = component is JPanel
+                             && component.getClientProperty(ToolbarDecorator.DECORATOR_KEY) == null
+                             && !DEFAULT_VERTICAL_GAP_COMPONENTS.any { clazz -> clazz.isInstance(component) }
+
+  return if (noDefaultVerticalGap) 0 else spacing.verticalComponentGap
 }
 
 internal fun createComment(@NlsContexts.Label text: String, maxLineLength: Int, action: HyperlinkEventAction): DslLabel {

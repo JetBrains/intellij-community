@@ -3,6 +3,7 @@ package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.ui.dsl.builder.Placeholder
 import com.intellij.ui.dsl.builder.RightGap
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
@@ -37,6 +38,11 @@ internal class PlaceholderImpl(parent: RowImpl) : PlaceholderBaseImpl<Placeholde
 
   override fun visible(isVisible: Boolean): Placeholder {
     super.visible(isVisible)
+    return this
+  }
+
+  override fun customize(customGaps: Gaps): Placeholder {
+    super.customize(customGaps)
     return this
   }
 }

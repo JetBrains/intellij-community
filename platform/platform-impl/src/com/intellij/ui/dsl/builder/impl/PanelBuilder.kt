@@ -2,23 +2,15 @@
 package com.intellij.ui.dsl.builder.impl
 
 import com.intellij.openapi.ui.DialogPanel
-import com.intellij.openapi.ui.TextFieldWithBrowseButton
-import com.intellij.ui.TitledSeparator
-import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
 import org.jetbrains.annotations.ApiStatus
-import javax.swing.*
+import javax.swing.JCheckBox
+import javax.swing.JComponent
+import javax.swing.JRadioButton
+import javax.swing.JToggleButton
 import kotlin.math.min
-
-/**
- * [JPanel] descendants that should use default vertical gaps around similar to other standard components like labels, text fields etc
- */
-private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
-  TextFieldWithBrowseButton::class,
-  TitledSeparator::class
-)
 
 @ApiStatus.Internal
 internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: DialogPanelConfig, val panel: DialogPanel, val grid: Grid) {
@@ -201,7 +193,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
 
     when (cell) {
       is CellImpl<*> -> {
-        val gaps = cell.customGaps ?: getComponentGaps(leftGap, rightGap, cell.component)
+        val gaps = cell.customGaps ?: getComponentGaps(leftGap, rightGap, cell.component, dialogPanelConfig.spacing)
         builder.cell(cell.viewComponent, width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
           resizableColumn = cell.resizableColumn,
           gaps = gaps, visualPaddings = getVisualPaddings(cell.viewComponent.origin))
@@ -225,14 +217,13 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         }
       }
       is PlaceholderBaseImpl -> {
-        val gaps = Gaps(left = leftGap, right = rightGap)
+        val gaps = cell.customGaps ?: Gaps(left = leftGap, right = rightGap)
+        if (cell.resizableColumn) {
+          builder.addResizableColumn()
+        }
         val constraints = builder.constraints(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
                                               gaps = gaps)
-        cell.init(panel, constraints)
-        if (cell.resizableColumn) {
-          builder.resizableColumns += constraints.x
-        }
-        builder.skip(width)
+        cell.init(panel, constraints, dialogPanelConfig.spacing)
         if (cell is SegmentedButtonImpl<*>) {
           cell.rebuild(true)
         }
@@ -241,27 +232,6 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         builder.skip(1)
       }
     }
-  }
-
-  private fun getComponentGaps(left: Int, right: Int, component: JComponent): Gaps {
-    val top = getDefaultVerticalGap(component)
-    var bottom = top
-    if (component is JLabel && component.getClientProperty(DslComponentPropertyInternal.LABEL_NO_BOTTOM_GAP) == true) {
-      bottom = 0
-    }
-    return Gaps(top = top, left = left, bottom = bottom, right = right)
-  }
-
-  /**
-   * Returns default top and bottom gap for [component]. All non [JPanel] components or
-   * [DEFAULT_VERTICAL_GAP_COMPONENTS] have default vertical gap, zero otherwise
-   */
-  private fun getDefaultVerticalGap(component: JComponent): Int {
-    val noDefaultVerticalGap = component is JPanel
-                               && component.getClientProperty(ToolbarDecorator.DECORATOR_KEY) == null
-                               && !DEFAULT_VERTICAL_GAP_COMPONENTS.any { clazz -> clazz.isInstance(component) }
-
-    return if (noDefaultVerticalGap) 0 else dialogPanelConfig.spacing.verticalComponentGap
   }
 
   private fun getMaxColumnsCount(): Int {
@@ -315,7 +285,7 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
       }
       else {
         val left = if (index == 0) firstCellIndent else 0
-        GeneratedComponentData(label, Gaps(top = getDefaultVerticalGap(label), left = left), index)
+        GeneratedComponentData(label, Gaps(top = getDefaultVerticalGap(label, dialogPanelConfig.spacing), left = left), index)
       }
     }
 

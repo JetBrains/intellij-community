@@ -12,6 +12,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.NlsActions
 import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.dsl.builder.impl.DialogPanelConfig
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.ApiStatus.ScheduledForRemoval
 import java.awt.Dimension
@@ -37,6 +38,7 @@ fun <T> Row.segmentedButton(options: Collection<T>, property: GraphProperty<T>, 
   val panel = com.intellij.ui.dsl.builder.panel {
     row {
       result = segmentedButton(options, renderer)
+        .customize(Gaps.EMPTY)
         .bind(property)
     }
   }

@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import org.jetbrains.annotations.ApiStatus
@@ -29,6 +30,8 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
   override fun resizableColumn(): SegmentedButton<T>
 
   override fun gap(rightGap: RightGap): SegmentedButton<T>
+
+  override fun customize(customGaps: Gaps): SegmentedButton<T>
 
   fun options(options: Collection<T>): SegmentedButton<T>
 

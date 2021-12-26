@@ -8,9 +8,9 @@ import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.SegmentedButton
-import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.builder.components.SegmentedButtonAction
 import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
+import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
@@ -58,6 +58,11 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
 
   override fun visible(isVisible: Boolean): SegmentedButton<T> {
     super.visible(isVisible)
+    return this
+  }
+
+  override fun customize(customGaps: Gaps): SegmentedButton<T> {
+    super.customize(customGaps)
     return this
   }
 
@@ -122,7 +127,7 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
       actionGroup = DefaultActionGroup(options.map { SegmentedButtonAction(it, propertyArg, renderer(it)) })
     }
 
-    val toolbar = SegmentedButtonToolbar(actionGroup, SpacingConfiguration.createIntelliJSpacingConfiguration())
+    val toolbar = SegmentedButtonToolbar(actionGroup, placeholderCellData!!.spacing)
     toolbar.targetComponent = null // any data context is supported, suppress warning
     component = toolbar
   }

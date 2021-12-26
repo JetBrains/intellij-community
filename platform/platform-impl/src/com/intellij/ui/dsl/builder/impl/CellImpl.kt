@@ -38,9 +38,6 @@ internal class CellImpl<T : JComponent>(
   var labelPosition: LabelPosition = LabelPosition.LEFT
     private set
 
-  var customGaps: Gaps? = null
-    private set
-
   private var property: GraphProperty<*>? = null
   private var applyIfEnabled = false
 
@@ -194,7 +191,7 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun customize(customGaps: Gaps): CellImpl<T> {
-    this.customGaps = customGaps
+    super.customize(customGaps)
     return this
   }
 

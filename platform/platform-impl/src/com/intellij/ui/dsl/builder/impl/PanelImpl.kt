@@ -29,9 +29,6 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
   var spacingConfiguration: SpacingConfiguration? = null
     private set
 
-  var customGaps: Gaps? = null
-    private set
-
   private var panelContext = PanelContext()
 
   private val _rows = mutableListOf<RowImpl>()
@@ -276,8 +273,8 @@ internal class PanelImpl(private val dialogPanelConfig: DialogPanelConfig,
     }
   }
 
-  override fun customize(customGaps: Gaps): Panel {
-    this.customGaps = customGaps
+  override fun customize(customGaps: Gaps): PanelImpl {
+    super.customize(customGaps)
     return this
   }
 

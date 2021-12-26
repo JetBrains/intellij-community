@@ -1,10 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.dsl.builder
 
-import com.intellij.ui.dsl.gridLayout.Constraints
-import com.intellij.ui.dsl.gridLayout.Grid
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.dsl.gridLayout.VerticalAlign
+import com.intellij.ui.dsl.gridLayout.*
 import com.intellij.ui.layout.*
 
 enum class RightGap {
@@ -79,5 +76,10 @@ interface CellBase<out T : CellBase<T>> {
    * Should not be used for last cell in a row
    */
   fun gap(rightGap: RightGap): CellBase<T>
+
+  /**
+   * Overrides all gaps around the cell by [customGaps]. Should be used rarely for very specific cases
+   */
+  fun customize(customGaps: Gaps): CellBase<T>
 
 }

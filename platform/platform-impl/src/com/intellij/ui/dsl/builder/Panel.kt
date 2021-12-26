@@ -34,6 +34,8 @@ interface Panel : CellBase<Panel> {
 
   override fun gap(rightGap: RightGap): Panel
 
+  override fun customize(customGaps: Gaps): Panel
+
   /**
    * Adds standard left indent
    */
@@ -138,8 +140,4 @@ interface Panel : CellBase<Panel> {
    */
   fun customizeSpacingConfiguration(spacingConfiguration: SpacingConfiguration, init: Panel.() -> Unit)
 
-  /**
-   * Overrides all gaps around panel by [customGaps]. Should be used for very specific cases
-   */
-  fun customize(customGaps: Gaps): Panel
 }
