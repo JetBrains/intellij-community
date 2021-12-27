@@ -163,6 +163,7 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
       }
 
       private fun checkIfEnoughSpace(): Boolean {
+        if (parent == null) return false
         if (parent.bounds.width < parent.preferredSize.width) {
           if (shouldShow) {
             shouldShow = false
