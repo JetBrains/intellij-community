@@ -63,6 +63,11 @@ import static com.intellij.util.ui.ThreeStateCheckBox.State;
 public abstract class ChangesTree extends Tree implements DataProvider {
   @ApiStatus.Internal @NonNls public static final String LOG_COMMIT_SESSION_EVENTS = "LogCommitSessionEvents";
 
+  @NotNull public static final TreeStateStrategy<?> DO_NOTHING = new DoNothingTreeStateStrategy();
+  @NotNull public static final TreeStateStrategy<?> ALWAYS_RESET = new AlwaysResetTreeStateStrategy();
+  @NotNull public static final TreeStateStrategy<?> ALWAYS_KEEP = new AlwaysKeepTreeStateStrategy();
+  @NotNull public static final TreeStateStrategy<?> KEEP_NON_EMPTY = new KeepNonEmptyTreeStateStrategy();
+
   @NotNull protected final Project myProject;
   private boolean myShowCheckboxes;
   @Nullable private ClickListener myCheckBoxClickHandler;
@@ -78,7 +83,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @Nullable private Runnable myTreeInclusionListener;
 
   @NotNull private final ChangesTreeHandlers myHandlers;
-  private boolean myKeepTreeState = false;
+  @NotNull private TreeStateStrategy<?> myTreeStateStrategy = ALWAYS_RESET;
   private boolean myScrollToSelection = true;
 
   @Deprecated @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
@@ -364,23 +369,14 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     try {
       ApplicationManager.getApplication().assertIsDispatchThread();
 
-      TreeState state = null;
-      if (myKeepTreeState) {
-        state = TreeState.createOn(this, getRoot());
-        state.setScrollToSelection(myScrollToSelection);
-      }
+      Object state = myTreeStateStrategy.saveState(this);
 
       setModel(model);
       myIsModelFlat = isCurrentModelFlat();
       setShowsRootHandles(!myGroupingSupport.isNone() || !myIsModelFlat);
 
-      if (myKeepTreeState) {
-        //noinspection ConstantConditions
-        state.applyTo(this, getRoot());
-      }
-      else {
-        resetTreeState();
-      }
+      //noinspection rawtypes,unchecked
+      ((TreeStateStrategy)myTreeStateStrategy).restoreState(this, state, myScrollToSelection);
     }
     finally {
       myModelUpdateInProgress = false;
@@ -705,12 +701,22 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     if (treeSelection.size() == 1) scrollPathToVisible(treeSelection.get(0));
   }
 
+  @NotNull
+  public TreeStateStrategy<?> getTreeStateStrategy() {
+    return myTreeStateStrategy;
+  }
+
+  public void setTreeStateStrategy(@NotNull TreeStateStrategy<?> keepTreeState) {
+    myTreeStateStrategy = keepTreeState;
+  }
+
   public boolean isKeepTreeState() {
-    return myKeepTreeState;
+    return myTreeStateStrategy != DO_NOTHING &&
+           myTreeStateStrategy != ALWAYS_RESET;
   }
 
   public void setKeepTreeState(boolean keepTreeState) {
-    myKeepTreeState = keepTreeState;
+    setTreeStateStrategy(keepTreeState ? ALWAYS_KEEP : ALWAYS_RESET);
   }
 
   public boolean isScrollToSelection() {
@@ -791,5 +797,67 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   private boolean shouldLogCommitSessionEvents() {
     return Boolean.TRUE.equals(getClientProperty(LOG_COMMIT_SESSION_EVENTS));
+  }
+
+  public interface TreeStateStrategy<T> {
+    T saveState(@NotNull ChangesTree tree);
+
+    void restoreState(@NotNull ChangesTree tree, T state, boolean scrollToSelection);
+  }
+
+  private static class DoNothingTreeStateStrategy implements TreeStateStrategy<Object> {
+    @Override
+    public Object saveState(@NotNull ChangesTree tree) {
+      return null;
+    }
+
+    @Override
+    public void restoreState(@NotNull ChangesTree tree, Object state, boolean scrollToSelection) {
+    }
+  }
+
+  private static class AlwaysResetTreeStateStrategy implements TreeStateStrategy<Object> {
+    @Override
+    public Object saveState(@NotNull ChangesTree tree) {
+      return null;
+    }
+
+    @Override
+    public void restoreState(@NotNull ChangesTree tree, Object state, boolean scrollToSelection) {
+      tree.resetTreeState();
+    }
+  }
+
+  private static class AlwaysKeepTreeStateStrategy implements TreeStateStrategy<TreeState> {
+    @Override
+    public TreeState saveState(@NotNull ChangesTree tree) {
+      return TreeState.createOn(tree, true, true);
+    }
+
+    @Override
+    public void restoreState(@NotNull ChangesTree tree, TreeState state, boolean scrollToSelection) {
+      if (state != null) {
+        state.setScrollToSelection(scrollToSelection);
+        state.applyTo(tree);
+      }
+    }
+  }
+
+  private static class KeepNonEmptyTreeStateStrategy implements TreeStateStrategy<TreeState> {
+    @Override
+    public TreeState saveState(@NotNull ChangesTree tree) {
+      return TreeState.createOn(tree, true, true);
+    }
+
+    @Override
+    public void restoreState(@NotNull ChangesTree tree, TreeState state, boolean scrollToSelection) {
+      if (state != null && !state.isEmpty()) {
+        state.setScrollToSelection(scrollToSelection);
+        state.applyTo(tree);
+      }
+      else {
+        tree.resetTreeState();
+      }
+    }
   }
 }

@@ -18,6 +18,7 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.DiffPreview;
+import com.intellij.openapi.vcs.changes.ui.ChangesTree;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.browser.LoadingChangesPanel;
 import com.intellij.openapi.vcs.history.actions.GetVersionAction;
@@ -162,6 +163,7 @@ public class CompareWithLocalDialog {
       myLocalContent = localContent;
 
       hideViewerBorder();
+      myViewer.setTreeStateStrategy(ChangesTree.KEEP_NON_EMPTY);
     }
 
     @Override
