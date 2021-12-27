@@ -12,10 +12,7 @@ import com.intellij.openapi.options.SearchableConfigurable
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.NlsSafe
-import com.intellij.ui.CollectionComboBoxModel
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.DocumentAdapter
-import com.intellij.ui.SearchTextField
+import com.intellij.ui.*
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.Row
@@ -263,9 +260,9 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
 
   companion object {
     fun updateMatchText(component: JComponent, @NlsSafe baseText: String, @NlsSafe searchText: String?) {
+      val textColor = JBColor(Gray._50, Gray._0) // Same color as in SimpleColoredComponent.doPaintText
       val text = searchText?.takeIf { it.isNotBlank() }?.let {
-        @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, UIUtil.getLabelFontColor(UIUtil.FontColor.NORMAL),
-          UIUtil.getSearchMatchGradientStartColor())
+        @NlsSafe val highlightedText = SearchUtil.markup(baseText, it, textColor, UIUtil.getSearchMatchGradientStartColor())
         "<html>$highlightedText"
       } ?: baseText
       when (component) {
@@ -278,7 +275,7 @@ class AdvancedSettingsConfigurable : DslConfigurableBase(), SearchableConfigurab
 
   override fun getId(): String = "advanced.settings"
 
-  override fun getHelpTopic(): String? = "Advanced_settings"
+  override fun getHelpTopic(): String = "Advanced_settings"
 
   override fun enableSearch(option: String?): Runnable {
     return Runnable { applyFilter(option, false) }
