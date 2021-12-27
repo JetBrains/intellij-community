@@ -12,13 +12,23 @@ import com.intellij.openapi.util.TextRange
 import com.intellij.psi.PsiElement
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.refactoring.suggested.startOffset
+import com.intellij.util.application
 import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
+import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings
 import org.intellij.plugins.markdown.settings.MarkdownSettingsUtil
 import org.jetbrains.annotations.ApiStatus
 
 @ApiStatus.Experimental
 abstract class CodeFenceDownloadLineMarkerProvider : LineMarkerProviderDescriptor() {
+  init {
+    application.messageBus.connect().subscribe(MarkdownExtensionsSettings.ChangeListener.TOPIC, object: MarkdownExtensionsSettings.ChangeListener {
+      override fun extensionsSettingsChanged(fromSettingsDialog: Boolean) {
+        LineMarkerProviders.getInstance().clearCache()
+      }
+    })
+  }
+
   abstract fun shouldProcessElement(element: PsiElement): Boolean
 
   abstract fun getExtension(): MarkdownExtensionWithDownloadableFiles?

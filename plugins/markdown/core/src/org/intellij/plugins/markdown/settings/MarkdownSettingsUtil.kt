@@ -5,6 +5,7 @@ import com.intellij.notification.Notification
 import com.intellij.notification.NotificationType
 import com.intellij.notification.Notifications
 import com.intellij.openapi.project.Project
+import com.intellij.util.application
 import com.intellij.util.download.DownloadableFileService
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles
@@ -40,6 +41,7 @@ object MarkdownSettingsUtil {
     if (extension.downloadFiles(project)) {
       if (enableAfterDownload) {
         MarkdownExtensionsSettings.getInstance().extensionsEnabledState[extension.id] = true
+        application.messageBus.syncPublisher(MarkdownExtensionsSettings.ChangeListener.TOPIC).extensionsSettingsChanged(fromSettingsDialog = false)
       }
       Notifications.Bus.notify(
         Notification(

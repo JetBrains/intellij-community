@@ -28,6 +28,7 @@ import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
+import com.intellij.util.application
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles
@@ -92,7 +93,12 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
         checkBox(MarkdownBundle.message("markdown.settings.commandrunner.text"))
           .bindSelected(settings::isRunnerEnabled)
       }.bottomGap(BottomGap.SMALL)
-      extensionsListRow()
+      extensionsListRow().apply {
+        onApply {
+          val publisher = application.messageBus.syncPublisher(MarkdownExtensionsSettings.ChangeListener.TOPIC)
+          publisher.extensionsSettingsChanged(fromSettingsDialog = true)
+        }
+      }
       customCssRow()
       pandocSettingsRow()
     }
@@ -190,8 +196,8 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
     super.disposeUIResources()
   }
 
-  private fun Panel.extensionsListRow() {
-    buttonsGroup(MarkdownBundle.message("markdown.settings.preview.extensions.name")) {
+  private fun Panel.extensionsListRow(): ButtonsGroup {
+    return buttonsGroup(MarkdownBundle.message("markdown.settings.preview.extensions.name")) {
       val extensions = MarkdownExtensionsUtil.collectConfigurableExtensions()
       for (extension in extensions) {
         createExtensionEntry(extension)

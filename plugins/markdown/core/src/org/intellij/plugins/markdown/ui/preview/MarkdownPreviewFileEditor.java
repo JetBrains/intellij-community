@@ -19,6 +19,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.markdown.MarkdownBundle;
+import org.intellij.plugins.markdown.settings.MarkdownExtensionsSettings;
 import org.intellij.plugins.markdown.settings.MarkdownSettings;
 import org.intellij.plugins.markdown.ui.preview.html.MarkdownUtil;
 import org.intellij.plugins.markdown.ui.split.SplitFileEditor;
@@ -102,9 +103,18 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
       attachHtmlPanel();
     }
 
-    final var settingsConnection = myProject.getMessageBus().connect(this);
+    final var messageBusConnection = myProject.getMessageBus().connect(this);
     final var settingsChangedListener = new MyUpdatePanelOnSettingsChangedListener();
-    settingsConnection.subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener);
+    messageBusConnection.subscribe(MarkdownSettings.ChangeListener.TOPIC, settingsChangedListener);
+    messageBusConnection.subscribe(MarkdownExtensionsSettings.ChangeListener.TOPIC, fromSettingsDialog -> {
+      if (!fromSettingsDialog) {
+        mySwingAlarm.addRequest(() -> {
+          if (myPanel != null) {
+            myPanel.reloadWithOffset(mainEditor.getCaretModel().getOffset());
+          }
+        }, 0, ModalityState.stateForComponent(getComponent()));
+      }
+    });
   }
 
   public void setMainEditor(Editor editor) {
