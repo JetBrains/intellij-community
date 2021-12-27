@@ -565,7 +565,7 @@ public class JavaValue extends XNamedValue implements NodeDescriptorProvider, XV
   }
 
   @Override
-  public boolean isShowsTextValue() {
+  public boolean shouldShowTextValue() {
     return myValueDescriptor.isString();
   }
 

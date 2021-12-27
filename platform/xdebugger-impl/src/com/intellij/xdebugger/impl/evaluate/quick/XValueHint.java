@@ -294,7 +294,7 @@ public class XValueHint extends AbstractValueHint {
   }
 
   private Runnable getShowPopupRunnable(@NotNull XValue value, @Nullable XFullValueEvaluator evaluator) {
-    if (value instanceof XValueTextProvider && ((XValueTextProvider)value).isShowsTextValue()) {
+    if (value instanceof XValueTextProvider && ((XValueTextProvider)value).shouldShowTextValue()) {
       @NotNull String initialText = StringUtil.notNullize(((XValueTextProvider)value).getValueText());
       return () -> showText(initialText, value, evaluator);
     }

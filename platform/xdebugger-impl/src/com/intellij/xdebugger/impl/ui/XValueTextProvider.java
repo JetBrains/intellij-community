@@ -9,5 +9,5 @@ public interface XValueTextProvider {
   String getValueText();
 
   @ApiStatus.Experimental
-  boolean isShowsTextValue();
+  boolean shouldShowTextValue();
 }

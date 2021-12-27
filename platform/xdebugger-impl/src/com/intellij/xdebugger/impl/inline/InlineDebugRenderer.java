@@ -139,7 +139,7 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
     };
 
     XValue value = myValueNode.getValueContainer();
-    if (value instanceof XValueTextProvider && ((XValueTextProvider)value).isShowsTextValue()) {
+    if (value instanceof XValueTextProvider && ((XValueTextProvider)value).shouldShowTextValue()) {
       String initialText = ((XValueTextProvider)value).getValueText();
       XDebuggerTextInlayPopup.showTextPopup(StringUtil.notNullize(initialText), myTreeCreator, descriptor, myValueNode, inlay.getEditor(), point, myPosition, mySession, hidePopupRunnable);
     } else {

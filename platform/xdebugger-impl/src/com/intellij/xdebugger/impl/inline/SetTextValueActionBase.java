@@ -56,7 +56,7 @@ public abstract class SetTextValueActionBase extends AnAction {
   protected boolean canSetTextValue(@NotNull XValueNodeImpl node) {
     XValue value = node.getValueContainer();
     return value instanceof XValueTextProvider &&
-           ((XValueTextProvider)value).isShowsTextValue() &&
+           ((XValueTextProvider)value).shouldShowTextValue() &&
            value.getModifier() != null;
   }
 
