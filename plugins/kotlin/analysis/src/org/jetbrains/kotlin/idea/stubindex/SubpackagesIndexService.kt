@@ -46,19 +46,35 @@ class SubpackagesIndexService(private val project: Project) {
         }
 
         fun hasSubpackages(fqName: FqName, scope: GlobalSearchScope): Boolean {
-            return fqNameByPrefix[fqName].any { packageWithFilesFqName ->
+            val fqNames = fqNameByPrefix[fqName]
+
+            if (fqNames.isKnownNotContains(fqName, scope)) {
+                return false
+            }
+
+            return fqNames.any { packageWithFilesFqName ->
                 ProgressManager.checkCanceled()
                 PackageIndexUtil.containsFilesWithExactPackage(packageWithFilesFqName, scope, project)
             }
         }
 
+        private fun Collection<FqName>.isKnownNotContains(fqName: FqName, scope: GlobalSearchScope): Boolean =
+            isEmpty() ||
+                    // fast check is reasonable when fqNames has more than 1 element
+                    size > 1 && !PackageIndexUtil.containsFilesWithPartialPackage(fqName, scope, project)
+
         fun packageExists(fqName: FqName): Boolean = fqName in allPackageFqNames || fqNameByPrefix.containsKey(fqName)
 
         fun getSubpackages(fqName: FqName, scope: GlobalSearchScope, nameFilter: (Name) -> Boolean): Collection<FqName> {
-            val possibleFilesFqNames = fqNameByPrefix[fqName]
+            val fqNames = fqNameByPrefix[fqName]
+
+            if (fqNames.isKnownNotContains(fqName, scope)) {
+                return emptyList()
+            }
+
             val existingSubPackagesShortNames = HashSet<Name>()
             val len = fqName.pathSegments().size
-            for (filesFqName in possibleFilesFqNames) {
+            for (filesFqName in fqNames) {
                 ProgressManager.checkCanceled()
                 val candidateSubPackageShortName = filesFqName.pathSegments()[len]
                 if (candidateSubPackageShortName in existingSubPackagesShortNames || !nameFilter(candidateSubPackageShortName)) continue
