@@ -3,6 +3,7 @@ package com.intellij.psi.javadoc;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -10,6 +11,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents name-value pair in @snippet tag.
  * @see PsiSnippetDocTag
  */
+@ApiStatus.Experimental
 public interface PsiSnippetAttribute extends PsiElement {
   PsiSnippetAttribute[] EMPTY_ARRAY = new PsiSnippetAttribute[0];
 

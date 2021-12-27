@@ -2,10 +2,12 @@
 package com.intellij.psi.javadoc;
 
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.ApiStatus;
 
 /**
  * Represents elements starting from ':' (inclusive) and until '}' (exclusive) in @snippet javadoc tag.
  * @see PsiSnippetDocTag
  */
+@ApiStatus.Experimental
 public interface PsiSnippetDocTagBody extends PsiElement {
 }
