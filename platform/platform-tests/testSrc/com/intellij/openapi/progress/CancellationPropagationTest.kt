@@ -13,8 +13,9 @@ import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.suspendCancellableCoroutine
-import org.junit.jupiter.api.Assertions.*
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
@@ -126,82 +127,42 @@ class CancellationPropagationTest {
   @Test
   fun `child is cancelled by parent job`() {
     var childFuture by AtomicReference<Future<*>>()
-    var grandChildFuture by AtomicReference<Future<*>>()
-
-    val lock = Semaphore(3)
+    val lock = Semaphore(2)
     val rootJob = withRootJob {
       childFuture = service.submit {
-        grandChildFuture = service.submit {
-          lock.up()
-          neverEndingStory()
-        }
         lock.up()
+        neverEndingStory()
       }
       lock.up()
     }
     lock.timeoutWaitUp()
-
-    waitAssertCompletedNormally(childFuture)
     rootJob.cancel()
-    waitAssertCompletedWithCancellation(grandChildFuture)
+    waitAssertCompletedWithCancellation(childFuture)
     rootJob.timeoutJoinBlocking()
   }
 
   @Test
-  fun `child is cancelled by parent job 2`() {
-    var childFuture by AtomicReference<Future<*>>()
-    val rootCancelled = Semaphore(1)
-    val finished = Semaphore(1)
-    var wasCancelled by AtomicReference<Boolean>()
-
-    val lock = Semaphore(2)
-    val rootJob = withRootJob {
-      childFuture = service.submit {
-        service.execute {
-          lock.up()
-          rootCancelled.timeoutWaitUp()
-          wasCancelled = Cancellation.isCancelled()
-          finished.up()
-          ProgressManager.checkCanceled()
+  fun `job is cancelled by future`(): Unit = timeoutRunBlocking {
+    suspendCancellableCoroutine { continuation ->
+      val started = Semaphore(1)
+      val cancelled = Semaphore(1)
+      val future = service.submit {
+        val result: Result<Unit> = runCatching {
+          started.up()
+          cancelled.timeoutWaitUp()
+          assertThrows<JobCanceledException> {
+            Cancellation.checkCancelled()
+          }
         }
+        continuation.resumeWith(result)
       }
-      lock.up()
-    }
-    lock.timeoutWaitUp()
-
-    waitAssertCompletedNormally(childFuture)
-    rootJob.cancel()
-    rootCancelled.up()
-    finished.timeoutWaitUp()
-    assertTrue(wasCancelled)
-    rootJob.timeoutJoinBlocking()
-  }
-
-  @Test
-  fun `job is cancelled by future`() {
-    var f by AtomicReference<Future<*>>()
-    val lock = Semaphore(2)
-    val cancelled = Semaphore(1)
-    val pce = Semaphore(1)
-    val rootJob = withRootJob {
-      f = service.submit {
-        lock.up()
-        cancelled.timeoutWaitUp()
-        try {
-          Cancellation.checkCancelled()
-          fail()
-        }
-        catch (e: ProcessCanceledException) {
-          pce.up()
-        }
+      started.timeoutWaitUp()
+      future.cancel(false)
+      cancelled.up()
+      assertThrows<CancellationException> {
+        future.timeoutGet()
       }
-      lock.up()
     }
-    lock.timeoutWaitUp()
-    f.cancel(false)
-    cancelled.up()
-    pce.timeoutWaitUp()
-    rootJob.timeoutJoinBlocking()
   }
 
   @Test

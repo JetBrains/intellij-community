@@ -1,13 +1,16 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.progress
 
+import com.intellij.concurrency.resetThreadContext
 import com.intellij.testFramework.LoggedErrorProcessor
-import com.intellij.testFramework.UsefulTestCase.assertInstanceOf
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
 import com.intellij.util.setValue
-import junit.framework.TestCase.*
+import junit.framework.TestCase.assertFalse
+import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.*
+import org.junit.jupiter.api.Assertions.assertInstanceOf
+import org.junit.jupiter.api.assertThrows
 import java.util.concurrent.CancellationException
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Future
@@ -28,6 +31,14 @@ fun neverEndingStory(): Nothing {
   while (true) {
     Cancellation.checkCancelled()
     Thread.sleep(1)
+  }
+}
+
+fun timeoutRunBlockingWithContext(action: suspend CoroutineScope.() -> Unit) {
+  timeoutRunBlocking {
+    resetThreadContext().use {
+      action()
+    }
   }
 }
 
@@ -58,13 +69,10 @@ fun waitAssertCompletedNormally(future: Future<*>) {
 }
 
 fun waitAssertCompletedWith(future: Future<*>, clazz: KClass<out Throwable>) {
-  try {
+  val ee = assertThrows<ExecutionException> {
     future.timeoutGet()
-    fail("ExecutionException expected")
   }
-  catch (e: ExecutionException) {
-    assertInstanceOf(e.cause, clazz.java)
-  }
+  assertInstanceOf(clazz.java, ee.cause)
 }
 
 fun waitAssertCompletedWithCancellation(future: Future<*>) {
