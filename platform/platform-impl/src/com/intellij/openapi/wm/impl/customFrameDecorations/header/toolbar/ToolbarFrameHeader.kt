@@ -155,14 +155,14 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     button.isOpaque = false
     addHoverAndPressStateListener(button,
                                   hoveredStateCallback = { cmp, hovered ->
-                                    if (cmp !is JComponent) return@addHoverAndPressStateListener
+                                    if (cmp !is AbstractButton) return@addHoverAndPressStateListener
                                     if (hovered) {
                                       cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.icon.hoverBackground"))
-                                      cmp.isOpaque = true
+                                      cmp.isContentAreaFilled = true
                                     }
                                     else {
                                       cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.icon.background"))
-                                      cmp.isOpaque = false
+                                      cmp.isContentAreaFilled = false
                                     }
                                   },
                                   pressedStateCallback = { cmp, pressed ->

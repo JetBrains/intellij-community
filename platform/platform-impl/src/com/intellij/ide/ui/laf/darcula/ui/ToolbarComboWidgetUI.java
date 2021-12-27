@@ -62,7 +62,7 @@ public class ToolbarComboWidgetUI extends ComponentUI {
   @Override
   public void paint(Graphics g, JComponent c) {
     ToolbarComboWidget combo = (ToolbarComboWidget)c;
-    paintBackground(g, combo);
+    if (c.isOpaque()) paintBackground(g, combo);
 
     List<Icon> leftIcons = combo.getLeftIcons();
     List<Icon> rightIcons = combo.getRightIcons();

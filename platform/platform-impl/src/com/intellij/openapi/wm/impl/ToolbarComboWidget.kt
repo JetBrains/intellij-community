@@ -1,12 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl
 
+import com.intellij.ui.hover.HoverStateListener
 import java.awt.Color
+import java.awt.Component
 import java.awt.event.ActionListener
 import java.awt.event.InputEvent
 import javax.swing.Icon
 import javax.swing.JComponent
-import javax.swing.SwingUtilities
 import javax.swing.UIManager
 import kotlin.properties.Delegates
 import kotlin.reflect.KProperty
@@ -22,6 +23,13 @@ abstract class ToolbarComboWidget: JComponent() {
 
   init {
     updateUI()
+    val hoverListener = object : HoverStateListener() {
+      override fun hoverChanged(component: Component, hovered: Boolean) {
+        (component as JComponent).isOpaque = hovered
+      }
+    }
+    isOpaque = false
+    hoverListener.addTo(this)
   }
 
   abstract fun doExpand(e: InputEvent)
