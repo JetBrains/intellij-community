@@ -97,4 +97,6 @@ public class JavadocParsingTest extends JavaParsingTestCase {
   public void testSnippetTag8() { doTest(true); }
   public void testSnippetTag9() { doTest(true); }
   public void testSnippetTag10() { doTest(true); }
+  public void testSnippetTag11() { doTest(true); }
+  public void testSnippetTag12() { doTest(true); }
 }
