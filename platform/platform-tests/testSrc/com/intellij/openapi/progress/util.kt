@@ -11,11 +11,12 @@ import junit.framework.TestCase.assertTrue
 import kotlinx.coroutines.*
 import org.junit.jupiter.api.Assertions.assertInstanceOf
 import org.junit.jupiter.api.assertThrows
+import java.util.concurrent.*
 import java.util.concurrent.CancellationException
-import java.util.concurrent.ExecutionException
-import java.util.concurrent.Future
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.Continuation
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.reflect.KClass
 import kotlinx.coroutines.sync.Semaphore as KSemaphore
 
@@ -144,4 +145,31 @@ fun loggedError(canThrow: Semaphore): Throwable {
 
 internal fun withIndicator(indicator: ProgressIndicator, action: () -> Unit) {
   ProgressManager.getInstance().runProcess(action, indicator)
+}
+
+internal suspend fun <X> childCallable(cs: CoroutineScope, action: () -> X): Callable<X> {
+  val lock = KSemaphore(permits = 1, acquiredPermits = 1)
+  var callable by AtomicReference<Callable<X>>()
+  cs.launch(Dispatchers.IO) {
+    suspendCancellableCoroutine { continuation: Continuation<Unit> ->
+      callable = Callable<X> {
+        try {
+          action().also {
+            continuation.resume(Unit)
+          }
+        }
+        catch (e: JobCanceledException) {
+          continuation.resume(Unit)
+          throw e
+        }
+        catch (e: Throwable) {
+          continuation.resumeWithException(e) // fail parent scope
+          throw e
+        }
+      }
+      lock.release()
+    }
+  }
+  lock.acquire()
+  return callable
 }

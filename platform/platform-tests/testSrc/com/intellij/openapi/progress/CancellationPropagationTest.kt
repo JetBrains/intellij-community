@@ -11,12 +11,13 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
 import com.intellij.util.setValue
-import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.*
+import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
+import java.util.concurrent.Callable
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Future
 import java.util.concurrent.atomic.AtomicReference
@@ -60,11 +61,13 @@ class CancellationPropagationTest {
   @Test
   fun appExecutorService(): Unit = timeoutRunBlocking {
     doExecutorServiceTest(service)
+    doTestInvokeAnyCancelsRunningCallables(service)
   }
 
   @Test
   fun appScheduledExecutorService(): Unit = timeoutRunBlocking {
     doExecutorServiceTest(scheduledService)
+    doTestInvokeAnyCancelsRunningCallables(scheduledService)
   }
 
   @Test
@@ -73,8 +76,22 @@ class CancellationPropagationTest {
   }
 
   @Test
+  fun boundedApplicationPoolExecutor2(): Unit = timeoutRunBlocking {
+    val bounded2 = AppExecutorUtil.createBoundedApplicationPoolExecutor("Bounded-2", 2)
+    doExecutorServiceTest(bounded2)
+    doTestInvokeAnyCancelsRunningCallables(bounded2)
+  }
+
+  @Test
   fun boundedScheduledExecutorService(): Unit = timeoutRunBlocking {
     doExecutorServiceTest(AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled", 1))
+  }
+
+  @Test
+  fun boundedScheduledExecutorService2(): Unit = timeoutRunBlocking {
+    val bounded2 = AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled-2", 2)
+    doExecutorServiceTest(bounded2)
+    doTestInvokeAnyCancelsRunningCallables(bounded2)
   }
 
   private suspend fun doTest(submit: (() -> Unit) -> Unit) {
@@ -136,6 +153,33 @@ class CancellationPropagationTest {
         future.timeoutGet()
       }
     }
+  }
+
+  private suspend fun doTestInvokeAnyCancelsRunningCallables(service: ExecutorService): Unit = coroutineScope {
+    val started = Semaphore(2)
+    val callable1CanFinish = Semaphore(1)
+    val cs = this
+    val c1: Callable<Int> = childCallable(cs) {
+      started.up()
+      callable1CanFinish.timeoutWaitUp()
+      42
+    }
+    val c2: Callable<Int> = childCallable(cs) {
+      started.up()
+      throw assertThrows<JobCanceledException> {
+        while (cs.isActive) {
+          Cancellation.checkCancelled()
+        }
+      }
+    }
+    val deferred = async(Dispatchers.IO) {
+      runInterruptible {
+        service.invokeAny(listOf(c1, c2))
+      }
+    }
+    started.timeoutWaitUp()
+    callable1CanFinish.up()
+    assertEquals(42, deferred.await())
   }
 
   @Test
