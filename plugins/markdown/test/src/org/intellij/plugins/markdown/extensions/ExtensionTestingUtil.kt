@@ -45,11 +45,10 @@ object ExtensionTestingUtil {
         }
       } catch (exception: Throwable) {
         lastException = exception
-      } finally {
-        logger.debug("Failed to download extension external files! Extension: ${extension.id}", lastException)
+        logger.debug("Failed to download extension external files on $it try! Extension: ${extension.id}", exception)
       }
     }
-    fail("Failed to download extension external files after $retries attempts. Extension: ${extension.id}", lastException)
+    fail("Failed to download extension external files after $retries attempts. Extension: ${extension.id}")
   }
 
   fun replaceExtensionsState(state: Map<String, Boolean>, parentDisposable: Disposable) {
