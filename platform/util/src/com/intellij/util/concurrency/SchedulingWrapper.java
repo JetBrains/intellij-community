@@ -1,4 +1,4 @@
-// Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.concurrency;
 
 import com.intellij.util.IncorrectOperationException;
@@ -291,7 +291,13 @@ class SchedulingWrapper implements ScheduledExecutorService {
   @NotNull
   @Override
   public ScheduledFuture<?> schedule(@NotNull Runnable command, long delay, @NotNull TimeUnit unit) {
-    MyScheduledFutureTask<?> t = new MyScheduledFutureTask<Void>(command, null, triggerTime(delayQueue, delay, unit));
+    return schedule(Executors.callable(command), delay, unit);
+  }
+
+  @NotNull
+  @Override
+  public <V> ScheduledFuture<V> schedule(@NotNull Callable<V> callable, long delay, @NotNull TimeUnit unit) {
+    MyScheduledFutureTask<V> t = new MyScheduledFutureTask<>(callable, triggerTime(delayQueue, delay, unit));
     return delayedExecute(t);
   }
 
@@ -306,13 +312,6 @@ class SchedulingWrapper implements ScheduledExecutorService {
       throw new IllegalArgumentException("Unsupported crazy delay " + t.getDelay(TimeUnit.DAYS) + " days: " + BoundedTaskExecutor.info(t));
     }
     return t;
-  }
-
-  @NotNull
-  @Override
-  public <V> ScheduledFuture<V> schedule(@NotNull Callable<V> callable, long delay, @NotNull TimeUnit unit) {
-    MyScheduledFutureTask<V> t = new MyScheduledFutureTask<>(callable, triggerTime(delayQueue, delay, unit));
-    return delayedExecute(t);
   }
 
   @NotNull
