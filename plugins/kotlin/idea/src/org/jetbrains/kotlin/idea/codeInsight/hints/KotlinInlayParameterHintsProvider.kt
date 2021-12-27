@@ -29,7 +29,8 @@ class KotlinInlayParameterHintsProvider : InlayParameterHintsProvider {
             "*SequenceBuilder.resume(value)", "*SequenceBuilder.yield(value)",
 
             /* Gradle DSL especially annoying hints */
-            "org.gradle.api.Project.*Property(propertyName)",
+            "org.gradle.api.Project.hasProperty(propertyName)",
+            "org.gradle.api.Project.findProperty(propertyName)",
             "org.gradle.api.Project.file(path)",
             "org.gradle.api.Project.uri(path)",
             "jvmArgs(arguments)",
