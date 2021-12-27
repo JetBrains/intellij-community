@@ -12,7 +12,6 @@ import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.EditorFocusGainedAction
 import training.featuresSuggester.settings.FeatureSuggesterSettings
 import training.featuresSuggester.statistics.FeatureSuggesterStatistics
-import training.featuresSuggester.statistics.FeatureSuggesterStatistics.Companion.SUGGESTION_FOUND
 import training.featuresSuggester.suggesters.FeatureSuggester
 import training.featuresSuggester.ui.NotificationSuggestionPresenter
 import training.featuresSuggester.ui.SuggestionPresenter
@@ -42,7 +41,7 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
   private fun processSuggester(suggester: FeatureSuggester, action: Action) {
     val suggestion = suggester.getSuggestion(action)
     if (suggestion is PopupSuggestion) {
-      FeatureSuggesterStatistics.sendStatistics(SUGGESTION_FOUND, suggester.id)
+      FeatureSuggesterStatistics.logSuggestionFound(suggester.id)
       if (suggester.isSuggestionNeeded(FeatureSuggesterSettings.instance().suggestingIntervalDays)) {
         suggestionPresenter.showSuggestion(project, suggestion)
         fireSuggestionFound(suggestion)
