@@ -359,6 +359,21 @@ public abstract class DumbService {
   }
 
   /**
+   * Invokes the given runnable with alternative resolve set to true.
+   *
+   * @see #setAlternativeResolveEnabled(boolean)
+   */
+  public void withAlternativeResolveEnabledForcibly(@NotNull Runnable runnable) {
+    setAlternativeResolveEnabled(true);
+    try {
+      runnable.run();
+    }
+    finally {
+      setAlternativeResolveEnabled(false);
+    }
+  }
+
+  /**
    * Invokes the given computable with alternative resolve set to true if dumb mode is enabled.
    *
    * @see #setAlternativeResolveEnabled(boolean)
@@ -375,6 +390,21 @@ public abstract class DumbService {
   }
 
   /**
+   * Invokes the given computable with alternative resolve set to true.
+   *
+   * @see #setAlternativeResolveEnabled(boolean)
+   */
+  public <T, E extends Throwable> T computeWithAlternativeResolveEnabledForcibly(@NotNull ThrowableComputable<T, E> runnable) throws E {
+    setAlternativeResolveEnabled(true);
+    try {
+      return runnable.compute();
+    }
+    finally {
+      setAlternativeResolveEnabled(false);
+    }
+  }
+
+  /**
    * Invokes the given runnable with alternative resolve set to true if dumb mode is enabled.
    *
    * @see #setAlternativeResolveEnabled(boolean)
@@ -387,6 +417,21 @@ public abstract class DumbService {
     }
     finally {
       if (isDumb) setAlternativeResolveEnabled(false);
+    }
+  }
+
+  /**
+   * Invokes the given runnable with alternative resolve set to true.
+   *
+   * @see #setAlternativeResolveEnabled(boolean)
+   */
+  public <E extends Throwable> void runWithAlternativeResolveEnabledForcibly(@NotNull ThrowableRunnable<E> runnable) throws E {
+    setAlternativeResolveEnabled(true);
+    try {
+      runnable.run();
+    }
+    finally {
+      setAlternativeResolveEnabled(false);
     }
   }
 
