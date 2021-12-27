@@ -10,6 +10,7 @@ import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.PortableCachesLoadListener;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilerManager;
@@ -40,6 +41,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
@@ -112,32 +114,61 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     }
 
     myDirtyScopeHolder.installVFSListener(this);
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
-      CompilerManager compilerManager = CompilerManager.getInstance(project);
-      boolean isUpToDate;
-      File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
 
-      boolean validIndexExists = buildDir != null
-                                 && CompilerReferenceIndex.exists(buildDir)
-                                 && !CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion());
-
-      isUpToDate = validIndexExists && compilerManager.isUpToDate(compilerManager.createProjectCompileScope(project));
-      executeOnBuildThread(() -> {
-        if (isUpToDate) {
-          openReaderIfNeeded(IndexOpenReason.UP_TO_DATE_CACHE);
-        }
-        else {
-          markAsOutdated();
-        }
-      });
-
-      project.getMessageBus().connect(this).subscribe(PortableCachesLoadListener.TOPIC, new PortableCachesLoadListener() {
-        @Override
-        public void loadingStarted() {
-          closeReaderIfNeeded(IndexCloseReason.SHUTDOWN);
-        }
-      });
+    Application app = ApplicationManager.getApplication();
+    if (app.isUnitTestMode()) {
+      return;
     }
+
+    File buildDir = BuildManager.getInstance().getProjectSystemDirectory(project);
+
+    boolean validIndexExists = buildDir != null
+                               && CompilerReferenceIndex.exists(buildDir)
+                               && !CompilerReferenceIndex.versionDiffers(buildDir, myReaderFactory.expectedIndexVersion());
+    if (validIndexExists) {
+      if (app.isReadAccessAllowed()) {
+        AppExecutorUtil.getAppExecutorService().execute(() -> {
+          try {
+            checkIsUpToDateForValidIndex();
+          }
+          catch (ProcessCanceledException ignore) {
+          }
+          catch (Exception e) {
+            LOG.error(e);
+          }
+        });
+      }
+      else {
+        checkIsUpToDateForValidIndex();
+      }
+    }
+    else {
+      initialCheckIsUpToDate(false);
+    }
+
+    project.getMessageBus().connect(this).subscribe(PortableCachesLoadListener.TOPIC, new PortableCachesLoadListener() {
+      @Override
+      public void loadingStarted() {
+        closeReaderIfNeeded(IndexCloseReason.SHUTDOWN);
+      }
+    });
+  }
+
+  private void checkIsUpToDateForValidIndex() {
+    CompilerManager compilerManager = CompilerManager.getInstance(myProject);
+    boolean isUpToDate = compilerManager.isUpToDate(compilerManager.createProjectCompileScope(myProject));
+    initialCheckIsUpToDate(isUpToDate);
+  }
+
+  private void initialCheckIsUpToDate(boolean isUpToDate) {
+    BuildManager.getInstance().runCommand(() -> {
+      if (isUpToDate) {
+        openReaderIfNeeded(IndexOpenReason.UP_TO_DATE_CACHE);
+      }
+      else {
+        markAsOutdated();
+      }
+    });
   }
 
   @Override
