@@ -7,27 +7,37 @@ import com.intellij.notification.Notifications
 import com.intellij.openapi.project.Project
 import com.intellij.util.download.DownloadableFileService
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
+import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles
+import org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager
+import org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager.Companion.obtainExternalFilesDirectoryPath
+import org.jetbrains.annotations.ApiStatus
 import javax.swing.JComponent
+import kotlin.io.path.absolutePathString
 
-internal object MarkdownSettingsUtil {
-  fun downloadExtensionFiles(extension: MarkdownExtensionWithExternalFiles, parentComponent: JComponent? = null): Boolean {
+@ApiStatus.Internal
+object MarkdownSettingsUtil {
+  fun downloadExtensionFiles(
+    extension: MarkdownExtensionWithDownloadableFiles,
+    project: Project? = null,
+    parentComponent: JComponent? = null
+  ): Boolean {
     val downloader = DownloadableFileService.getInstance()
-    val description = downloader.createFileDescription(
-      extension.downloadLink ?: error("Could not download files with empty link!"),
-      extension.downloadFilename
-    )
-    if (extension.directory.exists()) {
-      extension.directory.delete()
+    val descriptions = extension.filesToDownload.mapNotNull { entry ->
+      entry.link.get()?.let { downloader.createFileDescription(it, entry.filePath) }
     }
-    val result = downloader.createDownloader(listOf(description), extension.downloadFilename)
-      .downloadFilesWithProgress(extension.directory.absolutePath, null, parentComponent)
-      ?.also { extension.afterDownload() }
-    return result != null
+    ExtensionsExternalFilesPathManager.getInstance().cleanupExternalFiles(extension)
+    val directory = extension.obtainExternalFilesDirectoryPath()
+    val actualDownloader = downloader.createDownloader(descriptions, "Downloading Extension Files")
+    val files = actualDownloader.downloadFilesWithProgress(directory.absolutePathString(), project, parentComponent)
+    return files != null
   }
 
-  fun downloadExtension(extension: MarkdownExtensionWithExternalFiles, project: Project? = null, enableAfterDownload: Boolean = false): Boolean {
-    if (downloadExtensionFiles(extension)) {
+  fun downloadExtension(
+    extension: MarkdownExtensionWithDownloadableFiles,
+    project: Project? = null,
+    enableAfterDownload: Boolean = false
+  ): Boolean {
+    if (extension.downloadFiles(project)) {
       if (enableAfterDownload) {
         MarkdownExtensionsSettings.getInstance().extensionsEnabledState[extension.id] = true
       }

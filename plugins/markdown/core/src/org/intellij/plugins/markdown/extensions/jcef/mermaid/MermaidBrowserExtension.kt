@@ -2,16 +2,14 @@
 package org.intellij.plugins.markdown.extensions.jcef.mermaid
 
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.util.io.DigestUtil
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.extensions.CodeFenceGeneratingProvider
-import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
-import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
+import org.intellij.plugins.markdown.extensions.*
+import org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager.Companion.obtainExternalFilesDirectoryPath
+import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles.FileEntry
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
+import org.jetbrains.annotations.ApiStatus
 import java.io.File
-import java.nio.file.Paths
 
 /**
  * A brief description of how this extension works.
@@ -32,7 +30,8 @@ import java.nio.file.Paths
  *
  * The second case is much easier: we simply insert an `<img>` tag with the url to the cached image.
  */
-internal class MermaidBrowserExtension(panel: MarkdownHtmlPanel, private val directory: File): MarkdownBrowserPreviewExtension, ResourceProvider {
+@ApiStatus.Internal
+class MermaidBrowserExtension(panel: MarkdownHtmlPanel, private val directory: File): MarkdownBrowserPreviewExtension, ResourceProvider {
   init {
     panel.browserPipe?.subscribe(storeFileEventName, ::storeFileEvent)
     Disposer.register(this) {
@@ -75,7 +74,7 @@ internal class MermaidBrowserExtension(panel: MarkdownHtmlPanel, private val dir
 
   override fun dispose() = Unit
 
-  class Provider: MarkdownBrowserPreviewExtension.Provider, MarkdownExtensionWithExternalFiles {
+  class Provider: MarkdownBrowserPreviewExtension.Provider, MarkdownExtensionWithDownloadableFiles {
     override val displayName: String
       get() = MarkdownBundle.message("markdown.extensions.mermaid.display.name")
 
@@ -84,30 +83,15 @@ internal class MermaidBrowserExtension(panel: MarkdownHtmlPanel, private val dir
     override val description: String
       get() = MarkdownBundle.message("markdown.extensions.mermaid.description")
 
-    override val downloadLink: String = DOWNLOAD_URL
+    override val externalFiles: Iterable<String>
+      get() = ownFiles
 
-    override val downloadFilename: String = "mermaid.js"
-
-    override val isAvailable: Boolean
-      get() = actualFile.exists() && isDistributionChecksumValid()
-
-    private val actualFile
-      get() = Paths.get(directory.toString(), "mermaid", downloadFilename).toFile()
-
-    private fun isDistributionChecksumValid(): Boolean {
-      val got = StringUtil.toHexString(DigestUtil.md5().digest(actualFile.readBytes()))
-      return got == CHECKSUM
-    }
-
-    override fun afterDownload(): Boolean {
-      val sourceFile = File(directory, downloadFilename)
-      sourceFile.copyTo(actualFile, overwrite = true)
-      return sourceFile.delete()
-    }
+    override val filesToDownload: Iterable<FileEntry>
+      get() = downloadableFiles
 
     override fun createBrowserExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension? {
       return when {
-        isEnabled -> MermaidBrowserExtension(panel, directory)
+        isEnabled -> MermaidBrowserExtension(panel, obtainExternalFilesDirectoryPath().toFile())
         else -> null
       }
     }
@@ -120,7 +104,10 @@ internal class MermaidBrowserExtension(panel: MarkdownHtmlPanel, private val dir
     private const val CHECKSUM = "5a958b28bdd744b981422470fd160107"
     private const val storeFileEventName = "storeMermaidFile"
 
+    private val ownFiles = listOf(MAIN_SCRIPT_FILENAME)
+    private val downloadableFiles = listOf(FileEntry(MAIN_SCRIPT_FILENAME, DOWNLOAD_URL))
+
     private val generatingProvider
-      get() = CodeFenceGeneratingProvider.all.asSequence().filterIsInstance<MermaidCodeGeneratingProviderExtension>().firstOrNull()
+      get() = MarkdownExtensionsUtil.findCodeFenceGeneratingProvider<MermaidCodeGeneratingProviderExtension>()
   }
 }

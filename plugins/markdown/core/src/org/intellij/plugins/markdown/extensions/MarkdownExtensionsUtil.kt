@@ -15,29 +15,40 @@ import javax.swing.Icon
 
 @ApiStatus.Internal
 object MarkdownExtensionsUtil {
-  fun collectConfigurableExtensions(enabledOnly: Boolean = false): Set<MarkdownConfigurableExtension> {
-    val extensions = CodeFenceGeneratingProvider.all.filterIsInstance<MarkdownConfigurableExtension>().toMutableSet()
-    extensions.addAll(MarkdownBrowserPreviewExtension.Provider.all.filterIsInstance<MarkdownConfigurableExtension>())
+  fun collectConfigurableExtensions(enabledOnly: Boolean = false): Sequence<MarkdownConfigurableExtension> {
+    val generatingProviders = CodeFenceGeneratingProvider.all.asSequence().filterIsInstance<MarkdownConfigurableExtension>()
+    val previewExtensions = MarkdownBrowserPreviewExtension.Provider.all.asSequence().filterIsInstance<MarkdownConfigurableExtension>()
+    val all = generatingProviders + previewExtensions
     return when {
-      enabledOnly -> extensions.filter { it.isEnabled }.toSet()
-      else -> extensions
+      enabledOnly -> all.filter { it.isEnabled }
+      else -> all
     }
   }
 
-  inline fun <reified T> findBrowserExtensionProvider(): T? {
+  fun collectExtensionsWithExternalFiles(): Sequence<MarkdownExtensionWithExternalFiles> {
+    return collectConfigurableExtensions().filterIsInstance<MarkdownExtensionWithExternalFiles>()
+  }
+
+  inline fun <reified T: MarkdownBrowserPreviewExtension.Provider> findBrowserExtensionProvider(): T? {
     return MarkdownBrowserPreviewExtension.Provider.all.find { it is T } as? T
+  }
+
+  inline fun <reified T: CodeFenceGeneratingProvider> findCodeFenceGeneratingProvider(): T? {
+    return CodeFenceGeneratingProvider.all.find { it is T } as? T
   }
 
   fun loadIcon(icon: Icon, format: String): ByteArray {
     val output = ByteArrayOutputStream()
     val fontSize = JBCefApp.normalizeScaledSize(EditorUtil.getEditorFont().size + 1).toFloat()
-    //MarkdownExtension.currentProjectSettings.fontSize.toFloat()
     val scaledIcon = IconUtil.scaleByFont(icon, null, fontSize)
-    val image = ImageUtil.createImage(ScaleContext.create(), scaledIcon.iconWidth.toDouble(), scaledIcon.iconHeight.toDouble(),
-                                      BufferedImage.TYPE_INT_ARGB, PaintUtil.RoundingMode.FLOOR)
+    val image = ImageUtil.createImage(
+      ScaleContext.create(),
+      scaledIcon.iconWidth.toDouble(),
+      scaledIcon.iconHeight.toDouble(),
+      BufferedImage.TYPE_INT_ARGB,
+      PaintUtil.RoundingMode.FLOOR
+    )
     scaledIcon.paintIcon(null, image.graphics, 0, 0)
-
-    //val image = IconUtil.toBufferedImage(scaledIcon, true)
     ImageIO.write(image, format, output)
     return output.toByteArray()
   }

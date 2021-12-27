@@ -30,6 +30,7 @@ import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.layout.*
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
+import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithDownloadableFiles
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
 import org.intellij.plugins.markdown.extensions.MarkdownExtensionsUtil
 import org.intellij.plugins.markdown.settings.pandoc.PandocSettingsPanel
@@ -201,15 +202,13 @@ class MarkdownSettingsConfigurable(private val project: Project): BoundSearchabl
   private fun Panel.createExtensionEntry(extension: MarkdownConfigurableExtension) {
     row {
       val extensionsSettings = MarkdownExtensionsSettings.getInstance()
-      val extensionCheckBox = checkBox(
-        text = extension.displayName
-      ).bindSelected({ extensionsSettings.extensionsEnabledState[extension.id] ?: false },
-                     { extensionsSettings.extensionsEnabledState[extension.id] = it})
-        .gap(RightGap.SMALL)
+      val extensionCheckBox = checkBox(text = extension.displayName).bindSelected(
+        { extensionsSettings.extensionsEnabledState[extension.id] ?: false },
+        { extensionsSettings.extensionsEnabledState[extension.id] = it}
+      ).gap(RightGap.SMALL)
       extensionCheckBox.enabled((extension as? MarkdownExtensionWithExternalFiles)?.isAvailable ?: true)
-      contextHelp(extension.description)
-        .gap(RightGap.SMALL)
-      if ((extension as? MarkdownExtensionWithExternalFiles)?.isAvailable == false) {
+      contextHelp(extension.description).gap(RightGap.SMALL)
+      if ((extension as? MarkdownExtensionWithDownloadableFiles)?.isAvailable == false) {
         lateinit var installLink: Cell<ActionLink>
         installLink = link(MarkdownBundle.message("markdown.settings.extension.install.label")) {
           MarkdownSettingsUtil.downloadExtension(

@@ -3,19 +3,17 @@ package org.intellij.plugins.markdown.extensions.jcef.mermaid
 
 import com.intellij.psi.PsiElement
 import org.intellij.plugins.markdown.MarkdownBundle
-import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
-import org.intellij.plugins.markdown.extensions.MarkdownCodeFenceDownloadLineMarkerProvider
-import org.intellij.plugins.markdown.extensions.MarkdownExtensionWithExternalFiles
+import org.intellij.plugins.markdown.extensions.*
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import java.util.*
 
-internal class MermaidCodeFenceDownloadLineMarkerProvider: MarkdownCodeFenceDownloadLineMarkerProvider() {
+internal class MermaidCodeFenceDownloadLineMarkerProvider: CodeFenceDownloadLineMarkerProvider() {
   override fun shouldProcessElement(element: PsiElement): Boolean {
     return (element as? MarkdownCodeFence)?.fenceLanguage == MermaidLanguage.INSTANCE.displayName.lowercase(Locale.getDefault())
   }
 
-  override fun getExtension(): MarkdownExtensionWithExternalFiles? {
-    return MarkdownBrowserPreviewExtension.Provider.all.find { it is MermaidBrowserExtension.Provider } as? MermaidBrowserExtension.Provider
+  override fun getExtension(): MarkdownExtensionWithDownloadableFiles? {
+    return MarkdownExtensionsUtil.findBrowserExtensionProvider<MermaidBrowserExtension.Provider>()
   }
 
   override val tooltipText: String
