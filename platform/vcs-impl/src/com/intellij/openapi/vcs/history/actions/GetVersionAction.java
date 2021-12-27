@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.ReadonlyStatusHandler;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,21 +96,21 @@ public class GetVersionAction extends ExtendableAction implements DumbAware {
         Object commandGroup = new Object();
 
         for (FileRevisionProvider provider : myProviders) {
-          FilePath filePath = provider.getFilePath();
-          byte[] revisionContent = provider.getContent();
+          FilePath localFilePath = provider.getFilePath();
+          FileRevisionContent revisionContent = provider.getContent();
 
           Ref<IOException> exRef = new Ref<>();
           ApplicationManager.getApplication().invokeAndWait(() -> {
             try {
               CommandProcessor.getInstance().executeCommand(myProject, () -> {
-                VirtualFile virtualFile = filePath.getVirtualFile();
+                VirtualFile virtualFile = localFilePath.getVirtualFile();
                 if (revisionContent == null && virtualFile == null) return;
 
                 if (revisionContent == null) {
-                  trigger.prepare(Collections.emptyList(), Collections.singletonList(filePath));
+                  trigger.prepare(Collections.emptyList(), Collections.singletonList(localFilePath));
                 }
                 else if (virtualFile == null) {
-                  trigger.prepare(Collections.singletonList(filePath), Collections.emptyList());
+                  trigger.prepare(Collections.singletonList(localFilePath), Collections.emptyList());
                 }
 
                 ApplicationManager.getApplication().runWriteAction(() -> {
@@ -118,10 +119,14 @@ public class GetVersionAction extends ExtendableAction implements DumbAware {
                       writeDeletion(virtualFile);
                     }
                     else if (virtualFile == null) {
-                      writeCreation(filePath, revisionContent);
+                      FilePath path = ObjectUtils.chooseNotNull(revisionContent.oldFilePath, localFilePath);
+                      writeCreation(path, revisionContent.bytes);
                     }
                     else {
-                      writeModification(virtualFile, revisionContent);
+                      if (revisionContent.oldFilePath != null && !localFilePath.equals(revisionContent.oldFilePath)) {
+                        writeRename(virtualFile, revisionContent.oldFilePath);
+                      }
+                      writeModification(virtualFile, revisionContent.bytes);
                     }
                   }
                   catch (IOException e) {
@@ -174,6 +179,20 @@ public class GetVersionAction extends ExtendableAction implements DumbAware {
       FileDocumentManager.getInstance().reloadFiles(virtualFile);
     }
 
+    private static void writeRename(@NotNull VirtualFile virtualFile, @NotNull FilePath filePath) throws IOException {
+      FilePath parentPath = filePath.getParentPath();
+      if (parentPath != null) {
+        VirtualFile parentFile = VfsUtil.createDirectories(parentPath.getPath());
+        if (parentFile != null && !parentFile.equals(virtualFile.getParent())) {
+          virtualFile.move(MyWriteVersionTask.class, parentFile);
+        }
+      }
+
+      if (!virtualFile.getName().equals(filePath.getName())) {
+        virtualFile.rename(MyWriteVersionTask.class, filePath.getName());
+      }
+    }
+
     @Override
     public void onFinished() {
       if (myOnFinished != null) myOnFinished.run();
@@ -187,7 +206,7 @@ public class GetVersionAction extends ExtendableAction implements DumbAware {
     /**
      * @return file content at some revision. Return <code>null</code> if file does not exist in this revision.
      */
-    byte @Nullable [] getContent() throws VcsException;
+    @Nullable FileRevisionContent getContent() throws VcsException;
   }
 
   private static class VcsFileRevisionProvider implements FileRevisionProvider {
@@ -206,13 +225,24 @@ public class GetVersionAction extends ExtendableAction implements DumbAware {
     }
 
     @Override
-    public byte @Nullable [] getContent() throws VcsException {
+    public @Nullable FileRevisionContent getContent() throws VcsException {
       try {
-        return VcsHistoryUtil.loadRevisionContent(myRevision);
+        byte[] bytes = VcsHistoryUtil.loadRevisionContent(myRevision);
+        return new FileRevisionContent(bytes, null);
       }
       catch (IOException e) {
         throw new VcsException(e);
       }
+    }
+  }
+
+  public static class FileRevisionContent {
+    public final byte @NotNull [] bytes;
+    public final @Nullable FilePath oldFilePath;
+
+    public FileRevisionContent(byte @NotNull [] bytes, @Nullable FilePath oldFilePath) {
+      this.bytes = bytes;
+      this.oldFilePath = oldFilePath;
     }
   }
 }

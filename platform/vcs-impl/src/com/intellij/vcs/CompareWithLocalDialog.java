@@ -250,12 +250,14 @@ public class CompareWithLocalDialog {
       }
 
       @Override
-      public byte @Nullable [] getContent() throws VcsException {
+      public @Nullable GetVersionAction.FileRevisionContent getContent() throws VcsException {
         ContentRevision revision = myLocalContent == LocalContent.AFTER ? myChange.getBeforeRevision()
                                                                         : myChange.getAfterRevision();
         if (revision == null) return null;
+        byte[] bytes = ChangesUtil.loadContentRevision(revision);
 
-        return ChangesUtil.loadContentRevision(revision);
+        FilePath oldFilePath = myChange.isMoved() || myChange.isRenamed() ? revision.getFile() : null;
+        return new GetVersionAction.FileRevisionContent(bytes, oldFilePath);
       }
     }
   }

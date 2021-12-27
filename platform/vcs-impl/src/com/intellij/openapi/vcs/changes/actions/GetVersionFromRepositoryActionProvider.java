@@ -66,11 +66,12 @@ public class GetVersionFromRepositoryActionProvider implements AnActionExtension
     }
 
     @Override
-    public byte @Nullable [] getContent() throws VcsException {
+    public @Nullable GetVersionAction.FileRevisionContent getContent() throws VcsException {
       ContentRevision revision = myChange.getAfterRevision();
       if (revision == null) return null;
 
-      return ChangesUtil.loadContentRevision(revision);
+      byte[] bytes = ChangesUtil.loadContentRevision(revision);
+      return new GetVersionAction.FileRevisionContent(bytes, null);
     }
   }
 }
