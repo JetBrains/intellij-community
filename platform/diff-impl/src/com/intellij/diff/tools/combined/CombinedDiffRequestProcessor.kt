@@ -21,8 +21,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.progress.EmptyProgressIndicator
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.runBlockingCancellable
 import com.intellij.openapi.progress.runUnderIndicator
+import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.FilePath
@@ -270,11 +272,22 @@ open class CombinedDiffRequestProcessor(project: Project?,
       }
 
       fun buildCombinedDiffChildViewers(viewer: CombinedDiffViewer, request: CombinedDiffRequest) {
-        for ((index, childRequest) in request.getChildRequests().withIndex()) {
-          val content = buildLoadingBlockContent(childRequest.producer, childRequest.path, childRequest.fileStatus)
-          viewer.addChildBlock(content, index > 0)
-        }
-        viewer.notifyVisibleBlocksChanged(true)
+        Alarm(viewer.component, viewer).addComponentRequest(
+          Runnable {
+            BackgroundTaskUtil.executeOnPooledThread(viewer) {
+              for ((index, childRequest) in request.getChildRequests().withIndex()) {
+                ProgressManager.checkCanceled()
+                runInEdt {
+                  val content = buildLoadingBlockContent(childRequest.producer, childRequest.path, childRequest.fileStatus)
+                  viewer.addChildBlock(content, index > 0)
+                }
+              }
+              runInEdt {
+                viewer.notifyVisibleBlocksChanged(true)
+              }
+            }
+          }, 100
+        )
       }
 
       internal fun buildBlockContent(viewer: CombinedDiffViewer,
