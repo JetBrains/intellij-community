@@ -40,6 +40,7 @@ public enum LanguageLevel {
   JDK_16_PREVIEW(JavaPsiBundle.messagePointer("jdk.16.preview.language.level.description"), 16),
   JDK_17(JavaPsiBundle.messagePointer("jdk.17.language.level.description"), 17),
   JDK_17_PREVIEW(JavaPsiBundle.messagePointer("jdk.17.preview.language.level.description"), 17),
+  // TODO please notify nikita.eshkeev@jetbrains.com after having JDK_18 added, he need to update the "snippet" tag in JavadocManagerImpl.java:49
   JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 18);
 
   public static final LanguageLevel HIGHEST = JDK_17;

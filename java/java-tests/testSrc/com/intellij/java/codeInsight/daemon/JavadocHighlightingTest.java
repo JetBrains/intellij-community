@@ -125,6 +125,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIgnoreAccessors() { myInspection.setIgnoreSimpleAccessors(true); doTest(); }
   public void testAuthoredMethod() { doTest(); }
   public void testThrowsInheritDoc() { doTest(); }
+  public void testSnippetInlineTag() {  doTest(); }
 
   public void testIssueLinksInJavaDoc() {
     IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(getProject());
