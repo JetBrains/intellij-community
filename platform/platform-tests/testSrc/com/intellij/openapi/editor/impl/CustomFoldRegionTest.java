@@ -267,6 +267,24 @@ public class CustomFoldRegionTest extends AbstractEditorTest {
     assertEquals(List.of(Boolean.FALSE), results);
   }
 
+  public void testOverlappingAfterDocumentChange() {
+    initText("line1\nline2");
+    assertNotNull(addCustomFoldRegion(0, 0));
+    assertNotNull(addCollapsedFoldRegion(6, 11, "..."));
+    runWriteCommand(() -> getEditor().getDocument().deleteString(5, 6));
+    verifyFoldingState("[FoldRegion +(5:10), placeholder='...']");
+  }
+
+  public void testOverlappingAfterDocumentChangeComplexLineBreaks() {
+    initText("");
+    ((DocumentImpl)getEditor().getDocument()).setAcceptSlashR(true);
+    runWriteCommand(() -> getEditor().getDocument().insertString(0, "a\rb\nc"));
+    assertNotNull(addCustomFoldRegion(0, 0));
+    addCollapsedFoldRegion(3, 5, "...");
+    runWriteCommand(() -> getEditor().getDocument().deleteString(2, 3));
+    verifyFoldingState("[FoldRegion +(1:4), placeholder='...']");
+  }
+
   private void checkOverlapWithNormalRegion(int regionStartOffset,
                                             int regionEndOffset,
                                             int customRegionStartLine,

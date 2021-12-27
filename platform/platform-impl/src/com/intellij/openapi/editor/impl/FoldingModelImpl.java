@@ -60,6 +60,7 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
 
   private final MultiMap<FoldingGroup, FoldRegion> myGroups = new MultiMap<>();
   private boolean myDocumentChangeProcessed = true;
+  boolean myComplexDocumentChange;
   private final AtomicLong myExpansionCounter = new AtomicLong();
   private final EditorScrollingPositionKeeper myScrollingPositionKeeper;
 
@@ -653,6 +654,16 @@ public final class FoldingModelImpl extends InlayModel.SimpleAdapter
   }
 
   private void validateAffectedCustomRegions() {
+    if (myComplexDocumentChange) {
+      // validate all custom fold regions
+      myRegionTree.processAll(r -> {
+        if (r instanceof CustomFoldRegionImpl) {
+          myAffectedCustomRegions.add((CustomFoldRegionImpl)r);
+        }
+        return true;
+      });
+      myComplexDocumentChange = false;
+    }
     for (CustomFoldRegionImpl region : myAffectedCustomRegions) {
       if (region.isValid() && !myFoldTree.checkIfValidToCreate(region.getStartOffset(), region.getEndOffset(), true, region)) {
         myRegionTree.removeInterval(region);
