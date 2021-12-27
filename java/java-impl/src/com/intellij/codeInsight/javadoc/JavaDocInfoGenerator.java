@@ -98,6 +98,7 @@ public class JavaDocInfoGenerator {
   private static final String VALUE_TAG = "value";
   private static final String INDEX_TAG = "index";
   private static final String SUMMARY_TAG = "summary";
+  private static final String SNIPPET_TAG = "snippet";
   private static final String LT = "&lt;";
   private static final String GT = "&gt;";
   private static final String NBSP = "&nbsp;";
@@ -1615,6 +1616,9 @@ public class JavaDocInfoGenerator {
         else if (tagName.equals(SUMMARY_TAG)) {
           generateLiteralValue(buffer, tag, false);
         }
+        else if (tagName.equals(SNIPPET_TAG)) {
+          generateSnippetValue(buffer, tag);
+        }
       }
       else {
         final String text;
@@ -1626,6 +1630,39 @@ public class JavaDocInfoGenerator {
         }
         appendPlainText(buffer, text);
       }
+    }
+  }
+
+  @Contract(mutates = "param1")
+  private static void generateSnippetValue(@NotNull StringBuilder buffer, @NotNull PsiInlineDocTag tag) {
+    if (!(tag instanceof PsiSnippetDocTag)) {
+      LOG.error("Snippet tag must have type PsiSnippetDocTag, but was" + tag.getClass(), tag.getText());
+      return;
+    }
+    PsiSnippetDocTag snippetTag = (PsiSnippetDocTag)tag;
+
+    PsiSnippetDocTagValue value = snippetTag.getValueElement();
+    if (value == null) {
+      appendPlainText(buffer, snippetTag.getText());
+      return;
+    }
+    buffer.append("Snippet:");
+    PsiSnippetAttributeList attributes = value.getAttributeList();
+    for (PsiSnippetAttribute attribute : attributes.getAttributes()) {
+      buffer.append(BR_TAG);
+      String attributeName = attribute.getName();
+      PsiElement valueElement = attribute.getValue();
+      String attributeValue = valueElement != null ? valueElement.getText() : "";
+      buffer.append(attributeName).append(" = ").append(attributeValue);
+    }
+    buffer.append(BR_TAG);
+    PsiSnippetDocTagBody body = value.getBody();
+    if (body != null) {
+      buffer.append("<pre>");
+      for (PsiElement contentElement : body.getContent()) {
+        buffer.append('\n').append(contentElement.getText());
+      }
+      buffer.append("</pre>");
     }
   }
 
