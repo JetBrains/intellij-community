@@ -41,8 +41,8 @@ internal class SettingsSyncStreamProvider(private val application: Application,
       return
     }
 
-    val snap = SettingsSnapshot(setOf(FileState(file, content, size)))
-    application.messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SettingsChangeEvent(ChangeSource.FROM_LOCAL, snap))
+    val snapshot = SettingsSnapshot(setOf(FileState(file, content, size)))
+    application.messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.IdeChange(snapshot))
   }
 
   override fun read(fileSpec: String, roamingType: RoamingType, consumer: (InputStream?) -> Unit): Boolean {

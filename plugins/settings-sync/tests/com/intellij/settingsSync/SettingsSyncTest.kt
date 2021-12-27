@@ -7,7 +7,6 @@ import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.PersistentStateComponent
-import com.intellij.openapi.components.State
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.components.impl.stores.IComponentStore
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable
@@ -169,7 +168,7 @@ internal class SettingsSyncTest {
     }.toFileState()
     remoteCommunicator.updateResult = UpdateResult.Success(SettingsSnapshot(setOf(fileState)))
 
-    updateChecker.updateFromServer()
+    updateChecker.scheduleUpdateFromServer()
 
     waitForSettingsToBeApplied(generalSettings)
     assertFalse(generalSettings.isSaveOnFrameDeactivation)
@@ -204,7 +203,7 @@ internal class SettingsSyncTest {
     remoteCommunicator.updateResult = UpdateResult.Success(SettingsSnapshot(setOf(fileState)))
     remoteCommunicator.offline = false
 
-    updateChecker.updateFromServer() // merge will happen here
+    updateChecker.scheduleUpdateFromServer() // merge will happen here
 
     assertSettingsPushed {
       fileState {

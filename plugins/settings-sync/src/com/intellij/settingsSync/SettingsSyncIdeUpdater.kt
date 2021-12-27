@@ -27,22 +27,13 @@ import java.nio.file.Path
 
 internal class SettingsSyncIdeUpdater(application: Application,
                                       private val componentStore: ComponentStoreImpl,
-                                      private val rootConfig: Path) : SettingsLoggedListener {
+                                      private val rootConfig: Path) {
 
   companion object {
     val LOG = logger<SettingsSyncIdeUpdater>()
   }
 
-  init {
-    application.messageBus.connect().subscribe(SETTINGS_LOGGED_TOPIC, this)
-  }
-
-  override fun settingsLogged(event: SettingsLoggedEvent) {
-    if (!event.hasRemote) {
-      return
-    }
-
-    val snapshot = event.snapshot
+  fun settingsLogged(snapshot: SettingsSnapshot) {
     // todo race between this code and SettingsSyncStreamProvider.write which can write other user settings at the same time
 
     // todo update only that has really changed

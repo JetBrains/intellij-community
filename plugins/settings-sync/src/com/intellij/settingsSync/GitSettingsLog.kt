@@ -4,11 +4,15 @@ import com.intellij.openapi.Disposable
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.io.NioFiles
-import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.io.*
 import org.eclipse.jgit.api.Git
-import org.eclipse.jgit.api.MergeResult.MergeStatus.*
+import org.eclipse.jgit.api.MergeResult.MergeStatus.CONFLICTING
+import org.eclipse.jgit.api.MergeResult.MergeStatus.FAST_FORWARD
+import org.eclipse.jgit.api.errors.EmptyCommitException
 import org.eclipse.jgit.lib.Constants
+import org.eclipse.jgit.lib.Constants.R_HEADS
+import org.eclipse.jgit.lib.ObjectId
+import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
@@ -23,7 +27,11 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 ) : SettingsLog, Disposable {
 
   private lateinit var repository: Repository
-  private lateinit var remoteBranch: RevCommit
+  private lateinit var git: Git
+
+  private val master: Ref get() = repository.findRef(MASTER_REF_NAME)!!
+  private val ide: Ref get() = repository.findRef(IDE_REF_NAME)!!
+  private val cloud: Ref get() = repository.findRef(CLOUD_REF_NAME)!!
 
   init {
     Disposer.register(parentDisposable, this)
@@ -32,20 +40,36 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   override fun initialize(): Boolean {
     val dotGit = settingsSyncStorage.resolve(".git")
     repository = FileRepositoryBuilder.create(dotGit.toFile())
+    git = Git(repository)
 
     val newRepository = !dotGit.exists()
     if (newRepository) {
+      LOG.info("Initializing new Git repository for Settings Sync at $settingsSyncStorage")
       repository.create()
       initRepository(repository)
       copyExistingSettings(repository)
     }
 
-    remoteBranch = repository.headCommit()
+    createBranchIfNeeded(MASTER_REF_NAME, newRepository)
+    createBranchIfNeeded(CLOUD_REF_NAME, newRepository)
+    createBranchIfNeeded(IDE_REF_NAME, newRepository)
 
     return newRepository
   }
 
+  private fun createBranchIfNeeded(name: String, newRepository: Boolean) {
+    val ref = repository.findRef(name)
+    if (ref == null) {
+      val head = repository.headCommit()
+      if (!newRepository) {
+        LOG.warn("Ref with name $name not found in existing repository. Recreating at position of HEAD@${head.toObjectId().short}")
+      }
+      git.branchCreate().setName(name).setStartPoint(head).call()
+    }
+  }
+
   private fun copyExistingSettings(repository: Repository) {
+    LOG.info("Copying existing settings from $rootConfigPath to $settingsSyncStorage")
     val copiedFileSpecs = mutableListOf<String>()
 
     val filesToExport = collectFilesToExportFromSettings()
@@ -71,7 +95,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
         addCommand.addFilepattern(fileSpec)
       }
       addCommand.call()
-      git.commit().setMessage("copy existing configs").call()
+      git.commit().setMessage("Copy existing configs").call()
     }
   }
 
@@ -100,80 +124,44 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
     val git = Git(repository)
     git.add().addFilepattern(".gitignore").call()
-    git.commit().setMessage("initial").call()
-    // todo repo should be pushed after initialization (or be initialized by data received from the server)
+    git.commit().setMessage("Initial").call()
   }
 
-  @RequiresBackgroundThread
-  override fun applyLocalState(snapshot: SettingsSnapshot) {
-    if (snapshot.fileStates.isEmpty()) { // todo move upwards?
-      LOG.error("Don't record empty settings snapshot")
+  override fun applyIdeState(snapshot: SettingsSnapshot) {
+    applyState(IDE_REF_NAME, snapshot)
+  }
+
+  override fun applyCloudState(snapshot: SettingsSnapshot) {
+    applyState(CLOUD_REF_NAME, snapshot)
+  }
+
+  private fun applyState(refName: String, snapshot: SettingsSnapshot) {
+    if (snapshot.isEmpty()) {
+      LOG.error("Empty snapshot")
+      return
     }
 
-    applySnapshotAndCommit(snapshot)
+    git.checkout().setName(refName).call()
+    applySnapshotAndCommit(refName, snapshot)
   }
 
-  private fun applySnapshotAndCommit(snapshot: SettingsSnapshot): RevCommit {
+  private fun applySnapshotAndCommit(refName: String, snapshot: SettingsSnapshot) {
     // todo check repository consistency before each operation: that we're on master, that rb is deleted, that there're no uncommitted changes
 
-    // todo recording local operation should also be merged instead of applying,
-    // because of a race: local changes can happen after receiving changes from server but before and applying them.
-
-    val git = Git(repository)
+    LOG.info("Applying settings changes to $refName")
     val addCommand = git.add()
-    val message = StringBuilder()
+    val message = "Apply changes received from $refName"
     for (fileState in snapshot.fileStates) {
       settingsSyncStorage.resolve(fileState.file).write(fileState.content, 0, fileState.size)
       addCommand.addFilepattern(fileState.file)
-      message.appendLine(fileState.file)
     }
     addCommand.call()
-    return git.commit().setMessage("committing $message").call()
-  }
-
-  override fun pushedSuccessfully() {
-    remoteBranch = repository.headCommit()
-  }
-
-  override fun applyRemoteState(snapshot: SettingsSnapshot): Boolean { // todo improve return result API
-    // todo check repository consistency before each operation: that we're on master, than rb is deleted, that there're no uncommitted changes
-
-    val git = Git(repository)
-
-    if (repository.resolve("rb") != null) {
-      LOG.warn("rb wasn't deleted") // todo maybe don't need a warning here: it can happen after abnormal termination
-      git.checkout().setName("master").call() // todo check if not already checked out
-      git.branchDelete().setBranchNames("rb").setForce(true).call()
-    }
-
+    // Don't allow empty commit: sometimes the stream provider can notify about changes but there are no actual changes on disk
     try {
-      var rb = git.checkout().setCreateBranch(true).setName("rb").setStartPoint(remoteBranch).call().objectId
-      rb = applySnapshotAndCommit(snapshot)
-      git.checkout().setName("master").call()
-      val mergeResult = git.merge().include(rb).call()
-
-      // todo handle merge conflicts
-
-      when (mergeResult.mergeStatus) {
-        FAST_FORWARD, ALREADY_UP_TO_DATE -> {
-          return false
-        }
-        MERGED -> {
-          return true
-        }
-        else -> {
-          throw IllegalStateException("Unexpected merge result status: " + mergeResult.mergeStatus) //todo
-        }
-      }
+      git.commit().setMessage(message).setAllowEmpty(false).call()
     }
-    finally {
-      try {
-        git.checkout().setName("master").call() // todo extract to "returnToConsistency"
-        git.branchDelete().setBranchNames("rb").setForce(true).call()
-      }
-      catch (e: Throwable) {
-        LOG.error("Couldn't return to consistent state", e)
-      }
+    catch (e: EmptyCommitException) {
+      LOG.info("No actual changes in the settings")
     }
   }
 
@@ -181,7 +169,9 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     repository.close()   // todo synchronize
   }
 
-  override fun collectCurrentSnapshot(): SettingsSnapshot {   // todo check if there are uncommitted changes (should be none)
+  override fun collectCurrentSnapshot(): SettingsSnapshot {
+    // todo check repository consistency, e.g. there should be no uncommitted changes
+
     val files = settingsSyncStorage.toFile().walkTopDown()
       .onEnter { it.name != ".git" }
       .filter { it.isFile && it.name != ".gitignore" }
@@ -192,12 +182,94 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
     return SettingsSnapshot(files)
   }
 
+  override fun getIdePosition(): SettingsLog.Position {
+    return getPosition(ide)
+  }
+
+  override fun getCloudPosition(): SettingsLog.Position {
+    return getPosition(cloud)
+  }
+
+  override fun getMasterPosition(): SettingsLog.Position {
+    return getPosition(master)
+  }
+
+  private fun getPosition(ref: Ref) = BranchPosition(ref.objectId.name())
+
+  override fun setIdePosition(position: SettingsLog.Position) {
+    updateBranchPosition(IDE_REF_NAME, position)
+  }
+
+  override fun setCloudPosition(position: SettingsLog.Position) {
+    updateBranchPosition(CLOUD_REF_NAME, position)
+  }
+
+  private fun updateBranchPosition(refName: String, targetPosition: SettingsLog.Position): Ref {
+    val ref = repository.findRef(refName)!!
+    val previousObjectId = ref.objectId
+    val targetObjectId = ObjectId.fromString(targetPosition.id)
+    val refUpdate = repository.updateRef(ref.name)
+    refUpdate.setNewObjectId(targetObjectId)
+    val result = refUpdate.update()
+    LOG.info("Updated position of ${ref.short} from ${previousObjectId.short} to $targetPosition: $result")
+    return repository.findRef(ref.name)!!
+  }
+
+  private fun fastForwardMaster(branchOnSamePosition: Ref, targetBranch: Ref): BranchPosition {
+      LOG.info("Advancing master. Its position is equal to ${branchOnSamePosition.short}: ${master.objectId.short}. " +
+               "Expecting fast-forward merge to ${targetBranch.short} ${targetBranch.objectId.short}")
+      val mergeResult = git.merge().include(targetBranch).call()
+      if (mergeResult.mergeStatus != FAST_FORWARD) {
+        LOG.warn("Non-fast-forward result: $mergeResult")
+        // todo check consistency here
+      }
+      return getPosition(master)
+  }
+
+  override fun advanceMaster(): SettingsLog.Position {
+    git.checkout().setName(MASTER_REF_NAME).call()
+
+    if (master.objectId == ide.objectId) {
+      return fastForwardMaster(ide, cloud)
+    }
+
+    if (master.objectId == cloud.objectId) {
+      return fastForwardMaster(cloud, ide)
+    }
+
+    LOG.info("Advancing master@${master.objectId.short}. Need merge of ide@${ide.objectId.short} and cloud@${cloud.objectId.short}")
+    // 1. move master to ide
+    val refUpdate = repository.updateRef(ide.name)
+    refUpdate.setNewObjectId(ide.objectId)
+    refUpdate.update()
+
+    // 2. merge with cloud
+    val mergeResult = git.merge().include(cloud).call()
+    LOG.info("Merge of master&ide@${master.objectId.short} with cloud@${cloud.objectId.short}: $mergeResult")
+    if (mergeResult.mergeStatus == CONFLICTING) {
+      // todo redo merge with "last modified" strategy
+    }
+    return getPosition(master)
+  }
+
   private fun Repository.headCommit(): RevCommit {
-    val ref = this.exactRef(Constants.HEAD)
+    val ref = this.findRef(Constants.HEAD)
     return this.parseCommit(ref.objectId)
   }
 
-  companion object {
+  private val Ref.short get() = this.name.removePrefix(R_HEADS)
+
+  private val ObjectId.short get() = this.name.substring(0, 8)
+
+  private data class BranchPosition(override val id: String): SettingsLog.Position {
+    override fun toString(): String = id.substring(0, 8)
+  }
+
+  private companion object {
     val LOG = logger<GitSettingsLog>()
+
+    const val MASTER_REF_NAME = "master"
+    const val IDE_REF_NAME = "ide"
+    const val CLOUD_REF_NAME = "cloud"
   }
 }

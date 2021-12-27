@@ -4,20 +4,14 @@ import java.nio.charset.StandardCharsets.UTF_8
 
 internal interface SettingsChangeListener {
 
-  fun settingChanged(event: SettingsChangeEvent)
+  fun settingChanged(event: SyncSettingsEvent)
 
 }
 
-internal data class SettingsChangeEvent(val source: ChangeSource, val snapshot: SettingsSnapshot)
-
-internal enum class ChangeSource {
-  FROM_LOCAL,
-  FROM_SERVER
-}
-
-internal interface SettingsLoggedListener {
-
-  fun settingsLogged(event: SettingsLoggedEvent)
+internal sealed class SyncSettingsEvent {
+  class IdeChange(val snapshot: SettingsSnapshot) : SyncSettingsEvent()
+  class CloudChange(val snapshot: SettingsSnapshot) : SyncSettingsEvent()
+  class PushRequest(): SyncSettingsEvent()
 }
 
 internal data class SettingsSnapshot(val fileStates: Set<FileState>) {
