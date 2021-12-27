@@ -22,24 +22,27 @@ class ReformatInspection(@JvmField var processChangedFilesOnly: Boolean = false)
 
         if (isIncorrectFormattingInspectionEnabled(file.project)) {
             return null
-        } else {
-            return arrayOf(
-                manager.createProblemDescriptor(
-                    file,
-                    KotlinBundle.message("kotlin.formatting.inspection.is.deprecated"),
-                    EnableCommonInspection,
-                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                    isOnTheFly
-                )
-            )
         }
+
+        return arrayOf(
+            manager.createProblemDescriptor(
+                file,
+                KotlinBundle.message("kotlin.formatting.inspection.is.deprecated"),
+                EnableCommonInspection,
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                isOnTheFly
+            )
+        )
+
     }
 
 }
 
 
-private val incorrectFormattingInspectionKey = HighlightDisplayKey.findById(IncorrectFormattingInspection().id)
-private val incorrectFormattingInspectionShortName = IncorrectFormattingInspection().shortName
+private val incorrectFormattingInspectionKey: HighlightDisplayKey? by lazy { HighlightDisplayKey.findById(IncorrectFormattingInspection().id) }
+private val incorrectFormattingInspectionShortName: String by lazy { IncorrectFormattingInspection().shortName }
+
+private val reformatInspectionShortName: String by lazy { org.jetbrains.kotlin.idea.inspections.ReformatInspection().shortName }
 
 private fun isIncorrectFormattingInspectionEnabled(project: Project) =
     InspectionProjectProfileManager
@@ -54,5 +57,10 @@ private object EnableCommonInspection : LocalQuickFix {
             .getInstance(project)
             .currentProfile
             .enableTool(incorrectFormattingInspectionShortName, project)
+
+        InspectionProjectProfileManager
+            .getInstance(project)
+            .currentProfile
+            .setToolEnabled(reformatInspectionShortName, false, project)
     }
 }
