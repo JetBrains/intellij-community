@@ -10,7 +10,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.function.Consumer
 import java.util.function.Predicate
 
-data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
+data class OpenProjectTask @JvmOverloads constructor(val forceOpenInNewFrame: Boolean = false,
                            val projectToClose: Project? = null,
                            val isNewProject: Boolean = false,
                            /**
