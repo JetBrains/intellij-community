@@ -42,11 +42,17 @@ class CancellationPropagationTest {
     doTest {
       ApplicationManager.getApplication().executeOnPooledThread(it.runnable())
     }
+    doTestJobIsCancelledByFuture {
+      ApplicationManager.getApplication().executeOnPooledThread(it.runnable())
+    }
   }
 
   @Test
   fun `executeOnPooledThread(Callable)`(): Unit = timeoutRunBlocking {
     doTest {
+      ApplicationManager.getApplication().executeOnPooledThread(it.callable())
+    }
+    doTestJobIsCancelledByFuture {
       ApplicationManager.getApplication().executeOnPooledThread(it.callable())
     }
   }
@@ -101,6 +107,35 @@ class CancellationPropagationTest {
     doTest {
       service.invokeAll(listOf(it.callable()))
     }
+    doTestJobIsCancelledByFuture {
+      service.submit(it.runnable())
+    }
+    doTestJobIsCancelledByFuture {
+      service.submit(it.callable())
+    }
+  }
+
+  private suspend fun doTestJobIsCancelledByFuture(submit: (() -> Unit) -> Future<*>) {
+    return suspendCancellableCoroutine { continuation ->
+      val started = Semaphore(1)
+      val cancelled = Semaphore(1)
+      val future = submit {
+        val result: Result<Unit> = runCatching {
+          started.up()
+          cancelled.timeoutWaitUp()
+          assertThrows<JobCanceledException> {
+            Cancellation.checkCancelled()
+          }
+        }
+        continuation.resumeWith(result)
+      }
+      started.timeoutWaitUp()
+      future.cancel(false)
+      cancelled.up()
+      assertThrows<CancellationException> {
+        future.timeoutGet()
+      }
+    }
   }
 
   @Test
@@ -139,30 +174,6 @@ class CancellationPropagationTest {
     rootJob.cancel()
     waitAssertCompletedWithCancellation(childFuture)
     rootJob.timeoutJoinBlocking()
-  }
-
-  @Test
-  fun `job is cancelled by future`(): Unit = timeoutRunBlocking {
-    suspendCancellableCoroutine { continuation ->
-      val started = Semaphore(1)
-      val cancelled = Semaphore(1)
-      val future = service.submit {
-        val result: Result<Unit> = runCatching {
-          started.up()
-          cancelled.timeoutWaitUp()
-          assertThrows<JobCanceledException> {
-            Cancellation.checkCancelled()
-          }
-        }
-        continuation.resumeWith(result)
-      }
-      started.timeoutWaitUp()
-      future.cancel(false)
-      cancelled.up()
-      assertThrows<CancellationException> {
-        future.timeoutGet()
-      }
-    }
   }
 
   @Test
