@@ -174,7 +174,7 @@ public final class PythonCommandQueuePanel extends JPanel {
     this.communication = communication;
   }
 
-  protected void commandSelected(@NotNull QueueElementPanel elementPanel) {
+  void commandSelected(@NotNull QueueElementPanel elementPanel) {
     if (selectedCommand != null) {
       selectedCommand.getQueuePanel().setBackground(JBColor.lazy(UIUtil::getListBackground));
       selectedCommand.setTextColor();
