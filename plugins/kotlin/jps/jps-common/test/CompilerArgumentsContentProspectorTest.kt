@@ -231,7 +231,6 @@ class CompilerArgumentsContentProspectorTest {
             K2JSCompilerArguments::irProduceKlibFile,
             K2JSCompilerArguments::irProduceJs,
             K2JSCompilerArguments::irDce,
-            K2JSCompilerArguments::irDceDriven,
             K2JSCompilerArguments::irDcePrintReachabilityInfo,
             K2JSCompilerArguments::irNewIr2Js,
             K2JSCompilerArguments::irPropertyLazyInitialization,

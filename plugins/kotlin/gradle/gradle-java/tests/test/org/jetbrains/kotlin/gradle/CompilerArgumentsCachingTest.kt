@@ -328,7 +328,6 @@ class CompilerArgumentsCachingTest {
         irProduceKlibFile = Random.nextBoolean()
         irProduceJs = Random.nextBoolean()
         irDce = Random.nextBoolean()
-        irDceDriven = Random.nextBoolean()
         irDcePrintReachabilityInfo = Random.nextBoolean()
         irPropertyLazyInitialization = Random.nextBoolean()
         irOnly = Random.nextBoolean()
