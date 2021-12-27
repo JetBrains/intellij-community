@@ -3,6 +3,7 @@ package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -149,7 +150,9 @@ public final class ToolsImpl implements Tools {
   void readExternal(@NotNull Element toolElement, @NotNull InspectionProfileManager profileManager, @Nullable Map<String, List<String>> dependencies) {
     final String levelName = toolElement.getAttributeValue(LEVEL_ATTRIBUTE);
     final SeverityRegistrar registrar = profileManager.getSeverityRegistrar();
-    HighlightDisplayLevel level = levelName != null ? HighlightDisplayLevel.find(registrar.getSeverity(levelName)) : null;
+    HighlightDisplayLevel level;
+    HighlightSeverity severity = levelName == null ? null : registrar.getSeverity(levelName);
+    level = severity == null ? null : HighlightDisplayLevel.find(severity);
     if (level == null) {
       level = HighlightDisplayLevel.WARNING;
     }
@@ -181,8 +184,8 @@ public final class ToolsImpl implements Tools {
         if (scopeElement.getAttributes().size() > 3 || !scopeElement.getChildren().isEmpty()) {
           copyToolWrapper.getTool().readSettings(scopeElement);
         }
-        HighlightDisplayLevel scopeLevel = errorLevel != null ?
-                                           HighlightDisplayLevel.find(registrar.getSeverity(errorLevel)) : null;
+        HighlightSeverity errorSeverity = errorLevel == null ? null : registrar.getSeverity(errorLevel);
+        HighlightDisplayLevel scopeLevel = errorSeverity == null ? null : HighlightDisplayLevel.find(errorSeverity);
         if (scopeLevel == null) {
           scopeLevel = level;
         }

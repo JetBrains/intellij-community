@@ -187,7 +187,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     return null;
   }
 
-  public static @Nls String renderSeverity(HighlightSeverity severity) {
+  public static @Nls String renderSeverity(@NotNull HighlightSeverity severity) {
     if (HighlightSeverity.INFORMATION.equals(severity)) return LangBundle.message("single.inspection.profile.panel.no.highlighting.only.fix");
     return severity.getDisplayCapitalizedName();
   }
@@ -775,7 +775,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           new LevelChooserAction(myProfile.getProfileManager().getSeverityRegistrar(),
                                  includeDoNotShow(nodes)) {
             @Override
-            protected void onChosen(final HighlightSeverity severity) {
+            protected void onChosen(final @NotNull HighlightSeverity severity) {
               final HighlightDisplayLevel level = HighlightDisplayLevel.find(severity);
               final List<InspectionConfigTreeNode.Tool> toUpdate = new SmartList<>();
               for (final InspectionConfigTreeNode.Tool node : nodes) {
