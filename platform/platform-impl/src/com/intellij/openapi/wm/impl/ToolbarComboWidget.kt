@@ -32,6 +32,9 @@ abstract class ToolbarComboWidget: JComponent() {
 
   override fun updateUI() {
     setUI(UIManager.getUI(this))
+    UIManager.getColor("MainToolbar.dropdown.foreground")?.let { foreground = it }
+    UIManager.getColor("MainToolbar.dropdown.background")?.let { background = it}
+    UIManager.getColor("MainToolbar.dropdown.hoverBackground")?.let { hoverBackground = it }
   }
 
   fun addPressListener(action: ActionListener) {

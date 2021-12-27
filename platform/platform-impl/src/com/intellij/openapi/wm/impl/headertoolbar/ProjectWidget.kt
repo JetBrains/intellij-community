@@ -41,9 +41,6 @@ object ProjectWidgetFactory : MainToolbarProjectWidgetFactory {
 
   override fun createWidget(project: Project): JComponent {
     val widget = ProjectWidget(project)
-    UIManager.getColor("MainToolbar.dropdown.foreground")?.let { widget.foreground = it }
-    UIManager.getColor("MainToolbar.dropdown.background")?.let { widget.background = it}
-    UIManager.getColor("MainToolbar.dropdown.hoverBackground")?.let { widget.hoverBackground = it }
     ProjectWidgetUpdater(project, widget).subscribe()
     return widget
   }

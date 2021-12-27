@@ -24,7 +24,6 @@ import java.util.concurrent.Executor
 import javax.swing.Icon
 import javax.swing.JComponent
 import javax.swing.SwingUtilities
-import javax.swing.UIManager
 
 internal data class Changes(val incoming: Boolean, val outgoing: Boolean)
 
@@ -32,10 +31,6 @@ class GitToolbarWidgetFactory : MainToolbarProjectWidgetFactory, Disposable {
 
   override fun createWidget(project: Project): JComponent {
     val widget = GitToolbarWidget()
-    UIManager.getColor("MainToolbar.dropdown.foreground")?.let { widget.foreground = it }
-    UIManager.getColor("MainToolbar.dropdown.background")?.let { widget.background = it }
-    UIManager.getColor("MainToolbar.dropdown.hoverBackground")?.let { widget.hoverBackground = it }
-
     GitWidgetUpdater(project, widget).subscribe()
     return widget
   }
