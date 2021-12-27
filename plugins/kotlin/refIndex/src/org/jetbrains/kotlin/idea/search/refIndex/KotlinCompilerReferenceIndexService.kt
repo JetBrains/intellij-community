@@ -3,6 +3,7 @@ package org.jetbrains.kotlin.idea.search.refIndex
 
 import com.intellij.compiler.CompilerReferenceService
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase
+import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase.CompilerRefProvider
 import com.intellij.compiler.backwardRefs.DirtyScopeHolder
 import com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter
 import com.intellij.compiler.backwardRefs.SearchId
@@ -40,8 +41,6 @@ import com.intellij.util.containers.generateRecursiveSequence
 import com.intellij.util.indexing.StorageException
 import com.intellij.util.messages.MessageBusConnection
 import org.jetbrains.annotations.TestOnly
-import org.jetbrains.jps.backwardRefs.CompilerRef
-import org.jetbrains.jps.backwardRefs.NameEnumerator
 import org.jetbrains.kotlin.asJava.unwrapped
 import org.jetbrains.kotlin.config.SettingConstants
 import org.jetbrains.kotlin.idea.KotlinFileType
@@ -327,10 +326,8 @@ class KotlinCompilerReferenceIndexService(val project: Project) : Disposable, Mo
         ?.map(FqNameWrapper.Companion::createFromFqName)
         .orEmpty()
 
-    private fun getDirectJavaSubtypesOf(compilerRefProvider: (NameEnumerator) -> CompilerRef?): Sequence<FqNameWrapper> =
-        compilerReferenceServiceBase?.getDirectInheritorsNames(
-            CompilerReferenceServiceBase.CompilerRefProvider { compilerRefProvider(it) }
-        )
+    private fun getDirectJavaSubtypesOf(compilerRefProvider: CompilerRefProvider): Sequence<FqNameWrapper> =
+        compilerReferenceServiceBase?.getDirectInheritorsNames(compilerRefProvider)
             ?.asSequence()
             ?.mapNotNull(FqNameWrapper.Companion::createFromSearchId)
             .orEmpty()
