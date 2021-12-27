@@ -2,6 +2,7 @@
 
 package org.jetbrains.kotlin.idea.stubindex
 
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
@@ -45,18 +46,39 @@ class SubpackagesIndexService(private val project: Project) {
         }
 
         fun hasSubpackages(fqName: FqName, scope: GlobalSearchScope): Boolean {
-            return fqNameByPrefix[fqName].any { packageWithFilesFqName ->
+            val fqNames = fqNameByPrefix[fqName]
+
+            val knownNotContains = fqNames.isKnownNotContains(fqName, scope)
+            if (knownNotContains) {
+                return false
+            }
+
+            val any = fqNames.any { packageWithFilesFqName ->
+                ProgressManager.checkCanceled()
                 PackageIndexUtil.containsFilesWithExactPackage(packageWithFilesFqName, scope, project)
             }
+            return any
+        }
+
+        private fun Collection<FqName>.isKnownNotContains(fqName: FqName, scope: GlobalSearchScope): Boolean {
+            return !fqName.isRoot && (isEmpty() ||
+                    // fast check is reasonable when fqNames has more than 1 element
+                    size > 1 && !PackageIndexUtil.containsFilesWithPartialPackage(fqName, scope, project))
         }
 
         fun packageExists(fqName: FqName): Boolean = fqName in allPackageFqNames || fqNameByPrefix.containsKey(fqName)
 
         fun getSubpackages(fqName: FqName, scope: GlobalSearchScope, nameFilter: (Name) -> Boolean): Collection<FqName> {
-            val possibleFilesFqNames = fqNameByPrefix[fqName]
+            val fqNames = fqNameByPrefix[fqName]
+
+            if (fqNames.isKnownNotContains(fqName, scope)) {
+                return emptyList()
+            }
+
             val existingSubPackagesShortNames = HashSet<Name>()
             val len = fqName.pathSegments().size
-            for (filesFqName in possibleFilesFqNames) {
+            for (filesFqName in fqNames) {
+                ProgressManager.checkCanceled()
                 val candidateSubPackageShortName = filesFqName.pathSegments()[len]
                 if (candidateSubPackageShortName in existingSubPackagesShortNames || !nameFilter(candidateSubPackageShortName)) continue
 
