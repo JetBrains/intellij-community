@@ -532,11 +532,15 @@
 
       <action id="Debugger.CreateRenderer" class="com.intellij.debugger.actions.CreateRendererAction">
         <add-to-group group-id="XDebugger.Watches.Inline.Popup" anchor="last"/>
-        <override-text place="XDebuggerTreeInlayPopup"/>
+        <override-text place="XDebuggerTreePopup"/>
       </action>
       <action id="Debugger.AutoRenderer" class="com.intellij.debugger.actions.AutoRendererAction"/>
       <action id="Debugger.MuteRenderers" class="com.intellij.debugger.actions.ForceOnDemandRenderersAction">
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
+      </action>
+
+      <action id="Debugger.SetTextValue" class="com.intellij.debugger.actions.SetTextValueAction">
+        <add-to-group group-id="XDebugger.Watches.Inline.Text.Popup" anchor="last"/>
       </action>
 
       <action id="Debugger.AsyncStacks" class="com.intellij.debugger.actions.AsyncStacksToggleAction">

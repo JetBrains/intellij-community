@@ -18,6 +18,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.paint.EffectPainter;
@@ -34,6 +35,7 @@ import com.intellij.xdebugger.impl.evaluate.XDebuggerEditorLinePainter;
 import com.intellij.xdebugger.impl.evaluate.quick.XDebuggerTreeCreator;
 import com.intellij.xdebugger.impl.ui.XDebugSessionTab;
 import com.intellij.xdebugger.impl.ui.XDebuggerUIConstants;
+import com.intellij.xdebugger.impl.ui.XValueTextProvider;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import org.jetbrains.annotations.NotNull;
@@ -129,11 +131,20 @@ public final class InlineDebugRenderer implements EditorCustomElementRenderer {
     Point point = new Point(bounds.x, bounds.y + bounds.height);
 
     inlayRenderer.myPopupIsShown = true;
-    XDebuggerTreeInlayPopup.showTreePopup(myTreeCreator, descriptor, myValueNode, inlay.getEditor(), point, myPosition, mySession, () -> {
+
+    Runnable hidePopupRunnable = () -> {
       ApplicationManager.getApplication().invokeLater(() -> {
         inlayRenderer.myPopupIsShown = false;
       });
-    });
+    };
+
+    XValue value = myValueNode.getValueContainer();
+    if (value instanceof XValueTextProvider && ((XValueTextProvider)value).isShowsTextValue()) {
+      String initialText = ((XValueTextProvider)value).getValueText();
+      XDebuggerTextInlayPopup.showTextPopup(StringUtil.notNullize(initialText), myTreeCreator, descriptor, myValueNode, inlay.getEditor(), point, myPosition, mySession, hidePopupRunnable);
+    } else {
+      XDebuggerTreeInlayPopup.showTreePopup(myTreeCreator, descriptor, myValueNode, inlay.getEditor(), point, myPosition, mySession, hidePopupRunnable);
+    }
   }
 
 
