@@ -516,5 +516,8 @@ Includes the following features:</p>
     </group>
     <action id="Markdown.OpenDevtoolsAction"
             class="org.intellij.plugins.markdown.ui.actions.MarkdownOpenDevtoolsAction"/>
+    <action id="Markdown.Extensions.CleanupExternalFiles"
+            class="org.intellij.plugins.markdown.extensions.CleanupExtensionsExternalFilesAction"
+            icon="AllIcons.Actions.GC"/>
   </actions>
 </idea-plugin>
