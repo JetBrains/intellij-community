@@ -19,13 +19,12 @@ class FeatureSuggesterStatistics : CounterUsagesCollector() {
     private const val GROUP_ID = "feature_suggester"
     private const val NOTIFICATION_SHOWED_EVENT_ID = "notification.showed"
     private const val NOTIFICATION_DONT_SUGGEST_EVENT_ID = "notification.dont_suggest"
-    private const val NOTIFICATION_THANKS_EVENT_ID = "notification.thanks"
     private const val NOTIFICATION_LEARN_MORE_EVENT_ID = "notification.learn_more"
     private const val SUGGESTION_FOUND = "suggestion_found"
     private const val SUGGESTER_ID_FIELD = "suggester_id"
     const val SUGGESTER_ID_VALIDATION_RULE = "feature_suggester_id"
 
-    private val GROUP = EventLogGroup(GROUP_ID, 2)
+    private val GROUP = EventLogGroup(GROUP_ID, 3)
 
     private val suggesterIdField = EventFields.StringValidatedByCustomRule(SUGGESTER_ID_FIELD, SUGGESTER_ID_VALIDATION_RULE)
 
