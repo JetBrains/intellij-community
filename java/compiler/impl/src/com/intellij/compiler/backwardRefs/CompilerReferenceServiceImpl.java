@@ -14,7 +14,7 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
-import com.intellij.util.messages.SimpleMessageBusConnection;
+import com.intellij.util.messages.MessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -38,7 +38,7 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
               }
             }));
 
-    SimpleMessageBusConnection connection = myProject.getMessageBus().simpleConnect();
+    MessageBusConnection connection = project.getMessageBus().connect(this);
     connection.subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
       @Override
       public void buildStarted(@NotNull Project project, @NotNull UUID sessionId, boolean isAutomake) {

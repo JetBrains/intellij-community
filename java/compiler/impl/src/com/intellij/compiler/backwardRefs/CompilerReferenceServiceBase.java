@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -139,8 +138,6 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
         }
       });
     }
-
-    Disposer.register(this, () -> closeReaderIfNeeded(IndexCloseReason.SHUTDOWN));
   }
 
   @Override
@@ -672,7 +669,9 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
   }
 
   @Override
-  public void dispose() { }
+  public void dispose() {
+    closeReaderIfNeeded(IndexCloseReason.SHUTDOWN);
+  }
 
   protected @Nullable <T> T onException(@NotNull Exception e, @NotNull String actionName) {
     if (e instanceof ControlFlowException) {
