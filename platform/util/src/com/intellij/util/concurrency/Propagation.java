@@ -8,6 +8,7 @@ import com.intellij.openapi.progress.CancellationCallable;
 import com.intellij.openapi.progress.CancellationFutureTask;
 import com.intellij.openapi.progress.CancellationRunnable;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.util.concurrency.SchedulingWrapper.MyScheduledFutureTask;
 import kotlinx.coroutines.CompletableDeferred;
 import kotlinx.coroutines.CompletableJob;
 import kotlinx.coroutines.Job;
@@ -56,6 +57,23 @@ final class Propagation {
     }
   }
 
+  static <V> @NotNull MyScheduledFutureTask<V> handleScheduledFutureTask(
+    @NotNull SchedulingWrapper wrapper,
+    @NotNull Callable<V> callable,
+    long ns
+  ) {
+    if (propagateCancellation()) {
+      //noinspection TestOnlyProblems
+      Job currentJob = Cancellation.currentJob();
+      CompletableDeferred<V> childDeferred = CompletableDeferred(currentJob);
+      CancellationCallable<V> cancellationCallable = new CancellationCallable<>(childDeferred, callable);
+      return wrapper.new CancellationScheduledFutureTask<>(childDeferred, handleContext(cancellationCallable), ns);
+    }
+    else {
+      return wrapper.new MyScheduledFutureTask<>(handleContext(callable), ns);
+    }
+  }
+
   private static @NotNull Runnable handleContext(@NotNull Runnable runnable) {
     if (propagateThreadContext()) {
       return new ContextRunnable(runnable);
@@ -65,7 +83,7 @@ final class Propagation {
     }
   }
 
-  static <V> @NotNull Callable<V> handleContext(@NotNull Callable<V> callable) {
+  private static <V> @NotNull Callable<V> handleContext(@NotNull Callable<V> callable) {
     if (propagateThreadContext()) {
       return new ContextCallable<>(callable);
     }

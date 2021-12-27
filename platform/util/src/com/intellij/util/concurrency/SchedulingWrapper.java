@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.util.IncorrectOperationException;
+import kotlinx.coroutines.Job;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -147,7 +148,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
     /**
      * Creates a one-shot action with given nanoTime-based trigger time.
      */
-    private MyScheduledFutureTask(@NotNull Callable<V> callable, long ns) {
+    MyScheduledFutureTask(@NotNull Callable<V> callable, long ns) {
       super(callable);
       time = ns;
       period = 0;
@@ -244,6 +245,23 @@ class SchedulingWrapper implements ScheduledExecutorService {
     }
   }
 
+  final class CancellationScheduledFutureTask<V> extends MyScheduledFutureTask<V> {
+
+    private final @NotNull Job myJob;
+
+    CancellationScheduledFutureTask(@NotNull Job job, @NotNull Callable<V> callable, long ns) {
+      super(callable, ns);
+      myJob = job;
+    }
+
+    @Override
+    public boolean cancel(boolean mayInterruptIfRunning) {
+      boolean result = super.cancel(mayInterruptIfRunning);
+      myJob.cancel(null);
+      return result;
+    }
+  }
+
   void futureDone(@NotNull Future<?> task) {
 
   }
@@ -303,10 +321,10 @@ class SchedulingWrapper implements ScheduledExecutorService {
   }
 
   private <V> @NotNull MyScheduledFutureTask<V> createTask(@NotNull Callable<V> callable, long ns) {
-    if (propagateContextOrCancellation()) {
-      callable = Propagation.handleContext(callable);
+    if (!propagateContextOrCancellation()) {
+      return new MyScheduledFutureTask<>(callable, ns);
     }
-    return new MyScheduledFutureTask<>(callable, ns);
+    return Propagation.handleScheduledFutureTask(this, callable, ns);
   }
 
   @NotNull

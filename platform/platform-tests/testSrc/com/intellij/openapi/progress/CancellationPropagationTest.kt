@@ -12,14 +12,13 @@ import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
-import java.util.concurrent.Callable
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Future
+import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicReference
 
 class CancellationPropagationTest {
@@ -66,7 +65,7 @@ class CancellationPropagationTest {
 
   @Test
   fun appScheduledExecutorService(): Unit = timeoutRunBlocking {
-    doExecutorServiceTest(scheduledService)
+    doScheduledExecutorServiceTest(scheduledService)
     doTestInvokeAnyCancelsRunningCallables(scheduledService)
   }
 
@@ -84,13 +83,13 @@ class CancellationPropagationTest {
 
   @Test
   fun boundedScheduledExecutorService(): Unit = timeoutRunBlocking {
-    doExecutorServiceTest(AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled", 1))
+    doScheduledExecutorServiceTest(AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled", 1))
   }
 
   @Test
   fun boundedScheduledExecutorService2(): Unit = timeoutRunBlocking {
     val bounded2 = AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled-2", 2)
-    doExecutorServiceTest(bounded2)
+    doScheduledExecutorServiceTest(bounded2)
     doTestInvokeAnyCancelsRunningCallables(bounded2)
   }
 
@@ -129,6 +128,16 @@ class CancellationPropagationTest {
     }
     doTestJobIsCancelledByFuture {
       service.submit(it.callable())
+    }
+  }
+
+  private suspend fun doScheduledExecutorServiceTest(service: ScheduledExecutorService) {
+    doExecutorServiceTest(service)
+    doTest {
+      service.schedule(it.runnable(), 10, TimeUnit.MILLISECONDS)
+    }
+    doTest {
+      service.schedule(it.callable(), 10, TimeUnit.MILLISECONDS)
     }
   }
 
