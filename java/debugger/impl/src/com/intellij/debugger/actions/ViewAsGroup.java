@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.actions;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -146,6 +146,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware, UpdateInBackg
 
   @NotNull
   private static CompletableFuture<List<NodeRenderer>> getApplicableRenderers(List<JavaValue> values, Project project) {
+    List<NodeRenderer> allRenderers = NodeRendererSettings.getInstance().getAllRenderers(project);
     List<CompletableFuture<List<NodeRenderer>>> futures = new ArrayList<>(values.size());
     for (JavaValue value : values) {
       if (value instanceof JavaReferringObjectsValue) { // disable for any referrers at all
@@ -155,8 +156,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware, UpdateInBackg
       if (!valueDescriptor.isValueValid()) {
         return CompletableFuture.completedFuture(Collections.emptyList());
       }
-      futures.add(DebuggerUtilsImpl.getApplicableRenderers(NodeRendererSettings.getInstance().getAllRenderers(project),
-                                                            valueDescriptor.getType()));
+      futures.add(DebuggerUtilsImpl.getApplicableRenderers(allRenderers, valueDescriptor.getType()));
     }
 
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).thenApply(__ -> {
