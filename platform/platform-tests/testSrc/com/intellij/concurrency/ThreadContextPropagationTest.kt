@@ -11,6 +11,8 @@ import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.concurrent.ExecutorService
+import java.util.concurrent.ScheduledExecutorService
+import java.util.concurrent.TimeUnit
 
 class ThreadContextPropagationTest {
 
@@ -46,7 +48,7 @@ class ThreadContextPropagationTest {
 
   @Test
   fun appScheduledExecutorService(): Unit = timeoutRunBlocking {
-    doExecutorServiceTest(AppExecutorUtil.getAppScheduledExecutorService())
+    doScheduledExecutorServiceTest(AppExecutorUtil.getAppScheduledExecutorService())
   }
 
   @Test
@@ -56,7 +58,7 @@ class ThreadContextPropagationTest {
 
   @Test
   fun boundedScheduledExecutorService(): Unit = timeoutRunBlocking {
-    doExecutorServiceTest(AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled", 1))
+    doScheduledExecutorServiceTest(AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled", 1))
   }
 
   private suspend fun doTest(submit: (() -> Unit) -> Unit) {
@@ -88,6 +90,16 @@ class ThreadContextPropagationTest {
     }
     doTest {
       service.invokeAll(listOf(it.callable()))
+    }
+  }
+
+  private suspend fun doScheduledExecutorServiceTest(service: ScheduledExecutorService) {
+    doExecutorServiceTest(service)
+    doTest {
+      service.schedule(it.runnable(), 10, TimeUnit.MILLISECONDS)
+    }
+    doTest {
+      service.schedule(it.callable(), 10, TimeUnit.MILLISECONDS)
     }
   }
 }

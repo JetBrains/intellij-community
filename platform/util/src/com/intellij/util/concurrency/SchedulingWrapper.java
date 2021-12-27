@@ -12,6 +12,8 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 
+import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
+
 /**
  * Makes a {@link ScheduledExecutorService} from the supplied plain, non-scheduling {@link ExecutorService} by awaiting scheduled tasks in a separate thread
  * and then passing them for execution to the {@code backendExecutorService}.
@@ -301,6 +303,9 @@ class SchedulingWrapper implements ScheduledExecutorService {
   }
 
   private <V> @NotNull MyScheduledFutureTask<V> createTask(@NotNull Callable<V> callable, long ns) {
+    if (propagateContextOrCancellation()) {
+      callable = Propagation.handleContext(callable);
+    }
     return new MyScheduledFutureTask<>(callable, ns);
   }
 

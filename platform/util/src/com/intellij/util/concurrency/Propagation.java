@@ -65,7 +65,7 @@ final class Propagation {
     }
   }
 
-  private static <V> @NotNull Callable<V> handleContext(@NotNull Callable<V> callable) {
+  static <V> @NotNull Callable<V> handleContext(@NotNull Callable<V> callable) {
     if (propagateThreadContext()) {
       return new ContextCallable<>(callable);
     }

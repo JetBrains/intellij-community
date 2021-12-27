@@ -233,6 +233,7 @@ public final class AppScheduledExecutorService extends SchedulingWrapper {
       // Known implementations:
       // - CancellationFutureTask is created in newTaskFor;
       // - java.util.concurrent.ExecutorCompletionService$QueueingFuture (wraps CancellationFutureTask) is created in invokeAny
+      // - com.intellij.util.concurrency.SchedulingWrapper$MyScheduledFutureTask;
       return command;
     }
     if (!propagateContextOrCancellation()) {
