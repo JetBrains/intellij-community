@@ -1740,6 +1740,34 @@ public abstract class QuickFixMultiFileTestGenerated extends AbstractQuickFixMul
     }
 
     @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/quickfix/makeUpperBoundNonNullable")
+    public static class MakeUpperBoundNonNullable extends AbstractQuickFixMultiFileTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTestWithExtraFile, this, testDataFilePath);
+        }
+
+        @TestMetadata("withJavaError.before.Main.kt")
+        public void testWithJavaError() throws Exception {
+            runTest("testData/quickfix/makeUpperBoundNonNullable/withJavaError.before.Main.kt");
+        }
+
+        @TestMetadata("withJavaOverrideError.before.Main.kt")
+        public void testWithJavaOverrideError() throws Exception {
+            runTest("testData/quickfix/makeUpperBoundNonNullable/withJavaOverrideError.before.Main.kt");
+        }
+
+        @TestMetadata("withJavaOverrideWarning.before.Main.kt")
+        public void testWithJavaOverrideWarning() throws Exception {
+            runTest("testData/quickfix/makeUpperBoundNonNullable/withJavaOverrideWarning.before.Main.kt");
+        }
+
+        @TestMetadata("withJavaWarning.before.Main.kt")
+        public void testWithJavaWarning() throws Exception {
+            runTest("testData/quickfix/makeUpperBoundNonNullable/withJavaWarning.before.Main.kt");
+        }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/memberVisibilityCanBePrivate")
     public static class MemberVisibilityCanBePrivate extends AbstractQuickFixMultiFileTest {
         private void runTest(String testDataFilePath) throws Exception {
