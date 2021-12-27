@@ -494,6 +494,17 @@ public final class HtmlUtil {
     }
     while (true);
 
+    if (content.length() > charPrefix + 200) {
+      String name = tryFetchCharsetFromFileContent(content.subSequence(0, charPrefix + 200));
+      if (name != null) {
+        return CharsetToolkit.forName(name);
+      }
+    }
+    String name = tryFetchCharsetFromFileContent(content);
+    return CharsetToolkit.forName(name);
+  }
+
+  private static String tryFetchCharsetFromFileContent(@NotNull CharSequence content) {
     final Ref<String> charsetNameRef = new Ref<>();
     try {
       new HtmlBuilderDriver(content).build(new XmlBuilder() {
@@ -589,8 +600,7 @@ public final class HtmlUtil {
       // some weird things can happen, like unbalanaced tree
     }
 
-    String name = charsetNameRef.get();
-    return CharsetToolkit.forName(name);
+    return charsetNameRef.get();
   }
 
   public static boolean isTagWithoutAttributes(@NonNls String tagName) {
