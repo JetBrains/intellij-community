@@ -3,10 +3,7 @@ package com.intellij.vcs;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -195,6 +192,7 @@ public class CompareWithLocalDialog {
     private MyGetVersionAction() {
       super(VcsBundle.messagePointer("action.name.get.file.content.from.repository"),
             VcsBundle.messagePointer("action.description.get.file.content.from.repository"), AllIcons.Actions.Download);
+      copyShortcutFrom(ActionManager.getInstance().getAction("Vcs.GetVersion"));
     }
 
     @Override
@@ -261,6 +259,7 @@ public class CompareWithLocalDialog {
       super(VcsBundle.messagePointer("action.name.refresh.compare.with.local.panel"),
             VcsBundle.messagePointer("action.description.refresh.compare.with.local.panel"),
             AllIcons.Actions.Refresh);
+      copyShortcutFrom(ActionManager.getInstance().getAction(IdeActions.ACTION_REFRESH));
     }
 
     @Override
