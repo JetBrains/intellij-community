@@ -30,7 +30,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
 
   open fun setupSwitcherUi(builder: Row) {
     with(builder) {
-      val segmentedButton = segmentedButton(steps.keys, { it })
+      val segmentedButton = segmentedButton(steps.keys) { it }
         .bind(stepProperty)
       stepsProperty.afterChange {
         segmentedButton.options(steps.keys)
