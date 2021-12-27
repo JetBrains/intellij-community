@@ -22,10 +22,10 @@ public abstract class ManagingFS implements FileSystemInterface {
   }
 
   @Nullable
-  public abstract DataInputStream readAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att);
+  public abstract AttributeInputStream readAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att);
 
   @NotNull
-  public abstract DataOutputStream writeAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att);
+  public abstract AttributeOutputStream writeAttribute(@NotNull VirtualFile file, @NotNull FileAttribute att);
 
   /**
    * @return a number that's incremented every time something changes for the file: name, size, flags, content.

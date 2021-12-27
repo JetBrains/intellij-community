@@ -12,6 +12,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.FlushingDaemon;
 import com.intellij.util.hash.ContentHashEnumerator;
 import com.intellij.util.io.PersistentStringEnumerator;
+import com.intellij.util.io.SimpleStringPersistentEnumerator;
 import com.intellij.util.io.storage.CapacityAllocationPolicy;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.io.storage.RefCountingContentStorage;
@@ -47,6 +48,7 @@ final class PersistentFSConnection {
   @Nullable
   private final ContentHashEnumerator myContentHashesEnumerator;
   private final PersistentStringEnumerator myNames;
+  private final @NotNull SimpleStringPersistentEnumerator myEnumeratedAttributes;
 
   private final AtomicInteger myLocalModificationCount;
   private volatile boolean myDirty;
@@ -65,6 +67,7 @@ final class PersistentFSConnection {
                          @NotNull Storage attributes,
                          @NotNull RefCountingContentStorage contents,
                          @Nullable ContentHashEnumerator contentHashesEnumerator,
+                         @NotNull SimpleStringPersistentEnumerator enumeratedAttributes,
                          @NotNull IntList freeRecords,
                          AtomicInteger localModificationCount,
                          boolean markDirty) throws IOException {
@@ -76,6 +79,8 @@ final class PersistentFSConnection {
     myPersistentFSPaths = paths;
     myFreeRecords = freeRecords;
     myLocalModificationCount = localModificationCount;
+    myEnumeratedAttributes = enumeratedAttributes;
+
     if (markDirty) {
       markDirty();
     }
@@ -97,6 +102,11 @@ final class PersistentFSConnection {
     else {
       myFlushingFuture = null;
     }
+  }
+
+  @NotNull("Vfs must be initialized")
+  SimpleStringPersistentEnumerator getEnumeratedAttributes() {
+    return myEnumeratedAttributes;
   }
 
   @NotNull("Content hash enumerator must be initialized")
@@ -274,7 +284,7 @@ final class PersistentFSConnection {
 
   int getAttributeId(@NotNull String attId) throws IOException {
     // do not invoke FSRecords.requestVfsRebuild under read lock to avoid deadlock
-    return myAttributesList.getIdRaw(attId, false) + FIRST_ATTR_ID_OFFSET;
+    return myAttributesList.getIdRaw(attId) + FIRST_ATTR_ID_OFFSET;
   }
 
   @Contract("_->fail")

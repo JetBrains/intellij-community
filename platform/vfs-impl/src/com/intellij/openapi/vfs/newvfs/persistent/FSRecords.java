@@ -14,6 +14,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.impl.ZipHandlerBase;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
+import com.intellij.openapi.vfs.newvfs.AttributeInputStream;
+import com.intellij.openapi.vfs.newvfs.AttributeOutputStream;
 import com.intellij.openapi.vfs.newvfs.FileAttribute;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.events.ChildInfo;
@@ -677,9 +679,9 @@ public final class FSRecords {
   }
 
   @Nullable
-  public static DataInputStream readAttributeWithLock(int fileId, @NotNull FileAttribute att) {
+  public static AttributeInputStream readAttributeWithLock(int fileId, @NotNull FileAttribute att) {
     try {
-      try (DataInputStream stream = readAttribute(fileId, att)) {
+      try (AttributeInputStream stream = readAttribute(fileId, att)) {
         if (stream != null && att.isVersioned()) {
           try {
             int actualVersion = DataInputOutputUtil.readINT(stream);
@@ -702,7 +704,7 @@ public final class FSRecords {
 
   // must be called under r or w lock
   @Nullable
-  private static DataInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
+  private static AttributeInputStream readAttribute(int fileId, @NotNull FileAttribute attribute) throws IOException {
     return ourAttributeAccessor.readAttribute(fileId, attribute);
   }
 
@@ -749,7 +751,7 @@ public final class FSRecords {
   }
 
   @NotNull
-  public static DataOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
+  public static AttributeOutputStream writeAttribute(final int fileId, @NotNull FileAttribute att) {
     return ourAttributeAccessor.writeAttribute(fileId, att);
   }
 
