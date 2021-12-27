@@ -48,20 +48,23 @@ class SubpackagesIndexService(private val project: Project) {
         fun hasSubpackages(fqName: FqName, scope: GlobalSearchScope): Boolean {
             val fqNames = fqNameByPrefix[fqName]
 
-            if (fqNames.isKnownNotContains(fqName, scope)) {
-                return false
+            val knownNotContains = fqNames.isKnownNotContains(fqName, scope)
+            if (knownNotContains) {
+                //return false
             }
 
-            return fqNames.any { packageWithFilesFqName ->
+            val any = fqNames.any { packageWithFilesFqName ->
                 ProgressManager.checkCanceled()
                 PackageIndexUtil.containsFilesWithExactPackage(packageWithFilesFqName, scope, project)
             }
+            return any
         }
 
-        private fun Collection<FqName>.isKnownNotContains(fqName: FqName, scope: GlobalSearchScope): Boolean =
-            isEmpty() // || // TODO: [VD] temporary disable optimization
+        private fun Collection<FqName>.isKnownNotContains(fqName: FqName, scope: GlobalSearchScope): Boolean {
+            return !fqName.isRoot && (isEmpty() ||
                     // fast check is reasonable when fqNames has more than 1 element
-                    // size > 1 && !PackageIndexUtil.containsFilesWithPartialPackage(fqName, scope, project)
+                    size > 1 && !PackageIndexUtil.containsFilesWithPartialPackage(fqName, scope, project))
+        }
 
         fun packageExists(fqName: FqName): Boolean = fqName in allPackageFqNames || fqNameByPrefix.containsKey(fqName)
 
