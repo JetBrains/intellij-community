@@ -297,8 +297,11 @@ class SchedulingWrapper implements ScheduledExecutorService {
   @NotNull
   @Override
   public <V> ScheduledFuture<V> schedule(@NotNull Callable<V> callable, long delay, @NotNull TimeUnit unit) {
-    MyScheduledFutureTask<V> t = new MyScheduledFutureTask<>(callable, triggerTime(delayQueue, delay, unit));
-    return delayedExecute(t);
+    return delayedExecute(createTask(callable, triggerTime(delayQueue, delay, unit)));
+  }
+
+  private <V> @NotNull MyScheduledFutureTask<V> createTask(@NotNull Callable<V> callable, long ns) {
+    return new MyScheduledFutureTask<>(callable, ns);
   }
 
   @NotNull
