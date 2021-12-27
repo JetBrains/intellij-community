@@ -46,6 +46,28 @@ object PackageIndexUtil {
                 subpackagesIndex.hasSubpackages(packageFqName, searchScope)
     }
 
+    /**
+     * Fast check if a [packageFqName] available for specified [searchScope].
+     * It uses only some part of [packageFqName] and therefore could be a false-positive results.
+     *
+     * But never provides a false-negative results
+     * therefore it could be used to define that [packageFqName] is NOT in a [searchScope].
+     */
+    @JvmStatic
+    fun containsFilesWithPartialPackage(
+        packageFqName: FqName,
+        searchScope: GlobalSearchScope,
+        project: Project
+    ): Boolean {
+        val files = StubIndex.getInstance().getContainingFiles(
+            KotlinPartialPackageNamesIndex.getInstance().key,
+            KotlinPartialPackageNamesIndex.toPartialFqName(packageFqName).asString(),
+            project,
+            searchScope
+        )
+        return files.any { it in searchScope }
+    }
+
     @JvmStatic
     fun containsFilesWithExactPackage(
         packageFqName: FqName,
