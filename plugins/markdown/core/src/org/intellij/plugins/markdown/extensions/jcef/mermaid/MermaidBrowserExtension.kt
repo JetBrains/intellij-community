@@ -2,6 +2,7 @@
 package org.intellij.plugins.markdown.extensions.jcef.mermaid
 
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import org.intellij.plugins.markdown.MarkdownBundle
 import org.intellij.plugins.markdown.extensions.*
 import org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager.Companion.obtainExternalFilesDirectoryPath
@@ -100,12 +101,10 @@ class MermaidBrowserExtension(panel: MarkdownHtmlPanel, private val directory: F
   companion object {
     private const val MAIN_SCRIPT_FILENAME = "mermaid/mermaid.js"
     private const val THEME_DEFINITION_FILENAME = "mermaid/themeDefinition.js"
-    private const val DOWNLOAD_URL = "https://unpkg.com/mermaid@8.13.3/dist/mermaid.js"
-    private const val CHECKSUM = "5a958b28bdd744b981422470fd160107"
     private const val storeFileEventName = "storeMermaidFile"
 
     private val ownFiles = listOf(MAIN_SCRIPT_FILENAME)
-    private val downloadableFiles = listOf(FileEntry(MAIN_SCRIPT_FILENAME, DOWNLOAD_URL))
+    private val downloadableFiles = listOf(FileEntry(MAIN_SCRIPT_FILENAME) { Registry.stringValue("markdown.mermaid.download.link") })
 
     private val generatingProvider
       get() = MarkdownExtensionsUtil.findCodeFenceGeneratingProvider<MermaidCodeGeneratingProviderExtension>()
