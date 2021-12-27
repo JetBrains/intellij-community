@@ -22,7 +22,7 @@ import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 
 @RunWith(JUnit4::class)
-abstract class CodeFenceDownloadLineMarkersTestCase(createFakeFiles: Boolean): BasePlatformTestCase() {
+abstract class CodeFenceDownloadLineMarkersTest(createFakeFiles: Boolean): BasePlatformTestCase() {
   private val tempDirectory = TempDirectory()
 
   @Rule
@@ -49,9 +49,9 @@ abstract class CodeFenceDownloadLineMarkersTestCase(createFakeFiles: Boolean): B
     }
   }
 
-  class DownloadAvailable: CodeFenceDownloadLineMarkersTestCase(createFakeFiles = false)
+  class DownloadAvailable: CodeFenceDownloadLineMarkersTest(createFakeFiles = false)
 
-  class DownloadUnavailable: CodeFenceDownloadLineMarkersTestCase(createFakeFiles = true) {
+  class DownloadUnavailable: CodeFenceDownloadLineMarkersTest(createFakeFiles = true) {
     override fun doTest(expectedCount: Int, predicate: (LineMarkerInfo<*>) -> Boolean) {
       // Both extensions should be installed, so there should be no line markers at all
       super.doTest(0, predicate)
