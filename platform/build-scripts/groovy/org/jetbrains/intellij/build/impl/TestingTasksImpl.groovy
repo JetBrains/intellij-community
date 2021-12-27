@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
+import com.intellij.TestCaseLoader
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.util.io.FileUtil
@@ -363,6 +364,10 @@ class TestingTasksImpl extends TestingTasks {
     }
     else {
       context.messages.info("Starting ${(testGroups == null ? "all tests" : "test from groups '${testGroups}'")} from classpath of module '$mainModule'")
+    }
+    String numberOfBuckets = allSystemProperties[TestCaseLoader.TEST_RUNNERS_COUNT_FLAG]
+    if (numberOfBuckets != null) {
+      context.messages.info("Tests from bucket ${allSystemProperties[TestCaseLoader.TEST_RUNNER_INDEX_FLAG]} of $numberOfBuckets will be executed")
     }
     String runtime = runtimeExecutablePath()
     context.messages.info("Runtime: $runtime")
