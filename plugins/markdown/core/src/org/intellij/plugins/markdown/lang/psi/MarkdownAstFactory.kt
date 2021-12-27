@@ -10,8 +10,10 @@ import org.intellij.plugins.markdown.lang.MarkdownTokenTypes
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFence
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownCodeFenceContent
 import org.intellij.plugins.markdown.lang.psi.impl.MarkdownTableSeparatorRow
+import org.jetbrains.annotations.ApiStatus
 
-internal class MarkdownAstFactory: ASTFactory() {
+@ApiStatus.Internal
+class MarkdownAstFactory: ASTFactory() {
   override fun createComposite(type: IElementType): CompositeElement? {
     return when (type) {
       MarkdownElementTypes.CODE_FENCE -> MarkdownCodeFence(type)
