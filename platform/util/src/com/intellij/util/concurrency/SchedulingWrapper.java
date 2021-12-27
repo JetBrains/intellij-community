@@ -254,6 +254,11 @@ class SchedulingWrapper implements ScheduledExecutorService {
       myJob = job;
     }
 
+    CancellationScheduledFutureTask(@NotNull Job job, @NotNull Runnable r, long ns, long period) {
+      super(r, null, ns, period);
+      myJob = job;
+    }
+
     @Override
     public boolean cancel(boolean mayInterruptIfRunning) {
       boolean result = super.cancel(mayInterruptIfRunning);

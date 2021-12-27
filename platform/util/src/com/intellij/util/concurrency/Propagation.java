@@ -3,10 +3,7 @@ package com.intellij.util.concurrency;
 
 import com.intellij.concurrency.ContextCallable;
 import com.intellij.concurrency.ContextRunnable;
-import com.intellij.openapi.progress.Cancellation;
-import com.intellij.openapi.progress.CancellationCallable;
-import com.intellij.openapi.progress.CancellationFutureTask;
-import com.intellij.openapi.progress.CancellationRunnable;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.SchedulingWrapper.MyScheduledFutureTask;
 import kotlinx.coroutines.CompletableDeferred;
@@ -80,7 +77,16 @@ final class Propagation {
     long ns,
     long period
   ) {
-    return wrapper.new MyScheduledFutureTask<Void>(handleContext(runnable), null, ns, period);
+    if (propagateCancellation()) {
+      //noinspection TestOnlyProblems
+      Job currentJob = Cancellation.currentJob();
+      CompletableJob childJob = Job(currentJob);
+      PeriodicCancellationRunnable cancellationRunnable = new PeriodicCancellationRunnable(childJob, runnable);
+      return wrapper.new CancellationScheduledFutureTask<>(childJob, handleContext(cancellationRunnable), ns, period);
+    }
+    else {
+      return wrapper.new MyScheduledFutureTask<Void>(handleContext(runnable), null, ns, period);
+    }
   }
 
   private static @NotNull Runnable handleContext(@NotNull Runnable runnable) {

@@ -13,12 +13,13 @@ import com.intellij.util.getValue
 import com.intellij.util.setValue
 import kotlinx.coroutines.*
 import kotlinx.coroutines.CancellationException
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertSame
+import org.junit.jupiter.api.Assertions.*
 import org.junit.jupiter.api.Test
+import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
 class CancellationPropagationTest {
@@ -139,6 +140,10 @@ class CancellationPropagationTest {
     doTest {
       service.schedule(it.callable(), 10, TimeUnit.MILLISECONDS)
     }
+    doTestJobIsCancelledByFuture {
+      service.scheduleWithFixedDelay(it.runnable(), 5, 10, TimeUnit.MILLISECONDS)
+    }
+    doTestScheduleWithFixedDelay(service)
   }
 
   private suspend fun doTestJobIsCancelledByFuture(submit: (() -> Unit) -> Future<*>) {
@@ -189,6 +194,47 @@ class CancellationPropagationTest {
     started.timeoutWaitUp()
     callable1CanFinish.up()
     assertEquals(42, deferred.await())
+  }
+
+  private suspend fun doTestScheduleWithFixedDelay(service: ScheduledExecutorService) {
+    val throwable = object : Throwable() {}
+    val rootJob = withRootJob { currentJob ->
+      val counter = AtomicInteger()
+      var fixedDelayJob by AtomicReference<Job>()
+      val runnable = Runnable {
+        when (counter.getAndIncrement()) {
+          0 -> {
+            fixedDelayJob = assertCurrentJobIsChildOf(parent = currentJob)
+            assertDoesNotThrow {
+              Cancellation.checkCancelled()
+            }
+          }
+          1 -> {
+            assertSame(fixedDelayJob, Cancellation.currentJob()) // job is the same
+            assertDoesNotThrow {
+              Cancellation.checkCancelled()
+            }
+          }
+          2 -> {
+            assertSame(fixedDelayJob, Cancellation.currentJob()) // job is still the same
+            assertDoesNotThrow {
+              Cancellation.checkCancelled()
+            }
+            throw throwable
+          }
+          else -> {
+            fail()
+          }
+        }
+      }
+      val future = service.scheduleWithFixedDelay(runnable, 10, 10, TimeUnit.NANOSECONDS)
+      waitAssertCompletedWith(future, throwable::class)
+    }
+    rootJob.join()
+    val ce = assertThrows<CancellationException> {
+      rootJob.ensureActive()
+    }
+    assertSame(throwable, ce.cause)
   }
 
   @Test
