@@ -363,7 +363,7 @@ class TestingTasksImpl extends TestingTasks {
       context.messages.info("Running tests from ${mainModule} matched by '${options.batchTestIncludes}' pattern.")
     }
     else {
-      context.messages.info("Starting ${(testGroups == null ? "all tests" : "test from groups '${testGroups}'")} from classpath of module '$mainModule'")
+      context.messages.info("Starting ${(testGroups == null ? "all tests" : "tests from groups '${testGroups}'")} from classpath of module '$mainModule'")
     }
     String numberOfBuckets = allSystemProperties[TestCaseLoader.TEST_RUNNERS_COUNT_FLAG]
     if (numberOfBuckets != null) {
