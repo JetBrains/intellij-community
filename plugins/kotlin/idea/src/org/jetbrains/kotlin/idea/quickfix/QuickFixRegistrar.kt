@@ -689,5 +689,10 @@ class QuickFixRegistrar : QuickFixContributor {
         JAVA_CLASS_ON_COMPANION.registerFactory(JavaClassOnCompanionFixes)
 
         ILLEGAL_ESCAPE.registerFactory(ConvertIllegalEscapeToUnicodeEscapeFix)
+
+        NULLABLE_TYPE_PARAMETER_AGAINST_NOT_NULL_TYPE_PARAMETER.registerFactory(MakeUpperBoundNonNullableFix)
+        WRONG_NULLABILITY_FOR_JAVA_OVERRIDE.registerFactory(MakeUpperBoundNonNullableFix)
+        TYPE_MISMATCH.registerFactory(MakeUpperBoundNonNullableFix)
+        NOTHING_TO_OVERRIDE.registerFactory(MakeUpperBoundNonNullableFix)
     }
 }
