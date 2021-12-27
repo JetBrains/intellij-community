@@ -22,7 +22,7 @@ object KotlinTargetBuilder : KotlinMultiplatformComponentBuilder<KotlinTargetRef
         val name = origin.targetName
         val platformId = origin.platformType ?: return null
         val platform = KotlinPlatform.byId(platformId) ?: return null
-        val disambiguationClassifier = origin.disambiguationClassifier ?: return null
+        val disambiguationClassifier = origin.disambiguationClassifier
         val targetPresetName: String? = origin.presetName
 
         val compilations = origin.compilations?.mapNotNull {
