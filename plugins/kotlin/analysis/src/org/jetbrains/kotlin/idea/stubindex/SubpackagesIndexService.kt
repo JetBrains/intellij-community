@@ -59,9 +59,9 @@ class SubpackagesIndexService(private val project: Project) {
         }
 
         private fun Collection<FqName>.isKnownNotContains(fqName: FqName, scope: GlobalSearchScope): Boolean =
-            isEmpty() ||
+            isEmpty() // || // TODO: [VD] temporary disable optimization
                     // fast check is reasonable when fqNames has more than 1 element
-                    size > 1 && !PackageIndexUtil.containsFilesWithPartialPackage(fqName, scope, project)
+                    // size > 1 && !PackageIndexUtil.containsFilesWithPartialPackage(fqName, scope, project)
 
         fun packageExists(fqName: FqName): Boolean = fqName in allPackageFqNames || fqNameByPrefix.containsKey(fqName)
 

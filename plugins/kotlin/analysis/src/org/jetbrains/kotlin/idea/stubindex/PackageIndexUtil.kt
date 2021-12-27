@@ -51,7 +51,7 @@ object PackageIndexUtil {
      * It uses only some part of [packageFqName] and therefore could be a false-positive results.
      *
      * But never provides a false-negative results
-     * therefore it could be used to define that [fqName] is NOT in a [searchScope].
+     * therefore it could be used to define that [packageFqName] is NOT in a [searchScope].
      */
     @JvmStatic
     fun containsFilesWithPartialPackage(
