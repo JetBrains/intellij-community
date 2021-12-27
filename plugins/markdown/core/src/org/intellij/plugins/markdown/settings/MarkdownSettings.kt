@@ -128,6 +128,7 @@ class MarkdownSettings(val project: Project): SimplePersistentStateComponent<Mar
     fun settingsChanged(settings: MarkdownSettings) = Unit
 
     companion object {
+      @Topic.ProjectLevel
       @JvmField
       val TOPIC = Topic.create("MarkdownSettingsChanged", ChangeListener::class.java)
     }
