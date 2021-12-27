@@ -10,7 +10,6 @@ import org.jetbrains.uast.UFile
 import org.jetbrains.uast.test.common.kotlin.UastResolveApiTestBase
 import org.jetbrains.uast.test.kotlin.env.AbstractFE1UastTest
 import org.junit.runner.RunWith
-import java.io.File
 
 @RunWith(JUnit3RunnerWithInners::class)
 class FE1UastResolveApiTest : AbstractFE1UastTest() {
@@ -20,7 +19,6 @@ class FE1UastResolveApiTest : AbstractFE1UastTest() {
 
     @TestMetadata("uast-kotlin-fir/testData/declaration")
     @TestDataPath("/")
-    @RunWith(JUnit3RunnerWithInners::class)
     class Declaration : AbstractFE1UastTest(), UastResolveApiTestBase {
         override var testDataDir = KotlinRoot.DIR.resolve("uast/uast-kotlin-fir/testData/declaration")
 
