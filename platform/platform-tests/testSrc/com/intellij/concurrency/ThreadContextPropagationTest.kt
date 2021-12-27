@@ -69,6 +69,20 @@ class ThreadContextPropagationTest {
     doExecutorServiceTest(AppExecutorUtil.createBoundedScheduledExecutorService("Bounded-Scheduled", 1))
   }
 
+  private suspend fun doTest(submit: (() -> Unit) -> Unit) {
+    return suspendCancellableCoroutine { continuation ->
+      val element = TestElement("element")
+      withThreadContext(element) {                                       // install context in calling thread
+        submit {                                                         // switch to another thread
+          val result: Result<Unit> = runCatching {
+            assertSame(element, currentThreadContext()[TestElementKey])  // the same element must be present in another thread context
+          }
+          continuation.resumeWith(result)
+        }
+      }
+    }
+  }
+
   private suspend fun doExecutorServiceTest(service: ExecutorService) {
     doTest {
       service.execute(it.runnable())
@@ -84,20 +98,6 @@ class ThreadContextPropagationTest {
     }
     doTest {
       service.invokeAll(listOf(it.callable()))
-    }
-  }
-
-  private suspend fun doTest(submit: (() -> Unit) -> Unit) {
-    return suspendCancellableCoroutine { continuation ->
-      val element = TestElement("element")
-      withThreadContext(element) {                                       // install context in calling thread
-        submit {                                                         // switch to another thread
-          val result: Result<Unit> = runCatching {
-            assertSame(element, currentThreadContext()[TestElementKey])  // the same element must be present in another thread context
-          }
-          continuation.resumeWith(result)
-        }
-      }
     }
   }
 }
