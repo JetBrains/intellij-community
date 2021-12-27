@@ -685,5 +685,10 @@ class QuickFixRegistrar : QuickFixContributor {
 
         SEALED_INHERITOR_IN_DIFFERENT_PACKAGE.registerFactory(MoveToSealedMatchingPackageFix)
         SEALED_INHERITOR_IN_DIFFERENT_MODULE.registerFactory(MoveToSealedMatchingPackageFix)
+
+        NULLABLE_TYPE_PARAMETER_AGAINST_NOT_NULL_TYPE_PARAMETER.registerFactory(MakeUpperBoundNonNullableFix)
+        WRONG_NULLABILITY_FOR_JAVA_OVERRIDE.registerFactory(MakeUpperBoundNonNullableFix)
+        TYPE_MISMATCH.registerFactory(MakeUpperBoundNonNullableFix)
+        NOTHING_TO_OVERRIDE.registerFactory(MakeUpperBoundNonNullableFix)
     }
 }
