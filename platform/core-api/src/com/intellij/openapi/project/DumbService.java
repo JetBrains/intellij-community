@@ -343,47 +343,50 @@ public abstract class DumbService {
   public abstract void setAlternativeResolveEnabled(boolean enabled);
 
   /**
-   * Invokes the given runnable with alternative resolve set to true.
+   * Invokes the given runnable with alternative resolve set to true if dumb mode is enabled.
    *
    * @see #setAlternativeResolveEnabled(boolean)
    */
   public void withAlternativeResolveEnabled(@NotNull Runnable runnable) {
-    setAlternativeResolveEnabled(true);
+    boolean isDumb = isDumb();
+    if (isDumb) setAlternativeResolveEnabled(true);
     try {
       runnable.run();
     }
     finally {
-      setAlternativeResolveEnabled(false);
+      if (isDumb) setAlternativeResolveEnabled(false);
     }
   }
 
   /**
-   * Invokes the given computable with alternative resolve set to true.
+   * Invokes the given computable with alternative resolve set to true if dumb mode is enabled.
    *
    * @see #setAlternativeResolveEnabled(boolean)
    */
   public <T, E extends Throwable> T computeWithAlternativeResolveEnabled(@NotNull ThrowableComputable<T, E> runnable) throws E {
-    setAlternativeResolveEnabled(true);
+    boolean isDumb = isDumb();
+    if (isDumb) setAlternativeResolveEnabled(true);
     try {
       return runnable.compute();
     }
     finally {
-      setAlternativeResolveEnabled(false);
+      if (isDumb) setAlternativeResolveEnabled(false);
     }
   }
 
   /**
-   * Invokes the given runnable with alternative resolve set to true.
+   * Invokes the given runnable with alternative resolve set to true if dumb mode is enabled.
    *
    * @see #setAlternativeResolveEnabled(boolean)
    */
   public <E extends Throwable> void runWithAlternativeResolveEnabled(@NotNull ThrowableRunnable<E> runnable) throws E {
-    setAlternativeResolveEnabled(true);
+    boolean isDumb = isDumb();
+    if (isDumb) setAlternativeResolveEnabled(true);
     try {
       runnable.run();
     }
     finally {
-      setAlternativeResolveEnabled(false);
+      if (isDumb) setAlternativeResolveEnabled(false);
     }
   }
 
