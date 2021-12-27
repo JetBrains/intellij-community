@@ -189,7 +189,18 @@ public final class SwitchHelper {
       if (selectorQualifier instanceof AssignmentExprent) {
         selectorQualifier = ((AssignmentExprent)selectorQualifier).getLeft();
       }
-      if (!invocationCondition.getInstance().equals(selectorQualifier)) return null;
+      if (!invocationCondition.getInstance().equals(selectorQualifier)) {
+        // Ecj inlines compile constants, so we try to find a temp variable that is assigned to the same const value.
+        // It should be in the first basic block.
+        @NotNull Exprent tempSelectorQualifier = selectorQualifier;
+        var tempVarAssignment = ifStatement.getParent().getFirst().getExprents().stream()
+          .filter(exprent -> exprent instanceof AssignmentExprent)
+          .map(exprent -> (AssignmentExprent)exprent)
+          .filter(exprent -> exprent.getRight().equals(tempSelectorQualifier))
+          .filter(exprent -> exprent.getLeft().equals(invocationCondition.getInstance()))
+          .findFirst();
+        if (tempVarAssignment.isEmpty()) return null;
+      }
       Exprent equalsParameter = invocationCondition.getParameters().get(0);
       if (equalsParameter.type != Exprent.EXPRENT_CONST) return null;
       Object caseLabelValue = ((ConstExprent)equalsParameter).getValue();
