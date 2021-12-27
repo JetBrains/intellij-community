@@ -74,6 +74,15 @@ final class Propagation {
     }
   }
 
+  static @NotNull MyScheduledFutureTask<?> handlePeriodicScheduledFutureTask(
+    @NotNull SchedulingWrapper wrapper,
+    @NotNull Runnable runnable,
+    long ns,
+    long period
+  ) {
+    return wrapper.new MyScheduledFutureTask<Void>(handleContext(runnable), null, ns, period);
+  }
+
   private static @NotNull Runnable handleContext(@NotNull Runnable runnable) {
     if (propagateThreadContext()) {
       return new ContextRunnable(runnable);

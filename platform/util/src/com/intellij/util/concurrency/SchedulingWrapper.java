@@ -138,7 +138,7 @@ class SchedulingWrapper implements ScheduledExecutorService {
     /**
      * Creates a periodic action with given nano time and period.
      */
-    private MyScheduledFutureTask(@NotNull Runnable r, V result, long ns, long period) {
+    MyScheduledFutureTask(@NotNull Runnable r, V result, long ns, long period) {
       super(r, result);
       time = ns;
       this.period = period;
@@ -350,13 +350,20 @@ class SchedulingWrapper implements ScheduledExecutorService {
   @Override
   public ScheduledFuture<?> scheduleWithFixedDelay(@NotNull Runnable command, long initialDelay, long delay, @NotNull TimeUnit unit) {
     if (delay <= 0) {
-      throw new IllegalArgumentException("delay must be positive but got: "+delay);
+      throw new IllegalArgumentException("delay must be positive but got: " + delay);
     }
-    MyScheduledFutureTask<Void> sft = new MyScheduledFutureTask<>(command,
-                                                                  null,
-                                                                  triggerTime(delayQueue, initialDelay, unit),
-                                                                  unit.toNanos(-delay));
-    return delayedExecute(sft);
+    return delayedExecute(createTask(
+      command,
+      triggerTime(delayQueue, initialDelay, unit),
+      unit.toNanos(-delay)
+    ));
+  }
+
+  private @NotNull MyScheduledFutureTask<?> createTask(@NotNull Runnable command, long ns, long period) {
+    if (!propagateContextOrCancellation()) {
+      return new MyScheduledFutureTask<>(command, null, ns, period);
+    }
+    return Propagation.handlePeriodicScheduledFutureTask(this, command, ns, period);
   }
 
   /////////////////////// delegates for ExecutorService ///////////////////////////

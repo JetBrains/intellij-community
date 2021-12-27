@@ -101,5 +101,8 @@ class ThreadContextPropagationTest {
     doTest {
       service.schedule(it.callable(), 10, TimeUnit.MILLISECONDS)
     }
+    doTest {
+      service.scheduleWithFixedDelay(it.runnable(), 10, 10, TimeUnit.MILLISECONDS)
+    }
   }
 }
