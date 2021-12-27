@@ -16,14 +16,19 @@ import kotlin.math.roundToInt
 /**
  * Inspection highlight level with string representations bound to resources for i18n.
  */
-enum class InspectionsLevel(@PropertyKey(resourceBundle = EditorBundle.BUNDLE) private val bundleKey: String) {
-  NONE("iw.level.none"),
-  SYNTAX("iw.level.syntax"),
-  ESSENTIAL("iw.level.essential"),
-  ALL("iw.level.all");
+enum class InspectionsLevel(@PropertyKey(resourceBundle = EditorBundle.BUNDLE) private val nameKey: String,
+                            @PropertyKey(resourceBundle = EditorBundle.BUNDLE) private val descriptionKey: String,
+) {
+  NONE("iw.level.none.name","iw.level.none.description"),
+  SYNTAX("iw.level.syntax.name", "iw.level.syntax.description"),
+  ESSENTIAL("iw.level.essential.name", "iw.level.essential.description"),
+  ALL("iw.level.all.name", "iw.level.all.description");
 
   @Nls
-  override fun toString(): String = EditorBundle.message(bundleKey)
+  override fun toString(): String = EditorBundle.message(nameKey)
+
+  val description: @Nls String
+    get() = EditorBundle.message(descriptionKey)
 }
 
 /*
@@ -87,7 +92,7 @@ interface UIController {
   /**
    * Saves the <code>LanguageHighlightLevel</code> for the file.
    */
-  fun setHighLightLevel(newLevels: LanguageHighlightLevel)
+  fun setHighLightLevel(newLevel: LanguageHighlightLevel)
 
   /**
    * Adds panels coming from <code>com.intellij.hectorComponentProvider</code> EP providers to
@@ -193,7 +198,7 @@ class AnalyzerStatus(val icon: Icon, @Nls @get:Nls val title: String, @Nls @get:
       override fun getActions(): List<AnAction> = emptyList()
       override fun getAvailableLevels(): List<InspectionsLevel> = emptyList()
       override fun getHighlightLevels(): List<LanguageHighlightLevel> = emptyList()
-      override fun setHighLightLevel(newLevels: LanguageHighlightLevel) {}
+      override fun setHighLightLevel(newLevel: LanguageHighlightLevel) {}
       override fun fillHectorPanels(container: Container, gc: GridBag) {}
       override fun canClosePopup(): Boolean = true
       override fun onClosePopup() {}
