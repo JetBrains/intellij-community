@@ -703,5 +703,10 @@ class QuickFixRegistrar : QuickFixContributor {
         IS_ENUM_ENTRY.registerFactory(IsEnumEntryFactory)
 
         OVERRIDE_DEPRECATION.registerFactory(AddAnnotationWithArgumentsFix.CopyDeprecatedAnnotation)
+
+        NULLABLE_TYPE_PARAMETER_AGAINST_NOT_NULL_TYPE_PARAMETER.registerFactory(MakeUpperBoundNonNullableFix)
+        WRONG_NULLABILITY_FOR_JAVA_OVERRIDE.registerFactory(MakeUpperBoundNonNullableFix)
+        TYPE_MISMATCH.registerFactory(MakeUpperBoundNonNullableFix)
+        NOTHING_TO_OVERRIDE.registerFactory(MakeUpperBoundNonNullableFix)
     }
 }

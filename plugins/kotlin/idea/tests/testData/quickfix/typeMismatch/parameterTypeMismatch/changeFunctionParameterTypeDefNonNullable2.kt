@@ -1,5 +1,6 @@
 // "Change parameter 'x' type of function 'bar' to 'List<T & Any>'" "false"
 // ERROR: Type mismatch: inferred type is List<T> but List<T & Any> was expected
+// ACTION: Add 'Any' as upper bound for T to make it non-nullable
 // ACTION: Add 'x =' to argument
 // ACTION: Change parameter 'x' type of function 'foo' to 'List<T>'
 // ACTION: Create function 'foo'
