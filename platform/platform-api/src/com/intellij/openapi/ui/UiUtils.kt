@@ -6,6 +6,7 @@ package com.intellij.openapi.ui
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBTextField
@@ -18,7 +19,6 @@ import javax.swing.text.JTextComponent
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
 import javax.swing.tree.TreePath
-
 
 fun JTextComponent.isTextUnderMouse(e: MouseEvent): Boolean {
   val position = viewToModel2D(e.point)
@@ -151,3 +151,6 @@ fun TreeModel.getTreePath(userObject: Any?): TreePath? =
 
 val TextFieldWithBrowseButton.emptyText
   get() = (textField as JBTextField).emptyText
+
+val <E> ComboBox<E>.collectionModel: CollectionComboBoxModel<E>
+  get() = model as CollectionComboBoxModel
