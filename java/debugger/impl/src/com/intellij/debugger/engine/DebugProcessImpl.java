@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.debugger.engine;
 
 import com.intellij.Patches;
@@ -163,9 +163,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         myNodeRenderersMap.clear();
         myRenderers.clear();
         try {
-          NodeRendererSettings.getInstance().getAllRenderers(myProject).stream()
-            .filter(NodeRenderer::isEnabled)
-            .forEachOrdered(myRenderers::add);
+          myRenderers.addAll(NodeRendererSettings.getInstance().getAllRenderers(myProject));
         }
         finally {
           DebuggerInvocationUtil.swingInvokeLater(myProject, () -> {
@@ -222,6 +220,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         return (NodeRenderer)res;
       }
       NodeRenderer renderer = myRenderers.stream().
+        filter(NodeRenderer::isEnabled).
         filter(r -> DebuggerUtilsImpl.suppressExceptions(() -> r.isApplicable(type), false, true, ClassNotPreparedException.class)).
         findFirst().orElseGet(() -> getDefaultRenderer(type));
       myNodeRenderersMap.put(type, renderer);
@@ -232,6 +231,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       // use default, but do not cache
       return getDefaultRenderer(type);
     }
+  }
+
+  @NotNull
+  public CompletableFuture<List<NodeRenderer>> getApplicableRenderers(Type type) {
+    return DebuggerUtilsImpl.getApplicableRenderers(myRenderers, type);
   }
 
   @NotNull
@@ -253,7 +257,8 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         LOG.assertTrue(!future.isDone(), "Completed future for " + type);
         return future;
       }
-      CompletableFuture<NodeRenderer> res = DebuggerUtilsImpl.getApplicableRenderers(myRenderers, type)
+      List<NodeRenderer> enabledRenderers = ContainerUtil.filter(myRenderers, NodeRenderer::isEnabled);
+      CompletableFuture<NodeRenderer> res = DebuggerUtilsImpl.getApplicableRenderers(enabledRenderers, type)
         .handle((renderers, throwable) -> {
           DebuggerManagerThreadImpl.assertIsManagerThread();
           NodeRenderer r = ContainerUtil.getFirstItem(renderers);
