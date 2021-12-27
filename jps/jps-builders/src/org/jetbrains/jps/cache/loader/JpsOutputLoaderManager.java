@@ -79,6 +79,11 @@ public class JpsOutputLoaderManager {
   public void load(@NotNull BuildRunner buildRunner, boolean isForceUpdate,
                    @NotNull List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
     if (!canRunNewLoading()) return;
+    List<String> buildFilePaths = buildRunner.getFilePaths();
+    if (!buildFilePaths.isEmpty()) {
+      LOG.info("Recompile specific file is executed, avoid cache download");
+      return;
+    }
     Pair<String, Integer> commitInfo = getNearestCommit(buildRunner, isForceUpdate, scopes);
     if (commitInfo != null) {
       // Drop JPS metadata to force plugin for downloading all compilation outputs

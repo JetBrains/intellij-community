@@ -57,6 +57,10 @@ public final class BuildRunner {
     myFilePaths = filePaths != null? filePaths : Collections.emptyList();
   }
 
+  public List<String> getFilePaths() {
+    return myFilePaths;
+  }
+
   public void setBuilderParams(Map<String, String> builderParams) {
     myBuilderParams = builderParams != null? builderParams : Collections.emptyMap();
   }
