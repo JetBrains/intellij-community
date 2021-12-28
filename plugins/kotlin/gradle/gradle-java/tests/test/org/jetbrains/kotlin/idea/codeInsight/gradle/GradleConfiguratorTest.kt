@@ -52,18 +52,6 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 assertEquals(ConfigureKotlinStatus.BROKEN, findJsGradleModuleConfigurator().getStatus(moduleGroup))
             }
         }
-
-        assertEquals(
-            """
-            <p>The compiler bundled to Kotlin plugin (1.0.0) is older than external compiler used for building modules:</p>
-            <ul>
-            <li>project.app (${LATEST_STABLE_GRADLE_PLUGIN_VERSION})</li>
-            </ul>
-            <p>This may cause different set of errors and warnings reported in IDE.</p>
-            <p><a href="update">Update</a>  <a href="ignore">Ignore</a></p>
-            """.trimIndent().lines().joinToString(separator = ""),
-            createOutdatedBundledCompilerMessage(myProject, "1.0.0")
-        )
     }
 
     @Test
