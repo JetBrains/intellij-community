@@ -142,6 +142,6 @@ UFile (package = )
     UClass (name = A)
         UMethod (name = foo)
             UBlockExpression
-        UMethod (name = A)
         UMethod (name = inlineFoo)
             UBlockExpression
+        UMethod (name = A)
