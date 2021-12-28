@@ -237,7 +237,7 @@ final class JarPackager {
                                     Map<JpsLibrary, List<Path>> libraryToMerge,
                                     Path outputDir,
                                     Predicate<String> predicate) {
-    Map<JpsLibrary, List<Path>> result = new HashMap<>()
+    Map<JpsLibrary, List<Path>> result = new LinkedHashMap<>()
 
     Iterator<Map.Entry<JpsLibrary, List<Path>>> iterator = libraryToMerge.entrySet().iterator()
     while (iterator.hasNext()) {
@@ -327,7 +327,7 @@ final class JarPackager {
                                                     BaseLayout layout,
                                                     Map<Path, JpsLibrary> copiedFiles,
                                                     Map<String, List> extraLibSources) {
-    Map<JpsLibrary, List<Path>> toMerge = new HashMap<JpsLibrary, List<Path>>()
+    Map<JpsLibrary, List<Path>> toMerge = new LinkedHashMap<JpsLibrary, List<Path>>()
     Predicate<String> isLibraryMergeable = buildHelper.isLibraryMergeable
 
     Iterator<ProjectLibraryData> projectLibIterator = layout.includedProjectLibraries.isEmpty()
