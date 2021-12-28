@@ -37,7 +37,7 @@ class KotlinHighLevelDiagnosticHighlightingPass(
 ) : TextEditorHighlightingPass(ktFile.project, document) {
 
     @Suppress("UnstableApiUsage")
-    val annotationHolder = AnnotationHolderImpl(AnnotationSession(ktFile))
+    val annotationHolder = AnnotationHolderImpl(AnnotationSession(ktFile), false)
 
     override fun doCollectInformation(progress: ProgressIndicator) {
         analyse(ktFile) {
