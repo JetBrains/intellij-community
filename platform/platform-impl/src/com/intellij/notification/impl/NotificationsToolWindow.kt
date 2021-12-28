@@ -168,6 +168,7 @@ private class NotificationContent(val project: Project,
   init {
     myMainPanel.background = NotificationComponent.BG_COLOR
     setEmptyState()
+    handleFocus()
 
     suggestions = NotificationGroupComponent(this, true, project)
     timeline = NotificationGroupComponent(this, false, project)
@@ -272,6 +273,18 @@ private class NotificationContent(val project: Project,
 
   fun clearEmptyState() {
     myMainPanel.emptyText.clear()
+  }
+
+  private fun handleFocus() {
+    val listener = AWTEventListener {
+      if (it is MouseEvent && it.id == MouseEvent.MOUSE_PRESSED && !toolWindow.isActive && UIUtil.isAncestor(myMainPanel, it.component)) {
+        it.component.requestFocus()
+      }
+    }
+    Toolkit.getDefaultToolkit().addAWTEventListener(listener, AWTEvent.MOUSE_EVENT_MASK)
+    Disposer.register(toolWindow.disposable, Disposable {
+      Toolkit.getDefaultToolkit().removeAWTEventListener(listener)
+    })
   }
 
   private fun add(notification: Notification) {
