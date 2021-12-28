@@ -32,7 +32,7 @@ object SpecifySuperTypeFixFactory {
     class Input(val superTypes: List<TypeStringWithoutArgs>) : HLApplicatorInput
 
     val applicator = applicator<KtSuperExpression, Input> {
-        familyAndActionName(KotlinBundle.lazyMessage("specify.super.type"))
+        familyAndActionName(KotlinBundle.lazyMessage("intention.name.specify.supertype"))
         applyToWithEditorRequired { psi, input, project, editor ->
             when (input.superTypes.size) {
                 0 -> return@applyToWithEditorRequired
@@ -46,7 +46,7 @@ object SpecifySuperTypeFixFactory {
     }
 
     private fun KtSuperExpression.specifySuperType(superType: TypeStringWithoutArgs) {
-        project.executeWriteCommand(KotlinBundle.getMessage("specify.super.type")) {
+        project.executeWriteCommand(KotlinBundle.message("intention.name.specify.supertype")) {
             val label = this.labelQualifier?.text ?: ""
             val replaced =
                 replace(KtPsiFactory(this).createExpression("super<${superType.longTypeRepresentation}>$label")) as KtSuperExpression
@@ -55,7 +55,7 @@ object SpecifySuperTypeFixFactory {
     }
 
     private fun createListPopupStep(superExpression: KtSuperExpression, superTypes: List<TypeStringWithoutArgs>): ListPopupStep<*> {
-        return object : BaseListPopupStep<TypeStringWithoutArgs>(KotlinBundle.getMessage("choose.super.type"), superTypes) {
+        return object : BaseListPopupStep<TypeStringWithoutArgs>(KotlinBundle.getMessage("popup.title.choose.supertype"), superTypes) {
             override fun isAutoSelectionEnabled() = false
 
             override fun onChosen(selectedValue: TypeStringWithoutArgs, finalChoice: Boolean): PopupStep<*>? {
