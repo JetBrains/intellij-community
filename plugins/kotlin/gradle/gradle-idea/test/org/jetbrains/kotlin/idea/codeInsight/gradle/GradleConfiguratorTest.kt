@@ -18,6 +18,7 @@ import com.intellij.testFramework.runInEdtAndWait
 import com.intellij.util.Function
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.idea.KotlinVersionVerbose
 import org.jetbrains.kotlin.idea.configuration.*
 import org.jetbrains.kotlin.idea.util.application.executeWriteCommand
 import org.jetbrains.kotlin.idea.util.application.runReadAction
@@ -48,6 +49,15 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
                 assertEquals(ConfigureKotlinStatus.BROKEN, findJsGradleModuleConfigurator().getStatus(moduleGroup))
             }
         }
+
+        assertEquals(
+            KotlinVersionVerbose(
+                plainVersion = KotlinVersion(major = 1, minor = 3, patch = 70),
+                milestone = null,
+                buildNumber = null
+            ),
+            myProject.findAnyExternalKotlinCompilerVersion(),
+        )
     }
 
     @Test
