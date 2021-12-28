@@ -3,7 +3,6 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
-import org.jetbrains.uast.KotlinUDeclarationsExpression
 import org.jetbrains.uast.UElement
 
 class KotlinUDestructuringDeclarationExpression(
