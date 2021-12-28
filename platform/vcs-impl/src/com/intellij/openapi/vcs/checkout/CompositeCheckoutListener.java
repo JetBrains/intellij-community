@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkout;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -18,6 +19,8 @@ import java.nio.file.Path;
  * to be called after checkout - notifiers extenders on checkout completion
  */
 public final class CompositeCheckoutListener implements CheckoutProvider.Listener {
+  private static final Logger LOG = Logger.getInstance(CompositeCheckoutListener.class);
+
   private final Project myProject;
 
   private boolean myFoundProject = false;
@@ -38,6 +41,7 @@ public final class CompositeCheckoutListener implements CheckoutProvider.Listene
     for (CheckoutListener listener : CheckoutListener.EP_NAME.getExtensionList()) {
       myFoundProject = listener.processCheckedOutDirectory(myProject, directory);
       if (myFoundProject) {
+        LOG.debug(String.format("Cloned dir '%s' processed by %s", directory, listener));
         break;
       }
     }
@@ -45,6 +49,7 @@ public final class CompositeCheckoutListener implements CheckoutProvider.Listene
     for (VcsAwareCheckoutListener listener : VcsAwareCheckoutListener.EP_NAME.getExtensionList()) {
       boolean processingCompleted = listener.processCheckedOutDirectory(myProject, directory, vcs);
       if (processingCompleted) {
+        LOG.debug(String.format("Cloned dir '%s' processed by %s", directory, listener));
         break;
       }
     }
@@ -65,6 +70,7 @@ public final class CompositeCheckoutListener implements CheckoutProvider.Listene
     for (CheckoutListener listener : CheckoutListener.COMPLETED_EP_NAME.getExtensionList()) {
       boolean foundProject = listener.processCheckedOutDirectory(myProject, directory);
       if (foundProject) {
+        LOG.debug(String.format("Cloned dir '%s' processed by %s", directory, listener));
         break;
       }
     }
