@@ -6,6 +6,7 @@ package com.intellij.openapi.ui
 import com.intellij.openapi.actionSystem.KeyboardShortcut
 import com.intellij.openapi.keymap.KeymapManager
 import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.util.text.NaturalComparator
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.DropDownLink
@@ -161,3 +162,5 @@ val TextFieldWithBrowseButton.emptyText
 
 val <E> ComboBox<E>.collectionModel: CollectionComboBoxModel<E>
   get() = model as CollectionComboBoxModel
+
+fun <T> Iterable<T>.naturalSorted() = sortedWith(Comparator.comparing({ it.toString() }, NaturalComparator.INSTANCE))

@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.collectionModel
+import com.intellij.openapi.ui.naturalSorted
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColoredListCellRenderer
@@ -175,6 +176,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           archetypeManager.getArchetypes(catalogItem)
             .groupBy { ArchetypeItem.Id(it) }
             .map { ArchetypeItem(it.value) }
+            .naturalSorted()
         },
         onUiThread = { archetypes ->
           collectionModel.replaceAll(archetypes)
@@ -184,7 +186,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     }
 
     private fun ComboBox<String>.reloadArchetypeVersions() {
-      val versions = archetypeItem?.versions ?: emptyList()
+      val versions = archetypeItem?.versions?.naturalSorted()?.reversed() ?: emptyList()
       collectionModel.replaceAll(versions)
       archetypeVersion = versions.firstOrNull()
     }
