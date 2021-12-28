@@ -64,17 +64,6 @@ final class BuildDependenciesDownloader {
     return new URI(result)
   }
 
-  static void checkCommunityRoot(BuildDependenciesCommunityRoot communityRoot) {
-    if (communityRoot == null) {
-      throw new IllegalStateException("passed community root is null")
-    }
-
-    def probeFile = communityRoot.communityRoot.resolve("intellij.idea.community.main.iml")
-    if (!Files.exists(probeFile)) {
-      throw new IllegalStateException("community root was not found at $communityRoot")
-    }
-  }
-
   private static Path getProjectLocalDownloadCache(BuildDependenciesCommunityRoot communityRoot) {
     Path projectLocalDownloadCache = communityRoot.communityRoot.resolve("build").resolve("download")
     Files.createDirectories(projectLocalDownloadCache)
@@ -82,8 +71,6 @@ final class BuildDependenciesDownloader {
   }
 
   private static Path getDownloadCachePath(BuildDependenciesCommunityRoot communityRoot) {
-    checkCommunityRoot(communityRoot)
-
     Path path
     if (TeamCityHelper.isUnderTeamCity) {
       def persistentCachePath = TeamCityHelper.systemProperties["agent.persistent.cache"]
