@@ -37,7 +37,7 @@ internal class SettingsSyncStreamProvider(private val application: Application,
     // todo can we call default "stream provider" instead of duplicating logic?
     rootConfig.resolve(file).write(content, 0, size)
 
-    if (roamingType == RoamingType.DISABLED) {
+    if (!isSyncEnabled(fileSpec, roamingType)) {
       return
     }
 
