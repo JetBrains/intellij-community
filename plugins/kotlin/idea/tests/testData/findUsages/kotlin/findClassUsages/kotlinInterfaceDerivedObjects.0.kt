@@ -11,3 +11,5 @@ open class A : X {
 interface Y : X {
 
 }
+
+// FIR_COMPARISON
