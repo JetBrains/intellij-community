@@ -1,15 +1,5 @@
 UFile (package = )
     UClass (name = ReifiedReturnTypeKt)
-        UMethod (name = copyWhenGreater)
-            UParameter (name = list)
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
-            UParameter (name = threshold)
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
-            UParameter (name = threshold2)
-                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
-            UBlockExpression
-                UReturnExpression
-                    USimpleNameReferenceExpression (identifier = threshold2)
         UMethod (name = function1)
             UParameter (name = t)
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable)
@@ -38,6 +28,16 @@ UFile (package = )
             UBlockExpression
                 UReturnExpression
                     USimpleNameReferenceExpression (identifier = t)
+        UMethod (name = copyWhenGreater)
+            UParameter (name = list)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UParameter (name = threshold)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UParameter (name = threshold2)
+                UAnnotation (fqName = org.jetbrains.annotations.NotNull)
+            UBlockExpression
+                UReturnExpression
+                    USimpleNameReferenceExpression (identifier = threshold2)
         UMethod (name = function3)
             UParameter (name = t)
                 UAnnotation (fqName = org.jetbrains.annotations.Nullable)

@@ -151,6 +151,6 @@ UFile (package = ) [public final class ResolveKt {...]
     UClass (name = A) [public class A {...}]
         UMethod (name = foo) [public final fun foo() : void {...}]
             UBlockExpression [{...}] = Undetermined
-        UMethod (name = A) [public fun A() = UastEmptyExpression]
-        UMethod (name = inlineFoo) [public fun inlineFoo() : void {...}]
+        UMethod (name = inlineFoo) [public final fun inlineFoo() : void {...}]
             UBlockExpression [{...}] = Undetermined
+        UMethod (name = A) [public fun A() = UastEmptyExpression]
