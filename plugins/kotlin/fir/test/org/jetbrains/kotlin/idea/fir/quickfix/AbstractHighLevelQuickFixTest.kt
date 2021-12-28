@@ -4,13 +4,23 @@ package org.jetbrains.kotlin.idea.fir.quickfix
 
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInspection.InspectionProfileEntry
+import org.jetbrains.kotlin.idea.fir.invalidateCaches
 import org.jetbrains.kotlin.idea.quickfix.AbstractQuickFixTest
+import org.jetbrains.kotlin.idea.test.disableKotlinOfficialCodeStyle
+import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.utils.IgnoreTests
 import java.io.File
 import java.nio.file.Paths
-
+import com.intellij.util.ThrowableRunnable
 
 abstract class AbstractHighLevelQuickFixTest : AbstractQuickFixTest() {
+    override fun tearDown() {
+        runAll(
+            ThrowableRunnable { project.invalidateCaches() },
+            ThrowableRunnable { super.tearDown() },
+        )
+
+    }
     override fun doTest(beforeFileName: String) {
         val firBeforeFileName = getFirBeforeFileName(beforeFileName)
         IgnoreTests.runTestIfNotDisabledByFileDirective(
