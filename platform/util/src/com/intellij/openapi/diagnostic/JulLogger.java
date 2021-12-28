@@ -60,6 +60,11 @@ public class JulLogger extends Logger {
   }
 
   @Override
+  public void setLevel(@NotNull LogLevel level) {
+    myLogger.setLevel(level.getLevel());
+  }
+
+  @Override
   public void setLevel(@NotNull Level level) {
     switch (level.toInt()) {
       case Priority.OFF_INT:

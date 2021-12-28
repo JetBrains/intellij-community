@@ -4,13 +4,13 @@ package com.intellij.testFramework;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.JulLogger;
+import com.intellij.openapi.diagnostic.LogLevel;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SystemProperties;
-import org.apache.log4j.Level;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.AssumptionViolatedException;
@@ -128,8 +128,8 @@ public final class TestLoggerFactory implements Logger.Factory {
     for (String category : categories) {
       Logger logger = Logger.getInstance(category);
       if (!logger.isDebugEnabled()) {
-        logger.setLevel(Level.DEBUG);
-        Disposer.register(parentDisposable, () -> logger.setLevel(Level.INFO));
+        logger.setLevel(LogLevel.DEBUG);
+        Disposer.register(parentDisposable, () -> logger.setLevel(LogLevel.INFO));
       }
     }
   }
@@ -204,7 +204,7 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   public static void logTestFailure(@NotNull Throwable t) {
     if (shouldSplitTestLogs()) {
-      log(Level.ERROR.toString(), "Test framework", "Test failed", t);
+      log(LogLevel.ERROR.toString(), "Test framework", "Test failed", t);
     }
   }
 
