@@ -363,6 +363,9 @@ internal fun <T : PsiElement> findUsagesAndCheckResults(
 
         val usageChunks = ArrayList<TextChunk>()
         usageChunks.addAll(usageAdapter.presentation.text.asList())
+        if (usageChunks.isNotEmpty()) {
+            usageChunks[1] = TextChunk(usageChunks[1] .attributes, usageChunks[1].text.trimIndent())
+        }
         usageChunks.add(1, TextChunk(TextAttributes(), " ")) // add space after line number
 
         buildString {
