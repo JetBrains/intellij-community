@@ -64,5 +64,9 @@ class MavenCatalogManager : PersistentStateComponent<MavenCatalogManager.State> 
   companion object {
     @JvmStatic
     fun getInstance() = service<MavenCatalogManager>()
+
+    fun isLocal(location: String): Boolean {
+      return runCatching { URL(location).protocol == "file" }.getOrElse { true }
+    }
   }
 }

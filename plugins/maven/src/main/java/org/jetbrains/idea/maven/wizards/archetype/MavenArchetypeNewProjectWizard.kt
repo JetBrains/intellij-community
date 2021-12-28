@@ -20,16 +20,20 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.ColoredListCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.containers.ContainerUtil.putIfNotNull
 import com.intellij.util.io.systemIndependentPath
 import icons.OpenapiIcons
 import org.jetbrains.idea.maven.indices.MavenArchetypeManager
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalogManager
 import org.jetbrains.idea.maven.indices.arhetype.MavenCatalog
+import org.jetbrains.idea.maven.indices.arhetype.MavenCatalogManager
 import org.jetbrains.idea.maven.model.MavenArchetype
 import org.jetbrains.idea.maven.model.MavenId
-import org.jetbrains.idea.maven.wizards.*
+import org.jetbrains.idea.maven.wizards.InternalMavenModuleBuilder
+import org.jetbrains.idea.maven.wizards.MavenJavaNewProjectWizard
+import org.jetbrains.idea.maven.wizards.MavenNewProjectWizardStep
+import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import java.awt.Component
 import javax.swing.Icon
 import javax.swing.JList
@@ -78,20 +82,17 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
             .applyToComponent { loadCatalogs() }
             .bindItem(catalogItemProperty)
             .columns(COLUMNS_MEDIUM)
-          link(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.manage.link")) {
+          button(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.add.button")) {
             comboBox.component.addCatalog()
           }
         }.topGap(TopGap.SMALL)
         row(MavenWizardBundle.message("maven.new.project.wizard.archetype.label")) {
-          val comboBox = comboBox(CollectionComboBoxModel(), ArchetypeRenderer())
+          comboBox(CollectionComboBoxModel(), ArchetypeRenderer())
             .applyToComponent { setSwingPopup(false) }
             .applyToComponent { reloadArchetypes() }
             .applyToComponent { catalogItemProperty.afterChange { reloadArchetypes() } }
             .bindItem(archetypeItemProperty)
-            .columns(COLUMNS_MEDIUM)
-          button(MavenWizardBundle.message("maven.new.project.wizard.archetype.add.button")) {
-            comboBox.component.addArchetype()
-          }
+            .horizontalAlign(HorizontalAlign.FILL)
         }.topGap(TopGap.SMALL)
         row(MavenWizardBundle.message("maven.new.project.wizard.archetype.version.label")) {
           comboBox(CollectionComboBoxModel(), ArchetypeVersionRenderer())
@@ -123,6 +124,12 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     }
 
     private fun ComboBox<MavenCatalog>.addCatalog() {
+      val dialog = MavenAddCatalogDialog(context.projectOrDefault)
+      if (dialog.showAndGet()) {
+        val catalog = dialog.getCatalog() ?: return
+        collectionModel.add(catalog)
+        catalogItem = catalog
+      }
     }
 
     private fun ComboBox<ArchetypeItem>.reloadArchetypes() {
@@ -141,16 +148,6 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           archetypeItem = archetypes.firstOrNull()
         }
       )
-    }
-
-    private fun ComboBox<ArchetypeItem>.addArchetype() {
-      val dialog = MavenAddArchetypeDialog(parent)
-      if (dialog.showAndGet()) {
-        val archetype = dialog.archetype
-        val item = ArchetypeItem(archetype)
-        collectionModel.add(item)
-        archetypeItem = item
-      }
     }
 
     private fun ComboBox<String>.reloadArchetypeVersions() {
@@ -175,7 +172,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           archetypeItem!!.groupId,
           archetypeItem!!.artifactId,
           archetypeVersion!!,
-          archetypeItem!!.repository,
+          catalogItem.location,
           null
         )
         propertiesToCreateByArtifact = LinkedHashMap<String, String>().apply {
@@ -197,19 +194,15 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
   private class ArchetypeItem(
     val groupId: @NlsSafe String,
     val artifactId: @NlsSafe String,
-    val repository: @NlsSafe String?,
     val versions: List<@NlsSafe String>
   ) {
     constructor(archetype: MavenArchetype, versions: List<String>) :
-      this(archetype.groupId, archetype.artifactId, archetype.repository, versions)
+      this(archetype.groupId, archetype.artifactId, versions)
 
     constructor(archetypes: List<MavenArchetype>) :
       this(archetypes.first(), archetypes.map { it.version })
 
-    constructor(archetype: MavenArchetype) :
-      this(archetype, listOf(archetype.version))
-
-    override fun toString(): String = "$groupId:$artifactId in $repository"
+    override fun toString(): String = "$groupId:$artifactId"
 
     class Id(val archetype: MavenArchetype) {
       override fun equals(other: Any?): Boolean {
@@ -220,7 +213,6 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
 
         if (archetype.groupId != other.archetype.groupId) return false
         if (archetype.artifactId != other.archetype.artifactId) return false
-        if (archetype.repository != other.archetype.repository) return false
 
         return true
       }
@@ -228,7 +220,6 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       override fun hashCode(): Int {
         var result = archetype.groupId.hashCode()
         result = 31 * result + archetype.artifactId.hashCode()
-        result = 31 * result + (archetype.repository?.hashCode() ?: 0)
         return result
       }
     }
@@ -254,9 +245,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       hasFocus: Boolean
     ) {
       val archetype = value ?: return
-      if (index != -1) {
-        append(archetype.groupId + ":", SimpleTextAttributes.GRAYED_ATTRIBUTES)
-      }
+      append(archetype.groupId + ":", SimpleTextAttributes.GRAYED_ATTRIBUTES)
       append(archetype.artifactId)
     }
   }
