@@ -14,10 +14,10 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
 
-import static com.intellij.compiler.cache.ui.JpsLoaderNotifications.ATTENTION;
+import static com.intellij.compiler.cache.ui.CompilerCacheNotifications.ATTENTION;
 
-public final class JpsCacheStartupActivity implements StartupActivity.Background, Disposable {
-  private static final Logger LOG = Logger.getInstance(JpsCacheStartupActivity.class);
+public final class CompilerCacheStartupActivity implements StartupActivity.Background, Disposable {
+  private static final Logger LOG = Logger.getInstance(CompilerCacheStartupActivity.class);
   private static final String NOT_ASK_AGAIN = "JpsCaches.NOT_ASK_AGAIN";
   private static boolean lineEndingsConfiguredCorrectly = true;
 

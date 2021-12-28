@@ -295,7 +295,7 @@
     <compilableFileTypesProvider implementation="com.intellij.compiler.impl.javaCompiler.JavaCompilableFileTypesProvider" />
     <postStartupActivity implementation="com.intellij.compiler.server.BuildManager$BuildManagerStartupActivity"/>
     <postStartupActivity implementation="com.intellij.ide.SetupJavaProjectFromSourcesActivity" />
-    <backgroundPostStartupActivity implementation="com.intellij.compiler.cache.JpsCacheStartupActivity"/>
+    <backgroundPostStartupActivity implementation="com.intellij.compiler.cache.CompilerCacheStartupActivity"/>
 
     <projectService serviceInterface="com.intellij.packaging.artifacts.ArtifactManager" serviceImplementation="com.intellij.packaging.impl.artifacts.ArtifactManagerImpl" preload="await"/>
     <projectServiceContainerCustomizer implementation="com.intellij.packaging.impl.artifacts.workspacemodel.LegacyBridgeArtifactManagerRedefiner"/>

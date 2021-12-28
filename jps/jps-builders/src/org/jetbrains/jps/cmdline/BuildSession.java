@@ -22,6 +22,7 @@ import org.jetbrains.jps.TimingLog;
 import org.jetbrains.jps.api.*;
 import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
+import org.jetbrains.jps.cache.client.JpsServerConnectionUtil;
 import org.jetbrains.jps.cache.loader.JpsOutputLoaderManager;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.fs.BuildFSState;
@@ -69,6 +70,8 @@ final class BuildSession implements Runnable, CanceledStatus {
   private final boolean myLoadUnloadedModules;
   @Nullable
   private JpsOutputLoaderManager myCacheLoadManager;
+  @Nullable
+  private CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings myCacheDownloadSettings;
 
   BuildSession(UUID sessionId,
                Channel channel,
@@ -82,6 +85,7 @@ final class BuildSession implements Runnable, CanceledStatus {
     String globalOptionsPath = FileUtil.toCanonicalPath(globals.getGlobalOptionsPath());
     myBuildType = convertCompileType(params.getBuildType());
     myScopes = params.getScopeList();
+    myCacheDownloadSettings = params.hasCacheDownloadSettings() ? params.getCacheDownloadSettings() : null;
     List<String> filePaths = params.getFilePathList();
     final Map<String, String> builderParams = new HashMap<>();
     for (CmdlineRemoteProto.Message.KeyValuePair pair : params.getBuilderParameterList()) {
@@ -161,9 +165,10 @@ final class BuildSession implements Runnable, CanceledStatus {
       }
 
       myCacheLoadManager = null;
-      if (ProjectStamps.PORTABLE_CACHES && myBuildType == BuildType.BUILD) {
+      if (ProjectStamps.PORTABLE_CACHES && myCacheDownloadSettings != null) {
         LOG.info("Trying to download JPS caches before build");
-        myCacheLoadManager = new JpsOutputLoaderManager(myBuildRunner.getLoadedJpsProject(), this, myProjectPath, myChannel, mySessionId);
+        myCacheLoadManager = new JpsOutputLoaderManager(myBuildRunner.getLoadedJpsProject(), this, myProjectPath, myChannel,
+                                                        mySessionId, myCacheDownloadSettings);
         myCacheLoadManager.load(myBuildRunner, true, myScopes);
       }
 

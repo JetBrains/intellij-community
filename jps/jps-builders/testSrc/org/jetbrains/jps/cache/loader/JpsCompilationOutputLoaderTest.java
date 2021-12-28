@@ -29,7 +29,7 @@ public class JpsCompilationOutputLoaderTest extends BasePlatformTestCase {
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    compilationOutputLoader = new JpsCompilationOutputLoader(JpsServerClient.getServerClient(), "/intellij/out/classes");
+    compilationOutputLoader = new JpsCompilationOutputLoader(JpsServerClient.getServerClient(""), "/intellij/out/classes");
     myGson = new Gson();
     myTokenType = new TypeToken<Map<String, Map<String, BuildTargetState>>>() {}.getType();
   }

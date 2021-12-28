@@ -8,7 +8,8 @@ import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
 import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.YourKitProfilerService;
-import com.intellij.compiler.cache.JpsCacheStartupActivity;
+import com.intellij.compiler.cache.CompilerCacheConfigurator;
+import com.intellij.compiler.cache.CompilerCacheStartupActivity;
 import com.intellij.compiler.cache.git.GitRepositoryUtil;
 import com.intellij.compiler.impl.CompilerUtil;
 import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
@@ -920,13 +921,14 @@ public final class BuildManager implements Disposable {
         List<String> mappedPaths = ContainerUtil.map(paths, (p) -> pathMapper.apply(p));
         final CmdlineRemoteProto.Message.ControllerMessage params;
         if (isRebuild) {
-          params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, Collections.emptyList(), userData, globals, null);
+          params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, Collections.emptyList(), userData, globals, null, null);
         }
         else if (onlyCheckUpToDate) {
           params = CmdlineProtoUtil.createUpToDateCheckRequest(mappedProjectPath, scopes, mappedPaths, userData, globals, currentFSChanges);
         }
         else {
-          params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, isMake ? Collections.emptyList() : mappedPaths, userData, globals, currentFSChanges);
+          params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, isMake ? Collections.emptyList() : mappedPaths, userData, globals, currentFSChanges,
+                                                       !isMake ? CompilerCacheConfigurator.INSTANCE.getCacheDownloadSettings(project) : null);
         }
         if (!usingPreloadedProcess) {
           myMessageDispatcher.registerBuildMessageHandler(future, params);
@@ -1407,9 +1409,9 @@ public final class BuildManager implements Disposable {
     }
 
     // portable caches
-    if ( Registry.is("compiler.process.use.portable.caches")
-         && GitRepositoryUtil.isIntelliJRepository(project)
-         && JpsCacheStartupActivity.isLineEndingsConfiguredCorrectly()) {
+    if (Registry.is("compiler.process.use.portable.caches")
+        && GitRepositoryUtil.isIntelliJRepository(project)
+        && CompilerCacheStartupActivity.isLineEndingsConfiguredCorrectly()) {
       //cmdLine.addParameter("-Didea.resizeable.file.truncate.on.close=true");
       //cmdLine.addParameter("-Dkotlin.jps.non.caching.storage=true");
       cmdLine.addParameter("-D" + ProjectStamps.PORTABLE_CACHES_PROPERTY + "=true");

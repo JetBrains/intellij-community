@@ -19,9 +19,6 @@ import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.PreloadedDataExtension;
-import org.jetbrains.jps.cache.client.JpsServerAuthUtil;
-import org.jetbrains.jps.cache.git.GitCommitsIterator;
-import org.jetbrains.jps.cache.statistics.JpsCacheLoadingSystemStats;
 import org.jetbrains.jps.incremental.BuilderRegistry;
 import org.jetbrains.jps.incremental.MessageHandler;
 import org.jetbrains.jps.incremental.Utils;
@@ -240,21 +237,6 @@ public final class BuildMain {
             if (session != null) {
               session.processFSEvent(controllerMessage.getFsEvent());
             }
-            return;
-          }
-          case AUTHENTICATION_TOKEN: {
-            CmdlineRemoteProto.Message.ControllerMessage.RequestParams requestParams = controllerMessage.getRequestParams();
-            JpsServerAuthUtil.setRequestHeaders(requestParams.getAuthHeadersMap());
-            return;
-          }
-          case REPOSITORY_COMMITS_AND_STATS_RESULT: {
-            CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult repositoryCommitsResult = controllerMessage.getRepositoryCommitsResult();
-            LOG.info("Got " + repositoryCommitsResult.getCommitList().size() + " repository commits");
-            GitCommitsIterator.setRepositoryCommits(repositoryCommitsResult.getCommitList(),
-                                                    repositoryCommitsResult.getLatestBuiltMasterCommit(),
-                                                    repositoryCommitsResult.getLatestDownloadCommit());
-            JpsCacheLoadingSystemStats.setDecompressionSpeed(repositoryCommitsResult.getDecompressionSpeed());
-            JpsCacheLoadingSystemStats.setDeletionSpeed(repositoryCommitsResult.getDeletionSpeed());
             return;
           }
           case CONSTANT_SEARCH_RESULT: {

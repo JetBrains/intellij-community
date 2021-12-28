@@ -34,8 +34,6 @@ message Message {
       CANCEL_BUILD_COMMAND = 2;
       FS_EVENT = 3;
       CONSTANT_SEARCH_RESULT = 4;
-      AUTHENTICATION_TOKEN = 5;
-      REPOSITORY_COMMITS_AND_STATS_RESULT = 6;
     }
 
     message FSEvent {
@@ -68,6 +66,7 @@ message Message {
       repeated TargetTypeBuildScope scope = 4;
       repeated string file_path = 5;
       repeated KeyValuePair builder_parameter = 6;
+      optional CacheDownloadSettings cache_download_settings = 7;
     }
 
     message ConstantSearchResult {
@@ -77,24 +76,19 @@ message Message {
       repeated string path = 4;
     }
 
-    message RequestParams {
+    message CacheDownloadSettings {
       map<string, string> auth_headers = 1;
-    }
-
-    message RepositoryCommitsResult {
-      repeated string commit = 1;
-      required string latest_built_master_commit = 2;
-      required string latest_download_commit = 3;
-      required int64 decompression_speed = 4;
-      required int64 deletion_speed = 5;
+      required string download_commit = 2;
+      required int32 commits_count_latest_build = 3;
+      required string server_url = 4;
+      required int64 decompression_speed = 5;
+      required int64 deletion_speed = 6;
     }
 
     required Type type = 1;
     optional ParametersMessage params_message = 2;
     optional FSEvent fs_event = 3;
     optional ConstantSearchResult constant_search_result = 4;
-    optional RequestParams request_params = 5;
-    optional RepositoryCommitsResult repository_commits_result = 6;
   }
 
   message BuilderMessage {
@@ -103,11 +97,9 @@ message Message {
       BUILD_EVENT = 2;
       COMPILE_MESSAGE = 3;
       CONSTANT_SEARCH_TASK = 4;
-      AUTH_TOKEN_REQUEST = 5;
-      CACHE_DOWNLOAD_MESSAGE = 6;
-      REPOSITORY_COMMITS_REQUEST = 7;
-      SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE = 8;
-      SAVE_LATEST_BUILT_COMMIT_MESSAGE = 9;
+      CACHE_DOWNLOAD_MESSAGE = 5;
+      SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE = 6;
+      SAVE_LATEST_BUILT_COMMIT_MESSAGE = 7;
     }
 
     message BuildEvent {

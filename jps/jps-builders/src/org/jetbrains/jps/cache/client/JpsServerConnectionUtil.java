@@ -19,6 +19,8 @@ import org.jetbrains.jps.cache.model.JpsLoaderContext;
 import org.jetbrains.jps.cache.statistics.SystemOpsStatistic;
 
 import java.io.*;
+import java.net.URL;
+import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,7 +66,7 @@ public class JpsServerConnectionUtil {
 
   private static @Nullable SystemOpsStatistic measureConnectionSpeedOnFile(@NotNull JpsNettyClient nettyClient, @NotNull String fileName,
                                                                            @Nullable SystemOpsStatistic previousSystemStats) {
-    Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders(nettyClient);
+    Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders();
     String url = calculateURL(fileName);
     LOG.info("Checking connection speed base on the file: " + fileName);
     long start = System.currentTimeMillis();
@@ -175,6 +177,20 @@ public class JpsServerConnectionUtil {
       throw new IOException("Connection closed at byte " + bytesRead + ". Expected " + expectedContentLength + " bytes.");
     }
     return bytesWritten;
+  }
+
+  public static boolean checkInternetConnectionAvailable() {
+    try {
+      URL url = new URL("https://www.google.com/");
+      URLConnection connection = url.openConnection();
+      connection.setConnectTimeout(1000);
+      connection.connect();
+      return true;
+    }
+    catch (Exception e) {
+      LOG.info("Internet connection is not available");
+      return false;
+    }
   }
 
 

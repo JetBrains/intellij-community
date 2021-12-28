@@ -1,9 +1,9 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
-import com.intellij.compiler.cache.client.JpsServerAuthUtil;
+import com.intellij.compiler.cache.client.CompilerCacheServerAuthUtil;
 import com.intellij.compiler.cache.git.GitRepositoryUtil;
-import com.intellij.compiler.cache.statistic.JpsCacheLoadingStats;
+import com.intellij.compiler.cache.statistic.CompilerCacheLoadingStats;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -51,10 +51,6 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
           LOG.error("Internal build error:\n" + compileMessage.getText());
         }
         break;
-      case AUTH_TOKEN_REQUEST:
-        Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders(myProject);
-        channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createRequestParamsCommand(headers)));
-        break;
       case CACHE_DOWNLOAD_MESSAGE:
         CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage cacheDownloadMessage = msg.getCacheDownloadMessage();
         ProgressIndicator progressIndicator = getProgressIndicator();
@@ -64,33 +60,11 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
           progressIndicator.setFraction(cacheDownloadMessage.getDone());
         }
         break;
-      case REPOSITORY_COMMITS_REQUEST:
-        CmdlineRemoteProto.Message.BuilderMessage.CommitAndDownloadStatistics downloadStatistics = msg.getCommitAndDownloadStatistics();
-        String latestCommit = downloadStatistics.getCommit();
-        List<String> repositoryCommits = GitRepositoryUtil.fetchRepositoryCommits(myProject, latestCommit);
-
-        long deletionSpeed = 0;
-        long decompressionSpeed = 0;
-        String latestDownloadedCommit = "";
-        String nearestRemoteMasterCommit = "";
-        if (latestCommit.isEmpty()) {
-          nearestRemoteMasterCommit = GitRepositoryUtil.getLatestBuiltMasterCommitId();
-          latestDownloadedCommit = GitRepositoryUtil.getLatestDownloadedCommit();
-          decompressionSpeed = JpsCacheLoadingStats.getApproximateDecompressionSpeed();
-          deletionSpeed = JpsCacheLoadingStats.getApproximateDeletionSpeed();
-        }
-        CmdlineRemoteProto.Message.ControllerMessage message = CmdlineProtoUtil.createRepositoryCommitsMessage(repositoryCommits,
-                                                                                                               nearestRemoteMasterCommit,
-                                                                                                               latestDownloadedCommit,
-                                                                                                               deletionSpeed,
-                                                                                                               decompressionSpeed);
-        channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, message));
-        break;
       case SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE:
         CmdlineRemoteProto.Message.BuilderMessage.CommitAndDownloadStatistics downloadStatisticsMessage = msg.getCommitAndDownloadStatistics();
         GitRepositoryUtil.saveLatestDownloadedCommit(downloadStatisticsMessage.getCommit());
-        JpsCacheLoadingStats.saveApproximateDecompressionSpeed(downloadStatisticsMessage.getDecompressionSpeed());
-        JpsCacheLoadingStats.saveApproximateDeletionSpeed(downloadStatisticsMessage.getDeletionSpeed());
+        CompilerCacheLoadingStats.saveApproximateDecompressionSpeed(downloadStatisticsMessage.getDecompressionSpeed());
+        CompilerCacheLoadingStats.saveApproximateDeletionSpeed(downloadStatisticsMessage.getDeletionSpeed());
         break;
       case SAVE_LATEST_BUILT_COMMIT_MESSAGE:
         GitRepositoryUtil.saveLatestBuiltMasterCommit(myProject);

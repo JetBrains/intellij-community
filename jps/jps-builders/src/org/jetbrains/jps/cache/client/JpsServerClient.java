@@ -12,13 +12,10 @@ import java.util.Map;
 import java.util.Set;
 
 public interface JpsServerClient {
-  @NotNull
-  Map<String, Set<String>> getCacheKeysPerRemote(@NotNull JpsNettyClient nettyClient);
-  @Nullable
-  File downloadMetadataById(@NotNull JpsNettyClient nettyClient, @NotNull String metadataId, @NotNull File targetDir);
+  @Nullable File downloadMetadataById(@NotNull JpsNettyClient nettyClient, @NotNull String metadataId, @NotNull File targetDir);
   File downloadCacheById(@NotNull JpsLoaderContext context, @NotNull String cacheId, @NotNull File targetDir);
   List<OutputLoadResult> downloadCompiledModules(@NotNull JpsLoaderContext context, @NotNull List<AffectedModule> affectedModules);
-  static JpsServerClient getServerClient() {
-    return JpsServerClientImpl.INSTANCE;
+  static JpsServerClient getServerClient(@NotNull String serverUrl) {
+    return new JpsServerClientImpl(serverUrl);
   }
 }

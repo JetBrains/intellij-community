@@ -4,8 +4,8 @@ package com.intellij.compiler.cache.statistic;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 
-public class JpsCacheLoadingStats {
-  private static final Logger LOG = Logger.getInstance(JpsCacheLoadingStats.class);
+public class CompilerCacheLoadingStats {
+  private static final Logger LOG = Logger.getInstance(CompilerCacheLoadingStats.class);
   private static final String APPROXIMATE_DELETION_SPEED = "JpsOutputLoaderManager.deletionBytesPerSec";
   private static final String APPROXIMATE_DECOMPRESSION_SPEED = "JpsOutputLoaderManager.decompressionBytesPerSec";
 

@@ -1544,28 +1544,6 @@ public final class CmdlineRemoteProto {
        * @return The constantSearchResult.
        */
       org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult getConstantSearchResult();
-
-      /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
-       * @return Whether the requestParams field is set.
-       */
-      boolean hasRequestParams();
-      /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
-       * @return The requestParams.
-       */
-      org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams getRequestParams();
-
-      /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
-       * @return Whether the repositoryCommitsResult field is set.
-       */
-      boolean hasRepositoryCommitsResult();
-      /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
-       * @return The repositoryCommitsResult.
-       */
-      org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult getRepositoryCommitsResult();
     }
     /**
      * Protobuf type {@code org.jetbrains.jpsservice.Message.ControllerMessage}
@@ -1599,14 +1577,6 @@ public final class CmdlineRemoteProto {
          * <code>CONSTANT_SEARCH_RESULT = 4;</code>
          */
         CONSTANT_SEARCH_RESULT(4),
-        /**
-         * <code>AUTHENTICATION_TOKEN = 5;</code>
-         */
-        AUTHENTICATION_TOKEN(5),
-        /**
-         * <code>REPOSITORY_COMMITS_AND_STATS_RESULT = 6;</code>
-         */
-        REPOSITORY_COMMITS_AND_STATS_RESULT(6),
         ;
 
         /**
@@ -1625,14 +1595,6 @@ public final class CmdlineRemoteProto {
          * <code>CONSTANT_SEARCH_RESULT = 4;</code>
          */
         public static final int CONSTANT_SEARCH_RESULT_VALUE = 4;
-        /**
-         * <code>AUTHENTICATION_TOKEN = 5;</code>
-         */
-        public static final int AUTHENTICATION_TOKEN_VALUE = 5;
-        /**
-         * <code>REPOSITORY_COMMITS_AND_STATS_RESULT = 6;</code>
-         */
-        public static final int REPOSITORY_COMMITS_AND_STATS_RESULT_VALUE = 6;
 
 
         @java.lang.Override
@@ -1656,8 +1618,6 @@ public final class CmdlineRemoteProto {
             case 2: return CANCEL_BUILD_COMMAND;
             case 3: return FS_EVENT;
             case 4: return CONSTANT_SEARCH_RESULT;
-            case 5: return AUTHENTICATION_TOKEN;
-            case 6: return REPOSITORY_COMMITS_AND_STATS_RESULT;
             default: return null;
           }
         }
@@ -2800,6 +2760,17 @@ public final class CmdlineRemoteProto {
          * <code>repeated .org.jetbrains.jpsservice.Message.KeyValuePair builder_parameter = 6;</code>
          */
         int getBuilderParameterCount();
+
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings cache_download_settings = 7;</code>
+         * @return Whether the cacheDownloadSettings field is set.
+         */
+        boolean hasCacheDownloadSettings();
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings cache_download_settings = 7;</code>
+         * @return The cacheDownloadSettings.
+         */
+        org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings getCacheDownloadSettings();
       }
       /**
        * Protobuf type {@code org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage}
@@ -4017,6 +3988,52 @@ public final class CmdlineRemoteProto {
           builderParameter_.remove(index);
         }
 
+        public static final int CACHE_DOWNLOAD_SETTINGS_FIELD_NUMBER = 7;
+        private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings cacheDownloadSettings_;
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings cache_download_settings = 7;</code>
+         */
+        @java.lang.Override
+        public boolean hasCacheDownloadSettings() {
+          return ((bitField0_ & 0x00000008) != 0);
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings cache_download_settings = 7;</code>
+         */
+        @java.lang.Override
+        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings getCacheDownloadSettings() {
+          return cacheDownloadSettings_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings.getDefaultInstance() : cacheDownloadSettings_;
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings cache_download_settings = 7;</code>
+         */
+        private void setCacheDownloadSettings(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings value) {
+          value.getClass();
+  cacheDownloadSettings_ = value;
+          bitField0_ |= 0x00000008;
+          }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings cache_download_settings = 7;</code>
+         */
+        @java.lang.SuppressWarnings({"ReferenceEquality"})
+        private void mergeCacheDownloadSettings(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings value) {
+          value.getClass();
+  if (cacheDownloadSettings_ != null &&
+              cacheDownloadSettings_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings.getDefaultInstance()) {
+            cacheDownloadSettings_ =
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings.newBuilder(cacheDownloadSettings_).mergeFrom(value).buildPartial();
+          } else {
+            cacheDownloadSettings_ = value;
+          }
+          bitField0_ |= 0x00000008;
+        }
+        /**
+         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings cache_download_settings = 7;</code>
+         */
+        private void clearCacheDownloadSettings() {  cacheDownloadSettings_ = null;
+          bitField0_ = (bitField0_ & ~0x00000008);
+        }
+
         public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage parseFrom(
             java.nio.ByteBuffer data)
             throws com.google.protobuf.InvalidProtocolBufferException {
@@ -4548,6 +4565,53 @@ public final class CmdlineRemoteProto {
             return this;
           }
 
+          /**
+           * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings cache_download_settings = 7;</code>
+           */
+          @java.lang.Override
+          public boolean hasCacheDownloadSettings() {
+            return instance.hasCacheDownloadSettings();
+          }
+          /**
+           * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings cache_download_settings = 7;</code>
+           */
+          @java.lang.Override
+          public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings getCacheDownloadSettings() {
+            return instance.getCacheDownloadSettings();
+          }
+          /**
+           * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings cache_download_settings = 7;</code>
+           */
+          public Builder setCacheDownloadSettings(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings value) {
+            copyOnWrite();
+            instance.setCacheDownloadSettings(value);
+            return this;
+            }
+          /**
+           * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings cache_download_settings = 7;</code>
+           */
+          public Builder setCacheDownloadSettings(
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings.Builder builderForValue) {
+            copyOnWrite();
+            instance.setCacheDownloadSettings(builderForValue.build());
+            return this;
+          }
+          /**
+           * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings cache_download_settings = 7;</code>
+           */
+          public Builder mergeCacheDownloadSettings(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings value) {
+            copyOnWrite();
+            instance.mergeCacheDownloadSettings(value);
+            return this;
+          }
+          /**
+           * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings cache_download_settings = 7;</code>
+           */
+          public Builder clearCacheDownloadSettings() {  copyOnWrite();
+            instance.clearCacheDownloadSettings();
+            return this;
+          }
+
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage)
         }
         private byte memoizedIsInitialized = 2;
@@ -4575,10 +4639,12 @@ public final class CmdlineRemoteProto {
                   "filePath_",
                   "builderParameter_",
                   org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair.class,
+                  "cacheDownloadSettings_",
                 };
                 java.lang.String info =
-                    "\u0001\u0006\u0000\u0001\u0001\u0006\u0006\u0000\u0003\u0004\u0001\u150c\u0000\u0002" +
-                    "\u1409\u0001\u0003\u1008\u0002\u0004\u041b\u0005\u001a\u0006\u041b";
+                    "\u0001\u0007\u0000\u0001\u0001\u0007\u0007\u0000\u0003\u0005\u0001\u150c\u0000\u0002" +
+                    "\u1409\u0001\u0003\u1008\u0002\u0004\u041b\u0005\u001a\u0006\u041b\u0007\u1409\u0003" +
+                    "";
                 return newMessageInfo(DEFAULT_INSTANCE, info, objects);
             }
             // fall through
@@ -5374,8 +5440,8 @@ public final class CmdlineRemoteProto {
         }
       }
 
-      public interface RequestParamsOrBuilder extends
-          // @@protoc_insertion_point(interface_extends:org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams)
+      public interface CacheDownloadSettingsOrBuilder extends
+          // @@protoc_insertion_point(interface_extends:org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings)
           com.google.protobuf.MessageLiteOrBuilder {
 
         /**
@@ -5411,17 +5477,87 @@ public final class CmdlineRemoteProto {
 
         java.lang.String getAuthHeadersOrThrow(
             java.lang.String key);
+
+        /**
+         * <code>required string download_commit = 2;</code>
+         * @return Whether the downloadCommit field is set.
+         */
+        boolean hasDownloadCommit();
+        /**
+         * <code>required string download_commit = 2;</code>
+         * @return The downloadCommit.
+         */
+        java.lang.String getDownloadCommit();
+        /**
+         * <code>required string download_commit = 2;</code>
+         * @return The bytes for downloadCommit.
+         */
+        com.google.protobuf.ByteString
+            getDownloadCommitBytes();
+
+        /**
+         * <code>required int32 commits_count_latest_build = 3;</code>
+         * @return Whether the commitsCountLatestBuild field is set.
+         */
+        boolean hasCommitsCountLatestBuild();
+        /**
+         * <code>required int32 commits_count_latest_build = 3;</code>
+         * @return The commitsCountLatestBuild.
+         */
+        int getCommitsCountLatestBuild();
+
+        /**
+         * <code>required string server_url = 4;</code>
+         * @return Whether the serverUrl field is set.
+         */
+        boolean hasServerUrl();
+        /**
+         * <code>required string server_url = 4;</code>
+         * @return The serverUrl.
+         */
+        java.lang.String getServerUrl();
+        /**
+         * <code>required string server_url = 4;</code>
+         * @return The bytes for serverUrl.
+         */
+        com.google.protobuf.ByteString
+            getServerUrlBytes();
+
+        /**
+         * <code>required int64 decompression_speed = 5;</code>
+         * @return Whether the decompressionSpeed field is set.
+         */
+        boolean hasDecompressionSpeed();
+        /**
+         * <code>required int64 decompression_speed = 5;</code>
+         * @return The decompressionSpeed.
+         */
+        long getDecompressionSpeed();
+
+        /**
+         * <code>required int64 deletion_speed = 6;</code>
+         * @return Whether the deletionSpeed field is set.
+         */
+        boolean hasDeletionSpeed();
+        /**
+         * <code>required int64 deletion_speed = 6;</code>
+         * @return The deletionSpeed.
+         */
+        long getDeletionSpeed();
       }
       /**
-       * Protobuf type {@code org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams}
+       * Protobuf type {@code org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings}
        */
-      public  static final class RequestParams extends
+      public  static final class CacheDownloadSettings extends
           com.google.protobuf.GeneratedMessageLite<
-              RequestParams, RequestParams.Builder> implements
-          // @@protoc_insertion_point(message_implements:org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams)
-          RequestParamsOrBuilder {
-        private RequestParams() {
+              CacheDownloadSettings, CacheDownloadSettings.Builder> implements
+          // @@protoc_insertion_point(message_implements:org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings)
+          CacheDownloadSettingsOrBuilder {
+        private CacheDownloadSettings() {
+          downloadCommit_ = "";
+          serverUrl_ = "";
         }
+        private int bitField0_;
         public static final int AUTH_HEADERS_FIELD_NUMBER = 1;
         private static final class AuthHeadersDefaultEntryHolder {
           static final com.google.protobuf.MapEntryLite<
@@ -5515,73 +5651,283 @@ public final class CmdlineRemoteProto {
           return internalGetMutableAuthHeaders();
         }
 
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(
+        public static final int DOWNLOAD_COMMIT_FIELD_NUMBER = 2;
+        private java.lang.String downloadCommit_;
+        /**
+         * <code>required string download_commit = 2;</code>
+         * @return Whether the downloadCommit field is set.
+         */
+        @java.lang.Override
+        public boolean hasDownloadCommit() {
+          return ((bitField0_ & 0x00000001) != 0);
+        }
+        /**
+         * <code>required string download_commit = 2;</code>
+         * @return The downloadCommit.
+         */
+        @java.lang.Override
+        public java.lang.String getDownloadCommit() {
+          return downloadCommit_;
+        }
+        /**
+         * <code>required string download_commit = 2;</code>
+         * @return The bytes for downloadCommit.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getDownloadCommitBytes() {
+          return com.google.protobuf.ByteString.copyFromUtf8(downloadCommit_);
+        }
+        /**
+         * <code>required string download_commit = 2;</code>
+         * @param value The downloadCommit to set.
+         */
+        private void setDownloadCommit(
+            java.lang.String value) {
+          value.getClass();
+  bitField0_ |= 0x00000001;
+          downloadCommit_ = value;
+        }
+        /**
+         * <code>required string download_commit = 2;</code>
+         */
+        private void clearDownloadCommit() {
+          bitField0_ = (bitField0_ & ~0x00000001);
+          downloadCommit_ = getDefaultInstance().getDownloadCommit();
+        }
+        /**
+         * <code>required string download_commit = 2;</code>
+         * @param value The bytes for downloadCommit to set.
+         */
+        private void setDownloadCommitBytes(
+            com.google.protobuf.ByteString value) {
+          downloadCommit_ = value.toStringUtf8();
+          bitField0_ |= 0x00000001;
+        }
+
+        public static final int COMMITS_COUNT_LATEST_BUILD_FIELD_NUMBER = 3;
+        private int commitsCountLatestBuild_;
+        /**
+         * <code>required int32 commits_count_latest_build = 3;</code>
+         * @return Whether the commitsCountLatestBuild field is set.
+         */
+        @java.lang.Override
+        public boolean hasCommitsCountLatestBuild() {
+          return ((bitField0_ & 0x00000002) != 0);
+        }
+        /**
+         * <code>required int32 commits_count_latest_build = 3;</code>
+         * @return The commitsCountLatestBuild.
+         */
+        @java.lang.Override
+        public int getCommitsCountLatestBuild() {
+          return commitsCountLatestBuild_;
+        }
+        /**
+         * <code>required int32 commits_count_latest_build = 3;</code>
+         * @param value The commitsCountLatestBuild to set.
+         */
+        private void setCommitsCountLatestBuild(int value) {
+          bitField0_ |= 0x00000002;
+          commitsCountLatestBuild_ = value;
+        }
+        /**
+         * <code>required int32 commits_count_latest_build = 3;</code>
+         */
+        private void clearCommitsCountLatestBuild() {
+          bitField0_ = (bitField0_ & ~0x00000002);
+          commitsCountLatestBuild_ = 0;
+        }
+
+        public static final int SERVER_URL_FIELD_NUMBER = 4;
+        private java.lang.String serverUrl_;
+        /**
+         * <code>required string server_url = 4;</code>
+         * @return Whether the serverUrl field is set.
+         */
+        @java.lang.Override
+        public boolean hasServerUrl() {
+          return ((bitField0_ & 0x00000004) != 0);
+        }
+        /**
+         * <code>required string server_url = 4;</code>
+         * @return The serverUrl.
+         */
+        @java.lang.Override
+        public java.lang.String getServerUrl() {
+          return serverUrl_;
+        }
+        /**
+         * <code>required string server_url = 4;</code>
+         * @return The bytes for serverUrl.
+         */
+        @java.lang.Override
+        public com.google.protobuf.ByteString
+            getServerUrlBytes() {
+          return com.google.protobuf.ByteString.copyFromUtf8(serverUrl_);
+        }
+        /**
+         * <code>required string server_url = 4;</code>
+         * @param value The serverUrl to set.
+         */
+        private void setServerUrl(
+            java.lang.String value) {
+          value.getClass();
+  bitField0_ |= 0x00000004;
+          serverUrl_ = value;
+        }
+        /**
+         * <code>required string server_url = 4;</code>
+         */
+        private void clearServerUrl() {
+          bitField0_ = (bitField0_ & ~0x00000004);
+          serverUrl_ = getDefaultInstance().getServerUrl();
+        }
+        /**
+         * <code>required string server_url = 4;</code>
+         * @param value The bytes for serverUrl to set.
+         */
+        private void setServerUrlBytes(
+            com.google.protobuf.ByteString value) {
+          serverUrl_ = value.toStringUtf8();
+          bitField0_ |= 0x00000004;
+        }
+
+        public static final int DECOMPRESSION_SPEED_FIELD_NUMBER = 5;
+        private long decompressionSpeed_;
+        /**
+         * <code>required int64 decompression_speed = 5;</code>
+         * @return Whether the decompressionSpeed field is set.
+         */
+        @java.lang.Override
+        public boolean hasDecompressionSpeed() {
+          return ((bitField0_ & 0x00000008) != 0);
+        }
+        /**
+         * <code>required int64 decompression_speed = 5;</code>
+         * @return The decompressionSpeed.
+         */
+        @java.lang.Override
+        public long getDecompressionSpeed() {
+          return decompressionSpeed_;
+        }
+        /**
+         * <code>required int64 decompression_speed = 5;</code>
+         * @param value The decompressionSpeed to set.
+         */
+        private void setDecompressionSpeed(long value) {
+          bitField0_ |= 0x00000008;
+          decompressionSpeed_ = value;
+        }
+        /**
+         * <code>required int64 decompression_speed = 5;</code>
+         */
+        private void clearDecompressionSpeed() {
+          bitField0_ = (bitField0_ & ~0x00000008);
+          decompressionSpeed_ = 0L;
+        }
+
+        public static final int DELETION_SPEED_FIELD_NUMBER = 6;
+        private long deletionSpeed_;
+        /**
+         * <code>required int64 deletion_speed = 6;</code>
+         * @return Whether the deletionSpeed field is set.
+         */
+        @java.lang.Override
+        public boolean hasDeletionSpeed() {
+          return ((bitField0_ & 0x00000010) != 0);
+        }
+        /**
+         * <code>required int64 deletion_speed = 6;</code>
+         * @return The deletionSpeed.
+         */
+        @java.lang.Override
+        public long getDeletionSpeed() {
+          return deletionSpeed_;
+        }
+        /**
+         * <code>required int64 deletion_speed = 6;</code>
+         * @param value The deletionSpeed to set.
+         */
+        private void setDeletionSpeed(long value) {
+          bitField0_ |= 0x00000010;
+          deletionSpeed_ = value;
+        }
+        /**
+         * <code>required int64 deletion_speed = 6;</code>
+         */
+        private void clearDeletionSpeed() {
+          bitField0_ = (bitField0_ & ~0x00000010);
+          deletionSpeed_ = 0L;
+        }
+
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings parseFrom(
             java.nio.ByteBuffer data)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
               DEFAULT_INSTANCE, data);
         }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings parseFrom(
             java.nio.ByteBuffer data,
             com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
               DEFAULT_INSTANCE, data, extensionRegistry);
         }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings parseFrom(
             com.google.protobuf.ByteString data)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
               DEFAULT_INSTANCE, data);
         }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings parseFrom(
             com.google.protobuf.ByteString data,
             com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
               DEFAULT_INSTANCE, data, extensionRegistry);
         }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(byte[] data)
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings parseFrom(byte[] data)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
               DEFAULT_INSTANCE, data);
         }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings parseFrom(
             byte[] data,
             com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
               DEFAULT_INSTANCE, data, extensionRegistry);
         }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(java.io.InputStream input)
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings parseFrom(java.io.InputStream input)
             throws java.io.IOException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
               DEFAULT_INSTANCE, input);
         }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings parseFrom(
             java.io.InputStream input,
             com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
               DEFAULT_INSTANCE, input, extensionRegistry);
         }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseDelimitedFrom(java.io.InputStream input)
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings parseDelimitedFrom(java.io.InputStream input)
             throws java.io.IOException {
           return parseDelimitedFrom(DEFAULT_INSTANCE, input);
         }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseDelimitedFrom(
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings parseDelimitedFrom(
             java.io.InputStream input,
             com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
           return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
         }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings parseFrom(
             com.google.protobuf.CodedInputStream input)
             throws java.io.IOException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
               DEFAULT_INSTANCE, input);
         }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams parseFrom(
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings parseFrom(
             com.google.protobuf.CodedInputStream input,
             com.google.protobuf.ExtensionRegistryLite extensionRegistry)
             throws java.io.IOException {
@@ -5592,19 +5938,19 @@ public final class CmdlineRemoteProto {
         public static Builder newBuilder() {
           return (Builder) DEFAULT_INSTANCE.createBuilder();
         }
-        public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams prototype) {
+        public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings prototype) {
           return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
         }
 
         /**
-         * Protobuf type {@code org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams}
+         * Protobuf type {@code org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings}
          */
         public static final class Builder extends
             com.google.protobuf.GeneratedMessageLite.Builder<
-              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams, Builder> implements
-            // @@protoc_insertion_point(builder_implements:org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams)
-            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParamsOrBuilder {
-          // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams.newBuilder()
+              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings, Builder> implements
+            // @@protoc_insertion_point(builder_implements:org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings)
+            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettingsOrBuilder {
+          // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings.newBuilder()
           private Builder() {
             super(DEFAULT_INSTANCE);
           }
@@ -5708,751 +6054,158 @@ public final class CmdlineRemoteProto {
             return this;
           }
 
-          // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams)
-        }
-        @java.lang.Override
-        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
-        protected final java.lang.Object dynamicMethod(
-            com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
-            java.lang.Object arg0, java.lang.Object arg1) {
-          switch (method) {
-            case NEW_MUTABLE_INSTANCE: {
-              return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams();
-            }
-            case NEW_BUILDER: {
-              return new Builder();
-            }
-            case BUILD_MESSAGE_INFO: {
-                java.lang.Object[] objects = new java.lang.Object[] {
-                  "authHeaders_",
-                  AuthHeadersDefaultEntryHolder.defaultEntry,
-                };
-                java.lang.String info =
-                    "\u0001\u0001\u0000\u0000\u0001\u0001\u0001\u0001\u0000\u0000\u00012";
-                return newMessageInfo(DEFAULT_INSTANCE, info, objects);
-            }
-            // fall through
-            case GET_DEFAULT_INSTANCE: {
-              return DEFAULT_INSTANCE;
-            }
-            case GET_PARSER: {
-              com.google.protobuf.Parser<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams> parser = PARSER;
-              if (parser == null) {
-                synchronized (org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams.class) {
-                  parser = PARSER;
-                  if (parser == null) {
-                    parser =
-                        new DefaultInstanceBasedParser<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams>(
-                            DEFAULT_INSTANCE);
-                    PARSER = parser;
-                  }
-                }
-              }
-              return parser;
-          }
-          case GET_MEMOIZED_IS_INITIALIZED: {
-            return (byte) 1;
-          }
-          case SET_MEMOIZED_IS_INITIALIZED: {
-            return null;
-          }
-          }
-          throw new UnsupportedOperationException();
-        }
-
-
-        // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams)
-        private static final org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams DEFAULT_INSTANCE;
-        static {
-          RequestParams defaultInstance = new RequestParams();
-          // New instances are implicitly immutable so no need to make
-          // immutable.
-          DEFAULT_INSTANCE = defaultInstance;
-          com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
-            RequestParams.class, defaultInstance);
-        }
-
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams getDefaultInstance() {
-          return DEFAULT_INSTANCE;
-        }
-
-        private static volatile com.google.protobuf.Parser<RequestParams> PARSER;
-
-        public static com.google.protobuf.Parser<RequestParams> parser() {
-          return DEFAULT_INSTANCE.getParserForType();
-        }
-      }
-
-      public interface RepositoryCommitsResultOrBuilder extends
-          // @@protoc_insertion_point(interface_extends:org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult)
-          com.google.protobuf.MessageLiteOrBuilder {
-
-        /**
-         * <code>repeated string commit = 1;</code>
-         * @return A list containing the commit.
-         */
-        java.util.List<java.lang.String>
-            getCommitList();
-        /**
-         * <code>repeated string commit = 1;</code>
-         * @return The count of commit.
-         */
-        int getCommitCount();
-        /**
-         * <code>repeated string commit = 1;</code>
-         * @param index The index of the element to return.
-         * @return The commit at the given index.
-         */
-        java.lang.String getCommit(int index);
-        /**
-         * <code>repeated string commit = 1;</code>
-         * @param index The index of the element to return.
-         * @return The commit at the given index.
-         */
-        com.google.protobuf.ByteString
-            getCommitBytes(int index);
-
-        /**
-         * <code>required string latest_built_master_commit = 2;</code>
-         * @return Whether the latestBuiltMasterCommit field is set.
-         */
-        boolean hasLatestBuiltMasterCommit();
-        /**
-         * <code>required string latest_built_master_commit = 2;</code>
-         * @return The latestBuiltMasterCommit.
-         */
-        java.lang.String getLatestBuiltMasterCommit();
-        /**
-         * <code>required string latest_built_master_commit = 2;</code>
-         * @return The bytes for latestBuiltMasterCommit.
-         */
-        com.google.protobuf.ByteString
-            getLatestBuiltMasterCommitBytes();
-
-        /**
-         * <code>required string latest_download_commit = 3;</code>
-         * @return Whether the latestDownloadCommit field is set.
-         */
-        boolean hasLatestDownloadCommit();
-        /**
-         * <code>required string latest_download_commit = 3;</code>
-         * @return The latestDownloadCommit.
-         */
-        java.lang.String getLatestDownloadCommit();
-        /**
-         * <code>required string latest_download_commit = 3;</code>
-         * @return The bytes for latestDownloadCommit.
-         */
-        com.google.protobuf.ByteString
-            getLatestDownloadCommitBytes();
-
-        /**
-         * <code>required int64 decompression_speed = 4;</code>
-         * @return Whether the decompressionSpeed field is set.
-         */
-        boolean hasDecompressionSpeed();
-        /**
-         * <code>required int64 decompression_speed = 4;</code>
-         * @return The decompressionSpeed.
-         */
-        long getDecompressionSpeed();
-
-        /**
-         * <code>required int64 deletion_speed = 5;</code>
-         * @return Whether the deletionSpeed field is set.
-         */
-        boolean hasDeletionSpeed();
-        /**
-         * <code>required int64 deletion_speed = 5;</code>
-         * @return The deletionSpeed.
-         */
-        long getDeletionSpeed();
-      }
-      /**
-       * Protobuf type {@code org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult}
-       */
-      public  static final class RepositoryCommitsResult extends
-          com.google.protobuf.GeneratedMessageLite<
-              RepositoryCommitsResult, RepositoryCommitsResult.Builder> implements
-          // @@protoc_insertion_point(message_implements:org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult)
-          RepositoryCommitsResultOrBuilder {
-        private RepositoryCommitsResult() {
-          commit_ = com.google.protobuf.GeneratedMessageLite.emptyProtobufList();
-          latestBuiltMasterCommit_ = "";
-          latestDownloadCommit_ = "";
-        }
-        private int bitField0_;
-        public static final int COMMIT_FIELD_NUMBER = 1;
-        private com.google.protobuf.Internal.ProtobufList<java.lang.String> commit_;
-        /**
-         * <code>repeated string commit = 1;</code>
-         * @return A list containing the commit.
-         */
-        @java.lang.Override
-        public java.util.List<java.lang.String> getCommitList() {
-          return commit_;
-        }
-        /**
-         * <code>repeated string commit = 1;</code>
-         * @return The count of commit.
-         */
-        @java.lang.Override
-        public int getCommitCount() {
-          return commit_.size();
-        }
-        /**
-         * <code>repeated string commit = 1;</code>
-         * @param index The index of the element to return.
-         * @return The commit at the given index.
-         */
-        @java.lang.Override
-        public java.lang.String getCommit(int index) {
-          return commit_.get(index);
-        }
-        /**
-         * <code>repeated string commit = 1;</code>
-         * @param index The index of the value to return.
-         * @return The bytes of the commit at the given index.
-         */
-        @java.lang.Override
-        public com.google.protobuf.ByteString
-            getCommitBytes(int index) {
-          return com.google.protobuf.ByteString.copyFromUtf8(
-              commit_.get(index));
-        }
-        private void ensureCommitIsMutable() {
-          com.google.protobuf.Internal.ProtobufList<java.lang.String> tmp =
-              commit_;  if (!tmp.isModifiable()) {
-            commit_ =
-                com.google.protobuf.GeneratedMessageLite.mutableCopy(tmp);
-           }
-        }
-        /**
-         * <code>repeated string commit = 1;</code>
-         * @param index The index to set the value at.
-         * @param value The commit to set.
-         */
-        private void setCommit(
-            int index, java.lang.String value) {
-          value.getClass();
-  ensureCommitIsMutable();
-          commit_.set(index, value);
-        }
-        /**
-         * <code>repeated string commit = 1;</code>
-         * @param value The commit to add.
-         */
-        private void addCommit(
-            java.lang.String value) {
-          value.getClass();
-  ensureCommitIsMutable();
-          commit_.add(value);
-        }
-        /**
-         * <code>repeated string commit = 1;</code>
-         * @param values The commit to add.
-         */
-        private void addAllCommit(
-            java.lang.Iterable<java.lang.String> values) {
-          ensureCommitIsMutable();
-          com.google.protobuf.AbstractMessageLite.addAll(
-              values, commit_);
-        }
-        /**
-         * <code>repeated string commit = 1;</code>
-         */
-        private void clearCommit() {
-          commit_ = com.google.protobuf.GeneratedMessageLite.emptyProtobufList();
-        }
-        /**
-         * <code>repeated string commit = 1;</code>
-         * @param value The bytes of the commit to add.
-         */
-        private void addCommitBytes(
-            com.google.protobuf.ByteString value) {
-          ensureCommitIsMutable();
-          commit_.add(value.toStringUtf8());
-        }
-
-        public static final int LATEST_BUILT_MASTER_COMMIT_FIELD_NUMBER = 2;
-        private java.lang.String latestBuiltMasterCommit_;
-        /**
-         * <code>required string latest_built_master_commit = 2;</code>
-         * @return Whether the latestBuiltMasterCommit field is set.
-         */
-        @java.lang.Override
-        public boolean hasLatestBuiltMasterCommit() {
-          return ((bitField0_ & 0x00000001) != 0);
-        }
-        /**
-         * <code>required string latest_built_master_commit = 2;</code>
-         * @return The latestBuiltMasterCommit.
-         */
-        @java.lang.Override
-        public java.lang.String getLatestBuiltMasterCommit() {
-          return latestBuiltMasterCommit_;
-        }
-        /**
-         * <code>required string latest_built_master_commit = 2;</code>
-         * @return The bytes for latestBuiltMasterCommit.
-         */
-        @java.lang.Override
-        public com.google.protobuf.ByteString
-            getLatestBuiltMasterCommitBytes() {
-          return com.google.protobuf.ByteString.copyFromUtf8(latestBuiltMasterCommit_);
-        }
-        /**
-         * <code>required string latest_built_master_commit = 2;</code>
-         * @param value The latestBuiltMasterCommit to set.
-         */
-        private void setLatestBuiltMasterCommit(
-            java.lang.String value) {
-          value.getClass();
-  bitField0_ |= 0x00000001;
-          latestBuiltMasterCommit_ = value;
-        }
-        /**
-         * <code>required string latest_built_master_commit = 2;</code>
-         */
-        private void clearLatestBuiltMasterCommit() {
-          bitField0_ = (bitField0_ & ~0x00000001);
-          latestBuiltMasterCommit_ = getDefaultInstance().getLatestBuiltMasterCommit();
-        }
-        /**
-         * <code>required string latest_built_master_commit = 2;</code>
-         * @param value The bytes for latestBuiltMasterCommit to set.
-         */
-        private void setLatestBuiltMasterCommitBytes(
-            com.google.protobuf.ByteString value) {
-          latestBuiltMasterCommit_ = value.toStringUtf8();
-          bitField0_ |= 0x00000001;
-        }
-
-        public static final int LATEST_DOWNLOAD_COMMIT_FIELD_NUMBER = 3;
-        private java.lang.String latestDownloadCommit_;
-        /**
-         * <code>required string latest_download_commit = 3;</code>
-         * @return Whether the latestDownloadCommit field is set.
-         */
-        @java.lang.Override
-        public boolean hasLatestDownloadCommit() {
-          return ((bitField0_ & 0x00000002) != 0);
-        }
-        /**
-         * <code>required string latest_download_commit = 3;</code>
-         * @return The latestDownloadCommit.
-         */
-        @java.lang.Override
-        public java.lang.String getLatestDownloadCommit() {
-          return latestDownloadCommit_;
-        }
-        /**
-         * <code>required string latest_download_commit = 3;</code>
-         * @return The bytes for latestDownloadCommit.
-         */
-        @java.lang.Override
-        public com.google.protobuf.ByteString
-            getLatestDownloadCommitBytes() {
-          return com.google.protobuf.ByteString.copyFromUtf8(latestDownloadCommit_);
-        }
-        /**
-         * <code>required string latest_download_commit = 3;</code>
-         * @param value The latestDownloadCommit to set.
-         */
-        private void setLatestDownloadCommit(
-            java.lang.String value) {
-          value.getClass();
-  bitField0_ |= 0x00000002;
-          latestDownloadCommit_ = value;
-        }
-        /**
-         * <code>required string latest_download_commit = 3;</code>
-         */
-        private void clearLatestDownloadCommit() {
-          bitField0_ = (bitField0_ & ~0x00000002);
-          latestDownloadCommit_ = getDefaultInstance().getLatestDownloadCommit();
-        }
-        /**
-         * <code>required string latest_download_commit = 3;</code>
-         * @param value The bytes for latestDownloadCommit to set.
-         */
-        private void setLatestDownloadCommitBytes(
-            com.google.protobuf.ByteString value) {
-          latestDownloadCommit_ = value.toStringUtf8();
-          bitField0_ |= 0x00000002;
-        }
-
-        public static final int DECOMPRESSION_SPEED_FIELD_NUMBER = 4;
-        private long decompressionSpeed_;
-        /**
-         * <code>required int64 decompression_speed = 4;</code>
-         * @return Whether the decompressionSpeed field is set.
-         */
-        @java.lang.Override
-        public boolean hasDecompressionSpeed() {
-          return ((bitField0_ & 0x00000004) != 0);
-        }
-        /**
-         * <code>required int64 decompression_speed = 4;</code>
-         * @return The decompressionSpeed.
-         */
-        @java.lang.Override
-        public long getDecompressionSpeed() {
-          return decompressionSpeed_;
-        }
-        /**
-         * <code>required int64 decompression_speed = 4;</code>
-         * @param value The decompressionSpeed to set.
-         */
-        private void setDecompressionSpeed(long value) {
-          bitField0_ |= 0x00000004;
-          decompressionSpeed_ = value;
-        }
-        /**
-         * <code>required int64 decompression_speed = 4;</code>
-         */
-        private void clearDecompressionSpeed() {
-          bitField0_ = (bitField0_ & ~0x00000004);
-          decompressionSpeed_ = 0L;
-        }
-
-        public static final int DELETION_SPEED_FIELD_NUMBER = 5;
-        private long deletionSpeed_;
-        /**
-         * <code>required int64 deletion_speed = 5;</code>
-         * @return Whether the deletionSpeed field is set.
-         */
-        @java.lang.Override
-        public boolean hasDeletionSpeed() {
-          return ((bitField0_ & 0x00000008) != 0);
-        }
-        /**
-         * <code>required int64 deletion_speed = 5;</code>
-         * @return The deletionSpeed.
-         */
-        @java.lang.Override
-        public long getDeletionSpeed() {
-          return deletionSpeed_;
-        }
-        /**
-         * <code>required int64 deletion_speed = 5;</code>
-         * @param value The deletionSpeed to set.
-         */
-        private void setDeletionSpeed(long value) {
-          bitField0_ |= 0x00000008;
-          deletionSpeed_ = value;
-        }
-        /**
-         * <code>required int64 deletion_speed = 5;</code>
-         */
-        private void clearDeletionSpeed() {
-          bitField0_ = (bitField0_ & ~0x00000008);
-          deletionSpeed_ = 0L;
-        }
-
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(
-            java.nio.ByteBuffer data)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          return com.google.protobuf.GeneratedMessageLite.parseFrom(
-              DEFAULT_INSTANCE, data);
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(
-            java.nio.ByteBuffer data,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          return com.google.protobuf.GeneratedMessageLite.parseFrom(
-              DEFAULT_INSTANCE, data, extensionRegistry);
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(
-            com.google.protobuf.ByteString data)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          return com.google.protobuf.GeneratedMessageLite.parseFrom(
-              DEFAULT_INSTANCE, data);
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(
-            com.google.protobuf.ByteString data,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          return com.google.protobuf.GeneratedMessageLite.parseFrom(
-              DEFAULT_INSTANCE, data, extensionRegistry);
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(byte[] data)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          return com.google.protobuf.GeneratedMessageLite.parseFrom(
-              DEFAULT_INSTANCE, data);
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(
-            byte[] data,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws com.google.protobuf.InvalidProtocolBufferException {
-          return com.google.protobuf.GeneratedMessageLite.parseFrom(
-              DEFAULT_INSTANCE, data, extensionRegistry);
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(java.io.InputStream input)
-            throws java.io.IOException {
-          return com.google.protobuf.GeneratedMessageLite.parseFrom(
-              DEFAULT_INSTANCE, input);
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(
-            java.io.InputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws java.io.IOException {
-          return com.google.protobuf.GeneratedMessageLite.parseFrom(
-              DEFAULT_INSTANCE, input, extensionRegistry);
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseDelimitedFrom(java.io.InputStream input)
-            throws java.io.IOException {
-          return parseDelimitedFrom(DEFAULT_INSTANCE, input);
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseDelimitedFrom(
-            java.io.InputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws java.io.IOException {
-          return parseDelimitedFrom(DEFAULT_INSTANCE, input, extensionRegistry);
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(
-            com.google.protobuf.CodedInputStream input)
-            throws java.io.IOException {
-          return com.google.protobuf.GeneratedMessageLite.parseFrom(
-              DEFAULT_INSTANCE, input);
-        }
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult parseFrom(
-            com.google.protobuf.CodedInputStream input,
-            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
-            throws java.io.IOException {
-          return com.google.protobuf.GeneratedMessageLite.parseFrom(
-              DEFAULT_INSTANCE, input, extensionRegistry);
-        }
-
-        public static Builder newBuilder() {
-          return (Builder) DEFAULT_INSTANCE.createBuilder();
-        }
-        public static Builder newBuilder(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult prototype) {
-          return (Builder) DEFAULT_INSTANCE.createBuilder(prototype);
-        }
-
-        /**
-         * Protobuf type {@code org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult}
-         */
-        public static final class Builder extends
-            com.google.protobuf.GeneratedMessageLite.Builder<
-              org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult, Builder> implements
-            // @@protoc_insertion_point(builder_implements:org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult)
-            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResultOrBuilder {
-          // Construct using org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.newBuilder()
-          private Builder() {
-            super(DEFAULT_INSTANCE);
-          }
-
-
           /**
-           * <code>repeated string commit = 1;</code>
-           * @return A list containing the commit.
+           * <code>required string download_commit = 2;</code>
+           * @return Whether the downloadCommit field is set.
            */
           @java.lang.Override
-          public java.util.List<java.lang.String>
-              getCommitList() {
-            return java.util.Collections.unmodifiableList(
-                instance.getCommitList());
+          public boolean hasDownloadCommit() {
+            return instance.hasDownloadCommit();
           }
           /**
-           * <code>repeated string commit = 1;</code>
-           * @return The count of commit.
+           * <code>required string download_commit = 2;</code>
+           * @return The downloadCommit.
            */
           @java.lang.Override
-          public int getCommitCount() {
-            return instance.getCommitCount();
+          public java.lang.String getDownloadCommit() {
+            return instance.getDownloadCommit();
           }
           /**
-           * <code>repeated string commit = 1;</code>
-           * @param index The index of the element to return.
-           * @return The commit at the given index.
-           */
-          @java.lang.Override
-          public java.lang.String getCommit(int index) {
-            return instance.getCommit(index);
-          }
-          /**
-           * <code>repeated string commit = 1;</code>
-           * @param index The index of the value to return.
-           * @return The bytes of the commit at the given index.
+           * <code>required string download_commit = 2;</code>
+           * @return The bytes for downloadCommit.
            */
           @java.lang.Override
           public com.google.protobuf.ByteString
-              getCommitBytes(int index) {
-            return instance.getCommitBytes(index);
+              getDownloadCommitBytes() {
+            return instance.getDownloadCommitBytes();
           }
           /**
-           * <code>repeated string commit = 1;</code>
-           * @param index The index to set the value at.
-           * @param value The commit to set.
+           * <code>required string download_commit = 2;</code>
+           * @param value The downloadCommit to set.
            * @return This builder for chaining.
            */
-          public Builder setCommit(
-              int index, java.lang.String value) {
-            copyOnWrite();
-            instance.setCommit(index, value);
-            return this;
-          }
-          /**
-           * <code>repeated string commit = 1;</code>
-           * @param value The commit to add.
-           * @return This builder for chaining.
-           */
-          public Builder addCommit(
+          public Builder setDownloadCommit(
               java.lang.String value) {
             copyOnWrite();
-            instance.addCommit(value);
+            instance.setDownloadCommit(value);
             return this;
           }
           /**
-           * <code>repeated string commit = 1;</code>
-           * @param values The commit to add.
+           * <code>required string download_commit = 2;</code>
            * @return This builder for chaining.
            */
-          public Builder addAllCommit(
-              java.lang.Iterable<java.lang.String> values) {
+          public Builder clearDownloadCommit() {
             copyOnWrite();
-            instance.addAllCommit(values);
+            instance.clearDownloadCommit();
             return this;
           }
           /**
-           * <code>repeated string commit = 1;</code>
+           * <code>required string download_commit = 2;</code>
+           * @param value The bytes for downloadCommit to set.
            * @return This builder for chaining.
            */
-          public Builder clearCommit() {
-            copyOnWrite();
-            instance.clearCommit();
-            return this;
-          }
-          /**
-           * <code>repeated string commit = 1;</code>
-           * @param value The bytes of the commit to add.
-           * @return This builder for chaining.
-           */
-          public Builder addCommitBytes(
+          public Builder setDownloadCommitBytes(
               com.google.protobuf.ByteString value) {
             copyOnWrite();
-            instance.addCommitBytes(value);
+            instance.setDownloadCommitBytes(value);
             return this;
           }
 
           /**
-           * <code>required string latest_built_master_commit = 2;</code>
-           * @return Whether the latestBuiltMasterCommit field is set.
+           * <code>required int32 commits_count_latest_build = 3;</code>
+           * @return Whether the commitsCountLatestBuild field is set.
            */
           @java.lang.Override
-          public boolean hasLatestBuiltMasterCommit() {
-            return instance.hasLatestBuiltMasterCommit();
+          public boolean hasCommitsCountLatestBuild() {
+            return instance.hasCommitsCountLatestBuild();
           }
           /**
-           * <code>required string latest_built_master_commit = 2;</code>
-           * @return The latestBuiltMasterCommit.
+           * <code>required int32 commits_count_latest_build = 3;</code>
+           * @return The commitsCountLatestBuild.
            */
           @java.lang.Override
-          public java.lang.String getLatestBuiltMasterCommit() {
-            return instance.getLatestBuiltMasterCommit();
+          public int getCommitsCountLatestBuild() {
+            return instance.getCommitsCountLatestBuild();
           }
           /**
-           * <code>required string latest_built_master_commit = 2;</code>
-           * @return The bytes for latestBuiltMasterCommit.
+           * <code>required int32 commits_count_latest_build = 3;</code>
+           * @param value The commitsCountLatestBuild to set.
+           * @return This builder for chaining.
+           */
+          public Builder setCommitsCountLatestBuild(int value) {
+            copyOnWrite();
+            instance.setCommitsCountLatestBuild(value);
+            return this;
+          }
+          /**
+           * <code>required int32 commits_count_latest_build = 3;</code>
+           * @return This builder for chaining.
+           */
+          public Builder clearCommitsCountLatestBuild() {
+            copyOnWrite();
+            instance.clearCommitsCountLatestBuild();
+            return this;
+          }
+
+          /**
+           * <code>required string server_url = 4;</code>
+           * @return Whether the serverUrl field is set.
+           */
+          @java.lang.Override
+          public boolean hasServerUrl() {
+            return instance.hasServerUrl();
+          }
+          /**
+           * <code>required string server_url = 4;</code>
+           * @return The serverUrl.
+           */
+          @java.lang.Override
+          public java.lang.String getServerUrl() {
+            return instance.getServerUrl();
+          }
+          /**
+           * <code>required string server_url = 4;</code>
+           * @return The bytes for serverUrl.
            */
           @java.lang.Override
           public com.google.protobuf.ByteString
-              getLatestBuiltMasterCommitBytes() {
-            return instance.getLatestBuiltMasterCommitBytes();
+              getServerUrlBytes() {
+            return instance.getServerUrlBytes();
           }
           /**
-           * <code>required string latest_built_master_commit = 2;</code>
-           * @param value The latestBuiltMasterCommit to set.
+           * <code>required string server_url = 4;</code>
+           * @param value The serverUrl to set.
            * @return This builder for chaining.
            */
-          public Builder setLatestBuiltMasterCommit(
+          public Builder setServerUrl(
               java.lang.String value) {
             copyOnWrite();
-            instance.setLatestBuiltMasterCommit(value);
+            instance.setServerUrl(value);
             return this;
           }
           /**
-           * <code>required string latest_built_master_commit = 2;</code>
+           * <code>required string server_url = 4;</code>
            * @return This builder for chaining.
            */
-          public Builder clearLatestBuiltMasterCommit() {
+          public Builder clearServerUrl() {
             copyOnWrite();
-            instance.clearLatestBuiltMasterCommit();
+            instance.clearServerUrl();
             return this;
           }
           /**
-           * <code>required string latest_built_master_commit = 2;</code>
-           * @param value The bytes for latestBuiltMasterCommit to set.
+           * <code>required string server_url = 4;</code>
+           * @param value The bytes for serverUrl to set.
            * @return This builder for chaining.
            */
-          public Builder setLatestBuiltMasterCommitBytes(
+          public Builder setServerUrlBytes(
               com.google.protobuf.ByteString value) {
             copyOnWrite();
-            instance.setLatestBuiltMasterCommitBytes(value);
+            instance.setServerUrlBytes(value);
             return this;
           }
 
           /**
-           * <code>required string latest_download_commit = 3;</code>
-           * @return Whether the latestDownloadCommit field is set.
-           */
-          @java.lang.Override
-          public boolean hasLatestDownloadCommit() {
-            return instance.hasLatestDownloadCommit();
-          }
-          /**
-           * <code>required string latest_download_commit = 3;</code>
-           * @return The latestDownloadCommit.
-           */
-          @java.lang.Override
-          public java.lang.String getLatestDownloadCommit() {
-            return instance.getLatestDownloadCommit();
-          }
-          /**
-           * <code>required string latest_download_commit = 3;</code>
-           * @return The bytes for latestDownloadCommit.
-           */
-          @java.lang.Override
-          public com.google.protobuf.ByteString
-              getLatestDownloadCommitBytes() {
-            return instance.getLatestDownloadCommitBytes();
-          }
-          /**
-           * <code>required string latest_download_commit = 3;</code>
-           * @param value The latestDownloadCommit to set.
-           * @return This builder for chaining.
-           */
-          public Builder setLatestDownloadCommit(
-              java.lang.String value) {
-            copyOnWrite();
-            instance.setLatestDownloadCommit(value);
-            return this;
-          }
-          /**
-           * <code>required string latest_download_commit = 3;</code>
-           * @return This builder for chaining.
-           */
-          public Builder clearLatestDownloadCommit() {
-            copyOnWrite();
-            instance.clearLatestDownloadCommit();
-            return this;
-          }
-          /**
-           * <code>required string latest_download_commit = 3;</code>
-           * @param value The bytes for latestDownloadCommit to set.
-           * @return This builder for chaining.
-           */
-          public Builder setLatestDownloadCommitBytes(
-              com.google.protobuf.ByteString value) {
-            copyOnWrite();
-            instance.setLatestDownloadCommitBytes(value);
-            return this;
-          }
-
-          /**
-           * <code>required int64 decompression_speed = 4;</code>
+           * <code>required int64 decompression_speed = 5;</code>
            * @return Whether the decompressionSpeed field is set.
            */
           @java.lang.Override
@@ -6460,7 +6213,7 @@ public final class CmdlineRemoteProto {
             return instance.hasDecompressionSpeed();
           }
           /**
-           * <code>required int64 decompression_speed = 4;</code>
+           * <code>required int64 decompression_speed = 5;</code>
            * @return The decompressionSpeed.
            */
           @java.lang.Override
@@ -6468,7 +6221,7 @@ public final class CmdlineRemoteProto {
             return instance.getDecompressionSpeed();
           }
           /**
-           * <code>required int64 decompression_speed = 4;</code>
+           * <code>required int64 decompression_speed = 5;</code>
            * @param value The decompressionSpeed to set.
            * @return This builder for chaining.
            */
@@ -6478,7 +6231,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required int64 decompression_speed = 4;</code>
+           * <code>required int64 decompression_speed = 5;</code>
            * @return This builder for chaining.
            */
           public Builder clearDecompressionSpeed() {
@@ -6488,7 +6241,7 @@ public final class CmdlineRemoteProto {
           }
 
           /**
-           * <code>required int64 deletion_speed = 5;</code>
+           * <code>required int64 deletion_speed = 6;</code>
            * @return Whether the deletionSpeed field is set.
            */
           @java.lang.Override
@@ -6496,7 +6249,7 @@ public final class CmdlineRemoteProto {
             return instance.hasDeletionSpeed();
           }
           /**
-           * <code>required int64 deletion_speed = 5;</code>
+           * <code>required int64 deletion_speed = 6;</code>
            * @return The deletionSpeed.
            */
           @java.lang.Override
@@ -6504,7 +6257,7 @@ public final class CmdlineRemoteProto {
             return instance.getDeletionSpeed();
           }
           /**
-           * <code>required int64 deletion_speed = 5;</code>
+           * <code>required int64 deletion_speed = 6;</code>
            * @param value The deletionSpeed to set.
            * @return This builder for chaining.
            */
@@ -6514,7 +6267,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
           /**
-           * <code>required int64 deletion_speed = 5;</code>
+           * <code>required int64 deletion_speed = 6;</code>
            * @return This builder for chaining.
            */
           public Builder clearDeletionSpeed() {
@@ -6523,7 +6276,7 @@ public final class CmdlineRemoteProto {
             return this;
           }
 
-          // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult)
+          // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings)
         }
         private byte memoizedIsInitialized = 2;
         @java.lang.Override
@@ -6533,7 +6286,7 @@ public final class CmdlineRemoteProto {
             java.lang.Object arg0, java.lang.Object arg1) {
           switch (method) {
             case NEW_MUTABLE_INSTANCE: {
-              return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult();
+              return new org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings();
             }
             case NEW_BUILDER: {
               return new Builder();
@@ -6541,15 +6294,17 @@ public final class CmdlineRemoteProto {
             case BUILD_MESSAGE_INFO: {
                 java.lang.Object[] objects = new java.lang.Object[] {
                   "bitField0_",
-                  "commit_",
-                  "latestBuiltMasterCommit_",
-                  "latestDownloadCommit_",
+                  "authHeaders_",
+                  AuthHeadersDefaultEntryHolder.defaultEntry,
+                  "downloadCommit_",
+                  "commitsCountLatestBuild_",
+                  "serverUrl_",
                   "decompressionSpeed_",
                   "deletionSpeed_",
                 };
                 java.lang.String info =
-                    "\u0001\u0005\u0000\u0001\u0001\u0005\u0005\u0000\u0001\u0004\u0001\u001a\u0002\u1508" +
-                    "\u0000\u0003\u1508\u0001\u0004\u1502\u0002\u0005\u1502\u0003";
+                    "\u0001\u0006\u0000\u0001\u0001\u0006\u0006\u0001\u0000\u0005\u00012\u0002\u1508\u0000" +
+                    "\u0003\u1504\u0001\u0004\u1508\u0002\u0005\u1502\u0003\u0006\u1502\u0004";
                 return newMessageInfo(DEFAULT_INSTANCE, info, objects);
             }
             // fall through
@@ -6557,13 +6312,13 @@ public final class CmdlineRemoteProto {
               return DEFAULT_INSTANCE;
             }
             case GET_PARSER: {
-              com.google.protobuf.Parser<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult> parser = PARSER;
+              com.google.protobuf.Parser<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings> parser = PARSER;
               if (parser == null) {
-                synchronized (org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.class) {
+                synchronized (org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings.class) {
                   parser = PARSER;
                   if (parser == null) {
                     parser =
-                        new DefaultInstanceBasedParser<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult>(
+                        new DefaultInstanceBasedParser<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings>(
                             DEFAULT_INSTANCE);
                     PARSER = parser;
                   }
@@ -6583,24 +6338,24 @@ public final class CmdlineRemoteProto {
         }
 
 
-        // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult)
-        private static final org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult DEFAULT_INSTANCE;
+        // @@protoc_insertion_point(class_scope:org.jetbrains.jpsservice.Message.ControllerMessage.CacheDownloadSettings)
+        private static final org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings DEFAULT_INSTANCE;
         static {
-          RepositoryCommitsResult defaultInstance = new RepositoryCommitsResult();
+          CacheDownloadSettings defaultInstance = new CacheDownloadSettings();
           // New instances are implicitly immutable so no need to make
           // immutable.
           DEFAULT_INSTANCE = defaultInstance;
           com.google.protobuf.GeneratedMessageLite.registerDefaultInstance(
-            RepositoryCommitsResult.class, defaultInstance);
+            CacheDownloadSettings.class, defaultInstance);
         }
 
-        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult getDefaultInstance() {
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings getDefaultInstance() {
           return DEFAULT_INSTANCE;
         }
 
-        private static volatile com.google.protobuf.Parser<RepositoryCommitsResult> PARSER;
+        private static volatile com.google.protobuf.Parser<CacheDownloadSettings> PARSER;
 
-        public static com.google.protobuf.Parser<RepositoryCommitsResult> parser() {
+        public static com.google.protobuf.Parser<CacheDownloadSettings> parser() {
           return DEFAULT_INSTANCE.getParserForType();
         }
       }
@@ -6777,98 +6532,6 @@ public final class CmdlineRemoteProto {
        */
       private void clearConstantSearchResult() {  constantSearchResult_ = null;
         bitField0_ = (bitField0_ & ~0x00000008);
-      }
-
-      public static final int REQUEST_PARAMS_FIELD_NUMBER = 5;
-      private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams requestParams_;
-      /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
-       */
-      @java.lang.Override
-      public boolean hasRequestParams() {
-        return ((bitField0_ & 0x00000010) != 0);
-      }
-      /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
-       */
-      @java.lang.Override
-      public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams getRequestParams() {
-        return requestParams_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams.getDefaultInstance() : requestParams_;
-      }
-      /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
-       */
-      private void setRequestParams(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams value) {
-        value.getClass();
-  requestParams_ = value;
-        bitField0_ |= 0x00000010;
-        }
-      /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
-       */
-      @java.lang.SuppressWarnings({"ReferenceEquality"})
-      private void mergeRequestParams(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams value) {
-        value.getClass();
-  if (requestParams_ != null &&
-            requestParams_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams.getDefaultInstance()) {
-          requestParams_ =
-            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams.newBuilder(requestParams_).mergeFrom(value).buildPartial();
-        } else {
-          requestParams_ = value;
-        }
-        bitField0_ |= 0x00000010;
-      }
-      /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
-       */
-      private void clearRequestParams() {  requestParams_ = null;
-        bitField0_ = (bitField0_ & ~0x00000010);
-      }
-
-      public static final int REPOSITORY_COMMITS_RESULT_FIELD_NUMBER = 6;
-      private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult repositoryCommitsResult_;
-      /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
-       */
-      @java.lang.Override
-      public boolean hasRepositoryCommitsResult() {
-        return ((bitField0_ & 0x00000020) != 0);
-      }
-      /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
-       */
-      @java.lang.Override
-      public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult getRepositoryCommitsResult() {
-        return repositoryCommitsResult_ == null ? org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.getDefaultInstance() : repositoryCommitsResult_;
-      }
-      /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
-       */
-      private void setRepositoryCommitsResult(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult value) {
-        value.getClass();
-  repositoryCommitsResult_ = value;
-        bitField0_ |= 0x00000020;
-        }
-      /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
-       */
-      @java.lang.SuppressWarnings({"ReferenceEquality"})
-      private void mergeRepositoryCommitsResult(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult value) {
-        value.getClass();
-  if (repositoryCommitsResult_ != null &&
-            repositoryCommitsResult_ != org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.getDefaultInstance()) {
-          repositoryCommitsResult_ =
-            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.newBuilder(repositoryCommitsResult_).mergeFrom(value).buildPartial();
-        } else {
-          repositoryCommitsResult_ = value;
-        }
-        bitField0_ |= 0x00000020;
-      }
-      /**
-       * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
-       */
-      private void clearRepositoryCommitsResult() {  repositoryCommitsResult_ = null;
-        bitField0_ = (bitField0_ & ~0x00000020);
       }
 
       public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage parseFrom(
@@ -7143,100 +6806,6 @@ public final class CmdlineRemoteProto {
           return this;
         }
 
-        /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
-         */
-        @java.lang.Override
-        public boolean hasRequestParams() {
-          return instance.hasRequestParams();
-        }
-        /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
-         */
-        @java.lang.Override
-        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams getRequestParams() {
-          return instance.getRequestParams();
-        }
-        /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
-         */
-        public Builder setRequestParams(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams value) {
-          copyOnWrite();
-          instance.setRequestParams(value);
-          return this;
-          }
-        /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
-         */
-        public Builder setRequestParams(
-            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams.Builder builderForValue) {
-          copyOnWrite();
-          instance.setRequestParams(builderForValue.build());
-          return this;
-        }
-        /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
-         */
-        public Builder mergeRequestParams(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RequestParams value) {
-          copyOnWrite();
-          instance.mergeRequestParams(value);
-          return this;
-        }
-        /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RequestParams request_params = 5;</code>
-         */
-        public Builder clearRequestParams() {  copyOnWrite();
-          instance.clearRequestParams();
-          return this;
-        }
-
-        /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
-         */
-        @java.lang.Override
-        public boolean hasRepositoryCommitsResult() {
-          return instance.hasRepositoryCommitsResult();
-        }
-        /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
-         */
-        @java.lang.Override
-        public org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult getRepositoryCommitsResult() {
-          return instance.getRepositoryCommitsResult();
-        }
-        /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
-         */
-        public Builder setRepositoryCommitsResult(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult value) {
-          copyOnWrite();
-          instance.setRepositoryCommitsResult(value);
-          return this;
-          }
-        /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
-         */
-        public Builder setRepositoryCommitsResult(
-            org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.Builder builderForValue) {
-          copyOnWrite();
-          instance.setRepositoryCommitsResult(builderForValue.build());
-          return this;
-        }
-        /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
-         */
-        public Builder mergeRepositoryCommitsResult(org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult value) {
-          copyOnWrite();
-          instance.mergeRepositoryCommitsResult(value);
-          return this;
-        }
-        /**
-         * <code>optional .org.jetbrains.jpsservice.Message.ControllerMessage.RepositoryCommitsResult repository_commits_result = 6;</code>
-         */
-        public Builder clearRepositoryCommitsResult() {  copyOnWrite();
-          instance.clearRepositoryCommitsResult();
-          return this;
-        }
-
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage)
       }
       private byte memoizedIsInitialized = 2;
@@ -7260,13 +6829,10 @@ public final class CmdlineRemoteProto {
                 "paramsMessage_",
                 "fsEvent_",
                 "constantSearchResult_",
-                "requestParams_",
-                "repositoryCommitsResult_",
               };
               java.lang.String info =
-                  "\u0001\u0006\u0000\u0001\u0001\u0006\u0006\u0000\u0000\u0005\u0001\u150c\u0000\u0002" +
-                  "\u1409\u0001\u0003\u1409\u0002\u0004\u1409\u0003\u0005\u1009\u0004\u0006\u1409\u0005" +
-                  "";
+                  "\u0001\u0004\u0000\u0001\u0001\u0004\u0004\u0000\u0000\u0004\u0001\u150c\u0000\u0002" +
+                  "\u1409\u0001\u0003\u1409\u0002\u0004\u1409\u0003";
               return newMessageInfo(DEFAULT_INSTANCE, info, objects);
           }
           // fall through
@@ -7425,25 +6991,17 @@ public final class CmdlineRemoteProto {
          */
         CONSTANT_SEARCH_TASK(4),
         /**
-         * <code>AUTH_TOKEN_REQUEST = 5;</code>
+         * <code>CACHE_DOWNLOAD_MESSAGE = 5;</code>
          */
-        AUTH_TOKEN_REQUEST(5),
+        CACHE_DOWNLOAD_MESSAGE(5),
         /**
-         * <code>CACHE_DOWNLOAD_MESSAGE = 6;</code>
+         * <code>SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE = 6;</code>
          */
-        CACHE_DOWNLOAD_MESSAGE(6),
+        SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE(6),
         /**
-         * <code>REPOSITORY_COMMITS_REQUEST = 7;</code>
+         * <code>SAVE_LATEST_BUILT_COMMIT_MESSAGE = 7;</code>
          */
-        REPOSITORY_COMMITS_REQUEST(7),
-        /**
-         * <code>SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE = 8;</code>
-         */
-        SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE(8),
-        /**
-         * <code>SAVE_LATEST_BUILT_COMMIT_MESSAGE = 9;</code>
-         */
-        SAVE_LATEST_BUILT_COMMIT_MESSAGE(9),
+        SAVE_LATEST_BUILT_COMMIT_MESSAGE(7),
         ;
 
         /**
@@ -7463,25 +7021,17 @@ public final class CmdlineRemoteProto {
          */
         public static final int CONSTANT_SEARCH_TASK_VALUE = 4;
         /**
-         * <code>AUTH_TOKEN_REQUEST = 5;</code>
+         * <code>CACHE_DOWNLOAD_MESSAGE = 5;</code>
          */
-        public static final int AUTH_TOKEN_REQUEST_VALUE = 5;
+        public static final int CACHE_DOWNLOAD_MESSAGE_VALUE = 5;
         /**
-         * <code>CACHE_DOWNLOAD_MESSAGE = 6;</code>
+         * <code>SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE = 6;</code>
          */
-        public static final int CACHE_DOWNLOAD_MESSAGE_VALUE = 6;
+        public static final int SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE_VALUE = 6;
         /**
-         * <code>REPOSITORY_COMMITS_REQUEST = 7;</code>
+         * <code>SAVE_LATEST_BUILT_COMMIT_MESSAGE = 7;</code>
          */
-        public static final int REPOSITORY_COMMITS_REQUEST_VALUE = 7;
-        /**
-         * <code>SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE = 8;</code>
-         */
-        public static final int SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE_VALUE = 8;
-        /**
-         * <code>SAVE_LATEST_BUILT_COMMIT_MESSAGE = 9;</code>
-         */
-        public static final int SAVE_LATEST_BUILT_COMMIT_MESSAGE_VALUE = 9;
+        public static final int SAVE_LATEST_BUILT_COMMIT_MESSAGE_VALUE = 7;
 
 
         @java.lang.Override
@@ -7505,11 +7055,9 @@ public final class CmdlineRemoteProto {
             case 2: return BUILD_EVENT;
             case 3: return COMPILE_MESSAGE;
             case 4: return CONSTANT_SEARCH_TASK;
-            case 5: return AUTH_TOKEN_REQUEST;
-            case 6: return CACHE_DOWNLOAD_MESSAGE;
-            case 7: return REPOSITORY_COMMITS_REQUEST;
-            case 8: return SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE;
-            case 9: return SAVE_LATEST_BUILT_COMMIT_MESSAGE;
+            case 5: return CACHE_DOWNLOAD_MESSAGE;
+            case 6: return SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE;
+            case 7: return SAVE_LATEST_BUILT_COMMIT_MESSAGE;
             default: return null;
           }
         }

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
-import static com.intellij.compiler.cache.ui.JpsLoaderNotifications.ATTENTION;
+import static com.intellij.compiler.cache.ui.CompilerCacheNotifications.ATTENTION;
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
 
 /**

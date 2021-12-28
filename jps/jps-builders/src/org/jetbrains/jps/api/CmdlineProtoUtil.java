@@ -29,7 +29,7 @@ public final class CmdlineProtoUtil {
                                                                                         final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
                                                                                         final @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
     return createBuildParametersMessage(
-      CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.UP_TO_DATE_CHECK, project, scopes, userData, paths, globals, event
+      CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.UP_TO_DATE_CHECK, project, scopes, userData, paths, globals, event, null
     );
   }
 
@@ -38,9 +38,10 @@ public final class CmdlineProtoUtil {
                                                                                 Collection<String> paths,
                                                                                 final Map<String, String> userData,
                                                                                 final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
-                                                                                final @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
+                                                                                final @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event,
+                                                                                final @Nullable CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings cacheDownloadSettings) {
     return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.BUILD, project, scopes,
-                                        userData, paths, globals, event);
+                                        userData, paths, globals, event, cacheDownloadSettings);
   }
 
   public static List<TargetTypeBuildScope> createAllModulesScopes(final boolean forceBuild) {
@@ -72,7 +73,8 @@ public final class CmdlineProtoUtil {
                                                                                           Map<String, String> userData,
                                                                                           Collection<String> paths,
                                                                                           final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
-                                                                                          @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent) {
+                                                                                          @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent initialEvent,
+                                                                                          @Nullable CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings cacheDownloadSettings) {
     final CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Builder
       builder = CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.newBuilder();
     builder.setGlobalSettings(globals);
@@ -94,6 +96,9 @@ public final class CmdlineProtoUtil {
     final CmdlineRemoteProto.Message.ControllerMessage.Builder controlMessageBuilder = CmdlineRemoteProto.Message.ControllerMessage.newBuilder();
     if (initialEvent != null) {
       controlMessageBuilder.setFsEvent(initialEvent);
+    }
+    if (cacheDownloadSettings != null) {
+      builder.setCacheDownloadSettings(cacheDownloadSettings);
     }
     return controlMessageBuilder.setType(CmdlineRemoteProto.Message.ControllerMessage.Type.BUILD_PARAMETERS).setParamsMessage(builder.build()).build();
   }
@@ -122,23 +127,6 @@ public final class CmdlineProtoUtil {
     return builder.build();
   }
 
-  public static CmdlineRemoteProto.Message.ControllerMessage createRequestParamsCommand(@NotNull Map<String, String> headers) {
-    CmdlineRemoteProto.Message.ControllerMessage.RequestParams requestParam =
-      CmdlineRemoteProto.Message.ControllerMessage.RequestParams.newBuilder().putAllAuthHeaders(headers).build();
-    return CmdlineRemoteProto.Message.ControllerMessage.newBuilder()
-      .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.AUTHENTICATION_TOKEN)
-      .setRequestParams(requestParam).build();
-  }
-
-  public static BuilderMessage createRequestRepositoryCommitsAndStatistics(@NotNull String latestCommit) {
-    BuilderMessage.CommitAndDownloadStatistics.Builder requestCommitsBuilder = BuilderMessage.CommitAndDownloadStatistics.newBuilder();
-    requestCommitsBuilder.setCommit(latestCommit);
-    BuilderMessage.Builder newBuilder = BuilderMessage.newBuilder();
-    newBuilder.setType(BuilderMessage.Type.REPOSITORY_COMMITS_REQUEST);
-    newBuilder.setCommitAndDownloadStatistics(requestCommitsBuilder.build());
-    return newBuilder.build();
-  }
-
   public static BuilderMessage createSaveDownloadStatisticMessage(@NotNull String latestDownloadCommit, long decompressionSpeed,
                                                                   long deletionSpeed) {
     BuilderMessage.CommitAndDownloadStatistics.Builder downloadStatisticsBuilder = BuilderMessage.CommitAndDownloadStatistics.newBuilder();
@@ -149,22 +137,6 @@ public final class CmdlineProtoUtil {
     newBuilder.setType(BuilderMessage.Type.SAVE_LATEST_DOWNLOAD_STATISTIC_MESSAGE);
     newBuilder.setCommitAndDownloadStatistics(downloadStatisticsBuilder.build());
     return newBuilder.build();
-  }
-
-  public static CmdlineRemoteProto.Message.ControllerMessage createRepositoryCommitsMessage(@NotNull List<String> commits,
-                                                                                            @NotNull String nearestRemoteMasterCommit,
-                                                                                            @NotNull String latestDownloadedCommit,
-                                                                                            long deletionSpeed, long decompressionSpeed) {
-    CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.Builder repositoryCommitsResult =
-      CmdlineRemoteProto.Message.ControllerMessage.RepositoryCommitsResult.newBuilder();
-    repositoryCommitsResult.addAllCommit(commits);
-    repositoryCommitsResult.setLatestDownloadCommit(latestDownloadedCommit);
-    repositoryCommitsResult.setLatestBuiltMasterCommit(nearestRemoteMasterCommit);
-    repositoryCommitsResult.setDecompressionSpeed(decompressionSpeed);
-    repositoryCommitsResult.setDeletionSpeed(deletionSpeed);
-    return CmdlineRemoteProto.Message.ControllerMessage.newBuilder()
-      .setType(CmdlineRemoteProto.Message.ControllerMessage.Type.REPOSITORY_COMMITS_AND_STATS_RESULT)
-      .setRepositoryCommitsResult(repositoryCommitsResult.build()).build();
   }
 
   public static BuilderMessage createCacheDownloadMessage(String text) {
@@ -303,10 +275,6 @@ public final class CmdlineProtoUtil {
 
   public static BuilderMessage createParamRequest() {
     return BuilderMessage.newBuilder().setType(BuilderMessage.Type.PARAM_REQUEST).build();
-  }
-
-  public static BuilderMessage createAuthTokenRequest() {
-    return BuilderMessage.newBuilder().setType(BuilderMessage.Type.AUTH_TOKEN_REQUEST).build();
   }
 
   public static BuilderMessage createSaveLatestBuiltCommitMessage() {

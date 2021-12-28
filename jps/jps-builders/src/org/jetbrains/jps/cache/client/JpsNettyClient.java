@@ -40,14 +40,6 @@ public class JpsNettyClient {
                                                                                                                     deletionTimeBytesPerSec)));
   }
 
-  public void requestRepositoryCommits(@NotNull String latestCommit) {
-    channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createRequestRepositoryCommitsAndStatistics(latestCommit)));
-  }
-
-  public void requestAuthToken() {
-    channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createAuthTokenRequest()));
-  }
-
   public void saveLatestBuiltCommit() {
     channel.writeAndFlush(CmdlineProtoUtil.toMessage(sessionId, CmdlineProtoUtil.createSaveLatestBuiltCommitMessage()));
   }

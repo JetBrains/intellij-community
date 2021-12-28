@@ -154,7 +154,7 @@ class JpsCachesDownloader {
   @NotNull
   private File downloadFile(@NotNull final DownloadableFileUrl description, @NotNull final File existingFile, int expectedDownloads) throws IOException {
     final String presentableUrl = description.getPresentableDownloadUrl();
-    Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders(myNettyClient);
+    Map<String, String> headers = JpsServerAuthUtil.getRequestHeaders();
 
     try (CloseableHttpClient client = HttpClientBuilder.create().disableAutomaticRetries().build()) {
       HttpGet httpRequest = new HttpGet(description.getDownloadUrl());

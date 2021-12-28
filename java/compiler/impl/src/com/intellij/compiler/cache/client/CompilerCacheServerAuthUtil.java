@@ -9,9 +9,9 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 import java.util.Map;
 
-import static com.intellij.compiler.cache.ui.JpsLoaderNotifications.ATTENTION;
+import static com.intellij.compiler.cache.ui.CompilerCacheNotifications.ATTENTION;
 
-public final class JpsServerAuthUtil {
+public final class CompilerCacheServerAuthUtil {
   public static @NotNull Map<String, String> getRequestHeaders(@NotNull Project project) {
     JpsServerAuthExtension authExtension = JpsServerAuthExtension.getInstance();
     if (authExtension == null) {

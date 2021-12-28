@@ -15,15 +15,15 @@ import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.JpsBuildBundle;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.cache.client.JpsNettyClient;
+import org.jetbrains.jps.cache.client.JpsServerAuthUtil;
 import org.jetbrains.jps.cache.client.JpsServerClient;
 import org.jetbrains.jps.cache.client.JpsServerConnectionUtil;
-import org.jetbrains.jps.cache.git.GitCommitsIterator;
 import org.jetbrains.jps.cache.loader.JpsOutputLoader.LoaderStatus;
-import org.jetbrains.jps.cache.statistics.ProjectBuildStatistic;
 import org.jetbrains.jps.cache.model.BuildTargetState;
 import org.jetbrains.jps.cache.model.JpsLoaderContext;
-import org.jetbrains.jps.cache.statistics.SystemOpsStatistic;
 import org.jetbrains.jps.cache.statistics.JpsCacheLoadingSystemStats;
+import org.jetbrains.jps.cache.statistics.ProjectBuildStatistic;
+import org.jetbrains.jps.cache.statistics.SystemOpsStatistic;
 import org.jetbrains.jps.cmdline.BuildRunner;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.*;
@@ -41,7 +41,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.execution.process.ProcessIOExecutorService.INSTANCE;
-import static org.jetbrains.jps.cache.JpsCachesLoaderUtil.INTELLIJ_REPO_NAME;
 
 public class JpsOutputLoaderManager {
   private static final Logger LOG = Logger.getInstance(JpsOutputLoaderManager.class);
@@ -60,32 +59,34 @@ public class JpsOutputLoaderManager {
   private boolean isCacheDownloaded;
   private final String myBuildOutDir;
   private final String myProjectPath;
+  private final String myCommitHash;
+  private final int myCommitsCountBetweenCompilation;
   private final JpsNettyClient myNettyClient;
 
   public JpsOutputLoaderManager(@NotNull JpsProject project,
                                 @NotNull CanceledStatus canceledStatus,
                                 @NotNull String projectPath,
                                 @NotNull Channel channel,
-                                @NotNull UUID sessionId) {
+                                @NotNull UUID sessionId,
+                                @NotNull CmdlineRemoteProto.Message.ControllerMessage.CacheDownloadSettings cacheDownloadSettings) {
     myNettyClient = new JpsNettyClient(channel, sessionId);
     myCanceledStatus = canceledStatus;
     myProjectPath = projectPath;
     hasRunningTask = new AtomicBoolean();
     myBuildOutDir = getBuildDirPath(project);
-    myServerClient = JpsServerClient.getServerClient();
+    myServerClient = JpsServerClient.getServerClient(cacheDownloadSettings.getServerUrl());
     myMetadataLoader = new JpsMetadataLoader(projectPath, myServerClient);
+    myCommitHash = cacheDownloadSettings.getDownloadCommit();
+    myCommitsCountBetweenCompilation = cacheDownloadSettings.getCommitsCountLatestBuild();
+    JpsServerAuthUtil.setRequestHeaders(cacheDownloadSettings.getAuthHeadersMap());
+    JpsCacheLoadingSystemStats.setDeletionSpeed(cacheDownloadSettings.getDeletionSpeed());
+    JpsCacheLoadingSystemStats.setDecompressionSpeed(cacheDownloadSettings.getDecompressionSpeed());
   }
 
   public void load(@NotNull BuildRunner buildRunner, boolean isForceUpdate,
                    @NotNull List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
     if (!canRunNewLoading()) return;
-    List<String> buildFilePaths = buildRunner.getFilePaths();
-    if (!buildFilePaths.isEmpty()) {
-      LOG.info("Recompile specific file is executed, avoid cache download");
-      return;
-    }
-    Pair<String, Integer> commitInfo = getNearestCommit(buildRunner, isForceUpdate, scopes);
-    if (commitInfo != null) {
+    if (isDownloadQuickerThanLocalBuild(buildRunner, myCommitsCountBetweenCompilation, scopes)) {
       // Drop JPS metadata to force plugin for downloading all compilation outputs
       if (isForceUpdate) {
         myMetadataLoader.dropCurrentProjectMetadata();
@@ -96,7 +97,11 @@ public class JpsOutputLoaderManager {
         }
         LOG.info("Compilation output folder empty");
       }
-      startLoadingForCommit(commitInfo.first);
+      startLoadingForCommit(myCommitHash);
+    } else {
+      String message = JpsBuildBundle.message("progress.text.local.build.is.quicker");
+      LOG.warn(message);
+      myNettyClient.sendDescriptionStatusMessage(message);
     }
     hasRunningTask.set(false);
   }
@@ -119,73 +124,6 @@ public class JpsOutputLoaderManager {
     if (status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.CANCELED ||
         status == CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status.ERRORS ) return;
     myNettyClient.saveLatestBuiltCommit();
-  }
-
-  @Nullable
-  private Pair<String, Integer> getNearestCommit(@NotNull BuildRunner buildRunner, boolean isForceUpdate,
-                                                 @NotNull List<CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> scopes) {
-    Map<String, Set<String>> availableCommitsPerRemote = myServerClient.getCacheKeysPerRemote(myNettyClient);
-
-    GitCommitsIterator commitsIterator = new GitCommitsIterator(myNettyClient, INTELLIJ_REPO_NAME);
-    String latestDownloadedCommit = commitsIterator.getLatestDownloadedCommit();
-    String latestBuiltCommit = commitsIterator.getLatestBuiltRemoteMasterCommit();
-    Set<String> availableCommitsForRemote = availableCommitsPerRemote.get(commitsIterator.getRemote());
-    if (availableCommitsForRemote == null) {
-      String message = JpsBuildBundle.message("progress.text.not.found.any.caches.for.latest.commits.in.branch");
-      LOG.warn(message);
-      myNettyClient.sendDescriptionStatusMessage(message);
-      return null;
-    }
-
-    int commitsBehind = 0;
-    int commitsCountBetweenCompilation = 0;
-    String commitToDownload = "";
-    boolean latestBuiltCommitFound = false;
-    while (commitsIterator.hasNext()) {
-      String commitId = commitsIterator.next();
-      if (commitId.equals(latestBuiltCommit) && !latestBuiltCommitFound) {
-        latestBuiltCommitFound = true;
-      }
-      if (!latestBuiltCommitFound) {
-        commitsCountBetweenCompilation++;
-      }
-      if (availableCommitsForRemote.contains(commitId) && commitToDownload.isEmpty()) {
-        commitToDownload = commitId;
-      }
-      if (commitToDownload.isEmpty()) {
-        commitsBehind++;
-      }
-
-      if (latestBuiltCommitFound && !commitToDownload.isEmpty()) break;
-    }
-
-    if (commitsCountBetweenCompilation == 0) {
-      String message = JpsBuildBundle.message("progress.text.no.commits.since.latest.compilation");
-      LOG.warn(message);
-      myNettyClient.sendDescriptionStatusMessage(message);
-      return null;
-    }
-    if (!availableCommitsForRemote.contains(commitToDownload)) {
-      String message = JpsBuildBundle.message("progress.text.not.found.any.caches.for.latest.commits.in.branch");
-      LOG.warn(message);
-      myNettyClient.sendDescriptionStatusMessage(message);
-      return null;
-    }
-    LOG.info("Commits count between latest success compilation and current commit: " + commitsCountBetweenCompilation +
-             ". Detected commit to download: " + commitToDownload);
-    if (commitToDownload.equals(latestDownloadedCommit)) {
-      String message = JpsBuildBundle.message("progress.text.system.contains.up.to.date.caches");
-      LOG.info(message);
-      myNettyClient.sendDescriptionStatusMessage(message);
-      return null;
-    }
-    if (!isDownloadQuickerThanLocalBuild(buildRunner, commitsCountBetweenCompilation, scopes)) {
-      String message = JpsBuildBundle.message("progress.text.local.build.is.quicker");
-      LOG.warn(message);
-      myNettyClient.sendDescriptionStatusMessage(message);
-      return null;
-    }
-    return Pair.create(commitToDownload, commitsBehind);
   }
 
   private boolean isDownloadQuickerThanLocalBuild(BuildRunner buildRunner, int commitsCountBetweenCompilation,
