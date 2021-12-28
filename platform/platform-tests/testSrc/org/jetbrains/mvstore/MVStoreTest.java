@@ -512,9 +512,14 @@ public class MVStoreTest {
       assertThat(format).isEqualTo(3);
 
       ByteBuf buf = PooledByteBufAllocator.DEFAULT.ioBuffer(2 * MVStore.BLOCK_SIZE);
-      header.format = 12;
-      header.write(buf);
-      s.getFileStore().writeFully(buf, 0);
+      try {
+        header.format = 12;
+        header.write(buf);
+        s.getFileStore().writeFully(buf, 0);
+      }
+      finally {
+        buf.release();
+      }
     }
 
     try {
