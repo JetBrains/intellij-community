@@ -8,6 +8,7 @@ import kotlin.io.path.readText
 
 fun isEap(version: String): Boolean {
     return version.contains("rc") || version.contains("eap") || version.contains("-M") || version.contains("RC")
+            || version.contains("Beta")
 }
 
 fun isDev(version: String): Boolean {
