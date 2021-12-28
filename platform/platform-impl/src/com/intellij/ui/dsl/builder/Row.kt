@@ -105,6 +105,11 @@ interface Row {
    */
   fun resizableRow(): Row
 
+  @Deprecated("Use overloaded rowComment(...) instead", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun rowComment(@NlsContexts.DetailedDescription comment: String,
+                 maxLineLength: Int = DEFAULT_COMMENT_WIDTH): Row
+
   /**
    * Adds comment after the row with appropriate color and font size (macOS uses smaller font).
    * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically.
@@ -222,6 +227,11 @@ interface Row {
    */
   fun label(@NlsContexts.Label text: String): Cell<JLabel>
 
+  @Deprecated("Use text(...) instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun labelHtml(@NlsContexts.Label text: String,
+                action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
+
   /**
    * Adds text. [text] can contain HTML tags except &lt;html&gt;, which is added automatically.
    * \n does not work as new line in html, use &lt;br&gt; instead.
@@ -235,6 +245,10 @@ interface Row {
   fun text(@NlsContexts.Label text: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP,
            action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
 
+  @Deprecated("Use overloaded comment(...) instead", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP): Cell<JLabel>
+
   /**
    * Adds comment with appropriate color and font size (macOS uses smaller font).
    * [comment] can contain HTML tags except &lt;html&gt;, which is added automatically.
@@ -247,6 +261,10 @@ interface Row {
    */
   fun comment(@NlsContexts.DetailedDescription comment: String, maxLineLength: Int = MAX_LINE_LENGTH_WORD_WRAP,
               action: HyperlinkEventAction = HyperlinkEventAction.HTML_HYPERLINK_INSTANCE): Cell<JEditorPane>
+
+  @Deprecated("Use comment(...) instead")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun commentNoWrap(@NlsContexts.DetailedDescription text: String): Cell<JLabel>
 
   @Deprecated("Use comment(...) instead")
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")

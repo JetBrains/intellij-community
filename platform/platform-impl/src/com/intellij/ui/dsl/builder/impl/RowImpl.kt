@@ -11,6 +11,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
+import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.util.PopupUtil
 import com.intellij.openapi.util.NlsContexts
@@ -89,6 +90,11 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun resizableRow(): RowImpl {
     resizableRow = true
+    return this
+  }
+
+  override fun rowComment(comment: String, maxLineLength: Int): Row {
+    this.rowComment = ComponentPanelBuilder.createCommentComponent(comment, true, maxLineLength, true)
     return this
   }
 
@@ -256,6 +262,10 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(Label(text))
   }
 
+  override fun labelHtml(text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
+    return text(removeHtml(text), MAX_LINE_LENGTH_WORD_WRAP, action)
+  }
+
   override fun text(@NlsContexts.Label text: String, maxLineLength: Int, action: HyperlinkEventAction): Cell<JEditorPane> {
     val dslLabel = DslLabel(DslLabelType.LABEL)
     dslLabel.action = action
@@ -263,8 +273,16 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(dslLabel)
   }
 
+  override fun comment(@NlsContexts.DetailedDescription text: String, maxLineLength: Int): Cell<JLabel> {
+    return cell(ComponentPanelBuilder.createCommentComponent(text, true, maxLineLength, true))
+  }
+
   override fun comment(comment: String, maxLineLength: Int, action: HyperlinkEventAction): CellImpl<JEditorPane> {
     return cell(createComment(comment, maxLineLength, action))
+  }
+
+  override fun commentNoWrap(text: String): Cell<JLabel> {
+    return cell(ComponentPanelBuilder.createNonWrappingCommentComponent(text))
   }
 
   override fun commentHtml(text: String, action: HyperlinkEventAction): Cell<JEditorPane> {
