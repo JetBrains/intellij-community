@@ -118,7 +118,7 @@ public class MavenDistributionsCache {
       return new LocalMavenDistribution(root.resolve("maven3"), MavenServerManager.BUNDLED_MAVEN_3);
     }
 
-    throw new RuntimeException("run setupBundledMaven.gradle task. Cannot resolve embedded maven home without it");
+    throw new RuntimeException("run \"Download Bundled Maven\" run configuration. Cannot resolve embedded maven home without it");
   }
 
   @Nullable

@@ -416,7 +416,8 @@ idea.fatal.error.notification=disabled
   private void doBuildDistributions(BuildContext context) {
     checkProductProperties()
     copyDependenciesFile(context)
-    setupBundledMaven()
+    BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
+    BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
 
     logFreeDiskSpace("before compilation")
 
@@ -560,17 +561,6 @@ idea.fatal.error.notification=disabled
   @Override
   void generateProjectStructureMapping(File targetFile) {
     new DistributionJARsBuilder(buildContext).generateProjectStructureMapping(targetFile.toPath(), buildContext)
-  }
-
-  private void setupBundledMaven() {
-    buildContext.executeStep("set-up bundled maven", BuildOptions.SETUP_BUNDLED_MAVEN, new Runnable() {
-      @Override
-      void run() {
-        logFreeDiskSpace("before downloading Maven")
-        buildContext.gradle.runOneTask("setupBundledMaven")
-        logFreeDiskSpace("after downloading Maven")
-      }
-    })
   }
 
   @CompileStatic(TypeCheckingMode.SKIP)
@@ -935,7 +925,10 @@ idea.fatal.error.notification=disabled
   @Override
   void runTestBuild() {
     checkProductProperties()
-    setupBundledMaven()
+
+    BundledMavenDownloader.downloadMavenCommonLibs(buildContext.paths.buildDependenciesCommunityRoot)
+    BundledMavenDownloader.downloadMavenDistribution(buildContext.paths.buildDependenciesCommunityRoot)
+
     DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(buildContext)
     distributionJARsBuilder.buildJARs(buildContext)
     layoutShared(buildContext)
@@ -954,7 +947,9 @@ idea.fatal.error.notification=disabled
     buildContext.options.targetOS = currentOs.osId
     buildContext.options.buildStepsToSkip.add(BuildOptions.GENERATE_JAR_ORDER_STEP)
 
-    setupBundledMaven()
+    BundledMavenDownloader.downloadMavenCommonLibs(buildContext.paths.buildDependenciesCommunityRoot)
+    BundledMavenDownloader.downloadMavenDistribution(buildContext.paths.buildDependenciesCommunityRoot)
+
     compileModulesForDistribution(buildContext).buildJARs(buildContext, true)
     JvmArchitecture arch = CpuArch.isArm64() ? JvmArchitecture.aarch64 : JvmArchitecture.x64
     layoutShared(buildContext)

@@ -817,7 +817,8 @@ class TestingTasksImpl extends TestingTasks {
   void setupTestingDependencies() {
     if (!dependenciesInstalled) {
       dependenciesInstalled = true
-      context.gradle.run('Setting up testing dependencies', 'setupBundledMaven')
+      BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
+      BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
     }
   }
 
