@@ -147,12 +147,18 @@ public final class SwitchHelper {
         if (firstStatement.type == Statement.TYPE_BASIC_BLOCK) {
           for (int i = 0; i < firstStatement.getExprents().size(); i++) {
             Exprent exprent = firstStatement.getExprents().get(i);
+            Exprent assignmentExprent = null;
+            if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {
+              assignmentExprent = exprent;
+              exprent = ((AssignmentExprent)exprent).getLeft();
+            }
             if (exprent.type != Exprent.EXPRENT_VAR) continue;
             VarExprent varExprent = (VarExprent)exprent;
             if (varExprent.isDefinition() && tempVarAssignments.keySet().stream()
               .anyMatch(expr -> expr.getIndex() == varExprent.getIndex() && expr.getVersion() == varExprent.getVersion())) {
-              firstStatement.getExprents().remove(exprent);
+              firstStatement.getExprents().remove(assignmentExprent == null ? varExprent : assignmentExprent);
               removed = true;
+              break;
             }
           }
           if (removed) break;
@@ -186,21 +192,7 @@ public final class SwitchHelper {
       if (ifCondition.type != Exprent.EXPRENT_INVOCATION) return null;
       InvocationExprent invocationCondition = (InvocationExprent)ifCondition;
       if (!invocationCondition.isInstanceCall(ClassNameConstants.JAVA_LANG_STRING, "equals", 1)) return null;
-      if (selectorQualifier instanceof AssignmentExprent) {
-        selectorQualifier = ((AssignmentExprent)selectorQualifier).getLeft();
-      }
-      if (!invocationCondition.getInstance().equals(selectorQualifier)) {
-        // Ecj inlines compile constants, so we try to find a temp variable that is assigned to the same const value.
-        // It should be in the first basic block.
-        @NotNull Exprent tempSelectorQualifier = selectorQualifier;
-        var tempVarAssignment = ifStatement.getParent().getFirst().getExprents().stream()
-          .filter(exprent -> exprent instanceof AssignmentExprent)
-          .map(exprent -> (AssignmentExprent)exprent)
-          .filter(exprent -> exprent.getRight().equals(tempSelectorQualifier))
-          .filter(exprent -> exprent.getLeft().equals(invocationCondition.getInstance()))
-          .findFirst();
-        if (tempVarAssignment.isEmpty()) return null;
-      }
+      if (!invocationCondition.getInstance().equals(selectorQualifier)) return null;
       Exprent equalsParameter = invocationCondition.getParameters().get(0);
       if (equalsParameter.type != Exprent.EXPRENT_CONST) return null;
       Object caseLabelValue = ((ConstExprent)equalsParameter).getValue();
@@ -302,25 +294,46 @@ public final class SwitchHelper {
         Exprent switchSelectorQualifier = switchSelector.getInstance();
         Map<Integer, String> mappedCaseLabelValues = new HashMap<>();
         Map<Integer, IfStatement> ifBodyStatements = new HashMap<>();
+        VarExprent tempVar = null;
         for (Statement statement : switchStatement.getCaseStatements()) {
           if (statement.type != Statement.TYPE_IF) {
             Statement defaultStatement = switchStatement.getDefaultEdge().getDestination();
             if (defaultStatement != statement) return null;
             continue;
           }
+          Exprent tempSwitchSelectorQualifier = switchSelectorQualifier;
+          if (switchSelectorQualifier.type == Exprent.EXPRENT_ASSIGNMENT) {
+            tempSwitchSelectorQualifier = ((AssignmentExprent)switchSelectorQualifier).getLeft();
+          }
+          else if (switchSelectorQualifier.type == Exprent.EXPRENT_CONST) {
+            // Ecj inlines compile constants, so we try to find a temp variable that is assigned to the same const value.
+            // It should be in the first basic block.
+            Exprent finalSwitchSelectorQualifier = switchSelectorQualifier;
+            tempSwitchSelectorQualifier = switchStatement.getFirst().getExprents().stream()
+              .filter(exprent -> exprent instanceof AssignmentExprent)
+              .map(exprent -> (AssignmentExprent)exprent)
+              .filter(exprent -> exprent.getRight().equals(finalSwitchSelectorQualifier))
+              .map(exprent -> exprent.getLeft())
+              .findFirst()
+              .orElse(null);
+            if (tempSwitchSelectorQualifier == null) return null;
+          }
+          if (tempVar != null && !tempVar.equals(tempSwitchSelectorQualifier)) return null;
+          tempVar = (VarExprent)tempSwitchSelectorQualifier;
           IfStatement ifStatement = (IfStatement)statement;
-          String caseLabelValue = findRealCaseValue(ifStatement, switchSelectorQualifier);
+          String caseLabelValue = findRealCaseValue(ifStatement, tempVar);
           if (caseLabelValue == null) return null;
           int caseLabelHash = caseLabelValue.hashCode();
           if (!realCaseValueHashCodes.remove(caseLabelHash)) return null;
           mappedCaseLabelValues.put(caseLabelHash, caseLabelValue);
           ifBodyStatements.put(caseLabelHash, ifStatement);
         }
-        if (!realCaseValueHashCodes.isEmpty()) return null;
+        if (tempVar == null || !realCaseValueHashCodes.isEmpty()) return null;
         if (switchSelectorQualifier instanceof AssignmentExprent) {
           switchSelectorQualifier = ((AssignmentExprent)switchSelectorQualifier).getRight();
         }
-        return new SwitchOnStringCandidate.EcjSwitchCandidate(switchStatement, switchSelectorQualifier, ifBodyStatements, mappedCaseLabelValues);
+        return new SwitchOnStringCandidate.EcjSwitchCandidate(switchStatement, switchSelectorQualifier, tempVar, ifBodyStatements,
+                                                              mappedCaseLabelValues);
       }
     }
   }
@@ -424,15 +437,18 @@ public final class SwitchHelper {
     private static class EcjSwitchCandidate extends SwitchOnStringCandidate {
       @NotNull private final SwitchStatement switchStatement;
       @NotNull private final Exprent switchSelector;
+      @NotNull private final VarExprent tmpVar;
       @NotNull private final Map<Integer, @NotNull IfStatement> mappedIfStatements;
       @NotNull private final Map<Integer, @NotNull String> mappedCaseLabelValues;
 
       private EcjSwitchCandidate(@NotNull SwitchStatement switchStatement,
                                  @NotNull Exprent switchSelector,
+                                 @NotNull VarExprent tmpVar,
                                  @NotNull Map<Integer, IfStatement> mappedIfStatements,
                                  @NotNull Map<Integer, String> mappedCaseLabelValues) {
         this.switchStatement = switchStatement;
         this.switchSelector = switchSelector;
+        this.tmpVar = tmpVar;
         this.mappedIfStatements = mappedIfStatements;
         this.mappedCaseLabelValues = mappedCaseLabelValues;
       }
@@ -441,6 +457,7 @@ public final class SwitchHelper {
       void simplify(@NotNull Map<VarExprent, Statement> tempVarAssignments) {
         Exprent switchSelector = switchStatement.getHeadExprent();
         if (switchSelector == null || switchSelector.type != Exprent.EXPRENT_SWITCH) return;
+        tempVarAssignments.put(tmpVar, switchStatement);
         for (List<Exprent> values : switchStatement.getCaseValues()) {
           for (int i = 0; i < values.size(); i++) {
             ConstExprent constExprent = (ConstExprent)values.get(i);
