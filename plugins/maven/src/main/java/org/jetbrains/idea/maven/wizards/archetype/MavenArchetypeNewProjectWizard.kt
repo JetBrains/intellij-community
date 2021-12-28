@@ -11,6 +11,7 @@ import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
@@ -121,6 +122,19 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
               .horizontalAlign(HorizontalAlign.FILL)
           }
         }
+      }
+    }
+
+    override fun setupAdvancedSettingsUI(builder: Panel) {
+      super.setupAdvancedSettingsUI(builder)
+      with(builder) {
+        row(ExternalSystemBundle.message("external.system.mavenized.structure.wizard.version.label")) {
+          textField()
+            .bindText(versionProperty)
+            .columns(COLUMNS_MEDIUM)
+            .validationOnApply { validateVersion() }
+            .validationOnInput { validateVersion() }
+        }.bottomGap(BottomGap.SMALL)
       }
     }
 
