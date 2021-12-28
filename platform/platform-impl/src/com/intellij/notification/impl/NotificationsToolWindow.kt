@@ -46,7 +46,6 @@ import com.intellij.openapi.wm.ex.ToolWindowEx
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
-import com.intellij.ui.components.JBOptionButton
 import com.intellij.ui.components.JBPanelWithEmptyText
 import com.intellij.ui.components.JBScrollPane
 import com.intellij.ui.components.labels.LinkLabel
@@ -61,7 +60,10 @@ import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
 import java.awt.*
-import java.awt.event.*
+import java.awt.event.AWTEventListener
+import java.awt.event.ActionEvent
+import java.awt.event.KeyEvent
+import java.awt.event.MouseEvent
 import java.util.*
 import java.util.function.Consumer
 import java.util.function.Supplier
@@ -515,11 +517,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
 
   private var myScrollValue = 0
 
-  private var myMouseInside = false
-  private val myClearAllVisibleCallback: (() -> Unit)?
-
-  private val myEventHandler = ComponentEventHandler(this)
-
   private val myTimeComponents = ArrayList<JLabel>()
   private val myTimeAlarm = Alarm(myProject)
 
@@ -564,8 +561,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
 
       myTitle.border = JBUI.Borders.emptyLeft(10)
       mainPanel.add(myTitle, BorderLayout.NORTH)
-
-      myClearAllVisibleCallback = null
     }
     else {
       val panel = JPanel(BorderLayout())
@@ -579,24 +574,7 @@ private class NotificationGroupComponent(private val myMainContent: Notification
       }
       clearAll.mediumFontFunction()
       clearAll.border = JBUI.Borders.emptyRight(20)
-      clearAll.isVisible = false
       panel.add(clearAll, BorderLayout.EAST)
-
-      myClearAllVisibleCallback = {
-        clearAll.isVisible = myMouseInside && myList.componentCount > 0
-      }
-      myEventHandler.mouseEnter {
-        if (!myMouseInside) {
-          myMouseInside = true
-          myClearAllVisibleCallback.invoke()
-        }
-      }
-      myEventHandler.mouseExit {
-        if (myMouseInside) {
-          myMouseInside = false
-          myClearAllVisibleCallback.invoke()
-        }
-      }
 
       mainPanel.add(panel, BorderLayout.NORTH)
     }
@@ -618,8 +596,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
         myScrollValue = value
       }
     }
-
-    myEventHandler.add(this)
   }
 
   fun updateLaf() {
@@ -642,7 +618,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
 
     myList.add(component, 0)
     updateLayout()
-    myEventHandler.add(component)
 
     if (mySuggestionType && !PropertiesComponent.getInstance().getBoolean("notification.suggestion.dont.show.gotit")) {
       PropertiesComponent.getInstance().setValue("notification.suggestion.dont.show.gotit", true)
@@ -731,8 +706,6 @@ private class NotificationGroupComponent(private val myMainContent: Notification
   }
 
   private fun updateContent() {
-    myClearAllVisibleCallback?.invoke()
-
     if (!mySuggestionType) {
       myTimeAlarm.cancelAllRequests()
 
@@ -1263,80 +1236,6 @@ private class DropDownActionLayout(layout: LayoutManager2) : FinalLayoutWrapper(
         layout.layoutContainer(parent)
       }
     }
-  }
-}
-
-private class ComponentEventHandler(private val myTarget: NotificationGroupComponent) {
-  private var myHoverComponent: NotificationComponent? = null
-  private var myEnterCallback: (() -> Unit)? = null
-  private var myExitCallback: (() -> Unit)? = null
-
-  private val myMouseHandler = object : MouseAdapter() {
-    override fun mouseMoved(e: MouseEvent) {
-      if (myHoverComponent == null) {
-        val component = ComponentUtil.getParentOfType(NotificationComponent::class.java, e.component)
-        if (component != null) {
-          if (!component.isHover()) {
-            component.setHover(true)
-          }
-          myHoverComponent = component
-        }
-      }
-    }
-
-    override fun mouseEntered(e: MouseEvent) {
-      if (myEnterCallback != null && myTarget === findTarget(e)) {
-        myEnterCallback!!.invoke()
-      }
-    }
-
-    override fun mouseExited(e: MouseEvent) {
-      if (myExitCallback != null && myTarget === findTarget(e)) {
-        myExitCallback!!.invoke()
-      }
-      if (myHoverComponent != null) {
-        val component = myHoverComponent!!
-        if (component.isHover()) {
-          component.setHover(false)
-        }
-        myHoverComponent = null
-      }
-    }
-  }
-
-  private fun findTarget(e: MouseEvent): NotificationGroupComponent? {
-    return ComponentUtil.getParentOfType(NotificationGroupComponent::class.java, e.component)
-  }
-
-  fun add(component: Component) {
-    addAll(component) { c ->
-      c.addMouseListener(myMouseHandler)
-      c.addMouseMotionListener(myMouseHandler)
-    }
-  }
-
-  private fun addAll(component: Component, listener: (Component) -> Unit) {
-    listener.invoke(component)
-
-    if (component is JBOptionButton) {
-      component.addContainerListener(object : ContainerAdapter() {
-        override fun componentAdded(e: ContainerEvent) {
-          addAll(e.child, listener)
-        }
-      })
-    }
-
-    for (child in UIUtil.uiChildren(component)) {
-      addAll(child, listener)
-    }
-  }
-
-  fun mouseEnter(callback: () -> Unit) {
-    myEnterCallback = callback
-  }
-
-  fun mouseExit(callback: () -> Unit) {
-    myExitCallback = callback
   }
 }
 
