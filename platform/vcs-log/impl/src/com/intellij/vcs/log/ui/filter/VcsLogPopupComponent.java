@@ -262,7 +262,7 @@ public abstract class VcsLogPopupComponent extends JPanel {
 
     @Override
     public String getAccessibleName() {
-      return VcsLogBundle.message("vcs.log.Accessibility.filter.label", myNameLabel.getText(), myValueLabel.getText());
+      return VcsLogBundle.message("vcs.log.filter.accessible.name", myNameLabel.getText(), myValueLabel.getText());
     }
 
     @Override
