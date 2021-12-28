@@ -13,3 +13,5 @@ fun foo() {
         val d = object : T() {}
     }
 }
+
+// FIR_COMPARISON
