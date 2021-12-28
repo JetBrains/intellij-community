@@ -6,3 +6,5 @@ class A {
         var foo: String = "foo"
     }
 }
+
+// FIR_COMPARISON
