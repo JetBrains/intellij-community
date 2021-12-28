@@ -371,8 +371,10 @@ private class NotificationContent(val project: Project,
   }
 
   override fun lookAndFeelChanged(source: LafManager) {
-    suggestions.updateLaf()
-    timeline.updateLaf()
+    ApplicationManager.getApplication().invokeLater {
+      suggestions.updateLaf()
+      timeline.updateLaf()
+    }
   }
 
   private fun updateIcon() {
@@ -621,6 +623,7 @@ private class NotificationGroupComponent(private val myMainContent: Notification
   }
 
   fun updateLaf() {
+    updateComponents()
     iterateComponents { it.updateLaf() }
   }
 
