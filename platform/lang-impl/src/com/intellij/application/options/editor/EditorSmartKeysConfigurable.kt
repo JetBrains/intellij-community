@@ -103,7 +103,7 @@ private val EP_NAME = ExtensionPointName<EditorSmartKeysConfigurableEP>("com.int
  * <p>
  * A new instance of the specified class will be created each time then the Settings dialog is opened
  */
-internal class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
+class EditorSmartKeysConfigurable : Configurable.WithEpDependencies, BoundCompositeSearchableConfigurable<UnnamedConfigurable>(
   ApplicationBundle.message("group.smart.keys"),
   "reference.settingsdialog.IDE.editor.smartkey",
   ID
