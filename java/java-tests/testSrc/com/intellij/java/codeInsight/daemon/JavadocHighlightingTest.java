@@ -126,7 +126,7 @@ public class JavadocHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testAuthoredMethod() { doTest(); }
   public void testThrowsInheritDoc() { doTest(); }
   public void testSnippetInlineTag() {  doTest(); }
-  public void testSnippet() { setLanguageLevel(LanguageLevel.JDK_17); doTest(); }
+  public void testSnippet() { doTest(); }
 
   public void testIssueLinksInJavaDoc() {
     IssueNavigationConfiguration navigationConfiguration = IssueNavigationConfiguration.getInstance(getProject());
