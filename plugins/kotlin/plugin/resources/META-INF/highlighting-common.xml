@@ -1,0 +1,7 @@
+<idea-plugin>
+  <extensionPoints>
+     <extensionPoint
+            qualifiedName="org.jetbrains.kotlin.beforeResolveHighlightingVisitor"
+            interface="org.jetbrains.kotlin.idea.highlighter.BeforeResolveHighlightingExtension"/>
+  </extensionPoints>
+</idea-plugin>

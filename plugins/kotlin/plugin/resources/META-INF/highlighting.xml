@@ -4,10 +4,8 @@
             qualifiedName="org.jetbrains.kotlin.highlighterExtension"
             interface="org.jetbrains.kotlin.idea.highlighter.HighlighterExtension"
             dynamic="true"/>
-    <extensionPoint
-            qualifiedName="org.jetbrains.kotlin.beforeResolveHighlightingVisitor"
-            interface="org.jetbrains.kotlin.idea.highlighter.BeforeResolveHighlightingExtension"/>
   </extensionPoints>
+
 
   <extensions defaultExtensionNs="com.intellij">
     <applicationService
@@ -20,12 +18,6 @@
     <lang.syntaxHighlighterFactory language="kotlin" implementationClass="org.jetbrains.kotlin.idea.highlighter.KotlinSyntaxHighlighterFactory"/>
 
     <syntaxHighlighter factoryClass="org.jetbrains.kotlin.idea.decompiler.builtIns.KotlinSyntaxHighlighterProviderForDecompiledBuiltIns"/>
-
-    <lang.braceMatcher language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinPairMatcher"/>
-
-    <lang.parserDefinition language="kotlin" implementationClass="org.jetbrains.kotlin.parsing.KotlinParserDefinition"/>
-
-    <lang.commenter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.KotlinCommenter"/>
 
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighter.KotlinHighlightVisitor"/>
     <highlightVisitor implementation="org.jetbrains.kotlin.idea.highlighter.KotlinRainbowVisitor"/>
@@ -50,28 +42,6 @@
 
     <additionalTextAttributes scheme="Default" file="colorScheme/Default_Kotlin.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorScheme/Darcula_Kotlin.xml"/>
-
-    <itemPresentationProvider
-            implementationClass="org.jetbrains.kotlin.idea.presentation.KtFunctionPresenter"
-            forClass="org.jetbrains.kotlin.psi.KtFunction"/>
-    <itemPresentationProvider
-            implementationClass="org.jetbrains.kotlin.idea.presentation.KtDefaultDeclarationPresenter"
-            forClass="org.jetbrains.kotlin.psi.KtClass"/>
-    <itemPresentationProvider
-            implementationClass="org.jetbrains.kotlin.idea.presentation.KtDefaultDeclarationPresenter"
-            forClass="org.jetbrains.kotlin.psi.KtObjectDeclaration"/>
-    <itemPresentationProvider
-            implementationClass="org.jetbrains.kotlin.idea.presentation.KtDefaultDeclarationPresenter"
-            forClass="org.jetbrains.kotlin.psi.KtProperty"/>
-    <itemPresentationProvider
-            implementationClass="org.jetbrains.kotlin.idea.presentation.KtDefaultDeclarationPresenter"
-            forClass="org.jetbrains.kotlin.psi.KtParameter"/>
-    <itemPresentationProvider
-            implementationClass="org.jetbrains.kotlin.idea.presentation.KtDefaultDeclarationPresenter"
-            forClass="org.jetbrains.kotlin.psi.KtTypeAlias"/>
-    <itemPresentationProvider
-            implementationClass="org.jetbrains.kotlin.idea.presentation.KtJvmNameAnnotationPresenter"
-            forClass="org.jetbrains.kotlin.psi.KtAnnotationEntry"/>
 
     <registryKey
             key="kotlin.resolve.force.full.resolve.on.highlighting"
