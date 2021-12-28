@@ -85,19 +85,22 @@ class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableActionGroupP
   }
 }
 
-internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget>(VerticalLayout(0)) {
+internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget>(VerticalLayout(0)), Disposable {
 
   init {
     isOpaque = false
     add(createRunActionToolbar().component.apply {
       isOpaque = false
     }, VerticalLayout.CENTER)
-    ExecutionReasonableHistory(
+    val history = ExecutionReasonableHistory(
       project,
       onHistoryChanged = createProcessHistoryListener(),
       onAnyChange = createConfigurationHistoryStateUpdater()
     )
+    Disposer.register(this, history)
   }
+
+  override fun dispose() {}
 
   private fun createRunActionToolbar(): ActionToolbar {
     val actionGroup = CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOLBAR_WIDGET_GROUP) as ActionGroup

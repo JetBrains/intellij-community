@@ -3,9 +3,11 @@ package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.ui.UISettings
 import com.intellij.ide.ui.customization.CustomActionsSchema
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory.Position
 import com.intellij.ui.components.panels.HorizontalLayout
@@ -22,6 +24,7 @@ internal class MainToolbar(val project: Project?): JPanel(HorizontalLayout(10)) 
     Position.Center to HorizontalLayout.CENTER
   )
   private val visibleComponentsPool = VisibleComponentsPool()
+  private val disposable = Disposer.newDisposable()
 
   init {
     background = UIManager.getColor("MainToolbar.background")
@@ -40,10 +43,15 @@ internal class MainToolbar(val project: Project?): JPanel(HorizontalLayout(10)) 
     addComponentListener(ResizeListener())
   }
 
+  override fun removeNotify() {
+    Disposer.dispose(disposable)
+  }
+
   private fun addWidget(widget: JComponent,
                         position: Position) {
     add(layoutMap[position], widget)
     visibleComponentsPool.addElement(widget, position)
+    (widget as? Disposable)?.let { Disposer.register(disposable, it) }
   }
 
   private fun createActionsBar(): JComponent? {
