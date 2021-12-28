@@ -123,7 +123,7 @@ internal class CellImpl<T : JComponent>(
   }
 
   override fun commentHtml(comment: String?, action: HyperlinkEventAction): Cell<T> {
-    return comment(if (comment == null) null else removeHtml(comment), MAX_LINE_LENGTH_WORD_WRAP, HyperlinkEventAction.HTML_HYPERLINK_INSTANCE)
+    return comment(if (comment == null) null else removeHtml(comment), MAX_LINE_LENGTH_WORD_WRAP, action)
   }
 
   override fun label(label: String, position: LabelPosition): CellImpl<T> {
