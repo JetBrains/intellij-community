@@ -10,7 +10,7 @@ import org.jetbrains.annotations.TestOnly
 import java.util.function.Consumer
 import java.util.function.Predicate
 
-data class OpenProjectTask @JvmOverloads constructor(val forceOpenInNewFrame: Boolean = false,
+data class OpenProjectTask(val forceOpenInNewFrame: Boolean = false,
                            val projectToClose: Project? = null,
                            val isNewProject: Boolean = false,
                            /**
@@ -49,6 +49,49 @@ data class OpenProjectTask @JvmOverloads constructor(val forceOpenInNewFrame: Bo
                            val beforeOpen: ((Project) -> Boolean)? = null,
                            val preparedToOpen: ((Module) -> Unit)? = null,
                            val openProcessorChooser: ((List<ProjectOpenProcessor>) -> ProjectOpenProcessor)? = null) {
+
+  constructor(forceOpenInNewFrame: Boolean = false,
+              projectToClose: Project? = null,
+              isNewProject: Boolean = false,
+              useDefaultProjectAsTemplate: Boolean = isNewProject,
+              project: Project? = null,
+              projectName: String? = null,
+              showWelcomeScreen: Boolean = true,
+              callback: ProjectOpenedCallback? = null,
+              frameManager: Any? = null,
+              line: Int = -1,
+              column: Int = -1,
+              isRefreshVfsNeeded: Boolean = true,
+              runConfigurators: Boolean = false,
+              runConversionBeforeOpen: Boolean = true,
+              projectWorkspaceId: String? = null,
+              isProjectCreatedWithWizard: Boolean = false,
+              preloadServices: Boolean = true,
+              beforeInit: ((Project) -> Unit)? = null,
+              beforeOpen: ((Project) -> Boolean)? = null,
+              preparedToOpen: ((Module) -> Unit)? = null) :
+    this(forceOpenInNewFrame,
+         projectToClose,
+         isNewProject,
+         useDefaultProjectAsTemplate,
+         project,
+         projectName,
+         showWelcomeScreen,
+         callback,
+         frameManager,
+         line,
+         column,
+         isRefreshVfsNeeded,
+         runConfigurators,
+         runConversionBeforeOpen,
+         projectWorkspaceId,
+         isProjectCreatedWithWizard,
+         preloadServices,
+         beforeInit,
+         beforeOpen,
+         preparedToOpen,
+         null)
+
   @ApiStatus.Internal
   fun withBeforeOpenCallback(callback: Predicate<Project>) = copy(beforeOpen = { callback.test(it) })
 
