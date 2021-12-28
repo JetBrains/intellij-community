@@ -2,6 +2,7 @@
 package com.intellij.notification.impl
 
 import com.intellij.UtilBundle
+import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
@@ -21,6 +22,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.editor.colors.EditorColorsManager
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
@@ -536,7 +538,9 @@ private class NotificationGroupComponent(private val myMainContent: Notification
     myTitle.foreground = NotificationComponent.INFO_COLOR
 
     if (mySuggestionType) {
-      mySuggestionGotItPanel.background = JBColor(0xE6EEF7, 0xE6EEF7)
+      mySuggestionGotItPanel.background = JBColor.lazy {
+        EditorColorsManager.getInstance().globalScheme.getColor(HintUtil.PROMOTION_PANE_KEY)
+      }
       mySuggestionGotItPanel.isVisible = false
       mySuggestionGotItPanel.border = JBUI.Borders.customLineBottom(JBColor.border())
       add(mySuggestionGotItPanel, BorderLayout.NORTH)
