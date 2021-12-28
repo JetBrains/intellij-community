@@ -45,8 +45,7 @@ public class JavadocManagerImpl implements JavadocManager {
     myInfos.add(new SimpleDocTagInfo("index", LanguageLevel.JDK_1_9, true, PsiElement.class));
     myInfos.add(new SimpleDocTagInfo("summary", LanguageLevel.JDK_10, true, PsiElement.class));
     myInfos.add(new SimpleDocTagInfo("systemProperty", LanguageLevel.JDK_12, true, PsiElement.class));
-    // TODO nikita.eshkeev@jetbrains.com, please change the language level to LanguageLevel.JDK_18 when it's available
-    myInfos.add(new SimpleDocTagInfo("snippet", LanguageLevel.JDK_17, true, PsiElement.class));
+    myInfos.add(new SimpleDocTagInfo("snippet", LanguageLevel.JDK_18, true, PsiElement.class));
 
     // not a standard tag, used by IDEA for suppressing inspections
     myInfos.add(new SimpleDocTagInfo(SuppressionUtilCore.SUPPRESS_INSPECTIONS_TAG_NAME, LanguageLevel.JDK_1_3, false, PsiElement.class));
