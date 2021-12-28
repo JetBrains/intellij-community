@@ -139,7 +139,7 @@ private object ModalityStateElementKey : CoroutineContext.Key<ModalityStateEleme
  * @return a special coroutine dispatcher that's equivalent to using no modality state at all in `invokeLater`.
  */
 @Suppress("unused") // unused receiver
-val Dispatchers.EDT: CoroutineDispatcher
+val Dispatchers.EDT: CoroutineContext
   get() = EdtCoroutineDispatcher
 
 private object EdtCoroutineDispatcher : CoroutineDispatcher() {
