@@ -8,6 +8,7 @@ import org.jetbrains.kotlin.descriptors.impl.SyntheticFieldDescriptor
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
+import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
 import org.jetbrains.kotlin.lexer.KtTokens
@@ -32,7 +33,13 @@ class IntroduceBackingPropertyIntention : SelfTargetingIntention<KtProperty>(
             if (property.hasModifier(KtTokens.CONST_KEYWORD)) return false
             if (property.hasJvmFieldAnnotation()) return false
 
-            val bindingContext = property.getResolutionFacade().analyzeWithAllCompilerChecks(listOf(property)).bindingContext
+            val bindingContext =
+                property.actionUnderSafeAnalyzeBlock(
+                    {
+                        property.getResolutionFacade().analyzeWithAllCompilerChecks(listOf(property)).bindingContext
+                    },
+                    { BindingContext.EMPTY }
+                )
             val descriptor = bindingContext.get(BindingContext.DECLARATION_TO_DESCRIPTOR, property) as? PropertyDescriptor ?: return false
             if (bindingContext.get(BindingContext.BACKING_FIELD_REQUIRED, descriptor) == false) return false
 

@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.resolve.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.hasJvmFieldAnnotation
 import org.jetbrains.kotlin.idea.util.isExpectDeclaration
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -312,7 +313,7 @@ fun KtDeclaration.toDescriptor(): DeclarationDescriptor? {
         return null
     }
 
-    val bindingContext = analyze()
+    val bindingContext = safeAnalyzeNonSourceRootCode()
     // TODO: temporary code
     if (this is KtPrimaryConstructor) {
         return this.getContainingClassOrObject().resolveToDescriptorIfAny()?.unsubstitutedPrimaryConstructor
@@ -477,7 +478,7 @@ fun KtDeclaration.getModalityFromDescriptor(descriptor: DeclarationDescriptor? =
 
 fun KtDeclaration.implicitModality(): KtModifierKeywordToken {
     var predictedModality = predictImplicitModality()
-    val bindingContext = analyze(BodyResolveMode.PARTIAL)
+    val bindingContext = safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
     val descriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, this] ?: return predictedModality
     val containingDescriptor = descriptor.containingDeclaration ?: return predictedModality
 

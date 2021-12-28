@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.util.IdeDescriptorRenderers
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
 import org.jetbrains.kotlin.idea.util.getResolutionScope
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
@@ -66,7 +67,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
         lambdaExpression: KtLambdaExpression
     ): Boolean {
         val languageVersionSettings = callableExpression.languageVersionSettings
-        val context = callableExpression.analyze()
+        val context = callableExpression.safeAnalyzeNonSourceRootCode()
         val calleeReferenceExpression = when (callableExpression) {
             is KtCallExpression -> callableExpression.calleeExpression as? KtNameReferenceExpression ?: return false
             is KtNameReferenceExpression -> callableExpression
@@ -289,7 +290,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
             val argument = parentValueArgument() ?: return null
             val callExpression = argument.getStrictParentOfType<KtCallExpression>() ?: return null
             return callExpression
-                .getResolvedCall(context ?: analyze(BodyResolveMode.PARTIAL))
+                .getResolvedCall(context ?: safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL))
                 ?.getParameterForArgument(argument)?.type
         }
 
@@ -327,7 +328,7 @@ open class ConvertLambdaToReferenceIntention(textGetter: () -> String) : SelfTar
                         else -> return null
                     }
                     val receiver = singleStatement.receiverExpression
-                    val context = receiver.analyze()
+                    val context = receiver.safeAnalyzeNonSourceRootCode()
                     when (receiver) {
                         is KtNameReferenceExpression -> {
                             val receiverDescriptor = context[REFERENCE_TARGET, receiver] ?: return null

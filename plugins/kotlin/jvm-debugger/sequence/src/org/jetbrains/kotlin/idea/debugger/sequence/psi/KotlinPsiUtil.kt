@@ -4,6 +4,7 @@ package org.jetbrains.kotlin.idea.debugger.sequence.psi
 
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.util.approximateFlexibleTypes
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtDotQualifiedExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -36,7 +37,7 @@ fun KtExpression.resolveType(): KotlinType =
 fun KtCallExpression.callName(): String = this.calleeExpression!!.text
 
 fun KtCallExpression.receiverValue(): ReceiverValue? {
-    val resolvedCall = getResolvedCall(analyze(BodyResolveMode.PARTIAL)) ?: return null
+    val resolvedCall = getResolvedCall(safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)) ?: return null
     return resolvedCall.dispatchReceiver ?: resolvedCall.extensionReceiver
 }
 

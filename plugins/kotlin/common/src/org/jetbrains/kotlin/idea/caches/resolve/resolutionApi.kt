@@ -9,8 +9,8 @@ import org.jetbrains.kotlin.caches.resolve.KotlinCacheService
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
-import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.diagnostics.Diagnostic
+import org.jetbrains.kotlin.idea.FrontendInternals
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -19,6 +19,8 @@ import org.jetbrains.kotlin.resolve.BindingTraceContext
 import org.jetbrains.kotlin.resolve.ImportPath
 import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
+import org.jetbrains.kotlin.resolve.lazy.NoDescriptorForDeclarationException
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 fun KtElement.getResolutionFacade(): ResolutionFacade =
     KotlinCacheService.getInstance(project).getResolutionFacade(listOf(this))
@@ -213,3 +215,16 @@ fun ResolutionFacade.resolveImportReference(
     DeprecationLevel.ERROR
 )
 fun KtElement.analyzeFully(): BindingContext = analyzeWithAllCompilerChecks().bindingContext
+
+val Exception.isItNoDescriptorForDeclarationException: Boolean
+    get() = this is NoDescriptorForDeclarationException || cause?.safeAs<Exception>()?.isItNoDescriptorForDeclarationException == true
+
+inline fun <T> Exception.returnIfNoDescriptorForDeclarationException(
+    crossinline condition: (Boolean) -> Boolean = { v -> v },
+    crossinline computable: () -> T
+): T =
+    if (condition(this.isItNoDescriptorForDeclarationException)) {
+        computable()
+    } else {
+        throw this
+    }

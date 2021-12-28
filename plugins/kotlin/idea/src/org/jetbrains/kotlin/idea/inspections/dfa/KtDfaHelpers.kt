@@ -15,7 +15,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiPrimitiveType
 import com.intellij.psi.PsiType
 import com.intellij.psi.tree.IElementType
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -62,7 +62,7 @@ private fun KotlinType.toDfTypeNotNull(context: PsiElement): DfType {
 internal fun KotlinType.canBeNull() = isMarkedNullable || isNullabilityFlexible()
 
 internal fun getConstant(expr: KtConstantExpression): DfType {
-    val bindingContext = expr.analyze(BodyResolveMode.PARTIAL)
+    val bindingContext = expr.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
     val type = bindingContext.getType(expr)
     val constant: ConstantValue<Any?>? =
         if (type == null) null else ConstantExpressionEvaluator.getConstant(expr, bindingContext)?.toConstantValue(type)
@@ -80,7 +80,7 @@ internal fun getConstant(expr: KtConstantExpression): DfType {
     }
 }
 
-internal fun KtExpression.getKotlinType(): KotlinType? = analyze(BodyResolveMode.PARTIAL).getType(this)
+internal fun KtExpression.getKotlinType(): KotlinType? = safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL).getType(this)
 
 internal fun KotlinType.toPsiType(context: PsiElement): PsiType? {
     val typeFqName = this.constructor.declarationDescriptor?.fqNameSafe?.asString()

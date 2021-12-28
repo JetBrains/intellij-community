@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.idea.project.getLanguageVersionSettings
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.refactoring.fqName.fqName
 import org.jetbrains.kotlin.idea.util.projectStructure.module
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
@@ -54,7 +55,7 @@ class CoroutineNonBlockingContextChecker : NonBlockingContextChecker {
         if (element !is KtCallExpression) return false
 
         val containingLambda = element.parents
-            .firstOrNull { it is KtLambdaExpression && it.analyze().get(BindingContext.LAMBDA_INVOCATIONS, it) == null }
+            .firstOrNull { it is KtLambdaExpression && it.safeAnalyzeNonSourceRootCode().get(BindingContext.LAMBDA_INVOCATIONS, it) == null }
         val containingArgument = containingLambda?.getParentOfType<KtValueArgument>(true, KtCallableDeclaration::class.java)
         if (containingArgument != null) {
             val callExpression = containingArgument.getStrictParentOfType<KtCallExpression>() ?: return false

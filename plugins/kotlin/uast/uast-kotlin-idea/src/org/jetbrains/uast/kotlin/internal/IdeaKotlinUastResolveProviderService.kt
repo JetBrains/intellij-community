@@ -4,10 +4,10 @@ package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.config.LanguageVersionSettings
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.core.resolveCandidates
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.calls.util.getCall
@@ -16,7 +16,7 @@ import org.jetbrains.uast.kotlin.KotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.resolveToDeclarationImpl
 
 class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
-    override fun getBindingContext(element: KtElement) = element.analyze(BodyResolveMode.PARTIAL_WITH_CFA)
+    override fun getBindingContext(element: KtElement) = element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL_WITH_CFA)
 
     override fun isJvmElement(psiElement: PsiElement): Boolean = psiElement.isJvmElement
 
@@ -26,7 +26,7 @@ class IdeaKotlinUastResolveProviderService : KotlinUastResolveProviderService {
 
     override fun getReferenceVariants(ktExpression: KtExpression, nameHint: String): Sequence<PsiElement> {
         val resolutionFacade = ktExpression.getResolutionFacade()
-        val bindingContext = ktExpression.analyze()
+        val bindingContext = ktExpression.safeAnalyzeNonSourceRootCode(resolutionFacade)
         val call = ktExpression.getCall(bindingContext) ?: return emptySequence()
         return call.resolveCandidates(bindingContext, resolutionFacade)
             .mapNotNull { resolveToDeclarationImpl(ktExpression, it.candidateDescriptor) }

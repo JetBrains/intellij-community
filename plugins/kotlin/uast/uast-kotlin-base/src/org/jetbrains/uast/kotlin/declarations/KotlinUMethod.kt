@@ -2,14 +2,12 @@
 
 package org.jetbrains.uast.kotlin
 
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiNameIdentifierOwner
-import com.intellij.psi.PsiParameter
+import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.asJava.elements.isGetter
 import org.jetbrains.kotlin.asJava.elements.isSetter
+import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -59,7 +57,7 @@ open class KotlinUMethod(
     override fun getNameIdentifier() = UastLightIdentifier(psi, kotlinOrigin)
 
     override val uAnnotations: List<UAnnotation> by lz {
-        psi.annotations
+        psi.actionUnderSafeAnalyzeBlock({ psi.annotations }, { emptyArray<PsiAnnotation>() })
             .mapNotNull { (it as? KtLightElement<*, *>)?.kotlinOrigin as? KtAnnotationEntry }
             .map { baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this) }
     }

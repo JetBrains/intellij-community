@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.idea.caches.resolve.resolveToCall
 import org.jetbrains.kotlin.idea.core.CollectingNameValidator
 import org.jetbrains.kotlin.idea.core.KotlinNameSuggester
 import org.jetbrains.kotlin.idea.core.replaced
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.load.java.sam.JavaSingleAbstractMethodUtils
 import org.jetbrains.kotlin.psi.KtCallExpression
@@ -38,7 +39,7 @@ class SamConversionToAnonymousObjectIntention : SelfTargetingRangeIntention<KtCa
         val callee = element.calleeExpression ?: return null
         val lambda = getLambdaExpression(element) ?: return null
         val functionLiteral = lambda.functionLiteral
-        val bindingContext = functionLiteral.analyze()
+        val bindingContext = functionLiteral.safeAnalyzeNonSourceRootCode()
         val sam = element.getSingleAbstractMethod(bindingContext) ?: return null
 
         val samValueParameters = sam.valueParameters

@@ -15,7 +15,6 @@ import com.intellij.psi.impl.compiled.ClsMethodImpl
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.elements.KtLightDeclaration
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.caches.resolve.getResolutionFacade
 import org.jetbrains.kotlin.idea.caches.resolve.resolveToDescriptorIfAny
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
@@ -30,6 +29,7 @@ import org.jetbrains.kotlin.idea.references.resolveToDescriptors
 import org.jetbrains.kotlin.idea.resolve.ResolutionFacade
 import org.jetbrains.kotlin.idea.resolve.frontendService
 import org.jetbrains.kotlin.idea.util.isRunningInCidrIde
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocSection
@@ -137,7 +137,7 @@ open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider
     override fun getDocumentationElementForLink(psiManager: PsiManager, link: String, context: PsiElement?): PsiElement? {
         val navElement = context?.navigationElement as? KtElement ?: return null
         val resolutionFacade = navElement.getResolutionFacade()
-        val bindingContext = navElement.analyze(resolutionFacade, BodyResolveMode.PARTIAL)
+        val bindingContext = navElement.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL)
         val contextDescriptor = bindingContext[BindingContext.DECLARATION_TO_DESCRIPTOR, navElement] ?: return null
         val descriptors = resolveKDocLink(
             bindingContext, resolutionFacade,
@@ -223,7 +223,7 @@ open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider
                 // When caret on special enum function (e.g SomeEnum.values<caret>())
                 // element is not an KtReferenceExpression, but KtClass of enum
                 // so reference extracted from originalElement
-                val context = referenceExpression.analyze(BodyResolveMode.PARTIAL)
+                val context = referenceExpression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
                 (context[BindingContext.REFERENCE_TARGET, referenceExpression]
                     ?: context[BindingContext.REFERENCE_TARGET, referenceExpression.getChildOfType<KtReferenceExpression>()])?.let {
                     if (it is FunctionDescriptor) // To protect from Some<caret>Enum.values()
@@ -300,7 +300,7 @@ open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider
             if (quickNavigation) {
                 val referenceExpression = originalElement?.getNonStrictParentOfType<KtReferenceExpression>()
                 if (referenceExpression != null) {
-                    val context = referenceExpression.analyze(BodyResolveMode.PARTIAL)
+                    val context = referenceExpression.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
                     val declarationDescriptor = context[BindingContext.REFERENCE_TARGET, referenceExpression]
                     if (declarationDescriptor != null) {
                         return mixKotlinToJava(declarationDescriptor, element, originalElement)
@@ -318,7 +318,7 @@ open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider
 
         private fun buildKotlinDeclaration(declaration: KtExpression, quickNavigation: Boolean): KDocTemplate {
             val resolutionFacade = declaration.getResolutionFacade()
-            val context = declaration.analyze(resolutionFacade, BodyResolveMode.PARTIAL)
+            val context = declaration.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL)
             val declarationDescriptor = context[BindingContext.DECLARATION_TO_DESCRIPTOR, declaration]
 
             if (declarationDescriptor == null) {
@@ -335,7 +335,7 @@ open class KotlinDocumentationProviderCompatBase : AbstractDocumentationProvider
 
         private fun renderKotlinImplicitLambdaParameter(element: KtReferenceExpression, quickNavigation: Boolean): String? {
             val resolutionFacade = element.getResolutionFacade()
-            val context = element.analyze(resolutionFacade, BodyResolveMode.PARTIAL)
+            val context = element.safeAnalyzeNonSourceRootCode(resolutionFacade, BodyResolveMode.PARTIAL)
             val target = element.mainReference.resolveToDescriptors(context).singleOrNull() as? ValueParameterDescriptor? ?: return null
             return renderKotlin(context, target, quickNavigation, element, resolutionFacade)
         }

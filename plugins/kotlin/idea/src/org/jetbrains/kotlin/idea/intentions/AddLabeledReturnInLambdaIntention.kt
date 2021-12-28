@@ -6,7 +6,7 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.idea.KotlinBundle
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtPsiFactory
@@ -35,6 +35,6 @@ class AddLabeledReturnInLambdaIntention : SelfTargetingRangeIntention<KtBlockExp
 
     private fun isApplicableTo(block: KtBlockExpression): Boolean {
         val lastStatement = block.statements.lastOrNull()
-        return lastStatement !is KtReturnExpression && lastStatement?.isUsedAsExpression(lastStatement.analyze()) == true
+        return lastStatement !is KtReturnExpression && lastStatement?.isUsedAsExpression(lastStatement.safeAnalyzeNonSourceRootCode()) == true
     }
 }

@@ -6,9 +6,9 @@ import com.intellij.psi.*
 import com.intellij.psi.impl.source.resolve.ResolveCache
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.PackageViewDescriptor
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.codeInsight.DescriptorToSourceUtilsIde
 import org.jetbrains.kotlin.idea.util.application.runWithCancellationCheck
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.psi.KtReferenceExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -40,7 +40,7 @@ object KotlinDescriptorsBasedReferenceResolver : ResolveCache.PolyVariantResolve
     class KotlinResolveResult(element: PsiElement) : PsiElementResolveResult(element)
 
     private fun resolveToPsiElements(ref: KtDescriptorsBasedReference): Collection<PsiElement> {
-        val bindingContext = ref.element.analyze(BodyResolveMode.PARTIAL)
+        val bindingContext = ref.element.safeAnalyzeNonSourceRootCode(BodyResolveMode.PARTIAL)
         return resolveToPsiElements(ref, bindingContext, ref.getTargetDescriptors(bindingContext))
     }
 

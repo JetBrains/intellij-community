@@ -13,7 +13,6 @@ import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor
 import com.intellij.structuralsearch.impl.matcher.handlers.LiteralWithSubstitutionHandler
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler
 import com.intellij.util.containers.reverse
-import groovy.util.GroovyCollections.sum
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor
@@ -51,6 +50,7 @@ import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.expressions.OperatorConventions
 import org.jetbrains.kotlin.types.typeUtil.supertypes
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor) : SSRKtVisitor() {
     /** Gets the next element in the query tree and removes unnecessary parentheses. */
@@ -785,7 +785,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
             val type = it.typeReference; type is KtTypeReference && getHandler(type).withinHierarchyTextFilterSet
         }
         (other.parent as? KtClassOrObject)?.let { klass ->
-            val supertypes = (klass.descriptor as ClassDescriptor).toSimpleType().supertypes()
+            val supertypes = (klass.descriptor as? ClassDescriptor ?: return@let).toSimpleType().supertypes()
             withinHierarchyEntries.forEach { entry ->
                 val typeReference = entry.typeReference
                 if (!matchTextOrVariable(typeReference, klass.nameIdentifier) && typeReference != null && supertypes.none {
@@ -808,7 +808,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         val otherIdentifier = other.nameIdentifier
         var matchNameIdentifiers = matchTextOrVariable(identifier, otherIdentifier)
                 || identifier != null && otherIdentifier != null && matchTypeAgainstElement(
-                    (other.descriptor as LazyClassDescriptor).defaultType.fqName.toString(), identifier, otherIdentifier
+                    (other.descriptor.safeAs<LazyClassDescriptor>() ?: return).defaultType.fqName.toString(), identifier, otherIdentifier
                 )
 
         // Possible match if "within hierarchy" is set

@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.references.readWriteAccess
+import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaPackageFragment
 import org.jetbrains.kotlin.load.java.sam.SamAdapterDescriptor
 import org.jetbrains.kotlin.load.kotlin.KotlinJvmBinaryPackageSourceElement
@@ -182,6 +183,10 @@ internal fun KtElement.analyze(): BindingContext {
         ?.getBindingContext(this) ?: BindingContext.EMPTY
 }
 
+internal fun KtElement.safeAnalyzeNonSourceRootCode(): BindingContext {
+    return actionUnderSafeAnalyzeBlock({ analyze() }, { BindingContext.EMPTY })
+}
+
 internal fun KtExpression.getExpectedType(): KotlinType? = analyze()[BindingContext.EXPECTED_EXPRESSION_TYPE, this]
 
 internal fun KtTypeReference.getType(): KotlinType? = analyze()[BindingContext.TYPE, this]
@@ -227,7 +232,7 @@ internal fun KotlinULambdaExpression.getFunctionalInterfaceType(): PsiType? {
 }
 
 internal fun resolveToPsiMethod(context: KtElement): PsiMethod? =
-    context.getResolvedCall(context.analyze())?.resultingDescriptor?.let { resolveToPsiMethod(context, it) }
+    context.getResolvedCall(context.safeAnalyzeNonSourceRootCode())?.resultingDescriptor?.let { resolveToPsiMethod(context, it) }
 
 internal fun resolveToPsiMethod(
     context: KtElement,

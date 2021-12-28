@@ -111,7 +111,8 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     override fun getImplicitReturn(ktLambdaExpression: KtLambdaExpression, parent: UElement): KotlinUImplicitReturnExpression? {
         val lastExpression = ktLambdaExpression.bodyExpression?.statements?.lastOrNull() ?: return null
-        if (!lastExpression.isUsedAsResultOfLambda(lastExpression.analyze())) return null
+        val bindingContext = lastExpression.safeAnalyzeNonSourceRootCode().takeUnless { it == BindingContext.EMPTY } ?: return null
+        if (!lastExpression.isUsedAsResultOfLambda(bindingContext)) return null
 
         return KotlinUImplicitReturnExpression(parent).apply {
             returnExpression = baseKotlinConverter.convertOrEmpty(lastExpression, this)
@@ -176,7 +177,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     }
 
     override fun resolvedFunctionName(ktCallElement: KtCallElement): String? {
-        val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.analyze()) ?: return null
+        val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.safeAnalyzeNonSourceRootCode()) ?: return null
         return resolvedCall.resultingDescriptor.name.asString()
     }
 
@@ -189,7 +190,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     }
 
     override fun callKind(ktCallElement: KtCallElement): UastCallKind {
-        val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.analyze()) ?: return UastCallKind.METHOD_CALL
+        val resolvedCall = ktCallElement.getResolvedCall(ktCallElement.safeAnalyzeNonSourceRootCode()) ?: return UastCallKind.METHOD_CALL
         val fqName = DescriptorUtils.getFqNameSafe(resolvedCall.candidateDescriptor)
         return when {
             resolvedCall.resultingDescriptor is ConstructorDescriptor -> UastCallKind.CONSTRUCTOR_CALL
@@ -217,15 +218,15 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     private fun <T : KtCallElement> T.resolveToClassDescriptor(): ClassDescriptor? =
         when (this) {
             is KtAnnotationEntry ->
-                this.analyze()[BindingContext.ANNOTATION, this]?.annotationClass
+                this.safeAnalyzeNonSourceRootCode()[BindingContext.ANNOTATION, this]?.annotationClass
             is KtCallExpression ->
-                (this.getResolvedCall(this.analyze())?.resultingDescriptor as? ClassConstructorDescriptor)?.constructedClass
+                (this.getResolvedCall(this.safeAnalyzeNonSourceRootCode())?.resultingDescriptor as? ClassConstructorDescriptor)?.constructedClass
             else -> null
         }
 
     override fun resolveToDeclaration(ktExpression: KtExpression): PsiElement? {
         if (ktExpression is KtExpressionWithLabel) {
-            return ktExpression.analyze()[BindingContext.LABEL_TARGET, ktExpression.getTargetLabel()]
+            return ktExpression.safeAnalyzeNonSourceRootCode()[BindingContext.LABEL_TARGET, ktExpression.getTargetLabel()]
         }
         return resolveToDeclarationImpl(ktExpression)
     }
@@ -286,7 +287,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     }
 
     private fun getExpressionType(ktExpression: KtExpression, source: UElement): PsiType? {
-        val ktType = ktExpression.analyze()[BindingContext.EXPRESSION_TYPE_INFO, ktExpression]?.type ?: return null
+        val ktType = ktExpression.safeAnalyzeNonSourceRootCode()[BindingContext.EXPRESSION_TYPE_INFO, ktExpression]?.type ?: return null
         return ktType.toPsiType(source, ktExpression, ktExpression.typeOwnerKind, boxed = false)
     }
 
@@ -345,9 +346,10 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
 
     override fun evaluate(uExpression: UExpression): Any? {
         val ktElement = uExpression.sourcePsi as? KtExpression ?: return null
-        val compileTimeConst = ktElement.analyze()[BindingContext.COMPILE_TIME_VALUE, ktElement]
+        val bindingContext = ktElement.safeAnalyzeNonSourceRootCode()
+        val compileTimeConst = bindingContext[BindingContext.COMPILE_TIME_VALUE, ktElement]
         if (compileTimeConst is UnsignedErrorValueTypeConstant) return null
-        val ktType = ktElement.analyze()[BindingContext.EXPRESSION_TYPE_INFO, ktElement]?.type ?: TypeUtils.NO_EXPECTED_TYPE
+        val ktType = bindingContext[BindingContext.EXPRESSION_TYPE_INFO, ktElement]?.type ?: TypeUtils.NO_EXPECTED_TYPE
         return compileTimeConst?.takeUnless { it.isError }?.getValue(ktType)
     }
 }

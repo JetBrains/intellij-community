@@ -28,13 +28,13 @@ import org.jetbrains.jps.model.JpsElement
 import org.jetbrains.jps.model.ex.JpsElementBase
 import org.jetbrains.jps.model.java.JavaModuleSourceRootTypes
 import org.jetbrains.jps.model.java.JavaResourceRootType
-import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.module.JpsModuleSourceRoot
 import org.jetbrains.jps.model.module.JpsModuleSourceRootType
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.framework.KotlinSdkType
 import org.jetbrains.plugins.gradle.model.data.GradleSourceSetData
+import org.jetbrains.kotlin.idea.util.KOTLIN_AWARE_SOURCE_ROOT_TYPES
 
 private fun JpsModuleSourceRoot.getOrCreateProperties() =
     getProperties(rootType)?.also { (it as? JpsElementBase<*>)?.setParent(null) } ?: rootType.createDefaultProperties()
@@ -91,9 +91,6 @@ fun populateNonJvmSourceRootTypes(sourceSetNode: DataNode<GradleSourceSetData>, 
 fun getKotlinAwareDestinationSourceRoots(project: Project): List<VirtualFile> {
     return ModuleManager.getInstance(project).modules.flatMap { it.collectKotlinAwareDestinationSourceRoots() }
 }
-
-private val KOTLIN_AWARE_SOURCE_ROOT_TYPES: Set<JpsModuleSourceRootType<JavaSourceRootProperties>> =
-    JavaModuleSourceRootTypes.SOURCES + ALL_KOTLIN_SOURCE_ROOT_TYPES
 
 fun Module.collectKotlinAwareDestinationSourceRoots(): List<VirtualFile> {
     return rootManager

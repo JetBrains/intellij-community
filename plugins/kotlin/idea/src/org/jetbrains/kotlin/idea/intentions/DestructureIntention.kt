@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.core.isVisible
 import org.jetbrains.kotlin.idea.inspections.IntentionBasedInspection
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.Name
@@ -168,7 +169,7 @@ class DestructureIntention : SelfTargetingRangeIntention<KtDeclaration>(
         internal data class UsagesToRemove(val data: List<UsageData>, val removeSelectorInLoopRange: Boolean)
 
         internal fun collectUsagesToRemove(declaration: KtDeclaration): UsagesToRemove? {
-            val context = declaration.analyze()
+            val context = declaration.safeAnalyzeNonSourceRootCode()
 
             val variableDescriptor = when (declaration) {
                 is KtParameter -> context.get(BindingContext.VALUE_PARAMETER, declaration)

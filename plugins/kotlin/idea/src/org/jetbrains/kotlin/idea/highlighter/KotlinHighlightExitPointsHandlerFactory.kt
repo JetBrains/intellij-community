@@ -12,11 +12,12 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.tree.TokenSet
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.Consumer
-import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.references.mainReference
+import org.jetbrains.kotlin.idea.util.safeAnalyzeNonSourceRootCode
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.bindingContextUtil.isUsedAsResultOfLambda
 import org.jetbrains.kotlin.resolve.inline.InlineUtil
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
@@ -100,8 +101,8 @@ class KotlinHighlightExitPointsHandlerFactory : HighlightUsagesHandlerFactoryBas
                         return false
                     }
 
-                    val bindingContext = expression.analyze(BodyResolveMode.FULL)
-                    if (!expression.isUsedAsResultOfLambda(bindingContext)) {
+                    val bindingContext = expression.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL)
+                    if (bindingContext == BindingContext.EMPTY || !expression.isUsedAsResultOfLambda(bindingContext)) {
                         return false
                     }
 
@@ -148,7 +149,7 @@ private fun KtExpression.getRelevantDeclaration(): KtDeclarationWithBody? {
                 }
 
                 if (InlineUtil.canBeInlineArgument(parent) &&
-                    !InlineUtil.isInlinedArgument(parent as KtFunction, parent.analyze(BodyResolveMode.FULL), false)
+                    !InlineUtil.isInlinedArgument(parent as KtFunction, parent.safeAnalyzeNonSourceRootCode(BodyResolveMode.FULL), false)
                 ) {
                     return parent
                 }
