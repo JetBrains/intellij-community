@@ -3,3 +3,5 @@
 fun foo() {
     2 <caret>/ ""
 }
+
+/* IGNORE_FIR */
