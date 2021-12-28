@@ -33,6 +33,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
   ActionToolbarImpl("ButtonSelector", actionGroup, true, true) {
 
   init {
+    isFocusable = true
     border = SegmentedButtonBorder()
     setForceMinimumSize(true)
     // Buttons preferred size is calculated in SegmentedButton.getPreferredSize, so reset default size
@@ -203,7 +204,7 @@ private fun paintBorder(g: Graphics2D, r: Rectangle) {
 }
 
 @ApiStatus.Internal
-class SegmentedButtonBorder : Border {
+internal class SegmentedButtonBorder : Border {
 
   override fun paintBorder(c: Component, g: Graphics, x: Int, y: Int, width: Int, height: Int) {
     val g2 = g.create() as Graphics2D
