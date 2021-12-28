@@ -28,29 +28,29 @@ internal class TypeHighlightingVisitor(
             return
         }
         val target = expression.mainReference.resolve() ?: return
+        if (isAnnotationCall(expression, target)) {
+            // higlighted by AnnotationEntryHiglightingVisitor
+            return
+        }
         textAttributesKeyForTypeDeclaration(target)?.let { key ->
             if (expression.isConstructorCallReference() && key != Colors.ANNOTATION) {
                 // Do not highlight constructor call as class reference
                 return@let
             }
-            highlightName(computeHighlightingRangeForUsage(expression, target), key)
+            highlightName(expression.textRange, key)
         }
     }
 
-
-    private fun computeHighlightingRangeForUsage(expression: KtSimpleNameExpression, target: PsiElement): TextRange {
+    private fun isAnnotationCall(expression: KtSimpleNameExpression, target: PsiElement): Boolean {
         val expressionRange = expression.textRange
 
         val isKotlinAnnotation = target is KtPrimaryConstructor && target.parent.isAnnotationClass()
-        if (!isKotlinAnnotation && !target.isAnnotationClass()) return expressionRange
+        if (!isKotlinAnnotation && !target.isAnnotationClass()) return false
 
-        // include '@' symbol if the reference is the first segment of KtAnnotationEntry
-        // if "Deprecated" is highlighted then '@' should be highlighted too in "@Deprecated"
         val annotationEntry = PsiTreeUtil.getParentOfType(
             expression, KtAnnotationEntry::class.java, /* strict = */false, KtValueArgumentList::class.java
         )
-        val atSymbol = annotationEntry?.atSymbol ?: return expressionRange
-        return TextRange(atSymbol.textRange.startOffset, expression.textRange.endOffset)
+       return annotationEntry?.atSymbol != null
     }
 }
 
