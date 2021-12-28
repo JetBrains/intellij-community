@@ -370,47 +370,12 @@
 
   <!-- Navigation -->
   <extensions defaultExtensionNs="com.intellij">
-    <navbar implementation="org.jetbrains.kotlin.idea.navigationToolbar.KotlinNavBarModelExtension" order="first"/>
 
     <applicationService
             serviceInterface="org.jetbrains.kotlin.psi.KotlinReferenceProvidersService"
             serviceImplementation="org.jetbrains.kotlin.idea.references.KtIdeReferenceProviderService"/>
 
-    <psi.referenceContributor
-            implementation="org.jetbrains.kotlin.idea.references.KotlinWebReferenceContributor"/>
-    <psi.referenceContributor
-            id="kotlinFilePathReferenceContributor"
-            language="kotlin"
-            implementation="org.jetbrains.kotlin.idea.references.KotlinFilePathReferenceContributor"/>
-  </extensions>
 
-  <!-- Formatter -->
-  <extensions defaultExtensionNs="com.intellij">
-    <lang.formatter language="kotlin" implementationClass="org.jetbrains.kotlin.idea.formatter.KotlinFormattingModelBuilder"/>
-
-    <lineIndentProvider implementation="org.jetbrains.kotlin.idea.formatter.KotlinLineIndentProvider"/>
-
-    <preFormatProcessor implementation="org.jetbrains.kotlin.idea.formatter.KotlinPreFormatProcessor"/>
-
-    <postFormatProcessor implementation="org.jetbrains.kotlin.idea.formatter.TrailingCommaPostFormatProcessor"/>
-
-    <langCodeStyleSettingsProvider implementation="org.jetbrains.kotlin.idea.formatter.KotlinLanguageCodeStyleSettingsProvider"/>
-
-    <codeStyleSettingsProvider implementation="org.jetbrains.kotlin.idea.formatter.KotlinGenerationSettingsProvider"/>
-
-    <predefinedCodeStyle implementation="org.jetbrains.kotlin.idea.formatter.KotlinStyleGuideCodeStyle"/>
-    <predefinedCodeStyle implementation="org.jetbrains.kotlin.idea.formatter.KotlinObsoleteCodeStyle"/>
-
-    <registryKey
-            key="kotlin.formatter.allowTrailingCommaInAnyProject"
-            description="Allow a trailing comma regardless of plugin version"
-            defaultValue="false"
-            restartRequired="false"/>
-    <registryKey
-            key="kotlin.formatter.allowTrailingCommaOnCallSite"
-            description="Allow a trailing comma on call-site"
-            defaultValue="false"
-            restartRequired="false"/>
   </extensions>
 
   <!-- Templates -->
