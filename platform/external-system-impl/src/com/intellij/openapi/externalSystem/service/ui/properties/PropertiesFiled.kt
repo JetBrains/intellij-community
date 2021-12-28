@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.ui.properties
 
 import com.intellij.icons.AllIcons
 import com.intellij.openapi.actionSystem.CustomShortcutSet
+import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable.Property
 import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.observable.properties.AtomicLazyProperty
 import com.intellij.openapi.observable.properties.comap
@@ -68,6 +69,4 @@ class PropertiesFiled(project: Project, info: PropertiesInfo) : ExtendableTextFi
       AllIcons.General.InlineVariables, AllIcons.General.InlineVariablesHover, tooltip, action)
     addExtension(browseExtension)
   }
-
-  data class Property(var name: String, var value: String)
 }

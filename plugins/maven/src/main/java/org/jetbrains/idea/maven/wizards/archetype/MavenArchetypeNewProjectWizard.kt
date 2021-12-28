@@ -10,7 +10,9 @@ import com.intellij.ide.wizard.util.NewProjectLinkNewProjectWizardStep
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.invokeLater
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
+import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.ComboBox
@@ -68,10 +70,12 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     val catalogItemProperty = propertyGraph.graphProperty<MavenCatalog> { MavenCatalog.System.Internal }
     val archetypeItemProperty = propertyGraph.graphProperty<ArchetypeItem?> { null }
     val archetypeVersionProperty = propertyGraph.graphProperty<String?> { null }
+    val archetypeDescriptorProperty = propertyGraph.graphProperty<Map<String, String>> { emptyMap() }
 
     var catalogItem by catalogItemProperty
     var archetypeItem by archetypeItemProperty
     var archetypeVersion by archetypeVersionProperty
+    var archetypeDescriptor by archetypeDescriptorProperty
 
     override fun setupSettingsUI(builder: Panel) {
       super.setupSettingsUI(builder)
@@ -102,6 +106,21 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
             .bindItem(archetypeVersionProperty)
             .columns(10)
         }.topGap(TopGap.SMALL)
+        group(MavenWizardBundle.message("maven.new.project.wizard.archetype.properties.title")) {
+          row {
+            val table = PropertiesTable()
+              .setVisibleRowCount(3)
+              .setEmptyState(MavenWizardBundle.message("maven.new.project.wizard.archetype.properties.empty"))
+              .apply { reloadArchetypeDescriptor() }
+              .apply { archetypeVersionProperty.afterChange { reloadArchetypeDescriptor() } }
+              .bindProperties(archetypeDescriptorProperty.transform(
+                { it.map { (k, v) -> PropertiesTable.Property(k, v) } },
+                { it.associate { (n, v) -> n to v } }
+              ))
+            cell(table.component)
+              .horizontalAlign(HorizontalAlign.FILL)
+          }
+        }
       }
     }
 
@@ -156,6 +175,31 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       archetypeVersion = versions.firstOrNull()
     }
 
+    private fun PropertiesTable.reloadArchetypeDescriptor() {
+      archetypeDescriptor = emptyMap()
+      tableView.executeBackgroundTask(
+        onBackgroundThread = { resolveArchetypeDescriptor() },
+        onUiThread = { archetypeDescriptor = it }
+      )
+    }
+
+    private fun resolveArchetypeDescriptor(): Map<String, String> {
+      val archetypeManager = MavenArchetypeManager.getInstance(context.projectOrDefault)
+      val catalog = catalogItem.location
+      val groupId = archetypeItem?.groupId ?: return emptyMap()
+      val artifactId = archetypeItem?.artifactId ?: return emptyMap()
+      val version = archetypeVersion ?: return emptyMap()
+      val descriptor = archetypeManager.resolveAndGetArchetypeDescriptor(groupId, artifactId, version, catalog) ?: return emptyMap()
+      return descriptor.toMutableMap()
+        .apply { remove("groupId") }
+        .apply { remove("artifactId") }
+        .apply { remove("version") }
+        .apply { remove("archetypeGroupId") }
+        .apply { remove("archetypeArtifactId") }
+        .apply { remove("archetypeVersion") }
+        .apply { remove("archetypeRepository") }
+    }
+
     override fun setupProject(project: Project) {
       val builder = InternalMavenModuleBuilder().apply {
         moduleJdk = sdk
@@ -183,6 +227,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
           put("archetypeArtifactId", archetype.artifactId)
           put("archetypeVersion", archetype.version)
           putIfNotNull("archetypeRepository", archetype.repository, this)
+          putAll(archetypeDescriptor)
         }
       }
 

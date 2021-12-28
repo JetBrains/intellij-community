@@ -10,6 +10,7 @@ import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBTextField
+import com.intellij.ui.table.TableView
 import com.intellij.util.ui.tree.TreeModelAdapter
 import java.awt.ItemSelectable
 import java.awt.event.*
@@ -94,6 +95,12 @@ fun TreeModel.whenStructureChanged(listener: () -> Unit) {
       listener()
     }
   )
+}
+
+fun TableView<*>.whenTableModified(listener: () -> Unit) {
+  tableViewModel.addTableModelListener {
+    listener()
+  }
 }
 
 fun JTextComponent.whenTextModified(listener: () -> Unit) {
