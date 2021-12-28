@@ -17,6 +17,7 @@
     <exclude-output />
     <content url="file://$MODULE_DIR$">
       <sourceFolder url="file://$MODULE_DIR$/src" isTestSource="false" />
+      <sourceFolder url="file://$MODULE_DIR$/test" isTestSource="true" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
@@ -58,5 +59,6 @@
     <orderEntry type="library" name="kotlinc.analysis-api-providers" level="project" />
     <orderEntry type="module" module-name="kotlin.fir.analysis-project-structure-ide-impl" />
     <orderEntry type="library" name="kotlinc.analysis-project-structure" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlinc.kotlin-compiler-fir" level="project" />
   </component>
 </module>
