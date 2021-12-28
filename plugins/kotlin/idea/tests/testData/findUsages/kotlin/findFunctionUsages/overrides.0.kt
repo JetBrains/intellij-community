@@ -5,3 +5,5 @@ open class A {
         println(t)
     }
 }
+
+// FIR_COMPARISON

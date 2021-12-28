@@ -3,3 +3,5 @@
 interface A {
     fun <caret>foo(t: String)
 }
+
+// FIR_COMPARISON
