@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.colors.TextAttributesKey
 import com.intellij.openapi.util.TextRange
 import com.intellij.util.applyIf
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.idea.fir.highlighter.HiglightingFactory
 import org.jetbrains.kotlin.idea.highlighter.AbstractHighlightingVisitor
 
 abstract class FirAfterResolveHighlightingVisitor(
@@ -16,15 +17,7 @@ abstract class FirAfterResolveHighlightingVisitor(
 ) : AbstractHighlightingVisitor() {
 
     override fun createInfoAnnotation(textRange: TextRange, message: String?, textAttributes: TextAttributesKey?) {
-        val builder =
-            if (message == null) holder.newSilentAnnotation(HighlightSeverity.INFORMATION)
-            else holder.newAnnotation(HighlightSeverity.INFORMATION, message)
-        builder
-            .range(textRange)
-            .applyIf(textAttributes != null) {
-                textAttributes(textAttributes!!)
-            }
-            .create()
+        HiglightingFactory.createInfoAnnotation(holder, textRange, message, textAttributes)
     }
 
     companion object {
