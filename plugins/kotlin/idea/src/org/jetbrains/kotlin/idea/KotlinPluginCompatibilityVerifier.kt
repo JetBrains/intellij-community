@@ -41,7 +41,13 @@ data class KotlinVersionVerbose(val plainVersion: KotlinVersion, val milestone: 
             return fromRawArgs(major, minor, patch, milestone, buildNumber)
         }
 
-        internal fun fromRawArgs(major: String, minor: String, patch: String, milestone: String?, buildNumber: String?): KotlinVersionVerbose? {
+        internal fun fromRawArgs(
+            major: String,
+            minor: String,
+            patch: String,
+            milestone: String?,
+            buildNumber: String?
+        ): KotlinVersionVerbose? {
             val enumMilestone = KotlinVersionMilestone.values().singleOrNull { it.name.equals(milestone, ignoreCase = true) }
             val intBuildNumber = buildNumber?.toIntOrNull()
             if (intBuildNumber != null && enumMilestone == null) {
