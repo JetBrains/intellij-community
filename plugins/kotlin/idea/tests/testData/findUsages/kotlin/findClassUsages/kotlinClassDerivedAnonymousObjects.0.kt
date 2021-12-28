@@ -3,3 +3,5 @@
 open class <caret>A {
 
 }
+
+// FIR_COMPARISON
