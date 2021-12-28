@@ -24,7 +24,8 @@ import java.util.concurrent.CompletableFuture
 import java.util.concurrent.ConcurrentLinkedQueue
 
 @Service
-internal class Saul {
+@ApiStatus.Internal
+class Saul {
   companion object {
     @JvmStatic
     private val RECOVERY_ACTION_EP_NAME = ExtensionPointName.create<RecoveryAction>("com.intellij.recoveryAction")
