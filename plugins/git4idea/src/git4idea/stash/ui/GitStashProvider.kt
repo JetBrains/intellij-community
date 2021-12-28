@@ -13,12 +13,14 @@ import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.VcsBundle
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction
 import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider
+import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesTree
 import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
@@ -59,13 +61,15 @@ class GitStashProvider(val project: Project) : SavedPatchesProvider<StashInfo> {
 
   override fun buildPatchesTree(modelBuilder: TreeModelBuilder) {
     val stashesMap = stashTracker.stashes
+    val stashesRoot = SavedPatchesTree.TagWithCounterChangesBrowserNode(GitBundle.message("stash.root.node.title"))
+    modelBuilder.insertSubtreeRoot(stashesRoot)
     for ((root, stashesList) in stashesMap) {
       val rootNode = if (stashesMap.size > 1 &&
                          !(stashesList is GitStashTracker.Stashes.Loaded && stashesList.stashes.isEmpty())) {
-        createRootNode(root)?.also { modelBuilder.insertSubtreeRoot(it) } ?: modelBuilder.myRoot
+        createRootNode(root)?.also { modelBuilder.insertSubtreeRoot(it, stashesRoot) } ?: stashesRoot
       }
       else {
-        modelBuilder.myRoot
+        stashesRoot
       }
 
       when (stashesList) {
@@ -98,7 +102,7 @@ class GitStashProvider(val project: Project) : SavedPatchesProvider<StashInfo> {
   private class StashInfoChangesBrowserNode(private val stash: StashObject) : ChangesBrowserNode<StashObject>(stash) {
     override fun render(renderer: ChangesBrowserNodeRenderer, selected: Boolean, expanded: Boolean, hasFocus: Boolean) {
       renderer.append(stash.data.subject)
-      renderer.toolTipText = GitBundle.message("stash.created.on.date.at.time.tooltip",
+      renderer.toolTipText = VcsBundle.message("saved.patch.created.on.date.at.time.tooltip",
                                                stash.data.stash,
                                                DateFormatUtil.formatDate(stash.data.authorTime),
                                                DateFormatUtil.formatTime(stash.data.authorTime))

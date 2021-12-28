@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.RegistryValue
 import com.intellij.openapi.util.registry.RegistryValueListener
 import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesUi
+import com.intellij.openapi.vcs.changes.savedPatches.ShelfProvider
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManagerListener
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentProvider
@@ -34,7 +35,8 @@ internal class GitStashContentProvider(private val project: Project) : ChangesVi
     project.service<GitStashTracker>().scheduleRefresh()
 
     disposable = Disposer.newDisposable("Git Stash Content Provider")
-    val savedPatchesUi = SavedPatchesUi(project, listOf(GitStashProvider(project)), isVertical(), isEditorDiffPreview(),
+    val savedPatchesUi = SavedPatchesUi(project, listOf(GitStashProvider(project), ShelfProvider(project)),
+                                        isVertical(), isEditorDiffPreview(),
                                         ::returnFocusToToolWindow, disposable!!)
     project.messageBus.connect(disposable!!).subscribe(ChangesViewContentManagerListener.TOPIC, object : ChangesViewContentManagerListener {
       override fun toolWindowMappingChanged() {

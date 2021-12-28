@@ -210,12 +210,12 @@ public class ShelvedChangesViewManager implements Disposable {
         requireNonNull(changeList.getChanges()).stream().map(change -> new ShelvedWrapper(change, changeList)).forEach(shelvedChanges::add);
         changeList.getBinaryFiles().stream().map(binaryChange -> new ShelvedWrapper(binaryChange, changeList)).forEach(shelvedChanges::add);
 
-        shelvedChanges.sort(comparing(s -> s.getChange(myProject), CHANGE_COMPARATOR));
+        shelvedChanges.sort(comparing(s -> s.getChangeWithLocal(myProject), CHANGE_COMPARATOR));
 
         ShelvedListNode shelvedListNode = new ShelvedListNode(changeList);
         insertSubtreeRoot(shelvedListNode, parentNode);
         for (ShelvedWrapper shelved : shelvedChanges) {
-          Change change = shelved.getChange(myProject);
+          Change change = shelved.getChangeWithLocal(myProject);
           FilePath filePath = ChangesUtil.getFilePath(change);
           insertChangeNode(change, shelvedListNode, new ShelvedChangeNode(shelved, filePath, change.getOriginText(myProject)));
         }
@@ -409,7 +409,7 @@ public class ShelvedChangesViewManager implements Disposable {
       else if (VcsDataKeys.CHANGES.is(dataId)) {
         List<ShelvedWrapper> shelvedChanges = VcsTreeModelData.selected(this).userObjects(ShelvedWrapper.class);
         if (!shelvedChanges.isEmpty()) {
-          return map2Array(shelvedChanges, Change.class, s -> s.getChange(myProject));
+          return map2Array(shelvedChanges, Change.class, s -> s.getChangeWithLocal(myProject));
         }
       }
       else if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {

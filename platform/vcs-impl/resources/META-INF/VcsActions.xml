@@ -242,6 +242,9 @@
     <group id="Vcs.SavedPatches.ContextMenu"/>
     <group id="Vcs.SavedPatches.ChangesBrowser.ContextMenu"/>
 
+    <action id="Vcs.Shelf.Apply" class="com.intellij.openapi.vcs.changes.savedPatches.ApplyShelfAction"/>
+    <action id="Vcs.Shelf.Pop" class="com.intellij.openapi.vcs.changes.savedPatches.PopShelfAction"/>
+
     <!--a group for plugins to add their actions-->
     <group id="VcsHistoryActionsGroup"/>
     <group id="VcsHistoryActionsGroup.Toolbar"/>
