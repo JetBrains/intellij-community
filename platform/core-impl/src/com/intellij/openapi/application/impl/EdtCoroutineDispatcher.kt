@@ -4,12 +4,20 @@ package com.intellij.openapi.application.impl
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.job
 import kotlin.coroutines.CoroutineContext
 
 internal object EdtCoroutineDispatcher : CoroutineDispatcher() {
 
   override fun dispatch(context: CoroutineContext, block: Runnable) {
-    val state = context[ModalityStateElement]?.modalityState ?: ModalityState.any()
-    ApplicationManager.getApplication().invokeLater(block, state)
+    val state = context[ModalityStateElement]?.modalityState
+                ?: ModalityState.any()
+    val runnable = if (state === ModalityState.any()) {
+      block
+    }
+    else {
+      DispatchedRunnable(context.job, block)
+    }
+    ApplicationManager.getApplication().invokeLater(runnable, state)
   }
 }
