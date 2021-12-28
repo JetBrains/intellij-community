@@ -5,3 +5,5 @@ import bar.div
 fun foo() {
     2 <selection><caret></selection>/ ""
 }
+
+/* IGNORE_FIR */
