@@ -148,12 +148,12 @@ public final class JarsBuilder {
       myContext.processMessage(new CompilerMessage(IncArtifactBuilder.getBuilderName(), BuildMessage.Kind.WARNING, messageText));
     }
     BufferedOutputStream outputStream = new BufferedOutputStream(new FileOutputStream(jarFile));
-    JarOutputStream jarOutputStream = manifest != null ? new JarOutputStream(outputStream, manifest) : new JarOutputStream(outputStream);
+    JarOutputStream jarOutputStream = new JarOutputStream(outputStream);
 
     final Set<String> writtenPaths = new HashSet<>();
     try {
       if (manifest != null) {
-        writtenPaths.add(JarFile.MANIFEST_NAME);
+        addManifestEntry(jarOutputStream, manifest, writtenPaths);
       }
 
       for (Pair<String, Object> pair : jar.getContent()) {
@@ -403,6 +403,17 @@ public final class JarsBuilder {
     e.setCrc(0);
     output.putNextEntry(e);
     output.closeEntry();
+  }
+
+  private void addManifestEntry(ZipOutputStream output, Manifest manifest, Set<? super String> writtenPaths) throws IOException {
+    ZipEntry manifestEntry = new ZipEntry(JarFile.MANIFEST_NAME);
+    if (buildDateInMillis != null) {
+      manifestEntry.setTime(buildDateInMillis);
+    }
+    output.putNextEntry(manifestEntry);
+    manifest.write(new BufferedOutputStream(output));
+    output.closeEntry();
+    writtenPaths.add(JarFile.MANIFEST_NAME);
   }
 
   private class JarsGraph implements InboundSemiGraph<JarInfo> {
