@@ -153,11 +153,6 @@ final class BuildContextImpl extends BuildContext {
   }
 
   @Override
-  GradleRunner getGradle() {
-    compilationContext.gradle
-  }
-
-  @Override
   BuildOptions getOptions() {
     compilationContext.options
   }

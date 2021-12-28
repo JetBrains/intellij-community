@@ -36,7 +36,6 @@ import java.util.function.BiFunction
 @CompileStatic
 final class CompilationContextImpl implements CompilationContext {
   final AntBuilder ant
-  final GradleRunner gradle
   final BuildOptions options
   final BuildMessages messages
   final BuildPaths paths
@@ -77,10 +76,8 @@ final class CompilationContextImpl implements CompilationContext {
     def model = loadProject(projectHome, kotlinBinaries, messages)
     def oldToNewModuleName = loadModuleRenamingHistory(projectHome, messages) + loadModuleRenamingHistory(communityHome, messages)
 
-    GradleRunner gradle = new GradleRunner(dependenciesProjectDir, projectHome, messages, options)
-
     projectHome = toCanonicalPath(projectHome)
-    def context = new CompilationContextImpl(ant, gradle, model, communityHome, projectHome, messages, oldToNewModuleName,
+    def context = new CompilationContextImpl(ant, model, communityHome, projectHome, messages, oldToNewModuleName,
                                              buildOutputRootEvaluator, options)
     defineJavaSdk(context)
     context.prepareForBuild()
@@ -146,12 +143,11 @@ final class CompilationContextImpl implements CompilationContext {
     return mapping
   }
 
-  private CompilationContextImpl(AntBuilder ant, GradleRunner gradle, JpsModel model, String communityHome,
+  private CompilationContextImpl(AntBuilder ant, JpsModel model, String communityHome,
                                  String projectHome, BuildMessages messages,
                                  Map<String, String> oldToNewModuleName,
                                  BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
     this.ant = ant
-    this.gradle = gradle
     this.projectModel = model
     this.project = model.project
     this.global = model.global
@@ -178,7 +174,7 @@ final class CompilationContextImpl implements CompilationContext {
 
   CompilationContextImpl createCopy(AntBuilder ant, BuildMessages messages, BuildOptions options,
                                     BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator) {
-    CompilationContextImpl copy = new CompilationContextImpl(ant, gradle, projectModel, paths.communityHome, paths.projectHome,
+    CompilationContextImpl copy = new CompilationContextImpl(ant, projectModel, paths.communityHome, paths.projectHome,
                                                              messages, oldToNewModuleName, buildOutputRootEvaluator, options)
     copy.compilationData = compilationData
     return copy
@@ -186,7 +182,6 @@ final class CompilationContextImpl implements CompilationContext {
 
   private CompilationContextImpl(AntBuilder ant, BuildMessages messages, CompilationContextImpl context) {
     this.ant = ant
-    this.gradle = gradle
     this.projectModel = context.projectModel
     this.project = context.project
     this.global = context.global
