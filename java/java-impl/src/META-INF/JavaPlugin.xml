@@ -1276,6 +1276,7 @@
     <postStartupActivity implementation="com.intellij.pom.java.AcceptedLanguageLevelsSettings"/>
     <projectModelModifier implementation="com.intellij.openapi.roots.impl.IdeaProjectModelModifier" order="last"/>
     <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavaConcatenationToInjectorAdapter" order="first"/>
+    <multiHostInjector implementation="com.intellij.psi.impl.source.tree.injected.JavadocInjector" />
     <changeSignatureDetector language="JAVA" implementationClass="com.intellij.refactoring.changeSignature.JavaChangeSignatureDetector"/>
     <lookup.charFilter implementation="com.intellij.codeInsight.completion.JavaCharFilter" id="java"/>
     <completion.contributor language="JAVA" id="javaMethodHandle" order="last, before javaLegacy"

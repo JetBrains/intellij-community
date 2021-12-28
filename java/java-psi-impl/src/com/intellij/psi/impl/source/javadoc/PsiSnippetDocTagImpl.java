@@ -84,9 +84,19 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
         int off = 0;
         int len = subText.length();
 
+        boolean afterNewline = false;
         while (off < len) {
           final char aChar = subText.charAt(off++);
-          if (aChar == '*') continue;
+          if (afterNewline && Character.isWhitespace(aChar) ) {
+            continue;
+          }
+          if (afterNewline && aChar == '*') {
+            afterNewline = false;
+            continue;
+          }
+          if (aChar == '\n') {
+            afterNewline = true;
+          }
           outChars.append(aChar);
           outSourceOffsets[outChars.length() - outOffset] = off;
         }

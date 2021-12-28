@@ -1,5 +1,5 @@
 /** {<warning descr="'@snippet' tag is not available at this language level">@snippet</warning> :
- *  Body
+ *  <error descr="'class' or 'interface' expected">Body</error>
  * }
  */
 class A {

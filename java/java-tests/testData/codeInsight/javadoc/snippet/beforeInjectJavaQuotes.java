@@ -1,8 +1,7 @@
-// "Inject language or reference" "true"
+// "JAVA" "true"
 
 /**
- * The following code shows how to use {@code Optional.isPresent}:
- * {@snippet<caret> :
+ * {@snippet<caret> lang = "java" :
  * class Main {
  *     void f(Optional<Object> e) {
  *          if (v.isPresent()) {
