@@ -302,7 +302,7 @@
       "inactiveBackground": "Grey2",
       "Button": {
         "hoverBackground": "Grey3",
-        "preferredSize": "28,40"
+        "preferredSize": "36,40"
       }
     },
 
