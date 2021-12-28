@@ -56,6 +56,7 @@ private class UiDslTestDialog(project: Project?) : DialogWrapper(project, null, 
     result.addTab("Cells With Sub-Panels", createCellsWithPanels())
     result.addTab("Placeholder", PlaceholderPanel(myDisposable).panel)
     result.addTab("Resizable Rows", createResizableRows())
+    result.addTab("Deprecated Api", DeprecatedApiPanel().panel)
 
     return result
   }
