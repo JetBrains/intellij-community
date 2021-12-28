@@ -872,7 +872,7 @@ private class NotificationComponent(val notification: Notification,
     }
 
     if (notification.hasContent()) {
-      val textContent = NotificationsUtil.buildHtml(notification, null, true, null, NotificationsUtil.getFontStyle())
+      val textContent = NotificationsUtil.buildHtml(notification, null, true, null, null)
       val text = createTextComponent(textContent)
 
       NotificationsManagerImpl.setTextAccessibleName(text, textContent)
