@@ -63,9 +63,6 @@ public final class CompositeCheckoutListener implements CheckoutProvider.Listene
     Project project = findProjectByBaseDirLocation(directory);
     if (project != null) {
       VcsStatisticsCollector.CLONED_PROJECT_OPENED.log(project);
-      for (CheckoutListener listener: listeners) {
-        listener.processOpenedProject(project);
-      }
     }
   }
 
