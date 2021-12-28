@@ -50,7 +50,7 @@ class SubpackagesIndexService(private val project: Project) {
 
             val knownNotContains = fqNames.isKnownNotContains(fqName, scope)
             if (knownNotContains) {
-                //return false
+                return false
             }
 
             val any = fqNames.any { packageWithFilesFqName ->
