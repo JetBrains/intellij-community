@@ -45,7 +45,9 @@ internal class Saul {
 
   val modificationRecoveryActionTracker = ModificationTracker { recoveryActionModificationCounter }
 
-  fun sortThingsOut(recoveryScope: RecoveryScope) = RecoveryWorker(sortedActions).start(recoveryScope)
+  fun sortThingsOut(recoveryScope: RecoveryScope, actions: Collection<RecoveryAction>) = RecoveryWorker(actions).start(recoveryScope)
+
+  fun sortThingsOut(recoveryScope: RecoveryScope) = sortThingsOut(recoveryScope, sortedActions)
 }
 
 private class RecoveryWorker(val actions: Collection<RecoveryAction>) {
