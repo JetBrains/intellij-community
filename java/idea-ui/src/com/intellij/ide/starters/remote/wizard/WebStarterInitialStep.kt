@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.popup.IconButton
 import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsSafe
+import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.SimpleListCellRenderer
@@ -353,6 +354,8 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       requestServerOptions()
     }
 
+    val newOptionsRef: Ref<WebStarterServerOptions> = Ref.create()
+
     ProgressManager.getInstance().runProcessWithProgressSynchronously(Runnable {
       val progressIndicator = ProgressManager.getInstance().progressIndicator
       progressIndicator.isIndeterminate = true
@@ -360,11 +363,17 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       for (i in 0 until 30) {
         progressIndicator.checkCanceled()
         if (serverOptionsLoadingSemaphore.waitFor(500)) {
-          serverOptions?.let { updatePropertiesWithServerOptions(it) }
+          serverOptions?.let {
+            newOptionsRef.set(it)
+          }
           return@Runnable
         }
       }
     }, JavaStartersBundle.message("message.state.connecting.and.retrieving.options"), true, wizardContext.project)
+
+    if (!newOptionsRef.isNull) {
+      updatePropertiesWithServerOptions(newOptionsRef.get())
+    }
 
     return serverOptions != null
   }
