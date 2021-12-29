@@ -53,13 +53,7 @@ internal fun KtAnalysisSession.toPsiClass(
 
 internal fun KtAnalysisSession.toPsiMethod(functionSymbol: KtFunctionLikeSymbol): PsiMethod? {
     val psi = functionSymbol.psi ?: return null
-    try {
-        return psi.getRepresentativeLightMethod()
-    } catch (e: IllegalStateException) {
-        // TODO: Creating FirModuleResolveState is not yet supported for LibrarySourceInfo(libraryName=myLibrary)
-        //  this happens while destructuring a variable via Pair casting (testDestructuringDeclaration).
-        return null
-    }
+    return psi.getRepresentativeLightMethod()
 }
 
 internal fun KtAnalysisSession.toPsiType(
