@@ -298,8 +298,10 @@
     },
 
     "TitlePane": {
-      "background": "Grey2",
-      "inactiveBackground": "Grey2",
+      "mainWindow": {
+        "background": "Grey2",
+        "inactiveBackground": "Grey2"
+      },
       "Button": {
         "hoverBackground": "Grey3",
         "preferredSize": "36,40"

@@ -105,6 +105,8 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     return res
   }
 
+  override fun getHeaderBackground(active: Boolean) = CustomFrameDecorations.mainWindowTitlePaneBackground(active)
+
   private fun getElementRect(comp: Component, rectProcessor: (Rectangle) -> Unit = {}): RelativeRectangle {
     val rect = Rectangle(comp.size)
     rectProcessor(rect)
@@ -186,7 +188,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     }
 
     button.border = JBUI.Borders.empty()
-    button.putClientProperty("JButton.backgroundColor", CustomFrameDecorations.titlePaneBackground())
+    button.putClientProperty("JButton.backgroundColor", getHeaderBackground())
     button.putClientProperty("ActionToolbar.smallVariant", true)
 
     button.toolTipText = IdeBundle.message("main.toolbar.menu.button")

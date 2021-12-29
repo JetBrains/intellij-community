@@ -120,7 +120,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
   init {
     isOpaque = true
-    background = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground()
+    background = getHeaderBackground()
 
     fun onClose() {
       Disposer.dispose(this)
@@ -152,6 +152,8 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
 
     setCustomFrameTopBorder()
   }
+
+  open protected fun getHeaderBackground(active: Boolean = true) = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(active)
 
   protected fun setCustomFrameTopBorder(isTopNeeded: () -> Boolean = { true }, isBottomNeeded: () -> Boolean = { false }) {
     customFrameTopBorder = CustomFrameTopBorder(isTopNeeded, isBottomNeeded)
@@ -225,7 +227,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     buttonPanes.updateVisibility()
     customFrameTopBorder?.repaintBorder()
 
-    background = JBUI.CurrentTheme.CustomFrameDecorations.titlePaneBackground(myActive)
+    background = getHeaderBackground(myActive)
   }
 
   protected val myCloseAction: Action = CustomFrameAction(CommonBundle.getCloseButtonText(), AllIcons.Windows.CloseSmall) { close() }
