@@ -2,6 +2,20 @@
 package org.jetbrains.java.decompiler.struct;
 
 public class StructTypePath {
+  public enum Kind {
+    ARRAY(0), NESTED(1), TYPE_WILDCARD(2), TYPE(3);
+
+    private final int opcode;
+
+    Kind(int opcode) {
+      this.opcode = opcode;
+    }
+
+    public int getOpcode() {
+      return opcode;
+    }
+  }
+
   private int typePathKind;
 
   private int typeArgumentIndex;

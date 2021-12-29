@@ -17,7 +17,6 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.attr.StructBootstrapMethodsAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
-import org.jetbrains.java.decompiler.struct.attr.StructTypeAnnotationAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
 import org.jetbrains.java.decompiler.struct.consts.LinkConstant;
 import org.jetbrains.java.decompiler.struct.consts.PooledConstant;
@@ -644,23 +643,33 @@ public class ExprProcessor implements CodeConstants {
     }
   }
 
-  public static String getTypeName(VarType type) {
-    return getTypeName(type, true);
+  public static String getTypeName(VarType type, List<TypePathWriteProgress> typePathWriteStack) {
+    return getTypeName(type, true, typePathWriteStack);
   }
 
-  public static String getTypeName(VarType type, boolean getShort) {
+  public static String getTypeName(VarType type, boolean getShort, List<TypePathWriteProgress> typePathWriteStack) {
     int tp = type.type;
+    StringBuilder sb = new StringBuilder();
+    for (TypePathWriteProgress writeProgress : typePathWriteStack) {
+      if (writeProgress.getPaths().size() == type.arrayDim) {
+        writeProgress.writeTypeAnnotation(sb);
+      }
+    }
     if (tp <= CodeConstants.TYPE_BOOLEAN) {
-      return typeNames[tp];
+      sb.append(typeNames[tp]);
+      return sb.toString();
     }
     else if (tp == CodeConstants.TYPE_UNKNOWN) {
-      return UNKNOWN_TYPE_STRING; // INFO: should not occur
+      sb.append(UNKNOWN_TYPE_STRING);
+      return sb.toString(); // INFO: should not occur
     }
     else if (tp == CodeConstants.TYPE_NULL) {
-      return NULL_TYPE_STRING; // INFO: should not occur
+      sb.append(NULL_TYPE_STRING);
+      return sb.toString(); // INFO: should not occur
     }
     else if (tp == CodeConstants.TYPE_VOID) {
-      return "void";
+      sb.append("void");
+      return sb.toString();
     }
     else if (tp == CodeConstants.TYPE_OBJECT) {
       String ret = buildJavaClassName(type.value);
@@ -672,34 +681,42 @@ public class ExprProcessor implements CodeConstants {
         // FIXME: a warning should be logged
         ret = UNDEFINED_TYPE_STRING;
       }
-      return ret;
+      sb.append(ret);
+      return sb.toString();
     }
 
     throw new RuntimeException("invalid type");
   }
 
-  public static String getCastTypeName(VarType type, StructTypeAnnotationAttribute... attributes) {
-    return getCastTypeName(type, true, attributes);
+  public static String getCastTypeName(VarType type, List<TypePathWriteProgress> typePathWriteStack) {
+    return getCastTypeName(type, true, typePathWriteStack);
   }
 
-  public static String getCastTypeName(VarType type, boolean getShort, StructTypeAnnotationAttribute... attributes) {
-    StringBuilder sb = new StringBuilder(getTypeName(type, getShort));
-    for (int i = 0; i < type.arrayDim; i++) {
-      for (StructTypeAnnotationAttribute attribute : attributes) {
-        if (attribute != null) {
-          for (TypeAnnotation annotation : attribute.getAnnotations()) {
-            if (i == annotation.getPaths().size()) {
-              String text = annotation.getAnnotation().toJava(0, BytecodeMappingTracer.DUMMY).toString();
-              sb.append(' ');
-              sb.append(text);
-              sb.append(' ');
-            }
+  public static String getCastTypeName(VarType type, boolean getShort, List<TypePathWriteProgress> typePathWriteStack) {
+    StringBuilder sb = new StringBuilder(getTypeName(type, getShort, typePathWriteStack));
+    writeArray(sb, type.arrayDim, typePathWriteStack);
+    return sb.toString();
+  }
+
+  public static void writeArray(StringBuilder sb, int arrayDim, List<TypePathWriteProgress> typePathWriteStack) {
+    for (int i = 0; i < arrayDim; i++) {
+      var ref = new Object() {
+        boolean firstIteration = true;
+      };
+      final int it = i;
+      typePathWriteStack.removeIf(writeProgress -> {
+        if (it == writeProgress.getPaths().size()) {
+          if (ref.firstIteration) {
+            sb.append(' ');
+            ref.firstIteration = false;
           }
+          writeProgress.writeTypeAnnotation(sb);
+          return true;
         }
-      }
+        return false;
+      });
       sb.append("[]");
     }
-    return sb.toString();
   }
 
   public static PrimitiveExpressionList getExpressionData(VarExprent var) {
@@ -871,7 +888,7 @@ public class ExprProcessor implements CodeConstants {
     boolean cast =
       castAlways ||
       (!leftType.isSuperset(rightType) && (rightType.equals(VarType.VARTYPE_OBJECT) || leftType.type != CodeConstants.TYPE_OBJECT)) ||
-      (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType))) ||
+      (castNull && rightType.type == CodeConstants.TYPE_NULL && !UNDEFINED_TYPE_STRING.equals(getTypeName(leftType, Collections.emptyList()))) ||
       (castNarrowing && isIntConstant(exprent) && isNarrowedIntType(leftType));
 
     boolean quote = cast && exprent.getPrecedence() >= FunctionExprent.getPrecedence(FunctionExprent.FUNCTION_CAST);
@@ -886,7 +903,7 @@ public class ExprProcessor implements CodeConstants {
       }
     }
 
-    if (cast) buffer.append('(').append(getCastTypeName(leftType)).append(')');
+    if (cast) buffer.append('(').append(ExprProcessor.getCastTypeName(leftType, Collections.emptyList())).append(')');
 
     if (quote) buffer.append('(');
 

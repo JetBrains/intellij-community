@@ -180,6 +180,12 @@ public class SingleClassesTest {
   @Test public void testArrayTypeAnnotations() { doTest("typeAnnotations/ArrayTypeAnnotations",
     "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D");
   }
+  @Test public void testGenericTypeAnnotations() { doTest("typeAnnotations/GenericTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E");
+  }
+  @Test public void testGenericArrayTypeAnnotations() {doTest("typeAnnotations/GenericArrayTypeAnnotations",
+      "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E", "typeAnnotations/F");
+  }
   @Test public void testInheritanceChainCycle() { doTest("pkg/TestInheritanceChainCycle"); }
   @Test public void testDynamicConstantPoolEntry() { doTest("java11/TestDynamicConstantPoolEntry"); }
 

@@ -57,7 +57,7 @@ public class TypeAnnotation {
     return (dims == 0 && paths.isEmpty()) || (dims == paths.size());
   }
 
-  public @NotNull AnnotationExprent getAnnotation() {
+  public @NotNull AnnotationExprent getAnnotationExpr() {
     return annotation;
   }
 

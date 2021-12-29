@@ -128,7 +128,7 @@ public class ConstExprent extends Exprent {
     tracer.addMapping(bytecode);
 
     if (constType.type != CodeConstants.TYPE_NULL && value == null) {
-      return new TextBuffer(ExprProcessor.getCastTypeName(constType));
+      return new TextBuffer(ExprProcessor.getCastTypeName(constType, Collections.emptyList()));
     }
 
     switch (constType.type) {
@@ -270,7 +270,7 @@ public class ConstExprent extends Exprent {
         else if (constType.equals(VarType.VARTYPE_CLASS)) {
           String stringVal = value.toString();
           VarType type = new VarType(stringVal, !stringVal.startsWith("["));
-          return new TextBuffer(ExprProcessor.getCastTypeName(type)).append(".class");
+          return new TextBuffer(ExprProcessor.getCastTypeName(type, Collections.emptyList())).append(".class");
         }
     }
 

@@ -7,10 +7,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.vars.CheckTypesResult;
 import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
 
 public class ArrayExprent extends Exprent {
   private Exprent array;
@@ -74,7 +71,7 @@ public class ArrayExprent extends Exprent {
     VarType arrType = array.getExprType();
     if (arrType.arrayDim == 0) {
       VarType objArr = VarType.VARTYPE_OBJECT.resizeArrayDim(1); // type family does not change
-      res.enclose("((" + ExprProcessor.getCastTypeName(objArr) + ")", ")");
+      res.enclose("((" + ExprProcessor.getCastTypeName(objArr, Collections.emptyList()) + ")", ")");
     }
 
     tracer.addMapping(bytecode);
