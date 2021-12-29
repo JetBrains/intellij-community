@@ -407,7 +407,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
                     Module(
                         "desktop",
                         JvmTargetConfigurator,
-                        template = null,
+                        template = ComposeCommonDesktopTemplate(),
                         sourceSets = createDefaultSourceSets(),
                         subModules = emptyList()
                     ).withConfiguratorSettings<JvmTargetConfigurator> {
@@ -429,7 +429,7 @@ object ComposeMultiplatformApplicationProjectTemplate : ProjectTemplate() {
             +Module(
                 "desktop",
                 MppModuleConfigurator,
-                template = null,
+                template = ComposeCommonDesktopTemplate(),
                 sourceSets = createDefaultSourceSets(),
                 subModules = listOf(
                     Module(
