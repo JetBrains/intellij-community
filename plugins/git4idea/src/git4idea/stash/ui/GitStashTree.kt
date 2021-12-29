@@ -143,7 +143,7 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
                                                DateFormatUtil.formatTime(stash.authorTime))
     }
 
-    override fun getTextPresentation(): String = stash.stash
+    override fun getTextPresentation(): String = stash.subject
   }
 
   class MyTreeRenderer(val component: ChangesTree, renderer: ChangesBrowserNodeRenderer) : ChangesTreeCellRenderer(renderer) {
