@@ -46,7 +46,7 @@ import javax.swing.ScrollPaneConstants
 import javax.swing.event.ChangeEvent
 import javax.swing.event.ChangeListener
 
-class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Boolean) : DiffViewer, DataProvider {
+class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffViewer, DataProvider {
   private val project = context.project
 
   internal val contentPanel = JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false))
@@ -74,6 +74,9 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
       return (getCurrentBlockContent()?.viewer as? DiffViewerBase)?.request?.contentTitles ?: return emptyList()
     }
   }
+
+  private val combinedEditorSettingsAction =
+    CombinedEditorSettingsAction(TextDiffViewerUtil.getTextSettings(context), ::foldingModels, ::editors)
 
   internal fun updateBlockContent(block: CombinedDiffBlock, newContent: CombinedDiffBlockContent) {
     val oldViewer = block.content.viewer
@@ -116,10 +119,7 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
 
   private fun createDiffBlock(content: CombinedDiffBlockContent, needBorder: Boolean): CombinedDiffBlock {
     val viewer = content.viewer
-    if (viewer.isEditorBased) {
-      viewer.editors.forEach { it.settings.additionalLinesCount = 0 }
-    }
-    else {
+    if (!viewer.isEditorBased) {
       focusListener.register(viewer.component, this)
     }
 
@@ -264,13 +264,17 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
   }
 
   private fun createToolbarActions(): List<AnAction> {
-    val textSettings = TextDiffViewerUtil.getTextSettings(context)
-
-    return listOf(CombinedEditorSettingsAction(textSettings, getFoldingModels(), editors).apply { applyDefaults() })
+    return listOf(combinedEditorSettingsAction)
   }
 
-  private fun getFoldingModels(): List<FoldingModelSupport> {
-    return diffBlocks.mapNotNull { block ->
+  internal fun contentChanged() {
+    combinedEditorSettingsAction.installGutterPopup()
+    combinedEditorSettingsAction.applyDefaults()
+    editors.forEach { editor -> editor.settings.additionalLinesCount = 0 }
+  }
+
+  private val foldingModels: List<FoldingModelSupport>
+    get() = diffBlocks.mapNotNull { block ->
       with(block.content.viewer) {
         when (this) {
           is SimpleDiffViewer -> foldingModel
@@ -279,7 +283,6 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
         }
       }
     }
-  }
 
   private fun getCurrentDataProvider(): DataProvider? {
     val currentDiffViewer = getCurrentDiffViewer()

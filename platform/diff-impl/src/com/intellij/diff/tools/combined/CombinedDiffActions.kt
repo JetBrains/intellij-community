@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.actions.impl.NextChangeAction
@@ -30,7 +30,7 @@ import javax.swing.event.HyperlinkEvent
 import javax.swing.event.HyperlinkListener
 
 internal class CombinedToggleExpandByDefaultAction(val textSettings: TextDiffSettingsHolder.TextDiffSettings,
-                                                   val foldingModels: List<FoldingModelSupport>) :
+                                                   val foldingModels: () -> List<FoldingModelSupport>) :
   ToggleActionButton(message("collapse.unchanged.fragments"), null), DumbAware {
 
   override fun isVisible(): Boolean = textSettings.contextRange != -1
@@ -45,7 +45,7 @@ internal class CombinedToggleExpandByDefaultAction(val textSettings: TextDiffSet
   }
 
   private fun expandAll(expand: Boolean) {
-    foldingModels.forEach { it.expandAll(expand) }
+    foldingModels().forEach { it.expandAll(expand) }
   }
 }
 
@@ -56,8 +56,8 @@ internal class CombinedHighlightPolicySettingAction(settings: TextDiffSettingsHo
   TextDiffViewerUtil.HighlightPolicySettingAction(settings, *SmartTextDiffProvider.HIGHLIGHT_POLICIES)
 
 internal class CombinedEditorSettingsAction(private val settings: TextDiffSettingsHolder.TextDiffSettings,
-                                            private val foldingModels: List<FoldingModelSupport>,
-                                            editors: List<Editor>) : SetEditorSettingsAction(settings, editors) {
+                                            private val foldingModels: () -> List<FoldingModelSupport>,
+                                            editors: () -> List<Editor>) : SetEditorSettingsAction(settings, editors) {
   init {
     templatePresentation.putClientProperty(ActionButton.HIDE_DROPDOWN_ICON, true)
   }

@@ -216,6 +216,7 @@ open class CombinedDiffRequestProcessor(project: Project?,
 
     runInEdt {
       showProgressBar(false)
+      combinedViewer.contentChanged()
       if (blockToSelect != null) {
         combinedViewer.selectDiffBlock(blockToSelect, ScrollPolicy.DIFF_BLOCK)
       }
