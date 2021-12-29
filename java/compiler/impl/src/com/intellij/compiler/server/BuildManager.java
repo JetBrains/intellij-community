@@ -928,7 +928,7 @@ public final class BuildManager implements Disposable {
         }
         else {
           params = CmdlineProtoUtil.createBuildRequest(mappedProjectPath, scopes, isMake ? Collections.emptyList() : mappedPaths, userData, globals, currentFSChanges,
-                                                       !isMake ? CompilerCacheConfigurator.INSTANCE.getCacheDownloadSettings(project) : null);
+                                                       isMake ? CompilerCacheConfigurator.INSTANCE.getCacheDownloadSettings(project) : null);
         }
         if (!usingPreloadedProcess) {
           myMessageDispatcher.registerBuildMessageHandler(future, params);

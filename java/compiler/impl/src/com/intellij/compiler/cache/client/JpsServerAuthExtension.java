@@ -44,7 +44,7 @@ public interface JpsServerAuthExtension {
    * empty map or `null` can be return.
    * @return
    */
-  Map<String, String> getAuthHeader();
+  Map<String, String> getAuthHeader(boolean force);
 
   @Nullable
   static JpsServerAuthExtension getInstance() {

@@ -13,6 +13,10 @@ import static com.intellij.compiler.cache.ui.CompilerCacheNotifications.ATTENTIO
 
 public final class CompilerCacheServerAuthUtil {
   public static @NotNull Map<String, String> getRequestHeaders(@NotNull Project project) {
+    return getRequestHeaders(project, false);
+  }
+
+  public static @NotNull Map<String, String> getRequestHeaders(@NotNull Project project, boolean force) {
     JpsServerAuthExtension authExtension = JpsServerAuthExtension.getInstance();
     if (authExtension == null) {
       String message = JavaCompilerBundle.message("notification.content.internal.authentication.plugin.required.for.correct.work");
@@ -21,7 +25,7 @@ public final class CompilerCacheServerAuthUtil {
       });
       return Collections.emptyMap();
     }
-    Map<String, String> authHeader = authExtension.getAuthHeader();
+    Map<String, String> authHeader = authExtension.getAuthHeader(force);
     if (authHeader == null) {
       String message = JavaCompilerBundle.message("internal.authentication.plugin.missing.token");
       ApplicationManager.getApplication().invokeLater(() -> {

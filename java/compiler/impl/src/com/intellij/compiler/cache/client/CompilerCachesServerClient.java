@@ -39,6 +39,7 @@ public final class CompilerCachesServerClient {
 
   private static @Nullable Map<String, List<String>> doGetRequest(@NotNull Project project, @NotNull String serverUrl) {
     Map<String, String> headers = CompilerCacheServerAuthUtil.getRequestHeaders(project);
+    if (headers.isEmpty()) return null;
     try {
       return HttpRequests.request(serverUrl + "/commit_history.json")
         .tuner(tuner -> headers.forEach((k, v) -> tuner.addRequestProperty(k, v)))
