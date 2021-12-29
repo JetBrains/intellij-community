@@ -37,27 +37,22 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.importing.configurers.MavenModuleConfigurer;
-import org.jetbrains.idea.maven.model.MavenArtifact;
 import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.*;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
 import static org.jetbrains.idea.maven.project.MavenProjectChanges.ALL;
 
-public class MavenProjectImporterImpl {
+class MavenProjectImporterImpl extends MavenProjectImporterBase {
   private static final Logger LOG = Logger.getInstance(MavenProjectImporterImpl.class);
   private final Project myProject;
-  private final MavenProjectsTree myProjectsTree;
   private final Map<VirtualFile, Module> myFileToModuleMapping;
-  private volatile Map<MavenProject, MavenProjectChanges> myProjectsToImportWithChanges;
   private volatile Set<MavenProject> myAllProjects;
   private final boolean myImportModuleGroupsRequired;
-  private final MavenImportingSettings myImportingSettings;
 
   private final IdeModifiableModelsProvider myIdeModifiableModelsProvider;
   private final WorkspaceEntityStorageBuilder myDiff;
@@ -71,26 +66,25 @@ public class MavenProjectImporterImpl {
   private final Map<MavenProject, String> myMavenProjectToModuleName = new HashMap<>();
   private final Map<MavenProject, String> myMavenProjectToModulePath = new HashMap<>();
 
-  public MavenProjectImporterImpl(Project p,
-                                  MavenProjectsTree projectsTree,
-                                  Map<VirtualFile, Module> fileToModuleMapping,
-                                  Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
-                                  boolean importModuleGroupsRequired,
-                                  IdeModifiableModelsProvider modelsProvider,
-                                  MavenImportingSettings importingSettings,
-                                  Module dummyModule) {
+  MavenProjectImporterImpl(@NotNull Project p,
+                           @NotNull MavenProjectsTree projectsTree,
+                           @NotNull Map<VirtualFile, Module> fileToModuleMapping,
+                           @NotNull Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
+                           boolean importModuleGroupsRequired,
+                           @NotNull IdeModifiableModelsProvider modelsProvider,
+                           @NotNull MavenImportingSettings importingSettings,
+                           @Nullable Module dummyModule) {
+    super(projectsTree, importingSettings, projectsToImportWithChanges);
     myProject = p;
-    myProjectsTree = projectsTree;
     myFileToModuleMapping = fileToModuleMapping;
-    myProjectsToImportWithChanges = projectsToImportWithChanges;
     myImportModuleGroupsRequired = importModuleGroupsRequired;
-    myImportingSettings = importingSettings;
     myDummyModule = dummyModule;
 
     myDiff = ((IdeModifiableModelsProviderImpl)modelsProvider).getActualStorageBuilder();
     myIdeModifiableModelsProvider = modelsProvider;
   }
 
+  @Override
   @Nullable
   public List<MavenProjectsProcessorTask> importProject() {
     long startTime = System.currentTimeMillis();
@@ -218,13 +212,6 @@ public class MavenProjectImporterImpl {
     MavenUtil.invokeAndWaitWriteAction(myProject, () -> myModelsProvider.dispose());
   }
 
-  private boolean projectsToImportHaveChanges() {
-    for (MavenProjectChanges each : myProjectsToImportWithChanges.values()) {
-      if (each.hasChanges()) return true;
-    }
-    return false;
-  }
-
   private Map<MavenProject, MavenProjectChanges> collectProjectsToImport(Map<MavenProject, MavenProjectChanges> projectsToImport) {
     Map<MavenProject, MavenProjectChanges> result = new HashMap<>(projectsToImport);
     result.putAll(collectNewlyCreatedProjects()); // e.g. when 'create modules fro aggregators' setting changes
@@ -251,20 +238,6 @@ public class MavenProjectImporterImpl {
     }
 
     return result;
-  }
-
-  private Set<MavenProject> selectProjectsToImport(Collection<MavenProject> originalProjects) {
-    Set<MavenProject> result = new HashSet<>();
-    for (MavenProject each : originalProjects) {
-      if (!shouldCreateModuleFor(each)) continue;
-      result.add(each);
-    }
-    return result;
-  }
-
-  private boolean shouldCreateModuleFor(MavenProject project) {
-    if (myProjectsTree.isIgnored(project)) return false;
-    return !project.isAggregator() || myImportingSettings.isCreateModulesForAggregators();
   }
 
   private boolean deleteIncompatibleModules() {
@@ -410,37 +383,6 @@ public class MavenProjectImporterImpl {
     }
 
     return res.toString();
-  }
-
-  private static void doRefreshFiles(Set<File> files) {
-    LocalFileSystem.getInstance().refreshIoFiles(files);
-  }
-
-  private void scheduleRefreshResolvedArtifacts(List<MavenProjectsProcessorTask> postTasks) {
-    // We have to refresh all the resolved artifacts manually in order to
-    // update all the VirtualFilePointers. It is not enough to call
-    // VirtualFileManager.refresh() since the newly created files will be only
-    // picked by FS when FileWatcher finishes its work. And in the case of import
-    // it doesn't finish in time.
-    // I couldn't manage to write a test for this since behaviour of VirtualFileManager
-    // and FileWatcher differs from real-life execution.
-
-    List<MavenArtifact> artifacts = new ArrayList<>();
-    for (MavenProject each : myProjectsToImportWithChanges.keySet()) {
-      artifacts.addAll(each.getDependencies());
-    }
-
-    final Set<File> files = new HashSet<>();
-    for (MavenArtifact each : artifacts) {
-      if (MavenArtifactUtilKt.resolved(each)) files.add(each.getFile());
-    }
-
-    if (MavenUtil.isMavenUnitTestModeEnabled()) {
-      doRefreshFiles(files);
-    }
-    else {
-      postTasks.add(new RefreshingFilesTask(files));
-    }
   }
 
   private void mapMavenProjectsToModulesAndNames() {
@@ -700,21 +642,9 @@ public class MavenProjectImporterImpl {
     return rootModels.values();
   }
 
-  public List<Module> getCreatedModules() {
+  @Override
+  public @NotNull List<Module> getCreatedModules() {
     return myCreatedModules;
   }
 
-  private static class RefreshingFilesTask implements MavenProjectsProcessorTask {
-    private final Set<File> myFiles;
-
-    private RefreshingFilesTask(Set<File> files) {
-      myFiles = files;
-    }
-
-    @Override
-    public void perform(Project project, MavenEmbeddersManager embeddersManager, MavenConsole console, MavenProgressIndicator indicator) {
-      indicator.setText(MavenProjectBundle.message("progress.text.refreshing.files"));
-      doRefreshFiles(myFiles);
-    }
-  }
 }

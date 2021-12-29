@@ -50,7 +50,7 @@ import org.jetbrains.idea.maven.execution.SyncBundle;
 import org.jetbrains.idea.maven.externalSystemIntegration.output.quickfixes.CacheForCompilerErrorMessages;
 import org.jetbrains.idea.maven.importing.MavenFoldersImporter;
 import org.jetbrains.idea.maven.importing.MavenPomPathModuleService;
-import org.jetbrains.idea.maven.importing.MavenProjectImporterImpl;
+import org.jetbrains.idea.maven.importing.MavenProjectImporter;
 import org.jetbrains.idea.maven.indices.MavenIndicesManager;
 import org.jetbrains.idea.maven.model.*;
 import org.jetbrains.idea.maven.navigator.MavenProjectsNavigator;
@@ -1261,29 +1261,29 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
       myImportModuleGroupsRequired = false;
     }
 
-    final Ref<MavenProjectImporterImpl> importer = new Ref<>();
+    final Ref<MavenProjectImporter> importer = new Ref<>();
     final Ref<List<MavenProjectsProcessorTask>> postTasks = new Ref<>();
 
     final Runnable r = () -> {
-      MavenProjectImporterImpl projectImporter = new MavenProjectImporterImpl(myProject,
-                                                                              myProjectsTree,
-                                                                              getFileToModuleMapping(new MavenModelsProvider() {
-                                                                        @Override
-                                                                        public Module[] getModules() {
-                                                                          return ArrayUtil.remove(modelsProvider.getModules(),
-                                                                                                  myDummyModule);
-                                                                        }
+      MavenProjectImporter projectImporter = MavenProjectImporter.createImporter(myProject,
+                                                                                 myProjectsTree,
+                                                                                 getFileToModuleMapping(new MavenModelsProvider() {
+                                                                                   @Override
+                                                                                   public Module[] getModules() {
+                                                                                     return ArrayUtil.remove(modelsProvider.getModules(),
+                                                                                                             myDummyModule);
+                                                                                   }
 
-                                                                        @Override
-                                                                        public VirtualFile[] getContentRoots(Module module) {
-                                                                          return modelsProvider.getContentRoots(module);
-                                                                        }
-                                                                      }),
-                                                                              projectsToImportWithChanges,
-                                                                              importModuleGroupsRequired,
-                                                                              modelsProvider,
-                                                                              getImportingSettings(),
-                                                                              myDummyModule);
+                                                                                   @Override
+                                                                                   public VirtualFile[] getContentRoots(Module module) {
+                                                                                     return modelsProvider.getContentRoots(module);
+                                                                                   }
+                                                                                 }),
+                                                                                 projectsToImportWithChanges,
+                                                                                 importModuleGroupsRequired,
+                                                                                 modelsProvider,
+                                                                                 getImportingSettings(),
+                                                                                 myDummyModule);
       importer.set(projectImporter);
       postTasks.set(projectImporter.importProject());
     };
@@ -1317,7 +1317,7 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     // do not block user too often
     myImportingQueue.restartTimer();
 
-    MavenProjectImporterImpl projectImporter = importer.get();
+    MavenProjectImporter projectImporter = importer.get();
     List<Module> createdModules = projectImporter == null ? Collections.emptyList() : projectImporter.getCreatedModules();
     if (!projectsToImportWithChanges.isEmpty()) {
       myProject.getMessageBus().syncPublisher(MavenImportListener.TOPIC)

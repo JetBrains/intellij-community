@@ -14,7 +14,7 @@ import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.io.exists
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.idea.maven.execution.BTWMavenConsole
-import org.jetbrains.idea.maven.importing.MavenProjectImporterImpl
+import org.jetbrains.idea.maven.importing.MavenProjectImporter
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles
 import org.jetbrains.idea.maven.model.MavenPlugin
 import org.jetbrains.idea.maven.project.*
@@ -230,12 +230,12 @@ class MavenImportFlow {
     val modelsProvider = ProjectDataManager.getInstance().createModifiableModelsProvider(context.project)
     ApplicationManager.getApplication().assertIsNonDispatchThread()
     val projectManager = MavenProjectsManager.getInstance(context.project)
-    val projectImporter = MavenProjectImporterImpl(context.project, context.readContext.projectsTree,
-                                                   projectManager.getFileToModuleMapping(MavenDefaultModelsProvider(context.project)),
-                                                   context.projectsToImport.map {
-                                                     it to MavenProjectChanges.ALL
-                                                   }.toMap(), false, modelsProvider,
-                                                   context.initialContext.importingSettings, null)
+    val projectImporter = MavenProjectImporter.createImporter(context.project, context.readContext.projectsTree,
+                                                              projectManager.getFileToModuleMapping(MavenDefaultModelsProvider(context.project)),
+                                                              context.projectsToImport.map {
+                                                                it to MavenProjectChanges.ALL
+                                                              }.toMap(), false, modelsProvider,
+                                                              context.initialContext.importingSettings, null)
     val postImportTasks = projectImporter.importProject();
     val modulesCreated = projectImporter.createdModules
     return MavenImportedContext(context.project, modulesCreated, postImportTasks, context.initialContext);
