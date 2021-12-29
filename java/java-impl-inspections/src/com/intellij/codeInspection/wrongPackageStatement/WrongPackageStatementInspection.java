@@ -3,7 +3,7 @@ package com.intellij.codeInspection.wrongPackageStatement;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.JavaErrorBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightClassUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Comparing;
@@ -33,7 +33,7 @@ public class WrongPackageStatementInspection extends AbstractBaseJavaLocalInspec
       if (FileTypeUtils.isInServerPageFile(file)) return null;
       PsiJavaFile javaFile = (PsiJavaFile)file;
 
-      if (HighlightClassUtil.isJavaHashBangScript(javaFile)) return null;
+      if (JavaHighlightUtil.isJavaHashBangScript(javaFile)) return null;
 
       PsiDirectory directory = javaFile.getContainingDirectory();
       if (directory == null) return null;
