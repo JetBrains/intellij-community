@@ -199,25 +199,25 @@ abstract class ScriptClassRootsUpdater(
             if (underProgressManager) {
                 ProgressManager.checkCanceled()
             }
-            if (project.isDisposed) return
 
             if (updates.hasNewRoots) {
                 notifyRootsChanged()
             }
 
-            PsiElementFinder.EP.findExtensionOrFail(KotlinScriptDependenciesClassFinder::class.java, project).clearCache()
+            runReadAction {
+                if (project.isDisposed) return@runReadAction
+                PsiElementFinder.EP.findExtensionOrFail(KotlinScriptDependenciesClassFinder::class.java, project).clearCache()
 
-            ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
+                ScriptDependenciesModificationTracker.getInstance(project).incModificationCount()
 
-            if (updates.hasUpdatedScripts) {
-                updateHighlighting(project) {
-                    updates.isScriptChanged(it.path)
+                if (updates.hasUpdatedScripts) {
+                    updateHighlighting(project) { file -> updates.isScriptChanged(file.path) }
                 }
-            }
 
-            val scriptClassRootsCache = updates.cache
-            ScriptCacheDependencies(scriptClassRootsCache).save(project)
-            lastSeen = scriptClassRootsCache
+                val scriptClassRootsCache = updates.cache
+                ScriptCacheDependencies(scriptClassRootsCache).save(project)
+                lastSeen = scriptClassRootsCache
+            }
         } finally {
             scheduledUpdate = null
         }
