@@ -28,11 +28,10 @@ group 'intellij.tools'
 version '1.0'
 
 apply from: 'setupJdk.gradle'
-apply from: 'setupBundledMaven.gradle'
 apply from: 'setupCidr.gradle'
 
-task setupDependencies(dependsOn: ['setupJdks', 'setupBundledMaven'], group: 'dependencies')
-clean.dependsOn('cleanSetupJdks', 'cleanSetupBundledMaven')
+task setupDependencies(dependsOn: ['setupJdks'], group: 'dependencies')
+clean.dependsOn('cleanSetupJdks')
 
 wrapper {
   gradleVersion = '5.5'
