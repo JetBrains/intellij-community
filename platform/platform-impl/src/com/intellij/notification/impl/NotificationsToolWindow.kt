@@ -1248,7 +1248,7 @@ private class DropDownActionLayout(layout: LayoutManager2) : FinalLayoutWrapper(
       layout.layoutContainer(parent)
 
       while (parent.preferredSize.width > width && collapseIndex >= 0 && collapseIndex < actions.size) {
-        actions.get(collapseIndex).isVisible = false
+        actions[collapseIndex].isVisible = false
         collapseIndex += collapseDelta
         layout.layoutContainer(parent)
       }
@@ -1281,10 +1281,6 @@ private class ComponentEventHandler {
         myHoverComponent = null
       }
     }
-  }
-
-  private fun findTarget(e: MouseEvent): NotificationGroupComponent? {
-    return ComponentUtil.getParentOfType(NotificationGroupComponent::class.java, e.component)
   }
 
   fun add(component: Component) {
