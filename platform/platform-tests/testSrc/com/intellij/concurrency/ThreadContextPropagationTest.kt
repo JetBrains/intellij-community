@@ -3,16 +3,14 @@ package com.intellij.concurrency
 
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.progress.timeoutRunBlocking
-import com.intellij.openapi.util.registry.Registry
 import com.intellij.testFramework.ApplicationExtension
+import com.intellij.testFramework.RegistryKeyExtension
 import com.intellij.util.concurrency.AppExecutorUtil
 import kotlinx.coroutines.suspendCancellableCoroutine
-import org.junit.jupiter.api.AfterAll
-import org.junit.jupiter.api.BeforeAll
+import org.junit.jupiter.api.Assertions.assertSame
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.concurrent.ExecutorService
-import kotlin.test.assertSame
 
 class ThreadContextPropagationTest {
 
@@ -22,17 +20,9 @@ class ThreadContextPropagationTest {
     @JvmField
     val applicationExtension = ApplicationExtension()
 
-    @BeforeAll
-    @JvmStatic
-    fun setKey() {
-      Registry.get("ide.propagate.context").setValue(true)
-    }
-
-    @AfterAll
-    @JvmStatic
-    fun resetKey() {
-      Registry.get("ide.propagate.context").resetToDefault()
-    }
+    @RegisterExtension
+    @JvmField
+    val registryKeyExtension = RegistryKeyExtension("ide.propagate.context", true)
   }
 
   @Test
