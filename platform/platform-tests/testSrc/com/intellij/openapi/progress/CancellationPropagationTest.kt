@@ -22,6 +22,9 @@ import java.util.concurrent.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
+/**
+ * Rough cancellation equivalents with respect to structured concurrency are provided in comments.
+ */
 class CancellationPropagationTest {
 
   companion object {
@@ -38,6 +41,13 @@ class CancellationPropagationTest {
   private val service = AppExecutorUtil.getAppExecutorService()
   private val scheduledService = AppExecutorUtil.getAppScheduledExecutorService()
 
+  /**
+   * ```
+   * launch(Dispatchers.IO) {
+   *   runnable.run()
+   * }
+   * ```
+   */
   @Test
   fun `executeOnPooledThread(Runnable)`(): Unit = timeoutRunBlocking {
     doTest {
@@ -48,6 +58,13 @@ class CancellationPropagationTest {
     }
   }
 
+  /**
+   * ```
+   * async(Dispatchers.IO) {
+   *   callable.call()
+   * }
+   * ```
+   */
   @Test
   fun `executeOnPooledThread(Callable)`(): Unit = timeoutRunBlocking {
     doTest {
@@ -110,18 +127,43 @@ class CancellationPropagationTest {
 
   private suspend fun doExecutorServiceTest(service: ExecutorService) {
     doTest {
+      // launch {
+      //   runnable.run()
+      // }
       service.execute(it.runnable())
     }
     doTest {
+      // async {
+      //   runnable.run()
+      // }
       service.submit(it.runnable())
     }
     doTest {
+      // async {
+      //   callable.call()
+      // }
       service.submit(it.callable())
     }
     doTest {
+      // coroutineScope {
+      //   val result = select { // await the fastest callable
+      //     callables.map { callable ->
+      //       async {
+      //         callable.call()
+      //       }.onAwait { it }
+      //     }
+      //   }
+      //   coroutineContext.cancelChildren() // cancel the rest of callables
+      //   return@coroutineScope result
+      // }
       service.invokeAny(listOf(it.callable()))
     }
     doTest {
+      // callables.map { callable ->
+      //   async {
+      //     callable.call()
+      //   }
+      // }.awaitAll()
       service.invokeAll(listOf(it.callable()))
     }
     doTestJobIsCancelledByFuture {
@@ -135,12 +177,27 @@ class CancellationPropagationTest {
   private suspend fun doScheduledExecutorServiceTest(service: ScheduledExecutorService) {
     doExecutorServiceTest(service)
     doTest {
+      // async {
+      //   delay(timeout)
+      //   runnable.run()
+      // }
       service.schedule(it.runnable(), 10, TimeUnit.MILLISECONDS)
     }
     doTest {
+      // async {
+      //   delay(timeout)
+      //   callable.call()
+      // }
       service.schedule(it.callable(), 10, TimeUnit.MILLISECONDS)
     }
     doTestJobIsCancelledByFuture {
+      // launch {
+      //   delay(initialDelay)
+      //   while (isActive) {
+      //     runnable.run()
+      //     delay(10)
+      //   }
+      // }
       service.scheduleWithFixedDelay(it.runnable(), 5, 10, TimeUnit.MILLISECONDS)
     }
     doTestScheduleWithFixedDelay(service)
