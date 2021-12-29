@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityInvokator;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Conditions;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -22,16 +23,26 @@ final class ModalityInvokatorImpl implements ModalityInvokator {
 
   @Override
   public @NotNull ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull Condition<?> expired) {
-    return LaterInvocator.invokeLater(runnable, expired);
-  }
-
-  @Override
-  public @NotNull ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
-    return LaterInvocator.invokeLater(state, expired, runnable);
+    return invokeLater(runnable, ModalityState.defaultModalityState(), expired);
   }
 
   @Override
   public @NotNull ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state) {
     return invokeLater(runnable, state, ApplicationManager.getApplication().getDisposed());
+  }
+
+  @Override
+  public @NotNull ActionCallback invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
+    if (expired.value(null)) {
+      return ActionCallback.REJECTED;
+    }
+    ActionCallback callback = new ActionCallback();
+    LaterInvocator.invokeLater(state, Conditions.alwaysFalse(), () -> {
+      if (!expired.value(null)) {
+        runnable.run();
+      }
+      callback.setDone();
+    });
+    return callback;
   }
 }

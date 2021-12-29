@@ -373,7 +373,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
     Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, state);
-    LaterInvocator.invokeLaterWithCallback(state, expired, null, wrapWithRunIntendedWriteAction(r));
+    LaterInvocator.invokeLater(state, expired, wrapWithRunIntendedWriteAction(r));
   }
 
   @Override
@@ -833,7 +833,7 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
   public void invokeLaterOnWriteThread(@NotNull Runnable action, @NotNull ModalityState modal, @NotNull Condition<?> expired) {
     Runnable r = myTransactionGuard.wrapLaterInvocation(action, modal);
     // EDT == Write Thread in legacy mode
-    LaterInvocator.invokeLaterWithCallback(modal, expired, null, wrapWithRunIntendedWriteAction(r));
+    LaterInvocator.invokeLater(modal, expired, wrapWithRunIntendedWriteAction(r));
   }
 
   @Override
