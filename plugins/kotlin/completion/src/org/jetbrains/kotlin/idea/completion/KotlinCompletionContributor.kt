@@ -11,10 +11,6 @@ import com.intellij.patterns.PlatformPatterns
 import com.intellij.patterns.PsiJavaPatterns.elementType
 import com.intellij.patterns.PsiJavaPatterns.psiElement
 import com.intellij.psi.*
-import com.intellij.psi.search.PsiElementProcessor
-import com.intellij.psi.tree.TokenSet
-import com.intellij.psi.util.PsiTreeUtil
-import com.intellij.psi.util.elementType
 import com.intellij.util.ProcessingContext
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletion
 import org.jetbrains.kotlin.idea.completion.smart.SmartCompletionSession
@@ -249,13 +245,4 @@ abstract class KotlinCompletionExtension {
     companion object {
         val EP_NAME: ExtensionPointName<KotlinCompletionExtension> = ExtensionPointName.create("org.jetbrains.kotlin.completionExtension")
     }
-}
-
-private fun getToken(file: PsiFile, charsSequence: CharSequence, startOffset: Int): PsiElement {
-    assert(startOffset > 1 && charsSequence[startOffset - 1] == '.')
-    val token = file.findElementAt(startOffset - 2)!!
-    return if (token.node.elementType == KtTokens.IDENTIFIER || token.node.elementType == KtTokens.THIS_KEYWORD)
-        token
-    else
-        getToken(file, charsSequence, token.startOffset + 1)
 }
