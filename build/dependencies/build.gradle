@@ -28,7 +28,6 @@ group 'intellij.tools'
 version '1.0'
 
 apply from: 'setupJdk.gradle'
-apply from: 'setupAndroidSdk.gradle'
 apply from: 'setupBundledMaven.gradle'
 apply from: 'setupCidr.gradle'
 
