@@ -178,7 +178,7 @@ public final class EditorNotificationsImpl extends EditorNotifications {
   private void updateNotification(@NotNull FileEditor editor,
                                   @NotNull EditorNotificationProvider provider,
                                   @Nullable JComponent component) {
-    Map<Class<? extends EditorNotificationProvider>, JComponent> map = getMap(editor);
+    Map<Class<? extends EditorNotificationProvider>, JComponent> map = getNotificationPanels(editor);
     Class<? extends EditorNotificationProvider> providerClass = provider.getClass();
 
     JComponent old = map.get(providerClass);
@@ -254,8 +254,11 @@ public final class EditorNotificationsImpl extends EditorNotifications {
   }
 
   @VisibleForTesting
-  public static @NotNull Map<Class<? extends EditorNotificationProvider>, JComponent> getMap(@NotNull FileEditor editor) {
-    return Objects.requireNonNull(editor.getUserData(EDITOR_NOTIFICATION_PROVIDER));
+  public static @NotNull Map<Class<? extends EditorNotificationProvider>, JComponent> getNotificationPanels(@NotNull FileEditor editor) {
+    return Objects.requireNonNull(editor.getUserData(EDITOR_NOTIFICATION_PROVIDER),
+                                  () -> String.format("'%s' doesn't seem to support '%s'",
+                                                      editor.getClass().getName(),
+                                                      KeyWithDefaultValue.class.getName()));
   }
 
   @TestOnly

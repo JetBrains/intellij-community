@@ -59,7 +59,7 @@ public abstract class SdkSetupNotificationTestBase extends JavaCodeInsightFixtur
                                                      @NotNull String fileName,
                                                      @NotNull String fileText) {
     FileEditor editor = openTextInEditor(fixture, fileName, fileText);
-    return (EditorNotificationPanel)EditorNotificationsImpl.getMap(editor)
+    return (EditorNotificationPanel)EditorNotificationsImpl.getNotificationPanels(editor)
       .get(SdkSetupNotificationProvider.class);
   }
 
