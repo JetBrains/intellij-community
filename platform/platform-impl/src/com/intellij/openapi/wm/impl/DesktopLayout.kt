@@ -199,10 +199,10 @@ private fun normalizeOrder(infos: List<WindowInfoImpl>) {
  */
 private fun getMaxOrder(list: Collection<WindowInfoImpl>, anchor: ToolWindowAnchor) =
   if (ExperimentalUI.isNewToolWindowsStripes()) {
-    list.filter { anchor == it.largeStripeAnchor }.maxOf { it.orderOnLargeStripe }
+    list.filter { anchor == it.largeStripeAnchor }.maxOfOrNull { it.orderOnLargeStripe } ?: -1
   }
   else {
-    list.filter { anchor == it.anchor }.maxOf { it.order }
+    list.filter { anchor == it.anchor }.maxOfOrNull { it.order } ?: -1
   }
 
 /**
