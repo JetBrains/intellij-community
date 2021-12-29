@@ -2642,4 +2642,10 @@ class Abc {
     myFixture.type('\n')
     myFixture.checkResult("class Test {boolean}")
   }
+
+  void testPinyinMatcher() {
+    myFixture.configureByText("Test.java", "class Test {void test() {int \u4F60\u597D = 1;nh<caret>}}")
+    myFixture.completeBasic();
+    myFixture.checkResult("class Test {void test() {int \u4F60\u597D = 1;\u4F60\u597D}}")
+  }
 }

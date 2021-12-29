@@ -320,7 +320,11 @@ public final class NameUtil {
     public MinusculeMatcher build() {
       MinusculeMatcher matcher = typoTolerant ? FixingLayoutTypoTolerantMatcher.create(pattern, caseSensitivity, separators)
                                               : new FixingLayoutMatcher(pattern, caseSensitivity, separators);
-      return preferStartMatches ? new PreferStartMatchMatcherWrapper(matcher) : matcher;
+      if (preferStartMatches) {
+        matcher = new PreferStartMatchMatcherWrapper(matcher);
+      }
+      matcher = PinyinMatcher.create(matcher);
+      return matcher;
     }
   }
 
