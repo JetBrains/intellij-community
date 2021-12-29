@@ -3,6 +3,8 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import com.intellij.psi.impl.compiled.ClsMemberImpl
+import com.intellij.psi.impl.file.PsiPackageImpl
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.analyseForUast
@@ -16,8 +18,10 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSamConstructorSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.types.*
+import org.jetbrains.kotlin.analysis.project.structure.KtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
+import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.references.mainReference
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
@@ -255,24 +259,38 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
     }
 
     override fun resolveToDeclaration(ktExpression: KtExpression): PsiElement? {
-        val resolvedTargetElement = when (ktExpression) {
+        val resolvedTargetSymbol = when (ktExpression) {
             is KtExpressionWithLabel -> {
                 analyseForUast(ktExpression) {
-                    ktExpression.getTargetLabel()?.mainReference?.resolve()
+                    ktExpression.getTargetLabel()?.mainReference?.resolveToSymbol()
                 }
             }
             is KtReferenceExpression -> {
                 analyseForUast(ktExpression) {
-                    ktExpression.mainReference.resolve()
+                    ktExpression.mainReference.resolveToSymbol()
                 }
             }
-            else ->
-                return null
+            else -> null
+        } ?: return null
+
+        val resolvedTargetElement = resolvedTargetSymbol.psi
+
+        // Shortcut: if the resolution ends up with compiled class/member or package info, return it.
+        if (resolvedTargetElement is ClsMemberImpl<*> || resolvedTargetElement is PsiPackageImpl) {
+            return resolvedTargetElement
         }
 
-        resolvedTargetElement?.takeIf {
-            it is KtDeclaration && it.getKtModule() is KtSourceModule
-        }?.getMaybeLightElement(ktExpression)?.let { return it }
+        val ktModule = (resolvedTargetElement as? KtDeclaration)?.getKtModule()
+        when (ktModule) {
+            is KtSourceModule -> {
+                // `getMaybeLightElement` tries light element conversion first, and then something else for local declarations.
+                resolvedTargetElement?.getMaybeLightElement(ktExpression)?.let { return it }
+            }
+            is KtLibraryModule -> {
+                // For decompiled declarations, we can try light element conversion (only).
+                (resolvedTargetElement as? KtDeclaration)?.toLightElements()?.singleOrNull()?.let { return it }
+            }
+        }
 
         fun resolveToPsiClassOrEnumEntry(classOrObject: KtClassOrObject): PsiElement? {
             analyseForUast(ktExpression) {
