@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="kotlinc.analysis-api-providers">
+  <library name="kotlinc.analysis-api-providers" type="repository">
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:analysis-api-providers-for-ide:1.6.10-release-945" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/analysis-api-providers-for-ide/1.6.255/analysis-api-providers-for-ide-1.6.255.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-providers-for-ide/1.6.10-release-945/analysis-api-providers-for-ide-1.6.10-release-945.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/../build/repo/org/jetbrains/kotlin/analysis-api-providers-for-ide/1.6.255/analysis-api-providers-for-ide-1.6.255-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/analysis-api-providers-for-ide/1.6.10-release-945/analysis-api-providers-for-ide-1.6.10-release-945-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
