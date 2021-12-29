@@ -4,7 +4,8 @@ import java.util.List;
 class Main {
   void modifyStrings(List<String> strings) {
     for<caret> (int i = 0; i < strings.size(); i++) {
-      strings.set(i, strings.get(i).trim().toLowerCase());
+      String replacement = strings.get(i) + strings.get(i);
+      strings.set(i, replacement);
     }
   }
 }

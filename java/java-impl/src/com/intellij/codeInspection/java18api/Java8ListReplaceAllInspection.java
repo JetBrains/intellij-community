@@ -1,40 +1,49 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInspection.java18api;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.bulkOperation.UseBulkOperationInspection;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.IteratorDeclaration;
 import com.intellij.codeInspection.util.LambdaGenerationUtil;
+import com.intellij.java.JavaBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
-import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.*;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import javax.swing.*;
+import java.util.List;
 import java.util.function.Predicate;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher LIST_SET = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_LIST, "set").parameterTypes("int", "E");
-  private static final CallMatcher LIST_GET = CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_LIST, "get").parameterTypes("int");
+
+  @SuppressWarnings("PublicField") public boolean dontWarnInCaseOfMultilineLambda = true;
+
+  @Nullable
+  @Override
+  public JComponent createOptionsPanel() {
+    return new SingleCheckboxOptionsPanel(JavaBundle.message("checkbox.don.t.warn.in.case.of.multiline.lambda"), this,
+                                          "dontWarnInCaseOfMultilineLambda");
+  }
 
   @NotNull
   @Override
@@ -43,74 +52,62 @@ public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspecti
       return PsiElementVisitor.EMPTY_VISITOR;
     }
     return new JavaElementVisitor() {
+      private boolean isRedundantOperation(PsiExpression replacement,
+                                           PsiStatement body,
+                                           CountingLoop countingLoop,
+                                           IndexedContainer container) {
+        PsiLocalVariable counter = countingLoop.getCounter();
+        if (ExpressionUtils.isReferenceTo(container.extractIndexFromGetExpression(replacement), counter)) return true;
+        if (!(replacement instanceof PsiReferenceExpression)) return false;
+        PsiVariable variable = tryCast(((PsiReferenceExpression)replacement).resolve(), PsiVariable.class);
+        if (variable == null) return false;
+        PsiExpression initializer = variable.getInitializer();
+        PsiExpression index = container.extractIndexFromGetExpression(initializer);
+        return ExpressionUtils.isReferenceTo(index, counter) && HighlightControlFlowUtil.isEffectivelyFinal(variable, body, null);
+      }
+
+      private boolean isMultilineLambda(PsiStatement body, PsiStatement[] statements) {
+        if (statements.length == 1) return false;
+        if (statements.length > 3) return true;
+        if (getVariableToInline(statements[0], body) == null) return true;
+        return statements.length == 3 && getVariableToInline(statements[1], body) == null;
+      }
+
       @Override
-      public void visitMethodCallExpression(PsiMethodCallExpression call) {
-        PsiForStatement forStatement = PsiTreeUtil.getParentOfType(call, PsiForStatement.class);
-        if (forStatement == null) return;
-        PsiJavaToken endToken = forStatement.getRParenth();
-        if (endToken == null) return;
-        PsiExpression qualifier = PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getEffectiveQualifier(call.getMethodExpression()));
-        if (qualifier == null) return;
-        PsiExpression iterable = findIterable(call);
-        if (iterable == null) return;
-        if (!PsiEquivalenceUtil.areElementsEquivalent(qualifier, iterable) &&
-            !(qualifier instanceof PsiQualifiedExpression && iterable instanceof PsiQualifiedExpression)) {
+      public void visitForStatement(PsiForStatement statement) {
+        super.visitForStatement(statement);
+        PsiStatement body = statement.getBody();
+        PsiStatement[] statements = ControlFlowUtils.unwrapBlock(body);
+        if (dontWarnInCaseOfMultilineLambda && isMultilineLambda(body, statements)) return;
+        PsiMethodCallExpression maybeSetCall = getLastMethodCall(statements);
+        if (!LIST_SET.test(maybeSetCall)) return;
+        PsiExpression index = PsiUtil.skipParenthesizedExprDown(maybeSetCall.getArgumentList().getExpressions()[0]);
+        CountingLoop countingLoop = CountingLoop.from(statement);
+        if (countingLoop == null) return;
+        PsiLocalVariable counter = countingLoop.getCounter();
+        if (countingLoop.isIncluding() ||
+            countingLoop.isDescending() ||
+            !ExpressionUtils.isZero(countingLoop.getInitializer()) ||
+            !ExpressionUtils.isReferenceTo(index, counter)) {
           return;
         }
-        holder.registerProblem(forStatement, new TextRange(0, endToken.getTextOffset() - forStatement.getTextOffset() + 1),
-                               QuickFixBundle.message("java.8.list.replaceall.inspection.description"),
-                               new ReplaceWithReplaceAllQuickFix(call));
+        IndexedContainer container = IndexedContainer.fromLengthExpression(countingLoop.getBound());
+        if (container == null) return;
+        List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(counter, body);
+        if (!ContainerUtil.all(references, reference -> reference == index || container.extractGetExpressionFromIndex(reference) != null)) {
+          return;
+        }
+        if (isRedundantOperation(maybeSetCall.getArgumentList().getExpressions()[1], body, countingLoop, container)) return;
+        if (!container.isQualifierEquivalent(ExpressionUtils.getEffectiveQualifier(maybeSetCall.getMethodExpression()))) return;
+        Predicate<PsiVariable> variableAllowedPredicate = v -> PsiEquivalenceUtil.areElementsEquivalent(v, counter);
+        if (!LambdaGenerationUtil.canBeUncheckedLambda(body, variableAllowedPredicate)) return;
+        holder.registerProblem(statement.getFirstChild(), QuickFixBundle.message("java.8.list.replaceall.inspection.description"),
+                               new ReplaceWithReplaceAllQuickFix());
       }
     };
   }
 
-  @Nullable
-  private static PsiExpression findIterable(PsiMethodCallExpression call) {
-    if (!LIST_SET.test(call)) return null;
-    PsiForStatement forStatement = PsiTreeUtil.getParentOfType(call, PsiForStatement.class);
-    if (forStatement == null) return null;
-    PsiStatement body = forStatement.getBody();
-    if (body == null) return null;
-    PsiStatement lastStatement = ArrayUtil.getLastElement(ControlFlowUtils.unwrapBlock(body));
-    PsiElement parent = RefactoringUtil.getParentStatement(call, false);
-    if (parent == null) return null;
-    if (!PsiEquivalenceUtil.areElementsEquivalent(lastStatement, parent)) return null;
-    CountingLoop loop = CountingLoop.from(forStatement);
-    if (loop == null || !ExpressionUtils.isReferenceTo(call.getArgumentList().getExpressions()[0], loop.getCounter())) return null;
-    Predicate<PsiVariable> variableAllowedPredicate = variable -> PsiEquivalenceUtil.areElementsEquivalent(variable, loop.getCounter());
-    if (!LambdaGenerationUtil.canBeUncheckedLambda(forStatement.getBody(), variableAllowedPredicate)) return null;
-    PsiMethodCallExpression listGetCall = getListGetCall(body);
-    if (listGetCall == null) return null;
-    Ref<Integer> counter = new Ref<>(0);
-    PsiTreeUtil.processElements(body, e -> {
-      if (ExpressionUtils.isReferenceTo(ObjectUtils.tryCast(e, PsiExpression.class), loop.getCounter())) {
-        counter.set(counter.get() + 1);
-      }
-      return counter.get() <= 2;
-    });
-    if (counter.get() != 2) return null;
-    return UseBulkOperationInspection.findIterableForIndexedLoop(loop, listGetCall);
-  }
-
-  @Nullable
-  private static PsiMethodCallExpression getListGetCall(@NotNull PsiStatement body) {
-    Ref<PsiMethodCallExpression> getElementExpression = new Ref<>();
-    boolean isSoleGelElementExpression = PsiTreeUtil.processElements(body, e -> {
-      PsiMethodCallExpression maybeListGet = ObjectUtils.tryCast(e, PsiMethodCallExpression.class);
-      return !LIST_GET.test(maybeListGet) || getElementExpression.setIfNull(maybeListGet);
-    }) && !getElementExpression.isNull();
-    if (!isSoleGelElementExpression) return null;
-    return getElementExpression.get();
-  }
-
   private static class ReplaceWithReplaceAllQuickFix implements LocalQuickFix {
-    private final SmartPsiElementPointer<PsiMethodCallExpression> myCallPointer;
-
-    private ReplaceWithReplaceAllQuickFix(@NotNull PsiMethodCallExpression call) {
-      SmartPointerManager manager = SmartPointerManager.getInstance(call.getProject());
-      myCallPointer = manager.createSmartPsiElementPointer(call);
-    }
-
     @Nls
     @NotNull
     @Override
@@ -120,70 +117,93 @@ public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspecti
 
     @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      PsiMethodCallExpression call = myCallPointer.getElement();
-      if (call == null) return;
+      PsiElement parent = descriptor.getStartElement().getParent();
+      if (!(parent instanceof PsiForStatement)) return;
+      PsiForStatement statement = (PsiForStatement)parent;
+      PsiStatement body = statement.getBody();
+      if (body == null) return;
+      PsiStatement[] statements = ControlFlowUtils.unwrapBlock(body);
+      PsiMethodCallExpression call = getLastMethodCall(statements);
+      if (!LIST_SET.test(call)) return;
       PsiExpression qualifier = ExpressionUtils.getEffectiveQualifier(call.getMethodExpression());
       if (qualifier == null) return;
-      PsiExpression iterable = findIterable(call);
-      if (iterable == null) return;
-      PsiElement parent = RefactoringUtil.getParentStatement(iterable, false);
-      if (parent == null) return;
+      CountingLoop countingLoop = CountingLoop.from(statement);
+      if (countingLoop == null) return;
+      IndexedContainer container = IndexedContainer.fromLengthExpression(countingLoop.getBound());
+      if (container == null) return;
+      List<PsiMethodCallExpression> getCalls = collectGetCalls(body, container, countingLoop.getCounter());
+      String paramName = generateParameterName(body, getCalls);
+      getCalls.forEach(getCall -> {
+        new CommentTracker().replaceAndRestoreComments(getCall, paramName);
+      });
+      if (statements.length == 2) {
+        inlineVariable(getVariableToInline(statements[0], body), body);
+      }
+      else if (statements.length == 3) {
+        inlineVariable(getVariableToInline(statements[0], body), body);
+        inlineVariable(getVariableToInline(statements[1], body), body);
+      }
       CommentTracker ct = new CommentTracker();
-      String bulkMethodParameterText = calculateReplaceAllLambdaExpressionText(call, ct);
-      String text = ct.text(qualifier) + ".replaceAll(" + bulkMethodParameterText + ");";
-      PsiElement result = ct.replaceAndRestoreComments(parent, text);
+      PsiExpression replacementExpression = call.getArgumentList().getExpressions()[1];
+      PsiElement returnStatement =
+        new CommentTracker().replaceAndRestoreComments(call.getParent(), "return " + ct.textWithComments(replacementExpression) + ";");
+      String codeBlockText = body instanceof PsiBlockStatement ? ct.text(body) : "{ " + ct.text(returnStatement) + " }";
+      String replaceAllParameter = paramName + " -> " + codeBlockText;
+      String text = ct.text(qualifier) + ".replaceAll(" + replaceAllParameter + ");";
+      PsiElement result = ct.replaceAndRestoreComments(statement, text);
       LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
       simplifyToExpressionLambda(result);
-      result = JavaCodeStyleManager.getInstance(project).shortenClassReferences(result);
       CodeStyleManager.getInstance(project).reformat(result);
     }
 
-    @Nullable
-    private static String calculateReplaceAllLambdaExpressionText(PsiMethodCallExpression listSetCall, CommentTracker ct) {
-      PsiForStatement forStatement = PsiTreeUtil.getParentOfType(listSetCall, PsiForStatement.class);
-      if (forStatement == null) return null;
-      PsiStatement body = forStatement.getBody();
-      if (body == null) return null;
-      PsiMethodCallExpression listGetCall = getListGetCall(body);
-      if (listGetCall == null) return null;
-      PsiDeclarationStatement declarationStatement = PsiTreeUtil.getParentOfType(listGetCall, PsiDeclarationStatement.class);
-      PsiLocalVariable var = IteratorDeclaration.getDeclaredVariable(declarationStatement);
-      String paramName;
-      if (var != null && var.getInitializer() == listGetCall) {
-        paramName = var.getName();
-        new CommentTracker().deleteAndRestoreComments(declarationStatement);
-      }
-      else {
-        paramName = new VariableNameGenerator(body, VariableKind.PARAMETER).byExpression(listGetCall).generate(true);
-        PsiElement element = new CommentTracker().replaceAndRestoreComments(listGetCall, paramName);
-        PsiLocalVariable variable =
-          IteratorDeclaration.getDeclaredVariable(PsiTreeUtil.getParentOfType(element, PsiDeclarationStatement.class));
-        inlineVariable(variable);
-      }
-      String text = "return " + ct.textWithComments(listSetCall.getArgumentList().getExpressions()[1]) + ";";
-      PsiElement result = new CommentTracker().replaceAndRestoreComments(listSetCall.getParent(), text);
-      String codeBlockText = body instanceof PsiBlockStatement ? ct.text(body) : "{ " + ct.text(result) + " }";
-      return paramName + " -> " + codeBlockText;
+    @NotNull
+    private static List<PsiMethodCallExpression> collectGetCalls(PsiStatement body,
+                                                                 IndexedContainer container,
+                                                                 PsiLocalVariable counter) {
+      return StreamEx.of(PsiTreeUtil.findChildrenOfType(body, PsiMethodCallExpression.class))
+        .filter(call -> ExpressionUtils.isReferenceTo(container.extractIndexFromGetExpression(call), counter)).toList();
     }
 
-    private static void inlineVariable(@Nullable PsiLocalVariable variable) {
+    @NotNull
+    private static String generateParameterName(PsiStatement body, List<PsiMethodCallExpression> getCalls) {
+      if (getCalls.isEmpty()) return "ignored";
+      return new VariableNameGenerator(body, VariableKind.PARAMETER).byExpression(getCalls.get(0)).generate(true);
+    }
+
+    private static void inlineVariable(PsiLocalVariable variable, PsiStatement body) {
       if (variable == null) return;
-      final Collection<PsiReference> references = ReferencesSearch.search(variable).findAll();
+      if (!HighlightControlFlowUtil.isEffectivelyFinal(variable, body, null)) return;
+      List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(variable, body);
       PsiExpression initializer = variable.getInitializer();
-      if (initializer == null || references.size() != 1) return;
-      InlineUtil.inlineVariable(variable, initializer, (PsiJavaCodeReferenceElement)references.iterator().next());
+      if (initializer == null) return;
+      references.forEach(reference -> InlineUtil.inlineVariable(variable, initializer, reference));
       variable.delete();
     }
 
-    private static void simplifyToExpressionLambda(@NotNull PsiElement element) {
-      PsiExpressionStatement expressionStatement = ObjectUtils.tryCast(element, PsiExpressionStatement.class);
+    private static void simplifyToExpressionLambda(PsiElement element) {
+      PsiExpressionStatement expressionStatement = tryCast(element, PsiExpressionStatement.class);
       if (expressionStatement == null) return;
-      PsiMethodCallExpression call = ObjectUtils.tryCast(expressionStatement.getExpression(), PsiMethodCallExpression.class);
+      PsiMethodCallExpression call = tryCast(expressionStatement.getExpression(), PsiMethodCallExpression.class);
       if (call == null) return;
       PsiExpression arg = ArrayUtil.getFirstElement(call.getArgumentList().getExpressions());
-      PsiLambdaExpression lambdaExpression = ObjectUtils.tryCast(arg, PsiLambdaExpression.class);
+      PsiLambdaExpression lambdaExpression = tryCast(arg, PsiLambdaExpression.class);
       if (lambdaExpression == null) return;
       LambdaRefactoringUtil.simplifyToExpressionLambda(lambdaExpression);
     }
+  }
+
+  @Nullable
+  private static PsiMethodCallExpression getLastMethodCall(PsiStatement[] statements) {
+    PsiExpressionStatement expressionStatement = tryCast(ArrayUtil.getLastElement(statements), PsiExpressionStatement.class);
+    if (expressionStatement == null) return null;
+    return tryCast(expressionStatement.getExpression(), PsiMethodCallExpression.class);
+  }
+
+  @Nullable
+  private static PsiLocalVariable getVariableToInline(PsiStatement statement, PsiStatement body) {
+    PsiLocalVariable localVariable = IteratorDeclaration.getDeclaredVariable(statement);
+    if (localVariable == null) return null;
+    List<PsiReferenceExpression> references = VariableAccessUtils.getVariableReferences(localVariable, body);
+    return references.size() != 1 ? null : localVariable;
   }
 }
