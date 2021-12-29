@@ -161,6 +161,9 @@ Includes the following features:</p>
     <applicationService serviceInterface="org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager"
                         serviceImplementation="org.intellij.plugins.markdown.extensions.ExtensionsExternalFilesPathManager$Impl"/>
 
+    <applicationService serviceInterface="org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener"
+                        serviceImplementation="org.intellij.plugins.markdown.ui.preview.accessor.impl.MarkdownLinkOpenerImpl"/>
+
     <applicationService serviceImplementation="org.intellij.plugins.markdown.google.accounts.GooglePersistentAccounts"/>
     <applicationService serviceImplementation="org.intellij.plugins.markdown.google.authorization.GoogleOAuthService"/>
     <filePasteProvider implementation="org.intellij.plugins.markdown.fileActions.importFrom.googleDocs.GoogleDocsImportPasteProvider"/>

@@ -7,9 +7,9 @@ import com.intellij.ui.jcef.JBCefPsiNavigationUtils
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
 import org.intellij.plugins.markdown.ui.preview.ResourceProvider
-import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownAccessor
+import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
 
-internal class ProcessLinksExtension(panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension, ResourceProvider {
+internal class ProcessLinksExtension(private val panel: MarkdownHtmlPanel): MarkdownBrowserPreviewExtension, ResourceProvider {
   init {
     panel.browserPipe?.subscribe(openLinkEventName, ::openLink)
     Disposer.register(this) {
@@ -24,10 +24,8 @@ internal class ProcessLinksExtension(panel: MarkdownHtmlPanel): MarkdownBrowserP
     if (JBCefPsiNavigationUtils.navigateTo(link)) {
       return
     }
-    MarkdownAccessor.getSafeOpenerAccessor().openLink(link)
+    MarkdownLinkOpener.getInstance().openLink(panel.project, link)
   }
-
-  //override val events: Map<String, (String) -> Unit> = mapOf("openLink" to this::openLink)
 
   override val scripts: List<String> = listOf("processLinks/processLinks.js")
 
