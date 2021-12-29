@@ -49,8 +49,8 @@ import java.util.*;
 
 import static org.jetbrains.idea.maven.project.MavenProjectChanges.ALL;
 
-public class MavenProjectImporter {
-  private static final Logger LOG = Logger.getInstance(MavenProjectImporter.class);
+public class MavenProjectImporterImpl {
+  private static final Logger LOG = Logger.getInstance(MavenProjectImporterImpl.class);
   private final Project myProject;
   private final MavenProjectsTree myProjectsTree;
   private final Map<VirtualFile, Module> myFileToModuleMapping;
@@ -71,14 +71,14 @@ public class MavenProjectImporter {
   private final Map<MavenProject, String> myMavenProjectToModuleName = new HashMap<>();
   private final Map<MavenProject, String> myMavenProjectToModulePath = new HashMap<>();
 
-  public MavenProjectImporter(Project p,
-                              MavenProjectsTree projectsTree,
-                              Map<VirtualFile, Module> fileToModuleMapping,
-                              Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
-                              boolean importModuleGroupsRequired,
-                              IdeModifiableModelsProvider modelsProvider,
-                              MavenImportingSettings importingSettings,
-                              Module dummyModule) {
+  public MavenProjectImporterImpl(Project p,
+                                  MavenProjectsTree projectsTree,
+                                  Map<VirtualFile, Module> fileToModuleMapping,
+                                  Map<MavenProject, MavenProjectChanges> projectsToImportWithChanges,
+                                  boolean importModuleGroupsRequired,
+                                  IdeModifiableModelsProvider modelsProvider,
+                                  MavenImportingSettings importingSettings,
+                                  Module dummyModule) {
     myProject = p;
     myProjectsTree = projectsTree;
     myFileToModuleMapping = fileToModuleMapping;
