@@ -154,16 +154,16 @@ internal inline fun <reified T, reified R> Flow<T>.modifiedBy(
 
 internal fun <T, R> Flow<T>.mapLatestTimedWithLoading(
     loggingContext: String,
-    loadingFlow: MutableStateFlow<Boolean>,
+    loadingFlow: MutableStateFlow<Boolean>? = null,
     transform: suspend CoroutineScope.(T) -> R
 ) =
     mapLatest {
         measureTimedValue {
-            loadingFlow.emit(true)
+            loadingFlow?.emit(true)
             val result = try {
                 coroutineScope { transform(it) }
             } finally {
-                loadingFlow.emit(false)
+                loadingFlow?.emit(false)
             }
             result
         }
