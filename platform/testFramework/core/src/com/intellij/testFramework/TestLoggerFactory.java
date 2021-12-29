@@ -24,6 +24,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.logging.LogManager;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -66,6 +67,17 @@ public final class TestLoggerFactory implements Logger.Factory {
 
   public static boolean reconfigure() {
     try {
+      String customConfigPath = System.getProperty(PathManager.PROPERTY_LOG_CONFIG_FILE);
+      Path logProperties = customConfigPath != null
+                        ? Paths.get(customConfigPath)
+                        : Paths.get(PathManager.getHomePath(), "test-log.properties");
+      if (!Files.exists(logProperties)) {
+        return false;
+      }
+      try (final InputStream in = Files.newInputStream(logProperties)) {
+        final BufferedInputStream bin = new BufferedInputStream(in);
+        LogManager.getLogManager().readConfiguration(bin);
+      }
 
       String logDir = getTestLogDir();
       Files.createDirectories(Paths.get(logDir));
