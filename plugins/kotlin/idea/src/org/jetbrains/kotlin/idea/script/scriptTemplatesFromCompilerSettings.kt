@@ -23,7 +23,7 @@ class ScriptTemplatesFromCompilerSettingsProvider(
 ) : ScriptDefinitionSourceAsContributor {
 
     init {
-        project.messageBus.connect(KotlinPluginDisposable.getInstance(project))
+        project.messageBus.connect()
             .subscribe(KotlinCompilerSettingsListener.TOPIC, object : KotlinCompilerSettingsListener {
                 override fun <T> settingsChanged(newSettings: T) {
                     if (newSettings !is CompilerSettings) return

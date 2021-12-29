@@ -122,8 +122,7 @@ class CompositeScriptConfigurationManager(val project: Project) : ScriptConfigur
     }
 
     init {
-        val connection = project.messageBus.connect(KotlinPluginDisposable.getInstance(project))
-
+        val connection = project.messageBus.connect()
         connection.subscribe(ProjectTopics.PROJECT_ROOTS, object : ModuleRootListener {
             override fun rootsChanged(event: ModuleRootEvent) {
                 if (event.isCausedByFileTypesChange) return

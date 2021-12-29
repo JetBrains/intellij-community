@@ -14,7 +14,6 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
-import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElementFinder
@@ -30,6 +29,7 @@ import org.jetbrains.kotlin.idea.core.util.CheckCanceledLock
 import org.jetbrains.kotlin.idea.core.util.EDT
 import org.jetbrains.kotlin.idea.util.FirPluginOracleService
 import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
+import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.application.runWriteAction
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.scripting.resolve.ScriptCompilationConfigurationWrapper
@@ -172,12 +172,11 @@ abstract class ScriptClassRootsUpdater(
     private var scheduledUpdate: BackgroundTaskUtil.BackgroundTask? = null
 
     private fun ensureUpdateScheduled() {
-        val disposable = KotlinPluginDisposable.getInstance(project)
         lock.withLock {
             scheduledUpdate?.cancel()
 
-            if (!Disposer.isDisposed(disposable)) {
-                scheduledUpdate = BackgroundTaskUtil.submitTask(disposable) {
+            if (!project.isDisposed()) {
+                scheduledUpdate = BackgroundTaskUtil.submitTask(KotlinPluginDisposable.getInstance(project)) {
                     doUpdate()
                 }
             }
@@ -192,7 +191,6 @@ abstract class ScriptClassRootsUpdater(
     }
 
     private fun doUpdate(underProgressManager: Boolean = true) {
-        val disposable = KotlinPluginDisposable.getInstance(project)
         try {
             val updates = recreateRootsCacheAndDiff()
 
@@ -201,8 +199,7 @@ abstract class ScriptClassRootsUpdater(
             if (underProgressManager) {
                 ProgressManager.checkCanceled()
             }
-
-            if (Disposer.isDisposed(disposable)) return
+            if (project.isDisposed) return
 
             if (updates.hasNewRoots) {
                 notifyRootsChanged()

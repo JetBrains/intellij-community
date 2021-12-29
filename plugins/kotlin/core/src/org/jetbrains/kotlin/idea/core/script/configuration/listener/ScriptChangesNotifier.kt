@@ -26,10 +26,9 @@ internal class ScriptChangesNotifier(
     private val scriptChangesListenerDelayMillis = 1400
 
     init {
-        val parentDisposable = KotlinPluginDisposable.getInstance(project)
-        scriptsQueue = Alarm(Alarm.ThreadToUse.POOLED_THREAD, parentDisposable)
+        scriptsQueue = Alarm(Alarm.ThreadToUse.POOLED_THREAD, KotlinPluginDisposable.getInstance(project))
 
-        project.messageBus.connect(parentDisposable).subscribe(
+        project.messageBus.connect().subscribe(
             FileEditorManagerListener.FILE_EDITOR_MANAGER,
             object : FileEditorManagerListener {
                 override fun fileOpened(source: FileEditorManager, file: VirtualFile) {
@@ -78,7 +77,7 @@ internal class ScriptChangesNotifier(
                     }
                 }
             },
-            parentDisposable
+            KotlinPluginDisposable.getInstance(project)
         )
 
         // Init project scripting idea EP listeners

@@ -26,7 +26,7 @@ object ConfigureKotlinNotificationManager : KotlinSingleNotificationManager<Conf
         nonBlocking(Callable {
             ConfigureKotlinNotification.getNotificationState(project, excludeModules)
         })
-            .expireWith(KotlinPluginDisposable.getInstance(project))
+            .expireWhen { project.isDisposed }
             .coalesceBy(this)
             .finishOnUiThread(ModalityState.any()) { notificationState ->
                 notificationState?.let {
