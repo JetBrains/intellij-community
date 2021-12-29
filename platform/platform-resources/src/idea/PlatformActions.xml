@@ -665,6 +665,7 @@
           <action id="EditorSetRtlBidiTextDirection" class="com.intellij.openapi.editor.actions.SetEditorBidiTextDirectionAction$Rtl"/>
         </group>
         <separator/>
+        <action id="ToggleVisualFormattingLayer" class="com.intellij.formatting.visualLayer.ToggleVisualLayerAction"/>
       </group>
 
       <!-- Go to -->
