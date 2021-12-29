@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.intellij.internal.statistic.service.fus.collectors.ApplicationUsagesCollector
@@ -24,15 +24,17 @@ object EventsSchemeBuilder {
       throw IllegalStateException("Field name should not contains dots, because dots are used to express hierarchy. " +
                                   "Group=$groupId, event=$eventName, field=${field.name}")
     }
-    if (field == EventFields.PluginInfo || field == EventFields.PluginInfoFromInstance) {
-      return hashSetOf(
-        FieldDescriptor("plugin", hashSetOf("{util#plugin}")),
-        FieldDescriptor("plugin_type", hashSetOf("{util#plugin_type}")),
-        FieldDescriptor("plugin_version", hashSetOf("{util#plugin_version}"))
-      )
-    }
 
     return when (field) {
+      EventFields.PluginInfo,
+      EventFields.PluginInfoFromInstance, // todo extract marker trait for delegates
+      EventFields.PluginInfoByDescriptor,
+      ->
+        hashSetOf(
+          FieldDescriptor("plugin", hashSetOf("{util#plugin}")),
+          FieldDescriptor("plugin_type", hashSetOf("{util#plugin_type}")),
+          FieldDescriptor("plugin_version", hashSetOf("{util#plugin_version}"))
+        )
       is ObjectEventField -> buildObjectEvenScheme(fieldName, field.fields, eventName, groupId)
       is ObjectListEventField -> buildObjectEvenScheme(fieldName, field.fields, eventName, groupId)
       is ListEventField<*> -> {
