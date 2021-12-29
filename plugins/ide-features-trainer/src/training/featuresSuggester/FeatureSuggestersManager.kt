@@ -1,14 +1,13 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package training.featuresSuggester
 
-import com.intellij.ide.plugins.DynamicPluginListener
-import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
 import com.intellij.openapi.editor.ex.FocusChangeListener
+import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.project.Project
 import training.featuresSuggester.actions.Action
 import training.featuresSuggester.actions.EditorFocusGainedAction
@@ -22,17 +21,12 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
   private val suggestionPresenter: SuggestionPresenter =
     NotificationSuggestionPresenter()
 
-  private var pluginsLoadingInProgress = false
-
   init {
-    if (!project.isDefault) {
-      initFocusListener()
-      initDynamicPluginsListener()
-    }
+    if (!project.isDefault) initFocusListener()
   }
 
   fun actionPerformed(action: Action) {
-    if (project.isDisposed || pluginsLoadingInProgress) return
+    if (project.isDisposed || DumbService.isDumb(project)) return
     val language = action.language ?: return
     val suggesters = FeatureSuggester.suggesters
       .filter { it.languages.find { id -> id == Language.ANY.id || id == language.id } != null }
@@ -77,26 +71,6 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
       },
       this
     )
-  }
-
-  private fun initDynamicPluginsListener() {
-    project.messageBus.connect(this).subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
-      override fun beforePluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-        pluginsLoadingInProgress = true
-      }
-
-      override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
-        pluginsLoadingInProgress = false
-      }
-
-      override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-        pluginsLoadingInProgress = true
-      }
-
-      override fun pluginUnloaded(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
-        pluginsLoadingInProgress = false
-      }
-    })
   }
 
   override fun dispose() {}
