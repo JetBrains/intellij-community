@@ -74,6 +74,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   final ReadMostlyRWLock myLock;
 
+  /**
+   * @deprecated see {@link ModalityInvokator} notice
+   */
+  @Deprecated
   private final ModalityInvokator myInvokator = new ModalityInvokatorImpl();
 
   private final EventDispatcher<ApplicationListener> myDispatcher = EventDispatcher.create(ApplicationListener.class);
@@ -344,8 +348,10 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     return myLock.isWriteThread();
   }
 
+  @Deprecated
   @Override
   public @NotNull ModalityInvokator getInvokator() {
+    PluginException.reportDeprecatedUsage("Application.getInvokator", "Use `invokeLater` instead");
     return myInvokator;
   }
 
