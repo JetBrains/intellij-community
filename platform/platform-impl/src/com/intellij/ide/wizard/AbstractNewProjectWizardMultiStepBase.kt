@@ -40,6 +40,8 @@ abstract class AbstractNewProjectWizardMultiStepBase(
 
   override fun setupUI(builder: Panel) {
     steps = initSteps()
+    step = step.ifBlank { steps.keys.first() }
+
     with(builder) {
       row(label) {
         setupSwitcherUi(this@row)
@@ -55,13 +57,17 @@ abstract class AbstractNewProjectWizardMultiStepBase(
         }
         stepsPanels[name] = panel
       }
+
       stepProperty.afterChange {
-        for ((key, panel) in stepsPanels) {
-          panelBuilder.setVisible(panel, key == step)
-        }
+        updateStepPanels(stepsPanels, panelBuilder)
       }
-      //todo
-      step = step.ifBlank { steps.keys.first() }
+      updateStepPanels(stepsPanels, panelBuilder)
+    }
+  }
+
+  private fun updateStepPanels(stepsPanels: HashMap<String, DialogPanel>, panelBuilder: NewProjectWizardPanelBuilder) {
+    for ((key, panel) in stepsPanels) {
+      panelBuilder.setVisible(panel, key == step)
     }
   }
 
