@@ -4,15 +4,17 @@ package org.jetbrains.kotlin.idea.completion
 
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementBuilder
+import com.intellij.psi.PsiElement
 import org.jetbrains.kotlin.idea.completion.handlers.WithTailInsertHandler
 import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.psi.KtDeclarationWithBody
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtLabeledExpression
-import org.jetbrains.kotlin.psi.KtLoopExpression
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.renderer.render
 import java.util.ArrayList
+
+val PsiElement.isInsideKtTypeReference: Boolean
+    get() = getNonStrictParentOfType<KtTypeReference>() != null
 
 fun createKeywordElement(
     keyword: String,

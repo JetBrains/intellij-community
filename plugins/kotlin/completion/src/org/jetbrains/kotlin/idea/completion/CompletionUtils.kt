@@ -294,9 +294,6 @@ private fun KtDeclarationWithBody.returnType(bindingContext: BindingContext): Ko
     return callable.returnType
 }
 
-internal val PsiElement.isInsideKtTypeReference: Boolean
-    get() = getNonStrictParentOfType<KtTypeReference>() != null
-
 fun BasicLookupElementFactory.createLookupElementForType(type: KotlinType): LookupElement? {
     if (type.isError) return null
 
