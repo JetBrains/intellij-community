@@ -910,7 +910,7 @@ private class NotificationComponent(val notification: Notification,
       }
       else {
         if (actionsSize > 1 && notification.collapseDirection == Notification.CollapseActionsDirection.KEEP_RIGHTMOST) {
-          actionPanel.add(MyDropDownAction(notification))
+          actionPanel.add(MyDropDownAction(this))
         }
 
         for (action in actions) {
@@ -920,7 +920,7 @@ private class NotificationComponent(val notification: Notification,
         }
 
         if (actionsSize > 1 && notification.collapseDirection == Notification.CollapseActionsDirection.KEEP_LEFTMOST) {
-          actionPanel.add(MyDropDownAction(notification))
+          actionPanel.add(MyDropDownAction(this))
         }
       }
       centerPanel.add(actionPanel)
@@ -1012,6 +1012,7 @@ private class NotificationComponent(val notification: Notification,
   }
 
   private fun runAction(action: AnAction, component: Any) {
+    setNew(false)
     NotificationCollector.getInstance()
       .logNotificationActionInvoked(null, notification, action, NotificationCollector.NotificationPlace.ACTION_CENTER)
     Notification.fire(notification, action, DataManager.getInstance().getDataContext(component as Component))
@@ -1160,8 +1161,8 @@ private class NotificationComponent(val notification: Notification,
   }
 }
 
-private class MyDropDownAction(notification: Notification) : NotificationsManagerImpl.DropDownAction(null, null) {
-  var collapseActionsDirection: Notification.CollapseActionsDirection = notification.collapseDirection
+private class MyDropDownAction(notificationComponent: NotificationComponent) : NotificationsManagerImpl.DropDownAction(null, null) {
+  var collapseActionsDirection: Notification.CollapseActionsDirection = notificationComponent.notification.collapseDirection
 
   init {
     setListener(LinkListener { link, _ ->
@@ -1170,17 +1171,29 @@ private class MyDropDownAction(notification: Notification) : NotificationsManage
 
       for (action in layout.actions) {
         if (!action.isVisible) {
-          group.add(action.linkData)
+          val notificationAction = action.linkData
+          val popupAction = object : DumbAwareAction() {
+            override fun update(e: AnActionEvent) {
+              notificationAction.update(e)
+            }
+
+            override fun actionPerformed(e: AnActionEvent) {
+              notificationComponent.setNew(false)
+              notificationAction.actionPerformed(e)
+            }
+          }
+          popupAction.copyFrom(notificationAction)
+          group.add(popupAction)
         }
       }
 
       NotificationsManagerImpl.showPopup(link, group)
     }, null)
 
-    text = notification.dropDownText
+    text = notificationComponent.notification.dropDownText
     isVisible = false
 
-    Notification.setDataProvider(notification, this)
+    Notification.setDataProvider(notificationComponent.notification, this)
   }
 }
 
