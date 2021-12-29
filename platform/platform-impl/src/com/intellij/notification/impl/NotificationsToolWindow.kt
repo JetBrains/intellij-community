@@ -186,6 +186,7 @@ private class NotificationContent(val project: Project,
     myMainPanel.add(splitter)
 
     val content = ContentFactory.SERVICE.getInstance().createContent(myMainPanel, "", false)
+    content.preferredFocusableComponent = myMainPanel
 
     content.putUserData(NotificationsToolWindowFactory.ADD_KEY, Consumer(::add))
     content.putUserData(NotificationsToolWindowFactory.EXPIRE_KEY, Consumer(::expire))
