@@ -163,14 +163,14 @@ class UsageViewStatisticsCollector : CounterUsagesCollector() {
     fun logTooManyDialog(
       project: Project?,
       action: TooManyUsagesUserAction,
-      targetClass: Class<out PsiElement>,
+      targetClass: Class<out PsiElement>?,
       @Nls scope: String,
       language: Language?,
     ) {
       tooManyUsagesDialog.log(project,
                               SESSION_ID.with(getSessionId()),
                               USER_ACTION.with(action),
-                              SYMBOL_CLASS.with(targetClass),
+                              SYMBOL_CLASS.with(targetClass ?: String::class.java),
                               SEARCH_SCOPE.with(ScopeIdMapper.instance.getScopeSerializationId(scope)),
                               EventFields.Language.with(language))
     }
