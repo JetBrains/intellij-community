@@ -2502,15 +2502,6 @@ public final class ContainerUtil {
     return new LockFreeCopyOnWriteArrayList<>(c);
   }
 
-  /**
-   * @deprecated use {@link #addIfNotNull(Collection, Object)} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static <T> void addIfNotNull(@Nullable T element, @NotNull Collection<? super T> result) {
-    addIfNotNull(result,element);
-  }
-
   public static <T> void addIfNotNull(@NotNull Collection<? super T> result, @Nullable T element) {
     if (element != null) {
       result.add(element);

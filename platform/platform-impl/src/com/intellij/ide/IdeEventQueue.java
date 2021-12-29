@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.codeWithMe.ClientId;
@@ -29,7 +29,10 @@ import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
 import com.intellij.openapi.keymap.impl.KeyState;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.ui.JBPopupMenu;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.EmptyRunnable;
+import com.intellij.openapi.util.ExpirableRunnable;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -1112,7 +1115,7 @@ public final class IdeEventQueue extends EventQueue {
       else {
         UISettings uiSettings = UISettings.getInstanceOrNull();
         if (uiSettings == null ||
-            !SystemInfo.isWindows ||
+            !SystemInfoRt.isWindows ||
             !Registry.is("actionSystem.win.suppressAlt") ||
             !(uiSettings.getHideToolStripes() || uiSettings.getPresentationMode())) {
           return false;
@@ -1153,7 +1156,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   //Windows OS doesn't support a Windows+Up/Down shortcut for dialogs, so we provide a workaround
-  private class WindowsUpMaximizer implements EventDispatcher {
+  private final class WindowsUpMaximizer implements EventDispatcher {
     @SuppressWarnings("SSBasedInspection")
     @Override
     public boolean dispatch(@NotNull AWTEvent e) {
