@@ -367,10 +367,6 @@
     <action id="Git.Show.Stash" class="git4idea.stash.ui.GitShowStashToolWindowTabAction"/>
     <action id="Git.Stash.Refresh" class="git4idea.stash.ui.GitRefreshStashesAction" icon="AllIcons.Actions.Refresh"/>
 
-    <group id="Git.Stash.Toolbar">
-      <reference id="Diff.ShowDiff"/>
-      <reference id="Git.Stash.Refresh"/>
-    </group>
     <group id="Git.Stash.ContextMenu">
       <reference id="Git.Stash.Pop"/>
       <reference id="Git.Stash.Apply"/>

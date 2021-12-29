@@ -7,7 +7,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vcs.changes.EditorTabDiffPreviewManager
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
-import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.ui.*
 import com.intellij.util.containers.orNull
@@ -17,7 +16,6 @@ import git4idea.index.ui.ProportionKey
 import git4idea.index.ui.TwoKeySplitter
 import git4idea.ui.StashInfo
 import java.awt.BorderLayout
-import javax.swing.JComponent
 import javax.swing.JPanel
 
 class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boolean, disposable: Disposable) :
@@ -27,14 +25,12 @@ class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boo
   internal val changesBrowser: GitStashChangesBrowser
   private val treeChangesSplitter: TwoKeySplitter
   private val treeDiffSplitter: OnePixelSplitter
-  private val topToolbarComponent: JComponent
 
   init {
     tree = GitStashTree(project, this)
     PopupHandler.installPopupMenu(tree, "Git.Stash.ContextMenu", GIT_STASH_UI_PLACE)
 
     changesBrowser = GitStashChangesBrowser(project, this)
-    topToolbarComponent = buildTopToolbar().component
     val bottomToolbar = buildBottomToolbar()
 
     tree.addSelectionListener {
@@ -43,8 +39,7 @@ class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boo
     }
 
     val treePanel = JPanel(BorderLayout())
-    treePanel.add(topToolbarComponent, BorderLayout.NORTH)
-    treePanel.add(ScrollPaneFactory.createScrollPane(tree, SideBorder.TOP), BorderLayout.CENTER)
+    treePanel.add(ScrollPaneFactory.createScrollPane(tree, true), BorderLayout.CENTER)
 
     treeChangesSplitter = TwoKeySplitter(isVertical,
                                          ProportionKey("git.stash.changes.splitter.vertical", 0.5f,
@@ -63,16 +58,6 @@ class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boo
     add(treeDiffSplitter, BorderLayout.CENTER)
 
     Disposer.register(disposable, this)
-  }
-
-  private fun buildTopToolbar(): ActionToolbar {
-    val toolbarGroup = DefaultActionGroup()
-    toolbarGroup.add(ActionManager.getInstance().getAction(GIT_STASH_TOOLBAR_GROUP))
-    toolbarGroup.addSeparator()
-    toolbarGroup.addAll(TreeActionsToolbarPanel.createTreeActions(tree))
-    val toolbar = ActionManager.getInstance().createActionToolbar(GIT_STASH_UI_PLACE, toolbarGroup, true)
-    toolbar.targetComponent = tree
-    return toolbar
   }
 
   private fun buildBottomToolbar(): ActionToolbar {
@@ -108,7 +93,6 @@ class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boo
     if (!force && (isInEditor == (changesBrowser.editorTabPreview != null))) return
 
     val diffPreviewProcessor = changesBrowser.setDiffPreviewInEditor(isInEditor)
-    diffPreviewProcessor.toolbarWrapper.setVerticalSizeReferent(topToolbarComponent)
     if (isInEditor) {
       treeDiffSplitter.secondComponent = null
     }
@@ -129,7 +113,6 @@ class GitStashUi(project: Project, isVertical: Boolean, isEditorDiffPreview: Boo
   companion object {
     private const val GIT_STASH_APPLY_ACTION = "Git.Stash.Apply"
     private const val GIT_STASH_POP_ACTION = "Git.Stash.Pop"
-    private const val GIT_STASH_TOOLBAR_GROUP = "Git.Stash.Toolbar"
 
     const val GIT_STASH_UI_PLACE = "GitStashUiPlace"
     val GIT_STASH_UI = DataKey.create<GitStashUi>("GitStashUi")
