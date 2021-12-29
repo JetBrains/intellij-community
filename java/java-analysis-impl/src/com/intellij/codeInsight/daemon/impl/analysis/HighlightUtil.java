@@ -75,6 +75,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
+// generates HighlightInfoType.ERROR-like HighlightInfos
 public final class HighlightUtil {
   public static final Set<String> RESTRICTED_RECORD_COMPONENT_NAMES = Set.of(
     "clone", "finalize", "getClass", "hashCode", "notify", "notifyAll", "toString", "wait");
@@ -452,8 +453,7 @@ public final class HighlightUtil {
     return null;
   }
 
-  @Nullable
-  static HighlightInfo checkVarTypeSelfReferencing(PsiLocalVariable resolved, PsiReferenceExpression ref) {
+  static HighlightInfo checkVarTypeSelfReferencing(@NotNull PsiLocalVariable resolved, @NotNull PsiReferenceExpression ref) {
     if (PsiTreeUtil.isAncestor(resolved.getInitializer(), ref, false) && resolved.getTypeElement().isInferredType()) {
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
         .descriptionAndTooltip(JavaErrorBundle.message("lvti.selfReferenced", resolved.getName()))
@@ -473,44 +473,44 @@ public final class HighlightUtil {
     return null;
   }
 
-  @Nullable
-  static HighlightInfo checkVarTypeApplicability(PsiTypeElement typeElement) {
-    if (typeElement != null && typeElement.isInferredType()) {
-      PsiElement parent = typeElement.getParent();
-      PsiVariable variable = tryCast(parent, PsiVariable.class);
-      if (variable instanceof PsiLocalVariable) {
-        PsiExpression initializer = variable.getInitializer();
-        if (initializer == null) {
-          String message = JavaErrorBundle.message("lvti.no.initializer");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
-        }
-        if (initializer instanceof PsiFunctionalExpression) {
-          boolean lambda = initializer instanceof PsiLambdaExpression;
-          String message = JavaErrorBundle.message(lambda ? "lvti.lambda" : "lvti.method.ref");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
-        }
-
-        if (isArrayDeclaration(variable)) {
-          String message = JavaErrorBundle.message("lvti.array");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
-        }
-
-        PsiType lType = variable.getType();
-        if (PsiType.NULL.equals(lType) && SyntaxTraverser.psiTraverser(initializer)
-                                            .filter(PsiLiteralExpression.class)
-                                            .find(l -> PsiType.NULL.equals(l.getType())) != null) {
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(JavaErrorBundle.message("lvti.null"))
-            .range(typeElement).create();
-        }
-        if (PsiType.VOID.equals(lType)) {
-          String message = JavaErrorBundle.message("lvti.void");
-          return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
-        }
+  static HighlightInfo checkVarTypeApplicability(@NotNull PsiTypeElement typeElement) {
+    if (!typeElement.isInferredType()) {
+      return null;
+    }
+    PsiElement parent = typeElement.getParent();
+    PsiVariable variable = tryCast(parent, PsiVariable.class);
+    if (variable instanceof PsiLocalVariable) {
+      PsiExpression initializer = variable.getInitializer();
+      if (initializer == null) {
+        String message = JavaErrorBundle.message("lvti.no.initializer");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
       }
-      else if (variable instanceof PsiParameter && variable.getParent() instanceof PsiParameterList && isArrayDeclaration(variable)) {
+      if (initializer instanceof PsiFunctionalExpression) {
+        boolean lambda = initializer instanceof PsiLambdaExpression;
+        String message = JavaErrorBundle.message(lambda ? "lvti.lambda" : "lvti.method.ref");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+      }
+
+      if (isArrayDeclaration(variable)) {
         String message = JavaErrorBundle.message("lvti.array");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
       }
+
+      PsiType lType = variable.getType();
+      if (PsiType.NULL.equals(lType) && SyntaxTraverser.psiTraverser(initializer)
+                                          .filter(PsiLiteralExpression.class)
+                                          .find(l -> PsiType.NULL.equals(l.getType())) != null) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(JavaErrorBundle.message("lvti.null"))
+          .range(typeElement).create();
+      }
+      if (PsiType.VOID.equals(lType)) {
+        String message = JavaErrorBundle.message("lvti.void");
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
+      }
+    }
+    else if (variable instanceof PsiParameter && variable.getParent() instanceof PsiParameterList && isArrayDeclaration(variable)) {
+      String message = JavaErrorBundle.message("lvti.array");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip(message).range(typeElement).create();
     }
 
     return null;
@@ -633,16 +633,7 @@ public final class HighlightUtil {
 
   @NotNull
   public static @NlsContexts.DetailedDescription String getUnhandledExceptionsDescriptor(@NotNull Collection<? extends PsiClassType> unhandled) {
-    return getUnhandledExceptionsDescriptor(unhandled, null);
-  }
-
-  @NotNull
-  private static @NlsContexts.DetailedDescription String getUnhandledExceptionsDescriptor(@NotNull Collection<? extends PsiClassType> unhandled,
-                                                                                          @Nullable @Nls String source) {
-    String exceptions = formatTypes(unhandled);
-    return source == null
-           ? JavaErrorBundle.message("unhandled.exceptions", exceptions, unhandled.size())
-           : JavaErrorBundle.message("unhandled.close.exceptions", exceptions, unhandled.size(), source);
+    return JavaErrorBundle.message("unhandled.exceptions", formatTypes(unhandled), unhandled.size());
   }
 
   @NotNull
@@ -862,7 +853,8 @@ public final class HighlightUtil {
     HighlightInfoType highlightType = getUnhandledExceptionHighlightType(resource);
     if (highlightType == null) return null;
 
-    String description = getUnhandledExceptionsDescriptor(unhandled, JavaErrorBundle.message("auto.closeable.resource"));
+    String description = JavaErrorBundle.message("unhandled.close.exceptions", formatTypes(unhandled), unhandled.size(),
+                              JavaErrorBundle.message("auto.closeable.resource"));
     HighlightInfo highlight = HighlightInfo.newHighlightInfo(highlightType).range(resource).descriptionAndTooltip(description).create();
     HighlightFixUtil.registerUnhandledExceptionFixes(resource, highlight);
     return highlight;
@@ -896,8 +888,8 @@ public final class HighlightUtil {
     return null;
   }
 
-  static HighlightInfo checkYieldExpressionType(PsiExpression expression) {
-    if (expression != null && PsiType.VOID.equals(expression.getType())) {
+  static HighlightInfo checkYieldExpressionType(@NotNull PsiExpression expression) {
+    if (PsiType.VOID.equals(expression.getType())) {
       String message = JavaErrorBundle.message("yield.void");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
     }
@@ -961,18 +953,18 @@ public final class HighlightUtil {
   }
 
   /**
-   * Checks if the supplied modifier list contains incompatible modifiers (e.g. public and private).
+   * Checks if the supplied modifier list contains incompatible modifiers (e.g. "public private").
    *
    * @param modifierList a {@link PsiModifierList} to check
-   * @return true if the supplied modifier list contains incompatible modifiers
+   * @return true if the supplied modifier list contains compatible modifiers
    */
-  public static boolean isIllegalModifierCombination(@NotNull PsiModifierList modifierList) {
+  public static boolean isLegalModifierCombination(@NotNull PsiModifierList modifierList) {
     for (PsiElement child = modifierList.getFirstChild(); child != null; child = child.getNextSibling()) {
       if (child instanceof PsiKeyword && getIncompatibleModifier(child.getText(), modifierList) != null) {
-        return true;
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   private static Map<String, Set<String>> getIncompatibleModifierMap(@NotNull PsiElement modifierListOwner) {
@@ -1684,7 +1676,7 @@ public final class HighlightUtil {
     return null;
   }
 
-  public static HighlightInfo checkInstanceOfPatternSupertype(PsiInstanceOfExpression expression) {
+  static HighlightInfo checkInstanceOfPatternSupertype(PsiInstanceOfExpression expression) {
     if (expression == null) return null;
 
     PsiTypeTestPattern pattern = getTypeTestPattern(expression.getPattern());
@@ -1805,7 +1797,7 @@ public final class HighlightUtil {
 
     if (!InheritanceUtil.hasEnclosingInstanceInScope(aClass, expr, false, false)) {
       if (!resolvesToImmediateSuperInterface(expr, qualifier, aClass, languageLevel)) {
-        return HighlightClassUtil.reportIllegalEnclosingUsage(expr, null, aClass, expr);
+        return HighlightClassUtil.checkIllegalEnclosingUsage(expr, null, aClass, expr);
       }
       if (expr instanceof PsiSuperExpression) {
         PsiElement resolved = ((PsiReferenceExpression)expr.getParent()).resolve();
@@ -2221,9 +2213,9 @@ public final class HighlightUtil {
     return Collections.emptyList();
   }
 
-  private static boolean hasYield(@NotNull PsiSwitchExpression switchExpression, PsiElement scope) {
+  private static boolean hasYield(@NotNull PsiSwitchExpression switchExpression, @NotNull PsiElement scope) {
     class YieldFinder extends JavaRecursiveElementWalkingVisitor {
-      boolean hasYield = false;
+      private boolean hasYield;
 
       @Override
       public void visitYieldStatement(PsiYieldStatement statement) {
@@ -2850,6 +2842,7 @@ public final class HighlightUtil {
       .navigationShift(navigationShift).create();
   }
 
+  @FunctionalInterface
   interface IncompatibleTypesTooltipComposer {
     @NotNull @NlsContexts.Tooltip
     String consume(@NotNull @NlsSafe String lRawType,
@@ -3340,22 +3333,22 @@ public final class HighlightUtil {
     return feature.level;
   }
 
-  public static HighlightInfo checkFeature(@NotNull PsiElement element,
+  static HighlightInfo checkFeature(@NotNull PsiElement element,
                                            @NotNull HighlightingFeature feature,
                                            @NotNull LanguageLevel level,
                                            @NotNull PsiFile file) {
     return checkFeature(element, feature, level, file, null, HighlightInfoType.ERROR);
   }
 
-  public static HighlightInfo checkFeature(@NotNull PsiElement element,
-                                           @NotNull HighlightingFeature feature,
-                                           @NotNull LanguageLevel level,
-                                           @NotNull PsiFile file,
-                                           @Nullable @NlsContexts.DetailedDescription String message,
-                                           @NotNull HighlightInfoType highlightInfoType
+  static HighlightInfo checkFeature(@NotNull PsiElement element,
+                                    @NotNull HighlightingFeature feature,
+                                    @NotNull LanguageLevel level,
+                                    @NotNull PsiFile file,
+                                    @Nullable @NlsContexts.DetailedDescription String message,
+                                    @NotNull HighlightInfoType highlightInfoType
   ) {
     if (file.getManager().isInProject(file) && !feature.isSufficient(level)) {
-      message = Objects.requireNonNullElse(message, getUnsupportedFeatureMessage(feature, level, file));
+      message = message == null ? getUnsupportedFeatureMessage(feature, level, file) : message;
       HighlightInfo info = HighlightInfo.newHighlightInfo(highlightInfoType).range(element).descriptionAndTooltip(message).create();
       if (info != null) {
         registerIncreaseLanguageLevelFixes(file, feature, new QuickFixActionRegistrarImpl(info));
