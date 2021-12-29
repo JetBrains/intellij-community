@@ -22,7 +22,6 @@ import io.netty.handler.codec.protobuf.ProtobufDecoder;
 import io.netty.resolver.AddressResolverGroup;
 import io.netty.util.NetUtil;
 import net.n3.nanoxml.IXMLBuilder;
-import org.apache.log4j.Appender;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.aether.ArtifactRepositoryManager;
@@ -159,7 +158,6 @@ public final class ClasspathBootstrap {
     final Set<File> cp = new LinkedHashSet<>();
     cp.add(getResourceFile(ExternalJavacProcess.class)); // self
     cp.add(getResourceFile(JavacReferenceCollector.class));  // jps-javac-extension library
-    cp.add(getResourceFile(Appender.class)); // log4j
     cp.add(getResourceFile(SystemInfoRt.class)); // util_rt
     try {
       // trove
