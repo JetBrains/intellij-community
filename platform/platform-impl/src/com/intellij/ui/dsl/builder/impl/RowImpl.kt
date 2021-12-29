@@ -198,6 +198,10 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
     return cell(JBCheckBox(text))
   }
 
+  override fun radioButton(text: String): Cell<JBRadioButton> {
+    return radioButton(text, null)
+  }
+
   override fun radioButton(text: String, value: Any?): Cell<JBRadioButton> {
     val buttonsGroup = dialogPanelConfig.context.getButtonsGroup() ?: throw UiDslException(
       "Button group must be defined before using radio button")
@@ -398,6 +402,12 @@ internal open class RowImpl(private val dialogPanelConfig: DialogPanelConfig,
 
   override fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>?): Cell<ComboBox<T>> {
     val component = ComboBox(DefaultComboBoxModel(Vector(items)))
+    component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
+    return cell(component)
+  }
+
+  override fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>?): Cell<ComboBox<T>> {
+    val component = ComboBox(items)
     component.renderer = renderer ?: SimpleListCellRenderer.create("") { it.toString() }
     return cell(component)
   }

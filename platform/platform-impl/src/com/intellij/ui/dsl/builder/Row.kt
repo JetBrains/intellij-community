@@ -190,6 +190,10 @@ interface Row {
 
   fun checkBox(@NlsContexts.Checkbox text: String): Cell<JBCheckBox>
 
+  @Deprecated("Use overloaded radioButton(...) instead", level = DeprecationLevel.HIDDEN)
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun radioButton(@NlsContexts.RadioButton text: String): Cell<JBRadioButton>
+
   /**
    * Adds radio button. [Panel.buttonsGroup] must be defined above hierarchy before adding radio buttons.
    * If there is a binding [ButtonsGroup.bind] for the buttons group then [value] must be provided with correspondent to binding type,
@@ -342,6 +346,10 @@ interface Row {
   fun <T> comboBox(model: ComboBoxModel<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
 
   fun <T> comboBox(items: Collection<T>, renderer: ListCellRenderer<in T?>? = null): Cell<ComboBox<T>>
+
+  @Deprecated("Use overloaded comboBox(...) with Collection")
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  fun <T> comboBox(items: Array<T>, renderer: ListCellRenderer<T?>? = null): Cell<ComboBox<T>>
 
   /**
    * Overrides all gaps around row by [customRowGaps]. Should be used for very specific cases
