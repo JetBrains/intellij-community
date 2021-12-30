@@ -1,9 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing.events;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
-import com.intellij.openapi.diagnostic.Log4jBasedLogger;
+import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RollingFileHandler;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -13,9 +14,6 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.indexing.FileBasedIndexImpl;
 import com.intellij.util.indexing.diagnostic.IndexDiagnosticDumper;
-import org.apache.log4j.Level;
-import org.apache.log4j.PatternLayout;
-import org.apache.log4j.RollingFileAppender;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +22,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
+import java.util.logging.Level;
 import java.util.stream.Stream;
 
 public final class VfsEventsMerger {
@@ -222,25 +221,21 @@ public final class VfsEventsMerger {
     }
 
     @NotNull
-    private final RollingFileAppender myAppender;
+    private final RollingFileHandler myAppender;
 
     MyLoggerFactory() throws IOException {
       Path logPath = IndexDiagnosticDumper.Companion.getIndexingDiagnosticDir().resolve("index-vfs-events.log");
-      PatternLayout pattern = new PatternLayout("%d [%7r] %6p - %m\n");
-      myAppender = new RollingFileAppender(pattern, logPath.toFile().getAbsolutePath());
-      myAppender.setMaxFileSize("20MB");
-      myAppender.setMaxBackupIndex(50);
+      myAppender = new RollingFileHandler(logPath, 20000000, 50, false, null);
     }
-
 
     @Override
     public @NotNull Logger getLoggerInstance(@NotNull String category) {
-      final org.apache.log4j.Logger logger = org.apache.log4j.Logger.getLogger(category);
-      logger.removeAllAppenders();
-      logger.addAppender(myAppender);
-      logger.setAdditivity(false);
+      final java.util.logging.Logger logger = java.util.logging.Logger.getLogger(category);
+      JulLogger.clearHandlers(logger);
+      logger.addHandler(myAppender);
+      logger.setUseParentHandlers(false);
       logger.setLevel(Level.INFO);
-      return new Log4jBasedLogger(logger);
+      return new JulLogger(logger);
     }
 
     public static @Nullable Logger getLoggerInstance() {

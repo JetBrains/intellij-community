@@ -100,12 +100,15 @@ public class JulLogger extends Logger {
 
   public static void clearHandlers() {
     java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
-    Handler[] handlers = rootLogger.getHandlers();
-    for (Handler handler : handlers) {
-      rootLogger.removeHandler(handler);
-    }
+    clearHandlers(rootLogger);
   }
 
+  public static void clearHandlers(java.util.logging.Logger logger) {
+    Handler[] handlers = logger.getHandlers();
+    for (Handler handler : handlers) {
+      logger.removeHandler(handler);
+    }
+  }
   public static void configureLogFileAndConsole(@NotNull Path logFilePath,
                                                 boolean appendToFile,
                                                 boolean showDateInConsole,
