@@ -364,6 +364,11 @@
             displayType="STICKY_BALLOON"
             key="plugin.updater.notification.group"
     />
+    <notificationGroup
+            id="Kotlin Migration"
+            displayType="STICKY_BALLOON"
+            key="configuration.migration.group.name"
+    />
   </extensions>
 
   <!-- Navigation -->
