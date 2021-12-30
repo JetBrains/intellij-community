@@ -155,7 +155,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
                                   hoveredStateCallback = { cmp, hovered ->
                                     if (cmp !is AbstractButton) return@addHoverAndPressStateListener
                                     if (hovered) {
-                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.icon.hoverBackground"))
+                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.Icon.hoverBackground"))
                                       cmp.isContentAreaFilled = true
                                     }
                                     else {
@@ -166,10 +166,10 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
                                   pressedStateCallback = { cmp, pressed ->
                                     if (cmp !is JComponent) return@addHoverAndPressStateListener
                                     if (pressed) {
-                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.icon.pressedBackground"))
+                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.Icon.pressedBackground"))
                                     }
                                     else {
-                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.icon.hoverBackground"))
+                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.Icon.hoverBackground"))
                                     }
                                   })
 

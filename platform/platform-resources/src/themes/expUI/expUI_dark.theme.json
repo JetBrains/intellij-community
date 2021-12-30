@@ -278,13 +278,13 @@
     },
 
     "MainToolbar": {
-      "icon": {
+      "Icon": {
         "borderInsets": "10,10,10,10",
         "background": "Grey2",
         "hoverBackground": "Blue1",
         "pressedBackground": "Blue1"
       },
-      "dropdown": {
+      "Dropdown": {
         "borderInsets": "12,6,12,6"
       },
       "background": "Grey2"

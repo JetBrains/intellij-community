@@ -495,13 +495,13 @@
     },
 
     "MainToolbar": {
-      "icon": {
+      "Icon": {
         "borderInsets": "10,10,10,10",
         "background": "#000000",
         "hoverBackground": "#3333FF",
         "pressedBackground": "#3333FF"
       },
-      "dropdown": {
+      "Dropdown": {
         "borderInsets": "12,6,12,6",
         "background": "#000000",
         "hoverBackground": "#3333FF",

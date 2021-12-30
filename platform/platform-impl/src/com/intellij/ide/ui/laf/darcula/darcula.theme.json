@@ -552,13 +552,13 @@
 
     "MainToolbar": {
       "background": "#3c3f41",
-      "icon": {
+      "Icon": {
         "borderInsets": "10,10,10,10",
         "background": "#3C3F41",
         "hoverBackground": "#4C5052",
         "pressedBackground": "#4C5052"
       },
-      "dropdown": {
+      "Dropdown": {
         "borderInsets": "12,6,12,6",
         "background": "#3C3F41",
         "hoverBackground": "#4C5052",

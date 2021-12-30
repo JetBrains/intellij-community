@@ -27,7 +27,7 @@ internal class ActionToolbar(actions: List<AnAction>) : JPanel(FlowLayout(FlowLa
   }
 
   private fun createButton(action: AnAction): JComponent {
-    val insets = UIManager.getInsets("MainToolbar.icon.borderInsets") ?: JBUI.insets(10)
+    val insets = UIManager.getInsets("MainToolbar.Icon.borderInsets") ?: JBUI.insets(10)
 
     val presentation = action.templatePresentation.clone()
     presentation.scaleIcon(iconSize)
@@ -53,9 +53,9 @@ private class MainToolbarLook : IdeaActionButtonLook() {
 
   override fun getStateBackground(component: JComponent, state: Int): Color = when (state) {
     ActionButtonComponent.NORMAL -> component.background
-    ActionButtonComponent.PUSHED -> UIManager.getColor("MainToolbar.icon.pressedBackground")
+    ActionButtonComponent.PUSHED -> UIManager.getColor("MainToolbar.Icon.pressedBackground")
                                     ?: UIManager.getColor("ActionButton.pressedBackground")
-    else -> UIManager.getColor("MainToolbar.icon.hoverBackground")
+    else -> UIManager.getColor("MainToolbar.Icon.hoverBackground")
             ?: UIManager.getColor("ActionButton.hoverBackground")
   }
 

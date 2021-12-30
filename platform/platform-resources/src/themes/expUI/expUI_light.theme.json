@@ -294,13 +294,13 @@
     "MainToolbar": {
       "background": "Grey2",
       "inactiveBackground": "Grey2",
-      "icon": {
+      "Icon": {
         "borderInsets": "10,10,10,10",
         "background": "Grey2",
         "hoverBackground": "Grey1",
         "pressedBackground": "Grey1"
       },
-      "dropdown": {
+      "Dropdown": {
         "foreground": "Grey11",
         "borderInsets": "12,6,12,6",
         "background": "Grey2",
