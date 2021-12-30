@@ -50,6 +50,12 @@ internal class SegmentedButtonPanel {
         }
         .actionListener { _, component -> segmentedButtonRow.enabled(component.isSelected) }
     }
+
+    group("Segmented button without binding") {
+      row {
+        segmentedButton(generateItems(5), { it })
+      }
+    }
   }
 
   private fun generateItems(count: Int): Collection<String> {
