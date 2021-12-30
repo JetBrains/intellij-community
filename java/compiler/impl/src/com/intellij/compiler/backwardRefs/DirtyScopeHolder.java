@@ -3,7 +3,6 @@ package com.intellij.compiler.backwardRefs;
 
 import com.intellij.ProjectTopics;
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.view.DirtyScopeTestInfo;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ReadAction;
@@ -49,8 +48,6 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
   private final Set<FileType> myFileTypes;
   private final ProjectFileIndex myProjectFileIndex;
   private final ModificationTracker myModificationTracker;
-  private final FileDocumentManager myFileDocManager;
-  private final PsiDocumentManager myPsiDocManager;
   private final Object myLock = new Object();
 
   private final Set<Module> myVFSChangedModules = new HashSet<>(); // guarded by myLock
@@ -64,48 +61,45 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
 
   private final FileTypeRegistry myFileTypeRegistry = FileTypeRegistry.getInstance();
 
-
   public DirtyScopeHolder(@NotNull Project project,
                           @NotNull Set<FileType> fileTypes,
                           @NotNull ProjectFileIndex projectFileIndex,
                           @NotNull Disposable parentDisposable,
                           @NotNull ModificationTracker modificationTracker,
-                          @NotNull FileDocumentManager fileDocumentManager,
-                          @NotNull PsiDocumentManager psiDocumentManager,
                           @NotNull BiConsumer<? super MessageBusConnection, ? super Set<String>> compilationAffectedModulesSubscription) {
     myProject = project;
     myFileTypes = fileTypes;
     myProjectFileIndex = projectFileIndex;
     myModificationTracker = modificationTracker;
-    myFileDocManager = fileDocumentManager;
-    myPsiDocManager = psiDocumentManager;
 
-    if (CompilerReferenceService.isEnabled()) {
-      MessageBusConnection connect = project.getMessageBus().connect(parentDisposable);
-      connect.subscribe(ExcludedEntriesListener.TOPIC, new ExcludedEntriesListener() {
-        @Override
-        public void onEntryAdded(@NotNull ExcludeEntryDescription description) {
-          synchronized (myLock) {
-            if (myCompilationPhase) {
-              myExcludedDescriptions.add(description);
-            }
-          }
-        }
-      });
-
-      compilationAffectedModulesSubscription.accept(connect, myCompilationAffectedModules);
-
-      connect.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
-        @Override
-        public void rootsChanged(@NotNull ModuleRootEvent event) {
-          final Module[] modules = ModuleManager.getInstance(myProject).getModules();
-          synchronized (myLock) {
-            myVFSChangedModules.clear();
-            ContainerUtil.addAll(myVFSChangedModules, modules);
-          }
-        }
-      });
+    if (!CompilerReferenceServiceBase.isEnabled()) {
+      return;
     }
+
+    MessageBusConnection connect = project.getMessageBus().connect(parentDisposable);
+    connect.subscribe(ExcludedEntriesListener.TOPIC, new ExcludedEntriesListener() {
+      @Override
+      public void onEntryAdded(@NotNull ExcludeEntryDescription description) {
+        synchronized (myLock) {
+          if (myCompilationPhase) {
+            myExcludedDescriptions.add(description);
+          }
+        }
+      }
+    });
+
+    compilationAffectedModulesSubscription.accept(connect, myCompilationAffectedModules);
+
+    connect.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
+      @Override
+      public void rootsChanged(@NotNull ModuleRootEvent event) {
+        final Module[] modules = ModuleManager.getInstance(myProject).getModules();
+        synchronized (myLock) {
+          myVFSChangedModules.clear();
+          ContainerUtil.addAll(myVFSChangedModules, modules);
+        }
+      }
+    });
   }
 
   public void compilerActivityStarted() {
@@ -178,20 +172,27 @@ public final class DirtyScopeHolder extends UserDataHolderBase implements AsyncF
     return dirtyModuleScope.union(myExcludedFilesScope);
   }
 
-  @NotNull
-  Set<Module> getAllDirtyModules() {
-    final Set<Module> dirtyModules;
+  @NotNull Set<Module> getAllDirtyModules() {
+    Set<Module> dirtyModules;
     synchronized (myLock) {
       dirtyModules = new HashSet<>(myVFSChangedModules);
     }
-    for (Document document : myFileDocManager.getUnsavedDocuments()) {
-      final VirtualFile file = myFileDocManager.getFile(document);
-      if (file == null) continue;
-      final Module m = getModuleForSourceContentFile(file);
-      if (m != null) dirtyModules.add(m);
+
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    for (Document document : fileDocumentManager.getUnsavedDocuments()) {
+      VirtualFile file = fileDocumentManager.getFile(document);
+      if (file == null) {
+        continue;
+      }
+      Module m = getModuleForSourceContentFile(file);
+      if (m != null) {
+        dirtyModules.add(m);
+      }
     }
-    for (Document document : myPsiDocManager.getUncommittedDocuments()) {
-      final PsiFile psiFile = myPsiDocManager.getPsiFile(document);
+
+    PsiDocumentManager psiDocumentMananger = PsiDocumentManager.getInstance(myProject);
+    for (Document document : psiDocumentMananger.getUncommittedDocuments()) {
+      final PsiFile psiFile = psiDocumentMananger.getPsiFile(document);
       if (psiFile == null) continue;
       final VirtualFile file = psiFile.getVirtualFile();
       if (file == null) continue;

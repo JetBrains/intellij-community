@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.compiler.backwardRefs;
 
-import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.JavaBackwardReferenceIndexReaderFactory.BackwardReferenceReader;
 import com.intellij.compiler.chainsSearch.ChainOpAndOccurrences;
 import com.intellij.compiler.chainsSearch.ChainSearchMagicConstants;
@@ -13,7 +12,6 @@ import com.intellij.compiler.server.CustomBuilderMessageHandler;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.util.messages.MessageBusConnection;
 import it.unimi.dsi.fastutil.ints.IntSet;
 import one.util.streamex.StreamEx;
@@ -270,13 +268,6 @@ public final class CompilerReferenceServiceImpl extends CompilerReferenceService
     catch (Exception e) {
       onException(e, "inheritor count");
       throw new ReferenceIndexUnavailableException();
-    }
-  }
-
-  static final class InitializationActivity implements StartupActivity {
-    @Override
-    public void runActivity(@NotNull Project project) {
-      CompilerReferenceService.getInstanceIfEnabled(project);
     }
   }
 }
