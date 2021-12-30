@@ -142,6 +142,6 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   class PresentableNameGetter: com.intellij.openapi.components.State.NameGetter() {
-    override fun get(): String = TerminalToolWindowFactory.TOOL_WINDOW_ID
+    override fun get(): String = TerminalBundle.message("toolwindow.stripe.Terminal")
   }
 }
