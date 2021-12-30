@@ -9,6 +9,7 @@ import com.intellij.util.concurrency.SchedulingWrapper.MyScheduledFutureTask;
 import kotlinx.coroutines.CompletableDeferred;
 import kotlinx.coroutines.CompletableJob;
 import kotlinx.coroutines.Job;
+import org.jetbrains.annotations.ApiStatus.Internal;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.concurrent.Callable;
@@ -17,7 +18,8 @@ import java.util.concurrent.FutureTask;
 import static kotlinx.coroutines.CompletableDeferredKt.CompletableDeferred;
 import static kotlinx.coroutines.JobKt.Job;
 
-final class Propagation {
+@Internal
+public final class Propagation {
 
   private Propagation() { }
 
@@ -89,7 +91,7 @@ final class Propagation {
     }
   }
 
-  private static @NotNull Runnable handleContext(@NotNull Runnable runnable) {
+  public static @NotNull Runnable handleContext(@NotNull Runnable runnable) {
     if (propagateThreadContext()) {
       return new ContextRunnable(runnable);
     }

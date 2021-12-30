@@ -2,7 +2,9 @@
 package com.intellij.concurrency
 
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.progress.timeoutRunBlocking
+import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.ApplicationExtension
 import com.intellij.testFramework.RegistryKeyExtension
 import com.intellij.util.concurrency.AppExecutorUtil
@@ -38,6 +40,23 @@ class ThreadContextPropagationTest {
   fun `executeOnPooledThread(Callable)`(): Unit = timeoutRunBlocking {
     doTest {
       ApplicationManager.getApplication().executeOnPooledThread(it.callable())
+    }
+  }
+
+  @Test
+  fun invokeLater(): Unit = timeoutRunBlocking {
+    val application = ApplicationManager.getApplication()
+    doTest {
+      application.invokeLater(it.runnable())
+    }
+    doTest {
+      application.invokeLater(it.runnable(), Conditions.alwaysFalse<Nothing?>())
+    }
+    doTest {
+      application.invokeLater(it.runnable(), ModalityState.any())
+    }
+    doTest {
+      application.invokeLater(it.runnable(), ModalityState.any(), Conditions.alwaysFalse<Nothing?>())
     }
   }
 

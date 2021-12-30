@@ -44,6 +44,7 @@ import com.intellij.ui.ComponentUtil;
 import com.intellij.util.*;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.AppScheduledExecutorService;
+import com.intellij.util.concurrency.Propagation;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.EDT;
@@ -372,6 +373,9 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
+    if (!(runnable instanceof FutureTask)) { // see com.intellij.util.concurrency.AppScheduledExecutorService#handleCommand
+      runnable = Propagation.handleContext(runnable);
+    }
     Runnable r = myTransactionGuard.wrapLaterInvocation(runnable, state);
     LaterInvocator.invokeLater(state, expired, wrapWithRunIntendedWriteAction(r));
   }
