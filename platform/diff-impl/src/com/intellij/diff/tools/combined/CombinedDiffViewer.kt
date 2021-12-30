@@ -37,6 +37,7 @@ import com.intellij.ui.components.JBScrollPane
 import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.NonNls
+import java.awt.Rectangle
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
 import java.util.*
@@ -187,7 +188,21 @@ class CombinedDiffViewer(context: DiffContext, val unifiedDiff: Boolean) : DiffV
       }
 
     if (visibleBlocks.isNotEmpty()) {
+      updateGlobalBlockHeader(visibleBlocks, viewRect)
       blockListeners.multicaster.blocksVisible(visibleBlocks, null)
+    }
+  }
+
+  private fun updateGlobalBlockHeader(visibleBlocks: List<CombinedDiffBlock>, viewRect: Rectangle) {
+    val firstVisibleBlock = visibleBlocks.first()
+    val globalHeader = (firstVisibleBlock as? CombinedDiffGlobalBlockHeaderProvider)?.globalHeader ?: return
+    val blockOnTop = firstVisibleBlock.component.bounds.y == viewRect.y
+
+    if (blockOnTop || diffBlocks.first().header.bounds.y == viewRect.y) {
+      scrollPane.setColumnHeaderView(null)
+    }
+    else {
+      scrollPane.setColumnHeaderView(globalHeader)
     }
   }
 

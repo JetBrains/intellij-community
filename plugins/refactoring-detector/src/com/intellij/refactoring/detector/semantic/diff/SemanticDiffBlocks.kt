@@ -1,10 +1,7 @@
 package com.intellij.refactoring.detector.semantic.diff
 
 import com.intellij.diff.FrameDiffTool.DiffViewer
-import com.intellij.diff.tools.combined.CombinedDiffBlock
-import com.intellij.diff.tools.combined.CombinedDiffBlockContent
-import com.intellij.diff.tools.combined.CombinedDiffBlockFactory
-import com.intellij.diff.tools.combined.editors
+import com.intellij.diff.tools.combined.*
 import com.intellij.diff.tools.util.base.DiffViewerBase
 import com.intellij.icons.AllIcons
 import com.intellij.ide.actions.CloseTabToolbarAction
@@ -35,8 +32,10 @@ internal class SemanticDiffFragmentBlockFactory : CombinedDiffBlockFactory {
 }
 
 internal class SemanticCombinedDiffBlock(val title: String, override val content: CombinedDiffBlockContent, onCloseAction: () -> Unit) :
-  JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)), CombinedDiffBlock {
+  JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)),
+  CombinedDiffBlock, CombinedDiffGlobalBlockHeaderProvider {
 
+  override val globalHeader = SemanticCombinedDiffHeader(title, content.viewer) { onCloseAction(); Disposer.dispose(this) }
   override val header = SemanticCombinedDiffHeader(title, content.viewer) { onCloseAction(); Disposer.dispose(this) }
   override val body = content.viewer.component
 

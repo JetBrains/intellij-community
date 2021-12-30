@@ -36,6 +36,10 @@ interface CombinedDiffBlock : Disposable {
   fun updateBlockContent(newContent: CombinedDiffBlockContent) {}
 }
 
+interface CombinedDiffGlobalBlockHeaderProvider {
+  val globalHeader: JComponent
+}
+
 class CombinedDiffBlockContent(val viewer: FrameDiffTool.DiffViewer, val path: FilePath, val fileStatus: FileStatus)
 
 interface CombinedDiffBlockFactory {
@@ -123,11 +127,12 @@ private class CombinedSimpleDiffHeader(block: CombinedDiffBlock, path: FilePath,
 }
 
 private class CombinedSimpleDiffBlock(initialContent: CombinedDiffBlockContent, withBorder: Boolean) :
-  JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)), CombinedDiffBlock {
+  JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)), CombinedDiffBlock, CombinedDiffGlobalBlockHeaderProvider {
 
   override var content = initialContent
     private set
 
+  override val globalHeader = CombinedSimpleDiffHeader(this, content.path, false)
   override val header = CombinedSimpleDiffHeader(this, content.path, withBorder)
   override val body get() = content.viewer.component
 
