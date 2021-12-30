@@ -1,8 +1,9 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.process.mediator.grpc
 
 import com.intellij.execution.process.mediator.ProcessMediatorLogger
 import io.grpc.*
+import java.util.logging.Level
 
 internal object LoggingClientInterceptor : ClientInterceptor {
   override fun <ReqT, RespT> interceptCall(methodDescriptor: MethodDescriptor<ReqT, RespT>,
@@ -33,12 +34,12 @@ internal object LoggingClientInterceptor : ClientInterceptor {
 
   private inline fun <ReqT, RespT> trace(event: String, methodDescriptor: MethodDescriptor<ReqT, RespT>, messageSupplier: () -> String) {
     with(ProcessMediatorLogger.LOG) {
-      if (isTraceEnabled) {
+      if (isLoggable(Level.FINER)) {
         val fullName = methodDescriptor.fullMethodName
         val methodName = fullName.substringAfterLast('/')
         val qualifiedServiceName = fullName.substringBeforeLast('/', missingDelimiterValue = "")
         val simpleServiceName = qualifiedServiceName.substringAfterLast('.')
-        trace("$event[$simpleServiceName/$methodName]: ${messageSupplier()}")
+        finer("$event[$simpleServiceName/$methodName]: ${messageSupplier()}")
       }
     }
   }
