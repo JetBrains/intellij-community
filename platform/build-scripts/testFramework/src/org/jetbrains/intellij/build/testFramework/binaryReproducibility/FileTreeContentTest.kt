@@ -2,6 +2,7 @@
 package org.jetbrains.intellij.build.testFramework.binaryReproducibility
 
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.util.io.Decompressor
 import java.io.IOException
 import java.nio.file.Files
 import java.nio.file.Path
@@ -41,19 +42,20 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
     }
     val error = AssertionError("Failed for $relativePath")
     println(error.message)
-    return if (relativePath.extension == "jar") {
-      val jarContentComparisonError = assertTheSameContent(path1.unpackJar(), path2.unpackJar())
-      if (jarContentComparisonError == null) {
-        println("\tNo difference in $relativePath content, timestamp or ordering issue?")
+    return when (relativePath.extension) {
+      "tar.gz", "gz", "tar" -> assertTheSameContent(
+        path1.unpackingDir().also { Decompressor.Tar(path1).extract(it) },
+        path2.unpackingDir().also { Decompressor.Tar(path2).extract(it) }
+      ) ?: AssertionError("No difference in $relativePath content. Timestamp or ordering issue?")
+      "zip" -> assertTheSameContent(
+        path1.unpackingDir().also { Decompressor.Zip(path1).extract(it) },
+        path2.unpackingDir().also { Decompressor.Zip(path2).extract(it) }
+      ) ?: AssertionError("No difference in $relativePath content. Timestamp or ordering issue?")
+      "jar" -> assertTheSameContent(path1.unpackJar(), path2.unpackJar()) ?: AssertionError("No difference in $relativePath content")
+      else -> {
+        saveDiff(relativePath, path1.content(), path2.content())
         error
       }
-      else {
-        jarContentComparisonError
-      }
-    }
-    else {
-      saveDiff(relativePath, path1.content(), path2.content())
-      error
     }
   }
 
@@ -87,9 +89,8 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
 
   private fun Path.content(): String =
     when (extension) {
-      "jar" -> error("$this is expected to be already unpacked")
+      "jar", "zip", "tar.gz", "gz", "tar" -> error("$this is expected to be already unpacked")
       "class" -> process("javap", "-verbose", "$this")
-      "zip", "tar.gz", "gz", "tar", "exe" -> "$fileName"
       else -> try {
         Files.readString(this)
       }
@@ -98,19 +99,23 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
       }
     }
 
+  private fun Path.unpackingDir(): Path {
+    val unpackingDir = tempDir
+      .resolve("unpacked")
+      .resolve("$fileName".replace(".", "_"))
+      .resolve(UUID.randomUUID().toString())
+    FileUtil.delete(unpackingDir)
+    return unpackingDir
+  }
+
   private fun Path.unpackJar(): Path {
     assert(extension == "jar")
-    val name = "$fileName".replace(".", "_")
-    val targetDir = tempDir
-      .resolve("unpackedJars")
-      .resolve(name)
-      .resolve(UUID.randomUUID().toString())
-    FileUtil.delete(targetDir)
+    val unpackingDir = unpackingDir()
     JarFile(toFile()).use { jar ->
       val meta = jar.entries().toList().associate { entry ->
         if (!entry.isDirectory) {
           jar.getInputStream(entry).use {
-            val targetFile = targetDir.resolve(entry.name)
+            val targetFile = unpackingDir.resolve(entry.name)
             targetFile.parent.createDirectories()
             // FIXME workaround for case-insensitive file systems
             if (!targetFile.exists()) targetFile.createFile()
@@ -120,7 +125,7 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
         entry.name to entry.time
       }
       if (meta.isNotEmpty()) {
-        val targetFile = targetDir.resolve("__${name}_archive_meta__")
+        val targetFile = unpackingDir.resolve("__meta__")
         targetFile.parent.createDirectories()
         assert(!Files.exists(targetFile))
         targetFile.createFile()
@@ -129,7 +134,7 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
         })
       }
     }
-    return targetDir
+    return unpackingDir
   }
 
   private fun diff(path1: Path, path2: Path) = process("git", "diff", "--no-index", "--", "$path1", "$path2")
