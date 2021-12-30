@@ -5,8 +5,16 @@ import com.intellij.concurrency.callable
 import com.intellij.concurrency.resetThreadContext
 import com.intellij.concurrency.runnable
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.impl.LaterInvocator
+import com.intellij.openapi.application.impl.assertReferenced
+import com.intellij.openapi.application.impl.pumpEDT
+import com.intellij.openapi.application.impl.withModality
+import com.intellij.openapi.util.Condition
+import com.intellij.openapi.util.Conditions
 import com.intellij.testFramework.ApplicationExtension
 import com.intellij.testFramework.RegistryKeyExtension
+import com.intellij.testFramework.UncaughtExceptionsExtension
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.concurrency.Semaphore
 import com.intellij.util.getValue
@@ -19,6 +27,7 @@ import org.junit.jupiter.api.assertDoesNotThrow
 import org.junit.jupiter.api.assertThrows
 import org.junit.jupiter.api.extension.RegisterExtension
 import java.util.concurrent.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
@@ -32,6 +41,10 @@ class CancellationPropagationTest {
     @RegisterExtension
     @JvmField
     val applicationExtension = ApplicationExtension()
+
+    @RegisterExtension
+    @JvmField
+    val uncaughtExceptionsExtension = UncaughtExceptionsExtension()
 
     @RegisterExtension
     @JvmField
@@ -73,6 +86,67 @@ class CancellationPropagationTest {
     doTestJobIsCancelledByFuture {
       ApplicationManager.getApplication().executeOnPooledThread(it.callable())
     }
+  }
+
+  /**
+   * ```
+   * launch(Dispatchers.EDT + modalityState.asContextElement()) {
+   *   if (expiredCondition) {
+   *     throw CancellationException() // cancel current `launch` job
+   *   }
+   *   runnable.run()
+   * }
+   * ```
+   */
+  @Test
+  fun invokeLater(): Unit = timeoutRunBlocking {
+    val application = ApplicationManager.getApplication()
+    doTest {
+      application.invokeLater(it.runnable())
+    }
+    doTest {
+      application.invokeLater(it.runnable(), Conditions.alwaysFalse<Nothing?>())
+    }
+    doTest {
+      application.invokeLater(it.runnable(), ModalityState.any())
+    }
+    doTest {
+      application.invokeLater(it.runnable(), ModalityState.any(), Conditions.alwaysFalse<Nothing?>())
+    }
+    pumpEDT()
+  }
+
+  @Test
+  fun `cancelled invokeLater is not executed`(): Unit = timeoutRunBlocking {
+    launch {
+      resetThreadContext().use {
+        ApplicationManager.getApplication().withModality {
+          val runnable = Runnable {
+            fail()
+          }
+          ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, Conditions.alwaysFalse<Nothing?>())
+          assertReferenced(LaterInvocator::class.java, runnable) // the runnable is queued
+          this@launch.cancel()
+        }
+      }
+    }.join()
+    pumpEDT()
+  }
+
+  @Test
+  fun `expired invokeLater does not prevent completion of parent job`(): Unit = timeoutRunBlocking {
+    resetThreadContext().use {
+      val expired = AtomicBoolean(false)
+      ApplicationManager.getApplication().withModality {
+        val runnable = Runnable {
+          fail()
+        }
+        ApplicationManager.getApplication().invokeLater(runnable, ModalityState.NON_MODAL, Condition<Nothing?> { expired.get() })
+        assertReferenced(LaterInvocator::class.java, runnable) // the runnable is queued
+        expired.set(true)
+      }
+    }
+    pumpEDT()
   }
 
   @Test

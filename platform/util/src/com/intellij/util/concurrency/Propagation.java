@@ -27,7 +27,7 @@ public final class Propagation {
     return Registry.is("ide.propagate.context");
   }
 
-  private static boolean propagateCancellation() {
+  public static boolean propagateCancellation() {
     return Registry.is("ide.propagate.cancellation");
   }
 
