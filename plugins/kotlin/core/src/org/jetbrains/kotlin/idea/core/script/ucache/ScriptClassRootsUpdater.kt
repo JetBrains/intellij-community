@@ -14,6 +14,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ProjectManagerListener
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.EmptyRunnable
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElementFinder
@@ -172,11 +173,12 @@ abstract class ScriptClassRootsUpdater(
     private var scheduledUpdate: BackgroundTaskUtil.BackgroundTask? = null
 
     private fun ensureUpdateScheduled() {
+        val disposable = KotlinPluginDisposable.getInstance(project)
         lock.withLock {
             scheduledUpdate?.cancel()
 
-            if (!project.isDisposed()) {
-                scheduledUpdate = BackgroundTaskUtil.submitTask(KotlinPluginDisposable.getInstance(project)) {
+            if (!Disposer.isDisposed(disposable)) {
+                scheduledUpdate = BackgroundTaskUtil.submitTask(disposable) {
                     doUpdate()
                 }
             }
@@ -191,6 +193,7 @@ abstract class ScriptClassRootsUpdater(
     }
 
     private fun doUpdate(underProgressManager: Boolean = true) {
+        val disposable = KotlinPluginDisposable.getInstance(project)
         try {
             val updates = recreateRootsCacheAndDiff()
 
@@ -199,6 +202,7 @@ abstract class ScriptClassRootsUpdater(
             if (underProgressManager) {
                 ProgressManager.checkCanceled()
             }
+            if (Disposer.isDisposed(disposable)) return
 
             if (updates.hasNewRoots) {
                 notifyRootsChanged()

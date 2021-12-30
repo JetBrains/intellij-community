@@ -190,7 +190,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
                 .run {
                     indicator?.let { this.wrapProgress(indicator) } ?: this
                 }
-                .expireWhen { project.isDisposed }
+                .expireWith(KotlinPluginDisposable.getInstance(project))
                 .executeSynchronously()
 
         val result = mutableListOf<KotlinReferenceData>()
@@ -427,7 +427,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
                 .inSmartMode(project)
                 .wrapProgress(indicator)
                 .expireWhen { smartPsiElementPointer.element == null }
-                .expireWhen { project.isDisposed }
+                .expireWith(KotlinPluginDisposable.getInstance(project))
                 .executeSynchronously()?.let { mainReference ->
                     runReadAction {
                         val textRange = mainReference.element.textRange
@@ -516,7 +516,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
         }
             .withDocumentsCommitted(project)
             .wrapProgress(indicator)
-            .expireWhen { project.isDisposed }
+            .expireWith(KotlinPluginDisposable.getInstance(project))
             .inSmartMode(project)
             .submit(AppExecutorUtil.getAppExecutorService())
 
@@ -566,7 +566,7 @@ class KotlinCopyPasteReferenceProcessor : CopyPastePostProcessor<BasicKotlinRefe
             }
         }).inSmartMode(project)
             .wrapProgress(indicator)
-            .expireWhen { project.isDisposed }
+            .expireWith(KotlinPluginDisposable.getInstance(project))
             .executeSynchronously()
 
         val dummyFileImportsSet = dummyFileImports.toSet()

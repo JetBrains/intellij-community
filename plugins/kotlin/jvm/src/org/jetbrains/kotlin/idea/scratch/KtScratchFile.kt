@@ -86,6 +86,7 @@ class KtScratchFile(project: Project, file: VirtualFile) : ScratchFile(project, 
                 return@Callable psiFile.analyzeWithContent().diagnostics.any { it.severity == Severity.ERROR }
             })
             .inSmartMode(project)
+            .expireWith(KotlinPluginDisposable.getInstance(project))
             .expireWhen { project.isDisposed() }
             .executeSynchronously()
     }

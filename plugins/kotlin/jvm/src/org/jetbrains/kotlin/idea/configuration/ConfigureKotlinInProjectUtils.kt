@@ -126,11 +126,12 @@ fun getModulesWithKotlinFiles(project: Project): Collection<Module> {
         LOG.error("getModulesWithKotlinFiles could be a heavy operation and should not be call on AWT thread")
     }
 
+    val disposable = KotlinPluginDisposable.getInstance(project)
     val kotlinFiles = ReadAction.nonBlocking<Collection<VirtualFile>> {
         return@nonBlocking FileTypeIndex.getFiles(KotlinFileType.INSTANCE, GlobalSearchScope.projectScope(project))
     }
         .inSmartMode(project)
-        .expireWhen { project.isDisposed }
+        .expireWith(disposable)
         .executeSynchronously()
 
     val projectFileIndex = ProjectFileIndex.getInstance(project)

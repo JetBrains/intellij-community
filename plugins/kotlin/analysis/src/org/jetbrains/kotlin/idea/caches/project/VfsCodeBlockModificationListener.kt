@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.idea.util.application.isUnitTestMode
 
 class VfsCodeBlockModificationListener: StartupActivity.Background {
     override fun runActivity(project: Project) {
+        val disposable = KotlinPluginDisposable.getInstance(project)
         val kotlinOCBModificationListener = KotlinCodeBlockModificationListener.getInstance(project)
         val vfsEventsListener = AsyncVfsEventsListener { events: List<VFileEvent> ->
             val projectRelatedVfsFileChange = events.any { event ->
@@ -41,13 +42,14 @@ class VfsCodeBlockModificationListener: StartupActivity.Background {
             }
         }
         if (isUnitTestMode()) {
-            project.messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
+            val connection = project.messageBus.connect(disposable)
+            connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
                 override fun after(events: List<VFileEvent>) {
                     vfsEventsListener.filesChanged(events)
                 }
             })
         } else {
-            AsyncVfsEventsPostProcessor.getInstance().addListener(vfsEventsListener, KotlinPluginDisposable.getInstance(project))
+            AsyncVfsEventsPostProcessor.getInstance().addListener(vfsEventsListener, disposable)
         }
     }
 }

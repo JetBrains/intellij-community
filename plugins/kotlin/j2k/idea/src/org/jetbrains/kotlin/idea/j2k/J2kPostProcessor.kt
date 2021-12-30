@@ -58,12 +58,13 @@ class J2kPostProcessor(private val formatCode: Boolean) : PostProcessor {
             is JKMultipleFilesPostProcessingTarget -> target.files.single() to null
         }
 
+        val disposable = KotlinPluginDisposable.getInstance(file.project)
+
         runBlocking(EDT.ModalityStateElement(ModalityState.defaultModalityState())) {
-            val project = file.project
             do {
                 var modificationStamp: Long? = file.modificationStamp
                 val elementToActions: List<ActionData> = run {
-                    while (!project.isDisposed()) {
+                    while (!Disposer.isDisposed(disposable)) {
                         try {
                             return@run runReadAction {
                                 collectAvailableActions(file, rangeMarker)
@@ -99,7 +100,7 @@ class J2kPostProcessor(private val formatCode: Boolean) : PostProcessor {
             if (formatCode) {
                 withContext(EDT) {
                     runWriteAction {
-                        val codeStyleManager = CodeStyleManager.getInstance(project)
+                        val codeStyleManager = CodeStyleManager.getInstance(file.project)
                         if (rangeMarker != null) {
                             if (rangeMarker.isValid) {
                                 codeStyleManager.reformatRange(file, rangeMarker.startOffset, rangeMarker.endOffset)

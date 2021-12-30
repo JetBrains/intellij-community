@@ -207,7 +207,8 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
     fun scheduleModifiedFilesCheck(filePath: String) {
         modifiedFiles.add(filePath)
         if (modifiedFilesCheckScheduled.compareAndSet(false, true)) {
-            BackgroundTaskUtil.executeOnPooledThread(KotlinPluginDisposable.getInstance(project)) {
+            val disposable = KotlinPluginDisposable.getInstance(project)
+            BackgroundTaskUtil.executeOnPooledThread(disposable) {
                 if (modifiedFilesCheckScheduled.compareAndSet(true, false)) {
                     checkModifiedFiles()
                 }
@@ -271,7 +272,8 @@ class GradleBuildRootsManager(val project: Project) : GradleBuildRootsLocator(pr
             }
         }
 
-        project.messageBus.connect().subscribe(GradleSettingsListener.TOPIC, listener)
+        val disposable = KotlinPluginDisposable.getInstance(project)
+        project.messageBus.connect(disposable).subscribe(GradleSettingsListener.TOPIC, listener)
     }
 
     private fun getGradleProjectSettings(workingDir: String): GradleProjectSettings? {

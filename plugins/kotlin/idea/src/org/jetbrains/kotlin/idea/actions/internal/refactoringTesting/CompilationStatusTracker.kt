@@ -19,7 +19,8 @@ internal class CompilationStatusTracker(private val project: Project) {
     private val compilationStatusListener = object : CompilationStatusListener {
 
         init {
-            project.messageBus.connect().subscribe(COMPILATION_STATUS, this)
+            val disposable = KotlinPluginDisposable.getInstance(project)
+            project.messageBus.connect(disposable).subscribe(COMPILATION_STATUS, this)
         }
 
         var hasCompilerError = false

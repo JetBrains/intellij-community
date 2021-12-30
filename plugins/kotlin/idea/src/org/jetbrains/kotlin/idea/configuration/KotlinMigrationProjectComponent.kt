@@ -12,7 +12,8 @@ class KotlinMigrationProjectComponent : StartupActivity {
 
     override fun runActivity(project: Project) {
         val disposable = KotlinPluginDisposable.getInstance(project)
-        project.messageBus.connect().subscribe(ProjectDataImportListener.TOPIC, ProjectDataImportListener {
+        val connection = project.messageBus.connect(disposable)
+        connection.subscribe(ProjectDataImportListener.TOPIC, ProjectDataImportListener {
             runUnderDisposeAwareIndicator(disposable) {
                 KotlinMigrationProjectService.getInstance(project).onImportFinished()
             }

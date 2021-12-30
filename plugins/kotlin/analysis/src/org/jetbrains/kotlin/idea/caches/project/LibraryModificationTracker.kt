@@ -20,6 +20,7 @@ import com.intellij.openapi.vfs.newvfs.events.VFileCopyEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent
 import com.intellij.openapi.vfs.newvfs.events.VFileMoveEvent
+import org.jetbrains.kotlin.idea.core.KotlinPluginDisposable
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 
 class LibraryModificationTracker(project: Project) : SimpleModificationTracker() {
@@ -29,14 +30,17 @@ class LibraryModificationTracker(project: Project) : SimpleModificationTracker()
     }
 
     init {
-        val connection = project.messageBus.connect()
+        val disposable = KotlinPluginDisposable.getInstance(project)
+        val connection = project.messageBus.connect(disposable)
         connection.subscribe(VirtualFileManager.VFS_CHANGES, object : BulkFileListener {
             override fun after(events: List<VFileEvent>) {
                 events.filter(::isRelevantEvent).let { createEvents ->
                     if (createEvents.isNotEmpty()) {
                         ApplicationManager.getApplication().invokeLater({
                            processBulk(createEvents) {
-                               projectFileIndex.isInLibraryClasses(it) || isLibraryArchiveRoot(it)
+                               projectFileIndex.isInLibraryClasses(it) || isLibraryArchiveRoot(
+                                   it
+                               )
                            }
                        }, project.disposed)
                     }

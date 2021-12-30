@@ -18,7 +18,7 @@ internal inline fun <R> nonBlocking(project: Project, crossinline block: () -> R
             block()
         })
             .inSmartMode(project)
-            .expireWhen { project.isDisposed }
+            .expireWith(KotlinPluginDisposable.getInstance(project))
             .finishOnUiThread(ModalityState.current()) { result ->
                 uiContinuation(result)
             }.submit(AppExecutorUtil.getAppExecutorService())

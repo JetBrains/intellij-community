@@ -18,7 +18,7 @@ class MavenImportListener : StartupActivity {
 
     override fun runActivity(project: Project) {
         val parentDisposable = KotlinPluginDisposable.getInstance(project)
-        project.messageBus.connect().subscribe(
+        project.messageBus.connect(parentDisposable).subscribe(
             MavenImportListener.TOPIC,
             MavenImportListener { _: Collection<MavenProject>, _: List<Module> ->
                 runUnderDisposeAwareIndicator(parentDisposable) {
