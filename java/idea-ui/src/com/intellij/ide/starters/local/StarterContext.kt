@@ -6,6 +6,7 @@ import com.intellij.openapi.util.UserDataHolderBase
 
 class StarterContext : UserDataHolderBase() {
   var isCreatingNewProject: Boolean = false
+  var gitIntegration: Boolean = false
 
   lateinit var starterPack: StarterPack
   var starter: Starter? = null

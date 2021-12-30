@@ -38,7 +38,9 @@ import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.InplaceButton
 import com.intellij.ui.SimpleListCellRenderer
+import com.intellij.ui.UIBundle
 import com.intellij.ui.components.ActionLink
+import com.intellij.ui.dsl.builder.EMPTY_LABEL
 import com.intellij.ui.dsl.builder.SegmentedButton
 import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.Semaphore
@@ -79,6 +81,8 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
   private val languageLevelProperty: GraphProperty<StarterLanguageLevel?> = propertyGraph.graphProperty { starterContext.languageLevel }
   private val applicationTypeProperty: GraphProperty<StarterAppType?> = propertyGraph.graphProperty { starterContext.applicationType }
   private val exampleCodeProperty: GraphProperty<Boolean> = propertyGraph.graphProperty { starterContext.includeExamples }
+
+  private val gitProperty: GraphProperty<Boolean> = propertyGraph.graphProperty { false }
 
   private var entityName: String by entityNameProperty.map { it.trim() }
   private var location: String by locationProperty
@@ -148,6 +152,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
     starterContext.testFramework = testFrameworkProperty.get()
     starterContext.applicationType = applicationTypeProperty.get()
     starterContext.includeExamples = exampleCodeProperty.get()
+    starterContext.gitIntegration = gitProperty.get()
 
     wizardContext.projectName = entityName
     wizardContext.setProjectFileDirectory(FileUtil.join(location, entityName))
@@ -213,10 +218,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
         }
       }.largeGapAfter()
 
-      row(JavaStartersBundle.message("title.project.location.label")) {
-        projectLocationField(locationProperty, wizardContext)
-          .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_LOCATION_FOR_ERROR)
-      }.largeGapAfter()
+      addProjectLocationUi()
 
       addFieldsBefore(this)
 
@@ -376,6 +378,22 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
     }
 
     return serverOptions != null
+  }
+
+  private fun LayoutBuilder.addProjectLocationUi() {
+    val locationRow = row(JavaStartersBundle.message("title.project.location.label")) {
+      projectLocationField(locationProperty, wizardContext)
+        .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_LOCATION_FOR_ERROR)
+    }
+
+    if (wizardContext.isCreatingNewProject) {
+      // Git should not be enabled for single module
+      row(EMPTY_LABEL) {
+        checkBox(UIBundle.message("label.project.wizard.new.project.git.checkbox"), gitProperty)
+      }.largeGapAfter()
+    } else {
+      locationRow.largeGapAfter()
+    }
   }
 
   protected open fun addFieldsBefore(layout: LayoutBuilder) {}
