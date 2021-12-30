@@ -4,7 +4,7 @@ package org.jetbrains.java.decompiler.struct.gen.generics;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.main.DecompilerContext;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
-import org.jetbrains.java.decompiler.modules.decompiler.TypePathWriteProgress;
+import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypePathWriteProgress;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.struct.StructTypePath;
 
