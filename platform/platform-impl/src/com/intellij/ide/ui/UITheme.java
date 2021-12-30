@@ -25,7 +25,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.plaf.BorderUIResource;
 import javax.swing.plaf.ColorUIResource;
-import javax.swing.plaf.IconUIResource;
 import java.awt.*;
 import java.io.File;
 import java.io.IOException;
@@ -555,9 +554,7 @@ public final class UITheme {
       return parseGrayFilter(value);
     }
     else if (value.startsWith("AllIcons.")) {
-      return new IconUIResource(IconLoader.createLazy(() -> {
-        return Objects.requireNonNull(IconLoader.getReflectiveIcon(value, UITheme.class.getClassLoader()));
-      }));
+      return IconLoader.getReflectiveIcon(value, UITheme.class.getClassLoader());
     }
     else {
       Color color = parseColor(value);

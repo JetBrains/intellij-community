@@ -78,14 +78,6 @@ public final class IconLoader {
   );
   private static final AtomicInteger pathTransformGlobalModCount = new AtomicInteger();
 
-  @SuppressWarnings("UndesirableClassUsage")
-  private static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
-    @Override
-    public @NonNls String toString() {
-      return "Empty icon " + super.toString();
-    }
-  };
-
   private static boolean isActivated = !GraphicsEnvironment.isHeadless();
 
   private IconLoader() {}
@@ -523,7 +515,7 @@ public final class IconLoader {
     if (!isGoodSize(icon)) {
       // # 22481
       LOG.error("Invalid icon: " + cii);
-      return EMPTY_ICON;
+      return CachedImageIcon.EMPTY_ICON;
     }
     return icon;
   }
@@ -573,7 +565,7 @@ public final class IconLoader {
 
     if (!isGoodSize(icon)) {
       LOG.error(icon); // # 22481
-      return EMPTY_ICON;
+      return CachedImageIcon.EMPTY_ICON;
     }
 
     if (icon instanceof CachedImageIcon) {
@@ -694,6 +686,14 @@ public final class IconLoader {
 
   @ApiStatus.Internal
   public static class CachedImageIcon extends ScaleContextSupport implements CopyableIcon, ScalableIcon, DarkIconProvider, MenuBarIconProvider {
+    @SuppressWarnings("UndesirableClassUsage")
+    private static final ImageIcon EMPTY_ICON = new ImageIcon(new BufferedImage(1, 1, BufferedImage.TYPE_3BYTE_BGR)) {
+      @Override
+      public @NonNls String toString() {
+        return "Empty icon " + super.toString();
+      }
+    };
+
     private final @Nullable String originalPath;
     private volatile @Nullable ImageDataLoader resolver;
     private final @Nullable ImageDataLoader originalResolver;

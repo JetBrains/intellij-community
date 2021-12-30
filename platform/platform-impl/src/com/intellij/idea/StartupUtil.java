@@ -9,12 +9,12 @@ import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.ide.*;
 import com.intellij.ide.customize.CommonCustomizeIDEWizardDialog;
 import com.intellij.ide.gdpr.Agreements;
+import com.intellij.ide.gdpr.ConsentOptions;
 import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.StartupAbortedException;
 import com.intellij.ide.ui.html.GlobalStyleSheetHolder;
-import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -77,8 +77,6 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
-import static java.util.Objects.requireNonNullElse;
 
 @ApiStatus.Internal
 @SuppressWarnings("LoggerInitializedWithForeignClass")
@@ -146,7 +144,7 @@ public final class StartupUtil {
     configureLog4j();
 
     if (args.length > 0 && (Main.CWM_HOST_COMMAND.equals(args[0]) || Main.CWM_HOST_NO_LOBBY_COMMAND.equals(args[0]))) {
-      activity = activity.endAndStart("Cwm Host init");
+      activity = activity.endAndStart("cwm host init");
       try {
         Class<?> projectorMainClass = StartupUtil.class.getClassLoader().loadClass(PROJECTOR_LAUNCHER_CLASS_NAME);
         MethodHandles.privateLookupIn(projectorMainClass, MethodHandles.lookup())
@@ -160,15 +158,15 @@ public final class StartupUtil {
       }
     }
 
-    activity = activity.endAndStart("Check graphics environment");
+    activity = activity.endAndStart("graphics environment checking");
     if (!isHeadless && !checkGraphics()) {
       System.exit(Main.NO_GRAPHICS);
     }
 
     activity = activity.endAndStart("LaF init scheduling");
     Thread busyThread = Thread.currentThread();
-    // EndUserAgreement.Document type is not specified to avoid class loading
-    CompletableFuture<?> initUiTask = scheduleInitUi(busyThread, isHeadless);
+    // LookAndFeel type is not specified to avoid class loading
+    CompletableFuture<Object/*LookAndFeel*/> initUiTask = scheduleInitUi(busyThread, isHeadless);
     CompletableFuture<Boolean> agreementDialogWasShown;
     if (isHeadless) {
       agreementDialogWasShown = initUiTask.thenApply(__ -> true);
@@ -194,10 +192,6 @@ public final class StartupUtil {
       });
     }
     activity.end();
-
-    if (!checkJdkVersion()) {
-      System.exit(Main.JDK_CHECK_FAILED);
-    }
 
     activity = StartUpMeasurer.startActivity("config path computing");
     Path configPath = canonicalPath(PathManager.getConfigPath());
@@ -229,6 +223,10 @@ public final class StartupUtil {
       PluginManagerCore.scheduleDescriptorLoading();
     }
 
+    if (!checkJdkVersion()) {
+      System.exit(Main.JDK_CHECK_FAILED);
+    }
+
     forkJoinPool.execute(() -> {
       setupSystemLibraries();
       logEssentialInfoAboutIde(log, ApplicationInfoImpl.getShadowInstance(), args);
@@ -247,7 +245,7 @@ public final class StartupUtil {
     }
 
     // may be called from EDT, but other events in the queue should be processed before the `#patchSystem`
-    CompletableFuture<@Nullable Void> prepareUiFuture = agreementDialogWasShown
+    CompletableFuture<?> prepareUiFuture = agreementDialogWasShown
       .thenRunAsync(() -> {
         patchSystem(log, isHeadless);
 
@@ -283,11 +281,12 @@ public final class StartupUtil {
       .thenCompose(appStarter -> {
         mainClassLoadingWaitingActivity.end();
 
+        List<String> argsAsList = List.of(args);
         if (!isHeadless && configImportNeeded) {
           prepareUiFuture.join();
-          importConfig(Arrays.asList(args), log, appStarter, agreementDialogWasShown);
+          importConfig(argsAsList, log, appStarter, agreementDialogWasShown);
         }
-        return appStarter.start(Arrays.asList(args), prepareUiFuture);
+        return appStarter.start(argsAsList, prepareUiFuture.thenApply(__ -> initUiTask.join()));
       })
       .exceptionally(e -> {
         Throwable unwrappedError = e instanceof CompletionException && e.getCause() != null ? e.getCause() : e;
@@ -370,7 +369,7 @@ public final class StartupUtil {
 
   public interface AppStarter {
     /* called from IDE init thread */
-    @NotNull CompletableFuture<?> start(@NotNull List<String> args, @NotNull CompletableFuture<?> prepareUiFuture);
+    @NotNull CompletableFuture<?> start(@NotNull List<String> args, @NotNull CompletableFuture<Object> prepareUiFuture);
 
     /* called from IDE init thread */
     default void beforeImportConfigs() {}
@@ -425,11 +424,11 @@ public final class StartupUtil {
     }
   }
 
-  private static CompletableFuture<?> scheduleInitUi(Thread busyThread, boolean isHeadless) {
+  private static CompletableFuture<Object> scheduleInitUi(Thread busyThread, boolean isHeadless) {
     // calls `sun.util.logging.PlatformLogger#getLogger` - it takes enormous time (up to 500 ms)
     // only non-logging tasks can be executed before `setupLogger`
     Activity activityQueue = StartUpMeasurer.startActivity("LaF initialization (schedule)");
-    CompletableFuture<Void> initUiFuture = CompletableFuture.runAsync(() -> {
+    CompletableFuture<Object> initUiFuture = CompletableFuture.runAsync(() -> {
         checkHiDPISettings();
         blockATKWrapper();
 
@@ -439,13 +438,13 @@ public final class StartupUtil {
           System.setProperty("com.jetbrains.suppressWindowRaise", "true");
         }
 
-        Activity activity = StartUpMeasurer.startActivity("awt toolkit creating");
+        Activity activity = activityQueue.startChild("awt toolkit creating");
         Toolkit.getDefaultToolkit();
         activity.end();
 
         activityQueue.updateThreadName();
       }, ForkJoinPool.commonPool())
-      .thenRunAsync(() -> {
+      .thenApplyAsync(__ -> {
         activityQueue.end();
 
         Activity activity = null;
@@ -497,10 +496,7 @@ public final class StartupUtil {
           JBUIScale.scale(1f);
         }
 
-        activity = activity.endAndStart("LaF initialization");
-        initializeLaF(baseLaF);
-
-        StartUpMeasurer.setCurrentState(LoadingState.LAF_INITIALIZED);
+        StartUpMeasurer.setCurrentState(LoadingState.BASE_LAF_INITIALIZED);
 
         activity = activity.endAndStart("awt thread busy notification");
         /*
@@ -511,6 +507,8 @@ public final class StartupUtil {
          */
         AWTAutoShutdown.getInstance().notifyThreadBusy(busyThread);
         activity.end();
+
+        return baseLaF;
       }, it -> EventQueue.invokeLater(it) /* don't use a method reference here (`EventQueue` class must be loaded on demand) */);
 
     if (isUsingSeparateWriteThread()) {
@@ -522,21 +520,10 @@ public final class StartupUtil {
         finally {
           activity.end();
         }
-      }, ForkJoinPool.commonPool()));
+      }, ForkJoinPool.commonPool())).thenApply(__ -> initUiFuture.join());
     }
     else {
       return initUiFuture;
-    }
-  }
-
-  // separate method for easier profiling
-  private static void initializeLaF(LookAndFeel baseLaF) {
-    try {
-      // required even in a headless mode, because some tests create configurables and our LaF is expected
-      UIManager.setLookAndFeel(new IntelliJLaf(baseLaF));
-    }
-    catch (UnsupportedLookAndFeelException e) {
-      throw new CompletionException(e);
     }
   }
 
@@ -580,7 +567,7 @@ public final class StartupUtil {
     if (document != null) {
       Agreements.showEndUserAndDataSharingAgreements(document);
     }
-    else if (AppUIUtil.needToShowUsageStatsConsent()) {
+    else if (ConsentOptions.needToShowUsageStatsConsent()) {
       Agreements.showDataSharingAgreement();
     }
     activity.end();
@@ -621,11 +608,11 @@ public final class StartupUtil {
 
   private static void updateFrameClassAndWindowIcon() {
     Activity activity = StartUpMeasurer.startActivity("frame class updating");
-    AppUIUtil.updateFrameClass(Toolkit.getDefaultToolkit());
+    AppUIUtil.updateFrameClass();
 
     activity = activity.endAndStart("update window icon");
     // `updateWindowIcon` should be called after `UIUtil#initSystemFontData`, because it uses computed system font data for scale context
-    if (!PluginManagerCore.isRunningFromSources() && !AppUIUtil.isWindowIconAlreadyExternallySet()) {
+    if (!AppUIUtil.isWindowIconAlreadyExternallySet() && !PluginManagerCore.isRunningFromSources()) {
       // most of the time is consumed by loading SVG and can be done in parallel
       AppUIUtil.updateWindowIcon(JOptionPane.getRootFrame());
     }
@@ -935,16 +922,10 @@ public final class StartupUtil {
 
   // must be called from EDT
   private static void patchSystem(Logger log, boolean isHeadless) {
-    assert EventQueue.isDispatchThread() : Thread.currentThread();
-
     Activity activity = StartUpMeasurer.startActivity("event queue replacing");
     // replace system event queue
-    IdeEventQueue eventQueue = IdeEventQueue.getInstance();
-
-    LookAndFeel lookAndFeel = UIManager.getLookAndFeel();
-    if (lookAndFeel instanceof DarculaLaf) {
-      ((DarculaLaf)lookAndFeel).ideEventQueueInitialized(eventQueue);
-    }
+    //noinspection ResultOfMethodCallIgnored
+    IdeEventQueue.getInstance();
 
     if (!isHeadless) {
       if ("true".equals(System.getProperty("idea.check.swing.threading"))) {
@@ -955,7 +936,7 @@ public final class StartupUtil {
       if (SystemInfoRt.isXWindow) {
         activity = activity.endAndStart("linux wm set");
         String wmName = X11UiUtil.getWmName();
-        log.info("WM detected: " + wmName + ", desktop: " + requireNonNullElse(System.getenv("XDG_CURRENT_DESKTOP"), "-"));
+        log.info("WM detected: " + wmName + ", desktop: " + Objects.requireNonNullElse(System.getenv("XDG_CURRENT_DESKTOP"), "-"));
         if (wmName != null) {
           X11UiUtil.patchDetectedWm(wmName);
         }

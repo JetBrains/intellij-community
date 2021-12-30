@@ -47,7 +47,7 @@ import java.nio.file.Path
 import java.util.*
 import java.util.concurrent.*
 import java.util.function.BiFunction
-import javax.swing.UIManager
+import javax.swing.LookAndFeel
 import kotlin.system.exitProcess
 
 private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
@@ -55,7 +55,7 @@ private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED
 private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 // for non-technical reasons this method cannot return CompletableFuture
-fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) {
+fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>) {
   val args = processProgramArguments(rawArgs)
 
   val initAppActivity = StartupUtil.startupStart.endAndStart(Activities.INIT_APP)
@@ -72,12 +72,17 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<*>) 
   }
 
   // event queue is replaced as part of this task - application must be created only after that
-  initAppActivity.runChild("prepare ui waiting") {
+  val baseLaf = initAppActivity.runChild("prepare ui waiting") {
     (prepareUiFuture as CompletableFuture<*>).join()
   }
 
+  ForkJoinPool.commonPool().execute {
+    initAppActivity.runChild("base laf passing") {
+      DarculaLaf.setPreInitializedBaseLaf(baseLaf as LookAndFeel)
+    }
+  }
+
   val app = ApplicationImpl(isInternal, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())
-  (UIManager.getLookAndFeel() as? DarculaLaf)?.appCreated(app)
   ApplicationImpl.preventAwtAutoShutdown(app)
 
   val pluginSet = initAppActivity.runChild("plugin descriptor init waiting") {
@@ -124,13 +129,14 @@ private fun startApp(app: ApplicationImpl,
                      initAppActivity: Activity,
                      pluginSet: PluginSet,
                      args: List<String>) {
-    // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed,
-    // but it is OK, because registry is not and should not be used.
-    initConfigurationStore(app)
-    val preloadSyncServiceFuture = preloadServices(pluginSet.getEnabledModules(), app, activityPrefix = "")
+  // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed,
+  // but it is OK, because registry is not and should not be used.
+  initConfigurationStore(app)
+  val preloadSyncServiceFuture = preloadServices(pluginSet.getEnabledModules(), app, activityPrefix = "")
 
-    val placeOnEventQueueActivity = initAppActivity.startChild(Activities.PLACE_ON_EVENT_QUEUE)
-    val loadComponentInEdtFuture = CompletableFuture.runAsync({
+  val placeOnEventQueueActivity = initAppActivity.startChild(Activities.PLACE_ON_EVENT_QUEUE)
+  val loadComponentInEdtFuture = CompletableFuture.runAsync(
+    {
       placeOnEventQueueActivity.end()
 
       val indicator = if (SplashManager.SPLASH_WINDOW == null) {
@@ -142,17 +148,19 @@ private fun startApp(app: ApplicationImpl,
         }
       }
       app.loadComponents(indicator)
-    }, Executor(app::invokeLater))
+    },
+    Executor(app::invokeLater)
+  )
 
-  CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture, StartupUtil.getServerFuture())
-    .thenComposeAsync({
+  CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture, StartupUtil.getServerFuture()).thenComposeAsync(
+    {
       val pool = ForkJoinPool.commonPool()
 
       val future = CompletableFuture.runAsync({
-        initAppActivity.runChild("app initialized callback") {
-          ForkJoinTask.invokeAll(callAppInitialized(app))
-        }
-      }, pool)
+                                                initAppActivity.runChild("app initialized callback") {
+                                                  ForkJoinTask.invokeAll(callAppInitialized(app))
+                                                }
+                                              }, pool)
 
       if (!app.isUnitTestMode && !app.isHeadlessEnvironment &&
           java.lang.Boolean.parseBoolean(System.getProperty("enable.activity.preloading", "true"))) {
@@ -175,7 +183,8 @@ private fun startApp(app: ApplicationImpl,
       }
 
       future
-    }, Executor {
+    },
+    Executor {
       // if `loadComponentInEdtFuture` is completed after `preloadSyncServiceFuture`,
       // then this task will be executed in EDT, so force execution out of EDT
       if (app.isDispatchThread) {
@@ -184,26 +193,26 @@ private fun startApp(app: ApplicationImpl,
       else {
         it.run()
       }
-    })
-    .join()
-
-    addActivateAndWindowsCliListeners()
-    initAppActivity.end()
-
-    PluginManagerMain.checkThirdPartyPluginsAllowed()
-
-    if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
-      starter.main(args)
-      // no need to use pool once plugins are loaded
-      ZipFilePool.POOL = null
     }
-    else {
-      ApplicationManager.getApplication().invokeLater {
-        (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
-          starter.main(args)
-        }
+  ).join()
+
+  addActivateAndWindowsCliListeners()
+  initAppActivity.end()
+
+  PluginManagerMain.checkThirdPartyPluginsAllowed()
+
+  if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {
+    starter.main(args)
+    // no need to use pool once plugins are loaded
+    ZipFilePool.POOL = null
+  }
+  else {
+    ApplicationManager.getApplication().invokeLater {
+      (TransactionGuard.getInstance() as TransactionGuardImpl).performUserActivity {
+        starter.main(args)
       }
     }
+  }
 }
 
 private fun findCustomAppStarterAndStart(pluginSet: PluginSet,

@@ -34,7 +34,7 @@ import java.util.Map;
 @SuppressWarnings("UseJBColor")
 public final class JBUI {
   static {
-    LoadingState.LAF_INITIALIZED.checkOccurred();
+    LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
   }
 
   /**
