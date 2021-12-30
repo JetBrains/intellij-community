@@ -37,7 +37,8 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
   private fun assertTheSameContent(relativePath: Path, dir1: Path, dir2: Path): AssertionError? {
     val path1 = dir1.resolve(relativePath)
     val path2 = dir2.resolve(relativePath)
-    if (!path1.isRegularFile() || path1.checksum() == path2.checksum()) {
+    if (!Files.exists(path1) || !Files.exists(path2) ||
+        !path1.isRegularFile() || path1.checksum() == path2.checksum()) {
       return null
     }
     val error = AssertionError("Failed for $relativePath")
@@ -151,17 +152,13 @@ class FileTreeContentTest(private val diffDir: Path = Path.of(System.getProperty
     val listing2 = Files.walk(dir2).use { it.toList() }
     val relativeListing1 = listing1.map(dir1::relativize)
     val listingDiff = listingDiff(relativeListing1.toSet(), listing2.map(dir2::relativize).toSet())
-    if (listingDiff.isNotEmpty()) {
-      return AssertionError("Listing diff for $dir1 and $dir2: $listingDiff")
+    val contentComparisonFailures = relativeListing1.mapNotNull { assertTheSameContent(it, dir1, dir2) }
+    return when {
+      listingDiff.isNotEmpty() -> AssertionError(listingDiff.joinToString(prefix = "Listing diff for $dir1 and $dir2:\n", separator = "\n"))
+      contentComparisonFailures.isNotEmpty() -> AssertionError("$dir1 doesn't match $dir2")
+      else -> null
+    }?.apply {
+      contentComparisonFailures.forEach(::addSuppressed)
     }
-    val contentComparisonFailures = relativeListing1.mapNotNull {
-      assertTheSameContent(it, dir1, dir2)
-    }
-    return if (contentComparisonFailures.isNotEmpty()) {
-      AssertionError("$dir1 doesn't match $dir2").apply {
-        contentComparisonFailures.forEach(::addSuppressed)
-      }
-    }
-    else null
   }
 }
