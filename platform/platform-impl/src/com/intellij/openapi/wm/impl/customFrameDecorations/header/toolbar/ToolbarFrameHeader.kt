@@ -108,7 +108,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
     return result
   }
 
-  override fun getHeaderBackground(active: Boolean) = CustomFrameDecorations.mainWindowTitlePaneBackground(active)
+  override fun getHeaderBackground(active: Boolean) = CustomFrameDecorations.mainToolbarBackground(active)
 
   private fun getElementRect(comp: Component, rectProcessor: ((Rectangle) -> Unit)? = null): RelativeRectangle {
     val rect = Rectangle(comp.size)
@@ -150,7 +150,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
       button.icon = IconLoader.loadCustomVersionOrScale(icon, 20f) //todo change to precompiled icon later
     }
 
-    button.isOpaque = false
+    button.isContentAreaFilled = false
     addHoverAndPressStateListener(button,
                                   hoveredStateCallback = { cmp, hovered ->
                                     if (cmp !is AbstractButton) return@addHoverAndPressStateListener
@@ -159,7 +159,7 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
                                       cmp.isContentAreaFilled = true
                                     }
                                     else {
-                                      cmp.putClientProperty("JButton.backgroundColor", UIManager.getColor("MainToolbar.icon.background"))
+                                      cmp.putClientProperty("JButton.backgroundColor", CustomFrameDecorations.mainToolbarBackground(true))
                                       cmp.isContentAreaFilled = false
                                     }
                                   },

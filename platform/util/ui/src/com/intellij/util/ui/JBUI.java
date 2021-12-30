@@ -446,9 +446,9 @@ public final class JBUI {
         return JBColor.namedColor("TitlePane.background", paneBackground());
       }
 
-      public static @NotNull Color mainWindowTitlePaneBackground(boolean active) {
-        JBColor activeBG = JBColor.namedColor("TitlePane.mainWindow.background", titlePaneBackground());
-        JBColor inactiveBG = JBColor.namedColor("TitlePane.mainWindow.inactiveBackground", activeBG);
+      public static @NotNull Color mainToolbarBackground(boolean active) {
+        JBColor activeBG = JBColor.namedColor("MainToolbar.background", titlePaneBackground());
+        JBColor inactiveBG = JBColor.namedColor("MainToolbar.inactiveBackground", activeBG);
         return active ? activeBG : inactiveBG;
       }
 

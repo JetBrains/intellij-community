@@ -293,6 +293,7 @@
 
     "MainToolbar": {
       "background": "Grey2",
+      "inactiveBackground": "Grey2",
       "icon": {
         "borderInsets": "10,10,10,10",
         "background": "Grey2",
@@ -309,10 +310,6 @@
     },
 
     "TitlePane": {
-      "mainWindow": {
-        "background": "Grey2",
-        "inactiveBackground": "Grey2"
-      },
       "Button": {
         "hoverBackground": "Grey3",
         "preferredSize": "36,40"
