@@ -9,12 +9,11 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.stream.Stream;
 
 public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspectionTool {
 
@@ -34,7 +33,8 @@ public class ExcessiveLambdaUsageInspection extends AbstractBaseJavaLocalInspect
         if (!(lambda.getBody() instanceof PsiExpression)) return;
         PsiExpression expr = (PsiExpression)lambda.getBody();
         if (!ExpressionUtils.isSafelyRecomputableExpression(expr)) return;
-        if (Stream.of(lambda.getParameterList().getParameters()).anyMatch(param -> ExpressionUtils.isReferenceTo(expr, param))) return;
+        if (ContainerUtil.or(lambda.getParameterList().getParameters(),
+                             param -> ExpressionUtils.isReferenceTo(expr, param))) return;
 
         for (LambdaAndExplicitMethodPair info : LambdaAndExplicitMethodPair.INFOS) {
           if(info.isLambdaCall(call, lambda)) {
