@@ -9,6 +9,7 @@ import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.ex.ActionUtil.performActionDumbAwareWithCallbacks
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.ClearableLazyValue
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.changes.ui.*
@@ -17,6 +18,7 @@ import com.intellij.openapi.vcs.changes.ui.HoverChangesTree.Companion.getRowHeig
 import com.intellij.openapi.vcs.changes.ui.HoverChangesTree.Companion.getTransparentScrollbarWidth
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.SimpleTextAttributes
+import com.intellij.util.FontUtil
 import com.intellij.util.Processor
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.JBUI
@@ -28,6 +30,7 @@ import com.intellij.vcs.log.ui.render.LabelIconCache
 import com.intellij.vcs.log.ui.render.LabelPainter
 import git4idea.i18n.GitBundle
 import git4idea.log.GitRefManager
+import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryManager
 import git4idea.stash.GitStashTracker
 import git4idea.stash.GitStashTrackerListener
@@ -79,7 +82,7 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
     for ((root, stashesList) in stashesMap) {
       val rootNode = if (stashesMap.size > 1 &&
                          !(stashesList is GitStashTracker.Stashes.Loaded && stashesList.stashes.isEmpty())) {
-        createRootNode(root).also { modelBuilder.insertSubtreeRoot(it) }
+        createRootNode(root)?.also { modelBuilder.insertSubtreeRoot(it) } ?: modelBuilder.myRoot
       }
       else {
         modelBuilder.myRoot
@@ -103,10 +106,9 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
     }
   }
 
-  private fun createRootNode(root: VirtualFile): ChangesBrowserNode<*> {
-    val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root)
-                     ?: return ChangesBrowserNode.createFile(project, root)
-    return RepositoryChangesBrowserNode(repository)
+  private fun createRootNode(root: VirtualFile): ChangesBrowserNode<*>? {
+    val repository = GitRepositoryManager.getInstance(project).getRepositoryForRootQuick(root) ?: return null
+    return StashRepositoryChangesBrowserNode(repository)
   }
 
   private fun TreeModelBuilder.insertErrorNode(error: VcsException, parent: ChangesBrowserNode<*>) {
@@ -144,6 +146,18 @@ class GitStashTree(project: Project, parentDisposable: Disposable) : ChangesTree
     }
 
     override fun getTextPresentation(): String = stash.subject
+  }
+
+  class StashRepositoryChangesBrowserNode(repository: GitRepository) : RepositoryChangesBrowserNode(repository) {
+    private val stashCount = ClearableLazyValue.create {
+      VcsTreeModelData.children(this).userObjects(StashInfo::class.java).size
+    }
+
+    override fun getCountText() = FontUtil.spaceAndThinSpace() + stashCount.value
+    override fun resetCounters() {
+      super.resetCounters()
+      stashCount.drop()
+    }
   }
 
   class MyTreeRenderer(val component: ChangesTree, renderer: ChangesBrowserNodeRenderer) : ChangesTreeCellRenderer(renderer) {

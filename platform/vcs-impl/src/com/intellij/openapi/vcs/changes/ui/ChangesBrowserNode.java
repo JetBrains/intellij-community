@@ -145,13 +145,13 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
   @Override
   public void insert(MutableTreeNode newChild, int childIndex) {
     super.insert(newChild, childIndex);
-    resetFileCounters();
+    resetCounters();
   }
 
   @Override
   public void remove(int childIndex) {
     super.remove(childIndex);
-    resetFileCounters();
+    resetCounters();
   }
 
   protected boolean isFile() {
@@ -184,7 +184,7 @@ public abstract class ChangesBrowserNode<T> extends DefaultMutableTreeNode imple
     return myDirectoryCount;
   }
 
-  private void resetFileCounters() {
+  protected void resetCounters() {
     myFileCount = -1;
     myDirectoryCount = -1;
   }
