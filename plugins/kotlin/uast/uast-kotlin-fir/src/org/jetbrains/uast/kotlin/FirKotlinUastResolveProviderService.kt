@@ -275,8 +275,12 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
 
         val resolvedTargetElement = resolvedTargetSymbol.psi
 
-        // Shortcut: if the resolution ends up with compiled class/member or package info, return it.
-        if (resolvedTargetElement is ClsMemberImpl<*> || resolvedTargetElement is PsiPackageImpl) {
+        // Shortcut: if the resolution target is compiled class/member, package info, or pure Java declarations,
+        //   we can return it early here (to avoid expensive follow-up steps: module retrieval and light element conversion).
+        if (resolvedTargetElement is ClsMemberImpl<*> ||
+            resolvedTargetElement is PsiPackageImpl ||
+            !isKotlin(resolvedTargetElement)
+        ) {
             return resolvedTargetElement
         }
 
