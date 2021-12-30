@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
+import com.intellij.lang.Language
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.getAccessorLightMethods
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
+import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
@@ -137,3 +139,13 @@ val KtElement.typeOwnerKind: TypeOwnerKind
         is KtExpression -> TypeOwnerKind.EXPRESSION
         else -> TypeOwnerKind.UNKNOWN
     }
+
+/** Returns true if the given element is written in Kotlin. */
+fun isKotlin(element: PsiElement?): Boolean {
+    return element != null && isKotlin(element.language)
+}
+
+/** Returns true if the given language is Kotlin. */
+fun isKotlin(language: Language?): Boolean {
+    return language == KotlinLanguage.INSTANCE
+}
