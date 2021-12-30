@@ -28,7 +28,8 @@ import javax.swing.JComponent
 import javax.swing.border.Border
 import kotlin.math.max
 
-@ApiStatus.Experimental
+@Deprecated("Use Row.segmentedButton")
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfiguration: SpacingConfiguration) :
   ActionToolbarImpl("ButtonSelector", actionGroup, true, true) {
 
@@ -182,7 +183,8 @@ private class SegmentedButton(
   }
 }
 
-private fun getBorderColor(enabled: Boolean, hasFocus: Boolean): Color {
+@ApiStatus.Internal
+internal fun getBorderColor(enabled: Boolean, hasFocus: Boolean): Color {
   return if (enabled) {
     if (hasFocus) JBUI.CurrentTheme.Button.focusBorderColor(false)
     else
@@ -193,7 +195,8 @@ private fun getBorderColor(enabled: Boolean, hasFocus: Boolean): Color {
   }
 }
 
-private fun paintBorder(g: Graphics2D, r: Rectangle) {
+@ApiStatus.Internal
+internal fun paintBorder(g: Graphics2D, r: Rectangle) {
   val border = Path2D.Float(Path2D.WIND_EVEN_ODD)
   val lw = DarculaUIUtil.LW.float
   var arc = DarculaUIUtil.BUTTON_ARC.float
@@ -235,7 +238,8 @@ internal class SegmentedButtonBorder : Border {
   }
 }
 
-private object SegmentedButtonLook : IdeaActionButtonLook() {
+@ApiStatus.Internal
+internal object SegmentedButtonLook : IdeaActionButtonLook() {
 
   override fun paintBorder(g: Graphics, component: JComponent, state: Int) {
     // Border is painted in parent

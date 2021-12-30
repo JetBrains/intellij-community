@@ -1,21 +1,21 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.dsl.builder.impl
 
-import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.observable.properties.GraphProperty
-import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
-import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.ui.ComboBox
+import com.intellij.openapi.ui.DialogPanel
 import com.intellij.ui.dsl.builder.RightGap
 import com.intellij.ui.dsl.builder.SegmentedButton
-import com.intellij.ui.dsl.builder.components.SegmentedButtonAction
-import com.intellij.ui.dsl.builder.components.SegmentedButtonToolbar
+import com.intellij.ui.dsl.builder.SpacingConfiguration
+import com.intellij.ui.dsl.gridLayout.Constraints
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
+import com.intellij.util.lockOrSkip
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.DefaultComboBoxModel
 
 @ApiStatus.Internal
@@ -26,10 +26,13 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
   private var property: GraphProperty<T>? = null
   private var maxButtonsCount = SegmentedButton.DEFAULT_MAX_BUTTONS_COUNT
 
-  /**
-   * Keep instance to avoid [property] listeners creations after every [buildComboBox]
-   */
-  private var comboBox: ComboBox<T>? = null
+  private val comboBox = ComboBox<T>()
+  private val segmentedButtonComponent = SegmentedButtonComponent(options, renderer)
+
+  init {
+    comboBox.renderer = listCellRenderer { value, _, _ -> text = renderer(value) }
+    rebuild()
+  }
 
   override fun horizontalAlign(horizontalAlign: HorizontalAlign): SegmentedButton<T> {
     super.horizontalAlign(horizontalAlign)
@@ -74,7 +77,8 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
 
   override fun bind(property: GraphProperty<T>): SegmentedButton<T> {
     this.property = property
-    comboBox?.bind(property)
+    comboBox.bind(property)
+    bindSegmentedButtonComponent(property)
     rebuild()
     return this
   }
@@ -85,51 +89,38 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
     return this
   }
 
-  fun rebuild(forceCreation: Boolean = false) {
-    if (component == null && !forceCreation) {
-      return
-    }
+  override fun init(panel: DialogPanel, constraints: Constraints, spacing: SpacingConfiguration) {
+    super.init(panel, constraints, spacing)
+    segmentedButtonComponent.spacing = spacing
+  }
 
+  private fun rebuild() {
     if (ScreenReader.isActive() || options.size > maxButtonsCount) {
-      buildComboBox()
+      fillComboBox()
+      component = comboBox
     }
     else {
-      buildSegmentedButtonToolbar()
+      fillSegmentedButtonComponent()
+      component = segmentedButtonComponent
     }
   }
 
-  private fun buildComboBox() {
+  private fun fillComboBox() {
     val selectedItem = getSelectedItem()
-    var result = comboBox
-    if (result == null) {
-      result = ComboBox<T>()
-      result.renderer = listCellRenderer { value, _, _ -> text = renderer(value) }
-      property?.let { result.bind(it) }
-      comboBox = result
-    }
-
     val model = DefaultComboBoxModel<T>()
     model.addAll(options)
-    result.model = model
+    comboBox.model = model
     if (selectedItem != null && options.contains(selectedItem)) {
-      result.selectedItem = selectedItem
+      comboBox.selectedItem = selectedItem
     }
-    component = result
   }
 
-  private fun buildSegmentedButtonToolbar() {
-    val actionGroup: DefaultActionGroup
-    if (options.isEmpty()) {
-      actionGroup = DefaultActionGroup()
+  private fun fillSegmentedButtonComponent() {
+    val selectedItem = getSelectedItem()
+    segmentedButtonComponent.options = options
+    if (selectedItem != null && options.contains(selectedItem)) {
+      segmentedButtonComponent.selection = selectedItem
     }
-    else {
-      val propertyArg = property ?: PropertyGraph().graphProperty { options.first() }
-      actionGroup = DefaultActionGroup(options.map { SegmentedButtonAction(it, propertyArg, renderer(it)) })
-    }
-
-    val toolbar = SegmentedButtonToolbar(actionGroup, placeholderCellData!!.spacing)
-    toolbar.targetComponent = null // any data context is supported, suppress warning
-    component = toolbar
   }
 
   private fun getSelectedItem(): T? {
@@ -141,9 +132,25 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
     val c = component
     @Suppress("UNCHECKED_CAST")
     return when (c) {
-      is ComboBox<*> -> c.selectedItem as? T
-      is SegmentedButtonToolbar -> c.getSelectedOption() as? T
+      comboBox -> comboBox.selectedItem as? T
+      segmentedButtonComponent -> segmentedButtonComponent.selection
       else -> null
+    }
+  }
+
+  private fun bindSegmentedButtonComponent(property: GraphProperty<T>) {
+    val mutex = AtomicBoolean()
+    property.afterChange {
+      mutex.lockOrSkip {
+        segmentedButtonComponent.selection = it
+      }
+    }
+    segmentedButtonComponent.changeListener = {
+      segmentedButtonComponent.selection?.let {
+        mutex.lockOrSkip {
+          property.set(it)
+        }
+      }
     }
   }
 }

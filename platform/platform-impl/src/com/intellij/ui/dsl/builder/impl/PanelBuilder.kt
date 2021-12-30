@@ -224,9 +224,6 @@ internal class PanelBuilder(val rows: List<RowImpl>, val dialogPanelConfig: Dial
         val constraints = builder.constraints(width = width, horizontalAlign = cell.horizontalAlign, verticalAlign = cell.verticalAlign,
                                               gaps = gaps)
         cell.init(panel, constraints, dialogPanelConfig.spacing)
-        if (cell is SegmentedButtonImpl<*>) {
-          cell.rebuild(true)
-        }
       }
       null -> {
         builder.skip(1)

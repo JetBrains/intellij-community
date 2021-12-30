@@ -41,6 +41,7 @@ internal enum class DslComponentPropertyInternal {
  * [JPanel] descendants that should use default vertical gaps around similar to other standard components like labels, text fields etc
  */
 private val DEFAULT_VERTICAL_GAP_COMPONENTS = setOf(
+  SegmentedButtonComponent::class,
   SegmentedButtonToolbar::class,
   TextFieldWithBrowseButton::class,
   TitledSeparator::class
@@ -61,6 +62,7 @@ private val ALLOWED_LABEL_COMPONENTS = listOf(
   JSlider::class,
   JSpinner::class,
   JTextComponent::class,
+  SegmentedButtonComponent::class,
   SegmentedButtonToolbar::class
 )
 

@@ -49,7 +49,7 @@ internal abstract class PlaceholderBaseImpl<T : CellBase<T>>(private val parent:
     return this
   }
 
-  fun init(panel: DialogPanel, constraints: Constraints, spacing: SpacingConfiguration) {
+  open fun init(panel: DialogPanel, constraints: Constraints, spacing: SpacingConfiguration) {
     placeholderCellData = PlaceholderCellData(panel, constraints, spacing)
 
     if (component != null) {
