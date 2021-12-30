@@ -9,7 +9,7 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.workspaceModel.ide.getInstance
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
-import org.jetbrains.idea.maven.importing.worktree.MavenProjectImporterToWorkspaceModel
+import org.jetbrains.idea.maven.importing.workspaceModel.MavenProjectImporterToWorkspaceModel
 import org.jetbrains.idea.maven.project.*
 
 interface MavenProjectImporter {
