@@ -359,6 +359,11 @@
             displayType="STICKY_BALLOON"
             key="kotlin.external.compiler.updates.notification.group.name"
     />
+    <notificationGroup
+            id="Kotlin plugin updates"
+            displayType="STICKY_BALLOON"
+            key="plugin.updater.notification.group"
+    />
   </extensions>
 
   <!-- Navigation -->
