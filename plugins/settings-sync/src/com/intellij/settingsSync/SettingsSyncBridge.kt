@@ -93,7 +93,7 @@ internal class SettingsSyncBridge(application: Application,
 
     if (newIdePosition != masterPosition) { // master has advanced further that ide => the ide needs to be updated
       val pushResult: SettingsSyncPushResult = pushToIde(settingsLog.collectCurrentSnapshot())
-      LOG.info("Result of pushing settings to the cloud: $pushResult")
+      LOG.info("Result of pushing settings to the IDE: $pushResult")
       when (pushResult) {
         SettingsSyncPushResult.Success -> settingsLog.setIdePosition(masterPosition)
         is SettingsSyncPushResult.Error -> {
@@ -113,6 +113,7 @@ internal class SettingsSyncBridge(application: Application,
 
     if (pushToCloudRequired || newCloudPosition != masterPosition) {
       val pushResult: SettingsSyncPushResult = pushToCloud(settingsLog.collectCurrentSnapshot())
+      LOG.info("Result of pushing settings to the cloud: $pushResult")
       when (pushResult) {
         SettingsSyncPushResult.Success -> settingsLog.setCloudPosition(masterPosition)
         is SettingsSyncPushResult.Error -> {

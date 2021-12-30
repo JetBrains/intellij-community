@@ -148,7 +148,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
   private fun applySnapshotAndCommit(refName: String, snapshot: SettingsSnapshot) {
     // todo check repository consistency before each operation: that we're on master, that rb is deleted, that there're no uncommitted changes
 
-    LOG.info("Applying settings changes to $refName")
+    LOG.info("Applying settings changes to branch $refName")
     val addCommand = git.add()
     val message = "Apply changes received from $refName"
     for (fileState in snapshot.fileStates) {
@@ -217,7 +217,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
   private fun fastForwardMaster(branchOnSamePosition: Ref, targetBranch: Ref): BranchPosition {
       LOG.info("Advancing master. Its position is equal to ${branchOnSamePosition.short}: ${master.objectId.short}. " +
-               "Expecting fast-forward merge to ${targetBranch.short} ${targetBranch.objectId.short}")
+               "Fast-forwarding to ${targetBranch.short} ${targetBranch.objectId.short}")
       val mergeResult = git.merge().include(targetBranch).call()
       if (mergeResult.mergeStatus != FAST_FORWARD) {
         LOG.warn("Non-fast-forward result: $mergeResult")

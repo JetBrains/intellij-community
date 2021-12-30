@@ -49,6 +49,7 @@ private const val TIMEOUT = 10000
 
   private fun sendSnapshotFile(inputStream: InputStream) {
     val currentVersion = getCurrentVersion()
+    LOG.info("Sending $SETTINGS_SYNC_SNAPSHOT_ZIP, current version: $currentVersion")
     if (currentVersion != null) {
       clientVersionContext.doWithVersion(SETTINGS_SYNC_SNAPSHOT_ZIP, currentVersion) {
         client.write(SETTINGS_SYNC_SNAPSHOT_ZIP, inputStream)
@@ -125,7 +126,7 @@ private const val TIMEOUT = 10000
       return SettingsSyncPushResult.Success
     }
     catch (ive: InvalidVersionIdException) {
-      LOG.info("Rejected: version doesn't match the version on server")
+      LOG.info("Rejected: version doesn't match the version on server: ${ive.message}")
       return SettingsSyncPushResult.Rejected
     }
     // todo handle authentication failure: propose to login
