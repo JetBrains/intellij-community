@@ -78,9 +78,9 @@ public class Java8ListReplaceAllInspection extends AbstractBaseJavaLocalInspecti
         super.visitForStatement(statement);
         PsiStatement body = statement.getBody();
         PsiStatement[] statements = ControlFlowUtils.unwrapBlock(body);
-        if (dontWarnInCaseOfMultilineLambda && isMultilineLambda(body, statements)) return;
         PsiMethodCallExpression maybeSetCall = getLastMethodCall(statements);
         if (!LIST_SET.test(maybeSetCall)) return;
+        if (dontWarnInCaseOfMultilineLambda && isMultilineLambda(body, statements)) return;
         PsiExpression index = PsiUtil.skipParenthesizedExprDown(maybeSetCall.getArgumentList().getExpressions()[0]);
         CountingLoop countingLoop = CountingLoop.from(statement);
         if (countingLoop == null) return;
