@@ -369,6 +369,11 @@
             displayType="STICKY_BALLOON"
             key="configuration.migration.group.name"
     />
+    <notificationGroup
+            id="Update Kotlin code style"
+            displayType="STICKY_BALLOON"
+            key="configuration.kotlin.code.style.group.name"
+    />
   </extensions>
 
   <!-- Navigation -->
