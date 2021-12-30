@@ -359,6 +359,15 @@
     <tipAndTrick file="Kotlin_Java_convert.html"/>
   </extensions>
 
+  <!-- Notifications -->
+  <extensions defaultExtensionNs="com.intellij">
+    <notificationGroup
+            id="kotlin.external.compiler.updates"
+            displayType="STICKY_BALLOON"
+            key="kotlin.external.compiler.updates.notification.group.name"
+    />
+  </extensions>
+
   <!-- Navigation -->
   <extensions defaultExtensionNs="com.intellij">
     <navbar implementation="org.jetbrains.kotlin.idea.navigationToolbar.KotlinNavBarModelExtension" order="first"/>

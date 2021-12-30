@@ -8,6 +8,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.ReadAction
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataImportListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ModuleRootEvent
 import com.intellij.openapi.roots.ModuleRootListener
@@ -17,6 +18,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.idea.KotlinPluginCompatibilityVerifier.checkCompatibility
+import org.jetbrains.kotlin.idea.configuration.notifications.checkExternalKotlinCompilerVersion
 import org.jetbrains.kotlin.idea.configuration.notifications.notifyKotlinStyleUpdateIfNeeded
 import org.jetbrains.kotlin.idea.reporter.KotlinReportSubmitter.Companion.setupReportingFromRelease
 import org.jetbrains.kotlin.idea.search.containsKotlinFile
@@ -37,6 +39,7 @@ internal class PluginStartupActivity : StartupActivity.Background {
                 KotlinJavaPsiFacade.getInstance(project).clearPackageCaches()
             }
         })
+
         connection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
             override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
                 clearPackageCaches()
@@ -53,6 +56,10 @@ internal class PluginStartupActivity : StartupActivity.Background {
             private fun clearPackageCaches() {
                 KotlinJavaPsiFacade.getInstance(project).clearPackageCaches()
             }
+        })
+
+        connection.subscribe(ProjectDataImportListener.TOPIC, ProjectDataImportListener {
+            checkExternalKotlinCompilerVersion(project)
         })
 
         initializeDiagnostics()
