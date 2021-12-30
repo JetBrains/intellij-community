@@ -3,8 +3,12 @@ package org.jetbrains.kotlin.idea.quickfix
 
 import com.intellij.codeInsight.intention.HighPriorityAction
 import com.intellij.codeInsight.intention.IntentionAction
+import com.intellij.codeInspection.util.IntentionName
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.NlsContext
+import com.intellij.openapi.util.NlsSafe
+import org.jetbrains.annotations.Nls
 import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.descriptors.*
@@ -53,11 +57,19 @@ open class MakeUpperBoundNonNullableFix(
     sealed class Kind {
         abstract val renderedUpperBound: String
 
+        @IntentionName
+        abstract fun getText(parameter: KtTypeParameter): String
+
         /**
          * Add `Any` as an upper bound
          */
         object AddAnyAsUpperBound : Kind() {
             override val renderedUpperBound = StandardNames.FqNames.any.render()
+
+            override fun getText(parameter: KtTypeParameter): String = KotlinBundle.message(
+                "fix.make.upperbound.not.nullable.any.text",
+                parameter.name ?: ""
+            )
         }
 
         /**
@@ -66,27 +78,16 @@ open class MakeUpperBoundNonNullableFix(
          */
         class ReplaceExistingUpperBound(val replacement: KotlinType) : Kind() {
             override val renderedUpperBound = IdeDescriptorRenderers.SOURCE_CODE.renderType(replacement)
+
+            override fun getText(parameter: KtTypeParameter): String = KotlinBundle.message(
+                "fix.make.upperbound.not.nullable.remove.nullability.text",
+                parameter.name ?: "",
+                renderedUpperBound
+            )
         }
     }
 
-    override fun getText(): String {
-        val element = this.element ?: return ""
-        val parameterName = element.name ?: ""
-        return when (kind) {
-            Kind.AddAnyAsUpperBound ->
-                KotlinBundle.message(
-                    "fix.make.upperbound.not.nullable.any.text",
-                    parameterName
-                )
-            is Kind.ReplaceExistingUpperBound ->
-                KotlinBundle.message(
-                    "fix.make.upperbound.not.nullable.remove.nullability.text",
-                    parameterName,
-                    kind.renderedUpperBound
-                )
-        }
-    }
-
+    override fun getText(): String = element?.let { kind.getText(it) } ?: ""
     override fun getFamilyName() = KotlinBundle.message("fix.make.upperbound.not.nullable.family")
 
     override fun isAvailable(project: Project, editor: Editor?, file: KtFile): Boolean {
@@ -99,12 +100,8 @@ open class MakeUpperBoundNonNullableFix(
     }
 
     override fun invoke(project: Project, editor: Editor?, file: KtFile) {
-        val element = element ?: return
-        updateUpperBound(project, element, kind.renderedUpperBound)
-    }
-
-    private fun updateUpperBound(project: Project, typeParameter: KtTypeParameter, upperBound: String) {
-        val typeReference = KtPsiFactory(project).createType(upperBound)
+        val typeParameter = element ?: return
+        val typeReference = KtPsiFactory(project).createType(kind.renderedUpperBound)
         val insertedTypeReference = typeParameter.setExtendsBound(typeReference) ?: return
         ShortenReferences.DEFAULT.process(insertedTypeReference)
     }
