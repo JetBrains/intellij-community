@@ -9,13 +9,11 @@ package com.intellij.debugger.ui.impl.watch;
 import com.intellij.debugger.engine.StackFrameContext;
 import com.intellij.debugger.engine.evaluation.EvaluationContextImpl;
 import com.intellij.debugger.engine.evaluation.TextWithImports;
-import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.impl.PositionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiCodeFragment;
 import com.sun.jdi.Value;
-import org.jetbrains.annotations.ApiStatus;
 
 public class WatchItemDescriptor extends EvaluationDescriptor {
   public WatchItemDescriptor(Project project, TextWithImports text) {
@@ -32,12 +30,6 @@ public class WatchItemDescriptor extends EvaluationDescriptor {
     super(text, project, value);
     setValueLabel("");
     myStoredEvaluationContext = evaluationContext;
-  }
-
-  @ApiStatus.Experimental
-  public WatchItemDescriptor(Project project, TextWithImports text, ExpressionEvaluator evaluator) {
-    super(text, project, evaluator);
-    setValueLabel("");
   }
 
   @Override

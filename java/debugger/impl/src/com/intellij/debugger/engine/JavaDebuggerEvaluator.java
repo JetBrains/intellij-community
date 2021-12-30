@@ -147,7 +147,12 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
               throw ex;
             }
           });
-          WatchItemDescriptor descriptor = new WatchItemDescriptor(project, text.get(), evaluator);
+          WatchItemDescriptor descriptor = new WatchItemDescriptor(project, text.get()) {
+            @Override
+            protected @NotNull ExpressionEvaluator getEvaluator(EvaluationContextImpl evaluationContext) {
+              return evaluator;
+            }
+          };
           descriptor.setContext(evalContext);
           callback.evaluated(JavaValue.create(null, descriptor, evalContext, process.getNodeManager(), true));
         }

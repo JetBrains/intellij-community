@@ -539,10 +539,6 @@
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
 
-      <action id="Debugger.SetTextValue" class="com.intellij.debugger.actions.SetTextValueAction">
-        <add-to-group group-id="XDebugger.Watches.Inline.Text.Popup" anchor="last"/>
-      </action>
-
       <action id="Debugger.AsyncStacks" class="com.intellij.debugger.actions.AsyncStacksToggleAction">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
       </action>

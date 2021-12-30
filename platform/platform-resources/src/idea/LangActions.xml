@@ -1296,9 +1296,6 @@
       <reference ref="XDebugger.SetValue"/>
     </group>
 
-    <group id="XDebugger.Watches.Inline.Text.Popup" popup="true">
-    </group>
-
     <group id="XDebugger.Inspect.Tree.Popup">
       <reference ref="XDebugger.ValueGroup"/>
     </group>
