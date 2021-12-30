@@ -3,12 +3,13 @@ package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
 import org.jetbrains.intellij.build.impl.BaseLayout
-import org.jetbrains.intellij.build.impl.BuildHelper
 import org.jetbrains.intellij.build.impl.PlatformLayout
 import org.jetbrains.intellij.build.impl.ProjectLibraryData
 import org.jetbrains.intellij.build.kotlin.KotlinPluginBuilder
 
+import java.nio.file.Files
 import java.nio.file.Path
+import java.nio.file.StandardCopyOption
 import java.util.function.BiConsumer
 
 /**
@@ -181,9 +182,8 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
   @Override
   void copyAdditionalFiles(BuildContext context, String targetDirectory) {
     Path targetDir = Path.of(targetDirectory)
-    Path java8AnnotationsJar = targetDir.resolve("lib/annotations.jar")
-    BuildHelper.moveFile(java8AnnotationsJar, targetDir.resolve("redist/annotations-java8.jar"))
     // for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
-    BuildHelper.moveFile(targetDir.resolve("lib/annotations-java5.jar"), java8AnnotationsJar)
+    Files.move(targetDir.resolve("lib/annotations-java5.jar"), targetDir.resolve("lib/annotations.jar"),
+               StandardCopyOption.REPLACE_EXISTING)
   }
 }
