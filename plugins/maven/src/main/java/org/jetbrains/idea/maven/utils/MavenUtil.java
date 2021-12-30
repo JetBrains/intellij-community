@@ -240,7 +240,6 @@ public class MavenUtil {
     }
 
     runDumbAware(project, runnable);
-    StartupManager.getInstance(project).runAfterOpened(runnable);
   }
 
   public static boolean isNoBackgroundMode() {
