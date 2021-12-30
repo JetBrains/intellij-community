@@ -466,10 +466,29 @@ public final class SwitchHelper {
             String labelValue = mappedCaseLabelValues.get(caseLabelHash);
             values.set(i, new ConstExprent(VarType.VARTYPE_STRING, labelValue, null));
             IfStatement ifStatement = mappedIfStatements.get(caseLabelHash);
+            assert ifStatement.getStats().size() > 0;
+            if (ifStatement.getStats().size() == 1) {
+              ifStatement.getParent().replaceStatement(ifStatement, ifStatement.getStats().get(0));
+              continue;
+            }
+            removeOuterBreakEdge(ifStatement);
             ifStatement.getParent().replaceStatement(ifStatement, new SequenceStatement(ifStatement.getStats()));
           }
         }
         switchSelector.replaceExprent(((SwitchExprent)switchSelector).getValue(), this.switchSelector);
+      }
+
+      private static void removeOuterBreakEdge(@NotNull IfStatement ifStatement) {
+        List<StatEdge> ifStatementBreakEdges = ifStatement.getSuccessorEdges(StatEdge.TYPE_BREAK);
+        if (ifStatementBreakEdges.size() != 1) return;
+        Statement lastStatement = ifStatement.getStats().get(ifStatement.getStats().size() - 1);
+        List<StatEdge> lastStatementBreakEdges = lastStatement.getSuccessorEdges(StatEdge.TYPE_BREAK);
+        if (lastStatementBreakEdges.size() != 1) return;
+        StatEdge firstIfStatementBreakEdge = ifStatementBreakEdges.get(0);
+        StatEdge lastStatementBreakEdge = lastStatementBreakEdges.get(0);
+        if (firstIfStatementBreakEdge.getDestination() != lastStatementBreakEdge.getDestination()) {
+          ifStatement.removeSuccessor(firstIfStatementBreakEdge);
+        }
       }
     }
   }
