@@ -63,6 +63,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
+import static com.intellij.util.concurrency.AppExecutorUtil.propagateContextOrCancellation;
 import static kotlinx.coroutines.JobKt.Job;
 
 @ApiStatus.Internal
@@ -377,7 +378,8 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
 
   @Override
   public void invokeLater(@NotNull Runnable runnable, @NotNull ModalityState state, @NotNull Condition<?> expired) {
-    if (!(runnable instanceof FutureTask)) { // see com.intellij.util.concurrency.AppScheduledExecutorService#handleCommand
+    if (propagateContextOrCancellation() && !(runnable instanceof FutureTask)) {
+      // see com.intellij.util.concurrency.AppScheduledExecutorService#handleCommand
       if (Propagation.propagateCancellation()) {
         //noinspection TestOnlyProblems
         Job job = Cancellation.currentJob();
