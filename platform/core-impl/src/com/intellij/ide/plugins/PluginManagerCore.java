@@ -361,6 +361,7 @@ public final class PluginManagerCore {
   public static boolean isDevelopedByJetBrains(@NotNull PluginDescriptor plugin) {
     String vendor = plugin.getVendor();
     return isDevelopedByJetBrains(vendor) ||
+           isDevelopedByJetBrains(plugin.getOrganization()) ||
            (vendor == null &&  // a core plugin
             !(plugin.getPluginClassLoader() instanceof PluginClassLoader) &&
             plugin instanceof IdeaPluginDescriptorImpl &&
