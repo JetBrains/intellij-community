@@ -45,14 +45,14 @@ internal fun CoroutineScope.waitForWrite(): Semaphore {
 
 fun Application.withModality(action: () -> Unit) {
   val modalEntity = Any()
-  invokeAndWait(kotlinx.coroutines.Runnable {
+  invokeAndWait(Runnable {
     LaterInvocator.enterModal(modalEntity)
   }, ModalityState.any())
   try {
     action()
   }
   finally {
-    invokeAndWait(kotlinx.coroutines.Runnable {
+    invokeAndWait(Runnable {
       LaterInvocator.leaveModal(modalEntity)
     }, ModalityState.any())
   }
