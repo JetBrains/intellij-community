@@ -56,7 +56,6 @@ import java.awt.font.FontRenderContext;
 import java.awt.font.GlyphVector;
 import java.awt.geom.RoundRectangle2D;
 import java.awt.image.BufferedImage;
-import java.awt.image.BufferedImageOp;
 import java.awt.image.ImageObserver;
 import java.awt.image.RGBImageFilter;
 import java.awt.print.PrinterGraphics;
@@ -3514,10 +3513,6 @@ public final class UIUtil {
                                @Nullable Rectangle srcBounds,
                                @Nullable ImageObserver observer) {
     StartupUiUtil.drawImage(g, image, dstBounds, srcBounds, null, observer);
-  }
-
-  public static void drawImage(@NotNull Graphics g, @NotNull BufferedImage image, @Nullable BufferedImageOp op, int x, int y) {
-    StartupUiUtil.drawImage(g, image, x, y, -1, -1, op, null);
   }
 
   /**

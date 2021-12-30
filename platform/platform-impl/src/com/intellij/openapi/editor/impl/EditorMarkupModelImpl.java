@@ -1004,7 +1004,7 @@ public final class EditorMarkupModelImpl extends MarkupModelImpl
         myDirtyYPositions = null;
       }
 
-      UIUtil.drawImage(g, myCachedTrack, null, 0, 0);
+      StartupUiUtil.drawImage(g, myCachedTrack);
     }
 
     private void paintTrackBasement(@NotNull Graphics g, @NotNull Rectangle bounds) {
