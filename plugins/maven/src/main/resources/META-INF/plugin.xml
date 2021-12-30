@@ -265,6 +265,9 @@
     <registryKey key="maven.new.import" defaultValue="false"
                  description="new maven import"/>
 
+    <registryKey key="maven.import.to.workspace.model" defaultValue="false"
+                 description="Enable experimental implementation of Maven import which writes to workspace model directly. Only basic features are supported for now, this mode may work incorrecly for many projects. See IDEA-284414 for details."/>
+
     <registryKey key="maven.import.compiler.arguments" defaultValue="true"
                  description="Enable importing of the maven compiler plugin arguments"/>
 
