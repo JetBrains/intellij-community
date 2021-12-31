@@ -5,11 +5,14 @@ package org.jetbrains.uast.java
 import com.intellij.lang.Language
 import com.intellij.lang.java.JavaLanguage
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 import org.jetbrains.uast.java.internal.JavaUElementWithComments
 
-
-abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithComments, UElement {
+@ApiStatus.Internal
+abstract class JavaAbstractUElement(
+  givenParent: UElement?
+) : JavaUElementWithComments, UElement {
 
   override fun equals(other: Any?): Boolean {
     if (other !is UElement || other.javaClass != this.javaClass) return false
@@ -118,7 +121,10 @@ private inline fun branchHasElement(child: PsiElement?, parent: PsiElement?, pre
   return false
 }
 
-abstract class JavaAbstractUExpression(givenParent: UElement?) : JavaAbstractUElement(givenParent), UExpression {
+@ApiStatus.Internal
+abstract class JavaAbstractUExpression(
+  givenParent: UElement?
+) : JavaAbstractUElement(givenParent), UExpression {
 
   override fun evaluate(): Any? {
     val project = sourcePsi?.project ?: return null

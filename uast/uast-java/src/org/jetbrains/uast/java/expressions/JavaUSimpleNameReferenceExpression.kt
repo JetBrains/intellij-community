@@ -17,8 +17,10 @@ package org.jetbrains.uast.java
 
 import com.intellij.psi.*
 import com.intellij.psi.infos.CandidateInfo
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class JavaUSimpleNameReferenceExpression(
   override val sourcePsi: PsiElement?,
   override val identifier: String,
@@ -54,6 +56,7 @@ class JavaUSimpleNameReferenceExpression(
 
 }
 
+@ApiStatus.Internal
 class JavaUTypeReferenceExpression(
   override val sourcePsi: PsiTypeElement,
   givenParent: UElement?
@@ -62,6 +65,7 @@ class JavaUTypeReferenceExpression(
     get() = sourcePsi.type
 }
 
+@ApiStatus.Internal
 class LazyJavaUTypeReferenceExpression(
   override val sourcePsi: PsiElement,
   givenParent: UElement?,
