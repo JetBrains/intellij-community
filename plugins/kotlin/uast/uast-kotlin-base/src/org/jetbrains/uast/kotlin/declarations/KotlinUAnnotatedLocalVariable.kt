@@ -2,10 +2,12 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiLocalVariable
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UElement
 
+@ApiStatus.Internal
 open class KotlinUAnnotatedLocalVariable(
     psi: PsiLocalVariable,
     sourcePsi: KtElement,
