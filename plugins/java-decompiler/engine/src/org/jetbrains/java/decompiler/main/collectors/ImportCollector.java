@@ -121,15 +121,22 @@ public class ImportCollector {
       }
     }
     else {
-      fullName = fullName.replace('$', '.');
+      fullName = fullName.replace('/', '.');
     }
 
-    String shortName = fullName;
+    String outerShortName = fullName;
+    String nestedName = fullName;
     String packageName = "";
 
     int lastDot = fullName.lastIndexOf('.');
     if (lastDot >= 0) {
-      shortName = fullName.substring(lastDot + 1);
+      nestedName = fullName.substring(lastDot + 1).replace("$", ".");
+      int firstNestedDot = nestedName.indexOf(".");
+      if (firstNestedDot >= 0) {
+        outerShortName = nestedName.substring(0, firstNestedDot);
+      } else {
+        outerShortName = nestedName;
+      }
       packageName = fullName.substring(0, lastDot);
     }
 
@@ -140,23 +147,22 @@ public class ImportCollector {
     // 2) class with the same short name in the default package
     // 3) inner class with the same short name in the current class, a super class, or an implemented interface
     boolean existsDefaultClass =
-      (context.getClass(currentPackageSlash + shortName) != null && !packageName.equals(currentPackagePoint)) || // current package
-      (context.getClass(shortName) != null && !currentPackagePoint.isEmpty()) || // default package
-      setInnerClassNames.contains(shortName); // inner class
+      (context.getClass(currentPackageSlash + outerShortName) != null && !packageName.equals(currentPackagePoint)) || // current package
+      (context.getClass(outerShortName) != null && !currentPackagePoint.isEmpty()) || // default package
+      setInnerClassNames.contains(outerShortName); // inner class
 
-    if (existsDefaultClass ||
-        (mapSimpleNames.containsKey(shortName) && !packageName.equals(mapSimpleNames.get(shortName)))) {
+    if (existsDefaultClass || (mapSimpleNames.containsKey(outerShortName) && !packageName.equals(mapSimpleNames.get(outerShortName)))) {
       //  don't return full name because if the class is a inner class, full name refers to the parent full name, not the child full name
       return result == null ? fullName : (packageName + "." + result);
     }
-    else if (!mapSimpleNames.containsKey(shortName)) {
-      mapSimpleNames.put(shortName, packageName);
+    else if (!mapSimpleNames.containsKey(outerShortName)) {
+      mapSimpleNames.put(outerShortName, packageName);
       if (!imported) {
-        setNotImportedNames.add(shortName);
+        setNotImportedNames.add(outerShortName);
       }
     }
 
-    return result == null ? shortName : result;
+    return result == null ? nestedName : result;
   }
 
   public void writeImports(TextBuffer buffer, boolean addSeparator) {
