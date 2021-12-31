@@ -3,10 +3,12 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiLanguageInjectionHost
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 import org.jetbrains.uast.*
 import org.jetbrains.uast.expressions.UInjectionHost
 
+@ApiStatus.Internal
 class KotlinStringTemplateUPolyadicExpression(
     override val sourcePsi: KtStringTemplateExpression,
     givenParent: UElement?

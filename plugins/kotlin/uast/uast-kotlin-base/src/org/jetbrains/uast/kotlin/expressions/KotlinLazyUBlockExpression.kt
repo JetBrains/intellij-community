@@ -3,9 +3,11 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtAnonymousInitializer
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class KotlinLazyUBlockExpression(
     override val uastParent: UElement?,
     expressionProducer: (expressionParent: UElement) -> List<UExpression>

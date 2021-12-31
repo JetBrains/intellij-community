@@ -2,6 +2,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtProperty
@@ -11,6 +12,7 @@ import org.jetbrains.uast.UFieldEx
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.visitor.UastVisitor
 
+@ApiStatus.Internal
 open class KotlinUField(
     psi: PsiField,
     override val sourcePsi: KtElement?,

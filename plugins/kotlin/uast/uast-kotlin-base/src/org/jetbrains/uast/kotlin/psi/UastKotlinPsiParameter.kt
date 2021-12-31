@@ -8,6 +8,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiParameter
 import com.intellij.psi.PsiType
 import com.intellij.psi.impl.light.LightParameter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtExpression
@@ -18,6 +19,7 @@ import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.getParentOfType
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 
+@ApiStatus.Internal
 class UastKotlinPsiParameter(
     name: String,
     type: PsiType,
@@ -52,6 +54,7 @@ class UastKotlinPsiParameter(
 
 }
 
+@ApiStatus.Internal
 open class UastKotlinPsiParameterBase<T : KtElement>(
     name: String,
     type: PsiType,
