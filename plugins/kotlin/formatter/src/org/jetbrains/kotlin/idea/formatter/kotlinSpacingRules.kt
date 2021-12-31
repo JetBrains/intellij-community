@@ -416,6 +416,7 @@ fun createSpacingBuilder(settings: CodeStyleSettings, builderUtil: KotlinSpacing
             between(VALUE_ARGUMENT_LIST, LAMBDA_ARGUMENT).spaces(1)
             betweenInside(REFERENCE_EXPRESSION, LAMBDA_ARGUMENT, CALL_EXPRESSION).spaces(1)
             betweenInside(TYPE_ARGUMENT_LIST, LAMBDA_ARGUMENT, CALL_EXPRESSION).spaces(1)
+            betweenInside(STRING_TEMPLATE, LAMBDA_ARGUMENT, CALL_EXPRESSION).spaces(1)
 
             around(COLONCOLON).spaces(0)
 
