@@ -1328,6 +1328,8 @@
                         serviceImplementation="com.intellij.openapi.application.rw.PlatformReadActionSupport"/>
 
     <persistentFsConnectionListener implementation="com.intellij.openapi.vfs.impl.jar.ArchiveCachesCleaner"/>
+    <applicationService serviceInterface="com.intellij.openapi.progress.TaskSupport"
+                        serviceImplementation="com.intellij.openapi.progress.impl.PlatformTaskSupport"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains">
