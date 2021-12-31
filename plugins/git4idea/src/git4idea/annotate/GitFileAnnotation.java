@@ -271,7 +271,7 @@ public final class GitFileAnnotation extends FileAnnotation {
         if (ModalityState.current() == ModalityState.NON_MODAL &&
             Registry.is("vcs.blame.show.affected.files.in.log")) {
           Hash hash = HashImpl.build(info.getRevisionNumber().asString());
-          shownInLog = VcsLogContentUtil.jumpToRevisionAsync(myProject, root, hash, info.getFilePath());
+          shownInLog = VcsLogNavigationUtil.jumpToRevisionAsync(myProject, root, hash, info.getFilePath());
         }
         else {
           shownInLog = CompletableFuture.completedFuture(false); // can't use log tabs in modal dialogs (ex: commit, merge)
