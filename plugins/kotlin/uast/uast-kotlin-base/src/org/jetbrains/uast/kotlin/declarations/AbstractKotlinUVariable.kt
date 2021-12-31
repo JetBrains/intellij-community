@@ -36,7 +36,7 @@ abstract class AbstractKotlinUVariable(
             return languagePlugin?.convertElement(initializerExpression, this) as? UExpression ?: UastEmptyExpression(null)
         }
 
-    val delegateExpression: UExpression? by lz {
+    protected val delegateExpression: UExpression? by lz {
         val psi = psi
         val expression = when (psi) {
             is KtLightElement<*, *> -> (psi.kotlinOrigin as? KtProperty)?.delegateExpression
