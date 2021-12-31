@@ -5,6 +5,7 @@ package org.jetbrains.uast.kotlin.psi
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterBuilder
 import org.jetbrains.kotlin.asJava.elements.KotlinLightTypeParameterListBuilder
 import org.jetbrains.kotlin.asJava.elements.KtLightAnnotationForSourceEntry
@@ -16,6 +17,7 @@ import org.jetbrains.uast.UastErrorType
 import org.jetbrains.uast.kotlin.BaseKotlinUastResolveProviderService
 import org.jetbrains.uast.kotlin.lz
 
+@ApiStatus.Internal
 class UastFakeLightMethod(
     original: KtFunction,
     containingClass: PsiClass,
@@ -92,6 +94,7 @@ class UastFakeLightMethod(
     override fun getParameterList(): PsiParameterList = _parameterList
 }
 
+@ApiStatus.Internal
 class UastFakeLightPrimaryConstructor(
     original: KtClassOrObject,
     lightClass: PsiClass,
@@ -99,6 +102,7 @@ class UastFakeLightPrimaryConstructor(
     override fun isConstructor(): Boolean = true
 }
 
+@ApiStatus.Internal
 abstract class UastFakeLightMethodBase<T: KtDeclaration>(
     val original: T,
     containingClass: PsiClass,

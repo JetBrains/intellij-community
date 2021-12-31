@@ -2,10 +2,12 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtArrayAccessExpression
 import org.jetbrains.uast.UArrayAccessExpression
 import org.jetbrains.uast.UElement
 
+@ApiStatus.Internal
 class KotlinUArrayAccessExpression(
     override val sourcePsi: KtArrayAccessExpression,
     givenParent: UElement?

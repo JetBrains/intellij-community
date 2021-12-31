@@ -2,11 +2,13 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtLabeledExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.ULabeledExpression
 
+@ApiStatus.Internal
 class KotlinULabeledExpression(
     override val sourcePsi: KtLabeledExpression,
     givenParent: UElement?
