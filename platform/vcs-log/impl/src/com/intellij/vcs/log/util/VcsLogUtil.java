@@ -4,6 +4,7 @@ package com.intellij.vcs.log.util;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.NlsSafe;
@@ -16,6 +17,7 @@ import com.intellij.openapi.vcs.changes.TextRevisionNumber;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangesTreeBrowser;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.vcs.CommittedChangeListForRevision;
@@ -26,10 +28,7 @@ import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.graph.VisibleGraph;
 import com.intellij.vcs.log.graph.impl.facade.VisibleGraphImpl;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
-import com.intellij.vcs.log.impl.VcsChangesLazilyParsedDetails;
-import com.intellij.vcs.log.impl.VcsLogManager;
-import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiEx;
 import com.intellij.vcs.log.visible.VisiblePack;
@@ -427,5 +426,18 @@ public final class VcsLogUtil {
       return getCommitRow(storage, visiblePack, hash, root);
     }, future, silently, focus);
     return future;
+  }
+
+  public static void runWhenVcsAndLogIsReady(@NotNull Project project, @NotNull Consumer<? super VcsLogManager> action) {
+    VcsLogManager logManager = VcsProjectLog.getInstance(project).getLogManager();
+    if (logManager != null) {
+      action.consume(logManager);
+      return;
+    }
+    ProjectLevelVcsManager.getInstance(project).runAfterInitialization(() -> {
+      ApplicationManager.getApplication().invokeLater(() -> {
+        VcsProjectLog.runWhenLogIsReady(project, action);
+      });
+    });
   }
 }

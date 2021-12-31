@@ -17,7 +17,7 @@ import com.intellij.vcs.log.VcsLogBundle
 import com.intellij.vcs.log.VcsLogFilterCollection
 import com.intellij.vcs.log.impl.*
 import com.intellij.vcs.log.ui.VcsLogPanel
-import com.intellij.vcs.log.util.runWhenVcsAndLogIsReady
+import com.intellij.vcs.log.util.VcsLogUtil
 import java.awt.BorderLayout
 import javax.swing.JComponent
 
@@ -38,7 +38,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
 
   override fun createMainComponent(project: Project): JComponent {
     val panel = JBPanelWithEmptyText(BorderLayout()).withEmptyText(VcsLogBundle.message("vcs.log.is.loading"))
-    runWhenVcsAndLogIsReady(project) { logManager ->
+    VcsLogUtil.runWhenVcsAndLogIsReady(project) { logManager ->
       val projectLog = VcsProjectLog.getInstance(project)
       val tabsManager = projectLog.tabsManager
 
