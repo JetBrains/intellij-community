@@ -2,11 +2,12 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtBreakExpression
 import org.jetbrains.uast.UBreakExpression
 import org.jetbrains.uast.UElement
-import org.jetbrains.uast.kotlin.KotlinAbstractUExpression
 
+@ApiStatus.Internal
 class KotlinUBreakExpression(
     override val sourcePsi: KtBreakExpression,
     givenParent: UElement?

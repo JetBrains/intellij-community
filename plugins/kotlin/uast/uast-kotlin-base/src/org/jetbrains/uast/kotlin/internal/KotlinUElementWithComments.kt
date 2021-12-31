@@ -5,12 +5,14 @@ package org.jetbrains.uast.kotlin.internal
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtProperty
 import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 interface KotlinUElementWithComments : UElement {
 
     override val comments: List<UComment>

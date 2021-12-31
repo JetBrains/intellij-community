@@ -6,6 +6,7 @@ import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveResult
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.toLightAnnotation
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.multiResolveResults
 
+@ApiStatus.Internal
 sealed class KotlinUAnnotationBase<T : KtCallElement>(
     final override val sourcePsi: T,
     givenParent: UElement?
@@ -70,6 +72,7 @@ sealed class KotlinUAnnotationBase<T : KtCallElement>(
     override fun multiResolve(): Iterable<ResolveResult> = sourcePsi.multiResolveResults().asIterable()
 }
 
+@ApiStatus.Internal
 class KotlinUAnnotation(
     annotationEntry: KtAnnotationEntry,
     givenParent: UElement?
@@ -85,7 +88,7 @@ class KotlinUAnnotation(
         return baseResolveProviderService.resolveToClass(sourcePsi, this)
     }
 
-    override val uastAnchor by lz {
+    override val uastAnchor: UIdentifier by lz {
         KotlinUIdentifier(
             javaPsi?.nameReferenceElement,
             annotationEntry.typeReference?.nameElement,
@@ -95,6 +98,7 @@ class KotlinUAnnotation(
 
 }
 
+@ApiStatus.Internal
 class KotlinUNestedAnnotation private constructor(
     original: KtCallExpression,
     givenParent: UElement?
@@ -108,7 +112,7 @@ class KotlinUNestedAnnotation private constructor(
         return baseResolveProviderService.resolveToClassIfConstructorCall(sourcePsi, this)
     }
 
-    override val uastAnchor by lz {
+    override val uastAnchor: UIdentifier by lz {
         KotlinUIdentifier(
             javaPsi?.nameReferenceElement?.referenceNameElement,
             (original.calleeExpression as? KtNameReferenceExpression)?.getReferencedNameElement(),
@@ -127,5 +131,3 @@ class KotlinUNestedAnnotation private constructor(
     }
 
 }
-
-

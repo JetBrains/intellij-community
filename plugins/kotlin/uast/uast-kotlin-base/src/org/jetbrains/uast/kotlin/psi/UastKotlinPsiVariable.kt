@@ -4,6 +4,7 @@ package org.jetbrains.uast.kotlin.psi
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.light.LightTypeElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.LightVariableBuilder
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.*
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.psi.psiUtil.startOffset
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.*
 
+@ApiStatus.Internal
 class UastKotlinPsiVariable private constructor(
     manager: PsiManager,
     name: String,
