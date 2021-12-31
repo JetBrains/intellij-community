@@ -22,6 +22,10 @@ open class KotlinUField(
 
     override val psi = javaPsi
 
+    override fun getType(): PsiType {
+        return delegateExpression?.getExpressionType() ?: javaPsi.type
+    }
+
     override fun acceptsAnnotationTarget(target: AnnotationUseSiteTarget?): Boolean =
         target == AnnotationUseSiteTarget.FIELD ||
                 target == AnnotationUseSiteTarget.PROPERTY_DELEGATE_FIELD ||
