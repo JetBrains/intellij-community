@@ -4,12 +4,14 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiTypesUtil
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.kotlin.internal.TypedResolveResult
 import org.jetbrains.uast.visitor.UastVisitor
 
+@ApiStatus.Internal
 class KotlinUFunctionCallExpression(
     override val sourcePsi: KtCallElement,
     givenParent: UElement?,
@@ -23,11 +25,11 @@ class KotlinUFunctionCallExpression(
         baseResolveProviderService.resolvedFunctionName(sourcePsi)
     }
 
-    override val classReference by lz {
+    override val classReference: UReferenceExpression by lz {
         KotlinClassViaConstructorUSimpleReferenceExpression(sourcePsi, methodName.orAnonymous("class"), this)
     }
 
-    override val methodIdentifier by lz {
+    override val methodIdentifier: UIdentifier? by lz {
         if (sourcePsi is KtSuperTypeCallEntry) {
             ((sourcePsi.parent as? KtInitializerList)?.parent as? KtEnumEntry)?.let { ktEnumEntry ->
                 return@lz KotlinUIdentifier(ktEnumEntry.nameIdentifier, this)

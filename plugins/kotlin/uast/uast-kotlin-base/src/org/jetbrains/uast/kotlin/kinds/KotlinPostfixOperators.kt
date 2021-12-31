@@ -2,8 +2,10 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UastPostfixOperator
 
+@ApiStatus.Internal
 object KotlinPostfixOperators {
     @JvmField
     val EXCLEXCL = UastPostfixOperator("!!")

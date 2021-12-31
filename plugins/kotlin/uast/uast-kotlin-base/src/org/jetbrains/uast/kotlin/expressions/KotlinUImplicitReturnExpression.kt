@@ -3,11 +3,13 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UReturnExpression
 import org.jetbrains.uast.kotlin.internal.KotlinFakeUElement
 
+@ApiStatus.Internal
 class KotlinUImplicitReturnExpression(
     givenParent: UElement?,
 ) : KotlinAbstractUExpression(givenParent), UReturnExpression, KotlinUElementWithType, KotlinFakeUElement {

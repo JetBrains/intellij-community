@@ -3,9 +3,11 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.uast.UExpression
 
+@ApiStatus.Internal
 interface KotlinUElementWithType : UExpression {
     val baseResolveProviderService: BaseKotlinUastResolveProviderService
 

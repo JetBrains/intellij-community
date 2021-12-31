@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import com.intellij.psi.*
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
@@ -15,6 +16,7 @@ import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 
+@ApiStatus.Internal
 open class KotlinUMethod(
     psi: PsiMethod,
     final override val sourcePsi: KtDeclaration?,

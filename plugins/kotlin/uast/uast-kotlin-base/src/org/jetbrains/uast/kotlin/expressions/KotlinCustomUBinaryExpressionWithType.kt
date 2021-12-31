@@ -4,8 +4,10 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class KotlinCustomUBinaryExpressionWithType(
     override val psi: PsiElement,
     givenParent: UElement?

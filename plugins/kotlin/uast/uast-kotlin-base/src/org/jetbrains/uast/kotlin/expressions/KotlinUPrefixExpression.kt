@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiMethod
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtPrefixExpression
 import org.jetbrains.uast.UElement
@@ -10,6 +11,7 @@ import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UPrefixExpression
 import org.jetbrains.uast.UastPrefixOperator
 
+@ApiStatus.Internal
 class KotlinUPrefixExpression(
     override val sourcePsi: KtPrefixExpression,
     givenParent: UElement?

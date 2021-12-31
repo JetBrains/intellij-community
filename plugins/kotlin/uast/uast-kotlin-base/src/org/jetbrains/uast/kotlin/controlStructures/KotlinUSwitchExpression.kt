@@ -2,11 +2,12 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtWhenExpression
 import org.jetbrains.uast.*
-import org.jetbrains.uast.kotlin.*
 import org.jetbrains.uast.kotlin.kinds.KotlinSpecialExpressionKinds
 
+@ApiStatus.Internal
 class KotlinUSwitchExpression(
     override val sourcePsi: KtWhenExpression,
     givenParent: UElement?

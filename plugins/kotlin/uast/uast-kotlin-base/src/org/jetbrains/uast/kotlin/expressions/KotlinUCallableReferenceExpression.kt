@@ -5,10 +5,12 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiNamedElement
 import com.intellij.psi.ResolveResult
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtCallableReferenceExpression
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.getResolveResultVariants
 
+@ApiStatus.Internal
 class KotlinUCallableReferenceExpression(
     override val sourcePsi: KtCallableReferenceExpression,
     givenParent: UElement?

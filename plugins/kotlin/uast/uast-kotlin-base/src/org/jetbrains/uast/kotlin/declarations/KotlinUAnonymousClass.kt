@@ -5,11 +5,13 @@ package org.jetbrains.uast.kotlin
 import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class KotlinUAnonymousClass(
     psi: PsiAnonymousClass,
     givenParent: UElement?
@@ -31,8 +33,8 @@ class KotlinUAnonymousClass(
 
     override fun getContainingFile(): PsiFile = unwrapFakeFileForLightClass(psi.containingFile)
 
-    override val uastAnchor by lazy {
-        val ktClassOrObject = (psi.originalElement as? KtLightClass)?.kotlinOrigin as? KtObjectDeclaration ?: return@lazy null
+    override val uastAnchor: UIdentifier? by lz {
+        val ktClassOrObject = (psi.originalElement as? KtLightClass)?.kotlinOrigin as? KtObjectDeclaration ?: return@lz null
         KotlinUIdentifier(ktClassOrObject.getObjectKeyword(), this)
     }
 }

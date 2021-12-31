@@ -2,11 +2,13 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiParameter
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UElement
 
+@ApiStatus.Internal
 class KotlinReceiverUParameter(
     psi: PsiParameter,
     private val receiver: KtTypeReference,

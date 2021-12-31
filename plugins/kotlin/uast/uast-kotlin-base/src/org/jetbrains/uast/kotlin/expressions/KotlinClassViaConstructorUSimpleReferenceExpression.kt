@@ -8,12 +8,14 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiNamedElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtCallElement
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.USimpleNameReferenceExpression
 import org.jetbrains.uast.internal.log
 import org.jetbrains.uast.visitor.UastVisitor
 
+@ApiStatus.Internal
 class KotlinClassViaConstructorUSimpleReferenceExpression(
     override val sourcePsi: KtCallElement,
     override val identifier: String,

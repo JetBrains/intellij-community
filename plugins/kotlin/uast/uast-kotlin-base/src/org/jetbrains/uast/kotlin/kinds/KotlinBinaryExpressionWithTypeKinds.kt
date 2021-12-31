@@ -2,8 +2,10 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UastBinaryExpressionWithTypeKind
 
+@ApiStatus.Internal
 object KotlinBinaryExpressionWithTypeKinds {
     init {
         // We trigger class initialization for UastBinaryExpressionWithTypeKind early in order to

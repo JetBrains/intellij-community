@@ -3,11 +3,13 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtBlockExpression
 import org.jetbrains.kotlin.psi.KtLambdaExpression
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 
+@ApiStatus.Internal
 class KotlinULambdaExpression(
     override val sourcePsi: KtLambdaExpression,
     givenParent: UElement?
@@ -20,7 +22,11 @@ class KotlinULambdaExpression(
         sourcePsi.bodyExpression?.let { Body(it, this) } ?: UastEmptyExpression(this)
     }
 
-    class Body(bodyExpression: KtBlockExpression, parent: KotlinULambdaExpression) : KotlinUBlockExpression(bodyExpression, parent) {
+    @ApiStatus.Internal
+    class Body(
+        bodyExpression: KtBlockExpression,
+        parent: KotlinULambdaExpression
+    ) : KotlinUBlockExpression(bodyExpression, parent) {
 
         override val expressions: List<UExpression> by lz {
             val statements = sourcePsi.statements
