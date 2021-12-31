@@ -3,9 +3,11 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class KotlinUNamedExpression private constructor(
     override val name: String?,
     override val sourcePsi: PsiElement?,

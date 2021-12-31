@@ -21,7 +21,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
 
-fun convertParentImpl(
+internal fun convertParentImpl(
     service: BaseKotlinUastResolveProviderService,
     uElement: UElement
 ): UElement? {
@@ -122,7 +122,7 @@ fun convertParentImpl(
     return result
 }
 
-fun convertParentImpl(
+internal fun convertParentImpl(
     service: BaseKotlinUastResolveProviderService,
     element: UElement,
     parent: PsiElement?

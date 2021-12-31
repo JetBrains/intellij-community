@@ -2,9 +2,11 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtReturnExpression
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class KotlinUReturnExpression(
     override val sourcePsi: KtReturnExpression,
     givenParent: UElement?

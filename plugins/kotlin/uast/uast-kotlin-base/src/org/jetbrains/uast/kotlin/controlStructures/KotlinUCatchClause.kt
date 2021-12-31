@@ -3,12 +3,14 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtCatchClause
 import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 import org.jetbrains.uast.visitor.UastVisitor
 
+@ApiStatus.Internal
 class KotlinUCatchClause(
     override val sourcePsi: KtCatchClause,
     givenParent: UElement?

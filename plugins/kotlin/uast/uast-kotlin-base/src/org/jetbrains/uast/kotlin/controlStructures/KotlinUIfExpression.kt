@@ -2,11 +2,13 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UIfExpression
 
+@ApiStatus.Internal
 class KotlinUIfExpression(
     override val sourcePsi: KtIfExpression,
     givenParent: UElement?

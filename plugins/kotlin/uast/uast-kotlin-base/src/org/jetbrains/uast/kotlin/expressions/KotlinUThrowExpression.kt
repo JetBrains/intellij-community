@@ -2,10 +2,12 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtThrowExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UThrowExpression
 
+@ApiStatus.Internal
 class KotlinUThrowExpression(
     override val sourcePsi: KtThrowExpression,
     givenParent: UElement?

@@ -4,10 +4,12 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.psi.UastFakeLightMethod
 
+@ApiStatus.Internal
 class KotlinUMethodWithFakeLightDelegate(
     val original: KtFunction,
     fakePsi: UastFakeLightMethod,

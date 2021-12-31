@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDelegatedSuperTypeEntry
@@ -10,6 +11,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.internal.acceptList
 import org.jetbrains.uast.visitor.UastVisitor
 
+@ApiStatus.Internal
 abstract class AbstractKotlinUClass(
     givenParent: UElement?
 ) : KotlinAbstractUElement(givenParent), UClass, UAnchorOwner {
@@ -23,17 +25,19 @@ abstract class AbstractKotlinUClass(
         }
     }
 
-    open val ktClass: KtClassOrObject? get() = (psi as? KtLightClass)?.kotlinOrigin
+    protected open val ktClass: KtClassOrObject?
+        get() = (psi as? KtLightClass)?.kotlinOrigin
 
     override val uastSuperTypes: List<UTypeReferenceExpression>
         get() = ktClass?.superTypeListEntries.orEmpty().mapNotNull { it.typeReference }.map {
             KotlinUTypeReferenceExpression(it, this)
         }
 
-    val delegateExpressions: List<UExpression>
-        get() = ktClass?.superTypeListEntries.orEmpty()
+    private val delegateExpressions: List<UExpression> by lz {
+        ktClass?.superTypeListEntries.orEmpty()
             .filterIsInstance<KtDelegatedSuperTypeEntry>()
             .map { KotlinSupertypeDelegationUExpression(it, this) }
+    }
 
     override fun accept(visitor: UastVisitor) {
         if (visitor.visitClass(this)) return
