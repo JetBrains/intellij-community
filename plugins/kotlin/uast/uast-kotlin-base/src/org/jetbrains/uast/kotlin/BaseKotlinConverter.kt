@@ -5,6 +5,7 @@ package org.jetbrains.uast.kotlin
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.LightClassUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.*
@@ -25,6 +26,7 @@ import org.jetbrains.uast.internal.alternative
 import org.jetbrains.uast.expressions.UInjectionHost
 import org.jetbrains.uast.kotlin.psi.*
 
+@ApiStatus.Internal
 interface BaseKotlinConverter {
     val languagePlugin: UastLanguagePlugin
 
@@ -686,7 +688,7 @@ interface BaseKotlinConverter {
     fun createVarargsHolder(
         arguments: Collection<ValueArgument>,
         parent: UElement?,
-    ): KotlinUExpressionList =
+    ): UExpressionList =
         KotlinUExpressionList(null, UastSpecialExpressionKind.VARARGS, parent).apply {
             expressions = arguments.map { convertOrEmpty(it.getArgumentExpression(), parent) }
         }

@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.psi.KtConstantExpression
 import org.jetbrains.uast.UElement
@@ -10,6 +11,7 @@ import org.jetbrains.uast.ULiteralExpression
 import org.jetbrains.uast.kotlin.internal.KotlinFakeUElement
 import org.jetbrains.uast.wrapULiteral
 
+@ApiStatus.Internal
 class KotlinULiteralExpression(
     override val sourcePsi: KtConstantExpression,
     givenParent: UElement?

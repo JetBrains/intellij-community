@@ -2,8 +2,10 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UastBinaryOperator
 
+@ApiStatus.Internal
 object KotlinBinaryOperators {
     @JvmField
     val IN = UastBinaryOperator("in")

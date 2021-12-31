@@ -2,8 +2,10 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UastBinaryExpressionWithTypeKind
 
+@ApiStatus.Internal
 object KotlinBinaryExpressionWithTypeKinds {
     @JvmField
     val NEGATED_INSTANCE_CHECK = UastBinaryExpressionWithTypeKind.InstanceCheck("!is")

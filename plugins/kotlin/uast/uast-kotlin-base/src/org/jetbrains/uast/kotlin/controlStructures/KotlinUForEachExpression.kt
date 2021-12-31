@@ -2,6 +2,7 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.psi.KtForExpression
 import org.jetbrains.uast.UElement
@@ -10,6 +11,7 @@ import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 import org.jetbrains.uast.psi.UastPsiParameterNotResolved
 
+@ApiStatus.Internal
 class KotlinUForEachExpression(
     override val sourcePsi: KtForExpression,
     givenParent: UElement?

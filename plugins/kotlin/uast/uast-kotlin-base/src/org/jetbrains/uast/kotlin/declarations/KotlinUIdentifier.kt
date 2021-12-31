@@ -5,6 +5,7 @@ package org.jetbrains.uast.kotlin
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.source.tree.LeafPsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.kdoc.psi.impl.KDocName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.KotlinExceptionWithAttachments
@@ -12,7 +13,8 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.toUElement
 
-class KotlinUIdentifier constructor(
+@ApiStatus.Internal
+class KotlinUIdentifier(
     javaPsiSupplier: () -> PsiElement?,
     override val sourcePsi: PsiElement?,
     givenParent: UElement?

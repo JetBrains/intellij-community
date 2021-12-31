@@ -6,12 +6,14 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.light.LightPsiClassBuilder
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.uast.*
 
 /**
  * implementation of [UClass] for invalid code, when it is impossible to create a [KtLightClass]
  */
+@ApiStatus.Internal
 class KotlinInvalidUClass(
     override val psi: PsiClass,
     givenParent: UElement?

@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiMethod
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.utils.SmartList
@@ -11,6 +12,7 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.UIdentifier
 
+@ApiStatus.Internal
 open class KotlinConstructorUMethod(
     private val ktClass: KtClassOrObject?,
     override val psi: PsiMethod,

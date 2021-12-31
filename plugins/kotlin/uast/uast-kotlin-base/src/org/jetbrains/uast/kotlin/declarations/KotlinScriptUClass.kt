@@ -5,6 +5,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForScript
 import org.jetbrains.kotlin.asJava.elements.KtLightMethod
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.psi.KtScript
 import org.jetbrains.kotlin.psi.KtScriptInitializer
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class KotlinScriptUClass(
     psi: KtLightClassForScript,
     givenParent: UElement?
@@ -20,7 +22,7 @@ class KotlinScriptUClass(
 
     override fun getNameIdentifier(): PsiIdentifier = UastLightIdentifier(psi, psi.kotlinOrigin)
 
-    override val uastAnchor by lazy { KotlinUIdentifier(nameIdentifier, sourcePsi?.nameIdentifier, this) }
+    override val uastAnchor: UIdentifier by lz { KotlinUIdentifier(nameIdentifier, sourcePsi?.nameIdentifier, this) }
 
     override val javaPsi: PsiClass = psi
 
@@ -50,6 +52,7 @@ class KotlinScriptUClass(
 
     override fun getOriginalElement(): PsiElement? = psi.originalElement
 
+    @ApiStatus.Internal
     class KotlinScriptConstructorUMethod(
         script: KtScript,
         override val psi: KtLightMethod,

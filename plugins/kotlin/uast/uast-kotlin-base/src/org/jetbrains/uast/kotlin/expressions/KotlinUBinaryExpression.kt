@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiMethod
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.uast.UBinaryExpression
@@ -10,6 +11,7 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UIdentifier
 import org.jetbrains.uast.UastBinaryOperator
 
+@ApiStatus.Internal
 class KotlinUBinaryExpression(
     override val sourcePsi: KtBinaryExpression,
     givenParent: UElement?

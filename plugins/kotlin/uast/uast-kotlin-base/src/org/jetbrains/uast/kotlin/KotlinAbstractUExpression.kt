@@ -3,12 +3,14 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.uast.UAnnotation
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 import org.jetbrains.uast.convertOpt
 
+@ApiStatus.Internal
 abstract class KotlinAbstractUExpression(
     givenParent: UElement?,
 ) : KotlinAbstractUElement(givenParent), UExpression {

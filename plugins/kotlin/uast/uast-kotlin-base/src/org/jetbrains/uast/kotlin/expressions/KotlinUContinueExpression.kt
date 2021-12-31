@@ -2,11 +2,12 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtContinueExpression
 import org.jetbrains.uast.UContinueExpression
 import org.jetbrains.uast.UElement
-import org.jetbrains.uast.kotlin.KotlinAbstractUExpression
 
+@ApiStatus.Internal
 class KotlinUContinueExpression(
     override val sourcePsi: KtContinueExpression,
     givenParent: UElement?

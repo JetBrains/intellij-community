@@ -2,6 +2,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.elements.KtLightAbstractAnnotation
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
@@ -13,6 +14,7 @@ import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiVariable
 
+@ApiStatus.Internal
 abstract class AbstractKotlinUVariable(
     givenParent: UElement?
 ) : KotlinAbstractUElement(givenParent), PsiVariable, UVariableEx, UAnchorOwner {
@@ -103,7 +105,7 @@ abstract class AbstractKotlinUVariable(
             psi.parameterList.attributes.map { WrappedUNamedExpression(it, this) }
         }
 
-        override val uastAnchor by lazy {
+        override val uastAnchor: UIdentifier by lz {
             KotlinUIdentifier(
                 { javaPsi.nameReferenceElement?.referenceNameElement },
                 sourcePsi.safeAs<KtAnnotationEntry>()?.typeReference?.nameElement,

@@ -3,6 +3,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.asJava.findFacadeClass
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -11,6 +12,7 @@ import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.KotlinUElementWithComments
 import java.util.ArrayList
 
+@ApiStatus.Internal
 class KotlinUFile(
     override val psi: KtFile,
     override val languagePlugin: UastLanguagePlugin

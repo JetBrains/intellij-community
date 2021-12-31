@@ -2,10 +2,12 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.psi.UastKotlinPsiParameter
 
+@ApiStatus.Internal
 class KotlinLocalFunctionULambdaExpression(
     override val sourcePsi: KtFunction,
     givenParent: UElement?

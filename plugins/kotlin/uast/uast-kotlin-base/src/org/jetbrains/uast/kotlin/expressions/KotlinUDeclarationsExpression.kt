@@ -2,10 +2,12 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UDeclaration
 import org.jetbrains.uast.UDeclarationsExpression
 import org.jetbrains.uast.UElement
 
+@ApiStatus.Internal
 open class KotlinUDeclarationsExpression(
     override val psi: PsiElement?,
     givenParent: UElement?,

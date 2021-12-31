@@ -2,6 +2,7 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.*
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -9,6 +10,7 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UParameter
 import org.jetbrains.uast.UParameterEx
 
+@ApiStatus.Internal
 open class KotlinUParameter(
     psi: PsiParameter,
     final override val sourcePsi: KtElement?,

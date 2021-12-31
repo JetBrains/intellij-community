@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtAnnotatedExpression
 import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtExpression
@@ -93,6 +94,7 @@ fun createElvisExpression(elvisExpression: KtBinaryExpression, givenParent: UEle
     return KotlinUElvisExpression(elvisExpression, left, right, givenParent)
 }
 
+@ApiStatus.Internal
 class KotlinUElvisExpression(
     private val elvisExpression: KtBinaryExpression,
     private val left: KtExpression,

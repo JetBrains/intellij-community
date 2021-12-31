@@ -2,10 +2,12 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UExpression
 
+@ApiStatus.Internal
 class UnknownKotlinExpression(
     override val sourcePsi: KtExpression,
     givenParent: UElement?
