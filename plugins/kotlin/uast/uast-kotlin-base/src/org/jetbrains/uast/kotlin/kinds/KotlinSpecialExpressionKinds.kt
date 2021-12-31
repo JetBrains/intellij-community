@@ -2,8 +2,10 @@
 
 package org.jetbrains.uast.kotlin.kinds
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UastSpecialExpressionKind
 
+@ApiStatus.Internal
 object KotlinSpecialExpressionKinds {
     @JvmField
     val WHEN = UastSpecialExpressionKind("when")

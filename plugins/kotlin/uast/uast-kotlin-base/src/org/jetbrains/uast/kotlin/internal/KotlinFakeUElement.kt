@@ -3,7 +3,9 @@
 package org.jetbrains.uast.kotlin.internal
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 
+@ApiStatus.Internal
 interface KotlinFakeUElement {
     fun unwrapToSourcePsi(): List<PsiElement>
 }

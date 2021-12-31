@@ -3,8 +3,10 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiElement
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.uast.UElement
 
+@ApiStatus.Internal
 class KotlinUDestructuringDeclarationExpression(
     givenParent: UElement?,
     psiAnchor: PsiElement,

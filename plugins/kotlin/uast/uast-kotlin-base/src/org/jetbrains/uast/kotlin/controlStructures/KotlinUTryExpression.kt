@@ -2,9 +2,11 @@
 
 package org.jetbrains.uast.kotlin
 
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtTryExpression
 import org.jetbrains.uast.*
 
+@ApiStatus.Internal
 class KotlinUTryExpression(
     override val sourcePsi: KtTryExpression,
     givenParent: UElement?

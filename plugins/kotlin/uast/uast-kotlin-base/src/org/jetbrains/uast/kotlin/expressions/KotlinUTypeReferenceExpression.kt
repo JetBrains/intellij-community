@@ -3,11 +3,13 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiType
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UTypeReferenceExpression
 import org.jetbrains.uast.UastErrorType
 
+@ApiStatus.Internal
 class KotlinUTypeReferenceExpression(
     override val sourcePsi: KtTypeReference?,
     givenParent: UElement?,
