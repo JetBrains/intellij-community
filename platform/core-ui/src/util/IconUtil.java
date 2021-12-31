@@ -930,4 +930,35 @@ public final class IconUtil {
       return right;
     }
   }
+
+  @ApiStatus.Internal
+  public static Icon toRetinaAwareIcon(BufferedImage image) {
+    return new Icon() {
+      @Override
+      public void paintIcon(Component c, Graphics g, int x, int y) {
+        // [tav] todo: the icon is created in def screen scale
+        if (UIUtil.isJreHiDPI()) {
+          Graphics2D newG = (Graphics2D)g.create(x, y, image.getWidth(), image.getHeight());
+          float s = JBUIScale.sysScale();
+          newG.scale(1.0 / s, 1.0 / s);
+          newG.drawImage(image, (int)(x / s), (int)(y / s), null);
+          newG.scale(1.0, 1.0);
+          newG.dispose();
+        }
+        else {
+          g.drawImage(image, x, y, null);
+        }
+      }
+
+      @Override
+      public int getIconWidth() {
+        return UIUtil.isJreHiDPI() ? (int)(image.getWidth() / JBUIScale.sysScale()) : image.getWidth();
+      }
+
+      @Override
+      public int getIconHeight() {
+        return UIUtil.isJreHiDPI() ? (int)(image.getHeight() / JBUIScale.sysScale()) : image.getHeight();
+      }
+    };
+  }
 }
