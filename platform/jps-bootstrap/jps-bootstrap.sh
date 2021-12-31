@@ -47,6 +47,9 @@ else
         ;;
       aarch64)
         ZULU_ARCH=aarch64
+        ### TODO: Temporary workaround while cache-redirector doesn't support zulu-embedded
+        TEMP_JDK_URL_OVERRIDE="https://cdn.azul.com/zulu-embedded/bin/zulu11.50.19-ca-jdk11.0.12-linux_aarch64.tar.gz"
+        ### END
         ;;
       *)
         die "Unknown architecture $(uname -m)"
@@ -54,6 +57,11 @@ else
     esac
 fi
 JVM_URL=https://cache-redirector.jetbrains.com/cdn.azul.com/zulu/bin/$ZULU_PREFIX-$ZULU_ARCH.tar.gz
+### TODO: Temporary workaround while cache-redirector doesn't support zulu-embedded
+if [ -n "${TEMP_JDK_URL_OVERRIDE:-}" ]; then
+  JVM_URL="$TEMP_JDK_URL_OVERRIDE"
+fi
+### END
 JVM_TARGET_DIR="$JPS_BOOTSTRAP_WORK_DIR/jvm/$ZULU_PREFIX-$ZULU_ARCH-$SCRIPT_VERSION"
 
 mkdir -p "$JPS_BOOTSTRAP_WORK_DIR/jvm"
