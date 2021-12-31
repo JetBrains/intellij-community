@@ -38,6 +38,18 @@ public final class SystemProperties {
   }
 
   /**
+   * Returns a value of the given property as a long, or {@code defaultValue} if the property is not specified or malformed.
+   */
+  public static long getLongProperty(@NotNull String key, long defaultValue) {
+    String value = System.getProperty(key);
+    if (value != null) {
+      try { return Long.parseLong(value); }
+      catch (NumberFormatException ignored) { }
+    }
+    return defaultValue;
+  }
+
+  /**
    * Returns a value of the given property as a float, or {@code defaultValue} if the property is not specified or malformed.
    */
   public static float getFloatProperty(@NotNull String key, float defaultValue) {
