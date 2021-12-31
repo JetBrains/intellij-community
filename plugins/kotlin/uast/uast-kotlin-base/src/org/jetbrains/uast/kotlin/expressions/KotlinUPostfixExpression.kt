@@ -3,11 +3,13 @@
 package org.jetbrains.uast.kotlin
 
 import com.intellij.psi.PsiMethod
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtPostfixExpression
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.internal.DelegatedMultiResolve
 
+@ApiStatus.Internal
 class KotlinUPostfixExpression(
     override val sourcePsi: KtPostfixExpression,
     givenParent: UElement?
