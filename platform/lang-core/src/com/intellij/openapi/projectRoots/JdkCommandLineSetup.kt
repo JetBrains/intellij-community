@@ -218,7 +218,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
   private fun setupWorkingDirectory(javaParameters: SimpleJavaParameters) {
     val workingDirectory = javaParameters.workingDirectory
     if (workingDirectory != null) {
-      val targetWorkingDirectory = requestUploadIntoTarget(projectHomeOnTarget, workingDirectory)
+      val targetWorkingDirectory = requestUploadIntoTarget(projectHomeOnTarget, workingDirectory, uploadPathIsFile = false)
       commandLine.setWorkingDirectory(targetWorkingDirectory)
     }
   }
@@ -352,7 +352,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
         }
       }
 
-      val argFileParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, argFile.file.absolutePath)
+      val argFileParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, argFile.file.absolutePath, uploadPathIsFile = true)
       commandLine.addParameter(TargetValue.map(argFileParameter) { s -> "@$s" })
 
       argFile.scheduleWriteFileWhenReady(vmParameters) {
@@ -399,7 +399,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       }
 
 
-      val targetJarFile = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, jarFile.file.absolutePath)
+      val targetJarFile = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, jarFile.file.absolutePath, uploadPathIsFile = true)
       if (dynamicVMOptions || dynamicParameters) {
         // -classpath path1:path2 CommandLineWrapper path2
         commandLine.addParameter("-classpath")
@@ -504,19 +504,19 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       commandLine.addParameter(composePathsList(classpath))
 
       commandLine.addParameter(commandLineWrapper.name)
-      val classPathParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, classpathFile.absolutePath)
+      val classPathParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, classpathFile.absolutePath, uploadPathIsFile = true)
       commandLine.addParameter(classPathParameter)
       rememberFileContentAfterUpload(classpathFile, classPathParameter)
 
       if (vmParamsFile != null) {
         commandLine.addParameter("@vm_params")
-        val vmParamsParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, vmParamsFile.absolutePath)
+        val vmParamsParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, vmParamsFile.absolutePath, uploadPathIsFile = true)
         commandLine.addParameter(vmParamsParameter)
         rememberFileContentAfterUpload(vmParamsFile, vmParamsParameter)
       }
       if (appParamsFile != null) {
         commandLine.addParameter("@app_params")
-        val appParamsParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, appParamsFile.absolutePath)
+        val appParamsParameter = requestUploadIntoTarget(JavaLanguageRuntimeType.CLASS_PATH_VOLUME, appParamsFile.absolutePath, uploadPathIsFile = true)
         commandLine.addParameter(appParamsParameter)
         rememberFileContentAfterUpload(appParamsFile, appParamsParameter)
       }
@@ -539,8 +539,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       listOf(TargetValue.fixed(mainClass))
     }
     else if (jarPath != null) {
-      listOf(TargetValue.fixed("-jar"),
-             requestUploadIntoTarget(projectHomeOnTarget, jarPath, uploadPathIsFile = true))
+      listOf(TargetValue.fixed("-jar"), requestUploadIntoTarget(projectHomeOnTarget, jarPath, uploadPathIsFile = true))
     }
     else {
       throw CantRunException(ExecutionBundle.message("main.class.is.not.specified.error.message"))
@@ -568,7 +567,7 @@ class JdkCommandLineSetup(private val request: TargetEnvironmentRequest) {
       value.resolvePaths(
         uploadPathsResolver = { path ->
           path.beforeUploadOrDownloadResolved(path.localPath)
-          requestUploadIntoTarget(JavaLanguageRuntimeType.AGENTS_VOLUME, path.localPath, true) { path.afterUploadOrDownloadResolved(it) }
+          requestUploadIntoTarget(JavaLanguageRuntimeType.AGENTS_VOLUME, path.localPath, uploadPathIsFile = true) { path.afterUploadOrDownloadResolved(it) }
         },
         downloadPathsResolver = { path ->
           path.beforeUploadOrDownloadResolved(path.localPath)
