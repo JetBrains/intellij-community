@@ -58,6 +58,22 @@ open class FirUastResolveApiTest : AbstractFirUastTest() {
         }
     }
 
+    @TestMetadata("plugins/uast-kotlin-fir/testData/type")
+    @TestDataPath("\$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners::class)
+    class Type : FirUastResolveApiTest(), UastResolveApiTestBase {
+        override val isFirUastPlugin: Boolean = true
+
+        override fun check(filePath: String, file: UFile) {
+            // Bogus
+        }
+
+        @TestMetadata("threadSafe.kt")
+        fun testThreadSafe() {
+            doCheck("uast-kotlin-fir/testData/type/threadSafe.kt", ::checkThreadSafe)
+        }
+    }
+
     @TestMetadata("../uast-kotlin/tests/testData")
     @TestDataPath("\$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners::class)
