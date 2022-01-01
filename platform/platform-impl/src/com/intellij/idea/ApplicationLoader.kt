@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ApplicationLoader")
 @file:ApiStatus.Internal
 package com.intellij.idea
@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
+import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.serviceContainer.ComponentManagerImpl
 import com.intellij.ui.AnimatedIcon
@@ -43,6 +44,7 @@ import com.intellij.util.ui.EDT
 import net.miginfocom.layout.PlatformDefaults
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.VisibleForTesting
+import java.awt.EventQueue
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.nio.file.Files
@@ -84,6 +86,12 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
         initAppActivity.runChild("base laf passing") {
           DarculaLaf.setPreInitializedBaseLaf(baseLaf as LookAndFeel)
         }
+
+        if (!Main.isHeadless()) {
+          EventQueue.invokeLater {
+            WeakFocusStackManager.getInstance()
+          }
+        }
       }
 
       val app = ApplicationImpl(isInternal, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())
@@ -94,7 +102,9 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
         pluginSetFutureWaitActivity.end()
         it
       }
-    }, Executor { if (EDT.isCurrentThreadEdt()) ForkJoinPool.commonPool().execute(it) else it.run() }
+    }, Executor {
+    if (EDT.isCurrentThreadEdt()) ForkJoinPool.commonPool().execute(it) else it.run()
+    }
   )
     .thenCompose { pluginSet ->
       val app = ApplicationManager.getApplication() as ApplicationImpl

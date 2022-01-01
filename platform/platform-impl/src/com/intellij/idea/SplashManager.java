@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.idea;
 
 import com.intellij.diagnostic.Activity;
-import com.intellij.diagnostic.ActivityCategory;
 import com.intellij.diagnostic.StartUpMeasurer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
@@ -21,21 +20,23 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.concurrent.CompletionException;
 
 public final class SplashManager {
-  private static JFrame PROJECT_FRAME;
+  private static volatile JFrame PROJECT_FRAME;
   static Splash SPLASH_WINDOW;
 
-  public static void scheduleShow() {
-    Activity frameActivity = StartUpMeasurer.startActivity("splash as project frame initialization", ActivityCategory.DEFAULT);
+  public static void scheduleShow(@NotNull Activity parentActivity) {
+    Activity frameActivity = parentActivity.startChild("splash as project frame initialization");
     try {
-      PROJECT_FRAME = createFrameIfPossible();
+      createFrameIfPossible();
     }
     catch (Throwable e) {
       //noinspection UseOfSystemOutOrSystemErr
@@ -50,7 +51,7 @@ public final class SplashManager {
     // must be out of activity measurement
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     assert SPLASH_WINDOW == null;
-    Activity activity = StartUpMeasurer.startActivity("splash initialization", ActivityCategory.DEFAULT);
+    Activity activity = parentActivity.startChild("splash initialization");
     SPLASH_WINDOW = new Splash(appInfo);
     Activity queueActivity = activity.startChild("splash initialization (in queue)");
     EventQueue.invokeLater(() -> {
@@ -64,7 +65,7 @@ public final class SplashManager {
     });
   }
 
-  private static @Nullable IdeFrameImpl createFrameIfPossible() throws IOException {
+  private static void createFrameIfPossible() throws IOException {
     Path infoFile = Paths.get(PathManager.getSystemPath(), "lastProjectFrameInfo");
     ByteBuffer buffer;
     try (SeekableByteChannel channel = Files.newByteChannel(infoFile)) {
@@ -75,11 +76,11 @@ public final class SplashManager {
 
       buffer.flip();
       if (buffer.getShort() != 0) {
-        return null;
+        return;
       }
     }
     catch (NoSuchFileException ignore) {
-      return null;
+      return;
     }
 
     Rectangle savedBounds = new Rectangle(buffer.getInt(), buffer.getInt(), buffer.getInt(), buffer.getInt());
@@ -89,6 +90,25 @@ public final class SplashManager {
     boolean isFullScreen = buffer.get() == 1;
     int extendedState = buffer.getInt();
 
+    if (EventQueue.isDispatchThread()) {
+      PROJECT_FRAME = doShowFrame(savedBounds, backgroundColor, extendedState);
+    }
+    else {
+      try {
+        EventQueue.invokeAndWait(() -> {
+          PROJECT_FRAME = doShowFrame(savedBounds, backgroundColor, extendedState);
+        });
+      }
+      catch (InvocationTargetException e) {
+        throw new CompletionException(e.getCause());
+      }
+      catch (InterruptedException e) {
+        throw new CompletionException(e);
+      }
+    }
+  }
+
+  private static @NotNull IdeFrameImpl doShowFrame(Rectangle savedBounds, Color backgroundColor, int extendedState) {
     IdeFrameImpl frame = new IdeFrameImpl();
     frame.setAutoRequestFocus(false);
     frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);

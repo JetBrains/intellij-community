@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide;
 
 import com.intellij.codeWithMe.ClientId;
@@ -35,6 +35,7 @@ import com.intellij.openapi.util.ExpirableRunnable;
 import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
@@ -78,13 +79,21 @@ import java.util.function.Predicate;
 public final class IdeEventQueue extends EventQueue {
   private static final boolean ourDefaultEventWithWrite = true;
 
-  private static final Logger LOG = Logger.getInstance(IdeEventQueue.class);
-  private static final Logger TYPEAHEAD_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".typeahead");
-  private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".runnables");
   private static final boolean ourActionAwareTypeaheadEnabled = !SystemInfoRt.isMac && Boolean.getBoolean("action.aware.typeAhead");
   private static final boolean ourTypeAheadSearchEverywhereEnabled = Boolean.getBoolean("action.aware.typeAhead.searchEverywhere");
   private static final boolean ourSkipMetaPressOnLinux = Boolean.getBoolean("keymap.skip.meta.press.on.linux");
   private static TransactionGuardImpl ourTransactionGuard;
+
+  // IdeEventQueue is created before log configuration - cannot be initialized as a part of IdeEventQueue
+  private static final class Logs {
+    static {
+      LoadingState.BASE_LAF_INITIALIZED.checkOccurred();
+    }
+
+    private static final Logger LOG = Logger.getInstance(IdeEventQueue.class);
+    private static final Logger TYPEAHEAD_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".typeahead");
+    private static final Logger FOCUS_AWARE_RUNNABLES_LOG = Logger.getInstance(IdeEventQueue.class.getName() + ".runnables");
+  }
 
   /**
    * Adding/Removing of "idle" listeners should be thread safe.
@@ -110,10 +119,8 @@ public final class IdeEventQueue extends EventQueue {
   final AtomicInteger myKeyboardEventsPosted = new AtomicInteger();
   final AtomicInteger myKeyboardEventsDispatched = new AtomicInteger();
   private boolean myIsInInputEvent;
-  @NotNull
-  private AWTEvent myCurrentEvent = new InvocationEvent(this, EmptyRunnable.getInstance());
-  @Nullable
-  private AWTEvent myCurrentSequencedEvent;
+  private @NotNull AWTEvent myCurrentEvent = new InvocationEvent(this, EmptyRunnable.getInstance());
+  private @Nullable AWTEvent myCurrentSequencedEvent;
   private volatile long myLastActiveTime = System.nanoTime();
   private long myLastEventTime = System.currentTimeMillis();
   private final List<EventDispatcher> myDispatchers = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -123,8 +130,8 @@ public final class IdeEventQueue extends EventQueue {
   private boolean myKeyboardBusy;
   private boolean myWinMetaPressed;
   private int myInputMethodLock;
-  private final com.intellij.util.EventDispatcher<PostEventHook>
-    myPostEventListeners = com.intellij.util.EventDispatcher.create(PostEventHook.class);
+  private final com.intellij.util.EventDispatcher<PostEventHook> myPostEventListeners =
+    com.intellij.util.EventDispatcher.create(PostEventHook.class);
 
   private final Map<AWTEvent, List<Runnable>> myRunnablesWaitingFocusChange = new HashMap<>();
 
@@ -139,8 +146,8 @@ public final class IdeEventQueue extends EventQueue {
     ifFocusEventsInTheQueue(e -> {
       List<Runnable> runnables = myRunnablesWaitingFocusChange.get(e);
       if (runnables != null) {
-        if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-          FOCUS_AWARE_RUNNABLES_LOG.debug("We have already had a runnable for the event: " + e);
+        if (Logs.FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+          Logs.FOCUS_AWARE_RUNNABLES_LOG.debug("We have already had a runnable for the event: " + e);
         }
         runnables.add(runnable);
       }
@@ -152,9 +159,8 @@ public final class IdeEventQueue extends EventQueue {
     }, runnable);
   }
 
-  @NotNull
-  public String runnablesWaitingForFocusChangeState() {
-    return StringUtil.join(focusEventsList, event -> "[" + event.getID() + "; " + event.getSource().getClass().getName() + "]", ", ");
+  public @NotNull String runnablesWaitingForFocusChangeState() {
+    return Strings.join(focusEventsList, event -> "[" + event.getID() + "; " + event.getSource().getClass().getName() + "]", ", ");
   }
 
   private @Nullable AWTEvent getLastFocusGainedEvent() {
@@ -171,16 +177,16 @@ public final class IdeEventQueue extends EventQueue {
     AWTEvent lastFocusGainedEvent = getLastFocusGainedEvent();
 
     if (lastFocusGainedEvent != null) {
-      if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-        FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (trying to execute runnable): " + runnablesWaitingForFocusChangeState() + "\n" +
+      if (Logs.FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+        Logs.FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (trying to execute runnable): " + runnablesWaitingForFocusChangeState() + "\n" +
                                         "    runnable saved for : [" + lastFocusGainedEvent.getID() + "; " +
                                         lastFocusGainedEvent.getSource() + "] -> " + no.getClass().getName());
       }
       yes.accept(lastFocusGainedEvent);
     }
     else {
-      if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-        FOCUS_AWARE_RUNNABLES_LOG.debug("No focus gained event in the queue runnable is run on EDT if needed : " + no.getClass().getName());
+      if (Logs.FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+        Logs.FOCUS_AWARE_RUNNABLES_LOG.debug("No focus gained event in the queue runnable is run on EDT if needed : " + no.getClass().getName());
       }
       EdtInvocationManager.invokeLaterIfNeeded(no);
     }
@@ -277,7 +283,7 @@ public final class IdeEventQueue extends EventQueue {
     }
   }
 
-  public void addIdleListener(@NotNull final Runnable runnable, final int timeoutMillis) {
+  public void addIdleListener(final @NotNull Runnable runnable, final int timeoutMillis) {
     if (timeoutMillis <= 0 || TimeUnit.MILLISECONDS.toHours(timeoutMillis) >= 24) {
       throw new IllegalArgumentException("This timeout value is unsupported: " + timeoutMillis);
     }
@@ -289,14 +295,14 @@ public final class IdeEventQueue extends EventQueue {
     }
   }
 
-  public void removeIdleListener(@NotNull final Runnable runnable) {
+  public void removeIdleListener(final @NotNull Runnable runnable) {
     synchronized (myLock) {
       final boolean wasRemoved = myIdleListeners.remove(runnable);
       if (!wasRemoved) {
-        LOG.error("unknown runnable: " + runnable);
+        Logs.LOG.error("unknown runnable: " + runnable);
       }
       final MyFireIdleRequest request = myListenerToRequest.remove(runnable);
-      LOG.assertTrue(request != null);
+      Logs.LOG.assertTrue(request != null);
       myIdleRequestsAlarm.cancelRequest(request);
     }
   }
@@ -437,7 +443,7 @@ public final class IdeEventQueue extends EventQueue {
             p = ProgressManager.getInstance();
           }
           catch (RuntimeException ex) {
-            LOG.warn("app services aren't yet initialized", ex);
+            Logs.LOG.warn("app services aren't yet initialized", ex);
           }
           progressManager = p;
         }
@@ -538,8 +544,8 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private void onFocusEvent(@NotNull AWTEvent event) {
-    if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
-      FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + runnablesWaitingForFocusChangeState());
+    if (Logs.FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+      Logs.FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + runnablesWaitingForFocusChangeState());
     }
     List<AWTEvent> events = new ArrayList<>();
     while (!focusEventsList.isEmpty()) {
@@ -582,7 +588,7 @@ public final class IdeEventQueue extends EventQueue {
   // as we rely on system time monotonicity in many places let's log anomalies at least.
   private void checkForTimeJump(long now) {
     if (myLastEventTime > now + 1000) {
-      LOG.warn("System clock's jumped back by ~" + (myLastEventTime - now) / 1000 + " sec");
+      Logs.LOG.warn("System clock's jumped back by ~" + (myLastEventTime - now) / 1000 + " sec");
     }
     myLastEventTime = now;
   }
@@ -658,8 +664,7 @@ public final class IdeEventQueue extends EventQueue {
    * <p>
    * Note: As side-effect this method tracks special flag for 'Windows' key state that is valuable on itself
    */
-  @Nullable
-  private AWTEvent mapMetaState(@NotNull AWTEvent e) {
+  private @Nullable AWTEvent mapMetaState(@NotNull AWTEvent e) {
     if (myWinMetaPressed) {
       Application app = ApplicationManager.getApplication();
 
@@ -789,7 +794,7 @@ public final class IdeEventQueue extends EventQueue {
       for (Runnable idleListener : myIdleListeners) {
         final MyFireIdleRequest request = myListenerToRequest.get(idleListener);
         if (request == null) {
-          LOG.error("There is no request for " + idleListener);
+          Logs.LOG.error("There is no request for " + idleListener);
         }
         else {
           myIdleRequestsAlarm.addRequest(request, request.getTimeout(), ModalityState.NON_MODAL);
@@ -937,15 +942,15 @@ public final class IdeEventQueue extends EventQueue {
         dispatchEvent(getNextEvent());
       }
       catch (Exception e) {
-        LOG.error(e); //?
+        Logs.LOG.error(e); //?
       }
     }
   }
 
   public void pumpEventsForHierarchy(@NotNull Component modalComponent, @NotNull Future<?> exitCondition, @NotNull Predicate<? super AWTEvent> isCancelEvent) {
     assert EventQueue.isDispatchThread();
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("pumpEventsForHierarchy(" + modalComponent + ", " + exitCondition + ")");
+    if (Logs.LOG.isDebugEnabled()) {
+      Logs.LOG.debug("pumpEventsForHierarchy(" + modalComponent + ", " + exitCondition + ")");
     }
     while (!exitCondition.isDone()) {
       try {
@@ -959,11 +964,11 @@ public final class IdeEventQueue extends EventQueue {
         }
       }
       catch (Throwable e) {
-        LOG.error(e);
+        Logs.LOG.error(e);
       }
     }
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("pumpEventsForHierarchy.exit(" + modalComponent + ", " + exitCondition + ")");
+    if (Logs.LOG.isDebugEnabled()) {
+      Logs.LOG.debug("pumpEventsForHierarchy.exit(" + modalComponent + ", " + exitCondition + ")");
     }
   }
 
@@ -978,8 +983,8 @@ public final class IdeEventQueue extends EventQueue {
         while (c != null && c != modalWindow) c = c.getParent();
         if (c == null) {
           consumed = true;
-          if (LOG.isDebugEnabled()) {
-            LOG.debug("pumpEventsForHierarchy.consumed: " + event);
+          if (Logs.LOG.isDebugEnabled()) {
+            Logs.LOG.debug("pumpEventsForHierarchy.consumed: " + event);
           }
           ((InputEvent)event).consume();
         }
@@ -1029,18 +1034,15 @@ public final class IdeEventQueue extends EventQueue {
     return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - myLastActiveTime);
   }
 
-  @NotNull
-  public IdePopupManager getPopupManager() {
+  public @NotNull IdePopupManager getPopupManager() {
     return myPopupManager;
   }
 
-  @NotNull
-  public IdeKeyEventDispatcher getKeyEventDispatcher() {
+  public @NotNull IdeKeyEventDispatcher getKeyEventDispatcher() {
     return myKeyEventDispatcher;
   }
 
-  @NotNull
-  public IdeMouseEventDispatcher getMouseEventDispatcher() {
+  public @NotNull IdeMouseEventDispatcher getMouseEventDispatcher() {
     return myMouseEventDispatcher;
   }
 
@@ -1145,7 +1147,7 @@ public final class IdeEventQueue extends EventQueue {
                 myRobot.keyRelease(KeyEvent.VK_ALT);
               }
               catch (AWTException e1) {
-                LOG.debug(e1);
+                Logs.LOG.debug(e1);
               }
             });
           }
@@ -1229,8 +1231,8 @@ public final class IdeEventQueue extends EventQueue {
   private static boolean doesFocusGoIntoPopup(@NotNull AWTEvent e) {
     AWTEvent unwrappedEvent = unwrapWindowEvent(e);
 
-    if (TYPEAHEAD_LOG.isDebugEnabled() && (e instanceof WindowEvent || e.getClass().getName().contains("SequencedEvent"))) {
-      TYPEAHEAD_LOG.debug("Window event: " + e.paramString());
+    if (Logs.TYPEAHEAD_LOG.isDebugEnabled() && (e instanceof WindowEvent || e.getClass().getName().contains("SequencedEvent"))) {
+      Logs.TYPEAHEAD_LOG.debug("Window event: " + e.paramString());
     }
 
     return doesFocusGoIntoPopupFromWindowEvent(unwrappedEvent);
@@ -1270,10 +1272,10 @@ public final class IdeEventQueue extends EventQueue {
         unwrappedEvent = (AWTEvent)SequencedEventNestedFieldHolder.NESTED_FIELD.get(e);
       }
       catch (IllegalAccessException illegalAccessException) {
-        TYPEAHEAD_LOG.error(illegalAccessException);
+        Logs.TYPEAHEAD_LOG.error(illegalAccessException);
       }
     }
-    TYPEAHEAD_LOG.assertTrue(unwrappedEvent != null);
+    Logs.TYPEAHEAD_LOG.assertTrue(unwrappedEvent != null);
     return unwrappedEvent;
   }
 
@@ -1288,7 +1290,7 @@ public final class IdeEventQueue extends EventQueue {
       // sun.awt.PostEventQueue#flush implementation.
       // This is why we need to log the message on the event dispatch thread
       super.postEvent(new InvocationEvent(this, () ->
-        TYPEAHEAD_LOG.error(new RuntimeException("Typeahead timeout is exceeded: " + currentTypeaheadDelay))
+        Logs.TYPEAHEAD_LOG.error(new RuntimeException("Typeahead timeout is exceeded: " + currentTypeaheadDelay))
       ));
       return true;
     }
@@ -1298,7 +1300,7 @@ public final class IdeEventQueue extends EventQueue {
   private static boolean doesFocusGoIntoPopupFromWindowEvent(@NotNull AWTEvent e) {
     if (e.getID() == WindowEvent.WINDOW_GAINED_FOCUS || SystemInfoRt.isLinux && e.getID() == WindowEvent.WINDOW_OPENED) {
       if (UIUtil.isTypeAheadAware(((WindowEvent)e).getWindow())) {
-        TYPEAHEAD_LOG.debug("Focus goes into TypeAhead aware window");
+        Logs.TYPEAHEAD_LOG.debug("Focus goes into TypeAhead aware window");
         return true;
       }
     }
@@ -1341,8 +1343,8 @@ public final class IdeEventQueue extends EventQueue {
       myKeyboardEventsPosted.incrementAndGet();
       if (ourActionAwareTypeaheadEnabled && delayKeyEvents.get()) {
         myDelayedKeyEvents.offer((KeyEvent)event);
-        if (TYPEAHEAD_LOG.isDebugEnabled()) {
-          TYPEAHEAD_LOG.debug("Waiting for typeahead : " + event);
+        if (Logs.TYPEAHEAD_LOG.isDebugEnabled()) {
+          Logs.TYPEAHEAD_LOG.debug("Waiting for typeahead : " + event);
         }
         return true;
       }
@@ -1362,8 +1364,8 @@ public final class IdeEventQueue extends EventQueue {
             && ((KeyboardShortcut)s).getFirstKeyStroke().equals(keyStrokeToFind));
 
         if (!isActionPopupShown() && thisShortcutMayShowPopup && KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame) {
-          if (TYPEAHEAD_LOG.isDebugEnabled()) {
-            TYPEAHEAD_LOG.debug("Delay following events; Focused window is " +
+          if (Logs.TYPEAHEAD_LOG.isDebugEnabled()) {
+            Logs.TYPEAHEAD_LOG.debug("Delay following events; Focused window is " +
                                 KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow().getClass().getName());
           }
           delayKeyEvents.set(true);
@@ -1404,7 +1406,7 @@ public final class IdeEventQueue extends EventQueue {
       }
 
       if (isTypeaheadTimeoutExceeded()) {
-        TYPEAHEAD_LOG.debug("Clear delayed events because of IdeFrame deactivation");
+        Logs.TYPEAHEAD_LOG.debug("Clear delayed events because of IdeFrame deactivation");
         delayKeyEvents.set(false);
         flushDelayedKeyEvents();
         lastTypeaheadTimestamp = 0;
@@ -1444,18 +1446,18 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   private void postDelayedKeyEvents() {
-    if (TYPEAHEAD_LOG.isDebugEnabled()) {
-      TYPEAHEAD_LOG.debug("Stop delaying events. Events to post: " + numberOfDelayedKeyEvents());
+    if (Logs.TYPEAHEAD_LOG.isDebugEnabled()) {
+      Logs.TYPEAHEAD_LOG.debug("Stop delaying events. Events to post: " + numberOfDelayedKeyEvents());
     }
     KeyEvent event;
     while ((event = myDelayedKeyEvents.poll()) != null) {
-      if (TYPEAHEAD_LOG.isDebugEnabled()) {
-        TYPEAHEAD_LOG.debug("Posted after delay: " + event.paramString());
+      if (Logs.TYPEAHEAD_LOG.isDebugEnabled()) {
+        Logs.TYPEAHEAD_LOG.debug("Posted after delay: " + event.paramString());
       }
       super.postEvent(event);
     }
-    if (TYPEAHEAD_LOG.isDebugEnabled()) {
-      TYPEAHEAD_LOG.debug("Events after posting: " + numberOfDelayedKeyEvents());
+    if (Logs.TYPEAHEAD_LOG.isDebugEnabled()) {
+      Logs.TYPEAHEAD_LOG.debug("Events after posting: " + numberOfDelayedKeyEvents());
     }
   }
 
@@ -1496,8 +1498,7 @@ public final class IdeEventQueue extends EventQueue {
   private final List<String> actionsShowingPopupsList = new ArrayList<>();
   private long lastTypeaheadTimestamp = -1;
 
-  @NotNull
-  private Set<Shortcut> getShortcutsShowingPopups () {
+  private @NotNull Set<Shortcut> getShortcutsShowingPopups () {
     KeymapManager keymapManager = KeymapManager.getInstance();
     if (keymapManager != null) {
       Keymap keymap = keymapManager.getActiveKeymap();
@@ -1507,8 +1508,8 @@ public final class IdeEventQueue extends EventQueue {
         actionsShowingPopupsList.addAll(StringUtil.split(actionsAwareTypeaheadActionsList, ","));
         actionsShowingPopupsList.forEach(actionId -> {
           List<Shortcut> shortcuts = Arrays.asList(keymap.getShortcuts(actionId));
-          if (TYPEAHEAD_LOG.isDebugEnabled()) {
-            shortcuts.forEach(s -> TYPEAHEAD_LOG.debug("Typeahead for " + actionId + " : Shortcuts: " + s));
+          if (Logs.TYPEAHEAD_LOG.isDebugEnabled()) {
+            shortcuts.forEach(s -> Logs.TYPEAHEAD_LOG.debug("Typeahead for " + actionId + " : Shortcuts: " + s));
           }
           shortcutsShowingPopups.addAll(shortcuts);
         });
@@ -1558,7 +1559,7 @@ public final class IdeEventQueue extends EventQueue {
   }
 
   /**
-   * An absolutely guru API, please avoid using it at all cost.
+   * An absolute guru API, please avoid using it at all cost.
    */
   @FunctionalInterface
   public interface PostEventHook extends EventListener {
@@ -1596,15 +1597,5 @@ public final class IdeEventQueue extends EventQueue {
       }
     }
     r.run();
-  }
-
-  private static final class MyLastShortcut {
-    public final long when;
-    public final char keyChar;
-
-    private MyLastShortcut(long when, char keyChar) {
-      this.when = when;
-      this.keyChar = keyChar;
-    }
   }
 }

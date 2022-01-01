@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf.darcula;
 
 import com.intellij.diagnostic.LoadingState;
@@ -297,8 +297,7 @@ public class DarculaLaf extends BasicLookAndFeel implements UserDataHolder {
       Class<?> aClass = DarculaLaf.class.getClassLoader().loadClass(UIManager.getSystemLookAndFeelClassName());
       return (BasicLookAndFeel)MethodHandles.lookup().findConstructor(aClass, MethodType.methodType(void.class)).invoke();
     }
-
-    if (!SystemInfoRt.isLinux) {
+    else if (!SystemInfoRt.isLinux) {
       return new IdeaLaf(null);
     }
 
