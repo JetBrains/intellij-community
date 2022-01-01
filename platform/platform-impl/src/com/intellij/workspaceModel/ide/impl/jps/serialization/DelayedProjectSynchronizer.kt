@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.workspaceModel.ide.impl.jps.serialization
 
 import com.intellij.openapi.diagnostic.logger
@@ -17,18 +17,15 @@ import kotlin.system.measureTimeMillis
  */
 internal class DelayedProjectSynchronizer : StartupActivity.DumbAware {
   override fun runActivity(project: Project) {
-    val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project)
-    if (projectModelSynchronizer != null && (WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
+    val projectModelSynchronizer = JpsProjectModelSynchronizer.getInstance(project) ?: return
+    if ((WorkspaceModel.getInstance(project) as WorkspaceModelImpl).loadedFromCache) {
       val loadingTime = measureTimeMillis {
         projectModelSynchronizer.loadProject(project)
         project.messageBus.syncPublisher(JpsProjectLoadedListener.LOADED).loaded()
       }
-      log.info("Workspace model loaded from cache. " +
-               "Syncing real project state into workspace model in $loadingTime ms. ${Thread.currentThread()}")
+      logger<DelayedProjectSynchronizer>().info(
+        "Workspace model loaded from cache. Syncing real project state into workspace model in $loadingTime ms. ${Thread.currentThread()}"
+      )
     }
-  }
-
-  companion object {
-    private val log = logger<DelayedProjectSynchronizer>()
   }
 }
