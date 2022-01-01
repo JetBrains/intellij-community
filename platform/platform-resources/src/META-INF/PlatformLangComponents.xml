@@ -71,8 +71,6 @@
                         serviceImplementation="com.intellij.openapi.wm.impl.FocusManagerImpl"
                         headlessImplementation="com.intellij.openapi.wm.impl.IdeFocusManagerHeadless" preload="notHeadless"/>
 
-    <applicationService serviceImplementation="com.intellij.ide.IdeTooltipManager" preload="notHeadless"/>
-
     <applicationService serviceInterface="com.intellij.openapi.actionSystem.ActionManager"
                         serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionManagerImpl"/>
     <applicationService serviceInterface="com.intellij.ide.DataManager"
@@ -117,6 +115,9 @@
     <projectService serviceImplementation="com.intellij.facet.impl.pointers.FacetPointersManagerImpl"
                     serviceInterface="com.intellij.facet.pointers.FacetPointersManager"/>
     <postStartupActivity implementation="com.intellij.facet.impl.pointers.FacetPointersPostStartupActivity"/>
+
+    <!-- as last - to preload after all others preloaded services -->
+    <applicationService serviceImplementation="com.intellij.ide.IdeTooltipManager" preload="notHeadless"/>
   </extensions>
 
   <!--suppress PluginXmlDynamicPlugin -->
@@ -183,6 +184,9 @@
               topic="com.intellij.psi.util.PsiModificationTracker$Listener"/>
     <listener class="com.intellij.openapi.vfs.newvfs.impl.CachedFileType$ReparseListener"
               topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
+
+    <listener class="com.intellij.ide.IdeTooltipManager$MyRegistryListener"
+              topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
   </applicationListeners>
   <projectListeners>
     <listener class="com.intellij.notification.impl.NotificationsToolWindowNotificationListener"
