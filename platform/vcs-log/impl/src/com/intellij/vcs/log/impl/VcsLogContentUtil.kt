@@ -3,7 +3,6 @@ package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.MessageType
-import com.intellij.openapi.util.Condition
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier
@@ -38,33 +37,15 @@ object VcsLogContentUtil {
     return uis.singleOrNull()
   }
 
-  fun <U : VcsLogUiEx> findAndSelect(project: Project,
-                                     clazz: Class<U>,
-                                     condition: Condition<in U>): U? {
-    return find(project, clazz, true, condition)
-  }
-
-  fun <U : VcsLogUiEx> find(project: Project,
-                            clazz: Class<U>,
-                            select: Boolean,
-                            condition: Condition<in U>): U? {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return null
+  internal fun selectLogUi(project: Project, logUi: VcsLogUi): Boolean {
+    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ChangesViewContentManager.TOOLWINDOW_ID) ?: return false
     val manager = toolWindow.contentManager
-    val component = ContentUtilEx.findContentComponent(manager) { c: JComponent ->
-      getLogUi(c).safeCastTo(clazz)?.let { condition.value(it) } ?: false
-    } ?: return null
+    val component = ContentUtilEx.findContentComponent(manager) { c -> getLogUi(c)?.id == logUi.id } ?: return false
 
-    if (select) {
-      if (!toolWindow.isVisible) {
-        toolWindow.activate(null)
-      }
-      if (!ContentUtilEx.selectContent(manager, component, true)) {
-        return null
-      }
+    if (!toolWindow.isVisible) {
+      toolWindow.activate(null)
     }
-
-    @Suppress("UNCHECKED_CAST")
-    return getLogUi(component) as U
+    return ContentUtilEx.selectContent(manager, component, true)
   }
 
   fun getId(content: Content): String? {
@@ -155,11 +136,5 @@ object VcsLogContentUtil {
   fun getOrCreateLog(project: Project): VcsLogManager? {
     VcsProjectLog.ensureLogCreated(project)
     return VcsProjectLog.getInstance(project).logManager
-  }
-
-  private fun <U> Any?.safeCastTo(clazz: Class<U>): U? {
-    @Suppress("UNCHECKED_CAST")
-    if (this != null && clazz.isInstance(this)) return this as U
-    return null
   }
 }

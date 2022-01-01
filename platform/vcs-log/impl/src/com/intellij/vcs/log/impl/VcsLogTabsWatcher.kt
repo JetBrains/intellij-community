@@ -40,6 +40,10 @@ internal class VcsLogTabsWatcher(private val project: Project, private val postp
     return postponableLogRefresher.logWindows.filter(watcherExtension::isOwnerOf)
   }
 
+  fun getTabs(location: VcsLogTabLocation): List<VcsLogUiEx> {
+    return getLogWindows(location).map { it.ui }
+  }
+
   fun getVisibleTabs(location: VcsLogTabLocation): List<VcsLogUiEx> {
     return getLogWindows(location).filter { it.isVisible }.map { it.ui }
   }

@@ -8,6 +8,8 @@ import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.vcs.log.VcsLogUi
 import com.intellij.vcs.log.ui.VcsLogPanel
 import com.intellij.vcs.log.ui.VcsLogUiEx
 import org.jetbrains.annotations.ApiStatus
@@ -27,10 +29,19 @@ object VcsLogEditorUtil {
     return editors.asSequence().flatMap { VcsLogPanel.getLogUis(it.component) }.filterIsInstance(clazz).firstOrNull()
   }
 
+  internal fun selectLogUi(project: Project, ui: VcsLogUi): Boolean {
+    val fileEditorManager = FileEditorManagerEx.getInstance(project)
+    val editor = fileEditorManager.findLogFile(ui) ?: return false
+    return fileEditorManager.openFile(editor, true, true).isNotEmpty()
+  }
+
   internal fun updateTabName(project: Project, ui: VcsLogUiEx) {
     val fileEditorManager = FileEditorManagerEx.getInstanceEx(project)
-    val file = fileEditorManager.allEditors.first { getLogIds(it).contains(ui.id) }?.file
-    file?.let { fileEditorManager.updateFilePresentation(it) }
+    fileEditorManager.findLogFile(ui)?.let { fileEditorManager.updateFilePresentation(it) }
+  }
+
+  private fun FileEditorManager.findLogFile(ui: VcsLogUi): VirtualFile? {
+    return allEditors.first { getLogIds(it).contains(ui.id) }?.file
   }
 
   internal fun closeLogTabs(project: Project, editorTabIds: List<String>): Boolean {

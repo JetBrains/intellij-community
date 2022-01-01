@@ -179,6 +179,11 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
+  public List<? extends VcsLogUi> getLogUis(@NotNull VcsLogTabLocation location) {
+    return getTabsWatcher().getTabs(location);
+  }
+
+  @NotNull
   public List<? extends VcsLogUi> getVisibleLogUis(@NotNull VcsLogTabLocation location) {
     return getTabsWatcher().getVisibleTabs(location);
   }
