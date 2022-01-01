@@ -59,16 +59,9 @@ public final class VcsLogUtil {
 
   @NotNull
   public static Map<VirtualFile, Set<VcsRef>> groupRefsByRoot(@NotNull Collection<? extends VcsRef> refs) {
-    return groupByRoot(refs, VcsRef::getRoot);
-  }
-
-  @NotNull
-  private static <T> Map<VirtualFile, Set<T>> groupByRoot(@NotNull Collection<? extends T> items,
-                                                          @NotNull Function<? super T, ? extends VirtualFile> rootGetter) {
-    Map<VirtualFile, Set<T>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
-    for (T item : items) {
-      VirtualFile root = rootGetter.fun(item);
-      map.computeIfAbsent(root, k -> new HashSet<>()).add(item);
+    Map<VirtualFile, Set<VcsRef>> map = new TreeMap<>(Comparator.comparing(VirtualFile::getPresentableUrl));
+    for (VcsRef item : refs) {
+      map.computeIfAbsent(item.getRoot(), k -> new HashSet<>()).add(item);
     }
     return map;
   }
