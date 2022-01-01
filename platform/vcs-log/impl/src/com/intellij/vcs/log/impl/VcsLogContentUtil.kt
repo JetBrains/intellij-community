@@ -98,17 +98,12 @@ object VcsLogContentUtil {
     VcsBalloonProblemNotifier.showOverChangesView(project, VcsLogBundle.message("vcs.log.is.not.available"), MessageType.WARNING)
   }
 
-  private fun isMainLogTab(content: Content?): Boolean {
-    if (content == null) return false
-    return VcsLogContentProvider.TAB_NAME == content.tabName
-  }
-
   internal fun selectMainLog(cm: ContentManager): Boolean {
     val contents = cm.contents
     for (content in contents) {
       // here tab name is used instead of log ui id to select the correct tab
       // it's done this way since main log ui may not be created when this method is called
-      if (isMainLogTab(content)) {
+      if (VcsLogContentProvider.TAB_NAME == content.tabName) {
         cm.setSelectedContent(content)
         return true
       }
