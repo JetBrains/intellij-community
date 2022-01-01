@@ -3,6 +3,7 @@ package com.intellij.vcs.log.impl
 
 import com.intellij.openapi.project.Project
 import com.intellij.vcs.log.VcsLogUi
+import org.jetbrains.annotations.ApiStatus
 
 /**
  * Represents a location of the [VcsLogUi].
@@ -13,6 +14,7 @@ import com.intellij.vcs.log.VcsLogUi
  * @see VcsLogTabsWatcher
  * @see VcsLogTabsWatcherExtension
  */
+@ApiStatus.Experimental
 enum class VcsLogTabLocation {
   TOOL_WINDOW {
     override fun select(project: Project, logUi: VcsLogUi): Boolean = VcsLogContentUtil.selectLogUi(project, logUi)
