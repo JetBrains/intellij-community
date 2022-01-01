@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.Pair
@@ -548,25 +548,30 @@ final class DistributionJARsBuilder {
     return result
   }
 
-  static void buildAdditionalArtifacts(BuildContext buildContext, ProjectStructureMapping projectStructureMapping) {
-    ProductProperties productProperties = buildContext.productProperties
+  static void buildAdditionalArtifacts(BuildContext context, ProjectStructureMapping projectStructureMapping) {
+    ProductProperties productProperties = context.productProperties
 
     if (productProperties.generateLibrariesLicensesTable &&
-        !buildContext.options.buildStepsToSkip.contains(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP)) {
-      String artifactNamePrefix = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber)
-      Path artifactDir = buildContext.paths.artifactDir
+        !context.options.buildStepsToSkip.contains(BuildOptions.THIRD_PARTY_LIBRARIES_LIST_STEP)) {
+      String artifactNamePrefix = productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber)
+      Path artifactDir = context.paths.artifactDir
       Files.createDirectories(artifactDir)
-      Files.copy(getThirdPartyLibrariesHtmlFilePath(buildContext), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.html"))
-      Files.copy(getThirdPartyLibrariesJsonFilePath(buildContext), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.json"))
+      Files.copy(getThirdPartyLibrariesHtmlFilePath(context), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.html"))
+      Files.copy(getThirdPartyLibrariesJsonFilePath(context), artifactDir.resolve(artifactNamePrefix + "-third-party-libraries.json"))
     }
 
     if (productProperties.buildSourcesArchive) {
-      String archiveName = productProperties.getBaseArtifactName(buildContext.applicationInfo, buildContext.buildNumber) + "-sources.zip"
-      def modulesFromCommunity = projectStructureMapping.includedModules.findAll { moduleName ->
-        productProperties.includeIntoSourcesArchiveFilter.test(buildContext.findRequiredModule(moduleName), buildContext)
-      }
-      BuildTasks.create(buildContext).zipSourcesOfModules(modulesFromCommunity, buildContext.paths.artifactDir.resolve(archiveName), true)
+      buildSourcesArchive(projectStructureMapping, context)
     }
+  }
+
+  static void buildSourcesArchive(ProjectStructureMapping projectStructureMapping, BuildContext context) {
+    ProductProperties productProperties = context.productProperties
+    String archiveName = productProperties.getBaseArtifactName(context.applicationInfo, context.buildNumber) + "-sources.zip"
+    Set<String> modulesFromCommunity = projectStructureMapping.includedModules.findAll { moduleName ->
+      productProperties.includeIntoSourcesArchiveFilter.test(context.findRequiredModule(moduleName), context)
+    }
+    BuildTasks.create(context).zipSourcesOfModules(modulesFromCommunity, context.paths.artifactDir.resolve(archiveName), true)
   }
 
   void generateProjectStructureMapping(@NotNull Path targetFile, @NotNull BuildContext context) {

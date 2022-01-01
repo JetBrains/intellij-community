@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -176,12 +176,12 @@ final class BuildTasksImpl extends BuildTasks {
           buildContext.messages.debug("  skipped root $url: not a jar file")
         }
       }
-      BuildHelper.zipWithPrefixes(buildContext, targetFile, zipFileMap, false)
+      BuildHelper.zipWithPrefixes(buildContext, targetFile, zipFileMap, true)
       buildContext.notifyArtifactWasBuilt(targetFile)
     }
   }
 
-  private Boolean isSourceFile(String path) {
+  private static Boolean isSourceFile(String path) {
     return path.endsWith(".java") ||
            path.endsWith(".groovy") ||
            path.endsWith(".kt")
@@ -951,22 +951,27 @@ idea.fatal.error.notification=disabled
   void runTestBuild() {
     checkProductProperties()
 
-    BundledMavenDownloader.downloadMavenCommonLibs(buildContext.paths.buildDependenciesCommunityRoot)
-    BundledMavenDownloader.downloadMavenDistribution(buildContext.paths.buildDependenciesCommunityRoot)
+    BuildContext context = buildContext
+    BundledMavenDownloader.downloadMavenCommonLibs(context.paths.buildDependenciesCommunityRoot)
+    BundledMavenDownloader.downloadMavenDistribution(context.paths.buildDependenciesCommunityRoot)
 
-    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(buildContext)
-    distributionJARsBuilder.buildJARs(buildContext)
-    layoutShared(buildContext)
-    Map<String, String> checkerConfig = buildContext.productProperties.versionCheckerConfig
+    DistributionJARsBuilder distributionJARsBuilder = compileModulesForDistribution(context)
+    ProjectStructureMapping projectStructureMapping = distributionJARsBuilder.buildJARs(context)
+    layoutShared(context)
+    Map<String, String> checkerConfig = context.productProperties.versionCheckerConfig
     if (checkerConfig != null) {
-      ClassVersionChecker.checkVersions(checkerConfig, buildContext, buildContext.paths.distAllDir)
+      ClassVersionChecker.checkVersions(checkerConfig, context, context.paths.distAllDir)
+    }
+
+    if (context.productProperties.buildSourcesArchive) {
+      DistributionJARsBuilder.buildSourcesArchive(projectStructureMapping, context)
     }
   }
 
   @Override
   void buildUnpackedDistribution(@NotNull Path targetDirectory, boolean includeBinAndRuntime) {
     BuildContext buildContext = buildContext
-    def currentOs = OsFamily.currentOs
+    OsFamily currentOs = OsFamily.currentOs
 
     buildContext.paths.distAllDir = targetDirectory.toAbsolutePath().normalize()
     buildContext.options.targetOS = currentOs.osId
