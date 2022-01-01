@@ -152,6 +152,16 @@ public class VcsLogManager implements Disposable {
     return myTabsLogRefresher;
   }
 
+  /**
+   * @deprecated Use {@link VcsLogManager#createLogUi(VcsLogUiFactory, VcsLogTabLocation)} method instead.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  @NotNull
+  public <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory, @NotNull LogWindowKind kind) {
+    return createLogUi(factory, kind.getLocation(), true);
+  }
+
   @NotNull
   public <U extends VcsLogUiEx> U createLogUi(@NotNull VcsLogUiFactory<U> factory, @NotNull VcsLogTabLocation location) {
     return createLogUi(factory, location, true);
@@ -365,6 +375,27 @@ public class VcsLogManager implements Disposable {
                                               @NotNull VisiblePackRefresherImpl refresher,
                                               @Nullable VcsLogFilterCollection filters) {
       return new VcsLogUiImpl(logId, logData, colorManager, properties, refresher, filters);
+    }
+  }
+
+  /**
+   * @deprecated Use {@link VcsLogTabLocation} instead.
+   */
+  @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
+  public enum LogWindowKind {
+    TOOL_WINDOW(VcsLogTabLocation.TOOL_WINDOW),
+    EDITOR(VcsLogTabLocation.EDITOR),
+    STANDALONE(VcsLogTabLocation.STANDALONE);
+
+    private final @NotNull VcsLogTabLocation myLocation;
+
+    LogWindowKind(@NotNull VcsLogTabLocation location) {
+      myLocation = location;
+    }
+
+    @NotNull VcsLogTabLocation getLocation() {
+      return myLocation;
     }
   }
 }
