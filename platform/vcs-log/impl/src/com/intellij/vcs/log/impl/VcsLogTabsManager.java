@@ -93,7 +93,7 @@ public class VcsLogTabsManager {
     myUiProperties.resetState(tabId);
     if (kind == VcsLogManager.LogWindowKind.EDITOR) {
       FileEditor[] editors = openEditorLogTab(tabId, true, filters);
-      return Objects.requireNonNull(VcsLogEditorUtilKt.findVcsLogUi(editors, MainVcsLogUi.class));
+      return Objects.requireNonNull(VcsLogEditorUtil.findVcsLogUi(editors, MainVcsLogUi.class));
     }
     else if (kind == VcsLogManager.LogWindowKind.TOOL_WINDOW) {
       return openToolWindowLogTab(manager, tabId, true, filters);

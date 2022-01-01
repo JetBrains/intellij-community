@@ -48,7 +48,7 @@ internal class DefaultVcsLogFile(private val pathId: VcsLogVirtualFileSystem.Vcs
         tabName = VcsLogTabsManager.generateDisplayName(ui)
         ui.filterUi.addFilterListener {
           tabName = VcsLogTabsManager.generateDisplayName(ui)
-          updateTabName(project, ui)
+          VcsLogEditorUtil.updateTabName(project, ui)
         }
         if (filters != null) filters = null
         panel.add(VcsLogPanel(logManager, ui), BorderLayout.CENTER)
