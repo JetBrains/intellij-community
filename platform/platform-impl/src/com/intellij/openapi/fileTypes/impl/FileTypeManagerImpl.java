@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.diagnostic.PluginException;
@@ -220,7 +220,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }, this);
   }
 
-  static class FileTypeWithDescriptor implements Scheme {
+  static final class FileTypeWithDescriptor implements Scheme {
     private static final PluginDescriptor WILD_CARD = new DefaultPluginDescriptor("WILD_CARD");
 
     final @NotNull FileType fileType;
