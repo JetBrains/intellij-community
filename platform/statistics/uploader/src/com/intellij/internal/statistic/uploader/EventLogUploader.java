@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.uploader;
 
 import com.intellij.internal.statistic.eventLog.*;
@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static com.intellij.internal.statistic.StatisticsStringUtil.split;
+import static com.intellij.internal.statistic.config.StatisticsStringUtil.split;
 
 public final class EventLogUploader {
   private static final int WAIT_FOR_IDE_MS = 2000;
