@@ -15,3 +15,4 @@ fun foo() {
 }
 
 // DISABLE-ERRORS
+// FIR_COMPARISON
