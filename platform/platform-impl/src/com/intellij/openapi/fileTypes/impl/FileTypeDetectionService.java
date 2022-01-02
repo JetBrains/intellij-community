@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.scratch.ScratchUtil;
@@ -62,7 +62,7 @@ final class FileTypeDetectionService implements Disposable {
   private static final byte AUTO_DETECTED_AS_BINARY_MASK = 1<<1;   // set if the file was auto-detected as binary
   // set if auto-detection was performed for this file.
   // if some detector returned some custom file type, it's stored in DETECTED_FROM_CONTENT_FILE_TYPE_KEY file key.
-  // otherwise if auto-detected as text or binary, the result is stored in AUTO_DETECTED_AS_TEXT_MASK|AUTO_DETECTED_AS_BINARY_MASK bits
+  // otherwise, if auto-detected as text or binary, the result is stored in AUTO_DETECTED_AS_TEXT_MASK|AUTO_DETECTED_AS_BINARY_MASK bits
   private static final byte AUTO_DETECT_WAS_RUN_MASK = 1<<2;
   private static final byte ATTRIBUTES_WERE_LOADED_MASK = 1<<3;    // set if AUTO_* bits above were loaded from the file persistent attributes and saved to packedFlags
 
@@ -97,90 +97,98 @@ final class FileTypeDetectionService implements Disposable {
     fileTypeChangedCount = new AtomicInteger(AUTO_DETECTED_CACHE_INITIAL_ATTRIBUTE.getVersion());
     autoDetectedAttribute = AUTO_DETECTED_CACHE_INITIAL_ATTRIBUTE;
 
-    VirtualFileManager.getInstance().addAsyncFileListener(new AsyncFileListener() {
-      @Override
-      public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
-        Collection<VirtualFile> files = ContainerUtil.map2Set(events, event -> {
-          if (event instanceof VFileContentChangeEvent) {
-            VFileContentChangeEvent changeEvent = (VFileContentChangeEvent)event;
-            VirtualFile file = changeEvent.getFile();
-            if (changeEvent.getOldLength() == 0) {
-              // when something is written to the empty file, clear the file detection-from-content cache, because the file type can change from Unknown to e.g. Text
-              cacheAutoDetectedFileType(file, null);
-            }
-          }
-          ProgressManager.checkCanceled();
-          VirtualFile file = event instanceof VFileCreateEvent /* avoid expensive find child here */ || isReparseEvent(event) ? null : event.getFile();
-          VirtualFile filtered = file != null && wasAutoDetectedBefore(file) && isDetectable(file) ? file : null;
-          if (toLog()) {
-            log("F: after() VFS event " + event +
-                "; filtered file: " + filtered +
-                " (file: " + file +
-                "; wasAutoDetectedBefore(file): " + (file == null ? null : wasAutoDetectedBefore(file)) +
-                "; isDetectable(file): " + (file == null ? null : isDetectable(file)) +
-                "; file.getLength(): " + (file == null ? null : file.isDirectory() ? "-" : file.getLength()) +
-                "; file.isValid(): " + (file == null ? null : file.isValid()) +
-                "; file.is(VFileProperty.SPECIAL): " + (file == null ? null : file.is(VFileProperty.SPECIAL)) +
-                "; packedFlags.get(id): " + (file instanceof VirtualFileWithId ? readableFlags(packedFlags.get(((VirtualFileWithId)file).getId())) : null) +
-                "; file.getFileSystem():" + (file == null ? null : file.getFileSystem()) + ")");
-          }
-          return filtered;
-        });
-        files.remove(null);
-        if (toLog()) {
-          log("F: after() VFS events: " + events+"; files: "+files);
-        }
-        ProgressManager.checkCanceled();
-        if (!files.isEmpty() && RE_DETECT_ASYNC) {
-          if (toLog()) {
-            log("F: after() queued to redetect: " + files);
-          }
-
-          for (VirtualFile file : files) {
-            finishRedetectionIfEnqueued(file);
-          }
-
-          if (!files.isEmpty()) {
-            return new ChangeApplier() {
-              @Override
-              public void beforeVfsChange() {
-                myCanUseCachedDetectedFileType = false;
-              }
-
-              @Override
-              public void afterVfsChange() {
-                try {
-                  synchronized (filesToRedetect) {
-                    if (filesToRedetect.addAll(files)) {
-                      awakeReDetectExecutor();
-                    }
-                  }
-                }
-                finally {
-                  myCanUseCachedDetectedFileType = true;
-                }
-              }
-            };
-          }
-        }
-        return null;
-      }
-
-      private boolean isReparseEvent(@NotNull VFileEvent event) {
-        return event instanceof VFilePropertyChangeEvent &&
-               FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor());
-      }
-    }, this);
-
     FileTypeRegistry.FileTypeDetector.EP_NAME.addChangeListener(() -> {
       cachedDetectFileBufferSize = -1;
       onDetectorsChange();
     }, this);
 
     String prevDetectors = PropertiesComponent.getInstance().getValue(FILE_TYPE_DETECTORS_PROPERTY);
-    if (!StringUtil.equals(prevDetectors, getDetectorsString())) {
+    if (!Objects.equals(prevDetectors, getDetectorsString())) {
       onDetectorsChange();
     }
+  }
+
+  public @Nullable AsyncFileListener.ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+    Collection<VirtualFile> files = ContainerUtil.map2Set(events, event -> {
+      if (event instanceof VFileContentChangeEvent) {
+        VFileContentChangeEvent changeEvent = (VFileContentChangeEvent)event;
+        VirtualFile file = changeEvent.getFile();
+        if (changeEvent.getOldLength() == 0) {
+          // when something is written to the empty file, clear the file detection-from-content cache, because the file type can change from Unknown to e.g. Text
+          cacheAutoDetectedFileType(file, null);
+        }
+      }
+      ProgressManager.checkCanceled();
+      VirtualFile file =
+        event instanceof VFileCreateEvent /* avoid expensive find child here */ || isReparseEvent(event) ? null : event.getFile();
+      VirtualFile filtered = file != null && wasAutoDetectedBefore(file) && isDetectable(file) ? file : null;
+      if (toLog()) {
+        log("F: after() VFS event " +
+            event +
+            "; filtered file: " +
+            filtered +
+            " (file: " +
+            file +
+            "; wasAutoDetectedBefore(file): " +
+            (file == null ? null : wasAutoDetectedBefore(file)) +
+            "; isDetectable(file): " +
+            (file == null ? null : isDetectable(file)) +
+            "; file.getLength(): " +
+            (file == null ? null : file.isDirectory() ? "-" : file.getLength()) +
+            "; file.isValid(): " +
+            (file == null ? null : file.isValid()) +
+            "; file.is(VFileProperty.SPECIAL): " +
+            (file == null ? null : file.is(VFileProperty.SPECIAL)) +
+            "; packedFlags.get(id): " +
+            (file instanceof VirtualFileWithId ? readableFlags(packedFlags.get(((VirtualFileWithId)file).getId())) : null) +
+            "; file.getFileSystem():" +
+            (file == null ? null : file.getFileSystem()) +
+            ")");
+      }
+      return filtered;
+    });
+    files.remove(null);
+    if (toLog()) {
+      log("F: after() VFS events: " + events + "; files: " + files);
+    }
+    ProgressManager.checkCanceled();
+    if (!files.isEmpty() && RE_DETECT_ASYNC) {
+      if (toLog()) {
+        log("F: after() queued to redetect: " + files);
+      }
+
+      for (VirtualFile file : files) {
+        finishRedetectionIfEnqueued(file);
+      }
+
+      if (!files.isEmpty()) {
+        return new AsyncFileListener.ChangeApplier() {
+          @Override
+          public void beforeVfsChange() {
+            myCanUseCachedDetectedFileType = false;
+          }
+
+          @Override
+          public void afterVfsChange() {
+            try {
+              synchronized (filesToRedetect) {
+                if (filesToRedetect.addAll(files)) {
+                  awakeReDetectExecutor();
+                }
+              }
+            }
+            finally {
+              myCanUseCachedDetectedFileType = true;
+            }
+          }
+        };
+      }
+    }
+    return null;
+  }
+
+  private static boolean isReparseEvent(@NotNull VFileEvent event) {
+    return event instanceof VFilePropertyChangeEvent && FileContentUtilCore.FORCE_RELOAD_REQUESTOR.equals(event.getRequestor());
   }
 
   private boolean toLog() {
@@ -303,7 +311,7 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   private static String getDetectorsString() {
-    return Arrays.stream(FileTypeRegistry.FileTypeDetector.EP_NAME.getExtensions())
+    return FileTypeRegistry.FileTypeDetector.EP_NAME.extensions()
       .map(detector -> detector.getClass().getName())
       .sorted()
       .collect(Collectors.joining(":"));

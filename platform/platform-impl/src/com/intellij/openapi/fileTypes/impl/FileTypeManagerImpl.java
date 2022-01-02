@@ -27,7 +27,10 @@ import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.util.text.Strings;
+import com.intellij.openapi.vfs.AsyncFileListener;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.impl.CachedFileType;
 import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.StubVirtualFile;
@@ -218,6 +221,18 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
         }
       }
     }, this);
+  }
+
+  @TestOnly
+  void listenAsyncVfsEvents() {
+    VirtualFileManager.getInstance().addAsyncFileListener(myDetectionService::prepareChange, this);
+  }
+
+  static final class MyAsyncVfsListener implements AsyncFileListener {
+    @Override
+    public @Nullable ChangeApplier prepareChange(@NotNull List<? extends @NotNull VFileEvent> events) {
+      return ((FileTypeManagerImpl)getInstance()).myDetectionService.prepareChange(events);
+    }
   }
 
   static final class FileTypeWithDescriptor implements Scheme {
@@ -1521,7 +1536,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @Override
   public void dispose() { }
 
-  void setPatternsTable(@NotNull Set<? extends FileTypeWithDescriptor> fileTypes, @NotNull FileTypeAssocTable<FileTypeWithDescriptor> assocTable) {
+  void setPatternsTable(@NotNull Set<FileTypeWithDescriptor> fileTypes, @NotNull FileTypeAssocTable<FileTypeWithDescriptor> assocTable) {
     Map<FileNameMatcher, FileTypeWithDescriptor> removedMappings = getExtensionMap().getRemovedMappings(assocTable, fileTypes);
     String message = "set patterns table called: file types " + fileTypes + ", ass. table:" + assocTable;
     makeFileTypesChange(message, () -> {

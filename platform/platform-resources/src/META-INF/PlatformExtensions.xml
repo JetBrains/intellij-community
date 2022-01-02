@@ -82,6 +82,8 @@
 
     <applicationService serviceInterface="com.intellij.openapi.fileTypes.FileTypeManager"
                         serviceImplementation="com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl" preload="await"/>
+    <vfs.asyncListener implementation="com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl$MyAsyncVfsListener"/>
+
     <persistentFsConnectionListener implementation="com.intellij.openapi.fileTypes.impl.IgnoredFileCacheCleaner"/>
 
     <applicationService serviceImplementation="com.intellij.util.net.HttpConfigurable" preload="true"/>

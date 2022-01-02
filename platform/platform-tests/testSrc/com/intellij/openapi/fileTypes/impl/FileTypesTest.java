@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.ide.highlighter.ArchiveFileType;
@@ -87,6 +87,7 @@ public class FileTypesTest extends HeavyPlatformTestCase {
     super.setUp();
     // we test against myFileTypeManager instance only, standard FileTypeManager.getInstance() must not be changed in any way
     myFileTypeManager = new FileTypeManagerImpl();
+    myFileTypeManager.listenAsyncVfsEvents();
     myFileTypeManager.initializeComponent();
     myFileTypeManager.getRegisteredFileTypes();
     myFileTypeManager.reDetectAsync(true);
