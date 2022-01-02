@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.codeInsight;
 
@@ -376,6 +376,11 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
             public void testTrailingCommaOn_inspectionData_Inspections_test() throws Exception {
                 runTest("testData/inspections/trailingCommaOn/inspectionData/inspections.test");
             }
+
+            @TestMetadata("twoSetOfTypeparameters/inspectionData/inspections.test")
+            public void testTwoSetOfTypeparameters_inspectionData_Inspections_test() throws Exception {
+                runTest("testData/inspections/twoSetOfTypeparameters/inspectionData/inspections.test");
+            }
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
@@ -383,11 +388,6 @@ public abstract class InspectionTestGenerated extends AbstractInspectionTest {
         public static class TestBucket004 extends AbstractInspectionTest {
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-            }
-
-            @TestMetadata("twoSetOfTypeparameters/inspectionData/inspections.test")
-            public void testTwoSetOfTypeparameters_inspectionData_Inspections_test() throws Exception {
-                runTest("testData/inspections/twoSetOfTypeparameters/inspectionData/inspections.test");
             }
 
             @TestMetadata("unusedEquals/inspectionData/inspections.test")

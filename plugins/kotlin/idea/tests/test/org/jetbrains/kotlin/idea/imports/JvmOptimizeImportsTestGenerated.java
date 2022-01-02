@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.imports;
 
@@ -425,11 +425,6 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 public void testInvokeFunction() throws Exception {
                     runTest("testData/editor/optimizeImports/common/InvokeFunction.kt");
                 }
-
-                @TestMetadata("IteratorFunction.kt")
-                public void testIteratorFunction() throws Exception {
-                    runTest("testData/editor/optimizeImports/common/IteratorFunction.kt");
-                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
@@ -437,6 +432,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
             public static class TestBucket002 extends AbstractJvmOptimizeImportsTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("IteratorFunction.kt")
+                public void testIteratorFunction() throws Exception {
+                    runTest("testData/editor/optimizeImports/common/IteratorFunction.kt");
                 }
 
                 @TestMetadata("IteratorFunction2.kt")
@@ -533,11 +533,6 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
                 public void testSeveralClasses3() throws Exception {
                     runTest("testData/editor/optimizeImports/common/SeveralClasses3.kt");
                 }
-
-                @TestMetadata("TwoConstructors.kt")
-                public void testTwoConstructors() throws Exception {
-                    runTest("testData/editor/optimizeImports/common/TwoConstructors.kt");
-                }
             }
 
             @RunWith(JUnit3RunnerWithInners.class)
@@ -545,6 +540,11 @@ public abstract class JvmOptimizeImportsTestGenerated extends AbstractJvmOptimiz
             public static class TestBucket003 extends AbstractJvmOptimizeImportsTest {
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+                }
+
+                @TestMetadata("TwoConstructors.kt")
+                public void testTwoConstructors() throws Exception {
+                    runTest("testData/editor/optimizeImports/common/TwoConstructors.kt");
                 }
 
                 @TestMetadata("UnresolvedImport.kt")
