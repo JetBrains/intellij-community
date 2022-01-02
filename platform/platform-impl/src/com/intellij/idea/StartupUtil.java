@@ -139,6 +139,9 @@ public final class StartupUtil {
     }, forkJoinPool);
 
     CompletableFuture<@Nullable("if accepted") Object> euaDocumentFuture = isHeadless ? null : scheduleEuaDocumentLoading();
+    CompletableFuture<Runnable> splashTaskFuture = isHeadless || Main.isLightEdit() ? null : CompletableFuture.supplyAsync(() -> {
+      return prepareSplash(args);
+    }, forkJoinPool);
 
     if (args.length > 0 && (Main.CWM_HOST_COMMAND.equals(args[0]) || Main.CWM_HOST_NO_LOBBY_COMMAND.equals(args[0]))) {
       activity = activity.endAndStart("cwm host init");
@@ -178,9 +181,19 @@ public final class StartupUtil {
         return euaDocumentFuture.thenComposeAsync(StartupUtil::showEuaIfNeeded, forkJoinPool);
       });
 
-      if (!Main.isLightEdit()) {
-        showEuaIfNeededFuture.thenRunAsync(() -> showSplash(args), forkJoinPool);
+      Executor edtExecutor = it -> EventQueue.invokeLater(it);
+      CompletableFuture<?> euaAndSplashFuture;
+      if (splashTaskFuture == null) {
+        euaAndSplashFuture = showEuaIfNeededFuture;
       }
+      else {
+        // do not use method reference here
+        euaAndSplashFuture = showEuaIfNeededFuture.thenAcceptBothAsync(splashTaskFuture, (__, runnable) -> {
+          runnable.run();
+        }, edtExecutor);
+      }
+      // not directly after splash showing - make a room for a more important EDT activities that maybe in the event queue
+      euaAndSplashFuture.thenRunAsync(StartupUtil::patchHtmlStyle, edtExecutor);
     }
 
     activity = activity.endAndStart("config path computing");
@@ -244,28 +257,6 @@ public final class StartupUtil {
       runPreAppClass(log, args);
     }
 
-    // may be called from EDT, but other events in the queue should be processed before the `#patchSystem`
-    if (!isHeadless) {
-      // it can be executed after `initUiTask`, but let's make a room for splash and other more important tasks
-      showEuaIfNeededFuture
-        .thenRunAsync(() -> {
-          Activity patchingActivity = StartUpMeasurer.startActivity("html style patching");
-          // not important
-          // patch html styles
-          // create a separate copy for each case
-          UIDefaults uiDefaults = UIManager.getDefaults();
-
-          uiDefaults.put("javax.swing.JLabel.userStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet());
-          uiDefaults.put("HTMLEditorKit.jbStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet());
-
-          patchingActivity.end();
-        }, it -> EventQueue.invokeLater(it) /* don't use method reference */)
-        .exceptionally(e -> {
-          StartupAbortedException.logAndExit(new StartupAbortedException("UI initialization failed", unwrapError(e)), log);
-          return null;
-        });
-    }
-
     Activity mainClassLoadingWaitingActivity = StartUpMeasurer.startActivity("main class loading waiting");
     CompletableFuture<?> future = appStarterFuture
       .thenCompose(appStarter -> {
@@ -293,8 +284,21 @@ public final class StartupUtil {
     AWTAutoShutdown.getInstance().notifyThreadFree(busyThread);
   }
 
+  private static void patchHtmlStyle() {
+    Activity patchingActivity = StartUpMeasurer.startActivity("html style patching");
+    // not important
+    // patch html styles
+    // create a separate copy for each case
+    UIDefaults uiDefaults = UIManager.getDefaults();
+
+    uiDefaults.put("javax.swing.JLabel.userStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet());
+    uiDefaults.put("HTMLEditorKit.jbStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet());
+
+    patchingActivity.end();
+  }
+
   // executed not in EDT
-  private static void showSplash(String @NotNull [] args) {
+  private static @Nullable Runnable prepareSplash(String @NotNull [] args) {
     int showSplash = -1;
     for (String arg : args) {
       if (CommandLineArgs.SPLASH.equals(arg)) {
@@ -319,8 +323,12 @@ public final class StartupUtil {
 
     if (showSplash == 1) {
       Activity prepareSplashActivity = StartUpMeasurer.startActivity("splash preparation");
-      SplashManager.scheduleShow(prepareSplashActivity);
+      Runnable runnable = SplashManager.scheduleShow(prepareSplashActivity);
       prepareSplashActivity.end();
+      return runnable;
+    }
+    else {
+      return null;
     }
   }
 
@@ -605,14 +613,14 @@ public final class StartupUtil {
         euaFuture = CompletableFuture.supplyAsync(() -> {
           Agreements.showEndUserAndDataSharingAgreements(document);
           return true;
-        }, command -> EventQueue.invokeLater(command));
+        }, EventQueue::invokeLater);
         EventQueue.invokeAndWait(() -> Agreements.showEndUserAndDataSharingAgreements(document));
       }
       else if (ConsentOptions.needToShowUsageStatsConsent()) {
         euaFuture = CompletableFuture.supplyAsync(() -> {
           Agreements.showDataSharingAgreement();
           return false;
-        }, command -> EventQueue.invokeLater(command));
+        }, EventQueue::invokeLater);
       }
       else {
         euaFuture = CompletableFuture.completedFuture(false);

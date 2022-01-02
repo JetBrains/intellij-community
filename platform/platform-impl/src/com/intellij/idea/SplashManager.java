@@ -20,41 +20,40 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 import java.nio.channels.SeekableByteChannel;
 import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.concurrent.CompletionException;
 
 public final class SplashManager {
   private static volatile JFrame PROJECT_FRAME;
   static Splash SPLASH_WINDOW;
 
-  public static void scheduleShow(@NotNull Activity parentActivity) {
+  public static @NotNull Runnable scheduleShow(@NotNull Activity parentActivity) {
     Activity frameActivity = parentActivity.startChild("splash as project frame initialization");
     try {
-      createFrameIfPossible();
+      Runnable task = createFrameIfPossible();
+      if (task != null) {
+        return task;
+      }
     }
     catch (Throwable e) {
       //noinspection UseOfSystemOutOrSystemErr
       System.out.println(e.getMessage());
     }
-    frameActivity.end();
-
-    if (PROJECT_FRAME != null) {
-      return;
+    finally {
+      frameActivity.end();
     }
 
     // must be out of activity measurement
     ApplicationInfoEx appInfo = ApplicationInfoImpl.getShadowInstance();
     assert SPLASH_WINDOW == null;
-    Activity activity = parentActivity.startChild("splash initialization");
+    Activity activity = StartUpMeasurer.startActivity("splash initialization");
     SPLASH_WINDOW = new Splash(appInfo);
     Activity queueActivity = activity.startChild("splash initialization (in queue)");
-    EventQueue.invokeLater(() -> {
+    return () -> {
       queueActivity.end();
       Splash splash = SPLASH_WINDOW;
       // can be cancelled if app was started very fast
@@ -62,10 +61,10 @@ public final class SplashManager {
         splash.initAndShow(true);
       }
       activity.end();
-    });
+    };
   }
 
-  private static void createFrameIfPossible() throws IOException {
+  private static @Nullable Runnable createFrameIfPossible() throws IOException {
     Path infoFile = Paths.get(PathManager.getSystemPath(), "lastProjectFrameInfo");
     ByteBuffer buffer;
     try (SeekableByteChannel channel = Files.newByteChannel(infoFile)) {
@@ -76,11 +75,11 @@ public final class SplashManager {
 
       buffer.flip();
       if (buffer.getShort() != 0) {
-        return;
+        return null;
       }
     }
     catch (NoSuchFileException ignore) {
-      return;
+      return null;
     }
 
     Rectangle savedBounds = new Rectangle(buffer.getInt(), buffer.getInt(), buffer.getInt(), buffer.getInt());
@@ -89,23 +88,9 @@ public final class SplashManager {
     @SuppressWarnings("unused")
     boolean isFullScreen = buffer.get() == 1;
     int extendedState = buffer.getInt();
-
-    if (EventQueue.isDispatchThread()) {
+    return () -> {
       PROJECT_FRAME = doShowFrame(savedBounds, backgroundColor, extendedState);
-    }
-    else {
-      try {
-        EventQueue.invokeAndWait(() -> {
-          PROJECT_FRAME = doShowFrame(savedBounds, backgroundColor, extendedState);
-        });
-      }
-      catch (InvocationTargetException e) {
-        throw new CompletionException(e.getCause());
-      }
-      catch (InterruptedException e) {
-        throw new CompletionException(e);
-      }
-    }
+    };
   }
 
   private static @NotNull IdeFrameImpl doShowFrame(Rectangle savedBounds, Color backgroundColor, int extendedState) {

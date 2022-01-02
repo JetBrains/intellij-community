@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.codeWithMe.ClientId;
@@ -17,7 +17,7 @@ import javax.swing.*;
 import java.util.*;
 
 final class FlushQueue {
-  private static final Logger LOG = Logger.getInstance(LaterInvocator.class);
+  private static final Logger LOG = Logger.getInstance(FlushQueue.class);
   private final Object LOCK = ObjectUtils.sentinel("FlushQueue");
 
   private List<RunnableInfo> mySkippedItems = new ArrayList<>(); //protected by LOCK
