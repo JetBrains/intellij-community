@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.libraryUsage
 
 import com.intellij.internal.statistic.libraryJar.findJarVersion
@@ -15,7 +15,7 @@ import com.intellij.psi.PsiManager
 import com.intellij.util.concurrency.AppExecutorUtil
 import org.jetbrains.annotations.TestOnly
 
-class LibraryUsageStatisticsProvider(
+internal class LibraryUsageStatisticsProvider(
   private val project: Project,
   private val storageService: LibraryUsageStatisticsStorageService,
   private val libraryDescriptorFinder: LibraryDescriptorFinder,
@@ -68,8 +68,10 @@ class LibraryUsageStatisticsProvider(
     var isEnforceEnabledInTests: Boolean = false
 
     val isEnabled: Boolean
-      get() = isEnforceEnabledInTests || ApplicationManager.getApplication().run {
-        !isUnitTestMode && !isHeadlessEnvironment && StatisticsUploadAssistant.isSendAllowed()
+      get() {
+        return isEnforceEnabledInTests || ApplicationManager.getApplication().run {
+          !isUnitTestMode && !isHeadlessEnvironment && StatisticsUploadAssistant.isSendAllowed()
+        }
       }
   }
 }

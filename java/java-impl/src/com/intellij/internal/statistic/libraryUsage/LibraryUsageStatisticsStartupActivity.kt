@@ -6,14 +6,14 @@ import com.intellij.openapi.fileEditor.FileEditorManagerListener
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.startup.StartupActivity
 
-class LibraryUsageStatisticsStartupActivity : StartupActivity.Background {
+private class LibraryUsageStatisticsStartupActivity : StartupActivity.Background {
   override fun runActivity(project: Project) {
     if (!LibraryUsageStatisticsProvider.isEnabled) {
       return
     }
 
     val libraryDescriptorFinder = service<LibraryDescriptorFinderService>().libraryDescriptorFinder() ?: return
-    val storageService = LibraryUsageStatisticsStorageService[project]
+    val storageService = LibraryUsageStatisticsStorageService.getInstance(project)
     project.messageBus.connect(storageService).subscribe(
       FileEditorManagerListener.FILE_EDITOR_MANAGER,
       LibraryUsageStatisticsProvider(project, storageService, libraryDescriptorFinder),
