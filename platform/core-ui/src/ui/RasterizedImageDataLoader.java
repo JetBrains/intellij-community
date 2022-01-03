@@ -25,6 +25,7 @@ import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Arrays;
 import java.util.List;
 
 final class RasterizedImageDataLoader implements ImageDataLoader {
@@ -36,6 +37,7 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
   private final WeakReference<ClassLoader> originalClassLoaderRef;
 
   private final int imageFlags;
+  private boolean myPatched = false;
 
   RasterizedImageDataLoader(@NotNull String path,
                             @NotNull WeakReference<ClassLoader> classLoaderRef,
@@ -64,7 +66,13 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
                                                 int imageFlags) {
     String effectivePath = normalizePath(patched.first);
     WeakReference<ClassLoader> effectiveClassLoaderRef = patched.second == null ? originalClassLoaderRef : new WeakReference<>(patched.second);
-    return new RasterizedImageDataLoader(effectivePath, effectiveClassLoaderRef, originalPath, originalClassLoaderRef, cacheKey, imageFlags);
+    RasterizedImageDataLoader loader = new RasterizedImageDataLoader(effectivePath, effectiveClassLoaderRef, originalPath, originalClassLoaderRef, cacheKey, imageFlags);
+    loader.setPatched(true);
+    return loader;
+  }
+
+  private void setPatched(boolean patched) {
+    myPatched = patched;
   }
 
   @Override
@@ -80,7 +88,7 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
     }
     boolean isSvg = cacheKey != 0;
     // use cache key only if path to image is not customized
-    return loadRasterized(path, filters, classLoader, flags, scaleContext, isSvg, originalPath == path ? cacheKey : 0, imageFlags);
+    return loadRasterized(path, filters, classLoader, flags, scaleContext, isSvg, originalPath == path ? cacheKey : 0, imageFlags, myPatched);
   }
 
   @Override
@@ -136,7 +144,8 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
                                                 @NotNull ScaleContext scaleContext,
                                                 boolean isSvg,
                                                 int rasterizedCacheKey,
-                                                @MagicConstant(flagsFromClass = ImageDescriptor.class) int imageFlags) {
+                                                @MagicConstant(flagsFromClass = ImageDescriptor.class) int imageFlags,
+                                                boolean patched) {
     long loadingStart = StartUpMeasurer.getCurrentTimeIfEnabled();
 
     // Prefer retina images for HiDPI scale, because downscaling
@@ -176,16 +185,36 @@ final class RasterizedImageDataLoader implements ImageDataLoader {
       }
     }
 
+    List<Pair<String,Float>> effectivePaths;
+    if (patched) {
+      Pair<String, Float> retinaDark = Pair.create(name + "@2x_dark." + ext, isSvg ? scale : 2);
+      Pair<String, Float> dark       = Pair.create(name + "_dark." + ext, isSvg ? scale : 1);
+      Pair<String, Float> retina     = Pair.create(name + "@2x." + ext, isSvg ? scale : 2);
+      Pair<String, Float> plain      = Pair.create(path, isSvg ? scale : 1);
+      effectivePaths = isRetina && isDark ? Arrays.asList(retinaDark, dark, retina, plain)
+                                          : isDark ? Arrays.asList(dark, plain)
+                                                   : isRetina ? Arrays.asList(retina, plain)
+                                                              : List.of(plain);
+    } else {
+      effectivePaths = List.of(Pair.create(effectivePath, imageScale));
+    }
+
     ImageLoader.Dimension2DDouble originalUserSize = new ImageLoader.Dimension2DDouble(0, 0);
     try {
       long start = StartUpMeasurer.getCurrentTimeIfEnabled();
-      Image image;
-      if (isSvg) {
-        image = SVGLoader.loadFromClassResource(null, classLoader, effectivePath, rasterizedCacheKey, imageScale, isEffectiveDark,
-                                                originalUserSize);
-      }
-      else {
-        image = ImageLoader.loadPngFromClassResource(effectivePath, null, classLoader, imageScale, originalUserSize);
+      Image image = null;
+      for (Pair<String, Float> effPath: effectivePaths) {
+        String pathToImage = effPath.first;
+        float imgScale = effPath.second;
+        if (isSvg) {
+          image = SVGLoader.loadFromClassResource(null, classLoader, pathToImage, rasterizedCacheKey, imgScale, isEffectiveDark,
+                                                  originalUserSize);
+        }
+        else {
+          image = ImageLoader.loadPngFromClassResource(path, null, classLoader, imgScale, originalUserSize);
+        }
+
+        if (image != null) break;
       }
 
       if (start != -1) {
