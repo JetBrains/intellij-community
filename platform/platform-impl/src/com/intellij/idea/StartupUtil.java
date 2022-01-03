@@ -235,7 +235,7 @@ public final class StartupUtil {
       loadSystemLibraries(log);
 
       // JNA and Swing is used - invoke only after both are loaded
-      if (!isHeadless && !SystemInfoRt.isMac) {
+      if (!isHeadless && SystemInfoRt.isMac) {
         initUiFuture.thenRunAsync(() -> {
           Activity subActivity = StartUpMeasurer.startActivity("mac app init");
           MacOSApplicationProvider.initApplication(log);
