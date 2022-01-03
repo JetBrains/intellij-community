@@ -17,3 +17,4 @@ open class <caret>Server {
 }
 
 // DISABLE-ERRORS
+// FIR_COMPARISON

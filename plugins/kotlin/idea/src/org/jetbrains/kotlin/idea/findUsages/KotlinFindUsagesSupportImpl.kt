@@ -9,7 +9,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.idea.search.usagesSearch.dataClassComponentFunction
 import org.jetbrains.kotlin.idea.search.usagesSearch.isCallReceiverRefersToCompanionObject
-import org.jetbrains.kotlin.idea.search.usagesSearch.isConstructorUsage
+import org.jetbrains.kotlin.idea.search.usagesSearch.isKotlinConstructorUsage
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
@@ -37,8 +37,8 @@ class KotlinFindUsagesSupportImpl : KotlinFindUsagesSupport {
     override fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? =
         org.jetbrains.kotlin.idea.search.usagesSearch.tryRenderDeclarationCompactStyle(declaration)
 
-    override fun isConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean =
-        psiReference.isConstructorUsage(ktClassOrObject)
+    override fun isKotlinConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean =
+        psiReference.isKotlinConstructorUsage(ktClassOrObject)
 
     override fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> =
         org.jetbrains.kotlin.idea.refactoring.getSuperMethods(declaration, ignore)
