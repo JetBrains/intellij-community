@@ -30,11 +30,7 @@ public class CheckValidXmlInScriptBodyInspection extends CheckValidXmlInScriptBo
     @Override
     @NotNull
     public String getText() {
-      final String character = getXmlCharacter();
-
-      return character.equals("&")
-             ? XmlBundle.message("xml.quickfix.unescaped.xml.character.ampersand")
-             : XmlBundle.message("xml.quickfix.unescaped.xml.character.text", character);
+      return XmlBundle.message("xml.quickfix.unescaped.xml.character.text", getXmlCharacter());
     }
 
     @Override
