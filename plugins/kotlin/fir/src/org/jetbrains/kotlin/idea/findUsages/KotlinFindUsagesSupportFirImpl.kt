@@ -12,11 +12,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.Processor
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyseInModalWindow
-import org.jetbrains.kotlin.analysis.api.analyseWithReadAction
-import org.jetbrains.kotlin.analysis.api.calls.KtCall
-import org.jetbrains.kotlin.analysis.api.calls.KtCallableMemberCall
-import org.jetbrains.kotlin.analysis.api.calls.KtImplicitReceiverValue
-import org.jetbrains.kotlin.analysis.api.calls.calls
+import org.jetbrains.kotlin.analysis.api.calls.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtNamedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithKind
@@ -25,11 +21,13 @@ import org.jetbrains.kotlin.idea.core.util.showYesNoCancelDialog
 import org.jetbrains.kotlin.idea.refactoring.CHECK_SUPER_METHODS_YES_NO_DIALOG
 import org.jetbrains.kotlin.idea.refactoring.formatPsiClass
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
+import org.jetbrains.kotlin.idea.util.withResolvedCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.anyDescendantOfType
 import org.jetbrains.kotlin.psi.psiUtil.getElementTextWithContext
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 
 class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
@@ -40,10 +38,9 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
         val klass = companionObject.getStrictParentOfType<KtClass>() ?: return true
         return !klass.anyDescendantOfType(fun(element: KtElement): Boolean {
             if (element == companionObject) return false
-            var result = false
-            forResolvedCall(element) { call ->
+            return withResolvedCall(element) { call ->
                 if (callReceiverRefersToCompanionObject(call, companionObject)) {
-                    result = element.references.any {
+                    element.references.any {
                         // We get both a simple named reference and an invoke function
                         // reference for all function calls. We want the named reference.
                         //
@@ -53,16 +50,11 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
                         // We should make FIR references behave the same.
                         it !is KtInvokeFunctionReference && !referenceProcessor.process(it)
                     }
+                } else {
+                    false
                 }
-            }
-            return result
+            } ?: false
         })
-    }
-
-    private fun forResolvedCall(element: KtElement, block: KtAnalysisSession.(KtCall) -> Unit) {
-        analyseWithReadAction(element) {
-            element.resolveCall()?.calls?.singleOrNull()?.let { block(it) }
-        }
     }
 
     private fun KtAnalysisSession.callReceiverRefersToCompanionObject(call: KtCall, companionObject: KtObjectDeclaration): Boolean {
@@ -89,9 +81,20 @@ class KotlinFindUsagesSupportFirImpl : KotlinFindUsagesSupport {
         return (declaration as? KtNamedDeclaration)?.name ?: "SUPPORT FOR FIR"
     }
 
-    override fun isConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean {
-        // TODO: implement this
-        return false
+    override fun isKotlinConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean {
+        val element = psiReference.element
+        if (element !is KtElement) return false
+
+        val constructorCalleeExpression = element.getNonStrictParentOfType<KtConstructorCalleeExpression>() ?: return false
+        return withResolvedCall(constructorCalleeExpression) { call ->
+            when (call) {
+                is KtDelegatedConstructorCall -> {
+                    val constructedClassSymbol = call.symbol.containingClassIdIfNonLocal?.getCorrespondingToplevelClassOrObjectSymbol()
+                    constructedClassSymbol == ktClassOrObject.getClassOrObjectSymbol()
+                }
+                else -> false
+            }
+        } ?: false
     }
 
     override fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?): List<PsiElement> {
