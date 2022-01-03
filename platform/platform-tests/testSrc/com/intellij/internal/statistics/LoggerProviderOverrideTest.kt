@@ -13,7 +13,7 @@ class LoggerProviderOverrideTest : BasePlatformTestCase() {
     private const val fusRecorderId = "FUS"
   }
 
-  private class TestLoggerProvider: StatisticsEventLoggerProvider(fusRecorderId, 123) {
+  private class TestLoggerProvider: StatisticsEventLoggerProvider(fusRecorderId, 123, DEFAULT_SEND_FREQUENCY_MS, DEFAULT_MAX_FILE_SIZE_BYTES) {
     override fun isRecordEnabled() = false
     override fun isSendEnabled() = false
   }

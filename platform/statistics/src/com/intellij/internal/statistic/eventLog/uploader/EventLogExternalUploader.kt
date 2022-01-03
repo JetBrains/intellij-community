@@ -96,7 +96,6 @@ object EventLogExternalUploader {
     val libPaths = ArrayList<String>()
     libPaths.add(findLibraryByClass(kotlin.coroutines.Continuation::class.java)) // add kotlin-std to classpath
     libPaths.add(findLibraryByClass(NotNull::class.java))
-    libPaths.add(findLibraryByClass(org.apache.log4j.Logger::class.java))
     libPaths.add(findLibraryByClass(Gson::class.java))
     libPaths.add(findLibraryByClass(EventGroupsFilterRules::class.java))
     val classpath = joinAsClasspath(libPaths, uploader)
@@ -175,22 +174,6 @@ object EventLogExternalUploader {
 
   private fun findJavaHome(): String {
     return System.getProperty("java.home")
-  }
-
-  private fun findLibsByPrefixes(vararg prefixes: String): Array<File> {
-    val lib = PathManager.getLibPath()
-    val libFiles = File(lib).listFiles { file -> startsWithAny(file.name, prefixes) }
-    if (libFiles == null || libFiles.isEmpty()) {
-      throw EventLogUploadException("Cannot find libraries from dependency for event log uploader", NO_LIBRARIES)
-    }
-    return libFiles
-  }
-
-  private fun startsWithAny(str: String, prefixes: Array<out String>): Boolean {
-    for (prefix in prefixes) {
-      if (str.startsWith(prefix)) return true
-    }
-    return false
   }
 
   private fun getOrCreateTempDir(): File {
