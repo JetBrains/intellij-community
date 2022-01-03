@@ -8,6 +8,7 @@ import junit.framework.TestCase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertContainsElements
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase.assertDoesntContain
+import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.KotlinUFunctionCallExpression
@@ -423,6 +424,11 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             fun test1() { }
             @Deprecated(level = DeprecationLevel.HIDDEN, message="no longer supported")
             fun test2() { }
+            
+            class Test(private val parameter: Int)  {
+                @Deprecated(message = "Binary compatibility", level = DeprecationLevel.HIDDEN)
+                constructor() : this(42)
+            }
         """
         )
 
@@ -439,6 +445,14 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertTrue("Hidden level, hasAnnotation", test2.javaPsi.hasAnnotation("kotlin.Deprecated"))
         TestCase.assertTrue("Hidden level, isDeprecated", test2.javaPsi.isDeprecated)
         TestCase.assertTrue("Hidden level, public", test2.javaPsi.hasModifierProperty(PsiModifier.PUBLIC))
+
+        val testClass = uFile.findElementByTextFromPsi<UClass>("Test")
+        TestCase.assertNotNull("can't convert class Test", testClass)
+        testClass.methods.forEach { mtd ->
+            if (mtd.sourcePsi is KtConstructor<*>) {
+                TestCase.assertTrue("$mtd should be marked as a constructor", mtd.isConstructor)
+            }
+        }
     }
 
 }
