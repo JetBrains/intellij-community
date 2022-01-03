@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceGetOrSet", "ReplaceNegatedIsEmptyWithIsNotEmpty")
 
 package org.jetbrains.intellij.build.tasks
@@ -14,10 +14,6 @@ import org.apache.commons.compress.archivers.zip.Zip64Mode
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntryPredicate
 import org.apache.commons.compress.archivers.zip.ZipArchiveOutputStream
 import org.apache.commons.compress.archivers.zip.ZipFile
-import org.apache.log4j.ConsoleAppender
-import org.apache.log4j.Level
-import org.apache.log4j.Logger
-import org.apache.log4j.PatternLayout
 import org.jetbrains.intellij.build.io.NioFileDestination
 import org.jetbrains.intellij.build.io.NioFileSource
 import org.jetbrains.intellij.build.io.runAsync
@@ -32,6 +28,7 @@ import java.time.format.DateTimeFormatter
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
 import java.util.function.Consumer
+import java.util.logging.*
 import java.util.zip.Deflater
 
 private val random by lazy { SecureRandom() }
@@ -288,11 +285,16 @@ private fun downloadResult(remoteFile: String,
 }
 
 private val initLog by lazy {
-  System.setProperty("log4j.defaultInitOverride", "true")
-  val root = Logger.getRootLogger()
-  if (!root.allAppenders.hasMoreElements()) {
+  val root = Logger.getLogger("")
+  if (root.handlers.isEmpty()) {
     root.level = Level.INFO
-    root.addAppender(ConsoleAppender(PatternLayout(PatternLayout.DEFAULT_CONVERSION_PATTERN)))
+    root.addHandler(ConsoleHandler().also {
+      it.formatter = object : Formatter() {
+        override fun format(record: LogRecord): String {
+          return record.message + System.lineSeparator()
+        }
+      }
+    })
   }
 }
 
