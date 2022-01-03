@@ -211,7 +211,8 @@ class CodeFragmentCompiler(private val executionContext: ExecutionContext, priva
                                 }
                             }
                         },
-                        evaluatorFragmentInfoForPsi2Ir = evaluatorFragmentInfo
+                        evaluatorFragmentInfoForPsi2Ir = evaluatorFragmentInfo,
+                        shouldStubAndNotLinkUnboundSymbols = true
                     )
                 )
             }
