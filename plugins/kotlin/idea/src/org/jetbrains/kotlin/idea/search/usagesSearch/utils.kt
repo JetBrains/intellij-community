@@ -5,7 +5,6 @@ package org.jetbrains.kotlin.idea.search.usagesSearch
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.util.MethodSignatureUtil
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightMethods
@@ -26,13 +25,11 @@ import org.jetbrains.kotlin.idea.project.findAnalyzerServices
 import org.jetbrains.kotlin.idea.references.unwrappedTargets
 import org.jetbrains.kotlin.idea.search.KotlinSearchUsagesSupport
 import org.jetbrains.kotlin.idea.search.ReceiverTypeSearcherInfo
-import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.util.FuzzyType
 import org.jetbrains.kotlin.idea.util.application.runReadAction
 import org.jetbrains.kotlin.idea.util.fuzzyExtensionReceiverType
 import org.jetbrains.kotlin.idea.util.toFuzzyType
 import org.jetbrains.kotlin.load.java.descriptors.JavaClassDescriptor
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.renderer.DescriptorRenderer
@@ -129,22 +126,13 @@ fun PsiReference.checkUsageVsOriginalDescriptor(
         }
 }
 
-fun PsiReference.isConstructorUsage(ktClassOrObject: KtClassOrObject): Boolean = with(element) {
-    fun checkJavaUsage(): Boolean {
-        val call = getNonStrictParentOfType<PsiConstructorCall>()
-        return call == parent && call?.resolveConstructor()?.containingClass?.navigationElement == ktClassOrObject
-    }
+fun PsiReference.isKotlinConstructorUsage(ktClassOrObject: KtClassOrObject): Boolean = with(element) {
+    if (this !is KtElement) return false
 
-    fun checkKotlinUsage(): Boolean {
-        if (this !is KtElement) return false
+    val descriptor = getConstructorCallDescriptor() as? ConstructorDescriptor ?: return false
 
-        val descriptor = getConstructorCallDescriptor() as? ConstructorDescriptor ?: return false
-
-        val declaration = DescriptorToSourceUtils.descriptorToDeclaration(descriptor.containingDeclaration)
-        return declaration == ktClassOrObject || (declaration is KtConstructor<*> && declaration.getContainingClassOrObject() == ktClassOrObject)
-    }
-
-    checkJavaUsage() || checkKotlinUsage()
+    val declaration = DescriptorToSourceUtils.descriptorToDeclaration(descriptor.containingDeclaration)
+    return declaration == ktClassOrObject || (declaration is KtConstructor<*> && declaration.getContainingClassOrObject() == ktClassOrObject)
 }
 
 private fun KtElement.getConstructorCallDescriptor(): DeclarationDescriptor? {
