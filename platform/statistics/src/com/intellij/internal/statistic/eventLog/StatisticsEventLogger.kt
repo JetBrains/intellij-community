@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.internal.statistic.eventLog.logger.StatisticsEventLogThrottleWriter
@@ -58,7 +58,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
     fun parseFileSize(maxFileSize: String): Int {
       val length = maxFileSize.length
       if (length < 3) {
-        LOG.error("maxFileSize should contain measurement unit: $maxFileSize")
+        LOG.warn("maxFileSize should contain measurement unit: $maxFileSize")
         return DEFAULT_MAX_FILE_SIZE_BYTES
       }
       val value = maxFileSize.substring(0, length - 2)
@@ -66,7 +66,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
         value.toInt()
       }
       catch (e: NumberFormatException) {
-        LOG.error("Unable to parse maxFileSize for FUS log file: $maxFileSize")
+        LOG.warn("Unable to parse maxFileSize for FUS log file: $maxFileSize")
         return DEFAULT_MAX_FILE_SIZE_BYTES
       }
       val multiplier = when (maxFileSize.substring(length - 2, length)) {
@@ -74,7 +74,7 @@ abstract class StatisticsEventLoggerProvider(val recorderId: String,
         "MB" -> 1024 * 1024
         "GB" -> 1024 * 1024 * 1024
         else -> {
-          LOG.error("Unable to parse measurement unit of maxFileSize for FUS log file: $maxFileSize")
+          LOG.warn("Unable to parse measurement unit of maxFileSize for FUS log file: $maxFileSize")
           return DEFAULT_MAX_FILE_SIZE_BYTES
         }
       }
