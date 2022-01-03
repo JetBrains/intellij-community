@@ -3,6 +3,7 @@
 package org.jetbrains.kotlin.idea.findUsages
 
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiConstructorCall
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.search.GlobalSearchScope
@@ -12,6 +13,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 
 interface KotlinFindUsagesSupport {
 
@@ -33,8 +35,14 @@ interface KotlinFindUsagesSupport {
         fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String? =
             getInstance(declaration.project).tryRenderDeclarationCompactStyle(declaration)
 
-        fun PsiReference.isConstructorUsage(ktClassOrObject: KtClassOrObject): Boolean =
-            getInstance(ktClassOrObject.project).isConstructorUsage(this, ktClassOrObject)
+        fun PsiReference.isConstructorUsage(ktClassOrObject: KtClassOrObject): Boolean {
+            fun isJavaConstructorUsage(): Boolean {
+                val call = element.getNonStrictParentOfType<PsiConstructorCall>()
+                return call == element.parent && call?.resolveConstructor()?.containingClass?.navigationElement == ktClassOrObject
+            }
+
+            return isJavaConstructorUsage() || getInstance(ktClassOrObject.project).isKotlinConstructorUsage(this, ktClassOrObject)
+        }
 
         fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?) : List<PsiElement> =
             getInstance(declaration.project).getSuperMethods(declaration, ignore)
@@ -51,7 +59,7 @@ interface KotlinFindUsagesSupport {
 
     fun tryRenderDeclarationCompactStyle(declaration: KtDeclaration): String?
 
-    fun isConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean
+    fun isKotlinConstructorUsage(psiReference: PsiReference, ktClassOrObject: KtClassOrObject): Boolean
 
     fun getSuperMethods(declaration: KtDeclaration, ignore: Collection<PsiElement>?) : List<PsiElement>
 
