@@ -17,13 +17,18 @@ import kotlinx.coroutines.flow.collect
 
 internal class PlatformTaskSupport : TaskSupport {
 
+  override fun taskCancellationNonCancellableInternal(): TaskCancellation = NonCancellableTaskCancellation
+
+  override fun taskCancellationCancellableInternal(): TaskCancellation.Cancellable = defaultCancellable
+
   override suspend fun <T> withBackgroundProgressIndicatorInternal(
     project: Project,
     title: @ProgressTitle String,
+    cancellation: TaskCancellation,
     action: suspend CoroutineScope.() -> T
   ): T = coroutineScope {
     val sink = FlowProgressSink()
-    val showIndicatorJob = showIndicator(project, taskInfo(title), sink.stateFlow)
+    val showIndicatorJob = showIndicator(project, taskInfo(title, cancellation), sink.stateFlow)
     try {
       withContext(sink.asContextElement(), action)
     }
@@ -95,9 +100,9 @@ private fun showIndicatorInUI(project: Project, taskInfo: TaskInfo, indicator: P
   return true
 }
 
-private fun taskInfo(title: @ProgressTitle String): TaskInfo = object : TaskInfo {
+private fun taskInfo(title: @ProgressTitle String, cancellation: TaskCancellation): TaskInfo = object : TaskInfo {
   override fun getTitle(): String = title
-  override fun isCancellable(): Boolean = true
-  override fun getCancelText(): String? = null
-  override fun getCancelTooltipText(): String? = null
+  override fun isCancellable(): Boolean = cancellation is CancellableTaskCancellation
+  override fun getCancelText(): String? = (cancellation as? CancellableTaskCancellation)?.buttonText
+  override fun getCancelTooltipText(): String? = (cancellation as? CancellableTaskCancellation)?.tooltipText
 }
