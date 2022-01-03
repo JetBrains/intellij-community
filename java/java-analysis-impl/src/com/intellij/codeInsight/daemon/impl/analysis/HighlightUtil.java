@@ -1593,13 +1593,23 @@ public final class HighlightUtil {
     }
     List<HighlightInfo> infos = new ArrayList<>();
     PsiType switchExpressionType = switchExpression.getType();
+
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(switchExpression.getParent());
+    PsiMethod method =
+      parent instanceof PsiReturnStatement ? PsiTreeUtil.getParentOfType(parent, PsiMethod.class, false, PsiLambdaExpression.class) : null;
+
     if (switchExpressionType != null) {
       for (PsiExpression expression : PsiUtil.getSwitchResultExpressions(switchExpression)) {
         PsiType expressionType = expression.getType();
         if (expressionType != null && !TypeConversionUtil.areTypesAssignmentCompatible(switchExpressionType, expression)) {
           String text = JavaErrorBundle
             .message("bad.type.in.switch.expression", expressionType.getCanonicalText(), switchExpressionType.getCanonicalText());
-          infos.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text).create());
+          HighlightInfo info =
+            HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(text).create();
+          if (method != null) {
+            QuickFixAction.registerQuickFixAction(info, getFixFactory().createMethodReturnFix(method, expressionType, true));
+          }
+          infos.add(info);
         }
       }
 
