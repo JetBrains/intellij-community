@@ -11,27 +11,30 @@ import com.intellij.psi.search.SearchScope
 import com.intellij.psi.search.searches.DefinitionsScopedSearch
 import com.intellij.psi.search.searches.OverridingMethodsSearch
 import com.intellij.util.Processor
-import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
-import org.jetbrains.kotlin.asJava.unwrapped
-import org.jetbrains.kotlin.descriptors.Modality
-import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
 import org.jetbrains.kotlin.analysis.api.analyse
 import org.jetbrains.kotlin.analysis.api.analyseWithReadAction
+import org.jetbrains.kotlin.analysis.api.calls.KtDelegatedConstructorCall
+import org.jetbrains.kotlin.analysis.api.calls.symbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtPropertySymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithModality
 import org.jetbrains.kotlin.analysis.api.tokens.HackToForceAllowRunningAnalyzeOnEDT
 import org.jetbrains.kotlin.analysis.api.tokens.hackyAllowRunningOnEdt
+import org.jetbrains.kotlin.asJava.classes.KtFakeLightMethod
+import org.jetbrains.kotlin.asJava.unwrapped
+import org.jetbrains.kotlin.descriptors.Modality
+import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.search.declarationsSearch.toPossiblyFakeLightMethods
-import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.usagesSearch.getDefaultImports
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
+import org.jetbrains.kotlin.idea.util.withResolvedCall
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
+import org.jetbrains.kotlin.psi.psiUtil.getNonStrictParentOfType
 import org.jetbrains.kotlin.resolve.ImportPath
 
 class KotlinSearchUsagesSupportFirImpl : KotlinSearchUsagesSupport {
@@ -235,10 +238,15 @@ class KotlinSearchUsagesSupportFirImpl : KotlinSearchUsagesSupport {
     }
 
     override fun createConstructorHandle(ktDeclaration: KtDeclaration): KotlinSearchUsagesSupport.ConstructorCallHandle {
-        //TODO FIR: This is the stub. Need to implement
         return object : KotlinSearchUsagesSupport.ConstructorCallHandle {
             override fun referencedTo(element: KtElement): Boolean {
-                return false
+                val callExpression = element.getNonStrictParentOfType<KtCallElement>() ?: return false
+                return withResolvedCall(callExpression) { call ->
+                    when (call) {
+                        is KtDelegatedConstructorCall -> call.symbol == ktDeclaration.getSymbol()
+                        else -> false
+                    }
+                } ?: false
             }
         }
     }
