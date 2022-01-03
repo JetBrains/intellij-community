@@ -8,7 +8,7 @@ import org.jetbrains.annotations.ApiStatus.Internal
 
 private val GROUP = EventLogGroup(
   id = "plugins.dynamic",
-  version = 2,
+  version = 3,
 )
 
 private val LOAD_SUCCESS_EVENT = GROUP.registerEvent(
