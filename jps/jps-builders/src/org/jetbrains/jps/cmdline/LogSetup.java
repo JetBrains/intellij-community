@@ -1,27 +1,25 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.jps.cmdline;
 
-import com.intellij.openapi.diagnostic.Log4jBasedLogger;
+import com.intellij.openapi.diagnostic.JulLogger;
 import com.intellij.openapi.diagnostic.Logger;
-import org.apache.log4j.PropertyConfigurator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.api.GlobalOptions;
 
-import java.io.ByteArrayInputStream;
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.logging.LogManager;
 
 /**
  * @author Eugene Zhuravlev
  */
 public final class LogSetup {
-  public static final String LOG_CONFIG_FILE_NAME = "build-log.properties";
+  public static final String LOG_CONFIG_FILE_NAME = "build-log-jul.properties";
   private static final String LOG_FILE_NAME = "build.log";
-  private static final String LOG_FILE_MACRO = "$LOG_FILE_PATH$";
 
   public static void initLoggers() {
     if (!Boolean.parseBoolean(System.getProperty(GlobalOptions.USE_DEFAULT_FILE_LOGGING_OPTION, "true"))) {
@@ -32,10 +30,13 @@ public final class LogSetup {
       String logDir = System.getProperty(GlobalOptions.LOG_DIR_OPTION, null);
       Path configFile = logDir == null ? Paths.get(LOG_CONFIG_FILE_NAME) : Paths.get(logDir, LOG_CONFIG_FILE_NAME);
       ensureLogConfigExists(configFile);
-      String logFile = logDir == null ? LOG_FILE_NAME : Paths.get(logDir, LOG_FILE_NAME).toAbsolutePath().toString();
-      String text = new String(Files.readAllBytes(configFile), StandardCharsets.UTF_8)
-        .replace(LOG_FILE_MACRO, logFile.replace("\\", "\\\\"));
-      PropertyConfigurator.configure(new ByteArrayInputStream(text.getBytes(StandardCharsets.UTF_8)));
+      Path logFilePath = logDir != null ? Paths.get(logDir, LOG_FILE_NAME) : Paths.get(LOG_FILE_NAME);
+      JulLogger.clearHandlers();
+      try (final InputStream in = Files.newInputStream(configFile)) {
+        final BufferedInputStream bin = new BufferedInputStream(in);
+        LogManager.getLogManager().readConfiguration(bin);
+      }
+      JulLogger.configureLogFileAndConsole(logFilePath, true, true, null);
     }
     catch (IOException e) {
       //noinspection UseOfSystemOutOrSystemErr
@@ -44,7 +45,7 @@ public final class LogSetup {
       e.printStackTrace(System.err);
     }
 
-    Logger.setFactory(category -> new Log4jBasedLogger(org.apache.log4j.Logger.getLogger(category)));
+    Logger.setFactory(category -> new JulLogger(java.util.logging.Logger.getLogger(category)));
   }
 
   private static void ensureLogConfigExists(@NotNull Path logConfig) throws IOException {
