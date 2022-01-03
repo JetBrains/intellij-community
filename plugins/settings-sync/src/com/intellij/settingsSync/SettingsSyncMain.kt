@@ -27,6 +27,8 @@ internal class SettingsSyncFacade {
     ApplicationManager.getApplication().messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.PushRequest())
   }
 
+  internal fun getRemoteCommunicator(): SettingsSyncRemoteCommunicator = getMain().controls.remoteCommunicator
+
   private fun getMain(): SettingsSyncMain {
     return ApplicationLoadListener.EP_NAME.findExtensionOrFail(SettingsSyncMain::class.java)
   }
@@ -72,10 +74,11 @@ internal class SettingsSyncMain : ApplicationLoadListener {
       componentStore.storageManager.addStreamProvider(streamProvider)
 
 
-      return SettingsSyncControls(updateChecker, bridge)
+      return SettingsSyncControls(updateChecker, bridge, remoteCommunicator)
     }
   }
 
   internal class SettingsSyncControls(val updateChecker: SettingsSyncUpdateChecker,
-                                      val bridge: SettingsSyncBridge)
+                                      val bridge: SettingsSyncBridge,
+                                      val remoteCommunicator: SettingsSyncRemoteCommunicator)
 }

@@ -29,6 +29,7 @@
     <group id="SettingsSync">
       <action class="com.intellij.settingsSync.ManualUpdateAction" id="settingsSync.manualUpdate" icon="AllIcons.Chooser.Bottom"/>
       <action class="com.intellij.settingsSync.ManualPushAction" id="settingsSync.manualPush" icon="AllIcons.Chooser.Top" />
+      <action class="com.intellij.settingsSync.DownloadSnapshotAction" id="settingsSync.downloadSnapshot" icon="AllIcons.Actions.Download"/>
 
       <add-to-group group-id="NavBarToolBar" anchor="last"/>
       <add-to-group group-id="MainToolBar" anchor="last"/>

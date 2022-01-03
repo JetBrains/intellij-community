@@ -11,8 +11,10 @@ import com.jetbrains.cloudconfig.ETagStorage
 import com.jetbrains.cloudconfig.HeaderStorage
 import com.jetbrains.cloudconfig.auth.JbaTokenAuthProvider
 import com.jetbrains.cloudconfig.exception.InvalidVersionIdException
+import java.io.File
 import java.io.IOException
 import java.io.InputStream
+import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
@@ -156,15 +158,34 @@ private const val TIMEOUT = 10000
     }
   }
 
-  private inner class VersionContext : HeaderStorage {
-    private val contextVersionMap = mutableMapOf<String, String>()
-    private val lock = ReentrantLock()
+    fun downloadSnapshot(): File? {
+      val stream = receiveSnapshotFile()
+      if (stream == null) {
+        LOG.info("$SETTINGS_SYNC_SNAPSHOT_ZIP not found on the server")
+        return null
+      }
 
-    override fun get(path: String): String? {
-      return contextVersionMap[path]
+      try {
+        val currentDate = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss", Locale.US).format(Date())
+        val tempFile = FileUtil.createTempFile("settings.sync.snapshot.$currentDate.zip", null)
+        FileUtil.writeToFile(tempFile, stream.readAllBytes())
+        return tempFile
+      }
+      catch (e: Throwable) {
+        LOG.error(e)
+        return null
+      }
     }
 
-    override fun store(path: String, value: String) {
+    private inner class VersionContext : HeaderStorage {
+      private val contextVersionMap = mutableMapOf<String, String>()
+      private val lock = ReentrantLock()
+
+      override fun get(path: String): String? {
+        return contextVersionMap[path]
+      }
+
+      override fun store(path: String, value: String) {
       contextVersionMap[path] = path
     }
 
