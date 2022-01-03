@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.codeInsight.documentation.render;
 
 import com.intellij.codeInsight.CodeInsightBundle;
@@ -68,7 +68,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import static com.intellij.codeInsight.documentation.QuickDocUtil.isDocumentationV2Enabled;
 import static com.intellij.lang.documentation.ide.impl.DocumentationManager.instance;
 
-class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRenderer {
+final class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRenderer {
   private static final Logger LOG = Logger.getInstance(DocRenderer.class);
   private static final Key<EditorPane> CACHED_LOADING_PANE = Key.create("cached.loading.pane");
   private static final DocRendererMemoryManager MEMORY_MANAGER = new DocRendererMemoryManager();
@@ -551,7 +551,7 @@ class DocRenderer implements EditorCustomElementRenderer, CustomFoldRegionRender
     String linkColorHex = ColorUtil.toHex(linkColor);
     if (!Objects.equals(linkColorHex, ourCachedStyleSheetLinkColor)) {
       String editorFontNamePlaceHolder = EditorCssFontResolver.EDITOR_FONT_NAME_NO_LIGATURES_PLACEHOLDER;
-      ourCachedStyleSheet = StyleSheetUtil.createStyleSheet(
+      ourCachedStyleSheet = StyleSheetUtil.loadStyleSheet(
         "body {overflow-wrap: anywhere}" + // supported by JetBrains Runtime
         "code {font-family: \"" + editorFontNamePlaceHolder + "\"}" +
         "pre {font-family: \"" + editorFontNamePlaceHolder + "\";" +

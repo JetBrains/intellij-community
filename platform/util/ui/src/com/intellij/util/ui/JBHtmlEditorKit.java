@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +50,9 @@ public class JBHtmlEditorKit extends HTMLEditorKit {
   @Deprecated
   public JBHtmlEditorKit(boolean noGapsBetweenParagraphs) {
     this(ExtendableHTMLViewFactory.DEFAULT, StyleSheetUtil.getDefaultStyleSheet(), false);
-    if (noGapsBetweenParagraphs) getStyleSheet().addStyleSheet(UIUtil.NO_GAPS_BETWEEN_PARAGRAPHS_STYLE);
+    if (noGapsBetweenParagraphs) {
+      getStyleSheet().addStyleSheet(StyleSheetUtil.INSTANCE.getNO_GAPS_BETWEEN_PARAGRAPHS_STYLE());
+    }
   }
 
   /**

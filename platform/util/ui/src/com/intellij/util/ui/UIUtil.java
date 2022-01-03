@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.BundleBase;
@@ -95,9 +95,6 @@ public final class UIUtil {
   @ApiStatus.Internal
   public static final String NO_BORDER_UNDER_WINDOW_TITLE_KEY = "";
 
-  //TODO: lazy
-  static final StyleSheet NO_GAPS_BETWEEN_PARAGRAPHS_STYLE = StyleSheetUtil.createStyleSheet("p { margin-top: 0; }");
-
   // cannot be static because logging maybe not configured yet
   private static @NotNull Logger getLogger() {
     return Logger.getInstance(UIUtil.class);
@@ -107,10 +104,12 @@ public final class UIUtil {
     if (pane != null && SystemInfo.isMacOSMojave) {
       if (Runtime.version().feature() < 17) {
         pane.putClientProperty("jetbrains.awt.windowDarkAppearance", isUnderDarcula());
-      } else {
+      }
+      else {
         if (isUnderDarcula()) {
           pane.putClientProperty("apple.awt.windowAppearance", "NSAppearanceNameVibrantDark");
-        } else {
+        }
+        else {
           pane.putClientProperty("apple.awt.windowAppearance", "NSAppearanceNameVibrantLight");
         }
       }
@@ -1985,11 +1984,11 @@ public final class UIUtil {
   }
 
   /**
-   * @deprecated use {@link StyleSheetUtil#loadStyleSheet}
+   * @deprecated use {@link StyleSheetUtil#loadStyleSheet(InputStream)}
    */
   @Deprecated
   public static @Nullable StyleSheet loadStyleSheet(@Nullable URL url) {
-    return StyleSheetUtil.loadStyleSheet(url);
+    return url == null ? null : StyleSheetUtil.INSTANCE.loadStyleSheet(url);
   }
 
   /**
