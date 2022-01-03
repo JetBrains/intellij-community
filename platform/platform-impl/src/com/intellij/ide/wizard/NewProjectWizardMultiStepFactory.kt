@@ -19,6 +19,12 @@ interface NewProjectWizardMultiStepFactory<P : NewProjectWizardStep> {
   val name: @NlsContexts.Label String
 
   /**
+   * The ordinal the steps are sorted by
+   */
+  val ordinal: Int
+    get() = -1
+
+  /**
    * Disabled steps will be excluded from multistep switcher.
    *
    * @param context is context of wizard where created step will be displayed

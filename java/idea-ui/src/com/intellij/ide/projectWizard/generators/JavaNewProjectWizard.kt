@@ -6,6 +6,7 @@ import com.intellij.ide.wizard.*
 
 class JavaNewProjectWizard : LanguageNewProjectWizard {
   override val name: String = JAVA
+  override val ordinal = 0
 
   override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 

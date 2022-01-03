@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.tools.projectWizard.wizard.NewProjectWizardModuleBui
 import java.util.*
 
 class KotlinNewProjectWizard : LanguageNewProjectWizard {
+    override val ordinal = 1
 
     companion object {
         private const val DEFAULT_GROUP_ID = "me.user"

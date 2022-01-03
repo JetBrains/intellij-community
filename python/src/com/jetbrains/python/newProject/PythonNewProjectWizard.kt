@@ -37,6 +37,8 @@ import kotlin.streams.toList
  */
 class PythonNewProjectWizard : LanguageNewProjectWizard {
   override val name: String = "Python"
+  override val ordinal = 6
+
   override fun createStep(parent: NewProjectWizardLanguageStep): NewProjectWizardStep = NewPythonProjectStep(parent)
 }
 

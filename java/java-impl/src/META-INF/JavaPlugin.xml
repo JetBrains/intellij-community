@@ -2223,7 +2223,7 @@
     <readerModeProvider implementation="com.intellij.ide.impl.JavaInlaysReaderModeProvider"/>
     <referenceInjector implementation="com.intellij.java.JvmMethodNameReferenceInjector"/>
 
-    <newProjectWizard.language implementation="com.intellij.ide.projectWizard.generators.JavaNewProjectWizard" order="first" id="java"/>
+    <newProjectWizard.language implementation="com.intellij.ide.projectWizard.generators.JavaNewProjectWizard" order="first"/>
     <newProjectWizard.java.buildSystem implementation="com.intellij.ide.projectWizard.generators.IntelliJJavaNewProjectWizard"/>
 
     <registryKey key="starters.dependency.update.host"
