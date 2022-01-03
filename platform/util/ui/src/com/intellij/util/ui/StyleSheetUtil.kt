@@ -5,6 +5,7 @@ package com.intellij.util.ui
 
 import com.intellij.openapi.diagnostic.thisLogger
 import org.jetbrains.annotations.ApiStatus
+import java.awt.GraphicsEnvironment
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -25,9 +26,12 @@ object StyleSheetUtil {
     val sheet = StyleSheet()
     val globalStyleSheet = UIManager.getDefaults().get("HTMLEditorKit.jbStyleSheet") as? StyleSheet
     if (globalStyleSheet == null) {
-      thisLogger().warn("Missing global CSS sheet")
+      if (!GraphicsEnvironment.isHeadless()) {
+        thisLogger().warn("Missing global CSS sheet")
+      }
       return sheet
     }
+
     // return a linked sheet to avoid mutation of a global variable
     sheet.addStyleSheet(globalStyleSheet)
     return sheet
