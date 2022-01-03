@@ -249,13 +249,21 @@ internal class PerFileAnalysisCache(val file: KtFile, componentProvider: Compone
     ): AnalysisResult {
         val newBindingCtx = elementBindingTrace.stackedContext
         return when {
-            oldResult.isError() -> AnalysisResult.internalError(newBindingCtx, oldResult.error)
-            newResult.isError() -> AnalysisResult.internalError(newBindingCtx, newResult.error)
-            else -> AnalysisResult.success(
-                newBindingCtx,
-                oldResult.moduleDescriptor,
-                oldResult.shouldGenerateCode
-            )
+            oldResult.isError() -> {
+                oldResult.error.throwAsInvalidModuleException()
+                AnalysisResult.internalError(newBindingCtx, oldResult.error)
+            }
+            newResult.isError() -> {
+                newResult.error.throwAsInvalidModuleException()
+                AnalysisResult.internalError(newBindingCtx, newResult.error)
+            }
+            else -> {
+                AnalysisResult.success(
+                    newBindingCtx,
+                    oldResult.moduleDescriptor,
+                    oldResult.shouldGenerateCode
+                )
+            }
         }
     }
 
