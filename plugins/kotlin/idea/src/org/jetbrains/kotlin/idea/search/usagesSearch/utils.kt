@@ -228,26 +228,6 @@ fun PsiReference.isCallableOverrideUsage(declaration: KtNamedDeclaration): Boole
     }
 }
 
-fun <T : PsiNamedElement> List<T>.filterDataClassComponentsIfDisabled(kotlinOptions: KotlinReferencesSearchOptions): List<T> {
-    if (kotlinOptions.searchForComponentConventions) return this
-
-    fun PsiNamedElement.isComponentElement(): Boolean {
-
-        if (this !is PsiMethod) return false
-
-        val dataClassParent = ((parent as? KtLightClass)?.kotlinOrigin as? KtClass)?.isData() == true
-        if (!dataClassParent) return false
-
-        if (!Name.isValidIdentifier(name)) return false
-        val nameIdentifier = Name.identifier(name)
-        if (!DataClassResolver.isComponentLike(nameIdentifier)) return false
-
-        return true
-    }
-
-    return filter { !it.isComponentElement() }
-}
-
 fun KtFile.forceResolveReferences(elements: List<KtElement>) {
     getResolutionFacade().analyze(elements, BodyResolveMode.PARTIAL)
 }
