@@ -7,10 +7,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.SearchScope
+import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.idea.util.application.runReadAction
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.resolve.DataClassResolver
 import org.jetbrains.kotlin.resolve.ImportPath
 
 interface KotlinSearchUsagesSupport {
@@ -31,10 +34,22 @@ interface KotlinSearchUsagesSupport {
         val PsiClass.isSamInterface: Boolean
             get() = getInstance(project).isSamInterface(this)
 
-        fun <T : PsiNamedElement> List<T>.filterDataClassComponentsIfDisabled(kotlinOptions: KotlinReferencesSearchOptions): List<T> =
-            firstOrNull()?.let {
-                getInstance(it.project).filterDataClassComponentsIfDisabled(this, kotlinOptions)
-            } ?: this
+        fun <T : PsiNamedElement> List<T>.filterDataClassComponentsIfDisabled(kotlinOptions: KotlinReferencesSearchOptions): List<T> {
+            fun PsiNamedElement.isComponentElement(): Boolean {
+                if (this !is PsiMethod) return false
+
+                val dataClassParent = ((parent as? KtLightClass)?.kotlinOrigin as? KtClass)?.isData() == true
+                if (!dataClassParent) return false
+
+                if (!Name.isValidIdentifier(name)) return false
+                val nameIdentifier = Name.identifier(name)
+                if (!DataClassResolver.isComponentLike(nameIdentifier)) return false
+
+                return true
+            }
+
+            return if (kotlinOptions.searchForComponentConventions) this else filter { !it.isComponentElement() }
+        }
 
         fun PsiReference.isCallableOverrideUsage(declaration: KtNamedDeclaration): Boolean =
             getInstance(declaration.project).isCallableOverrideUsage(this, declaration)
@@ -117,8 +132,6 @@ interface KotlinSearchUsagesSupport {
     fun hasType(element: KtExpression): Boolean
 
     fun isSamInterface(psiClass: PsiClass): Boolean
-
-    fun <T : PsiNamedElement> filterDataClassComponentsIfDisabled(elements: List<T>, kotlinOptions: KotlinReferencesSearchOptions): List<T>
 
     fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean
 

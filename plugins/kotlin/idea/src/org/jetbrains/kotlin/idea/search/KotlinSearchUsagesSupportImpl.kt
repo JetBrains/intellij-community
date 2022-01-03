@@ -11,7 +11,6 @@ import org.jetbrains.kotlin.idea.caches.resolve.util.hasJavaResolutionFacade
 import org.jetbrains.kotlin.idea.core.isInheritable
 import org.jetbrains.kotlin.idea.core.isOverridable
 import org.jetbrains.kotlin.idea.search.declarationsSearch.forEachOverridingMethod
-import org.jetbrains.kotlin.idea.search.ideaExtensions.KotlinReferencesSearchOptions
 import org.jetbrains.kotlin.idea.search.usagesSearch.*
 import org.jetbrains.kotlin.idea.stubindex.KotlinTypeAliasShortNameIndex
 import org.jetbrains.kotlin.idea.util.ProjectRootsUtil
@@ -33,12 +32,6 @@ class KotlinSearchUsagesSupportImpl : KotlinSearchUsagesSupport {
 
     override fun isSamInterface(psiClass: PsiClass): Boolean =
         org.jetbrains.kotlin.idea.search.usagesSearch.isSamInterface(psiClass)
-
-    override fun <T : PsiNamedElement> filterDataClassComponentsIfDisabled(
-        elements: List<T>,
-        kotlinOptions: KotlinReferencesSearchOptions
-    ): List<T> =
-        elements.filterDataClassComponentsIfDisabled(kotlinOptions)
 
     override fun isCallableOverrideUsage(reference: PsiReference, declaration: KtNamedDeclaration): Boolean =
         reference.isCallableOverrideUsage(declaration)
