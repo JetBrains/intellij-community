@@ -167,6 +167,10 @@ abstract class UastFakeLightMethodBase<T: KtDeclaration>(
                 super.isDeprecated()
     }
 
+    override fun isConstructor(): Boolean {
+        return original is KtConstructor<*>
+    }
+
     override fun getReturnType(): PsiType? {
         return baseResolveProviderService.getType(original, this)
     }
