@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet")
+
 package com.intellij.util.ui
 
 import com.intellij.openapi.diagnostic.thisLogger
@@ -11,19 +13,17 @@ import javax.swing.UIManager
 import javax.swing.text.html.StyleSheet
 
 object StyleSheetUtil {
-
   @JvmStatic
   fun getDefaultStyleSheet(): StyleSheet {
     val sheet = StyleSheet()
-    val globalStyleSheet = UIManager.getDefaults()["HTMLEditorKit.jbStyleSheet"] as? StyleSheet
+    val globalStyleSheet = UIManager.getDefaults().get("HTMLEditorKit.jbStyleSheet") as? StyleSheet
     if (globalStyleSheet == null) {
       thisLogger().warn("Missing global CSS sheet")
       return sheet
     }
     // return a linked sheet to avoid mutation of a global variable
-    return sheet.apply {
-      addStyleSheet(globalStyleSheet)
-    }
+    sheet.addStyleSheet(globalStyleSheet)
+    return sheet
   }
 
   @JvmStatic
@@ -40,7 +40,9 @@ object StyleSheetUtil {
 
   @JvmStatic
   fun loadStyleSheet(url: URL?): StyleSheet? {
-    if (url == null) return null
+    if (url == null) {
+      return null
+    }
 
     return try {
       StyleSheet().apply {

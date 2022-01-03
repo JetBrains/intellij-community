@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.html
 
 import com.intellij.ide.ui.LafManager
@@ -17,7 +17,6 @@ import javax.swing.text.html.StyleSheet
  */
 @Internal
 object GlobalStyleSheetHolder {
-
   private val globalStyleSheet = StyleSheet()
 
   private var swingStyleSheetHandled = false
@@ -28,9 +27,11 @@ object GlobalStyleSheetHolder {
    * Returns a global style sheet that is dynamically updated when LAF changes
    */
   @JvmStatic
-  fun getGlobalStyleSheet() = StyleSheet().apply {
+  fun getGlobalStyleSheet(): StyleSheet {
+    val result = StyleSheet()
     // return a linked sheet to avoid mutation of a global variable
-    addStyleSheet(globalStyleSheet)
+    result.addStyleSheet(globalStyleSheet)
+    return result
   }
 
   /**
@@ -54,10 +55,9 @@ object GlobalStyleSheetHolder {
       globalStyleSheet.removeStyleSheet(currentSheet)
     }
 
-    val newStyle = StyleSheet().apply {
-      addRule(LafCssProvider.getCssForCurrentLaf())
-      addRule(LafCssProvider.getCssForCurrentEditorScheme())
-    }
+    val newStyle = StyleSheet()
+    newStyle.addRule(LafCssProvider.getCssForCurrentLaf())
+    newStyle.addRule(LafCssProvider.getCssForCurrentEditorScheme())
     currentLafStyleSheet = newStyle
     globalStyleSheet.addStyleSheet(newStyle)
   }
