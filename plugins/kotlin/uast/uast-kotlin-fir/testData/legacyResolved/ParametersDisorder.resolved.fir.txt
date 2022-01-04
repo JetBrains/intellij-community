@@ -52,7 +52,7 @@ UTypeReferenceExpression (name = float) -> USimpleNameReferenceExpression (ident
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = chunked) -> FUN: chunked
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = toTypedArray) -> FUN: toTypedArray
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 2))(resolves to null) -> USimpleNameReferenceExpression (identifier = with) -> FUN: with
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A {
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:class A {
 
     fun String.with2Receivers(a: Int, b: Float) {}
 

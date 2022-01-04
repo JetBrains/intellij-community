@@ -1,5 +1,5 @@
 UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A {
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A {
     fun foo() {}
     inline fun inlineFoo() {
 
@@ -7,7 +7,7 @@ UBlockExpression -> UQualifiedReferenceExpression -> null: null
 }: A
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = foo) -> Kotlin_Light_Method: foo
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A {
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A {
     fun foo() {}
     inline fun inlineFoo() {
 
@@ -16,7 +16,7 @@ UBlockExpression -> UQualifiedReferenceExpression -> null: null
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = inlineFoo) -> Kotlin_Light_Method: inlineFoo
     UBlockExpression -> UQualifiedReferenceExpression -> null: null
     UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1))(resolves to null) -> USimpleNameReferenceExpression (identifier = listOf) -> FUN: listOf
-    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A {
+    UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = A) -> Kotlin_Light_Class:open class A {
     fun foo() {}
     inline fun inlineFoo() {
 

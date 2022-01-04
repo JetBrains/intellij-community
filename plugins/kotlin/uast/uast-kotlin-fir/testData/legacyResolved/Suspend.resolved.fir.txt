@@ -7,7 +7,7 @@ UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identif
 UCallExpression (kind = UastCallKind(name='method_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = inner) -> Kotlin_Light_Method: inner
 UTypeReferenceExpression (name = int) -> USimpleNameReferenceExpression (identifier = Int) -> Decompiled_Class: Integer
 UReturnExpression -> UQualifiedReferenceExpression -> null: null
-UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to null) -> USimpleNameReferenceExpression (identifier = Context) -> Kotlin_Light_Class:class Context {
+UCallExpression (kind = UastCallKind(name='constructor_call'), argCount = 0))(resolves to Kotlin_Light_Method) -> USimpleNameReferenceExpression (identifier = Context) -> Kotlin_Light_Class:class Context {
     suspend fun inner(): Int = suspendPrivate()
     private suspend fun suspendPrivate(): Int = inner()
 }: Context
