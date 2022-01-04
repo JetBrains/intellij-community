@@ -7,7 +7,9 @@ fun main(args: Array<String>) {
 // EXIST: { lookupString:"Array", tailText:"<T> (kotlin)", icon: "org/jetbrains/kotlin/idea/icons/classKotlin.svg"}
 // EXIST_JAVA_ONLY: { lookupString:"Array", tailText:" (java.sql)" }
 
-// EXIST: { lookupString:"ArrayList", tailText:"<E> (kotlin.collections)", icon: "org/jetbrains/kotlin/idea/icons/typeAlias.svg"}
+// EXIST_JAVA_ONLY: { lookupString:"ArrayList", tailText:"<E> (kotlin.collections)", icon: "org/jetbrains/kotlin/idea/icons/typeAlias.svg"}
+// EXIST_JS_ONLY: { lookupString:"ArrayList", tailText:"<E> (kotlin.collections)", icon: "org/jetbrains/kotlin/idea/icons/classKotlin.svg"}
+
 // EXIST_JAVA_ONLY: { lookupString:"ArrayList", tailText:"<E> (java.util)"}
 
 
