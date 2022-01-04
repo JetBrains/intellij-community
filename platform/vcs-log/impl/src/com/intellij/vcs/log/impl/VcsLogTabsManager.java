@@ -52,7 +52,7 @@ public class VcsLogTabsManager {
         myIsLogDisposing = false;
         Map<String, VcsLogTabLocation> savedTabs = myUiProperties.getTabs();
         ApplicationManager.getApplication().invokeLater(() -> {
-          if (LOG.assertTrue(!Disposer.isDisposed(manager), "Attempting to open tabs on disposed VcsLogManager")) {
+          if (LOG.assertTrue(!manager.isDisposed(), "Attempting to open tabs on disposed VcsLogManager")) {
             reopenLogTabs(manager, savedTabs);
           }
         }, ModalityState.NON_MODAL, o -> manager != VcsProjectLog.getInstance(project).getLogManager());
