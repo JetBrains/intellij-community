@@ -8,13 +8,10 @@ import org.jetbrains.java.decompiler.main.extern.IFernflowerLogger;
 import org.jetbrains.java.decompiler.main.extern.IFernflowerPreferences;
 import org.jetbrains.java.decompiler.main.rels.ClassWrapper;
 import org.jetbrains.java.decompiler.main.rels.MethodWrapper;
-import org.jetbrains.java.decompiler.modules.decompiler.typeann.FormalParameterTarget;
-import org.jetbrains.java.decompiler.modules.decompiler.typeann.TargetInfo;
-import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypePathWriteProgress;
+import org.jetbrains.java.decompiler.modules.decompiler.typeann.*;
 import org.jetbrains.java.decompiler.modules.decompiler.ExprProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
-import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotation;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarTypeProcessor;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarVersionPair;
 import org.jetbrains.java.decompiler.modules.renamer.PoolInterceptor;
@@ -477,16 +474,22 @@ public class ClassWriter {
     }
 
     buffer.append(' ');
-
+    List<TypePathWriteProgress> supertypeAnnotations = createTypeAnnWriteProgress(cl).stream()
+      .filter(typePathWriteProgress -> typePathWriteProgress.getAnnotation().getTargetInfo() instanceof SupertypeTarget)
+      .collect(Collectors.toList());
     if (!isEnum && !isInterface && components == null && cl.superClass != null) {
       VarType supertype = new VarType(cl.superClass.getString(), true);
+      List<TypePathWriteProgress> extendsupertypeAnnotations = supertypeAnnotations.stream()
+        .filter(typePathWriteProgress ->
+          ((SupertypeTarget)typePathWriteProgress.getAnnotation().getTargetInfo()).getSupertypeIndex() == 0xFFFF
+        ).collect(Collectors.toList());
       if (!VarType.VARTYPE_OBJECT.equals(supertype)) {
         buffer.append("extends ");
         if (descriptor != null) {
-          buffer.append(GenericMain.getGenericCastTypeName(descriptor.superclass, Collections.emptyList()));
+          buffer.append(GenericMain.getGenericCastTypeName(descriptor.superclass, extendsupertypeAnnotations));
         }
         else {
-          buffer.append(ExprProcessor.getCastTypeName(supertype, Collections.emptyList()));
+          buffer.append(ExprProcessor.getCastTypeName(supertype, extendsupertypeAnnotations));
         }
         buffer.append(' ');
       }
@@ -500,11 +503,16 @@ public class ClassWriter {
           if (i > 0) {
             buffer.append(", ");
           }
+          final int it = i;
+          List<TypePathWriteProgress> curSuperTypeAnnotations = supertypeAnnotations.stream()
+            .filter(typePathWriteProgress ->
+              ((SupertypeTarget)typePathWriteProgress.getAnnotation().getTargetInfo()).getSupertypeIndex() == it
+            ).collect(Collectors.toList());
           if (descriptor != null) {
-            buffer.append(GenericMain.getGenericCastTypeName(descriptor.superinterfaces.get(i), Collections.emptyList()));
+            buffer.append(GenericMain.getGenericCastTypeName(descriptor.superinterfaces.get(i), curSuperTypeAnnotations));
           }
           else {
-            buffer.append(ExprProcessor.getCastTypeName(new VarType(cl.getInterface(i), true), Collections.emptyList()));
+            buffer.append(ExprProcessor.getCastTypeName(new VarType(cl.getInterface(i), true), curSuperTypeAnnotations));
           }
         }
         buffer.append(' ');
