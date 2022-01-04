@@ -26,8 +26,6 @@ open class FirUastApiTest : AbstractFirUastTest() {
     private val whitelist : Set<String> = setOf(
         // TODO: resolve to inline and stdlib
         "uast-kotlin/testData/Resolve.kt",
-        // TODO: resolve to local declarations/constructors
-        "uast-kotlin/testData/LocalDeclarations.kt",
         // TODO: return type of inline functions
         "uast-kotlin/testData/ReifiedReturnType.kt",
         // TODO: PsiMethod -> getFunctionalInterfaceMethod
