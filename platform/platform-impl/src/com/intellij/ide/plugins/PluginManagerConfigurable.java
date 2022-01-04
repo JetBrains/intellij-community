@@ -1354,10 +1354,6 @@ public final class PluginManagerConfigurable
         else if (tags == null) {
           return List.of(Tags.Paid.name());
         }
-        else if (!tags.contains(Tags.Paid.name())) {
-          tags = new ArrayList<>(tags);
-          tags.add(Tags.Paid.name());
-        }
       }
     }
     else if (productCode != null && !plugin.isBundled() && !LicensePanel.isEA2Product(productCode)) {
@@ -1381,6 +1377,9 @@ public final class PluginManagerConfigurable
       }
       if (tags.remove(Tags.Paid.name())) {
         tags.add(0, Tags.Paid.name());
+      }
+      if (tags.remove(Tags.Freemium.name())) {
+        tags.add(0, Tags.Freemium.name());
       }
     }
 
