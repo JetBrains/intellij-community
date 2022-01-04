@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui.win;
 
 import com.intellij.ide.CliResult;
@@ -15,7 +15,12 @@ import java.util.concurrent.Future;
 
 final class RecentProjectApplication extends ApplicationStarterBase {
   RecentProjectApplication() {
-    super("reopen", 1);
+    super(1);
+  }
+
+  @Override
+  public String getCommandName() {
+    return "reopen";
   }
 
   @Override

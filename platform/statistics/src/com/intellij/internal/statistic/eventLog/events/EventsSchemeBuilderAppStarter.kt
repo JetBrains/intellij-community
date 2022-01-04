@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.eventLog.events
 
 import com.google.gson.GsonBuilder
@@ -12,7 +12,7 @@ import java.io.File
 import java.lang.reflect.Type
 import kotlin.system.exitProcess
 
-class EventsSchemeBuilderAppStarter : ApplicationStarter {
+internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
   override fun getCommandName(): String = "buildEventsScheme"
 
   override fun main(args: List<String>) {

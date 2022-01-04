@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.diagnostic.ActivityCategory;
@@ -325,10 +325,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   }
 
   // null id means that instance was created and extension element cleared
-  public final void processIdentifiableImplementations(@NotNull BiConsumer<? super @NotNull Supplier<@Nullable T>, ? super @Nullable String> consumer) {
+  public final void processIdentifiableImplementations(@NotNull BiConsumer<@NotNull Supplier<@Nullable T>, @Nullable String> consumer) {
     // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
     for (ExtensionComponentAdapter adapter : getSortedAdapters()) {
-      consumer.accept((Supplier<T>)() -> adapter.createInstance(componentManager), adapter.getOrderId());
+      consumer.accept(() -> adapter.createInstance(componentManager), adapter.getOrderId());
     }
   }
 
@@ -396,7 +396,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     return cache == null ? adapters.size() : cache.size();
   }
 
-  private @NotNull List<ExtensionComponentAdapter> getSortedAdapters() {
+  public final @NotNull List<ExtensionComponentAdapter> getSortedAdapters() {
     if (adaptersAreSorted) {
       return adapters;
     }

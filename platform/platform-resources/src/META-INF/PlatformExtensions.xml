@@ -4,21 +4,21 @@
     <startupActivity id="performanceReporter" implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartUpPerformanceReporter" order="first"/>
 
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
-    <appStarter implementation="com.intellij.openapi.application.SaveStarter"/>
-    <appStarter implementation="com.intellij.openapi.application.ExitStarter"/>
-    <appStarter implementation="com.intellij.diff.applications.DiffApplication"/>
-    <appStarter implementation="com.intellij.diff.applications.MergeApplication"/>
-    <appStarter implementation="com.intellij.ui.win.RecentProjectApplication"/>
-    <appStarter implementation="com.intellij.openapi.command.impl.UpdatePluginsApp"/>
-    <appStarter implementation="com.intellij.help.impl.KeymapGenerator"/>
-    <appStarter implementation="com.intellij.help.impl.IntentionDump"/>
-    <appStarter implementation="com.intellij.help.impl.InspectionDump"/>
-    <appStarter implementation="com.intellij.help.impl.ShowProductVersion"/>
-    <appStarter implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
-    <appStarter implementation="com.intellij.ide.plugins.HeadlessPluginsInstaller"/>
-    <appStarter implementation="com.intellij.warmup.ProjectIndexesWarmup"/>
-    <appStarter implementation="com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilderAppStarter"/>
-    <appStarter implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter"/>
+    <appStarter id="save" implementation="com.intellij.openapi.application.SaveStarter"/>
+    <appStarter id="exit" implementation="com.intellij.openapi.application.ExitStarter"/>
+    <appStarter id="diff" implementation="com.intellij.diff.applications.DiffApplication"/>
+    <appStarter id="merge" implementation="com.intellij.diff.applications.MergeApplication"/>
+    <appStarter id="reopen" implementation="com.intellij.ui.win.RecentProjectApplication"/>
+    <appStarter id="update" implementation="com.intellij.openapi.command.impl.UpdatePluginsApp"/>
+    <appStarter id="keymap" implementation="com.intellij.help.impl.KeymapGenerator"/>
+    <appStarter id="intentions" implementation="com.intellij.help.impl.IntentionDump"/>
+    <appStarter id="inspections" implementation="com.intellij.help.impl.InspectionDump"/>
+    <appStarter id="-version" implementation="com.intellij.help.impl.ShowProductVersion"/>
+    <appStarter id="listBundledPlugins" implementation="com.intellij.ide.plugins.BundledPluginsLister"/>
+    <appStarter id="installPlugins" implementation="com.intellij.ide.plugins.HeadlessPluginsInstaller"/>
+    <appStarter id="warmup" implementation="com.intellij.warmup.ProjectIndexesWarmup"/>
+    <appStarter id="buildEventsScheme" implementation="com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilderAppStarter"/>
+    <appStarter id="dumpActions" implementation="com.intellij.internal.statistic.utils.DumpActionsAppStarter"/>
     <protocolHandler implementation="com.intellij.openapi.application.JBProtocolHandler"/>
 
     <groupConfigurable id="appearance" weight="70"

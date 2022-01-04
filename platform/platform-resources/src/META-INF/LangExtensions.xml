@@ -6,9 +6,9 @@
     <projectService serviceInterface="com.intellij.openapi.roots.ProjectRootManager"
                     serviceImplementation="com.intellij.workspaceModel.ide.impl.legacyBridge.project.ProjectRootManagerBridge" preload="await"/>
 
-    <appStarter implementation="com.intellij.ide.ui.search.TraverseUIStarter"/>
-    <appStarter implementation="com.intellij.formatting.commandLine.FormatterStarter"/>
-    <appStarter implementation="com.intellij.ide.script.IdeScriptStarter"/>
+    <appStarter id="traverseUI" implementation="com.intellij.ide.ui.search.TraverseUIStarter"/>
+    <appStarter id="format" implementation="com.intellij.formatting.commandLine.FormatterStarter"/>
+    <appStarter id="ideScript" implementation="com.intellij.ide.script.IdeScriptStarter"/>
 
     <applicationService serviceInterface="com.intellij.util.Queries"
                         serviceImplementation="com.intellij.util.QueriesImpl"/>

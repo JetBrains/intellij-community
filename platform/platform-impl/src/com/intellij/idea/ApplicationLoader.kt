@@ -20,6 +20,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl
 import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginDescriptor
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
@@ -28,6 +29,7 @@ import com.intellij.openapi.ui.DialogEarthquakeShaker
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.SystemPropertyBean
+import com.intellij.openapi.util.io.OSAgnosticPathUtil
 import com.intellij.openapi.wm.WeakFocusStackManager
 import com.intellij.openapi.wm.WindowManager
 import com.intellij.serviceContainer.ComponentManagerImpl
@@ -61,20 +63,24 @@ private val LOG = Logger.getInstance("#com.intellij.idea.ApplicationLoader")
 
 // for non-technical reasons this method cannot return CompletableFuture
 fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>) {
-  val args = processProgramArguments(rawArgs)
-
   val initAppActivity = StartupUtil.startupStart.endAndStart(Activities.INIT_APP)
 
   val isInternal = java.lang.Boolean.getBoolean(ApplicationManagerEx.IS_INTERNAL_PROPERTY)
   if (isInternal) {
-    prepareUiFuture.thenRunAsync {
-      BundleBase.assertOnMissedKeys(true)
+    ForkJoinPool.commonPool().execute {
+      initAppActivity.runChild("assert on missed keys enabling") {
+        BundleBase.assertOnMissedKeys(true)
+      }
     }
   }
 
-  if (isInternal || Disposer.isDebugDisposerOn()) {
-    Disposer.setDebugMode(true)
+  initAppActivity.runChild("disposer debug mode enabling if needed") {
+    if (isInternal || Disposer.isDebugDisposerOn()) {
+      Disposer.setDebugMode(true)
+    }
   }
+
+  val args = processProgramArguments(rawArgs)
 
   // event queue is replaced as part of "prepareUiFuture" task - application must be created only after that
   val prepareUiFutureWaitActivity = initAppActivity.startChild("prepare ui waiting")
@@ -94,8 +100,10 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
         }
       }
 
-      val app = ApplicationImpl(isInternal, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())
-      ApplicationImpl.preventAwtAutoShutdown(app)
+      initAppActivity.runChild("app instantiation") {
+        val app = ApplicationImpl(isInternal, Main.isHeadless(), Main.isCommandLine(), EDT.getEventDispatchThread())
+        ApplicationImpl.preventAwtAutoShutdown(app)
+      }
 
       val pluginSetFutureWaitActivity = initAppActivity.startChild("plugin descriptor init waiting")
       PluginManagerCore.getInitPluginFuture().thenApply {
@@ -104,23 +112,19 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
       }
     }, Executor {
     if (EDT.isCurrentThreadEdt()) ForkJoinPool.commonPool().execute(it) else it.run()
-    }
+  }
   )
     .thenCompose { pluginSet ->
       val app = ApplicationManager.getApplication() as ApplicationImpl
-      runActivity("app component registration") {
+      initAppActivity.runChild("app component registration") {
         app.registerComponents(modules = pluginSet.getEnabledModules(),
                                app = app,
                                precomputedExtensionModel = null,
                                listenerCallbacks = null)
       }
 
-      val starter = if (args.isEmpty()) {
-        IdeStarter()
-      }
-      else {
-        // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
-        findCustomAppStarterAndStart(args)
+      val starter = initAppActivity.runChild("app starter creation") {
+        findAppStarter(args)
       }
 
       // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed,
@@ -234,14 +238,34 @@ private fun prepareStart(app: ApplicationImpl,
     Executor {
       // if `loadComponentInEdtFuture` is completed after `preloadSyncServiceFuture`,
       // then this task will be executed in EDT, so force execution out of EDT
-      if (app.isDispatchThread) ForkJoinPool.commonPool().execute(it) else it.run()
+      if (EDT.isCurrentThreadEdt()) ForkJoinPool.commonPool().execute(it) else it.run()
     }
   )
 }
 
-private fun findCustomAppStarterAndStart(args: List<String>): ApplicationStarter {
-  val starter = findStarter(args.first())
-                ?: if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
+private fun findAppStarter(args: List<String>): ApplicationStarter {
+  val first = args.firstOrNull()
+  // first argument maybe a project path
+  if (first == null) {
+    return IdeStarter()
+  }
+  else if (args.size == 1 && OSAgnosticPathUtil.isAbsolute(first)) {
+    return createDefaultAppStarter()
+  }
+
+  var starter: ApplicationStarter? = null
+  val point = ApplicationStarter.EP_NAME.point as ExtensionPointImpl<ApplicationStarter>
+  for (adapter in point.sortedAdapters) {
+    if (adapter.orderId == first) {
+      starter = adapter.createInstance(point.componentManager)
+    }
+  }
+
+  if (starter == null) {
+    // `ApplicationStarter` is an extension, so to find a starter, extensions must be registered first
+    starter = point.find { it == null || it.commandName == first } ?: createDefaultAppStarter()
+  }
+
   if (Main.isHeadless() && !starter.isHeadless) {
     val commandName = starter.commandName
     val message = IdeBundle.message(
@@ -262,6 +286,10 @@ private fun findCustomAppStarterAndStart(args: List<String>): ApplicationStarter
 
   starter.premain(args)
   return starter
+}
+
+private fun createDefaultAppStarter(): ApplicationStarter {
+  return if (PlatformUtils.getPlatformPrefix() == "LightEdit") IdeStarter.StandaloneLightEditStarter() else IdeStarter()
 }
 
 @VisibleForTesting
@@ -292,7 +320,7 @@ fun preloadServices(modules: Sequence<IdeaPluginDescriptorImpl>,
   }
 
   logError(result.async)
-  return logError(result.sync)
+  return result.sync
 }
 
 private fun addActivateAndWindowsCliListeners() {

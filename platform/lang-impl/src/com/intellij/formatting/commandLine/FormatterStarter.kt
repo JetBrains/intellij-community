@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.formatting.commandLine
 
 import com.intellij.formatting.commandLine.CodeStyleProcessorBuildException.ArgumentsException
@@ -17,20 +17,15 @@ import java.io.IOException
 import java.nio.charset.Charset
 import kotlin.system.exitProcess
 
-
-const val FORMAT_COMMAND_NAME = "format"
-
 private val LOG = Logger.getInstance(FormatterStarter::class.java)
-
 
 /**
  * A launcher class for command-line formatter.
  */
-class FormatterStarter : ApplicationStarter {
-
+internal class FormatterStarter : ApplicationStarter {
   val messageOutput = StdIoMessageOutput
 
-  override fun getCommandName() = FORMAT_COMMAND_NAME
+  override fun getCommandName() = "format"
 
   override fun main(args: Array<String>) {
     messageOutput.info("$appInfo Formatter\n")
