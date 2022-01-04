@@ -11,6 +11,8 @@ import org.jetbrains.kotlin.analysis.api.types.KtClassErrorType
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
+import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
+import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.KotlinLanguage
@@ -21,7 +23,9 @@ import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin
 import org.jetbrains.uast.kotlin.TypeOwnerKind
+import org.jetbrains.uast.kotlin.getContainingLightClass
 import org.jetbrains.uast.kotlin.lz
+import org.jetbrains.uast.kotlin.psi.UastFakeLightMethod
 import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
 
 val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
@@ -52,11 +56,25 @@ internal fun KtAnalysisSession.toPsiClass(
 internal fun KtAnalysisSession.toPsiMethod(functionSymbol: KtFunctionLikeSymbol): PsiMethod? {
     return when (val psi = functionSymbol.psi) {
         null -> null
+        is PsiMethod -> psi
         is KtClassOrObject -> {
             psi.primaryConstructor?.getRepresentativeLightMethod()?.let { return it }
             val lc = psi.toLightClass() ?: return null
             lc.constructors.firstOrNull()?.let { return it }
             if (psi.isLocal) UastFakeLightPrimaryConstructor(psi, lc) else null
+        }
+        is KtFunction -> {
+            // For JVM-invisible methods, such as @JvmSynthetic, LC conversion returns nothing, so fake it
+            fun handleLocalOrSynthetic(source: KtFunction): PsiMethod? {
+                val ktModule = source.getKtModule()
+                if (ktModule !is KtSourceModule) return null
+                return getContainingLightClass(source)?.let { UastFakeLightMethod(source, it) }
+            }
+
+            if (psi.isLocal)
+                handleLocalOrSynthetic(psi)
+            else
+                psi.getRepresentativeLightMethod() ?: handleLocalOrSynthetic(psi)
         }
         else -> psi.getRepresentativeLightMethod()
     }
