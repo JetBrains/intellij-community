@@ -140,11 +140,11 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
         }
 
         val safeGetDefinitions = source.safeGetDefinitions()
-        val updateDefinitionsResult = definitionsLock.writeWithCheckCanceled {
-            definitionsBySource[source] = safeGetDefinitions
-
-            definitions = definitionsBySource.values.flattenTo(mutableListOf())
-
+        val updateDefinitionsResult = run {
+            definitionsLock.writeWithCheckCanceled {
+                definitionsBySource[source] = safeGetDefinitions
+                definitions = definitionsBySource.values.flattenTo(mutableListOf())
+            }
             updateDefinitions()
         }
         updateDefinitionsResult?.apply()
@@ -179,10 +179,11 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
         val newDefinitionsBySource = getSources().associateWith { it.safeGetDefinitions() }
 
-        val updateDefinitionsResult = definitionsLock.writeWithCheckCanceled {
-            definitionsBySource.putAll(newDefinitionsBySource)
-            definitions = definitionsBySource.values.flattenTo(mutableListOf())
-
+        val updateDefinitionsResult = run {
+            definitionsLock.writeWithCheckCanceled {
+                definitionsBySource.putAll(newDefinitionsBySource)
+                definitions = definitionsBySource.values.flattenTo(mutableListOf())
+            }
             updateDefinitions()
         }
         updateDefinitionsResult?.apply()
@@ -198,21 +199,25 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
 
     fun reorderScriptDefinitions() {
         val scriptingSettings = kotlinScriptingSettingsSafe() ?: return
-        val updateDefinitionsResult = definitionsLock.writeWithCheckCanceled {
-            definitions?.let { list ->
-                list.forEach {
-                    it.order = scriptingSettings.getScriptDefinitionOrder(it)
+        val updateDefinitionsResult = run {
+            definitionsLock.writeWithCheckCanceled {
+                definitions?.let { list ->
+                    list.forEach {
+                        it.order = scriptingSettings.getScriptDefinitionOrder(it)
+                    }
+                    definitions = list.sortedBy(ScriptDefinition::order)
                 }
-                definitions = list.sortedBy(ScriptDefinition::order)
-
-                updateDefinitions()
             }
+            updateDefinitions()
         }
         updateDefinitionsResult?.apply()
     }
 
-    private fun kotlinScriptingSettingsSafe() = runReadAction {
-        if (!project.isDisposed) KotlinScriptingSettings.getInstance(project) else null
+    private fun kotlinScriptingSettingsSafe(): KotlinScriptingSettings? {
+        assert(!definitionsLock.isWriteLocked) { "kotlinScriptingSettingsSafe should be called out if the write lock to avoid deadlocks" }
+        return runReadAction {
+            if (!project.isDisposed) KotlinScriptingSettings.getInstance(project) else null
+        }
     }
 
     fun getAllDefinitions(): List<ScriptDefinition> = definitions ?: run {
@@ -236,7 +241,7 @@ class ScriptDefinitionsManager(private val project: Project) : LazyScriptDefinit
     }
 
     private fun updateDefinitions(): UpdateDefinitionsResult? {
-        assert(definitionsLock.isWriteLocked) { "updateDefinitions should only be called under the write lock" }
+        assert(!definitionsLock.isWriteLocked) { "updateDefinitions should be called out the write lock" }
         if (project.isDisposed) return null
 
         val fileTypeManager = FileTypeManager.getInstance()
