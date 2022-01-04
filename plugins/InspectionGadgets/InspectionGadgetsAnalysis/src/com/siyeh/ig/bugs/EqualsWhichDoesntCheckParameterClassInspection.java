@@ -32,8 +32,10 @@ import org.jetbrains.annotations.NotNull;
 import static com.intellij.util.ObjectUtils.tryCast;
 
 public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspection {
-  private static final CallMatcher REFLECTION_EQUALS =
+  private static final CallMatcher APACHE_REFLECTION_EQUALS =
     CallMatcher.staticCall("org.apache.commons.lang.builder.EqualsBuilder", "reflectionEquals");
+  private static final CallMatcher APACHE3_REFLECTION_EQUALS =
+    CallMatcher.staticCall("org.apache.commons.lang3.builder.EqualsBuilder", "reflectionEquals");
   private static final CallMatcher CLASS_IS_INSTANCE =
     CallMatcher.instanceCall(CommonClassNames.JAVA_LANG_CLASS, "isInstance").parameterCount(1);
   private static final CallMatcher OBJECT_GET_CLASS =
@@ -96,7 +98,7 @@ public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspecti
       if (Boolean.FALSE.equals(constant)) {
         return true; // incomplete code
       }
-      if (REFLECTION_EQUALS.matches(returnValue)) {
+      if (isReflectionEquals(returnValue)) {
         return true;
       }
       if (isIdentityEquals(returnValue, parameter)) {
@@ -119,6 +121,10 @@ public class EqualsWhichDoesntCheckParameterClassInspection extends BaseInspecti
       return ExpressionUtils.isReferenceTo(lhs, parameter) &&
              rhs instanceof PsiThisExpression &&
              ((PsiThisExpression)rhs).getQualifier() == null;
+    }
+
+    private static boolean isReflectionEquals(final PsiExpression returnValue) {
+      return APACHE3_REFLECTION_EQUALS.matches(returnValue) || APACHE_REFLECTION_EQUALS.matches(returnValue);
     }
   }
 
