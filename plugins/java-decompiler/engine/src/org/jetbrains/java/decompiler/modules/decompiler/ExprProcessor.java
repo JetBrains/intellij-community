@@ -16,6 +16,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypePathWriteProgress;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.StructClass;
+import org.jetbrains.java.decompiler.struct.StructTypePath;
 import org.jetbrains.java.decompiler.struct.attr.StructBootstrapMethodsAttribute;
 import org.jetbrains.java.decompiler.struct.attr.StructGeneralAttribute;
 import org.jetbrains.java.decompiler.struct.consts.ConstantPool;
@@ -27,6 +28,7 @@ import org.jetbrains.java.decompiler.struct.gen.VarType;
 import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class ExprProcessor implements CodeConstants {
   @SuppressWarnings("SpellCheckingInspection")
@@ -651,11 +653,20 @@ public class ExprProcessor implements CodeConstants {
   public static String getTypeName(VarType type, boolean getShort, List<TypePathWriteProgress> typePathWriteStack) {
     int tp = type.type;
     StringBuilder sb = new StringBuilder();
-    for (TypePathWriteProgress writeProgress : typePathWriteStack) {
-      if (writeProgress.getPaths().size() == type.arrayDim) {
-        writeProgress.writeTypeAnnotation(sb);
+    typePathWriteStack.removeIf(typePathWriteProgress -> {
+      StructTypePath path = typePathWriteProgress.getPaths().peek();
+      if (path == null && type.arrayDim == 0) { // nested type
+        typePathWriteProgress.writeTypeAnnotation(sb);
+        return true;
       }
-    }
+      if (path != null && path.getTypePathKind() == StructTypePath.Kind.ARRAY.getOpcode() &&
+        typePathWriteProgress.getPaths().size() == type.arrayDim
+      ) {
+        typePathWriteProgress.writeTypeAnnotation(sb);
+        return true;
+      }
+      return false;
+    });
     if (tp <= CodeConstants.TYPE_BOOLEAN) {
       sb.append(typeNames[tp]);
       return sb.toString();
@@ -680,15 +691,35 @@ public class ExprProcessor implements CodeConstants {
         ret = buildJavaClassName(type.value);
       }
 
-      if (ret == null) {
-        // FIXME: a warning should be logged
-        ret = UNDEFINED_TYPE_STRING;
+      String[] nestedClasses = ret.split("\\.");
+      for (int i = 0; i < nestedClasses.length; i++) {
+        String nestedType = nestedClasses[i];
+        if (i != 0) { // first annotation is written already
+          checkNestedTypeAnnotation(sb, typePathWriteStack);
+        }
+
+        sb.append(nestedType);
+        if (i != nestedClasses.length - 1) sb.append(".");
       }
-      sb.append(ret);
+
       return sb.toString();
     }
 
     throw new RuntimeException("invalid type");
+  }
+
+  public static void checkNestedTypeAnnotation(StringBuilder sb, List<TypePathWriteProgress> typePathWriteStack) {
+    typePathWriteStack.removeIf(typePathWriteProgress -> {
+      StructTypePath path = typePathWriteProgress.getPaths().peek();
+      if (path != null && path.getTypePathKind() == StructTypePath.Kind.NESTED.getOpcode()) {
+        typePathWriteProgress.getPaths().pop();
+        if (typePathWriteProgress.getPaths().isEmpty()) {
+          typePathWriteProgress.writeTypeAnnotation(sb);
+          return true;
+        }
+      }
+      return false;
+    });
   }
 
   public static String getCastTypeName(VarType type, List<TypePathWriteProgress> typePathWriteStack) {
@@ -696,8 +727,21 @@ public class ExprProcessor implements CodeConstants {
   }
 
   public static String getCastTypeName(VarType type, boolean getShort, List<TypePathWriteProgress> typePathWriteStack) {
-    StringBuilder sb = new StringBuilder(getTypeName(type, getShort, typePathWriteStack));
-    writeArray(sb, type.arrayDim, typePathWriteStack);
+    List<TypePathWriteProgress> arrayPaths = new ArrayList<>();
+    List<TypePathWriteProgress> notArrayPath = typePathWriteStack.stream().filter(stack -> {
+      boolean isArrayPath = stack.getPaths().size() < type.arrayDim;
+      if (stack.getPaths().size() > type.arrayDim) {
+        for (int i = 0; i < type.arrayDim; i++) {
+          stack.getPaths().poll(); // remove all trailing
+        }
+      }
+      if (isArrayPath) {
+        arrayPaths.add(stack);
+      }
+      return !isArrayPath;
+    }).collect(Collectors.toList());
+    StringBuilder sb = new StringBuilder(getTypeName(type, getShort, notArrayPath));
+    writeArray(sb, type.arrayDim, arrayPaths);
     return sb.toString();
   }
 

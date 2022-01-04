@@ -219,15 +219,19 @@ public final class GenericMain {
     }
     else {
       for (GenericType tp : enclosingClasses) {
-        if (sb.length() == 0) {
-          sb.append(DecompilerContext.getImportCollector().getShortName(tp.value.replace('/', '.')));
-        }
-        else {
-          sb.append(tp.value);
-        }
+        String[] nestedClasses = DecompilerContext.getImportCollector().getShortName(tp.value.replace('/', '.')).split("\\.");
+        for (int i = 0; i < nestedClasses.length; i++) {
+          String nestedType = nestedClasses[i];
+          if (i != 0) { // first annotation is written already
+            ExprProcessor.checkNestedTypeAnnotation(sb, typePathWriteStack);
+          }
 
+          sb.append(nestedType);
+          if (i != nestedClasses.length - 1) sb.append(".");
+        }
         appendTypeArguments(tp, sb, typePathWriteStack);
         sb.append('.');
+        ExprProcessor.checkNestedTypeAnnotation(sb, typePathWriteStack);
       }
 
       sb.append(type.value);

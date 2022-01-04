@@ -185,6 +185,21 @@ public class SingleClassesTest {
   @Test public void testGenericArrayTypeAnnotations() {doTest("typeAnnotations/GenericArrayTypeAnnotations",
       "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E", "typeAnnotations/F");
   }
+  @Test public void testNestedTypeAnnotations() {doTest("typeAnnotations/NestedTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",
+    "typeAnnotations/F", "typeAnnotations/Z");
+  }
+  @Test public void testArrayNestedTypeAnnotations() {doTest("typeAnnotations/ArrayNestedTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/Z");
+  }
+  @Test public void testGenericNestedTypeAnnotations() {doTest("typeAnnotations/GenericNestedTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",
+    "typeAnnotations/V");
+  }
+  @Test public void testGenericArrayNestedTypeAnnotations() {doTest("typeAnnotations/GenericArrayNestedTypeAnnotations",
+    "typeAnnotations/A", "typeAnnotations/B", "typeAnnotations/C", "typeAnnotations/D", "typeAnnotations/E",
+    "typeAnnotations/F", "typeAnnotations/V");
+  }
   @Test public void testInheritanceChainCycle() { doTest("pkg/TestInheritanceChainCycle"); }
   @Test public void testDynamicConstantPoolEntry() { doTest("java11/TestDynamicConstantPoolEntry"); }
 
