@@ -1,13 +1,13 @@
-KotlinUFile(
-    KotlinUClass(
-        KotlinUMethod(
+KotlinUFile:facade.kt(
+    KotlinUClass:Utils(
+        KotlinUMethod:foo(
             UComment(// Single-line comment bound to fun foo)
         )
-        KotlinUMethod(
+        KotlinUMethod:buzz(
             UComment(/*
              * Multi-line comment bound to extension fun buzz
              */)
-            KotlinReceiverUParameter(
+            KotlinReceiverUParameter:$this$buzz(
             )
         )
     )
