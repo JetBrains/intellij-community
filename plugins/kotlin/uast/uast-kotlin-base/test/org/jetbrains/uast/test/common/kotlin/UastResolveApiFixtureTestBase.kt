@@ -344,6 +344,24 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("bar", resolved.name)
     }
 
+    fun checkResolveLocalDefaultConstructor(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "MyClass.kt", """
+            fun foo() {
+                class LocalClass
+
+                val lc = Local<caret>Class()
+            }
+        """
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
+        TestCase.assertTrue("Not resolved to local class default constructor", resolved.isConstructor)
+        TestCase.assertEquals("LocalClass", resolved.name)
+    }
 
     fun checkResolveCompiledAnnotation(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
