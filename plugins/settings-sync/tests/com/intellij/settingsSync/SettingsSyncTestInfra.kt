@@ -38,6 +38,12 @@ internal fun PersistentStateComponent<*>.serialize(): ByteArray {
   return appElement.toByteArray()
 }
 
+internal fun settingsSnapshot(build: SettingsSnapshotBuilder.() -> Unit) : SettingsSnapshot {
+  val builder = SettingsSnapshotBuilder()
+  builder.build()
+  return SettingsSnapshot(builder.fileStates.toSet())
+}
+
 internal class SettingsSnapshotBuilder {
   val fileStates = mutableListOf<FileState>()
 

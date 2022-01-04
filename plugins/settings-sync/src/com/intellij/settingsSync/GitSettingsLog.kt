@@ -8,12 +8,14 @@ import com.intellij.util.io.*
 import org.eclipse.jgit.api.Git
 import org.eclipse.jgit.api.MergeResult.MergeStatus.CONFLICTING
 import org.eclipse.jgit.api.MergeResult.MergeStatus.FAST_FORWARD
+import org.eclipse.jgit.api.ResetCommand
 import org.eclipse.jgit.api.errors.EmptyCommitException
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Constants.R_HEADS
 import org.eclipse.jgit.lib.ObjectId
 import org.eclipse.jgit.lib.Ref
 import org.eclipse.jgit.lib.Repository
+import org.eclipse.jgit.merge.MergeStrategy
 import org.eclipse.jgit.revwalk.RevCommit
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
 import java.nio.file.*
@@ -239,17 +241,38 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
 
     LOG.info("Advancing master@${master.objectId.short}. Need merge of ide@${ide.objectId.short} and cloud@${cloud.objectId.short}")
     // 1. move master to ide
-    val refUpdate = repository.updateRef(ide.name)
-    refUpdate.setNewObjectId(ide.objectId)
-    refUpdate.update()
+    git.reset().setRef(IDE_REF_NAME).setMode(ResetCommand.ResetType.HARD).call();
 
     // 2. merge with cloud
     val mergeResult = git.merge().include(cloud).call()
     LOG.info("Merge of master&ide@${master.objectId.short} with cloud@${cloud.objectId.short}: $mergeResult")
     if (mergeResult.mergeStatus == CONFLICTING) {
-      // todo redo merge with "last modified" strategy
+      LOG.info("Merge of master&ide with cloud failed with conflicts. Aborting and merging with simplified last-modified strategy...")
+      abortMerge()
+
+      // todo implement more precise last-modified-per-file-strategy: use the version of the file which was
+      // current implementation take the whole YOURS or OTHERS subtree based on the date of the latest commit in ide and cloud branches:
+      // e.g. if the latest commit was made to 'cloud', then 'cloud' (which is OTHERS for this merge) will be used as the source of truth.
+      mergeUsingSimplifiedLastModifiedStrategy()
     }
+    // todo check other statuses and force consistency if needed
     return getPosition(master)
+  }
+
+  private fun mergeUsingSimplifiedLastModifiedStrategy() {
+    val ideTip = git.log().add(ide.objectId).setMaxCount(1).call().first()
+    val ideLastDate = ideTip.commitTime
+    val cloudTip = git.log().add(cloud.objectId).setMaxCount(1).call().first()
+    val cloudLastDate = cloudTip.commitTime
+    val mergeStrategy = if (ideLastDate >= cloudLastDate) MergeStrategy.OURS else MergeStrategy.THEIRS
+    val mergeResult = git.merge().include(cloud).setStrategy(mergeStrategy).call()
+    LOG.info("Merging with the last-modified strategy completed with result: $mergeResult")
+  }
+
+  private fun abortMerge() {
+    repository.writeMergeCommitMsg(null);
+    repository.writeMergeHeads(null);
+    git.reset().setMode(ResetCommand.ResetType.HARD).call();
   }
 
   private fun Repository.headCommit(): RevCommit {
