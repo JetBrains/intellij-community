@@ -28,6 +28,11 @@ public class FirUastDeclarationTestGenerated extends AbstractFirUastDeclarationT
         runTest("testData/declaration/annotationOnElvis.kt");
     }
 
+    @TestMetadata("commentsOnProperties.kt")
+    public void testCommentsOnProperties() throws Exception {
+        runTest("testData/declaration/commentsOnProperties.kt");
+    }
+
     @TestMetadata("doWhile.kt")
     public void testDoWhile() throws Exception {
         runTest("testData/declaration/doWhile.kt");

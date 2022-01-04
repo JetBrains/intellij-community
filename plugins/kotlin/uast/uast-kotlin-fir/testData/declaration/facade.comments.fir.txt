@@ -1,0 +1,39 @@
+KotlinUFile:facade.kt(
+    KotlinUClass:Utils(
+        KotlinUField:boo(
+            UComment(/**
+             * Multi-line document bound to property boo (w/ initializer)
+             */)
+        )
+        KotlinUField:bar(
+            UComment(/**
+             * Multi-line document bound to property bar (w/ backing field access)
+             */)
+        )
+        KotlinUField:baq(
+            UComment(// Single-line comment bound to property baq (w/ backing field access))
+        )
+        KotlinUMethod:foo(
+            UComment(// Single-line comment bound to fun foo)
+        )
+        KotlinUMethod:buzz(
+            UComment(/*
+             * Multi-line comment bound to extension fun buzz
+             */)
+            KotlinReceiverUParameter:$this$buzz(
+            )
+        )
+        KotlinUMethod:getBoo(
+            UComment(/**
+             * Multi-line document bound to property boo (w/ initializer)
+             */)
+        )
+        KotlinUMethod:getBar(
+            UComment(// Single-line comment bound to getter for property bar)
+        )
+        KotlinUMethod:getBaq(
+        )
+        KotlinUMethod:getBaz(
+        )
+    )
+)
