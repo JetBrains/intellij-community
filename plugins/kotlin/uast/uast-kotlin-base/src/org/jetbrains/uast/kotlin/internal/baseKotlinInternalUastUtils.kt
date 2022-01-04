@@ -37,7 +37,7 @@ inline fun <reified T : UDeclaration, reified P : PsiElement> unwrap(element: P)
 
 fun unwrapFakeFileForLightClass(file: PsiFile): PsiFile = (file as? FakeFileForLightClass)?.ktFile ?: file
 
-internal fun getContainingLightClass(original: KtDeclaration): KtLightClass? =
+fun getContainingLightClass(original: KtDeclaration): KtLightClass? =
     (original.containingClassOrObject?.toLightClass() ?: original.containingKtFile.findFacadeClass())
 
 fun getKotlinMemberOrigin(element: PsiElement?): KtDeclaration? {
