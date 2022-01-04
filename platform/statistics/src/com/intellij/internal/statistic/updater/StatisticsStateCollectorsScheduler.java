@@ -1,8 +1,9 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal.statistic.updater;
 
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.ide.ApplicationInitializedListener;
+import com.intellij.ide.lightEdit.LightEdit;
 import com.intellij.internal.statistic.service.fus.collectors.FUStateUsagesLogger;
 import com.intellij.internal.statistic.utils.StatisticsUploadAssistant;
 import com.intellij.openapi.application.ApplicationManager;
@@ -53,6 +54,11 @@ public class StatisticsStateCollectorsScheduler implements ApplicationInitialize
     connection.subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
       public void projectOpened(@NotNull Project project) {
+        // Smart mode is not available when LightEdit is active
+        if (LightEdit.owns(project)) {
+          return;
+        }
+
         //wait until initial indexation will be finished
         DumbService.getInstance(project).runWhenSmart(() -> {
           ScheduledFuture<?> future = JobScheduler.getScheduler()
