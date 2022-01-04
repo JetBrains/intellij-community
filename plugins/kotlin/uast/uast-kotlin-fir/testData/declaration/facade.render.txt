@@ -3,9 +3,6 @@
 package declaration
 
 public final class Utils {
-    @org.jetbrains.annotations.NotNull private static final var boo: int = 42
-    @org.jetbrains.annotations.NotNull private static final var bar: int = 42
-    @org.jetbrains.annotations.NotNull private static final var baq: int = 42
     public static final fun foo() : int {
         return 42
     }
