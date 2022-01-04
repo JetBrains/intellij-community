@@ -58,6 +58,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkLocalResolve(myFixture)
     }
 
+    fun testResolveLocalDefaultConstructor() {
+        checkResolveLocalDefaultConstructor(myFixture)
+    }
+
     fun testResolveCompiledAnnotation() {
         checkResolveCompiledAnnotation(myFixture)
     }
