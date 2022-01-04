@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.server;
 
 import com.intellij.execution.DefaultExecutionResult;
@@ -172,7 +172,6 @@ public class MavenServerCMDState extends CommandLineState {
 
   protected @NotNull Collection<String> collectRTLibraries(String mavenVersion) {
     Set<String> classPath = new LinkedHashSet<>();
-    classPath.add(PathUtil.getJarPathForClass(org.apache.log4j.Logger.class));
     if (StringUtil.compareVersionNumbers(mavenVersion, "3.1") < 0) {
       classPath.add(PathUtil.getJarPathForClass(Logger.class));
       classPath.add(PathUtil.getJarPathForClass(JDK14LoggerFactory.class));
