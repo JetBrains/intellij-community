@@ -63,6 +63,10 @@ class FE1UastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         checkResolveCompiledAnnotation(myFixture)
     }
 
+    fun testResolveSyntheticMethod() {
+        checkResolveSyntheticMethod(myFixture)
+    }
+
     fun testAssigningArrayElementType() {
         checkAssigningArrayElementType(myFixture)
     }
