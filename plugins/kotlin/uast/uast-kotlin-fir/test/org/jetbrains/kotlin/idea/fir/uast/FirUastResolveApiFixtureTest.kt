@@ -35,8 +35,6 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
         "MultiInvokableObjectResolve",
         // TODO: multiResolve
         "MultiResolveJvmOverloads",
-        // TODO: local resolution
-        "LocalResolve",
         // TODO: resolve annotation param to annotation ctor ??
         "ResolveCompiledAnnotation",
     )
@@ -117,6 +115,10 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
 
     fun testResolveCompiledAnnotation() {
         doCheck("ResolveCompiledAnnotation", ::checkResolveCompiledAnnotation)
+    }
+
+    fun testResolveSyntheticMethod() {
+        doCheck("ResolveSyntheticMethod", ::checkResolveSyntheticMethod)
     }
 
     fun testAssigningArrayElementType() {
