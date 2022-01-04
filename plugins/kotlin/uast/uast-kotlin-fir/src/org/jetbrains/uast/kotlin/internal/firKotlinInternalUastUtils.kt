@@ -15,16 +15,14 @@ import org.jetbrains.kotlin.asJava.getRepresentativeLightMethod
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.idea.KotlinLanguage
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi.KtClass
-import org.jetbrains.kotlin.psi.KtConstructor
-import org.jetbrains.kotlin.psi.KtElement
-import org.jetbrains.kotlin.psi.KtNamedFunction
+import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.containingClass
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.uast.*
 import org.jetbrains.uast.kotlin.FirKotlinUastLanguagePlugin
 import org.jetbrains.uast.kotlin.TypeOwnerKind
 import org.jetbrains.uast.kotlin.lz
+import org.jetbrains.uast.kotlin.psi.UastFakeLightPrimaryConstructor
 
 val firKotlinUastPlugin: FirKotlinUastLanguagePlugin by lz {
     UastLanguagePlugin.getInstances().single { it.language == KotlinLanguage.INSTANCE } as FirKotlinUastLanguagePlugin?
@@ -52,8 +50,16 @@ internal fun KtAnalysisSession.toPsiClass(
 }
 
 internal fun KtAnalysisSession.toPsiMethod(functionSymbol: KtFunctionLikeSymbol): PsiMethod? {
-    val psi = functionSymbol.psi ?: return null
-    return psi.getRepresentativeLightMethod()
+    return when (val psi = functionSymbol.psi) {
+        null -> null
+        is KtClassOrObject -> {
+            psi.primaryConstructor?.getRepresentativeLightMethod()?.let { return it }
+            val lc = psi.toLightClass() ?: return null
+            lc.constructors.firstOrNull()?.let { return it }
+            if (psi.isLocal) UastFakeLightPrimaryConstructor(psi, lc) else null
+        }
+        else -> psi.getRepresentativeLightMethod()
+    }
 }
 
 internal fun KtAnalysisSession.toPsiType(
