@@ -378,6 +378,27 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertEquals("message", resolved.name)
     }
 
+    fun checkResolveSyntheticMethod(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "MyClass.kt", """
+            class Foo {
+                @JvmSynthetic
+                fun bar() {}
+            }
+
+            fun test() {
+                Foo().ba<caret>r()
+            }
+        """
+        )
+
+        val uCallExpression = myFixture.file.findElementAt(myFixture.caretOffset).toUElement().getUCallExpression()
+            .orFail("cant convert to UCallExpression")
+        val resolved = uCallExpression.resolve()
+            .orFail("cant resolve from $uCallExpression")
+        TestCase.assertEquals("bar", resolved.name)
+    }
+
     fun checkAssigningArrayElementType(myFixture: JavaCodeInsightTestFixture) {
         myFixture.configureByText(
             "MyClass.kt", """ 
