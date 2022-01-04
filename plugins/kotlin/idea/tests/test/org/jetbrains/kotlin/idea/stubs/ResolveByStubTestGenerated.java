@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.kotlin.idea.stubs;
 
@@ -2560,6 +2560,11 @@ public abstract class ResolveByStubTestGenerated extends AbstractResolveByStubTe
         @TestMetadata("ExtVarl.kt")
         public void testExtVarl() throws Exception {
             runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/prop/ExtVarl.kt"));
+        }
+
+        @TestMetadata("nonConstValWithConstantValueAttribute.kt")
+        public void testNonConstValWithConstantValueAttribute() throws Exception {
+            runTest(compilerTestData("compiler/testData/loadJava/compiledKotlin/prop/nonConstValWithConstantValueAttribute.kt"));
         }
 
         @TestMetadata("NsVal.kt")
