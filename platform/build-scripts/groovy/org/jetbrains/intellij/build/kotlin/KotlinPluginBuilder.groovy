@@ -60,6 +60,7 @@ final class KotlinPluginBuilder {
     "kotlin.compiler-plugins.lombok.gradle",
     "kotlin.compiler-plugins.lombok.maven",
     "kotlin.compiler-plugins.scripting",
+    "kotlin.compiler-plugins.android-extensions-stubs",
     "kotlin.jvm-run-configurations",
     "kotlin.maven",
     "kotlin.gradle.gradle-tooling",
