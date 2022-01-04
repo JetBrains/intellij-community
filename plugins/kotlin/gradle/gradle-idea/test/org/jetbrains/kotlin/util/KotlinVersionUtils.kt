@@ -14,7 +14,7 @@ val KotlinVersion.isDev: Boolean
 
 val KotlinVersion.isMilestone: Boolean
     get() = this.classifier != null &&
-            this.classifier.matches(Regex("""[mM]-?\d*"""))
+            this.classifier.matches(Regex("""[mM]\d-?\d*"""))
 
 val KotlinVersion.isAlpha: Boolean
     get() = this.classifier != null &&
