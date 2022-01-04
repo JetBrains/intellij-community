@@ -1,10 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.tooling.proxy
 
-import org.apache.log4j.ConsoleAppender
-import org.apache.log4j.Level
-import org.apache.log4j.Logger
-import org.apache.log4j.PatternLayout
 import org.gradle.internal.remote.internal.inet.InetEndpoint
 import org.gradle.launcher.daemon.protocol.BuildEvent
 import org.gradle.launcher.daemon.protocol.DaemonMessageSerializer
@@ -21,6 +17,9 @@ import org.slf4j.LoggerFactory
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.ObjectOutputStream
+import java.util.logging.ConsoleHandler
+import java.util.logging.Level
+import java.util.logging.Logger
 
 object Main {
   const val LOCAL_BUILD_PROPERTY = "idea.gradle.target.local"
@@ -213,11 +212,19 @@ object Main {
   }
 
   private fun initLogging(args: Array<String>) {
-    val loggingArguments = listOf("--debug", "--info", "-warn", "--error", "--trace")
-    val loggingLevel = args.find { it in loggingArguments }?.drop(2) ?: "error"
-    Logger.getRootLogger().apply {
-      addAppender(ConsoleAppender(PatternLayout("%d{dd/MM HH:mm:ss} %-5p %C{1}.%M - %m%n")))
-      level = Level.toLevel(loggingLevel, Level.ERROR)
+    val loggingArguments = mapOf(
+      "--debug" to Level.FINE,
+      "--info" to Level.INFO,
+      "--warn" to Level.WARNING,
+      "--error" to Level.SEVERE,
+      "--trace" to Level.FINER
+    )
+    val loggingLevel = args.find { it in loggingArguments } ?: "--error"
+    Logger.getLogger("").apply {
+      if (handlers.isEmpty()) {
+        addHandler(ConsoleHandler())
+      }
+      level = loggingArguments[loggingLevel]
     }
 
     LOG = LoggerFactory.getLogger(Main::class.java)

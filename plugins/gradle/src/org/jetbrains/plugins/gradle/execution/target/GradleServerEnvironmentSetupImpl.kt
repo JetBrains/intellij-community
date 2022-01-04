@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.execution.target
 
 import com.intellij.execution.Platform
@@ -297,7 +297,6 @@ internal class GradleServerEnvironmentSetupImpl(private val project: Project,
     // logging jars
     classpathInferer.add(LoggerFactory::class.java)
     classpathInferer.add(JDK14LoggerFactory::class.java)
-    classpathInferer.add(org.apache.log4j.Level::class.java)
     // gradle tooling proxy module
     classpathInferer.add(Main::class.java)
     // intellij.gradle.toolingExtension - for use of model adapters classes
