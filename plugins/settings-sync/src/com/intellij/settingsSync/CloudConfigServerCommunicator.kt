@@ -90,6 +90,7 @@ private const val TIMEOUT = 10000
   }
 
   override fun receiveUpdates(): UpdateResult {
+    LOG.info("Receiving settings snapshot from the cloud config server...")
     try {
       val stream = receiveSnapshotFile()
       if (stream == null) {

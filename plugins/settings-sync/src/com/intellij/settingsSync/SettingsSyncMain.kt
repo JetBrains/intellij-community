@@ -7,8 +7,11 @@ import com.intellij.ide.ApplicationLoadListener
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.components.stateStore
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.util.SystemProperties
+import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.messages.Topic
 import java.nio.file.Path
 
@@ -29,8 +32,24 @@ internal class SettingsSyncFacade {
 
   internal fun getRemoteCommunicator(): SettingsSyncRemoteCommunicator = getMain().controls.remoteCommunicator
 
+  @RequiresBackgroundThread
+  internal fun syncSettings() {
+    val updateChecker = service<SettingsSyncFacade>().updateChecker
+    if (updateChecker.isUpdateNeeded()) {
+      LOG.info("Syncing settings...")
+      updateChecker.scheduleUpdateFromServer()
+    }
+    else {
+      LOG.info("Syncing settings... is not needed.")
+    }
+  }
+
   private fun getMain(): SettingsSyncMain {
     return ApplicationLoadListener.EP_NAME.findExtensionOrFail(SettingsSyncMain::class.java)
+  }
+
+  companion object {
+    private val LOG = logger<SettingsSyncFacade>()
   }
 }
 

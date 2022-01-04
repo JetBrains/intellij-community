@@ -23,16 +23,24 @@
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncFacade"/>
     <notificationGroup displayType="STICKY_BALLOON" id="settingsSync.errors"
                        bundle="messages.SettingsSyncBundle" key="settingsSync.errors.notificationGroup"/>
+
+    <registryKey key="settingsSync.autoSync.on.focus" defaultValue="true"
+                 description="Settings will be automatically synced when the application receives the focus" />
+    <registryKey key="settingsSync.autoSync.frequency.sec" defaultValue="60"
+                 description="Settings will be automatically synced with the server every N seconds.
+                              Settings the value to 0 or less disables syncing by timer." />
   </extensions>
+
+  <applicationListeners>
+    <listener class="com.intellij.settingsSync.SettingsSyncFrameListener" topic="com.intellij.ide.FrameStateListener"
+              activeInTestMode="false" activeInHeadlessMode="false"/>
+  </applicationListeners>
 
   <actions>
     <group id="SettingsSync">
-      <action class="com.intellij.settingsSync.ManualUpdateAction" id="settingsSync.manualUpdate" icon="AllIcons.Chooser.Bottom"/>
-      <action class="com.intellij.settingsSync.ManualPushAction" id="settingsSync.manualPush" icon="AllIcons.Chooser.Top" />
+      <action class="com.intellij.settingsSync.ManualSyncAction" id="settingsSync.manualUpdate" icon="AllIcons.Chooser.Bottom"/>
+      <action class="com.intellij.settingsSync.ManualPushAction" id="settingsSync.manualPush" icon="AllIcons.Chooser.Top" internal="true"/>
       <action class="com.intellij.settingsSync.DownloadSnapshotAction" id="settingsSync.downloadSnapshot" icon="AllIcons.Actions.Download"/>
-
-      <add-to-group group-id="NavBarToolBar" anchor="last"/>
-      <add-to-group group-id="MainToolBar" anchor="last"/>
     </group>
 
     <action id="SettingsSyncStatusAction" class="com.intellij.settingsSync.config.SettingsSyncStatusAction">

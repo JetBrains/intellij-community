@@ -16,5 +16,7 @@ internal class SettingsSyncUpdateChecker(private val application: Application,
     return updateResult
   }
 
-  // todo update by app focus receive & by timer
+  fun isUpdateNeeded(): Boolean {
+    return remoteCommunicator.isUpdateNeeded()
+  }
 }

@@ -6,7 +6,7 @@ import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.Task
 import com.intellij.openapi.project.DumbAwareAction
 
-class ManualUpdateAction : DumbAwareAction() {
+class ManualSyncAction : DumbAwareAction() {
 
   override fun actionPerformed(e: AnActionEvent) {
     val facade = service<SettingsSyncFacade>()
