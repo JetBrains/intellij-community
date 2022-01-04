@@ -14,7 +14,6 @@ import com.intellij.psi.impl.compiled.StubBuildingVisitor
 import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.util.SmartList
 import org.jetbrains.kotlin.asJava.*
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.builtins.isBuiltinFunctionalTypeOrSubtype
 import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.descriptors.*
@@ -35,7 +34,6 @@ import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMemberSignature
 import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmProtoBufUtil
 import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.parents
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
@@ -73,9 +71,6 @@ val kotlinUastPlugin: UastLanguagePlugin by lz {
     UastLanguagePlugin.getInstances().find { it.language == KotlinLanguage.INSTANCE }
         ?: KotlinUastLanguagePlugin()
 }
-
-internal fun getContainingLightClass(original: KtDeclaration): KtLightClass? =
-    (original.containingClassOrObject?.toLightClass() ?: original.containingKtFile.findFacadeClass())
 
 internal fun KotlinType.toPsiType(
     source: UElement?,
