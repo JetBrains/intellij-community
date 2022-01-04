@@ -18,6 +18,11 @@ public class FE1UastCommentsTest extends AbstractFE1UastCommentsTest {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
+    @TestMetadata("commentsOnProperties.kt")
+    public void testCommentsOnProperties() throws Exception {
+        runTest("testData/declaration/commentsOnProperties.kt");
+    }
+
     @TestMetadata("facade.kt")
     public void testFacade() throws Exception {
         runTest("testData/declaration/facade.kt");
