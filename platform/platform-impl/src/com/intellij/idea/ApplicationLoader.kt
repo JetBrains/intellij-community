@@ -137,9 +137,9 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
       }
     }
 
-  block.thenAccept { starter ->
-    addActivateAndWindowsCliListeners()
+  block.thenAcceptAsync({ addActivateAndWindowsCliListeners() }, ForkJoinPool.commonPool())
 
+  block.thenAccept { starter ->
     initAppActivity.end()
 
     if (starter.requiredModality == ApplicationStarter.NOT_IN_EDT) {

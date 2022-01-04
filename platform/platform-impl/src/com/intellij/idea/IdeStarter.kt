@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.idea
 
@@ -105,8 +105,6 @@ open class IdeStarter : ApplicationStarter {
     if (app.isHeadlessEnvironment) {
       frameInitActivity.end()
       LifecycleUsageTriggerCollector.onIdeStart()
-      @Suppress("DEPRECATION")
-      lifecyclePublisher.appStarting(null)
       return CompletableFuture.completedFuture(null)
     }
 
@@ -120,8 +118,6 @@ open class IdeStarter : ApplicationStarter {
 
     if (uriToOpen != null || args.isNotEmpty() && args[0].contains(SCHEME_SEPARATOR)) {
       frameInitActivity.end()
-      @Suppress("DEPRECATION")
-      lifecyclePublisher.appStarting(null)
       processUriParameter(uriToOpen ?: args.first(), lifecyclePublisher)
     }
     else {
@@ -132,8 +128,6 @@ open class IdeStarter : ApplicationStarter {
       frameInitActivity.end()
 
       if (!needToOpenProject) {
-        @Suppress("DEPRECATION")
-        lifecyclePublisher.appStarting(null)
         return CompletableFuture.completedFuture(null)
       }
 
@@ -142,8 +136,6 @@ open class IdeStarter : ApplicationStarter {
         args.isNotEmpty() -> loadProjectFromExternalCommandLine(args)
         else -> null
       }
-      @Suppress("DEPRECATION")
-      lifecyclePublisher.appStarting(project)
 
       if (project == null && willReopenRecentProjectOnStart) {
         return recentProjectManager.reopenLastProjectsOnStart()
