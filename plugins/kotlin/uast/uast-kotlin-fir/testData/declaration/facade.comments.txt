@@ -19,8 +19,12 @@ KotlinUFile:facade.kt(
             UComment(// Single-line comment bound to getter for property bar)
         )
         KotlinUMethod:getBaq(
+            UComment(// Single-line comment bound to property baq (w/ backing field access))
         )
         KotlinUMethod:getBaz(
+            UComment(/**
+             * Multi-line document bound to property baz (w/o backing field)
+             */)
         )
     )
 )
