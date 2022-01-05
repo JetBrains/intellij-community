@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.siyeh.ig.inheritance;
 
+import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.AnnotateMethodFix;
 import com.intellij.codeInspection.CleanupLocalInspectionTool;
@@ -26,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
@@ -152,9 +154,15 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
         return true;
       }
 
-      private boolean hasOverrideAnnotation(PsiModifierListOwner element) {
-        final PsiModifierList modifierList = element.getModifierList();
-        return modifierList != null && modifierList.hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE);
+      private boolean hasOverrideAnnotation(PsiModifierListOwner modifierListOwner) {
+        final PsiModifierList modifierList = modifierListOwner.getModifierList();
+        if (modifierList != null && modifierList.hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE)) {
+          return true;
+        }
+        final ExternalAnnotationsManager annotationsManager = ExternalAnnotationsManager.getInstance(modifierListOwner.getProject());
+        final List<PsiAnnotation> annotations =
+          annotationsManager.findExternalAnnotations(modifierListOwner, CommonClassNames.JAVA_LANG_OVERRIDE);
+        return !annotations.isEmpty();
       }
 
       private boolean isJdk6Override(PsiMethod method, PsiClass methodClass) {
