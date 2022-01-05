@@ -2,35 +2,80 @@
 
 package org.jetbrains.kotlin.idea.stubindex
 
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
+import com.intellij.lang.Language
+import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
+import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.MultiMap
-import org.jetbrains.kotlin.idea.caches.trackers.KotlinCodeBlockModificationListener
+import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.caches.trackers.KotlinPackageModificationListener
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import java.util.*
 
-class SubpackagesIndexService(private val project: Project) {
+class SubpackagesIndexService(private val project: Project): Disposable {
 
     private val cachedValue = CachedValuesManager.getManager(project).createCachedValue(
         {
             CachedValueProvider.Result(
                 SubpackagesIndex(KotlinExactPackagesIndex.getInstance().getAllKeys(project)),
-                KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker
+                ProjectRootModificationTracker.getInstance(project),
+                otherLanguagesModificationTracker(),
+                KotlinPackageModificationListener.getInstance(project).packageTracker,
             )
         },
         false
     )
 
+    @Volatile
+    private var otherLanguagesModificationTracker: ModificationTracker? = null
+
+    init {
+        val messageBusConnection = project.messageBus.connect(this)
+        messageBusConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+            override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+                resetOtherLanguagesModificationTracker()
+            }
+
+            override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+                resetOtherLanguagesModificationTracker()
+            }
+        })
+    }
+
+    private fun resetOtherLanguagesModificationTracker() {
+        otherLanguagesModificationTracker = null
+    }
+
+    override fun dispose() {
+        resetOtherLanguagesModificationTracker()
+    }
+
+    private fun otherLanguagesModificationTracker() =
+        otherLanguagesModificationTracker ?: PsiModificationTracker.SERVICE.getInstance(project).forLanguages {
+            // PSI changes of Kotlin and Java languages are covered by [KotlinPackageModificationListener]
+            // changes in other languages could affect packages
+            !it.`is`(Language.ANY) && !it.`is`(KotlinLanguage.INSTANCE) && !it.`is`(JavaLanguage.INSTANCE)
+        }
+            .also {
+                otherLanguagesModificationTracker = it
+            }
+
     inner class SubpackagesIndex(allPackageFqNames: Collection<String>) {
         // a map from any existing package (in kotlin) to a set of subpackages (not necessarily direct) containing files
         private val allPackageFqNames = hashSetOf<FqName>()
         private val fqNameByPrefix = MultiMap.createSet<FqName, FqName>()
-        private val oocbCount = KotlinCodeBlockModificationListener.getInstance(project).kotlinOutOfCodeBlockTracker.modificationCount
+        private val ptCount = KotlinPackageModificationListener.getInstance(project).packageTracker.modificationCount
 
         init {
             for (fqNameAsString in allPackageFqNames) {
@@ -91,7 +136,7 @@ class SubpackagesIndexService(private val project: Project) {
             return existingSubPackagesShortNames.map { fqName.child(it) }
         }
 
-        override fun toString() = "SubpackagesIndex: OOCB on creation $oocbCount, all packages size ${allPackageFqNames.size}"
+        override fun toString() = "SubpackagesIndex: PTC on creation $ptCount, all packages size ${allPackageFqNames.size}"
     }
 
     companion object {

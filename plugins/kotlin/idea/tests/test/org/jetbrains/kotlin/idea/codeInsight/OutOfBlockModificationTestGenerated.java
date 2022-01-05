@@ -277,6 +277,16 @@ public abstract class OutOfBlockModificationTestGenerated extends AbstractOutOfB
             runTest("testData/codeInsight/outOfBlock/InObjectPrivatePropertyType.kt");
         }
 
+        @TestMetadata("InPackage.kt")
+        public void testInPackage() throws Exception {
+            runTest("testData/codeInsight/outOfBlock/InPackage.kt");
+        }
+
+        @TestMetadata("InPackage2.kt")
+        public void testInPackage2() throws Exception {
+            runTest("testData/codeInsight/outOfBlock/InPackage2.kt");
+        }
+
         @TestMetadata("InPrimaryConstructor.kt")
         public void testInPrimaryConstructor() throws Exception {
             runTest("testData/codeInsight/outOfBlock/InPrimaryConstructor.kt");
@@ -331,6 +341,14 @@ public abstract class OutOfBlockModificationTestGenerated extends AbstractOutOfB
         public void testInSecondaryConstructorBody() throws Exception {
             runTest("testData/codeInsight/outOfBlock/InSecondaryConstructorBody.kt");
         }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/codeInsight/outOfBlock")
+    public static class TestBucket004 extends AbstractOutOfBlockModificationTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
         @TestMetadata("InSecondaryConstructorParameter.kt")
         public void testInSecondaryConstructorParameter() throws Exception {
@@ -340,14 +358,6 @@ public abstract class OutOfBlockModificationTestGenerated extends AbstractOutOfB
         @TestMetadata("InSuperCtorLambda.kt")
         public void testInSuperCtorLambda() throws Exception {
             runTest("testData/codeInsight/outOfBlock/InSuperCtorLambda.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/codeInsight/outOfBlock")
-    public static class TestBucket004 extends AbstractOutOfBlockModificationTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("InSuperTypeCallCallInLambdaInCall.kt")
@@ -439,6 +449,14 @@ public abstract class OutOfBlockModificationTestGenerated extends AbstractOutOfB
         public void testPropertyNoType_Initializer_String() throws Exception {
             runTest("testData/codeInsight/outOfBlock/PropertyNoType_Initializer_String.kt");
         }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/codeInsight/outOfBlock")
+    public static class TestBucket005 extends AbstractOutOfBlockModificationTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
         @TestMetadata("PropertyWithType_Initializer_String.kt")
         public void testPropertyWithType_Initializer_String() throws Exception {
@@ -448,14 +466,6 @@ public abstract class OutOfBlockModificationTestGenerated extends AbstractOutOfB
         @TestMetadata("scriptInLambdaExpression.kts")
         public void testScriptInLambdaExpression() throws Exception {
             runTest("testData/codeInsight/outOfBlock/scriptInLambdaExpression.kts");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/codeInsight/outOfBlock")
-    public static class TestBucket005 extends AbstractOutOfBlockModificationTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("scriptTopLevelCallExpression.kts")
