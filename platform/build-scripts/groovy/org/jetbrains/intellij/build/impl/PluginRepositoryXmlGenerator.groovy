@@ -65,6 +65,9 @@ final class PluginRepositoryXmlGenerator {
           depends.append("<depends>").append(it.content).append("</depends>")
         }
       }
+      xml.getChild("dependencies")?.getChildren("plugin")?.each {
+        depends.append("<depends>").append(it.getAttributeValue("id")).append("</depends>")
+      }
 
 
       String name = xml.getChild("name")?.content
