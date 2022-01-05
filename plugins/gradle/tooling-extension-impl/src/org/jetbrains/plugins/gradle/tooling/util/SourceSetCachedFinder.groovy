@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.tooling.util
 
+import java.util.concurrent.ConcurrentHashMap
 import groovy.transform.CompileStatic
 import org.gradle.api.Project
 import org.gradle.api.initialization.IncludedBuild
@@ -41,7 +42,7 @@ class SourceSetCachedFinder {
   private static final DataProvider<ArtifactsMap> ARTIFACTS_PROVIDER = new DataProvider<ArtifactsMap>() {
     @NotNull
     @Override
-    ArtifactsMap create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
+    synchronized ArtifactsMap create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
       return createArtifactsMap(gradle)
     }
   }
@@ -49,7 +50,7 @@ class SourceSetCachedFinder {
     @NotNull
     @Override
     Map<String, Set<File>> create(@NotNull Gradle gradle, @NotNull MessageReporter messageReporter) {
-      return new HashMap<String, Set<File>>()
+      return new ConcurrentHashMap<String, Set<File>>()
     }
   }
 
