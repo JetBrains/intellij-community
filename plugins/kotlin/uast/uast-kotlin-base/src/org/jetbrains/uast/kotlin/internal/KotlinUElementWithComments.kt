@@ -5,19 +5,39 @@ package org.jetbrains.uast.kotlin.internal
 import com.intellij.psi.PsiComment
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiWhiteSpace
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.KtValueArgument
 import org.jetbrains.kotlin.psi.psiUtil.allChildren
-import org.jetbrains.uast.UComment
-import org.jetbrains.uast.UElement
-import org.jetbrains.uast.UExpression
-import org.jetbrains.uast.UParameter
+import org.jetbrains.uast.*
 
 interface KotlinUElementWithComments : UElement {
 
     override val comments: List<UComment>
         get() {
             val psi = sourcePsi ?: return emptyList()
-            val childrenComments = psi.allChildren.filterIsInstance<PsiComment>().map { UComment(it, this) }.toList()
+            val childrenComments = commentsOnPsiElement(psi)
+            // Default property accessors
+            if (this is UMethod && psi is KtProperty) {
+                // Don't regard property's comments as accessor's comments,
+                // unless that property won't be materialized (e.g., property in interface)
+                val backingField = (uastParent as? UClass)?.fields?.find { it.sourcePsi == psi }
+                return if (backingField != null)
+                    emptyList()
+                else
+                    childrenComments
+            }
+            // Property accessor w/o its own comments
+            if (psi is KtPropertyAccessor && childrenComments.isEmpty()) {
+                // If the containing property does not have a backing field,
+                // comments on the property won't appear on any elements, so we should keep them here.
+                val propertyPsi = psi.parent as? KtProperty ?: return childrenComments
+                val backingField = (uastParent as? UClass)?.fields?.find { it.sourcePsi == propertyPsi }
+                return if (backingField != null)
+                    childrenComments
+                else
+                    commentsOnPsiElement(propertyPsi)
+            } // Property accessor w/ its own comments fall through and return those comments.
             if (this !is UExpression &&
                 this !is UParameter     // fun (/* prior */ a: Int) <-- /* prior */ is on the level of VALUE_PARAM_LIST
             )
@@ -31,6 +51,10 @@ interface KotlinUElementWithComments : UElement {
                     parent.nearestCommentSibling(forward = true)?.let { listOf(UComment(it, this)) }.orEmpty() +
                     parent.nearestCommentSibling(forward = false)?.let { listOf(UComment(it, this)) }.orEmpty()
         }
+
+    private fun commentsOnPsiElement(psi: PsiElement): List<UComment> {
+        return psi.allChildren.filterIsInstance<PsiComment>().map { UComment(it, this) }.toList()
+    }
 
     private fun PsiElement.nearestCommentSibling(forward: Boolean): PsiComment? {
         var sibling = if (forward) nextSibling else prevSibling
