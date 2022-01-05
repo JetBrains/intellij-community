@@ -870,20 +870,23 @@ public class ClassWriter {
 
       boolean throwsExceptions = false;
       int paramCount = 0;
-
+      final List<TypePathWriteProgress> typeAnnWriteProgress = createTypeAnnWriteProgress(mt);
       if (!clInit && !dInit) {
         if (descriptor != null && !descriptor.typeParameters.isEmpty()) {
           appendTypeParameters(buffer, descriptor.typeParameters, descriptor.typeParameterBounds);
           buffer.append(' ');
         }
 
-        if (!init) {
-          List<TypePathWriteProgress> typePathWriteProgresses = createTypeAnnWriteProgress(mt);
+        if (init) {
+          typeAnnWriteProgress.stream().filter(typePathWriteProgress ->
+            typePathWriteProgress.getAnnotation().getTargetInfo() instanceof EmptyTarget
+          ).forEach(typePathWriteProgress -> typePathWriteProgress.writeTypeAnnotation(buffer));
+        } else {
           if (descriptor != null) {
-            buffer.append(GenericMain.getGenericCastTypeName(descriptor.returnType, typePathWriteProgresses));
+            buffer.append(GenericMain.getGenericCastTypeName(descriptor.returnType, typeAnnWriteProgress));
           }
           else {
-            buffer.append(ExprProcessor.getCastTypeName(md.ret, typePathWriteProgresses));
+            buffer.append(ExprProcessor.getCastTypeName(md.ret, typeAnnWriteProgress));
           }
           buffer.append(' ');
         }
@@ -918,7 +921,7 @@ public class ClassWriter {
             String typeName;
             boolean isVarArg = i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS);
             final int it = i;
-            final List<TypePathWriteProgress> typeAnnWriteProgress = createTypeAnnWriteProgress(mt).stream().filter(typePathWriteProgress ->
+            List<TypePathWriteProgress> parameterProgresses = typeAnnWriteProgress.stream().filter(typePathWriteProgress ->
               typePathWriteProgress.getAnnotation().getTargetType() == TypeAnnotation.METHOD_PARAMETER &&
                 ((FormalParameterTarget) typePathWriteProgress.getAnnotation().getTargetInfo()).getFormalParameterIndex() == it
             ).collect(Collectors.toList());
@@ -929,7 +932,7 @@ public class ClassWriter {
               if (isVarArg) {
                 parameterType = parameterType.decreaseArrayDim();
               }
-              typeName = GenericMain.getGenericCastTypeName(parameterType, typeAnnWriteProgress);
+              typeName = GenericMain.getGenericCastTypeName(parameterType, parameterProgresses);
             }
             else {
               VarType parameterType = md.params[i];
@@ -937,12 +940,12 @@ public class ClassWriter {
               if (isVarArg) {
                 parameterType = parameterType.decreaseArrayDim();
               }
-              typeName = ExprProcessor.getCastTypeName(parameterType, typeAnnWriteProgress);
+              typeName = ExprProcessor.getCastTypeName(parameterType, parameterProgresses);
             }
 
             if (ExprProcessor.UNDEFINED_TYPE_STRING.equals(typeName) &&
                 DecompilerContext.getOption(IFernflowerPreferences.UNDEFINED_PARAM_TYPE_OBJECT)) {
-              typeName = ExprProcessor.getCastTypeName(VarType.VARTYPE_OBJECT, typeAnnWriteProgress);
+              typeName = ExprProcessor.getCastTypeName(VarType.VARTYPE_OBJECT, parameterProgresses);
             }
             buffer.append(typeName);
             if (isVarArg) {
@@ -1014,8 +1017,9 @@ public class ClassWriter {
             BytecodeMappingTracer codeTracer = new BytecodeMappingTracer(tracer.getCurrentSourceLine());
             TextBuffer code = root.toJava(indent + 1, codeTracer);
 
-            hideMethod = code.length() == 0 && (clInit || dInit || hideConstructor(node, init, throwsExceptions, paramCount, flags)) ||
-                         isSyntheticRecordMethod(cl, mt, code);
+            hideMethod = code.length() == 0 &&
+              (clInit || dInit || hideConstructor(node, !typeAnnWriteProgress.isEmpty(), init, throwsExceptions, paramCount, flags)) ||
+              isSyntheticRecordMethod(cl, mt, code);
 
             buffer.append(code);
 
@@ -1054,8 +1058,15 @@ public class ClassWriter {
     return !hideMethod;
   }
 
-  private static boolean hideConstructor(ClassNode node, boolean init, boolean throwsExceptions, int paramCount, int methodAccessFlags) {
-    if (!init || throwsExceptions || paramCount > 0 || !DecompilerContext.getOption(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR)) {
+  private static boolean hideConstructor(
+    ClassNode node,
+    boolean hasAnnotation,
+    boolean init,
+    boolean throwsExceptions,
+    int paramCount,
+    int methodAccessFlags
+  ) {
+    if (!init || hasAnnotation|| throwsExceptions || paramCount > 0 || !DecompilerContext.getOption(IFernflowerPreferences.HIDE_DEFAULT_CONSTRUCTOR)) {
       return false;
     }
 

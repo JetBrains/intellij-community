@@ -2,6 +2,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.typeann;
 
 import org.jetbrains.java.decompiler.main.collectors.BytecodeMappingTracer;
 import org.jetbrains.java.decompiler.struct.StructTypePath;
+import org.jetbrains.java.decompiler.util.TextBuffer;
 
 import java.util.Deque;
 
@@ -24,6 +25,12 @@ public class TypePathWriteProgress {
   }
 
   public void writeTypeAnnotation(StringBuilder sb) {
+    String text = annotation.getAnnotationExpr().toJava(0, BytecodeMappingTracer.DUMMY).toString();
+    sb.append(text);
+    sb.append(' ');
+  }
+
+  public void writeTypeAnnotation(TextBuffer sb) {
     String text = annotation.getAnnotationExpr().toJava(0, BytecodeMappingTracer.DUMMY).toString();
     sb.append(text);
     sb.append(' ');
