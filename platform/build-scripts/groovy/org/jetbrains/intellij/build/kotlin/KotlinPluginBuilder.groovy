@@ -14,7 +14,6 @@ import org.jetbrains.jps.model.library.JpsLibrary
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 
-import java.nio.file.Files
 import java.nio.file.Path
 import java.util.function.BiConsumer
 import java.util.function.UnaryOperator
@@ -129,10 +128,6 @@ final class KotlinPluginBuilder {
   static PluginLayout kotlinPlugin(KotlinPluginKind kind) {
     return PluginLayout.plugin(MAIN_KOTLIN_PLUGIN_MODULE) {
       switch (kind) {
-        case KotlinPluginKind.AC_KMM:
-          directoryName = "AppCodeKMMPlugin"
-          mainJarName = "appcode-kmm-plugin.jar"
-          break
         default:
           directoryName = "Kotlin"
           mainJarName = "kotlin-plugin.jar"
@@ -162,54 +157,6 @@ final class KotlinPluginBuilder {
         withModule("kotlin-ultimate.javascript.nodeJs")
         withModule("kotlin-ultimate.ultimate-plugin")
         withModule("kotlin-ultimate.ultimate-native")
-      }
-
-      if (kind == KotlinPluginKind.AC_KMM) {
-        //noinspection SpellCheckingInspection
-        withProjectLibrary("kxml2")
-        withProjectLibrary("org.jetbrains.kotlin:backend.native:mobile")
-        //noinspection SpellCheckingInspection
-        withModuleLibrary("precompiled-android-annotations", "android.sdktools.android-annotations", "")
-        //noinspection SpellCheckingInspection
-        withModuleLibrary("precompiled-common", "android.sdktools.common", "")
-        //noinspection SpellCheckingInspection
-        withModuleLibrary("precompiled-ddmlib", "android.sdktools.ddmlib", "")
-
-        withModule("kotlin-ultimate.appcode-kmm")
-        withModule("intellij.android.kotlin.idea.common")
-        withModule("kotlin-ultimate.apple-gradle-plugin-api")
-        withModule("kotlin-ultimate.common-cidr-mobile")
-        withModule("kotlin-ultimate.common-native")
-        withModule("kotlin-ultimate.mobile-native")
-        withModule("kotlin-ultimate.projectTemplate")
-        withModule("kotlin-ultimate.kotlin-ocswift")
-
-        withBin("../mobile-ide/common-native/scripts", "scripts")
-
-        withPatch(new BiConsumer<ModuleOutputPatcher, BuildContext>() {
-          @Override
-          void accept(ModuleOutputPatcher patcher, BuildContext context) {
-            String kotlinServicesModule = "kotlin.gradle.gradle-tooling"
-
-            String mobileServicesModule = "kotlin-ultimate.mobile-native"
-            String servicesFilePath = "META-INF/services/org.jetbrains.plugins.gradle.tooling.ModelBuilderService"
-
-            Path kotlinServices = context.findFileInModuleSources(kotlinServicesModule, servicesFilePath)
-            if (kotlinServices == null) {
-              throw new IllegalStateException("Could not find the ModelBuilderServices file in $kotlinServicesModule")
-            }
-
-            Path mobileServices = context.findFileInModuleSources(mobileServicesModule, servicesFilePath)
-            if (mobileServices == null) {
-              throw new IllegalStateException("Could not find the ModelBuilderServices file in $mobileServicesModule")
-            }
-
-            String content = Files.readString(kotlinServices) + "\n" + Files.readString(mobileServices)
-            patcher.patchModuleOutput(kotlinServicesModule,
-                                      "META-INF/services/org.jetbrains.plugins.gradle.tooling.ModelBuilderService",
-                                      content)
-          }
-        })
       }
 
       String kotlincKotlinCompiler = "kotlinc.kotlin-compiler"
@@ -330,15 +277,7 @@ final class KotlinPluginBuilder {
               )
               break
             case KotlinPluginKind.AC_KMM:
-              text = replace(text, "<id>([^<]+)</id>", "<id>com.intellij.appcode.kmm</id>")
-              text = replace(text, "<name>([^<]+)</name>", "")
-              text = replace(text, "(?s)<description>.*</description>", "")
-              text = replace(text, "(?s)<change-notes>.*</change-notes>", "")
-              text = replace(text, "</idea-plugin>", """\
-                                                      <xi:include href="/META-INF/plugin.production.xml" />
-                                                      <!-- Marketplace gets confused by identifiers from included xml -->
-                                                      <id>com.intellij.appcode.kmm</id>
-                                                    </idea-plugin>""".stripIndent())
+              text = replace(text, "<plugin id=\"com.intellij.java\"/>", "<plugin id=\"com.intellij.kotlinNative.platformDeps\"/>")
               break
             default:
               throw new IllegalStateException("Unknown kind = $kind")
