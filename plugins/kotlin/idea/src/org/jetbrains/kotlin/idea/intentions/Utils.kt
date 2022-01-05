@@ -33,6 +33,7 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.KotlinTypeFactory
 import org.jetbrains.kotlin.types.isFlexible
+import org.jetbrains.kotlin.types.toDefaultAttributes
 import org.jetbrains.kotlin.types.typeUtil.builtIns
 import org.jetbrains.kotlin.types.typeUtil.isUnit
 import org.jetbrains.kotlin.util.OperatorChecks
@@ -348,7 +349,7 @@ fun KotlinType.reflectToRegularFunctionType(): KotlinType {
     val parameterCount = if (isTypeAnnotatedWithExtensionFunctionType) arguments.size - 2 else arguments.size - 1
     val classDescriptor =
         if (isKSuspendFunctionType) builtIns.getSuspendFunction(parameterCount) else builtIns.getFunction(parameterCount)
-    return KotlinTypeFactory.simpleNotNullType(annotations, classDescriptor, arguments)
+    return KotlinTypeFactory.simpleNotNullType(attributes, classDescriptor, arguments)
 }
 
 private val KOTLIN_BUILTIN_ENUM_FUNCTIONS = listOf(FqName("kotlin.enumValues"), FqName("kotlin.enumValueOf"))

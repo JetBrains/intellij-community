@@ -65,7 +65,7 @@ private fun KotlinType.renderSingle(typeParameterNameMap: Map<TypeParameterDescr
 
         val defaultType = typeParameter.defaultType
         val wrappingType = KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
-            defaultType.annotations,
+            defaultType.attributes,
             wrappingTypeConstructor,
             defaultType.arguments,
             defaultType.isMarkedNullable,
@@ -300,7 +300,7 @@ internal fun KotlinType.substitute(substitution: KotlinTypeSubstitution, varianc
             val (projection, typeParameter) = pair
             TypeProjectionImpl(Variance.INVARIANT, projection.type.substitute(substitution, typeParameter.variance))
         }
-        KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(annotations, constructor, newArguments, isMarkedNullable, memberScope)
+        KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(attributes, constructor, newArguments, isMarkedNullable, memberScope)
     }
 }
 
