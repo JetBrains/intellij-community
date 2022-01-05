@@ -11,7 +11,6 @@ KotlinUFile:objects.kt(
             )
         )
         KotlinUMethod:getTopRunnable(
-            UComment(// Single-line comment bound to top-level property)
         )
         KotlinUMethod:main(
         )
