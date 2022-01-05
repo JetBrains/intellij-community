@@ -238,7 +238,7 @@ class ExternalProjectBuilderImpl extends AbstractModelBuilderService {
     if (generatedSourceDirs && !generatedSourceDirs.isEmpty()) {
       additionalIdeaGenDirs.addAll(generatedSourceDirs)
     }
-    sourceSets.all { SourceSet sourceSet ->
+    sourceSets.each { SourceSet sourceSet ->
       ExternalSourceSet externalSourceSet = new DefaultExternalSourceSet()
       externalSourceSet.name = sourceSet.name
 
