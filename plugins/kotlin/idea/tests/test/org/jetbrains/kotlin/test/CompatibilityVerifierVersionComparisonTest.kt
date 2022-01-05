@@ -96,6 +96,7 @@ class CompatibilityVerifierVersionComparisonTest : LightPlatformTestCase() {
         assertKotlinVersionVerbose("1.3.10-M1-8132")
         assertKotlinVersionVerbose("1.4.32-release")
         assertKotlinVersionVerbose("1.4.32-dev-333")
+        assertKotlinVersionVerbose("1.4.32-333")
     }
 
     private fun assertKotlinVersionVerbose(version: String, expected: String = version) {
