@@ -3,6 +3,8 @@
 package org.jetbrains.kotlin.idea.perf
 
 import org.jetbrains.kotlin.idea.perf.common.AbstractWholeProjectPerformanceComparisonTest
+import org.jetbrains.kotlin.idea.testFramework.Stats
+import org.jetbrains.kotlin.idea.testFramework.WarmUpProject
 
 class WholeProjectPerformanceComparisonFE10ImplTest : AbstractWholeProjectPerformanceComparisonTest() {
     override val testPrefix: String = "FE10"

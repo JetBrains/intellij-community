@@ -68,7 +68,7 @@ fun MutableTSuite.model(
 ) {
     models += TModel(
         path = path,
-        pattern = pattern,
+        matcher = pattern,
         testClassName = testClassName,
         testMethodName = testMethodName,
         flatten = flatten,

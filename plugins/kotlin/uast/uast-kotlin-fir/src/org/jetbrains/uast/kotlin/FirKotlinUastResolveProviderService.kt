@@ -46,7 +46,7 @@ interface FirKotlinUastResolveProviderService : BaseKotlinUastResolveProviderSer
         val annotationEntry = uAnnotation.sourcePsi
         analyseForUast(annotationEntry) {
             val resolvedAnnotationCall = annotationEntry.resolveCall() as? KtAnnotationCall ?: return null
-            val parameter = resolvedAnnotationCall.argumentMapping[arg] ?: return null
+            val parameter = resolvedAnnotationCall.argumentMapping[arg as? PsiElement] ?: return null
             val namedExpression = uAnnotation.attributeValues.find { it.name == parameter.name.asString() }
             return namedExpression?.expression as? KotlinUVarargExpression ?: namedExpression
         }

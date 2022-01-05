@@ -271,7 +271,7 @@ object ExpectedCompletionUtils {
                         val proposal = itemsInformation[index]
 
                         val candidate = CompletionProposal(expectedProposal) { k, _ -> k != CompletionProposal.PRESENTATION_ICON }
-                        if (proposal.matches(candidate)) {
+                        if (proposal.matches(candidate, ignoreProperties = emptyList())) {
                             closeMatchWithoutIcon = proposal
                             break
                         }

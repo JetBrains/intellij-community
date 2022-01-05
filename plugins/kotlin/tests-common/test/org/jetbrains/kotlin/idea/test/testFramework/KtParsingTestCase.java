@@ -2,7 +2,6 @@
 
 package org.jetbrains.kotlin.idea.test.testFramework;
 
-import com.intellij.ide.util.AppPropertiesComponentImpl;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.lang.*;
 import com.intellij.lang.impl.PsiBuilderFactoryImpl;
@@ -93,7 +92,6 @@ public abstract class KtParsingTestCase extends KtPlatformLiteFixture {
                 }
         );
 
-        registerApplicationService(PropertiesComponent.class, new AppPropertiesComponentImpl());
         registerApplicationService(PsiBuilderFactory.class, new PsiBuilderFactoryImpl());
         registerApplicationService(DefaultASTFactory.class, new DefaultASTFactoryImpl());
         registerApplicationService(SchemeManagerFactory.class, new MockSchemeManagerFactory());
