@@ -14,9 +14,6 @@ KotlinUFile:commentsOnProperties.kt(
             UComment(// Single-line comment bound to property baq (w/ backing field access))
         )
         KotlinUMethod:getBoo(
-            UComment(/**
-             * Multi-line document bound to property boo (w/ initializer)
-             */)
         )
         KotlinUMethod:getBar(
             UComment(// Single-line comment bound to getter for property bar)
@@ -24,6 +21,9 @@ KotlinUFile:commentsOnProperties.kt(
         KotlinUMethod:getBaq(
         )
         KotlinUMethod:getBaz(
+            UComment(/**
+             * Multi-line document bound to property baz (w/o backing field)
+             */)
         )
     )
     KotlinUClass:Test(
@@ -41,9 +41,6 @@ KotlinUFile:commentsOnProperties.kt(
             UComment(// Single-line comment bound to property faq (w/ backing field access))
         )
         KotlinUMethod:getFoo(
-            UComment(/**
-                 * Multi-line document bound to property foo (w/ initializer)
-                 */)
         )
         KotlinUMethod:getFar(
             UComment(// Single-line comment bound to getter for property bar)
@@ -51,6 +48,9 @@ KotlinUFile:commentsOnProperties.kt(
         KotlinUMethod:getFaq(
         )
         KotlinUMethod:getFaz(
+            UComment(/**
+                 * Multi-line document bound to property faz (w/o backing field)
+                 */)
         )
         KotlinConstructorUMethod:Test(
         )
