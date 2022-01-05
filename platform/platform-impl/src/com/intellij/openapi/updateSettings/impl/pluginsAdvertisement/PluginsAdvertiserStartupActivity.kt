@@ -1,9 +1,8 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.plugins.DEPENDENCY_SUPPORT_FEATURE
-import com.intellij.ide.plugins.DependencyCollectorBean
 import com.intellij.ide.plugins.advertiser.PluginData
 import com.intellij.ide.plugins.advertiser.PluginFeatureCacheService
 import com.intellij.ide.plugins.advertiser.PluginFeatureMap
@@ -45,6 +44,7 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
         ProgressManager.checkCanceled()
         ApplicationManager.getApplication().invokeLater(Runnable {
           notificationGroup.createNotification(IdeBundle.message("plugins.advertiser.no.suggested.plugins"), NotificationType.INFORMATION)
+            .setDisplayId("advertiser.no.plugins")
             .notify(project)
         }, ModalityState.NON_MODAL, project.disposed)
       }

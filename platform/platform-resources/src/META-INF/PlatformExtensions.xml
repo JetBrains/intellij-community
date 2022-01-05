@@ -1227,7 +1227,8 @@
     <notificationGroup id="Dump Threads Group" displayType="BALLOON" isLogByDefault="false"/>
     <notificationGroup id="Plugins AutoSwitch" displayType="BALLOON"/>
     <notificationGroup id="Cached value profiling" displayType="BALLOON"/>
-    <notificationGroup id="Plugins Suggestion" displayType="STICKY_BALLOON"/>
+    <notificationGroup id="Plugins Suggestion" displayType="STICKY_BALLOON"
+                       notificationIds="advertiser.plugins;advertiser.no.plugins;kotlin.native.debug;kotlin.js"/>
     <notificationGroup id="File Watcher Messages" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Memory" displayType="BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.memory"/>
     <notificationGroup id="Low Memory" displayType="BALLOON" bundle="messages.IdeBundle" key="low.memory.notification.title"/>
