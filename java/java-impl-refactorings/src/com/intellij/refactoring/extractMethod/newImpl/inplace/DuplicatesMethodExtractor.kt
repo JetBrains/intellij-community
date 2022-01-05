@@ -85,11 +85,11 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
     val changedExpressions = duplicates.flatMap { it.changedExpressions.map(ChangedExpression::pattern) }
     val duplicatesFinder = finder.withPredefinedChanges((parameterExpressions + changedExpressions).toSet())
 
-    duplicates = duplicates.mapNotNull { duplicatesFinder.createDuplicate(it.pattern, it.candidate) }
+    val duplicatesWithUnifiedParameters = duplicates.mapNotNull { duplicatesFinder.createDuplicate(it.pattern, it.candidate) }
 
-    val updatedParameters: List<InputParameter> = findNewParameters(options.inputParameters, duplicates)
+    val updatedParameters: List<InputParameter> = findNewParameters(options.inputParameters, duplicatesWithUnifiedParameters)
 
-    val elementsToReplace = MethodExtractor().prepareRefactoringElements(options.copy(inputParameters = updatedParameters, methodName = method.name))
+    val parametrizedExtraction = MethodExtractor().prepareRefactoringElements(options.copy(inputParameters = updatedParameters, methodName = method.name))
 
     //TODO clean up
     val initialParameters = options.inputParameters.flatMap(InputParameter::references).toSet()
@@ -97,31 +97,30 @@ class DuplicatesMethodExtractor: InplaceExtractMethodProvider {
       duplicate -> duplicate.changedExpressions.all { changedExpression -> changedExpression.pattern in initialParameters }
     }
     val oldMethodCall = findMethodCallInside(calls.firstOrNull()) ?: throw IllegalStateException()
-    val newMethodCall = findMethodCallInside(elementsToReplace.callElements.firstOrNull()) ?: throw IllegalStateException()
+    val newMethodCall = findMethodCallInside(parametrizedExtraction.callElements.firstOrNull()) ?: throw IllegalStateException()
     val parametrizedDuplicatesNumber = duplicates.size - exactDuplicates.size
     fun confirmChangeSignature(): Boolean {
-      val dialog = SignatureSuggesterPreviewDialog(method, elementsToReplace.method, oldMethodCall, newMethodCall, parametrizedDuplicatesNumber)
+      val dialog = SignatureSuggesterPreviewDialog(method, parametrizedExtraction.method, oldMethodCall, newMethodCall, parametrizedDuplicatesNumber)
       return dialog.showAndGet()
     }
-    if (parametrizedDuplicatesNumber > 0){
-      val changeSignature = isSilentMode || confirmChangeSignature()
-      if (!changeSignature) {
-        duplicates = exactDuplicates
-      }
-    }
+
+    val changeSignature = parametrizedDuplicatesNumber > 0 && (isSilentMode || confirmChangeSignature())
+    duplicates = if (changeSignature) duplicatesWithUnifiedParameters else exactDuplicates
+    val parameters = if (changeSignature) updatedParameters else options.inputParameters
+    val extractedElements = if (changeSignature) parametrizedExtraction else MethodExtractor.ExtractedElements(calls, method)
 
     duplicates = confirmDuplicates(project, editor, duplicates)
     if (duplicates.isEmpty()) return
 
     val replacedMethod = runWriteAction {
-      replacePsiRange(calls, elementsToReplace.callElements)
-      method.replace(elementsToReplace.method) as PsiMethod
+      replacePsiRange(calls, extractedElements.callElements)
+      method.replace(extractedElements.method) as PsiMethod
     }
 
     duplicates.forEach { duplicate ->
       val duplicateOptions = findExtractOptions(duplicate.candidate)
       val expressionMap = duplicate.changedExpressions.associate { (pattern, candidate) -> pattern to candidate }
-      val duplicateParameters = updatedParameters.map { parameter -> parameter.copy(references = parameter.references.map { expression -> expressionMap[expression]!! }) }
+      val duplicateParameters = parameters.map { parameter -> parameter.copy(references = parameter.references.map { expression -> expressionMap[expression]!! }) }
 
       //TODO extract duplicate
       val builder = CallBuilder(duplicateOptions.project, duplicateOptions.elements.first())
