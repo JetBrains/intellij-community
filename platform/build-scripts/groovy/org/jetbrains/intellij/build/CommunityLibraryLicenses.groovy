@@ -523,7 +523,7 @@ final class CommunityLibraryLicenses {
                        license: "LGPL 2.1",
                        licenseUrl: "https://www.gnu.org/licenses/lgpl-2.1.txt"),
     new LibraryLicense(name: "Log4j", libraryName: "Log4J",
-                       url: "https://logging.apache.org/log4j/1.2/index.html").apache(),
+                       url: "https://www.slf4j.org/legacy.html#log4j-over-slf4j").apache(),
     new LibraryLicense(name: "lz4-java", libraryName: "lz4-java",
                        url: "https://github.com/lz4/lz4-java", licenseUrl: "https://github.com/lz4/lz4-java/blob/master/LICENSE.txt").apache(),
     new LibraryLicense(name: "markdown4j", libraryName: "markdown4j", url: "https://code.google.com/p/markdown4j/").newBsd(),
