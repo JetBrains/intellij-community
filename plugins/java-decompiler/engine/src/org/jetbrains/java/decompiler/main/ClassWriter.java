@@ -884,11 +884,14 @@ public class ClassWriter {
             typePathWriteProgress.getAnnotation().getTargetInfo() instanceof EmptyTarget
           ).forEach(typePathWriteProgress -> typePathWriteProgress.writeTypeAnnotation(buffer));
         } else {
+          final List<TypePathWriteProgress> emptyTargetTypeAnnWriteProgress = typeAnnWriteProgress.stream().filter(typePathWriteProgress ->
+            typePathWriteProgress.getAnnotation().getTargetInfo() instanceof EmptyTarget
+          ).collect(Collectors.toList());
           if (descriptor != null) {
-            buffer.append(GenericMain.getGenericCastTypeName(descriptor.returnType, typeAnnWriteProgress));
+            buffer.append(GenericMain.getGenericCastTypeName(descriptor.returnType, emptyTargetTypeAnnWriteProgress));
           }
           else {
-            buffer.append(ExprProcessor.getCastTypeName(md.ret, typeAnnWriteProgress));
+            buffer.append(ExprProcessor.getCastTypeName(md.ret, emptyTargetTypeAnnWriteProgress));
           }
           buffer.append(' ');
         }
