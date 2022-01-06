@@ -975,10 +975,21 @@ public class ClassWriter {
           throwsExceptions = true;
           buffer.append(" throws ");
 
+          List<TypePathWriteProgress> throwsTypeAnnWriteProgress = typeAnnWriteProgress.stream()
+            .filter(typePathWriteProgress -> typePathWriteProgress.getAnnotation().getTargetInfo() instanceof ThrowsTarget)
+            .collect(Collectors.toList());
           for (int i = 0; i < attr.getThrowsExceptions().size(); i++) {
             if (i > 0) {
               buffer.append(", ");
             }
+            final int it = i;
+            throwsTypeAnnWriteProgress.removeIf(typePathWriteProgress -> {
+              if(((ThrowsTarget)typePathWriteProgress.getAnnotation().getTargetInfo()).getThrowsTypeIndex() == it) {
+                typePathWriteProgress.writeTypeAnnotation(buffer);
+                return true;
+              }
+              return false;
+            });
             if (descriptor != null && !descriptor.exceptionTypes.isEmpty()) {
               GenericType type = descriptor.exceptionTypes.get(i);
               buffer.append(GenericMain.getGenericCastTypeName(type, Collections.emptyList()));
