@@ -63,6 +63,7 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     "intellij.completionMlRankingModels",
     "intellij.ml.models.local",
     "intellij.sh",
+    "intellij.toml",
     "intellij.vcs.changeReminder",
     "intellij.markdown",
     "intellij.webp",
@@ -178,7 +179,6 @@ abstract class BaseIdeaProperties extends JetBrainsProductProperties {
     def workspaceRoot = "$context.paths.communityHome/../.."
     return [
       Path.of("$workspaceRoot/prebuilts/tools/common/kotlin-plugin/Kotlin").toAbsolutePath().normalize(),
-      Path.of("$workspaceRoot/prebuilts/tools/common/toml-plugin/intellij-toml").toAbsolutePath().normalize()  // until included in the platform
     ]
   }
 
