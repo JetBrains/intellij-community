@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.util;
 
 import org.jetbrains.annotations.ApiStatus;
@@ -8,6 +8,8 @@ import java.util.function.Supplier;
 
 /**
  * Compute-once keep-forever lazy value.
+ * Do not extend, but use static factory methods to create instance.
+ * <p/>
  * Clearable version: {@link ClearableLazyValue}.
  */
 @ApiStatus.NonExtendable
