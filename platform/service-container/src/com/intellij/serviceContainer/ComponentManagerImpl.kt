@@ -383,6 +383,20 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     return count
   }
 
+  fun createInitOldComponentsTask(): Runnable? {
+    val components = componentAdapters.getImmutableSet().filterIsInstance<MyComponentAdapter>()
+    if (components.isEmpty()) {
+      return null
+    }
+    return Runnable {
+      for (componentAdapter in componentAdapters.getImmutableSet()) {
+        if (componentAdapter is MyComponentAdapter) {
+          componentAdapter.getInstance<Any>(this, keyClass = null, indicator = null)
+        }
+      }
+    }
+  }
+
   protected fun createComponents(indicator: ProgressIndicator?) {
     LOG.assertTrue(containerState.get() == ContainerState.PRE_INIT)
 

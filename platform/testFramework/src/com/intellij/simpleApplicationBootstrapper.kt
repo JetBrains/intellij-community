@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij
 
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory
@@ -67,7 +67,7 @@ internal fun doLoadApp(setupEventQueue: () -> Unit) {
     RegistryKeyBean.addKeysFromPlugins()
     Registry.markAsLoaded()
     val preloadServiceFuture = preloadServices(pluginSet.getEnabledModules(), app, activityPrefix = "")
-    app.loadComponents(null)
+    app.loadComponents()
 
     preloadServiceFuture.get(40, TimeUnit.SECONDS)
     ForkJoinTask.invokeAll(callAppInitialized(app))

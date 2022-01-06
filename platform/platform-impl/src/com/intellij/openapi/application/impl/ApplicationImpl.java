@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.application.impl;
 
 import com.intellij.BundleBase;
@@ -416,18 +416,12 @@ public class ApplicationImpl extends ClientAwareComponentManager implements Appl
     registerComponents(modules, this, null, null);
     ApplicationLoader.initConfigurationStore(this);
     preloadServices(modules, "", false).sync.join();
-    loadComponents(null);
+    loadComponents();
     ForkJoinTask.invokeAll(ApplicationLoader.callAppInitialized(this));
   }
 
-  public final void loadComponents(@Nullable ProgressIndicator indicator) {
-    if (indicator == null) {
-      // no splash - no need to use the progress manager
-      createComponents(null);
-    }
-    else {
-      ProgressManager.getInstance().runProcess(() -> createComponents(indicator), indicator);
-    }
+  public final void loadComponents() {
+    createComponents(null);
     StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED);
   }
 

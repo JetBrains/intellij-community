@@ -1,19 +1,6 @@
 <idea-plugin>
   <!--suppress PluginXmlDynamicPlugin -->
-  <application-components>
-    <component>
-      <interface-class>com.intellij.openapi.command.undo.UndoManager</interface-class>
-      <implementation-class>com.intellij.openapi.command.impl.UndoManagerImpl</implementation-class>
-    </component>
-  </application-components>
-
-  <!--suppress PluginXmlDynamicPlugin -->
   <project-components>
-    <component>
-      <interface-class>com.intellij.openapi.command.undo.UndoManager</interface-class>
-      <implementation-class>com.intellij.openapi.command.impl.UndoManagerImpl</implementation-class>
-    </component>
-
     <component>
       <interface-class>com.intellij.openapi.module.ModuleManager</interface-class>
       <implementation-class>com.intellij.workspaceModel.ide.impl.legacyBridge.module.ModuleManagerComponentBridge</implementation-class>
@@ -60,6 +47,12 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.openapi.command.undo.UndoManager"
+                        serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="await"/>
+
+    <projectService serviceInterface="com.intellij.openapi.command.undo.UndoManager"
+                    serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl" preload="await"/>
+
     <applicationService serviceInterface="com.intellij.ide.ui.LafManager"
                         serviceImplementation="com.intellij.ide.ui.laf.LafManagerImpl"
                         headlessImplementation="com.intellij.ide.ui.laf.HeadlessLafManagerImpl" preload="true" order="first"/>
@@ -79,10 +72,8 @@
     <postStartupActivity implementation="com.intellij.codeInsight.actions.ReaderModeEditorSettingsListener"/>
     <postStartupActivity implementation="com.intellij.openapi.wm.impl.LibraryDependentToolWindowManager"/>
 
-    <applicationService serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl$ClientState"
-                        client="all"/>
-    <projectService serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl$ClientState"
-                    client="all"/>
+    <applicationService serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl$ClientState" client="all"/>
+    <projectService serviceImplementation="com.intellij.openapi.command.impl.UndoManagerImpl$ClientState" client="all"/>
 
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.CurrentEditorProvider"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.FocusBasedCurrentEditorProvider"
@@ -133,6 +124,9 @@
   </module-components>
 
   <applicationListeners>
+    <listener class="com.intellij.openapi.command.impl.UndoManagerImpl$MyCommandListener"
+              topic="com.intellij.openapi.command.CommandListener"/>
+
     <listener class="com.intellij.openapi.editor.impl.VisibleEditorsTracker$MyCommandListener"
               topic="com.intellij.openapi.command.CommandListener"/>
     <listener class="com.intellij.util.gist.GistManagerImpl$MyBulkFileListener" topic="com.intellij.openapi.vfs.newvfs.BulkFileListener"/>
@@ -189,6 +183,9 @@
               topic="com.intellij.openapi.util.registry.RegistryValueListener"/>
   </applicationListeners>
   <projectListeners>
+    <listener class="com.intellij.openapi.command.impl.UndoManagerImpl$MyCommandListener"
+              topic="com.intellij.openapi.command.CommandListener"/>
+
     <listener class="com.intellij.notification.impl.NotificationsToolWindowNotificationListener"
               topic="com.intellij.notification.Notifications"/>
     <listener class="com.intellij.execution.lineMarker.RunnableStatusListener"

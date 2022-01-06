@@ -21,7 +21,6 @@ import com.intellij.openapi.components.stateStore
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.extensions.PluginDescriptor
 import com.intellij.openapi.extensions.impl.ExtensionPointImpl
-import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.progress.ProcessCanceledException
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase
@@ -162,23 +161,27 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
 private fun prepareStart(app: ApplicationImpl,
                          initAppActivity: Activity,
                          preloadSyncServiceFuture: CompletableFuture<*>): CompletableFuture<*> {
-  val placeOnEventQueueActivity = initAppActivity.startChild(Activities.PLACE_ON_EVENT_QUEUE)
-  val loadComponentInEdtFuture = CompletableFuture.runAsync(
-    {
-      placeOnEventQueueActivity.end()
+  val loadComponentInEdtFutureTask = initAppActivity.runChild("old component init task creating") {
+    app.createInitOldComponentsTask()
+  }
 
-      val indicator = if (SplashManager.SPLASH_WINDOW == null) {
-        null
-      }
-      else object : EmptyProgressIndicator() {
-        override fun setFraction(fraction: Double) {
-          SplashManager.SPLASH_WINDOW.showProgress(fraction)
-        }
-      }
-      app.loadComponents(indicator)
-    },
-    Executor(app::invokeLater)
-  )
+  val loadComponentInEdtFuture: CompletableFuture<*>
+  if (loadComponentInEdtFutureTask == null) {
+    loadComponentInEdtFuture = CompletableFuture.completedFuture(null)
+  }
+  else {
+    val placeOnEventQueueActivity = initAppActivity.startChild(Activities.PLACE_ON_EVENT_QUEUE)
+    loadComponentInEdtFuture = CompletableFuture.runAsync(
+      {
+        placeOnEventQueueActivity.end()
+        loadComponentInEdtFutureTask.run()
+      },
+      Executor(app::invokeLater)
+    )
+  }
+  loadComponentInEdtFuture.thenRun {
+    StartUpMeasurer.setCurrentState(LoadingState.COMPONENTS_LOADED)
+  }
 
   return CompletableFuture.allOf(loadComponentInEdtFuture, preloadSyncServiceFuture, StartupUtil.getServerFuture()).thenComposeAsync(
     {
