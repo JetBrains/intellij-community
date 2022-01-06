@@ -22,6 +22,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.*;
 import com.siyeh.ig.psiutils.MethodUtils;
 import one.util.streamex.StreamEx;
+import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -40,6 +41,14 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
 
   @SuppressWarnings("PublicField")
   public boolean ignoreAnonymousClassMethods;
+
+  public boolean warnInSuper = true;
+
+  @Override
+  public void writeSettings(@NotNull Element node) {
+    defaultWriteSettings(node, "warnInSuper");
+    writeBooleanOption(node, "warnInSuper", true);
+  }
 
   @Override
   @NotNull
@@ -68,6 +77,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
     final MultipleCheckboxOptionsPanel panel = new MultipleCheckboxOptionsPanel(this);
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.equals.hashcode.and.tostring"), "ignoreObjectMethods");
     panel.addCheckbox(InspectionGadgetsBundle.message("ignore.methods.in.anonymous.classes"), "ignoreAnonymousClassMethods");
+    panel.addCheckbox(InspectionGadgetsBundle.message("missing.override.warn.on.super.option"), "warnInSuper");
     return panel;
   }
 
@@ -85,10 +95,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
 
       @Override
       public void visitMethod(@NotNull PsiMethod method) {
-        if (method.getNameIdentifier() == null) {
-          return;
-        }
-        if (method.isConstructor()) {
+        if (method.getNameIdentifier() == null || method.isConstructor()) {
           return;
         }
         if (method.hasModifierProperty(PsiModifier.PRIVATE) || method.hasModifierProperty(PsiModifier.STATIC)) {
@@ -104,7 +111,7 @@ public class MissingOverrideAnnotationInspection extends BaseInspection implemen
         }
 
         final boolean annotateMethod = isMissingOverride(method);
-        final boolean annotateHierarchy = isOnTheFly() && isMissingOverrideInOverriders(method);
+        final boolean annotateHierarchy = warnInSuper && isOnTheFly() && isMissingOverrideInOverriders(method);
         if (annotateMethod || annotateHierarchy) {
           registerMethodError(method, method, annotateMethod, annotateHierarchy);
         }
