@@ -186,12 +186,15 @@ public final class GenericMain {
       return "void";
     }
     else if (tp == CodeConstants.TYPE_GENVAR) {
-      return type.value;
+      StringBuilder sb = new StringBuilder();
+      appendTypeAnnotationBeforeType(type, sb, typePathWriteStack);
+      sb.append(type.value);
+      return sb.toString();
     }
     else if (tp == CodeConstants.TYPE_OBJECT) {
-      StringBuilder buffer = new StringBuilder();
-      appendClassName(type, buffer, typePathWriteStack);
-      return buffer.toString();
+      StringBuilder sb = new StringBuilder();
+      appendClassName(type, sb, typePathWriteStack);
+      return sb.toString();
     }
 
     throw new RuntimeException("Invalid type: " + type);
@@ -200,18 +203,7 @@ public final class GenericMain {
   private static void appendClassName(GenericType type, StringBuilder sb, List<TypePathWriteProgress> typePathWriteStack) {
     List<GenericType> enclosingClasses = type.getEnclosingClasses();
 
-    typePathWriteStack.removeIf(writeProgress -> {
-      StructTypePath path = writeProgress.getPaths().peek();
-      if (path == null) {
-        writeProgress.writeTypeAnnotation(sb);
-        return true;
-      }
-      if (path.getTypePathKind() == StructTypePath.Kind.ARRAY.getOpcode() && type.arrayDim == writeProgress.getPaths().size()) {
-        writeProgress.writeTypeAnnotation(sb);
-        return true;
-      }
-      return false;
-    });
+    appendTypeAnnotationBeforeType(type, sb, typePathWriteStack);
 
     if (enclosingClasses.isEmpty()) {
       String name = type.value.replace('/', '.');
@@ -238,6 +230,21 @@ public final class GenericMain {
     }
 
     appendTypeArguments(type, sb, typePathWriteStack);
+  }
+
+  private static void appendTypeAnnotationBeforeType(GenericType type, StringBuilder sb, List<TypePathWriteProgress> typePathWriteStack) {
+    typePathWriteStack.removeIf(writeProgress -> {
+      StructTypePath path = writeProgress.getPaths().peek();
+      if (path == null) {
+        writeProgress.writeTypeAnnotation(sb);
+        return true;
+      }
+      if (path.getTypePathKind() == StructTypePath.Kind.ARRAY.getOpcode() && type.arrayDim == writeProgress.getPaths().size()) {
+        writeProgress.writeTypeAnnotation(sb);
+        return true;
+      }
+      return false;
+    });
   }
 
   private static void appendTypeArguments(GenericType type, StringBuilder sb, List<TypePathWriteProgress> typePathWriteStack) {
