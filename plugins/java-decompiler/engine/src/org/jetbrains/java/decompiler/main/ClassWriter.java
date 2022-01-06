@@ -455,9 +455,11 @@ public class ClassWriter {
     }
     buffer.append(node.simpleName);
 
+    List<TypePathWriteProgress> typeAnnWriteProgress = createTypeAnnWriteProgress(cl);
+
     GenericClassDescriptor descriptor = getGenericClassDescriptor(cl);
     if (descriptor != null && !descriptor.fparameters.isEmpty()) {
-      appendTypeParameters(buffer, descriptor.fparameters, descriptor.fbounds);
+      appendTypeParameters(buffer, descriptor.fparameters, descriptor.fbounds, typeAnnWriteProgress);
     }
 
     if (components != null) {
@@ -474,7 +476,7 @@ public class ClassWriter {
     }
 
     buffer.append(' ');
-    List<TypePathWriteProgress> supertypeAnnotations = createTypeAnnWriteProgress(cl).stream()
+    List<TypePathWriteProgress> supertypeAnnotations = typeAnnWriteProgress.stream()
       .filter(typePathWriteProgress -> typePathWriteProgress.getAnnotation().getTargetInfo() instanceof SupertypeTarget)
       .collect(Collectors.toList());
     if (!isEnum && !isInterface && components == null && cl.superClass != null) {
@@ -873,7 +875,7 @@ public class ClassWriter {
       final List<TypePathWriteProgress> typeAnnWriteProgress = createTypeAnnWriteProgress(mt);
       if (!clInit && !dInit) {
         if (descriptor != null && !descriptor.typeParameters.isEmpty()) {
-          appendTypeParameters(buffer, descriptor.typeParameters, descriptor.typeParameterBounds);
+          appendTypeParameters(buffer, descriptor.typeParameters, descriptor.typeParameterBounds, typeAnnWriteProgress);
           buffer.append(' ');
         }
 
@@ -1269,22 +1271,62 @@ public class ClassWriter {
     return null;
   }
 
-  public static void appendTypeParameters(TextBuffer buffer, List<String> parameters, List<? extends List<GenericType>> bounds) {
+  public static void appendTypeParameters(
+    TextBuffer buffer,
+    List<String> parameters,
+    List<? extends List<GenericType>> bounds,
+    final List<TypePathWriteProgress> typeAnnWriteProgress
+  ) {
+    final List<TypePathWriteProgress> typeParamTypeAnnWriteProgress = typeAnnWriteProgress.stream().filter(typePathWriteProgress -> {
+      TargetInfo targetInfo = typePathWriteProgress.getAnnotation().getTargetInfo();
+      return targetInfo instanceof TypeParameterTarget || targetInfo instanceof TypeParameterBoundTarget;
+    }).collect(Collectors.toList());
+
     buffer.append('<');
 
     for (int i = 0; i < parameters.size(); i++) {
       if (i > 0) {
         buffer.append(", ");
       }
+      final int it = i;
+      typeParamTypeAnnWriteProgress.removeIf(typePathWriteProgress -> {
+        TargetInfo targetInfo = typePathWriteProgress.getAnnotation().getTargetInfo();
+        if (targetInfo instanceof TypeParameterTarget && ((TypeParameterTarget)targetInfo).getTypeParameterIndex() == it) {
+          typePathWriteProgress.writeTypeAnnotation(buffer);
+          return true;
+        }
+        return false;
+      });
 
       buffer.append(parameters.get(i));
 
       List<GenericType> parameterBounds = bounds.get(i);
       if (parameterBounds.size() > 1 || !"java/lang/Object".equals(parameterBounds.get(0).value)) {
         buffer.append(" extends ");
+        typeParamTypeAnnWriteProgress.removeIf(typePathWriteProgress -> {
+          TargetInfo targetInfo = typePathWriteProgress.getAnnotation().getTargetInfo();
+          if (targetInfo instanceof TypeParameterBoundTarget &&
+            ((TypeParameterBoundTarget)targetInfo).getTypeParameterIndex() == it &&
+            ((TypeParameterBoundTarget)targetInfo).getBoundIndex() == 0) {
+            typePathWriteProgress.writeTypeAnnotation(buffer);
+            return true;
+          }
+          return false;
+        });
         buffer.append(GenericMain.getGenericCastTypeName(parameterBounds.get(0), Collections.emptyList()));
         for (int j = 1; j < parameterBounds.size(); j++) {
           buffer.append(" & ");
+          final int jt = j;
+          typeParamTypeAnnWriteProgress.removeIf(typePathWriteProgress -> {
+            TargetInfo targetInfo = typePathWriteProgress.getAnnotation().getTargetInfo();
+            if (targetInfo instanceof TypeParameterBoundTarget &&
+              ((TypeParameterBoundTarget)targetInfo).getTypeParameterIndex() == it &&
+              ((TypeParameterBoundTarget)targetInfo).getBoundIndex() == jt) {
+              typePathWriteProgress.writeTypeAnnotation(buffer);
+              return true;
+            }
+            return false;
+          });
           buffer.append(GenericMain.getGenericCastTypeName(parameterBounds.get(j), Collections.emptyList()));
         }
       }
