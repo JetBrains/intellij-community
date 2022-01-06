@@ -405,7 +405,10 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
   // new TemplatesGroup selected
   private void projectTypeChanged() {
     TemplatesGroup group = getSelectedGroup();
-    if (group == null || group == myLastSelectedGroup) return;
+    if (group == null || !isNewWizard() && group == myLastSelectedGroup) {
+      return;
+    }
+
     myLastSelectedGroup = group;
     PropertiesComponent.getInstance().setValue(PROJECT_WIZARD_GROUP, group.getId() );
     if (LOG.isDebugEnabled()) {
