@@ -1656,6 +1656,11 @@ public abstract class LocalInspectionTestGenerated extends AbstractLocalInspecti
                 KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
             }
 
+            @TestMetadata("asSequenceCalledOnIterator.kt")
+            public void testAsSequenceCalledOnIterator() throws Exception {
+                runTest("testData/inspectionsLocal/collections/redundantAsSequence/asSequenceCalledOnIterator.kt");
+            }
+
             @TestMetadata("hasComment.kt")
             public void testHasComment() throws Exception {
                 runTest("testData/inspectionsLocal/collections/redundantAsSequence/hasComment.kt");

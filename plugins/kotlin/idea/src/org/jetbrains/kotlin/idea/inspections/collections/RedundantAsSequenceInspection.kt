@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.resolve.analyze
 import org.jetbrains.kotlin.idea.core.replaced
 import org.jetbrains.kotlin.idea.inspections.AbstractKotlinInspection
+import org.jetbrains.kotlin.idea.inspections.dfa.fqNameEquals
 import org.jetbrains.kotlin.idea.intentions.RemoveExplicitTypeArgumentsIntention
 import org.jetbrains.kotlin.idea.intentions.callExpression
 import org.jetbrains.kotlin.idea.util.CommentSaver
@@ -24,8 +25,8 @@ import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 
 class RedundantAsSequenceInspection : AbstractKotlinInspection() {
     companion object {
-        private val asSequenceOnSequenceFqName = FqName("kotlin.sequences.asSequence")
-        private val asSequenceFqName = FqName("kotlin.collections.asSequence")
+        private val asSequenceFqName2 = FqName("kotlin.sequences.asSequence")
+        private val asSequenceFqName1 = FqName("kotlin.collections.asSequence")
         private val terminations = collectionTerminationFunctionNames.associateWith { FqName("kotlin.sequences.$it") }
         private val transformationsAndTerminations =
             collectionTransformationFunctionNames.associateWith { FqName("kotlin.sequences.$it") } + terminations
@@ -37,17 +38,20 @@ class RedundantAsSequenceInspection : AbstractKotlinInspection() {
         if (callee.text != "asSequence") return
 
         val context = qualified.analyze(BodyResolveMode.PARTIAL)
+        if (!call.isCalling(asSequenceFqName1, context) && !call.isCalling(asSequenceFqName2, context)) {
+            return
+        }
+        val receiverType = qualified.receiverExpression.getType(context) ?: return
         when {
-            call.isCalling(asSequenceOnSequenceFqName, context) -> {
+            receiverType.fqNameEquals("kotlin.sequences.Sequence") -> {
                 val typeArgumentList = call.typeArgumentList
                 if (typeArgumentList != null && !typeArgumentList.isRedundant()) return
                 registerProblem(holder, qualified, callee)
             }
-            call.isCalling(asSequenceFqName, context) -> {
+            else -> {
+                if (!receiverType.isIterable(DefaultBuiltIns.Instance)) return
                 val parent = qualified.getQualifiedExpressionForReceiver()
                 val parentCall = parent?.callExpression ?: return
-                val receiverType = qualified.receiverExpression.getType(context) ?: return
-                if (!receiverType.isIterable(DefaultBuiltIns.Instance)) return
                 if (!parentCall.isTermination(context)) return
                 val grandParentCall = parent.getQualifiedExpressionForReceiver()?.callExpression
                 if (grandParentCall?.isTransformationOrTermination(context) == true) return
