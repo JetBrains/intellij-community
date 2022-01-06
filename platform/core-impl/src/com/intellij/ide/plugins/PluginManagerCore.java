@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins;
 
 import com.intellij.ReviseWhenPortedToJDK;
@@ -163,12 +163,14 @@ public final class PluginManagerCore {
     return PluginEnabler.HEADLESS.isDisabled(pluginId);
   }
 
+  @ApiStatus.Internal
   public static boolean isBrokenPlugin(@NotNull IdeaPluginDescriptor descriptor) {
     PluginId pluginId = descriptor.getPluginId();
     Set<String> set = getBrokenPluginVersions().get(pluginId);
     return set != null && set.contains(descriptor.getVersion());
   }
 
+  @ApiStatus.Internal
   public static void updateBrokenPlugins(Map<PluginId, Set<String>> brokenPlugins) {
     brokenPluginVersions = new SoftReference<>(brokenPlugins);
     Path updatedBrokenPluginFile = getUpdatedBrokenPluginFile();
@@ -259,6 +261,7 @@ public final class PluginManagerCore {
     return null;
   }
 
+  @ApiStatus.Internal
   public static void writePluginsList(@NotNull Collection<PluginId> ids, @NotNull Writer writer) throws IOException {
     List<PluginId> sortedIds = new ArrayList<>(ids);
     sortedIds.sort(null);
@@ -268,14 +271,17 @@ public final class PluginManagerCore {
     }
   }
 
+  @ApiStatus.Internal
   public static boolean disablePlugin(@NotNull PluginId id) {
     return PluginEnabler.HEADLESS.disableById(Collections.singleton(id));
   }
 
+  @ApiStatus.Internal
   public static boolean enablePlugin(@NotNull PluginId id) {
     return PluginEnabler.HEADLESS.enableById(Collections.singleton(id));
   }
 
+  @ApiStatus.Internal
   public static boolean isModuleDependency(@NotNull PluginId dependentPluginId) {
     return dependentPluginId.getIdString().startsWith(MODULE_DEPENDENCY_PREFIX);
   }
@@ -1107,6 +1113,7 @@ public final class PluginManagerCore {
     return true;
   }
 
+  @ApiStatus.Internal
   public static synchronized boolean isUpdatedBundledPlugin(@NotNull PluginDescriptor plugin) {
     return shadowedBundledPlugins != null && shadowedBundledPlugins.contains(plugin.getPluginId());
   }
