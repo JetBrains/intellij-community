@@ -92,8 +92,8 @@ class KotlinGradleProjectSettingsDataService : AbstractProjectDataService<Projec
                 ?.settings ?: return@mapNotNull null
             if (settings.useProjectSettings) null else settings
         }
-        val languageVersion = allSettings.asSequence().mapNotNullTo(LinkedHashSet()) { it.languageLevel }.singleOrNull()
-        val apiVersion = allSettings.asSequence().mapNotNullTo(LinkedHashSet()) { it.apiLevel }.singleOrNull()
+        val languageVersion = allSettings.mapNotNullTo(LinkedHashSet()) { it.languageLevel }.singleOrNull()
+        val apiVersion = allSettings.mapNotNullTo(LinkedHashSet()) { it.apiLevel }.singleOrNull()
         KotlinCommonCompilerArgumentsHolder.getInstance(project).update {
             if (languageVersion != null) {
                 this.languageVersion = languageVersion.versionString
