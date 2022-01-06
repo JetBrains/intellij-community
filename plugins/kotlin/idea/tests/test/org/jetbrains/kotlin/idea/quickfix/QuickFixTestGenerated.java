@@ -626,156 +626,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
     @RunWith(JUnit3RunnerWithInners.class)
     @TestMetadata("testData/quickfix/addExclExclCall")
-    public static class AddExclExclCall extends AbstractQuickFixTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
-        }
-
-        @TestMetadata("array.kt")
-        public void testArray() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/array.kt");
-        }
-
-        @TestMetadata("array2.kt")
-        public void testArray2() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/array2.kt");
-        }
-
-        @TestMetadata("array3.kt")
-        public void testArray3() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/array3.kt");
-        }
-
-        @TestMetadata("array4.kt")
-        public void testArray4() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/array4.kt");
-        }
-
-        @TestMetadata("assignment.kt")
-        public void testAssignment() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/assignment.kt");
-        }
-
-        @TestMetadata("assignmentToUnsafeCallExpression.kt")
-        public void testAssignmentToUnsafeCallExpression() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/assignmentToUnsafeCallExpression.kt");
-        }
-
-        @TestMetadata("functionReference.kt")
-        public void testFunctionReference() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/functionReference.kt");
-        }
-
-        @TestMetadata("functionReference2.kt")
-        public void testFunctionReference2() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/functionReference2.kt");
-        }
-
-        @TestMetadata("functionReference3.kt")
-        public void testFunctionReference3() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/functionReference3.kt");
-        }
-
-        @TestMetadata("implicit.kt")
-        public void testImplicit() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/implicit.kt");
-        }
-
-        @TestMetadata("implicit2.kt")
-        public void testImplicit2() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/implicit2.kt");
-        }
-
-        @TestMetadata("implicit3.kt")
-        public void testImplicit3() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/implicit3.kt");
-        }
-
-        @TestMetadata("implicitFunctionCall.kt")
-        public void testImplicitFunctionCall() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/implicitFunctionCall.kt");
-        }
-
-        @TestMetadata("infixCall.kt")
-        public void testInfixCall() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/infixCall.kt");
-        }
-
-        @TestMetadata("iterable.kt")
-        public void testIterable() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/iterable.kt");
-        }
-
-        @TestMetadata("iterableDoesNotInheritIterableInterface.kt")
-        public void testIterableDoesNotInheritIterableInterface() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/iterableDoesNotInheritIterableInterface.kt");
-        }
-
-        @TestMetadata("iterableGeneric.kt")
-        public void testIterableGeneric() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/iterableGeneric.kt");
-        }
-
-        @TestMetadata("iterableInExtension.kt")
-        public void testIterableInExtension() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/iterableInExtension.kt");
-        }
-
-        @TestMetadata("iterableWithBadIterator.kt")
-        public void testIterableWithBadIterator() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/iterableWithBadIterator.kt");
-        }
-
-        @TestMetadata("normal.kt")
-        public void testNormal() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/normal.kt");
-        }
-
-        @TestMetadata("normal2.kt")
-        public void testNormal2() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/normal2.kt");
-        }
-
-        @TestMetadata("null.kt")
-        public void testNull() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/null.kt");
-        }
-
-        @TestMetadata("nullInitializer.kt")
-        public void testNullInitializer() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/nullInitializer.kt");
-        }
-
-        @TestMetadata("nullInitializerWithUnstableSmartcast.kt")
-        public void testNullInitializerWithUnstableSmartcast() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/nullInitializerWithUnstableSmartcast.kt");
-        }
-
-        @TestMetadata("nullReceiver.kt")
-        public void testNullReceiver() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/nullReceiver.kt");
-        }
-
-        @TestMetadata("nullReceiverWithUnstableSmartcast.kt")
-        public void testNullReceiverWithUnstableSmartcast() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/nullReceiverWithUnstableSmartcast.kt");
-        }
-
-        @TestMetadata("operationBinary.kt")
-        public void testOperationBinary() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/operationBinary.kt");
-        }
-
-        @TestMetadata("operationIn.kt")
-        public void testOperationIn() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/operationIn.kt");
-        }
-
-        @TestMetadata("operationUnary.kt")
-        public void testOperationUnary() throws Exception {
-            runTest("testData/quickfix/addExclExclCall/operationUnary.kt");
-        }
-
+    public abstract static class AddExclExclCall extends AbstractQuickFixTest {
         @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/addExclExclCall/typeMismatch")
         public static class TypeMismatch extends AbstractQuickFixTest {
@@ -851,6 +702,159 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             @TestMetadata("smartcastImpossibleForReceiver.kt")
             public void testSmartcastImpossibleForReceiver() throws Exception {
                 runTest("testData/quickfix/addExclExclCall/typeMismatch/smartcastImpossibleForReceiver.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/addExclExclCall")
+        public static class Uncategorized extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("array.kt")
+            public void testArray() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/array.kt");
+            }
+
+            @TestMetadata("array2.kt")
+            public void testArray2() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/array2.kt");
+            }
+
+            @TestMetadata("array3.kt")
+            public void testArray3() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/array3.kt");
+            }
+
+            @TestMetadata("array4.kt")
+            public void testArray4() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/array4.kt");
+            }
+
+            @TestMetadata("assignment.kt")
+            public void testAssignment() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/assignment.kt");
+            }
+
+            @TestMetadata("assignmentToUnsafeCallExpression.kt")
+            public void testAssignmentToUnsafeCallExpression() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/assignmentToUnsafeCallExpression.kt");
+            }
+
+            @TestMetadata("functionReference.kt")
+            public void testFunctionReference() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/functionReference.kt");
+            }
+
+            @TestMetadata("functionReference2.kt")
+            public void testFunctionReference2() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/functionReference2.kt");
+            }
+
+            @TestMetadata("functionReference3.kt")
+            public void testFunctionReference3() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/functionReference3.kt");
+            }
+
+            @TestMetadata("implicit.kt")
+            public void testImplicit() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/implicit.kt");
+            }
+
+            @TestMetadata("implicit2.kt")
+            public void testImplicit2() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/implicit2.kt");
+            }
+
+            @TestMetadata("implicit3.kt")
+            public void testImplicit3() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/implicit3.kt");
+            }
+
+            @TestMetadata("implicitFunctionCall.kt")
+            public void testImplicitFunctionCall() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/implicitFunctionCall.kt");
+            }
+
+            @TestMetadata("infixCall.kt")
+            public void testInfixCall() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/infixCall.kt");
+            }
+
+            @TestMetadata("iterable.kt")
+            public void testIterable() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/iterable.kt");
+            }
+
+            @TestMetadata("iterableDoesNotInheritIterableInterface.kt")
+            public void testIterableDoesNotInheritIterableInterface() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/iterableDoesNotInheritIterableInterface.kt");
+            }
+
+            @TestMetadata("iterableGeneric.kt")
+            public void testIterableGeneric() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/iterableGeneric.kt");
+            }
+
+            @TestMetadata("iterableInExtension.kt")
+            public void testIterableInExtension() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/iterableInExtension.kt");
+            }
+
+            @TestMetadata("iterableWithBadIterator.kt")
+            public void testIterableWithBadIterator() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/iterableWithBadIterator.kt");
+            }
+
+            @TestMetadata("normal.kt")
+            public void testNormal() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/normal.kt");
+            }
+
+            @TestMetadata("normal2.kt")
+            public void testNormal2() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/normal2.kt");
+            }
+
+            @TestMetadata("null.kt")
+            public void testNull() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/null.kt");
+            }
+
+            @TestMetadata("nullInitializer.kt")
+            public void testNullInitializer() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/nullInitializer.kt");
+            }
+
+            @TestMetadata("nullInitializerWithUnstableSmartcast.kt")
+            public void testNullInitializerWithUnstableSmartcast() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/nullInitializerWithUnstableSmartcast.kt");
+            }
+
+            @TestMetadata("nullReceiver.kt")
+            public void testNullReceiver() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/nullReceiver.kt");
+            }
+
+            @TestMetadata("nullReceiverWithUnstableSmartcast.kt")
+            public void testNullReceiverWithUnstableSmartcast() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/nullReceiverWithUnstableSmartcast.kt");
+            }
+
+            @TestMetadata("operationBinary.kt")
+            public void testOperationBinary() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationBinary.kt");
+            }
+
+            @TestMetadata("operationIn.kt")
+            public void testOperationIn() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationIn.kt");
+            }
+
+            @TestMetadata("operationUnary.kt")
+            public void testOperationUnary() throws Exception {
+                runTest("testData/quickfix/addExclExclCall/operationUnary.kt");
             }
         }
     }
@@ -8076,6 +8080,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             runTest("testData/quickfix/expressions/unnecessarySafeCall1.kt");
         }
 
+        @TestMetadata("unnecessarySafeCall2.kt")
+        public void testUnnecessarySafeCall2() throws Exception {
+            runTest("testData/quickfix/expressions/unnecessarySafeCall2.kt");
+        }
+
         @TestMetadata("unsafeCall1.kt")
         public void testUnsafeCall1() throws Exception {
             runTest("testData/quickfix/expressions/unsafeCall1.kt");
@@ -9562,11 +9571,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/modifiers/abstractMemberNotImplemented.kt");
             }
 
-            @TestMetadata("abstractMemberNotImplemented.kt")
-            public void testAbstractMemberNotImplemented() throws Exception {
-                runTest("idea/testData/quickfix/modifiers/abstractMemberNotImplemented.kt");
-            }
-
             @TestMetadata("abstractModifierInEnum.kt")
             public void testAbstractModifierInEnum() throws Exception {
                 runTest("testData/quickfix/modifiers/abstractModifierInEnum.kt");
@@ -9719,7 +9723,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @TestMetadata("openVarWithPrivateSetter1.kt")
             public void testOpenVarWithPrivateSetter1() throws Exception {
-            runTest("testData/quickfix/modifiers/openVarWithPrivateSetter1.kt");
+                runTest("testData/quickfix/modifiers/openVarWithPrivateSetter1.kt");
             }
 
             @TestMetadata("openVarWithPrivateSetter2.kt")
@@ -9784,7 +9788,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
             @TestMetadata("removeExternalModifier.kt")
             public void testRemoveExternalModifier() throws Exception {
-                runTest("idea/testData/quickfix/modifiers/removeExternalModifier.kt");
+                runTest("testData/quickfix/modifiers/removeExternalModifier.kt");
             }
 
             @TestMetadata("removeIncompatibleModifier.kt")
@@ -11814,7 +11818,7 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @TestMetadata("assignmentToPropertyWithNoExplicitType.kt")
         public void testAssignmentToPropertyWithNoExplicitType() throws Exception {
-            runTest("idea/testData/quickfix/replaceWithSafeCall/assignmentToPropertyWithNoExplicitType.kt");
+            runTest("testData/quickfix/replaceWithSafeCall/assignmentToPropertyWithNoExplicitType.kt");
         }
 
         @TestMetadata("assignmentToUnsafeCallExpression.kt")
@@ -11844,12 +11848,12 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
 
         @TestMetadata("functionExpressionBody.kt")
         public void testFunctionExpressionBody() throws Exception {
-            runTest("idea/testData/quickfix/replaceWithSafeCall/functionExpressionBody.kt");
+            runTest("testData/quickfix/replaceWithSafeCall/functionExpressionBody.kt");
         }
 
         @TestMetadata("functionExpressionBodyWithNoExplicitType.kt")
         public void testFunctionExpressionBodyWithNoExplicitType() throws Exception {
-            runTest("idea/testData/quickfix/replaceWithSafeCall/functionExpressionBodyWithNoExplicitType.kt");
+            runTest("testData/quickfix/replaceWithSafeCall/functionExpressionBodyWithNoExplicitType.kt");
         }
 
         @TestMetadata("hasElvis.kt")
@@ -15056,6 +15060,11 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 @TestMetadata("valWithSetter.kt")
                 public void testValWithSetter() throws Exception {
                     runTest("testData/quickfix/variables/changeMutability/valWithSetter.kt");
+                }
+
+                @TestMetadata("varAnnotationParameter.kt")
+                public void testVarAnnotationParameter() throws Exception {
+                    runTest("testData/quickfix/variables/changeMutability/varAnnotationParameter.kt");
                 }
             }
         }
