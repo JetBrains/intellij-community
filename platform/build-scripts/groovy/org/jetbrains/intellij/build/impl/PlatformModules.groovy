@@ -244,6 +244,7 @@ final class PlatformModules {
       // jna uses native lib
       "jna", PackMode.STANDALONE_MERGED,
       "jetbrains-annotations-java5", PackMode.STANDALONE_SEPARATE_WITHOUT_VERSION_NAME,
+      "kotlin-stdlib-jdk8", PackMode.STANDALONE_SEPARATE,  // Android Studio: b/213385827
     )
 
     layout.projectLibrariesToUnpack.putValues(UTIL_JAR, List.of(
