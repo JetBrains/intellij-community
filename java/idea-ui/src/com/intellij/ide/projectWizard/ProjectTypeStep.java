@@ -47,6 +47,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBPanelWithEmptyText;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
+import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
@@ -138,6 +139,15 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       layout.setHGap(0);
       myPanel.setLayout(layout);
 
+      JBSplitter splitter = new JBSplitter(false, 0.25f);
+      splitter.setFirstComponent(myProjectTypePanel);
+      splitter.setSecondComponent(mySettingsPanel);
+      myPanel.removeAll();
+      myPanel.add(splitter, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH,
+                                                GridConstraints.FILL_BOTH,
+                                                GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                null, null, null));
+
       String emptyCard = "emptyCard";
       ProjectTypeListWithSearch<TemplatesGroup> listWithFilter = new ProjectTypeListWithSearch<>(
         myContext, myProjectTypeList, new JBScrollPane(myProjectTypeList), group -> group.getName(), () -> {
@@ -145,7 +155,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
           wizard.updateButtons(true, false, true);
       });
 
-      myProjectTypePanel.setMinimumSize(JBUI.size(160, -1));
       myProjectTypePanel.add(listWithFilter);
 
       myOptionsPanel.add(new JBPanelWithEmptyText().withEmptyText(JavaUiBundle.message("label.select.project.type.to.configure")), emptyCard);
