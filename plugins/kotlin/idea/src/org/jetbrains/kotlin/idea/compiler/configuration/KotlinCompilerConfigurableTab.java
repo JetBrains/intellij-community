@@ -355,7 +355,9 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
                 permittedAPIVersions,
                 languageVersion -> {
                     ApiVersion apiVersion = ApiVersion.createByLanguageVersion(languageVersion);
-                    if (isLessOrEqual(apiVersion, upperBound) && !apiVersion.isUnsupported()) return new VersionView.Specific(apiVersion);
+                    if (isLessOrEqual(apiVersion, upperBound) && !apiVersion.isUnsupported()) {
+                        return new VersionView.Specific(languageVersion);
+                    }
 
                     return null;
                 }
@@ -443,7 +445,7 @@ public class KotlinCompilerConfigurableTab implements SearchableConfigurable, Di
             ApiVersion apiVersion = ApiVersion.createByLanguageVersion(languageVersion);
 
             if (!apiVersion.isUnsupported()) {
-                apiVersionComboBox.addItem(new VersionView.Specific(apiVersion));
+                apiVersionComboBox.addItem(new VersionView.Specific(languageVersion));
             }
             if (!languageVersion.isUnsupported()) {
                 languageVersionComboBox.addItem(new VersionView.Specific(languageVersion));
