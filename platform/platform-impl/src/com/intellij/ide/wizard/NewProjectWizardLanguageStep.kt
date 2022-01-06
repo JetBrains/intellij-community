@@ -20,11 +20,11 @@ class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
   override var language by ::step
 
   override var additionalStepPlugins = mapOf(
-    "Go" to "com.intellij.go",
-    "Ruby" to "com.intellij.ruby",
-    "PHP" to "com.intellij.php",
+    "Go" to "org.jetbrains.plugins.go",
+    "Ruby" to "org.jetbrains.plugins.ruby",
+    "PHP" to "com.jetbrains.php",
     "Python" to "com.intellij.python",
-    "Scala" to "com.intellij.scala",
+    "Scala" to "org.intellij.scala"
   )
 
   init {

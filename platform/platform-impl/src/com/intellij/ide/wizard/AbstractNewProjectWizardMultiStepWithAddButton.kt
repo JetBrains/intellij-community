@@ -2,19 +2,19 @@
 package com.intellij.ide.wizard
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.plugins.PluginManagerConfigurable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
 import com.intellij.openapi.extensions.ExtensionPointName
-import com.intellij.openapi.options.ShowSettingsUtil
-import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.extensions.PluginId
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.popup.JBPopupFactory
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.InstallAndEnablePluginTask
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.builder.components.SegmentedButtonBorder
-import java.util.function.Consumer
 import java.util.function.Supplier
 import javax.swing.JComponent
 
@@ -46,18 +46,19 @@ abstract class AbstractNewProjectWizardMultiStepWithAddButton<S : NewProjectWiza
         UIBundle.message("new.project.wizard.popup.title.install.plugin"), DefaultActionGroup(additionalSteps),
         e.dataContext,
         JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, false
-      ).show(RelativePoint.getSouthOf(e.getData(PlatformCoreDataKeys.CONTEXT_COMPONENT) as JComponent))
+      ).show(RelativePoint.getSouthOf(e.getData(CONTEXT_COMPONENT) as JComponent))
     }
   }
 
   private inner class OpenMarketPlaceAction(private val language: String) : AnAction(Supplier { language }) {
     override fun actionPerformed(e: AnActionEvent) {
-      ShowSettingsUtil.getInstance().editConfigurable(
-        ProjectManager.getInstance().defaultProject,
-        PluginManagerConfigurable(),
-        Consumer {
-          it.openMarketplaceTab(language)
-        })
+      val pluginId = PluginId.getId(additionalStepPlugins[language]!!)
+      val component = e.dataContext.getData(CONTEXT_COMPONENT)!!
+      val pluginDownloader = ProgressManager.getInstance().run(InstallAndEnablePluginTask(pluginId))
+
+      if (pluginDownloader != null) {
+        InstallAndEnablePluginTask.doInstallPlugins(component, pluginDownloader)
+      }
     }
   }
 }
