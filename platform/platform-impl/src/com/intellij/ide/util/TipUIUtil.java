@@ -10,6 +10,7 @@ import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationInfo;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
@@ -459,8 +460,12 @@ public final class TipUIUtil {
       String fileName = "tips/css/" + (StartupUiUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css");
       try {
         byte[] data = ResourceUtil.getResourceAsBytes(fileName, TipUIUtil.class.getClassLoader());
-        LOG.assertTrue(data != null);
-        kit.getStyleSheet().addStyleSheet(StyleSheetUtil.loadStyleSheet(new ByteArrayInputStream(data)));
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.assertTrue(data != null);
+        }
+        if (data != null) {
+          kit.getStyleSheet().addStyleSheet(StyleSheetUtil.loadStyleSheet(new ByteArrayInputStream(data)));
+        }
       }
       catch (IOException e) {
         LOG.error("Cannot load stylesheet " + fileName, e);
