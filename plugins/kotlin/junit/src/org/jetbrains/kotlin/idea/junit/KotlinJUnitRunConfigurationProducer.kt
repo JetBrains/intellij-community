@@ -11,10 +11,14 @@ import com.intellij.execution.configurations.ModuleBasedConfiguration
 import com.intellij.execution.junit.*
 import com.intellij.execution.testframework.AbstractInClassConfigurationProducer
 import com.intellij.execution.testframework.AbstractPatternBasedConfigurationProducer
+import com.intellij.openapi.application.runReadAction
+import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.DumbService
 import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiMember
+import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.caches.project.isNewMPPModule
 import org.jetbrains.kotlin.idea.run.asJvmModule
 import org.jetbrains.kotlin.idea.run.forceGradleRunnerInMPP
@@ -104,8 +108,17 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
     }
 
     override fun onFirstRun(fromContext: ConfigurationFromContext, context: ConfigurationContext, performRunnable: Runnable) {
-        val testEntity = JunitKotlinTestFrameworkProvider.getJavaTestEntity(fromContext.sourceElement, checkMethod = true)
-            ?: return super.onFirstRun(fromContext, context, performRunnable)
+        val testEntity =
+            ProgressManager.getInstance().runProcessWithProgressSynchronously(
+                ThrowableComputable {
+                    runReadAction {
+                        JunitKotlinTestFrameworkProvider.getJavaTestEntity(fromContext.sourceElement, checkMethod = true)
+                    }
+                },
+                KotlinBundle.message("progress.text.detect.test.framework"),
+                true,
+                context.project
+            ) ?: return super.onFirstRun(fromContext, context, performRunnable)
 
         val sourceElement = testEntity.testMethod ?: testEntity.testClass
 
