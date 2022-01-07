@@ -23,6 +23,7 @@ import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenStructureWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import org.jetbrains.idea.maven.wizards.SelectPropertiesStep
+import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
 import java.util.*
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
@@ -30,7 +31,7 @@ import kotlin.io.path.createDirectories
 /**
  * Currently used only for new project wizard, thus the functionality is rather limited
  */
-class MavenGroovyNewProjectBuilder : AbstractMavenModuleBuilder() {
+class MavenGroovyNewProjectBuilder(private val groovySdkVersion : String) : AbstractMavenModuleBuilder() {
 
   override fun createWizardSteps(wizardContext: WizardContext, modulesProvider: ModulesProvider): Array<ModuleWizardStep> = arrayOf(
     MavenStructureWizardStep(this, wizardContext),
@@ -63,9 +64,9 @@ class MavenGroovyNewProjectBuilder : AbstractMavenModuleBuilder() {
         val file = root.createChildData(this, MavenConstants.POM_XML)
         val properties = Properties()
         val conditions = Properties()
-        properties.setProperty("GROOVY_VERSION", "3.0.9")
-        properties.setProperty("GROOVY_REPOSITORY", "org.codehaus.groovy")
-        conditions.setProperty("NEED_POM", "true")
+        properties.setProperty("GROOVY_VERSION", groovySdkVersion)
+        properties.setProperty("GROOVY_REPOSITORY", GroovyConfigUtils.getMavenSdkRepository(groovySdkVersion))
+        conditions.setProperty("NEED_POM", (GroovyConfigUtils.compareSdkVersions(groovySdkVersion, GroovyConfigUtils.GROOVY2_5) >= 0).toString())
         conditions.setProperty("CREATE_SAMPLE_CODE", "true")
         MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, projectId, null, null, properties,
                                                      conditions, MavenFileTemplateGroupFactory.MAVEN_GROOVY_XML_TEMPLATE, false)

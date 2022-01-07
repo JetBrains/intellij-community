@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.config;
 
 import com.intellij.openapi.module.Module;
@@ -73,6 +73,15 @@ public final class GroovyConfigUtils extends AbstractConfigUtils {
 
   public static boolean isAtLeastGroovy40(@NotNull PsiElement element) {
     return getInstance().isVersionAtLeast(element, GROOVY4_0);
+  }
+
+  public static @NlsSafe String getMavenSdkRepository(@NotNull String groovyVersion) {
+    if (compareSdkVersions(groovyVersion, GROOVY4_0) >= 0) {
+      return "org.apache.groovy";
+    }
+    else {
+      return "org.codehaus.groovy";
+    }
   }
 
   @Override
