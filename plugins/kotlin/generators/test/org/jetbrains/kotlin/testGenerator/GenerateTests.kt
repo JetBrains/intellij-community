@@ -833,10 +833,6 @@ private fun assembleWorkspace(): TWorkspace = workspace {
             model("editor/commenter", pattern = KT_WITHOUT_DOTS)
         }
 
-        testClass<AbstractKotlinExceptionFilterTest> {
-            model("debugger/exceptionFilter", pattern = Patterns.forRegex("""^([^\.]+)$"""), isRecursive = false)
-        }
-
         testClass<AbstractStubBuilderTest> {
             model("stubs", pattern = KT)
         }
@@ -1454,17 +1450,7 @@ private fun assembleWorkspace(): TWorkspace = workspace {
         }
     }
 
-    testGroup("plugins/parcelize/parcelize-ide/tests") {
-        testClass<AbstractParcelizeQuickFixTest> {
-            model("quickfix", pattern = Patterns.forRegex("^([\\w\\-_]+)\\.kt$"))
-        }
-
-        testClass<AbstractParcelizeCheckerTest> {
-            model("checker", pattern = KT)
-        }
-    }
-
-    testGroup("compiler-plugins/kotlin-serialization/kotlin-serialization-ide/test") {
+    testGroup("compiler-plugins/kotlinx-serialization/common") {
         testClass<AbstractSerializationPluginIdeDiagnosticTest> {
             model("diagnostics")
         }
