@@ -78,6 +78,9 @@
     </extensionPoint>
     <extensionPoint name="callTypeCalculator" dynamic="true" interface="org.jetbrains.plugins.groovy.lang.typing.GrCallTypeCalculator"/>
 
+    <extensionPoint qualifiedName="com.intellij.newProjectWizard.groovy.buildSystem"
+                    interface="org.jetbrains.plugins.groovy.config.wizard.BuildSystemGroovyNewProjectWizard" dynamic="true"/>
+
     <!--suppress PluginXmlValidity -->
     <extensionPoint name="classDescriptor" dynamic="true"
                     beanClass="org.jetbrains.plugins.groovy.extensions.GroovyClassDescriptor"/>
@@ -355,7 +358,7 @@
     <registryKey key="groovy.process.nested.dfa" defaultValue="true"
                  description="Allows to run nested DFA inside the outer one"/>
 
-    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.groovy.config.GroovyNewProjectWizardUsageCollector"/>
+    <statistics.counterUsagesCollector implementationClass="org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizardUsageCollector"/>
 
     <additionalTextAttributes scheme="Default" file="colorSchemes/GroovyDefault.xml"/>
     <additionalTextAttributes scheme="Darcula" file="colorSchemes/GroovyDarcula.xml"/>
@@ -1287,7 +1290,7 @@
 
     <notificationGroup id="Groovy DSL errors" displayType="BALLOON"/>
     <notificationGroup id="Grape" displayType="BALLOON"/>
-    <newProjectWizard.language implementation="org.jetbrains.plugins.groovy.config.GroovyNewProjectWizard"/>
+    <newProjectWizard.language implementation="org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizard"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">
