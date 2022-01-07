@@ -1,12 +1,12 @@
 <component name="libraryTable">
   <library name="kotlinc.sam-with-receiver-compiler-plugin" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:sam-with-receiver-compiler-plugin-for-ide:1.6.10-release-945" />
+    <properties include-transitive-deps="false" maven-id="org.jetbrains.kotlin:sam-with-receiver-compiler-plugin-for-ide:1.6.10-release-947" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/1.6.10-release-945/sam-with-receiver-compiler-plugin-for-ide-1.6.10-release-945.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/1.6.10-release-947/sam-with-receiver-compiler-plugin-for-ide-1.6.10-release-947.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/1.6.10-release-945/sam-with-receiver-compiler-plugin-for-ide-1.6.10-release-945-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/kotlin/sam-with-receiver-compiler-plugin-for-ide/1.6.10-release-947/sam-with-receiver-compiler-plugin-for-ide-1.6.10-release-947-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
