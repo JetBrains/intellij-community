@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification
 
 import com.intellij.ide.plugins.PluginUtil
@@ -53,6 +53,8 @@ class NotificationGroup private constructor(val displayId: String,
 
   var parentId: String? = null
     private set
+
+  var isHideFromSettings: Boolean = false
 
   val pluginId = pluginId ?: ApplicationManager.getApplication()?.let { PluginUtil.getInstance().findPluginId(Throwable()) }
 

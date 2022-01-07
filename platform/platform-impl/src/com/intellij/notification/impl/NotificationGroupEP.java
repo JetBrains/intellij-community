@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl;
 
 import com.intellij.BundleBase;
@@ -78,6 +78,14 @@ public final class NotificationGroupEP implements PluginAware {
    */
   @Attribute(value = "notificationIds", converter = IdParser.class)
   public @Nullable List<String> notificationIds;
+
+  /**
+   * If true, the group will not be shown in Settings | Notifications. Should be used for very rarely
+   * shown notifications, where there's no expectation that the user will want to change how the notification
+   * is presented.
+   */
+  @Attribute("hideFromSettings")
+  public boolean hideFromSettings;
 
   private static final class IdParser extends Converter<List<String>> {
     @Override
