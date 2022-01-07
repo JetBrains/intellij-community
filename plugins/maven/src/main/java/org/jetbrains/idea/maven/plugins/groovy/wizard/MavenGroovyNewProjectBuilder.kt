@@ -17,7 +17,6 @@ import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiManager
 import org.jetbrains.idea.maven.model.MavenConstants
 import org.jetbrains.idea.maven.project.MavenProjectsManager
-import org.jetbrains.idea.maven.utils.MavenFileTemplateGroupFactory
 import org.jetbrains.idea.maven.utils.MavenUtil
 import org.jetbrains.idea.maven.wizards.AbstractMavenModuleBuilder
 import org.jetbrains.idea.maven.wizards.MavenStructureWizardStep
@@ -69,14 +68,14 @@ class MavenGroovyNewProjectBuilder(private val groovySdkVersion : String) : Abst
         conditions.setProperty("NEED_POM", (GroovyConfigUtils.compareSdkVersions(groovySdkVersion, GroovyConfigUtils.GROOVY2_5) >= 0).toString())
         conditions.setProperty("CREATE_SAMPLE_CODE", "true")
         MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, projectId, null, null, properties,
-                                                     conditions, MavenFileTemplateGroupFactory.MAVEN_GROOVY_XML_TEMPLATE, false)
+                                                     conditions, MAVEN_GROOVY_XML_TEMPLATE, false)
         file
       }
 
     val sourceDirectory = VfsUtil.createDirectories(root.path + "/src/main/groovy")
     VfsUtil.createDirectories(root.path + "/src/main/resources")
     VfsUtil.createDirectories(root.path + "/src/test/groovy")
-    createSampleCode(project, sourceDirectory)
+    createSampleCodeFile(project, sourceDirectory)
 
     MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
 
@@ -85,11 +84,16 @@ class MavenGroovyNewProjectBuilder(private val groovySdkVersion : String) : Abst
     }
   }
 
-  private fun createSampleCode(project: Project, sourceDirectory: VirtualFile) {
-    WriteCommandAction.runWriteCommandAction(project, MavenWizardBundle.message("maven.new.project.wizard.groovy.creating.main.file"), null, Runnable {
-      val fileTemplate = FileTemplateManager.getInstance(project).getCodeTemplate("template.groovy")
-      val helloWorldFile = sourceDirectory.createChildData(this, "Main.groovy")
-      VfsUtil.saveText(helloWorldFile, fileTemplate.text)
-    })
+  private fun createSampleCodeFile(project: Project, sourceDirectory: VirtualFile) {
+    WriteCommandAction.runWriteCommandAction(project, MavenWizardBundle.message("maven.new.project.wizard.groovy.creating.main.file"), null,
+       Runnable {
+         val fileTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(MAIN_GROOVY_TEMPLATE)
+         val helloWorldFile = sourceDirectory.createChildData(this, MAIN_FILE)
+         VfsUtil.saveText(helloWorldFile, fileTemplate.text)
+       })
   }
 }
+
+private const val MAVEN_GROOVY_XML_TEMPLATE = "Maven Groovy.xml"
+private const val MAIN_FILE = "Main.groovy"
+private const val MAIN_GROOVY_TEMPLATE = "template.groovy"
