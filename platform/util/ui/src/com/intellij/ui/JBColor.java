@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.openapi.util.registry.Registry;
@@ -95,11 +95,11 @@ public class JBColor extends Color {
     return namedColor(propertyName, new JBColor(defaultValueRGB, darkValueRGB));
   }
 
-  public static @NotNull JBColor namedColor(final @NonNls @NotNull String propertyName) {
+  public static @NotNull JBColor namedColor(@NonNls @NotNull String propertyName) {
     return namedColor(propertyName, NAMED_COLOR_FALLBACK_MARKER);
   }
 
-  public static @NotNull JBColor namedColor(final @NonNls @NotNull String propertyName, final @NotNull Color defaultColor) {
+  public static @NotNull JBColor namedColor(@NonNls @NotNull String propertyName, @NotNull Color defaultColor) {
     return new JBColor(propertyName, defaultColor);
   }
 
