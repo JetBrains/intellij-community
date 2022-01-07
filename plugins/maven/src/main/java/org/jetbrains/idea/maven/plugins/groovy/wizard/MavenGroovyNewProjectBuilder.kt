@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.plugins.groovy.wizard
 
+import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.util.EditorHelper
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -29,7 +30,7 @@ import kotlin.io.path.createDirectories
 /**
  * Currently used only for new project wizard, thus the functionality is rather limited
  */
-class MavenGroovyModuleBuilder : AbstractMavenModuleBuilder() {
+class MavenGroovyNewProjectBuilder : AbstractMavenModuleBuilder() {
 
   override fun createWizardSteps(wizardContext: WizardContext, modulesProvider: ModulesProvider): Array<ModuleWizardStep> = arrayOf(
     MavenStructureWizardStep(this, wizardContext),
@@ -65,19 +66,29 @@ class MavenGroovyModuleBuilder : AbstractMavenModuleBuilder() {
         properties.setProperty("GROOVY_VERSION", "3.0.9")
         properties.setProperty("GROOVY_REPOSITORY", "org.codehaus.groovy")
         conditions.setProperty("NEED_POM", "true")
+        conditions.setProperty("CREATE_SAMPLE_CODE", "true")
         MavenUtil.runOrApplyMavenProjectFileTemplate(project, file, projectId, null, null, properties,
                                                      conditions, MavenFileTemplateGroupFactory.MAVEN_GROOVY_XML_TEMPLATE, false)
         file
       }
 
-    VfsUtil.createDirectories(root.path + "/src/main/groovy")
+    val sourceDirectory = VfsUtil.createDirectories(root.path + "/src/main/groovy")
     VfsUtil.createDirectories(root.path + "/src/main/resources")
     VfsUtil.createDirectories(root.path + "/src/test/groovy")
+    createSampleCode(project, sourceDirectory)
 
     MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
 
     MavenUtil.invokeLater(project, ModalityState.NON_MODAL) {
       PsiManager.getInstance(project).findFile(pom)?.let(EditorHelper::openInEditor)
     }
+  }
+
+  private fun createSampleCode(project: Project, sourceDirectory: VirtualFile) {
+    WriteCommandAction.runWriteCommandAction(project, MavenWizardBundle.message("maven.new.project.wizard.groovy.creating.main.file"), null, Runnable {
+      val fileTemplate = FileTemplateManager.getInstance(project).getCodeTemplate("template.groovy")
+      val helloWorldFile = sourceDirectory.createChildData(this, "Main.groovy")
+      VfsUtil.saveText(helloWorldFile, fileTemplate.text)
+    })
   }
 }

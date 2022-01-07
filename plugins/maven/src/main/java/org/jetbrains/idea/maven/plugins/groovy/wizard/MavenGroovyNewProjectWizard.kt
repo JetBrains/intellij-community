@@ -17,7 +17,7 @@ class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
 
   class Step(parent: GroovyNewProjectWizard.Step) : MavenNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent) {
     override fun setupProject(project: Project) {
-      val builder = MavenGroovyModuleBuilder().apply {
+      val builder = MavenGroovyNewProjectBuilder().apply {
         moduleJdk = sdk
         name = parentStep.name
         contentEntryPath = parentStep.projectPath.systemIndependentPath
