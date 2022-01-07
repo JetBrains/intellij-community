@@ -55,13 +55,12 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
   }
 
   init {
-    RunWidgetAvailabilityManager.getInstance(project).addListener(this, RunWidgetAvailabilityManager.RunWidgetAvailabilityListener {
+    RunWidgetAvailabilityManager.getInstance(project).addListener(this) {
       logger.info("New toolbar: run widget availability changed $it")
-
       IdeRootPaneNorthExtension.EP_NAME.findExtension(NewToolbarRootPaneExtension::class.java, project)?.let { extension ->
         startUpdateActionGroups(extension)
       }
-    })
+    }
   }
 
   override fun dispose() {
