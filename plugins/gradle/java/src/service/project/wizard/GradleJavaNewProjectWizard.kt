@@ -1,8 +1,10 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.gradle.service.project.wizard
 
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizard
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
+import com.intellij.ide.wizard.NewProjectWizardBaseData
+import com.intellij.ide.wizard.NewProjectWizardStep
 import com.intellij.openapi.externalSystem.model.project.ProjectId
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl
 import com.intellij.openapi.project.Project
@@ -20,22 +22,8 @@ class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     GradleJavaNewProjectWizardData {
 
     override fun setupProject(project: Project) {
-      val builder = InternalGradleModuleBuilder().apply {
-        moduleJdk = sdk
-        name = parentStep.name
-        contentEntryPath = parentStep.projectPath.systemIndependentPath
-
-        isCreatingNewProject = context.isCreatingNewProject
-
-        parentProject = parentData
-        projectId = ProjectId(groupId, artifactId, version)
-        isInheritGroupId = parentData?.group == groupId
-        isInheritVersion = parentData?.version == version
-
-        isUseKotlinDsl = useKotlinDsl
-
-        gradleVersion = suggestGradleVersion()
-      }
+      val builder = generateModuleBuilder()
+      builder.gradleVersion = suggestGradleVersion()
 
       builder.configureBuildScript {
         it.withJavaPlugin()
@@ -51,3 +39,19 @@ class GradleJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
     }
   }
 }
+
+fun <T> GradleNewProjectWizardStep<T>.generateModuleBuilder(): AbstractGradleModuleBuilder
+  where T : NewProjectWizardStep, T : NewProjectWizardBaseData = InternalGradleModuleBuilder().apply {
+    moduleJdk = sdk
+    name = parentStep.name
+    contentEntryPath = parentStep.projectPath.systemIndependentPath
+
+    isCreatingNewProject = context.isCreatingNewProject
+
+    parentProject = parentData
+    projectId = ProjectId(groupId, artifactId, version)
+    isInheritGroupId = parentData?.group == groupId
+    isInheritVersion = parentData?.version == version
+
+    isUseKotlinDsl = useKotlinDsl
+  }
