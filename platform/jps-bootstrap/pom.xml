@@ -23,7 +23,7 @@
     <dependency>
       <groupId>com.google.protobuf</groupId>
       <artifactId>protobuf-java</artifactId>
-      <version>3.15.8</version>
+      <version>3.16.1</version>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>
