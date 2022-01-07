@@ -13,6 +13,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.SmartList;
 import org.jdom.Element;
 import org.jdom.Parent;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -21,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+@ApiStatus.Internal
 public final class FileStorageCoreUtil {
   private static final Logger LOG = Logger.getInstance(FileStorageCoreUtil.class);
 
@@ -28,9 +30,7 @@ public final class FileStorageCoreUtil {
   public static final String NAME = "name";
   public static final String DEFAULT_EXT = PathManager.DEFAULT_EXT;
 
-  public static @NotNull Map<String, Element> load(@NotNull Element rootElement,
-                                                   @Nullable PathMacroSubstitutor pathMacroSubstitutor,
-                                                   boolean internElements) {
+  public static @NotNull Map<String, Element> load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor) {
     if (pathMacroSubstitutor != null) {
       pathMacroSubstitutor.expandPaths(rootElement);
     }
@@ -67,7 +67,7 @@ public final class FileStorageCoreUtil {
       // remove only after "getMacroNames" - some PathMacroFilter requires element name attribute
       element.removeAttribute(NAME);
 
-      map.put(name, internElements ? JDOMUtil.internElement(element) : element);
+      map.put(name, element);
     }
     return map;
   }

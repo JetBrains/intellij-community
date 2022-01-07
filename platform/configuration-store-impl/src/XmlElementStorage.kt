@@ -82,7 +82,7 @@ abstract class XmlElementStorage protected constructor(val fileSpec: String,
 
   private fun loadState(element: Element): StateMap {
     beforeElementLoaded(element)
-    return StateMap.fromMap(FileStorageCoreUtil.load(element, pathMacroSubstitutor, true))
+    return StateMap.fromMap(FileStorageCoreUtil.load(element, pathMacroSubstitutor))
   }
 
   final override fun createSaveSessionProducer(): SaveSessionProducer? {
