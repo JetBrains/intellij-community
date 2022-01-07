@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.AnActionListener
 import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.util.Disposer
@@ -72,7 +73,12 @@ class SearchEverywhereNewToolbarAction : SearchEverywhereAction(), AnActionListe
       ActionsBundle.message("action.SearchEverywhereToolbar.text")
     }
     else {
-      ActionsBundle.message("action.SearchEverywhereToolbarHotKey.text")
+      val shortcuts = KeymapUtil.getActiveKeymapShortcuts(IdeActions.ACTION_SEARCH_EVERYWHERE).shortcuts
+      val shortcut = if (shortcuts.isEmpty()) {
+        ActionsBundle.message("action.SearchEverywhereToolbarHotKey.hotkey")
+      }
+      else KeymapUtil.getShortcutsText(shortcuts)
+      ActionsBundle.message("action.SearchEverywhereToolbarHotKey.text", shortcut)
     }
     event.presentation.icon = AllIcons.Actions.Search
     if (!subscribedForDoubleShift) {

@@ -2,27 +2,30 @@
 package com.intellij.openapi.vcs.actions
 
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction
-import com.intellij.openapi.actionSystem.ex.CustomComponentAction
-import com.intellij.openapi.vcs.VcsBundle
-import javax.swing.JComponent
-import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
-import com.intellij.util.ui.JBInsets
-import com.intellij.ide.ui.customization.CustomActionsSchema
-import com.intellij.openapi.vcs.VcsActions
 import com.intellij.ide.DataManager
+import com.intellij.ide.HelpTooltip
+import com.intellij.ide.actions.GotoClassPresentationUpdater.getActionTitlePluralized
+import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.actionSystem.impl.ActionButtonWithText
+import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.roots.ui.configuration.actions.IconWithTextAction
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.ListPopup
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsActions
+import com.intellij.openapi.vcs.VcsBundle
+import com.intellij.util.ui.JBInsets
 import java.awt.Color
 import java.awt.Insets
 import java.awt.Point
 import java.awt.event.MouseEvent
-import java.util.*
 import javax.swing.FocusManager
+import javax.swing.JComponent
 
 /**
  * Vcs quick popup action which is shown in the new toolbar and has two different presentations
@@ -36,9 +39,28 @@ open class VcsQuickActionsToolbarPopup : IconWithTextAction(), CustomComponentAc
   ) : ActionButtonWithText(action, presentation, place, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
 
     override fun getInactiveTextColor(): Color = foreground
-
     override fun getInsets(): Insets = JBInsets(0, 0, 0, 0)
+    override fun updateToolTipText() {
+      val shortcut = KeymapUtil.getShortcutText("Vcs.QuickListPopupAction")
+      val classesTabName = java.lang.String.join("/", getActionTitlePluralized())
+      if (Registry.`is`("ide.helptooltip.enabled")) {
+        HelpTooltip.dispose(this)
+        HelpTooltip()
+          .setTitle(VcsBundle.message("Vcs.Toolbar.ShowMoreActions.description"))
+          .setShortcut(shortcut)
+          .installOn(this)
+      }
+      else {
+        toolTipText = VcsBundle.message("Vcs.Toolbar.ShowMoreActions.description", shortcutText, classesTabName)
+      }
+    }
+
+    fun getShortcut(): String {
+      val shortcuts = KeymapUtil.getActiveKeymapShortcuts(VcsActions.VCS_OPERATIONS_POPUP).shortcuts
+      return KeymapUtil.getShortcutsText(shortcuts)
+    }
   }
+
 
   open fun getName(project: Project): String? {
     return null
