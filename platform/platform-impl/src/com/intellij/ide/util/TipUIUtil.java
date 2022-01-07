@@ -456,7 +456,7 @@ public final class TipUIUtil {
         .withGapsBetweenParagraphs()
         .build();
 
-      String fileName = StartupUiUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css";
+      String fileName = "tips/css/" + (StartupUiUtil.isUnderDarcula() ? "tips_darcula.css" : "tips.css");
       try {
         byte[] data = ResourceUtil.getResourceAsBytes(fileName, TipUIUtil.class.getClassLoader());
         LOG.assertTrue(data != null);
