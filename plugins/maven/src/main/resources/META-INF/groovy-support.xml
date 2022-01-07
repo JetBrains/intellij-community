@@ -35,5 +35,8 @@
                             implementationClass="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyPomCompletionContributor"/>
 
     <fileTypeUsageSchemaDescriptor schema="Maven Groovy" implementationClass="org.jetbrains.idea.maven.plugins.groovy.MavenGroovyScriptTypeDetector"/>
+
+    <newProjectWizard.groovy.buildSystem implementation="org.jetbrains.idea.maven.plugins.groovy.wizard.MavenGroovyNewProjectWizard"/>
+
   </extensions>
 </idea-plugin>

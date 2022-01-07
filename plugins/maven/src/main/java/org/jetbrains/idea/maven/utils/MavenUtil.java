@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.utils;
 
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
@@ -369,8 +369,19 @@ public class MavenUtil {
                                                         MavenId parentId,
                                                         @Nullable VirtualFile parentFile,
                                                         boolean interactive) throws IOException {
-    Properties properties = new Properties();
-    Properties conditions = new Properties();
+    runOrApplyMavenProjectFileTemplate(project, file, projectId, parentId, parentFile, new Properties(), new Properties(),
+                                       MavenFileTemplateGroupFactory.MAVEN_PROJECT_XML_TEMPLATE, interactive);
+  }
+
+  public static void runOrApplyMavenProjectFileTemplate(Project project,
+                                                        VirtualFile file,
+                                                        @NotNull MavenId projectId,
+                                                        MavenId parentId,
+                                                        @Nullable VirtualFile parentFile,
+                                                        @NotNull Properties properties,
+                                                        @NotNull Properties conditions,
+                                                        @NonNls @NotNull String template,
+                                                        boolean interactive) throws IOException {
     properties.setProperty("GROUP_ID", projectId.getGroupId());
     properties.setProperty("ARTIFACT_ID", projectId.getArtifactId());
     properties.setProperty("VERSION", projectId.getVersion());
@@ -408,7 +419,7 @@ public class MavenUtil {
         properties.setProperty("COMPILER_LEVEL_TARGET", description);
       }
     }
-    runOrApplyFileTemplate(project, file, MavenFileTemplateGroupFactory.MAVEN_PROJECT_XML_TEMPLATE, properties, conditions, interactive);
+    runOrApplyFileTemplate(project, file, template, properties, conditions, interactive);
   }
 
   public static void runFileTemplate(Project project,
@@ -417,12 +428,12 @@ public class MavenUtil {
     runOrApplyFileTemplate(project, file, templateName, new Properties(), new Properties(), true);
   }
 
-  private static void runOrApplyFileTemplate(Project project,
-                                             VirtualFile file,
-                                             String templateName,
-                                             Properties properties,
-                                             Properties conditions,
-                                             boolean interactive) throws IOException {
+  public static void runOrApplyFileTemplate(Project project,
+                                            VirtualFile file,
+                                            String templateName,
+                                            Properties properties,
+                                            Properties conditions,
+                                            boolean interactive) throws IOException {
     FileTemplateManager manager = FileTemplateManager.getInstance(project);
     FileTemplate fileTemplate = manager.getJ2eeTemplate(templateName);
     Properties allProperties = manager.getDefaultProperties();
