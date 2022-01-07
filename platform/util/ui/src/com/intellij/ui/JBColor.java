@@ -3,7 +3,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.JBUI.CurrentTheme;
 import com.intellij.util.ui.StartupUiUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NonNls;
@@ -20,20 +20,18 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Supplier;
 
-import static com.intellij.util.ObjectUtils.notNull;
-
 /**
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UseJBColor")
 public class JBColor extends Color {
-  public static final Color PanelBackground = namedColor("Panel.background", 0xffffff);
+  public static final Color PanelBackground = new JBColor("Panel.background", new Color(0xffffff));
 
   private static final class Lazy {
     private static volatile boolean DARK = StartupUiUtil.isUnderDarcula();
   }
 
-  private static final Color NAMED_COLOR_FALLBACK_MARKER = ColorUtil.marker("NAMED_COLOR_FALLBACK_MARKER");
+  private static final Color NAMED_COLOR_FALLBACK_MARKER = marker("NAMED_COLOR_FALLBACK_MARKER");
 
   private final String name;
   private final Color darkColor;
@@ -61,10 +59,6 @@ public class JBColor extends Color {
     func = function;
   }
 
-  public static JBColor lazy(@NotNull Supplier<? extends Color> supplier) {
-    return new JBColor(supplier);
-  }
-
   /**
    * @deprecated Use {@link #lazy(Supplier)}
    * @param function
@@ -85,6 +79,26 @@ public class JBColor extends Color {
     this.defaultColor = defaultColor;
     darkColor = null;
     func = null;
+  }
+
+  public static JBColor lazy(@NotNull Supplier<? extends Color> supplier) {
+    return new JBColor(supplier);
+  }
+
+  public static @NotNull Color marker(@NotNull String name) {
+    return new JBColor((Supplier<? extends Color>)() -> {
+      throw new AssertionError(name);
+    }) {
+      @Override
+      public boolean equals(Object obj) {
+        return this == obj;
+      }
+
+      @Override
+      public String toString() {
+        return name;
+      }
+    };
   }
 
   public static @NotNull JBColor namedColor(@NonNls @NotNull String propertyName, int defaultValueRGB) {
@@ -116,9 +130,16 @@ public class JBColor extends Color {
     return defaultColor == NAMED_COLOR_FALLBACK_MARKER || defaultColor == null ? calculateFallback(name) : defaultColor;
   }
 
-  private static @NotNull Color calculateFallback(final @NonNls @NotNull String propertyName) {
-    Color color = notNull(UIManager.getColor(propertyName),
-                          () -> notNull(findPatternMatch(propertyName), Gray.TRANSPARENT));
+  private static @NotNull Color calculateFallback(@NonNls @NotNull String propertyName) {
+    Color value = UIManager.getColor(propertyName);
+    Color color;
+    if (value == null) {
+      Color v = findPatternMatch(propertyName);
+      color = v == null ? Gray.TRANSPARENT : v;
+    }
+    else {
+      color = value;
+    }
     if (UIManager.get(propertyName) == null) {
       if (Registry.is("ide.save.missing.jb.colors", false)) {
         return _saveAndReturnColor(propertyName, color);
@@ -161,13 +182,12 @@ public class JBColor extends Color {
   }
 
   /**
-   * @deprecated use {@link JBUI.CurrentTheme.Link.Foreground#ENABLED}
+   * @deprecated use {@link CurrentTheme.Link.Foreground#ENABLED}
    */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
   public static @NotNull Color link() {
-    //noinspection UnnecessaryFullyQualifiedName
-    return com.intellij.util.ui.JBUI.CurrentTheme.Link.Foreground.ENABLED;
+    return CurrentTheme.Link.Foreground.ENABLED;
   }
 
   public static void setDark(boolean dark) {
@@ -376,7 +396,7 @@ public class JBColor extends Color {
   }
 
   public static @NotNull Color background() {
-    return lazy(() -> JBUI.CurrentTheme.List.BACKGROUND);
+    return lazy(() -> CurrentTheme.List.BACKGROUND);
   }
 
   public static @NotNull Color border() {
@@ -397,6 +417,7 @@ public class JBColor extends Color {
     });
   }
 
+  @SuppressWarnings("unused")
   private static void saveMissingColorInUIDefaults(String propertyName, Color color) {
     if (Registry.is("ide.save.missing.jb.colors", false)) {
       String key = propertyName + "!!!";

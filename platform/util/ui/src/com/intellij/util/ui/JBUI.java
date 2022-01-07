@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.diagnostic.LoadingState;
@@ -315,8 +315,8 @@ public final class JBUI {
 
   @SuppressWarnings("UnregisteredNamedColor")
   public static final class CurrentTheme {
-    public interface Component {
-      Color FOCUSED_BORDER_COLOR = JBColor.namedColor("Component.focusedBorderColor", 0x87AFDA, 0x466D94);
+    public static final class Component {
+      public static final Color FOCUSED_BORDER_COLOR = JBColor.namedColor("Component.focusedBorderColor", 0x87AFDA, 0x466D94);
     }
 
     public static final class ActionButton {

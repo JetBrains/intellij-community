@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.diagnostic.Checks;
@@ -11,28 +11,11 @@ import java.awt.*;
 import java.util.function.Supplier;
 
 /**
- * @author max
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UseJBColor")
 public final class ColorUtil {
   private ColorUtil() {
-  }
-
-  public static @NotNull Color marker(final @NotNull String name) {
-    return new JBColor((Supplier<? extends Color>)() -> {
-      throw new AssertionError(name);
-    }) {
-      @Override
-      public boolean equals(Object obj) {
-        return this == obj;
-      }
-
-      @Override
-      public String toString() {
-        return name;
-      }
-    };
   }
 
   public static @NotNull Color softer(@NotNull Color color) {

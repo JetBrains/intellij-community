@@ -19,7 +19,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Ref;
-import com.intellij.ui.ColorUtil;
+import com.intellij.ui.JBColor;
 import com.intellij.util.JdomKt;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformUtils;
@@ -40,8 +40,8 @@ import java.util.stream.Collectors;
 @SuppressWarnings("UseJBColor")
 public abstract class AbstractColorsScheme extends EditorFontCacheImpl implements EditorColorsScheme, SerializableScheme {
   public static final TextAttributes INHERITED_ATTRS_MARKER = new TextAttributes();
-  public static final Color INHERITED_COLOR_MARKER = ColorUtil.marker("INHERITED_COLOR_MARKER");
-  public static final Color NULL_COLOR_MARKER = ColorUtil.marker("NULL_COLOR_MARKER");
+  public static final Color INHERITED_COLOR_MARKER = JBColor.marker("INHERITED_COLOR_MARKER");
+  public static final Color NULL_COLOR_MARKER = JBColor.marker("NULL_COLOR_MARKER");
 
   public static final int CURR_VERSION = 142;
 
