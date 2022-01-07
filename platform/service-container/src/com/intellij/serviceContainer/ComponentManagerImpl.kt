@@ -1031,7 +1031,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
 
           val activity = StartUpMeasurer.startActivity("${service.`interface`} preloading")
           try {
-            instantiateService(service)
+            preloadService(service)
           }
           catch (ignore: AlreadyDisposedException) {
           }
@@ -1059,7 +1059,7 @@ abstract class ComponentManagerImpl @JvmOverloads constructor(
     )
   }
 
-  protected open fun instantiateService(service: ServiceDescriptor) {
+  protected open fun preloadService(service: ServiceDescriptor) {
     val adapter = componentKeyToAdapter.get(service.getInterface()) as ServiceComponentAdapter? ?: return
     if (adapter.isInitializing) {
       // already in initialization
