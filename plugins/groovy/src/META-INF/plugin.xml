@@ -1291,6 +1291,7 @@
     <notificationGroup id="Groovy DSL errors" displayType="BALLOON"/>
     <notificationGroup id="Grape" displayType="BALLOON"/>
     <newProjectWizard.language implementation="org.jetbrains.plugins.groovy.config.wizard.GroovyNewProjectWizard"/>
+    <newProjectWizard.groovy.buildSystem implementation="org.jetbrains.plugins.groovy.config.wizard.IntelliJGroovyNewProjectWizard"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.debugger">

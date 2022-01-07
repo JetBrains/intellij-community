@@ -19,6 +19,8 @@ import java.util.*
 class MavenGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
   override val name = MAVEN
 
+  override val ordinal: Int = 1
+
   override fun createStep(parent: GroovyNewProjectWizard.Step) = Step(parent)
 
   class Step(parent: GroovyNewProjectWizard.Step) : MavenNewProjectWizardStep<GroovyNewProjectWizard.Step>(parent) {
