@@ -1,4 +1,4 @@
-// Copyright 2000-2020 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl.ui
 
 import com.intellij.ide.IdeBundle
@@ -63,7 +63,7 @@ class NotificationsConfigurableUi(settings: NotificationsConfigurationImpl) : Co
   }
 
   private fun createNotificationsList(): JBList<NotificationSettingsWrapper> {
-    return JBList(*NotificationsConfigurablePanel.NotificationsTreeTableModel().allSettings.toTypedArray())
+    return JBList(*NotificationsConfigurablePanel.NotificationsTreeTableModel().allSettings.sortedBy { it.toString() }.toTypedArray())
       .apply {
         cellRenderer = SimpleListCellRenderer.create("") { it.toString() }
         selectionModel.addListSelectionListener {
