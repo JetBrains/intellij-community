@@ -2,38 +2,53 @@
 package com.intellij.ide.plugins.advertiser
 
 import com.intellij.openapi.components.*
-import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
 
 @Service(Service.Level.APP)
 @State(name = "PluginFeatureCacheService", storages = [Storage(StoragePathMacros.CACHE_FILE)], allowLoadInTests = true)
 @ApiStatus.Internal
-class PluginFeatureCacheService : SimplePersistentStateComponent<PluginFeatureCacheService.State>(State()) {
-  class State : BaseState() {
-    @get:Property
-    var extensions by property<PluginFeatureMap?>(null) { it == null }
+class PluginFeatureCacheService : PersistentStateComponentWithModificationTracker<PluginFeatureCacheService.MyState> {
+  @Volatile
+  private var state = MyState()
 
-    @get:Property
-    var dependencies by property<PluginFeatureMap?>(null) { it == null }
+  override fun getState() = state
+
+  override fun getStateModificationCount(): Long {
+    val state = state
+    return (state.extensions?.modificationCount ?: 0) + (state.dependencies?.modificationCount ?: 0)
+  }
+
+  override fun loadState(state: MyState) {
+    this.state = state
+  }
+
+  class MyState {
+    @JvmField
+    var extensions: PluginFeatureMap? = null
+    @JvmField
+    var dependencies: PluginFeatureMap? = null
   }
 
   companion object {
-    private val lock = ReentrantReadWriteLock()
-
     @JvmStatic
     fun getInstance(): PluginFeatureCacheService = service()
   }
 
   var extensions: PluginFeatureMap?
-    get() = lock.read { state.extensions }
-    set(value) = lock.write { state.extensions = value }
+    get() = state.extensions
+    set(value) {
+      state = MyState().apply {
+        extensions = value
+        dependencies = state.dependencies
+      }
+    }
 
   var dependencies: PluginFeatureMap?
-    get() = lock.read { state.dependencies }
-    set(value) = lock.write { state.dependencies = value }
-
-  override fun loadState(state: State) = lock.write { super.loadState(state) }
+    get() = state.dependencies
+    set(value) {
+      state = MyState().apply {
+        extensions = state.extensions
+        dependencies = value
+      }
+    }
 }
