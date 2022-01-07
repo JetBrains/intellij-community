@@ -1,4 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+@file:Suppress("ReplaceGetOrSet", "ReplacePutWithAssignment")
+
 package com.intellij.ide.plugins.advertiser
 
 import com.intellij.openapi.extensions.PluginDescriptor
@@ -57,46 +59,46 @@ class FeaturePluginData @JvmOverloads constructor(
 )
 
 @Tag("plugins")
-class PluginDataSet @JvmOverloads constructor(dataSet: Set<PluginData> = setOf()) {
-
+class PluginDataSet @JvmOverloads constructor(dataSet: Set<PluginData> = emptySet()) {
   @JvmField
   @XCollection(style = XCollection.Style.v2)
-  val dataSet = mutableSetOf<PluginData>()
+  val dataSet = HashSet<PluginData>()
 
   init {
-    this.dataSet += dataSet
+    this.dataSet.addAll(dataSet)
   }
 }
 
 @Tag("features")
-class PluginFeatureMap @JvmOverloads constructor(featureMap: Map<String, Set<PluginData>> = mapOf()) : ModificationTracker {
-
+class PluginFeatureMap @JvmOverloads constructor(initialFeatureMap: Map<String, Set<PluginData>> = emptyMap()) : ModificationTracker {
   @JvmField
   @XMap
-  val featureMap = mutableMapOf<String, PluginDataSet>()
+  val featureMap = HashMap<String, PluginDataSet>()
 
   @JvmField
+  @Attribute
   var lastUpdateTime: Long = 0L
 
   private var modificationCount = 0L
 
   init {
-    featureMap.entries.forEach { entry ->
-      this.featureMap[entry.key] = PluginDataSet(entry.value)
+    for (entry in initialFeatureMap.entries) {
+      featureMap.put(entry.key, PluginDataSet(entry.value))
     }
   }
 
-  fun update(featureMap: Map<String, Set<PluginData>>) {
-    for ((id, plugins) in featureMap) {
-      this.featureMap.getOrPut(id) { PluginDataSet() }.dataSet.addAll(plugins)
+  fun update(newFeatureMap: Map<String, Set<PluginData>>) {
+    for ((id, plugins) in newFeatureMap) {
+      featureMap.computeIfAbsent(id) { PluginDataSet() }.dataSet.addAll(plugins)
     }
     lastUpdateTime = System.currentTimeMillis()
     modificationCount++
   }
 
-  val outdated get() = System.currentTimeMillis() - lastUpdateTime > TimeUnit.DAYS.toMillis(1L)
+  val outdated: Boolean
+    get() = System.currentTimeMillis() - lastUpdateTime > TimeUnit.DAYS.toMillis(1L)
 
-  operator fun get(implementationName: String): Set<PluginData> = featureMap[implementationName]?.dataSet ?: setOf()
+  fun get(implementationName: String): Set<PluginData> = featureMap.get(implementationName)?.dataSet ?: emptySet()
 
   override fun getModificationCount(): Long = modificationCount
 }

@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.plugins.advertiser
 
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.*
 import com.intellij.util.xmlb.annotations.Property
 import org.jetbrains.annotations.ApiStatus
@@ -10,16 +9,10 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 @Service(Service.Level.APP)
-@State(
-  name = "PluginFeatureCacheService",
-  storages = [Storage(StoragePathMacros.CACHE_FILE, roamingType = RoamingType.DISABLED)],
-  allowLoadInTests = true,
-)
+@State(name = "PluginFeatureCacheService", storages = [Storage(StoragePathMacros.CACHE_FILE)], allowLoadInTests = true)
 @ApiStatus.Internal
 class PluginFeatureCacheService : SimplePersistentStateComponent<PluginFeatureCacheService.State>(State()) {
-
   class State : BaseState() {
-
     @get:Property
     var extensions by property<PluginFeatureMap?>(null) { it == null }
 
@@ -28,12 +21,10 @@ class PluginFeatureCacheService : SimplePersistentStateComponent<PluginFeatureCa
   }
 
   companion object {
-
     private val lock = ReentrantReadWriteLock()
 
     @JvmStatic
-    val instance: PluginFeatureCacheService
-      get() = ApplicationManager.getApplication().getService(PluginFeatureCacheService::class.java)
+    fun getInstance(): PluginFeatureCacheService = service()
   }
 
   var extensions: PluginFeatureMap?

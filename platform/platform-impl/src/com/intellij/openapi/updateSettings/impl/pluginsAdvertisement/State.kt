@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.updateSettings.impl.pluginsAdvertisement
 
 import com.github.benmanes.caffeine.cache.Caffeine
@@ -36,10 +36,7 @@ data class PluginAdvertiserExtensionsData(
   val plugins: Set<PluginData> = emptySet(),
 )
 
-@State(
-  name = "PluginAdvertiserExtensions",
-  storages = [Storage(StoragePathMacros.CACHE_FILE, roamingType = RoamingType.DISABLED)]
-)
+@State(name = "PluginAdvertiserExtensions", storages = [Storage(StoragePathMacros.CACHE_FILE)])
 @Service(Service.Level.APP)
 class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<PluginAdvertiserExtensionsStateService.State>(
   State()
@@ -148,16 +145,13 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
       return false
     }
 
-    val knownExtensions = PluginFeatureCacheService.instance.extensions
+    val knownExtensions = PluginFeatureCacheService.getInstance().extensions
     if (knownExtensions == null) {
       LOG.debug("No known extensions loaded")
       return false
     }
 
-    val compatiblePlugins = requestCompatiblePlugins(
-      extensionOrFileName,
-      knownExtensions[extensionOrFileName]
-    )
+    val compatiblePlugins = requestCompatiblePlugins(extensionOrFileName, knownExtensions.get(extensionOrFileName))
 
     updateCache(extensionOrFileName, compatiblePlugins)
     return true
@@ -204,13 +198,13 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
         return it
       }
 
-      val knownExtensions = PluginFeatureCacheService.instance.extensions
+      val knownExtensions = PluginFeatureCacheService.getInstance().extensions
       if (knownExtensions == null) {
         LOG.debug("No known extensions loaded")
         return null
       }
 
-      val plugin = findEnabledPlugin(knownExtensions[fileName].map { it.pluginIdString }.toSet())
+      val plugin = findEnabledPlugin(knownExtensions.get(fileName).mapTo(HashSet()) { it.pluginIdString })
       if (plugin != null) {
         // Plugin supporting the exact file name is installed and enabled, no advertiser is needed
         return null
@@ -220,7 +214,7 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
       if (pluginsForExactFileName != null && pluginsForExactFileName.plugins.isNotEmpty()) {
         return pluginsForExactFileName
       }
-      if (knownExtensions[fileName].isNotEmpty()) {
+      if (knownExtensions.get(fileName).isNotEmpty()) {
         // there is a plugin that can support the exact file name, but we don't know a compatible version,
         // return null to force request to update cache
         return null
@@ -234,7 +228,7 @@ class PluginAdvertiserExtensionsStateService : SimplePersistentStateComponent<Pl
 
       if (fileType is PlainTextLikeFileType || fileType is DetectedByContentFileType) {
         return fullExtension?.let { cache.getIfPresent(it) }
-               ?: if (fullExtension?.let { knownExtensions[it] }?.isNotEmpty() == true) {
+               ?: if (fullExtension?.let { knownExtensions.get(it) }?.isNotEmpty() == true) {
                  // there is a plugin that can support the file type, but we don't know a compatible version,
                  // return null to force request to update cache
                  null

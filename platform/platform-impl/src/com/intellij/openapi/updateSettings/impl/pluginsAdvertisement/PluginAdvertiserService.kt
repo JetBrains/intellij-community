@@ -24,11 +24,9 @@ import com.intellij.util.containers.MultiMap
 import org.jetbrains.annotations.ApiStatus
 
 open class PluginAdvertiserService {
-
   companion object {
     @JvmStatic
-    val instance: PluginAdvertiserService
-      get() = service()
+    fun getInstance(): PluginAdvertiserService = service()
   }
 
   open fun run(
@@ -41,7 +39,7 @@ open class PluginAdvertiserService {
     val disabledPlugins = HashMap<PluginData, IdeaPluginDescriptor>()
 
     val ids = mutableMapOf<PluginId, PluginData>()
-    val dependencies = PluginFeatureCacheService.instance.dependencies
+    val dependencies = PluginFeatureCacheService.getInstance().dependencies
 
     val ignoredPluginSuggestionState = GlobalIgnoredPluginSuggestionState.getInstance()
     for (feature in unknownFeatures) {
@@ -67,7 +65,7 @@ open class PluginAdvertiserService {
         putFeature(installedPluginData)
       }
       else if (featureType == DEPENDENCY_SUPPORT_FEATURE && dependencies != null) {
-        dependencies[implementationName].forEach { putFeature(it) }
+        dependencies.get(implementationName).forEach(::putFeature)
       }
       else {
         MarketplaceRequests.getInstance()
@@ -317,7 +315,7 @@ open class PluginAdvertiserService {
   fun rescanDependencies(project: Project) {
     val dependencyUnknownFeatures = collectDependencyUnknownFeatures(project).toList()
     if (dependencyUnknownFeatures.isNotEmpty()) {
-      instance.run(
+      getInstance().run(
         project,
         loadPluginsFromCustomRepositories(),
         dependencyUnknownFeatures,

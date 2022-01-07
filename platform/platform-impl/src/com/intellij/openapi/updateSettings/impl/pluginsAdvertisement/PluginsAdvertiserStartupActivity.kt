@@ -19,7 +19,6 @@ import com.intellij.ui.EditorNotifications
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 
 internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
-
   @RequiresBackgroundThread
   fun checkSuggestedPlugins(project: Project, includeIgnored: Boolean) {
     val application = ApplicationManager.getApplication()
@@ -33,11 +32,11 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
       return
     }
 
-    val extensionsService = PluginFeatureCacheService.instance
+    val extensionsService = PluginFeatureCacheService.getInstance()
     val extensions = extensionsService.extensions
 
     val unknownFeatures = UnknownFeaturesCollector.getInstance(project).unknownFeatures.toMutableList()
-    unknownFeatures.addAll(PluginAdvertiserService.instance.collectDependencyUnknownFeatures(project, includeIgnored))
+    unknownFeatures.addAll(PluginAdvertiserService.getInstance().collectDependencyUnknownFeatures(project, includeIgnored))
 
     if (extensions != null && unknownFeatures.isEmpty()) {
       if (includeIgnored) {
@@ -72,7 +71,7 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
         }
       }
       ProgressManager.checkCanceled()
-      PluginAdvertiserService.instance.run(
+      PluginAdvertiserService.getInstance().run(
         project,
         customPlugins,
         unknownFeatures,
