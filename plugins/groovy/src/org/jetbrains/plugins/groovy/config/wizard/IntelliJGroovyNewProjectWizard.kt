@@ -139,6 +139,7 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
         contentEntryPath = FileUtil.toSystemDependentName(contentRoot)
         name = moduleName
         moduleJdk = sdk
+        addGroovySample("src")
         val moduleFile = Paths.get(moduleFileLocation, moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION)
         moduleFilePath = FileUtil.toSystemDependentName(moduleFile.toString())
       }

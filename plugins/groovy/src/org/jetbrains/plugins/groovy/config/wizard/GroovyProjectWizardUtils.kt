@@ -3,7 +3,13 @@
 package org.jetbrains.plugins.groovy.config.wizard
 
 import com.intellij.framework.library.FrameworkLibraryVersion
+import com.intellij.ide.fileTemplates.FileTemplateManager
+import com.intellij.ide.util.projectWizard.ModuleBuilder
+import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.ui.CollectionComboBoxModel
 import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import com.intellij.ui.dsl.builder.Row
@@ -24,6 +30,9 @@ import javax.swing.SwingUtilities
 
 const val GROOVY_SDK_FALLBACK_VERSION = "3.0.9"
 
+private const val MAIN_FILE = "Main.groovy"
+private const val MAIN_GROOVY_TEMPLATE = "template.groovy"
+
 fun Row.groovySdkComboBox(property : GraphProperty<Optional<String>>) {
   comboBox(getInitializedModel(), fallbackAwareRenderer)
     .columns(COLUMNS_MEDIUM)
@@ -37,6 +46,16 @@ fun Row.groovySdkComboBox(property : GraphProperty<Optional<String>>) {
       }
     }
 }
+
+fun ModuleBuilder.createSampleGroovyCodeFile(project: Project, sourceDirectory: VirtualFile) {
+  WriteCommandAction.runWriteCommandAction(project, GroovyBundle.message("new.project.wizard.groovy.creating.main.file"), null,
+     Runnable {
+       val fileTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(MAIN_GROOVY_TEMPLATE)
+       val helloWorldFile = sourceDirectory.createChildData(this, MAIN_FILE)
+       VfsUtil.saveText(helloWorldFile, fileTemplate.text)
+     })
+}
+
 
 private val fallbackAwareRenderer: DefaultListCellRenderer = object : DefaultListCellRenderer() {
   override fun getListCellRendererComponent(list: JList<*>?, value: Any?, index: Int, isSelected: Boolean, cellHasFocus: Boolean): Component {

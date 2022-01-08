@@ -1,7 +1,6 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.plugins.groovy.wizard
 
-import com.intellij.ide.fileTemplates.FileTemplateManager
 import com.intellij.ide.util.EditorHelper
 import com.intellij.ide.util.projectWizard.ModuleWizardStep
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -23,6 +22,7 @@ import org.jetbrains.idea.maven.wizards.MavenStructureWizardStep
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 import org.jetbrains.idea.maven.wizards.SelectPropertiesStep
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils
+import org.jetbrains.plugins.groovy.config.wizard.createSampleGroovyCodeFile
 import java.util.*
 import kotlin.io.path.Path
 import kotlin.io.path.createDirectories
@@ -75,7 +75,7 @@ class MavenGroovyNewProjectBuilder(private val groovySdkVersion : String) : Abst
     val sourceDirectory = VfsUtil.createDirectories(root.path + "/src/main/groovy")
     VfsUtil.createDirectories(root.path + "/src/main/resources")
     VfsUtil.createDirectories(root.path + "/src/test/groovy")
-    createSampleCodeFile(project, sourceDirectory)
+    createSampleGroovyCodeFile(project, sourceDirectory)
 
     MavenProjectsManager.getInstance(project).forceUpdateAllProjectsOrFindAllAvailablePomFiles()
 
@@ -83,17 +83,6 @@ class MavenGroovyNewProjectBuilder(private val groovySdkVersion : String) : Abst
       PsiManager.getInstance(project).findFile(pom)?.let(EditorHelper::openInEditor)
     }
   }
-
-  private fun createSampleCodeFile(project: Project, sourceDirectory: VirtualFile) {
-    WriteCommandAction.runWriteCommandAction(project, MavenWizardBundle.message("maven.new.project.wizard.groovy.creating.main.file"), null,
-       Runnable {
-         val fileTemplate = FileTemplateManager.getInstance(project).getCodeTemplate(MAIN_GROOVY_TEMPLATE)
-         val helloWorldFile = sourceDirectory.createChildData(this, MAIN_FILE)
-         VfsUtil.saveText(helloWorldFile, fileTemplate.text)
-       })
-  }
 }
 
 private const val MAVEN_GROOVY_XML_TEMPLATE = "Maven Groovy.xml"
-private const val MAIN_FILE = "Main.groovy"
-private const val MAIN_GROOVY_TEMPLATE = "template.groovy"
