@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diagnostic;
 
 import com.intellij.CommonBundle;
@@ -43,6 +43,7 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.text.DateFormatUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -139,8 +140,8 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           try {
-            DeveloperList updatedDevelopers = new DeveloperList(ITNProxy.fetchDevelopers(indicator));
-            UIUtil.invokeLaterIfNeeded(() -> {
+            DeveloperList updatedDevelopers = new DeveloperList(ITNProxy.fetchDevelopers(indicator), System.currentTimeMillis());
+            EdtInvocationManager.invokeLaterIfNeeded(() -> {
               configurable.setDeveloperList(updatedDevelopers);
               if (isShowing()) {
                 setDevelopers(updatedDevelopers);
@@ -149,7 +150,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
           }
           catch (SocketTimeoutException e) {
             LOG.debug(e);
-            UIUtil.invokeLaterIfNeeded(() -> {
+            EdtInvocationManager.invokeLaterIfNeeded(() -> {
               if (isShowing()) {
                 setDevelopers(developers);
               }
