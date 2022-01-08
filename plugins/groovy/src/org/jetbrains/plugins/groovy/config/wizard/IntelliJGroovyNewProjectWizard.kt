@@ -7,8 +7,11 @@ import com.intellij.framework.library.FrameworkLibraryVersion
 import com.intellij.framework.library.FrameworkLibraryVersionFilter
 import com.intellij.ide.highlighter.ModuleFileType
 import com.intellij.ide.projectWizard.generators.IntelliJNewProjectWizardStep
+import com.intellij.ide.util.EditorHelper
 import com.intellij.ide.util.projectWizard.ModuleBuilder
 import com.intellij.ide.wizard.NewProjectWizardStep
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.transform
@@ -18,10 +21,13 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.NewLibraryEdito
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory
 import com.intellij.openapi.roots.ui.distribution.*
+import com.intellij.openapi.startup.StartupManager
 import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.io.FileUtil
+import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil
+import com.intellij.psi.PsiManager
 import com.intellij.ui.dsl.builder.*
 import com.intellij.ui.layout.*
 import com.intellij.util.download.DownloadableFileSetVersions
@@ -154,6 +160,16 @@ class IntelliJGroovyNewProjectWizard : BuildSystemGroovyNewProjectWizard {
       })
 
       groovyModuleBuilder.commit(project)
+      StartupManager.getInstance(project).runAfterOpened {
+        val file = LocalFileSystem.getInstance().refreshAndFindFileByPath(groovyModuleBuilder.contentEntryPath + "/src/Main.groovy")
+        if (file != null) {
+          runReadAction {
+            PsiManager.getInstance(project).findFile(file)?.let {
+              ApplicationManager.getApplication().invokeLater { EditorHelper.openInEditor(it) }
+            }
+          }
+        }
+      }
     }
 
     private fun reportFeature() {
