@@ -98,7 +98,7 @@ private object ForceTypeCopySubstitution : TypeSubstitution() {
 }
 
 private fun KotlinType.copyAsSimpleType(): SimpleType = KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
-    annotations,
+    annotations.toDefaultAttributes(),
     constructor,
     arguments,
     isMarkedNullable,
