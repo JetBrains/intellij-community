@@ -127,7 +127,7 @@ private fun KotlinType.approximateNonDynamicFlexibleTypes(
         return AbbreviatedType(it.expandedType, it.abbreviation.approximateNonDynamicFlexibleTypes(preferNotNull))
     }
     return KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
-        annotations,
+        annotations.toDefaultAttributes(),
         constructor,
         arguments.map { it.substitute { type -> type.approximateFlexibleTypes(preferNotNull = true) } },
         isMarkedNullable,

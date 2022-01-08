@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.psi.createExpressionByPattern
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.KotlinTypeFactory
+import org.jetbrains.kotlin.types.TypeAttributes
 import org.jetbrains.kotlin.types.TypeProjectionImpl
 import org.jetbrains.kotlin.types.typeUtil.isSubtypeOf
 
@@ -38,7 +39,7 @@ class ConvertKClassToClassFix(element: KtExpression) : KotlinQuickFixAction<KtEx
             val javaLangClassDescriptor = file.resolveImportReference(JAVA_LANG_CLASS_FQ_NAME)
                 .singleOrNull() as? ClassDescriptor ?: return null
             val javaLangClassType = KotlinTypeFactory.simpleNotNullType(
-                Annotations.EMPTY,
+                TypeAttributes.Empty,
                 javaLangClassDescriptor,
                 listOf(TypeProjectionImpl(expressionTypeArgument))
             )
