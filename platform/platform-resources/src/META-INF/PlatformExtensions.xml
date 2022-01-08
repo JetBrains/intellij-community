@@ -1121,6 +1121,11 @@
         <component>ErrorReportConfigurable</component>
       </components>
     </obsoleteStorage>
+    <obsoleteStorage file="$CACHE_FILE$">
+      <components>
+        <component>KnownExtensionsService</component>
+      </components>
+    </obsoleteStorage>
 
     <obsoleteStorage file="usage.statistics.xml" isProjectLevel="true">
       <components>
