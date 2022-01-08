@@ -3,14 +3,15 @@ package com.intellij.openapi.components.impl.stores;
 
 import com.intellij.application.options.PathMacrosCollector;
 import com.intellij.application.options.PathMacrosImpl;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.CompositePathMacroFilter;
 import com.intellij.openapi.components.PathMacroSubstitutor;
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SmartList;
+import org.jdom.CDATA;
+import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Parent;
 import org.jetbrains.annotations.ApiStatus;
@@ -28,7 +29,7 @@ public final class FileStorageCoreUtil {
 
   public static final String COMPONENT = "component";
   public static final String NAME = "name";
-  public static final String DEFAULT_EXT = PathManager.DEFAULT_EXT;
+  public static final String DEFAULT_EXT = ".xml";
 
   public static @NotNull Map<String, Element> load(@NotNull Element rootElement, @Nullable PathMacroSubstitutor pathMacroSubstitutor) {
     if (pathMacroSubstitutor != null) {
@@ -55,7 +56,7 @@ public final class FileStorageCoreUtil {
       // so, PathMacroFilter can easily find component name (null parent)
       iterator.remove();
 
-      if (pathMacroSubstitutor instanceof TrackingPathMacroSubstitutor) {
+      if (pathMacroSubstitutor instanceof TrackingPathMacroSubstitutor && !isKotlinSerializable(element)) {
         if (filter == null) {
           filter = new CompositePathMacroFilter(PathMacrosCollector.MACRO_FILTER_EXTENSION_POINT_NAME.getExtensionList());
         }
@@ -72,18 +73,25 @@ public final class FileStorageCoreUtil {
     return map;
   }
 
-  @Nullable
-  static String getComponentNameIfValid(@NotNull Element element) {
+  private static boolean isKotlinSerializable(Element element) {
+    if (element.hasAttributes()) {
+      return false;
+    }
+
+    List<Content> content = element.getContent();
+    return content.size() == 1 && content.get(0) instanceof CDATA;
+  }
+
+  static @Nullable String getComponentNameIfValid(@NotNull Element element) {
     String name = element.getAttributeValue(NAME);
-    if (StringUtil.isEmpty(name)) {
+    if (Strings.isEmpty(name)) {
       LOG.warn("No name attribute for component in " + JDOMUtil.writeElement(element));
       return null;
     }
     return name;
   }
 
-  @Nullable
-  public static String findComponentName(@NotNull Element element) {
+  public static @Nullable String findComponentName(@NotNull Element element) {
     Element componentElement = element;
     while (true) {
       Parent parent = componentElement.getParent();
@@ -94,6 +102,6 @@ public final class FileStorageCoreUtil {
       componentElement = (Element)parent;
     }
 
-    return StringUtil.nullize(componentElement.getAttributeValue(NAME));
+    return Strings.nullize(componentElement.getAttributeValue(NAME));
   }
 }

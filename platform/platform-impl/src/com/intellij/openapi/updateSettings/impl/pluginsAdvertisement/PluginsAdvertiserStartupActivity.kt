@@ -89,17 +89,14 @@ internal class PluginsAdvertiserStartupActivity : StartupActivity.Background {
   override fun runActivity(project: Project) {
     checkSuggestedPlugins(project, false)
   }
+}
 
-  companion object {
-    @JvmStatic
-    private fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, featureType: String): Map<String, Set<PluginData>> {
-      val params = mapOf("featureType" to featureType)
-      return MarketplaceRequests.getInstance()
-        .getFeatures(params)
-        .groupBy(
-          { it.implementationName!! },
-          { feature -> feature.toPluginData { customPluginIds.contains(it) } }
-        ).mapValues { it.value.filterNotNull().toSet() }
-    }
-  }
+private fun getFeatureMapFromMarketPlace(customPluginIds: Set<String>, featureType: String): Map<String, MutableSet<PluginData>> {
+  val params = mapOf("featureType" to featureType)
+  return MarketplaceRequests.getInstance()
+    .getFeatures(params)
+    .groupBy(
+      { it.implementationName!! },
+      { feature -> feature.toPluginData { customPluginIds.contains(it) } }
+    ).mapValues { it.value.filterNotNull().toHashSet() }
 }
