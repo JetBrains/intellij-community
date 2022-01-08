@@ -213,7 +213,7 @@ class KtSymbolBasedClassDescriptor(override val ktSymbol: KtNamedClassOrObjectSy
     override fun getDefaultType(): SimpleType {
         val arguments = TypeUtils.getDefaultTypeProjections(typeConstructor.parameters)
         return KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
-            Annotations.EMPTY, typeConstructor, arguments, false,
+            TypeAttributes.Empty, typeConstructor, arguments, false,
             MemberScopeForKtSymbolBasedDescriptors { "ktSymbol = $ktSymbol" }
         )
     }
@@ -263,7 +263,7 @@ class KtSymbolBasedTypeParameterDescriptor(
 
     override fun getDefaultType(): SimpleType =
         KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
-            Annotations.EMPTY, typeConstructor, emptyList(), false,
+            TypeAttributes.Empty, typeConstructor, emptyList(), false,
             MemberScopeForKtSymbolBasedDescriptors { "ktSymbol = $ktSymbol" }
         )
 

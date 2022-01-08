@@ -345,7 +345,7 @@ class TypeInstantiationItems(
     ) : InheritanceItemsSearcher {
 
         private val baseHasTypeArgs = classDescriptor.declaredTypeParameters.isNotEmpty()
-        private val expectedType = KotlinTypeFactory.simpleNotNullType(Annotations.EMPTY, classDescriptor, typeArgs)
+        private val expectedType = KotlinTypeFactory.simpleNotNullType(TypeAttributes.Empty, classDescriptor, typeArgs)
         private val expectedFuzzyType = expectedType.toFuzzyType(freeParameters)
 
         override fun search(nameFilter: (String) -> Boolean, consumer: (LookupElement) -> Unit) {
