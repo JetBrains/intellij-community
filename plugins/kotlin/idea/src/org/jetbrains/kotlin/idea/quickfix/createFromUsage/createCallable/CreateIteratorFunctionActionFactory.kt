@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.psi.KtPsiFactory
 import org.jetbrains.kotlin.types.KotlinTypeFactory
 import org.jetbrains.kotlin.types.TypeProjectionImpl
 import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.types.toDefaultAttributes
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import java.util.*
 
@@ -40,7 +41,7 @@ object CreateIteratorFunctionActionFactory : CreateCallableMemberFromUsageFactor
         val returnJetTypeParameterType = TypeProjectionImpl(returnJetTypeParameterTypes[0])
         val returnJetTypeArguments = Collections.singletonList(returnJetTypeParameterType)
         val newReturnJetType = KotlinTypeFactory.simpleTypeWithNonTrivialMemberScope(
-            returnJetType.annotations,
+            returnJetType.annotations.toDefaultAttributes(),
             returnJetType.constructor,
             returnJetTypeArguments,
             returnJetType.isMarkedNullable,
