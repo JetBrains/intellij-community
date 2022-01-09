@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.ide.IdeBundle;
@@ -34,7 +34,6 @@ import com.intellij.ui.SimpleListCellRenderer;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Consumer;
 import com.intellij.util.IconUtil;
@@ -162,23 +161,23 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   }
 
   private void saveRecent(String path) {
-    List<String> files = new ArrayList<>(Arrays.asList(getRecentFiles()));
+    List<String> files = new ArrayList<>(getRecentFiles());
     files.remove(path);
     files.add(0, path);
     while (files.size() > 30) {
       files.remove(files.size() - 1);
     }
-    PropertiesComponent.getInstance().setValues(RECENT_FILES_KEY, ArrayUtilRt.toStringArray(files));
+    PropertiesComponent.getInstance().setList(RECENT_FILES_KEY, files);
   }
 
-  private String @NotNull [] getRecentFiles() {
-    String[] array = PropertiesComponent.getInstance().getValues(RECENT_FILES_KEY);
+  private @NotNull List<String> getRecentFiles() {
+    List<String> array = PropertiesComponent.getInstance().getList(RECENT_FILES_KEY);
     if (array == null) {
-      return ArrayUtil.EMPTY_STRING_ARRAY;
+      return Collections.emptyList();
     }
 
-    if (array.length > 0 && myPathTextField != null && myPathTextField.getField().getText().replace('\\', '/').equals(array[0])) {
-      return Arrays.copyOfRange(array, 1, array.length);
+    if (array.size() > 0 && myPathTextField != null && myPathTextField.getField().getText().replace('\\', '/').equals(array.get(0))) {
+      return array.subList(1, array.size());
     }
     return array;
   }
@@ -239,7 +238,7 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
       toolbarPanel.add(extraToolbarPanel, BorderLayout.SOUTH);
     }
 
-    myPath = new ComboBox<>(getRecentFiles());
+    myPath = new ComboBox<>(getRecentFiles().toArray(ArrayUtilRt.EMPTY_STRING_ARRAY));
     myPath.setEditable(true);
     myPath.setRenderer(SimpleListCellRenderer.create((var label, @NlsContexts.Label var value, var index) -> {
           label.setText(value);
@@ -620,15 +619,15 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
   private void selectInTree(VirtualFile[] array, boolean requestFocus, boolean updatePathNeeded) {
     myTreeIsUpdating = true;
     final List<VirtualFile> fileList = Arrays.asList(array);
-    if (!Arrays.asList(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
+    if (!Set.of(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
       myFileSystemTree.select(array, () -> {
-        if (!myFileSystemTree.areHiddensShown() && !Arrays.asList(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
+        if (!myFileSystemTree.areHiddensShown() && !Set.of(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
           // try to select files in hidden folders
           myFileSystemTree.showHiddens(true);
           selectInTree(array, requestFocus, updatePathNeeded);
           return;
         }
-        if (array.length == 1 && !Arrays.asList(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
+        if (array.length == 1 && !Set.of(myFileSystemTree.getSelectedFiles()).containsAll(fileList)) {
           // try to select a parent of a missed file
           VirtualFile parent = array[0].getParent();
           if (parent != null && parent.isValid()) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.keymap.impl;
 
 import com.intellij.execution.ExecutionException;
@@ -24,7 +24,6 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
-import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -484,22 +483,22 @@ public final class SystemShortcuts {
         return;
       }
       myMutedActions = new HashSet<>();
-      final String[] muted = PropertiesComponent.getInstance().getValues(MUTED_ACTIONS_KEY);
+      List<String> muted = PropertiesComponent.getInstance().getList(MUTED_ACTIONS_KEY);
       if (muted != null) {
-        Collections.addAll(myMutedActions, muted);
+        myMutedActions.addAll(muted);
       }
     }
 
     void addMutedAction(@NotNull String actId) {
       init();
       myMutedActions.add(actId);
-      PropertiesComponent.getInstance().setValues(MUTED_ACTIONS_KEY, ArrayUtilRt.toStringArray(myMutedActions));
+      PropertiesComponent.getInstance().setList(MUTED_ACTIONS_KEY, myMutedActions);
     }
 
     void removeMutedAction(@NotNull String actId) {
       init();
       myMutedActions.remove(actId);
-      PropertiesComponent.getInstance().setValues(MUTED_ACTIONS_KEY, ArrayUtilRt.toStringArray(myMutedActions));
+      PropertiesComponent.getInstance().setList(MUTED_ACTIONS_KEY, myMutedActions);
     }
 
     public boolean isMutedAction(@NotNull String actionId) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.fileChooser.impl;
 
 import com.intellij.ide.IdeBundle;
@@ -177,18 +177,18 @@ final class NewFileChooserDialogImpl extends DialogWrapper implements FileChoose
   }
 
   private static Stream<String> recentPaths() {
-    String[] values = PropertiesComponent.getInstance().getValues(RECENT_FILES_KEY);
-    return values != null ? Stream.of(values) : Stream.empty();
+    List<String> values = PropertiesComponent.getInstance().getList(RECENT_FILES_KEY);
+    return values != null ? values.stream() : Stream.empty();
   }
 
   private static void updateRecentPaths(VirtualFile file) {
     if (file.isInLocalFileSystem()) {
-      String[] newValues = Stream.concat(Stream.of(file.getPath()), recentPaths())
+      List<String> newValues = Stream.concat(Stream.of(file.getPath()), recentPaths())
         .filter(p -> NioFiles.toPath(p) != null)
         .distinct()
         .limit(RECENT_FILES_LIMIT)
-        .toArray(String[]::new);
-      PropertiesComponent.getInstance().setValues(RECENT_FILES_KEY, newValues);
+        .collect(Collectors.toList());
+      PropertiesComponent.getInstance().setList(RECENT_FILES_KEY, newValues);
     }
   }
 

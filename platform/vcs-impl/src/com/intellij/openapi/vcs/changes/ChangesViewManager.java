@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.openapi.vcs.changes;
 
@@ -204,7 +204,7 @@ public class ChangesViewManager implements ChangesViewEx,
 
   private void migrateShowFlattenSetting() {
     if (!myState.myShowFlatten) {
-      myState.groupingKeys = set(DEFAULT_GROUPING_KEYS);
+      myState.groupingKeys = Set.copyOf(DEFAULT_GROUPING_KEYS);
       myState.myShowFlatten = true;
     }
   }

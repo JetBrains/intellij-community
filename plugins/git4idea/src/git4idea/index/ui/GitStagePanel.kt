@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.index.ui
 
 import com.intellij.dvcs.ui.RepositoryChangesBrowserNode
@@ -364,13 +364,13 @@ internal class GitStagePanel(private val tracker: GitStageTracker,
     override fun installGroupingSupport(): ChangesGroupingSupport {
       val result = ChangesGroupingSupport(project, this, false)
 
-      if (PropertiesComponent.getInstance(project).getValues(GROUPING_PROPERTY_NAME) == null) {
-        val oldGroupingKeys = (PropertiesComponent.getInstance(project).getValues(GROUPING_KEYS) ?: DEFAULT_GROUPING_KEYS).toMutableSet()
+      if (PropertiesComponent.getInstance(project).getList(GROUPING_PROPERTY_NAME) == null) {
+        val oldGroupingKeys = (PropertiesComponent.getInstance(project).getList(GROUPING_KEYS) ?: DEFAULT_GROUPING_KEYS).toMutableSet()
         oldGroupingKeys.add(REPOSITORY_GROUPING)
-        PropertiesComponent.getInstance(project).setValues(GROUPING_PROPERTY_NAME, *oldGroupingKeys.toTypedArray())
+        PropertiesComponent.getInstance(project).setList(GROUPING_PROPERTY_NAME, oldGroupingKeys.toList())
       }
 
-      installGroupingSupport(this, result, GROUPING_PROPERTY_NAME, *DEFAULT_GROUPING_KEYS + REPOSITORY_GROUPING)
+      installGroupingSupport(this, result, GROUPING_PROPERTY_NAME, DEFAULT_GROUPING_KEYS + REPOSITORY_GROUPING)
       return result
     }
 

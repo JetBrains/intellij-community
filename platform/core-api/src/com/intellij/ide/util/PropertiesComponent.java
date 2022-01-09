@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * Allows simple persistence of application/project-level values.
@@ -60,9 +62,26 @@ public abstract class PropertiesComponent {
    */
   public abstract void setValue(@NonNls @NotNull String name, boolean value, boolean defaultValue);
 
+  /**
+   * @deprecated Use {@link #getList(String)}
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  @Deprecated
   public abstract String @Nullable [] getValues(@NonNls @NotNull String name);
 
+  /**
+   * @deprecated Use {@link #getList(String)}
+   */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2022.3")
+  @Deprecated
   public abstract void setValues(@NonNls @NotNull String name, String[] values);
+
+  public abstract @Nullable List<String> getList(@NonNls @NotNull String name);
+
+  /**
+   * The passed collection will be copied.
+   */
+  public abstract void setList(@NonNls @NotNull String name, @Nullable Collection<String> values);
 
   /**
    * Returns the project-level instance.

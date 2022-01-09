@@ -1066,6 +1066,11 @@
         <component>PluginAdvertiserExtensions</component>
       </components>
     </obsoleteStorage>
+    <obsoleteStorage file="other.xml">
+      <components>
+        <component>PropertiesComponent</component>
+      </components>
+    </obsoleteStorage>
     <obsoleteStorage file="menu.item.text.update.xml">
       <components>
         <component>ActionMenuItemUpdateCollector</component>
