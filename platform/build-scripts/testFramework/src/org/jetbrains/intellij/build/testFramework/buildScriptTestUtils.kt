@@ -14,6 +14,7 @@ import org.jetbrains.intellij.build.impl.TracerProviderManager
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.junit.AssumptionViolatedException
 import java.net.http.HttpConnectTimeoutException
+import org.jetbrains.intellij.build.testFramework.binaryReproducibility.BuildArtifactsReproducibilityTest
 import java.nio.file.Files
 import java.nio.file.NoSuchFileException
 import java.nio.file.Path
@@ -42,7 +43,13 @@ fun createBuildContext(
   options.buildStepsToSkip.addAll(listOf(
     BuildOptions.getTEAMCITY_ARTIFACTS_PUBLICATION(),
     BuildOptions.OS_SPECIFIC_DISTRIBUTIONS_STEP,
+    BuildOptions.LINUX_TAR_GZ_WITHOUT_BUNDLED_JRE_STEP,
+    BuildOptions.WIN_SIGN_STEP,
+    BuildOptions.MAC_SIGN_STEP,
   ))
+  options.buildDmgWithBundledJre = false
+  options.buildDmgWithoutBundledJre = false
+  options.buildUnixSnaps = false
   options.outputRootPath = FileUtil.createTempDirectory("test-build-${productProperties.baseFileName}", null, false).absolutePath
   options.isUseCompiledClassesFromProjectOutput = true
   options.compilationLogEnabled = false
@@ -56,8 +63,38 @@ fun runTestBuild(
   buildTools: ProprietaryBuildTools = ProprietaryBuildTools.DUMMY,
   communityHomePath: String = "$homePath/community",
   traceSpanName: String? = null,
-  verifier: (paths: BuildPaths) -> Unit = {},
-  buildOptionsCustomizer: (BuildOptions) -> Unit = {},
+  onFinish: (context: BuildContext) -> Unit = {},
+  buildOptionsCustomizer: (BuildOptions) -> Unit = {}
+) {
+  val buildArtifactsReproducibilityTest = BuildArtifactsReproducibilityTest()
+  if (!buildArtifactsReproducibilityTest.isEnabled) {
+    testBuild(homePath, productProperties, buildTools, communityHomePath, traceSpanName, onFinish, buildOptionsCustomizer)
+  }
+  else {
+    testBuild(homePath, productProperties, buildTools, communityHomePath, traceSpanName, buildOptionsCustomizer = {
+      buildOptionsCustomizer(it)
+      buildArtifactsReproducibilityTest.configure(it)
+    }, onFinish = { firstIteration ->
+      onFinish(firstIteration)
+      testBuild(homePath, productProperties, buildTools, communityHomePath, traceSpanName, buildOptionsCustomizer = {
+        buildOptionsCustomizer(it)
+        buildArtifactsReproducibilityTest.configure(it)
+      }, onFinish = { nextIteration ->
+        onFinish(nextIteration)
+        buildArtifactsReproducibilityTest.compare(firstIteration, nextIteration)
+      })
+    })
+  }
+}
+
+private fun testBuild(
+  homePath: String,
+  productProperties: ProductProperties,
+  buildTools: ProprietaryBuildTools,
+  communityHomePath: String,
+  traceSpanName: String?,
+  onFinish: (context: BuildContext) -> Unit,
+  buildOptionsCustomizer: (BuildOptions) -> Unit,
 ) {
   val buildContext = createBuildContext(
     homePath = homePath,
@@ -71,14 +108,15 @@ fun runTestBuild(
   runTestBuild(
     buildContext = buildContext,
     traceSpanName = traceSpanName,
-    verifier = verifier,
+    onFinish = onFinish,
   )
 }
 
+// FIXME: test reproducibility
 fun runTestBuild(
   buildContext: BuildContext,
   traceSpanName: String? = null,
-  verifier: (paths: BuildPaths) -> Unit = {},
+  onFinish: (context: BuildContext) -> Unit = {},
 ) {
   initializeTracer
 
@@ -96,7 +134,7 @@ fun runTestBuild(
     val messages = buildContext.messages as BuildMessagesImpl
     try {
       BuildTasks.create(buildContext).runTestBuild()
-      verifier(buildContext.paths)
+      onFinish(buildContext)
     }
     catch (e: Throwable) {
       if (e !is FileComparisonFailure) {
