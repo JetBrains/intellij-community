@@ -9,6 +9,8 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import org.jdom.CDATA
 import org.jdom.Element
+import java.lang.invoke.MethodHandles
+import java.lang.invoke.MethodType
 
 @OptIn(ExperimentalSerializationApi::class)
 private val json = Json {
@@ -17,7 +19,22 @@ private val json = Json {
   ignoreUnknownKeys = true
 }
 
-internal class KotlinxSerializationBinding(private val serializer: KSerializer<Any>) : NotNullDeserializeBinding() {
+private val lookup = MethodHandles.lookup()
+private val kotlinMethodType = MethodType.methodType(KSerializer::class.java)
+
+internal class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializeBinding() {
+  private val serializer: KSerializer<Any>
+
+  init {
+    // don't use official `::kotlin.get().serializer()` API — avoid kotlin refection wrapper creation
+    // findStaticGetter cannot be used because type of Companion not used
+    val field = aClass.getDeclaredField("Companion")
+    field.isAccessible = true
+    val companion = lookup.unreflectGetter(field).invoke()
+    @Suppress("UNCHECKED_CAST")
+    serializer = lookup.findVirtual(companion.javaClass, "serializer", kotlinMethodType).invoke(companion) as KSerializer<Any>
+  }
+
   override fun serialize(o: Any, context: Any?, filter: SerializationFilter?): Any {
     val element = Element("state")
     element.addContent(CDATA(json.encodeToString(serializer, o)))

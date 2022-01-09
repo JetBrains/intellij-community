@@ -10,9 +10,7 @@ import com.intellij.serialization.xml.KotlinAwareBeanBinding
 import com.intellij.serialization.xml.KotlinxSerializationBinding
 import com.intellij.util.io.URLUtil
 import com.intellij.util.xmlb.*
-import kotlinx.serialization.InternalSerializationApi
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.serializer
 import org.jdom.Element
 import org.jdom.JDOMException
 import org.jetbrains.annotations.TestOnly
@@ -172,14 +170,12 @@ private abstract class OldBindingProducer<ROOT_BINDING> {
 }
 
 private class MyXmlSerializer : XmlSerializerImpl.XmlSerializerBase() {
-  @OptIn(InternalSerializationApi::class)
   val bindingProducer = object : OldBindingProducer<Binding>() {
     override fun createRootBinding(aClass: Class<*>, type: Type, cacheKey: Type, map: MutableMap<Type, Binding>): Binding {
       var binding = createClassBinding(aClass, null, type)
       if (binding == null) {
         if (aClass.isAnnotationPresent(Serializable::class.java)) {
-          @Suppress("UNCHECKED_CAST")
-          binding = KotlinxSerializationBinding((aClass as Class<Any>)::kotlin.get().serializer())
+          binding = KotlinxSerializationBinding(aClass)
         }
         else {
           binding = KotlinAwareBeanBinding(aClass)
