@@ -19,23 +19,27 @@ class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
   override val languageProperty by ::stepProperty
   override var language by ::step
 
-  override var additionalStepPlugins = mapOf(
-    "Go" to "org.jetbrains.plugins.go",
-    "Ruby" to "org.jetbrains.plugins.ruby",
-    "PHP" to "com.jetbrains.php",
-    "Python" to "com.intellij.python",
-    "Scala" to "org.intellij.scala"
-  )
+  override var additionalStepPlugins = defaultLanguages
 
   init {
     data.putUserData(LanguageNewProjectWizardData.KEY, this)
     languageProperty.afterChange {
-      NewProjectWizardCollector.logLanguageChanged(context, this::class.java)
+      NewProjectWizardCollector.logLanguageChanged(context, step)
     }
   }
 
   override fun setupProject(project: Project) {
     super.setupProject(project)
-    logLanguageFinished(context, this::class.java)
+    logLanguageFinished(context, step)
+  }
+
+  companion object {
+    val defaultLanguages = mapOf(
+      "Go" to "org.jetbrains.plugins.go",
+      "Ruby" to "org.jetbrains.plugins.ruby",
+      "PHP" to "com.jetbrains.php",
+      "Python" to "com.intellij.python",
+      "Scala" to "org.intellij.scala"
+    )
   }
 }
