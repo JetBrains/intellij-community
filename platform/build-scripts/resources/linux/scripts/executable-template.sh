@@ -133,6 +133,13 @@ else
   message "Cannot find a VM options file"
 fi
 
+# ---------------------------------------------------------------------
+# Make application work on wayland
+# ---------------------------------------------------------------------
+if [ -z "${_JAVA_AWT_WM_NONREPARENTIN+x}" ] && [ "$XDG_SESSION_TYPE" = "wayland" ]; then
+  export _JAVA_AWT_WM_NONREPARENTING=1
+fi
+
 __class_path__
 
 # ---------------------------------------------------------------------
