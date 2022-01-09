@@ -102,7 +102,7 @@ final class FileTypeDetectionService implements Disposable {
       onDetectorsChange();
     }, this);
 
-    String prevDetectors = PropertiesComponent.getInstance().getValue(FILE_TYPE_DETECTORS_PROPERTY);
+    List<String> prevDetectors = PropertiesComponent.getInstance().getList(FILE_TYPE_DETECTORS_PROPERTY);
     if (!Objects.equals(prevDetectors, getDetectorsString())) {
       onDetectorsChange();
     }
@@ -199,15 +199,14 @@ final class FileTypeDetectionService implements Disposable {
     myFileTypeManager.log(s);
   }
 
-  @NotNull
-  FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content) {
+  @NotNull FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content) {
     return getOrDetectFromContent(file, content, myCanUseCachedDetectedFileType);
   }
-  @NotNull
-  FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content, boolean useCache) {
+
+  @NotNull FileType getOrDetectFromContent(@NotNull VirtualFile file, byte @Nullable [] content, boolean useCache) {
     if (!isDetectable(file)) {
       if (myFileTypeManager.getFileTypeByFileName(file.getName()) == DetectedByContentFileType.INSTANCE) {
-        //allow to open empty file in IDEA's editor
+        // allow opening empty file in IDEA's editor
         return DetectedByContentFileType.INSTANCE;
       }
       if (ScratchUtil.isScratch(file)) {
@@ -307,14 +306,14 @@ final class FileTypeDetectionService implements Disposable {
 
   private void onDetectorsChange() {
     clearCaches();
-    PropertiesComponent.getInstance().setValue(FILE_TYPE_DETECTORS_PROPERTY, getDetectorsString());
+    PropertiesComponent.getInstance().setList(FILE_TYPE_DETECTORS_PROPERTY, getDetectorsString());
   }
 
-  private static String getDetectorsString() {
+  private static @NotNull List<String> getDetectorsString() {
     return FileTypeRegistry.FileTypeDetector.EP_NAME.extensions()
       .map(detector -> detector.getClass().getName())
       .sorted()
-      .collect(Collectors.joining(":"));
+      .collect(Collectors.toList());
   }
 
   @Override
