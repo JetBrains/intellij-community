@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.impl.compilation
 
 import com.google.gson.Gson
@@ -45,7 +45,6 @@ import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 import java.util.function.Consumer
 import java.util.function.Predicate
-import java.util.zip.GZIPOutputStream
 
 @CompileStatic
 class CompilationPartsUtil {
@@ -280,18 +279,12 @@ class CompilationPartsUtil {
 
     executor.reportErrors(messages)
 
+
     // Save and publish metadata file
     def metadataFile = new File("$zipsLocation/metadata.json")
     FileUtil.writeToFile(metadataFile, metadataJson)
-    messages.artifactBuilt(metadataFile.absolutePath)
 
-    def gzippedMetadataFile = new File(zipsLocation, "metadata.json.gz")
-    new GZIPOutputStream(gzippedMetadataFile.newOutputStream()).use { OutputStream outputStream ->
-      metadataFile.newInputStream().use { InputStream inputStream ->
-        FileUtil.copy(inputStream, outputStream)
-      }
-    }
-    messages.artifactBuilt(gzippedMetadataFile.absolutePath)
+    messages.artifactBuilt(metadataFile.absolutePath)
   }
 
   static void fetchAndUnpackCompiledClasses(BuildMessages messages, File classesOutput, BuildOptions options) {
