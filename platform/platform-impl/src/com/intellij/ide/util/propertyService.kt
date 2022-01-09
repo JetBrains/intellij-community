@@ -1,68 +1,58 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet")
+@file:Suppress("ReplacePutWithAssignment", "ReplaceGetOrSet", "ReplaceJavaStaticMethodWithKotlinAnalog")
 
 package com.intellij.ide.util
 
-import com.intellij.openapi.components.*
-import com.intellij.openapi.diagnostic.logger
-import org.jdom.Element
-import org.jdom.Verifier
+import com.intellij.openapi.components.PersistentStateComponentWithModificationTracker
+import com.intellij.openapi.components.State
+import com.intellij.openapi.components.Storage
+import com.intellij.openapi.components.StoragePathMacros
+import com.intellij.openapi.util.SimpleModificationTracker
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
+import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.function.BiConsumer
 import java.util.function.Predicate
 
-private val LOG = logger<BasePropertyService>()
-
-private const val ELEMENT_PROPERTY = "property"
-private const val ATTRIBUTE_NAME = "name"
-private const val ATTRIBUTE_VALUE = "value"
-
 @Internal
-sealed class BasePropertyService : PropertiesComponent(), PersistentStateComponent<Element?> {
-  private val keyToValue = ConcurrentHashMap<String, String>()
+sealed class BasePropertyService : PropertiesComponent(), PersistentStateComponentWithModificationTracker<BasePropertyService.MyState> {
+  private val tracker = SimpleModificationTracker()
+
+  @kotlinx.serialization.Serializable
+  data class MyState(
+    val keyToString: Map<String, String> = emptyMap(),
+    val keyToStringList: Map<String, List<String>> = emptyMap()
+  )
+
+  private val keyToString = ConcurrentHashMap<String, String>()
+  private val keyToStringList = ConcurrentHashMap<String, List<String>>()
+
+  override fun getStateModificationCount() = tracker.modificationCount
 
   fun removeIf(predicate: Predicate<String>) {
-    keyToValue.keys.removeIf(predicate)
+    keyToString.keys.removeIf(predicate)
   }
 
-  fun forEach(consumer: BiConsumer<String, String>) {
-    keyToValue.forEach(consumer)
+  fun forEachPrimitiveValue(consumer: BiConsumer<String, String>) {
+    keyToString.forEach(consumer)
   }
 
   private fun doPut(key: String, value: String) {
-    Verifier.checkCharacterData(key)?.let(LOG::error)
-    if (keyToValue.put(key, value) !== value) {
-      incModificationCount()
+    if (keyToString.put(key, value) !== value) {
+      tracker.incModificationCount()
     }
   }
 
-  override fun getState(): Element? {
-    val parentNode = Element("state")
-    val keys = ArrayList<String>(keyToValue.keys)
-    keys.sort()
-    for (key in keys) {
-      val value = keyToValue.get(key)
-      if (value != null) {
-        val element = Element(ELEMENT_PROPERTY)
-        element.setAttribute(ATTRIBUTE_NAME, key)
-        element.setAttribute(ATTRIBUTE_VALUE, value)
-        parentNode.addContent(element)
-      }
-    }
-    return parentNode
+  override fun getState() = if (keyToString.isEmpty()) MyState(emptyMap()) else MyState(TreeMap(keyToString))
+
+  override fun loadState(state: MyState) {
+    keyToString.clear()
+    keyToString.putAll(state.keyToString)
+    keyToStringList.putAll(state.keyToStringList)
   }
 
-  override fun loadState(parentNode: Element) {
-    keyToValue.clear()
-    for (e in parentNode.getChildren(ELEMENT_PROPERTY)) {
-      val name = e.getAttributeValue(ATTRIBUTE_NAME) ?: continue
-      keyToValue.put(name, e.getAttributeValue(ATTRIBUTE_VALUE) ?: continue)
-    }
-  }
-
-  override fun getValue(name: String): String? = keyToValue.get(name)
+  override fun getValue(name: String): String? = keyToString.get(name)
 
   override fun setValue(name: String, value: String?) {
     if (value == null) {
@@ -110,28 +100,39 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
   }
 
   override fun unsetValue(name: String) {
-    if (keyToValue.remove(name) != null) {
-      incModificationCount()
+    if (keyToString.remove(name) != null) {
+      tracker.incModificationCount()
     }
   }
 
-  override fun isValueSet(name: String) = keyToValue.containsKey(name)
+  override fun isValueSet(name: String) = keyToString.containsKey(name)
 
-  override fun getValues(name: @NonNls String): Array<String>? {
-    return getValue(name)?.split("\n")?.dropLastWhile { it.isEmpty() }?.toTypedArray()
-  }
+  override fun getValues(name: @NonNls String) = getList(name)?.toTypedArray()
 
   override fun setValues(name: @NonNls String, values: Array<String>?) {
-    if (values == null) {
-      setValue(name, null)
+    if (values.isNullOrEmpty()) {
+      unsetValue(name)
     }
     else {
-      setValue(name, values.joinToString(separator = "\n"))
+      keyToStringList.put(name, java.util.List.of(*values))
+      tracker.incModificationCount()
+    }
+  }
+
+  override fun getList(name: String) = keyToStringList.get(name)
+
+  override fun setList(name: String, values: MutableCollection<String>?) {
+    if (values.isNullOrEmpty()) {
+      unsetValue(name)
+    }
+    else {
+      keyToStringList.put(name, java.util.List.copyOf(values))
+      tracker.incModificationCount()
     }
   }
 }
 
-@State(name = "PropertiesComponent", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)])
+@State(name = "PropertyService", storages = [Storage(value = StoragePathMacros.CACHE_FILE)])
 internal class AppPropertyService : BasePropertyService()
 
 @State(name = "PropertiesComponent", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
