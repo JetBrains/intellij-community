@@ -7,20 +7,29 @@ import com.intellij.openapi.components.*
 import com.intellij.openapi.diagnostic.logger
 import org.jdom.Element
 import org.jdom.Verifier
+import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.util.concurrent.ConcurrentHashMap
+import java.util.function.BiConsumer
+import java.util.function.Predicate
 
-private val LOG = logger<PropertiesComponentImpl>()
+private val LOG = logger<BasePropertyService>()
 
 private const val ELEMENT_PROPERTY = "property"
 private const val ATTRIBUTE_NAME = "name"
 private const val ATTRIBUTE_VALUE = "value"
 
-sealed class PropertiesComponentImpl : PropertiesComponent(), PersistentStateComponent<Element?> {
+@Internal
+sealed class BasePropertyService : PropertiesComponent(), PersistentStateComponent<Element?> {
   private val keyToValue = ConcurrentHashMap<String, String>()
 
-  val keys: Set<String>
-    get() = keyToValue.keys
+  fun removeIf(predicate: Predicate<String>) {
+    keyToValue.keys.removeIf(predicate)
+  }
+
+  fun forEach(consumer: BiConsumer<String, String>) {
+    keyToValue.forEach(consumer)
+  }
 
   private fun doPut(key: String, value: String) {
     Verifier.checkCharacterData(key)?.let(LOG::error)
@@ -122,8 +131,8 @@ sealed class PropertiesComponentImpl : PropertiesComponent(), PersistentStateCom
   }
 }
 
-@State(name = "PropertiesComponent", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
-internal class ProjectPropertiesComponentImpl : PropertiesComponentImpl()
-
 @State(name = "PropertiesComponent", storages = [Storage(value = StoragePathMacros.NON_ROAMABLE_FILE, roamingType = RoamingType.DISABLED)])
-internal class AppPropertiesComponentImpl : PropertiesComponentImpl()
+internal class AppPropertyService : BasePropertyService()
+
+@State(name = "PropertiesComponent", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
+internal class ProjectPropertyService : BasePropertyService()

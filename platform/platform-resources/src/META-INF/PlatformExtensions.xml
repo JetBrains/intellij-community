@@ -78,7 +78,9 @@
 
     <!-- FileTypeManagerImpl wants PropertiesComponent -->
     <applicationService serviceInterface="com.intellij.ide.util.PropertiesComponent"
-                        serviceImplementation="com.intellij.ide.util.AppPropertiesComponentImpl" preload="true"/>
+                        serviceImplementation="com.intellij.ide.util.AppPropertyService" preload="true"/>
+    <projectService serviceInterface="com.intellij.ide.util.PropertiesComponent"
+                    serviceImplementation="com.intellij.ide.util.ProjectPropertyService"/>
 
     <applicationService serviceInterface="com.intellij.openapi.fileTypes.FileTypeManager"
                         serviceImplementation="com.intellij.openapi.fileTypes.impl.FileTypeManagerImpl" preload="true"/>
