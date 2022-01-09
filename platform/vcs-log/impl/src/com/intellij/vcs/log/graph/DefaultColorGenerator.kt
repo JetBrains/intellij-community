@@ -1,51 +1,46 @@
 // Copyright 2000-2019 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.vcs.log.graph;
+package com.intellij.vcs.log.graph
 
-import com.intellij.ui.JBColor;
-import com.intellij.vcs.log.paint.ColorGenerator;
-import org.jetbrains.annotations.NotNull;
-
-import java.awt.*;
-import java.util.HashMap;
-import java.util.Map;
+import com.intellij.ui.JBColor
+import com.intellij.vcs.log.paint.ColorGenerator
+import java.awt.Color
+import kotlin.math.abs
 
 /**
  * @author erokhins
  */
-public class DefaultColorGenerator implements ColorGenerator {
-
-  private static final Map<Integer, JBColor> ourColorMap = new HashMap<>();
-
-  static {
-    ourColorMap.put(GraphColorManagerImpl.DEFAULT_COLOR, JBColor.BLACK);
-  }
-
-  @NotNull
-  @Override
-  public JBColor getColor(int branchNumber) {
-    JBColor color = ourColorMap.get(branchNumber);
+class DefaultColorGenerator : ColorGenerator {
+  override fun getColor(branchNumber: Int): JBColor {
+    var color = ourColorMap[branchNumber]
     if (color == null) {
-      color = calcColor(branchNumber);
-      ourColorMap.put(branchNumber, color);
+      color = calcColor(branchNumber)
+      ourColorMap[branchNumber] = color
     }
-    return color;
+    return color
   }
 
-  private static int rangeFix(int n) {
-    return Math.abs(n % 100) + 70;
-  }
+  companion object {
+    private val ourColorMap: MutableMap<Int, JBColor> = HashMap()
 
-  @NotNull
-  private static JBColor calcColor(int indexColor) {
-    int r = indexColor * 200 + 30;
-    int g = indexColor * 130 + 50;
-    int b = indexColor * 90 + 100;
-    try {
-      Color color = new Color(rangeFix(r), rangeFix(g), rangeFix(b));
-      return new JBColor(color, color);
+    init {
+      ourColorMap[GraphColorManagerImpl.DEFAULT_COLOR] = JBColor.BLACK
     }
-    catch (IllegalArgumentException a) {
-      throw new IllegalArgumentException("indexColor: " + indexColor + " " + r % 256 + " " + (g % 256) + " " + (b % 256));
+
+    private fun rangeFix(n: Int): Int {
+      return abs(n % 100) + 70
+    }
+
+    private fun calcColor(indexColor: Int): JBColor {
+      val r = indexColor * 200 + 30
+      val g = indexColor * 130 + 50
+      val b = indexColor * 90 + 100
+      return try {
+        val color = Color(rangeFix(r), rangeFix(g), rangeFix(b))
+        JBColor(color, color)
+      }
+      catch (a: IllegalArgumentException) {
+        throw IllegalArgumentException("indexColor: $indexColor ${r % 256} ${g % 256} ${b % 256}")
+      }
     }
   }
 }
