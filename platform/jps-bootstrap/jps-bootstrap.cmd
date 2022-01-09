@@ -24,6 +24,13 @@ if not exist "%JVM_TARGET_DIR%" MD "%JVM_TARGET_DIR%"
 
 if not exist "%JVM_TARGET_DIR%.flag" goto downloadAndExtractJvm
 
+set JAVA_HOME=
+for /d %%d in ("%_JVM_TARGET_DIR%"*) do if exist "%%d\bin\java.exe" set JAVA_HOME=%%d
+if not exist "%JAVA_HOME%\bin\java.exe" (
+  echo WARN Unable to find java.exe under %JVM_TARGET_DIR%
+  goto downloadAndExtractJvm
+)
+
 set /p CURRENT_FLAG=<"%JVM_TARGET_DIR%.flag"
 if "%CURRENT_FLAG%" == "%JVM_URL%" goto continueWithJvm
 
