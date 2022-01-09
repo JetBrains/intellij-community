@@ -1171,6 +1171,9 @@
     <projectService serviceInterface="com.intellij.execution.ExecutionTargetManager" serviceImplementation="com.intellij.execution.ExecutionTargetManagerImpl"/>
 
     <projectService serviceInterface="com.intellij.execution.dashboard.RunDashboardManager" serviceImplementation="com.intellij.execution.dashboard.RunDashboardManagerImpl"/>
+
+    <notificationGroup id="JDK Update Error" displayType="STICKY_BALLOON" bundle="messages.LangBundle" key="notification.group.jdk.update.error"/>
+    <notificationGroup id="ColorSchemeDrop" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Services Tool Window" displayType="STICKY_BALLOON" isLogByDefault="false"
                        notificationIds="run.dashboard.multiple.run.configurations"/>
     <projectService serviceInterface="com.intellij.execution.services.ServiceViewManager" serviceImplementation="com.intellij.execution.services.ServiceViewManagerImpl"/>

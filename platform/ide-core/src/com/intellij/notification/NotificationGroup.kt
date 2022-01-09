@@ -208,6 +208,7 @@ class NotificationGroup private constructor(val displayId: String,
       findRegisteredGroup(displayId)?.title ?: registeredTitles[displayId]
 
     @JvmStatic
+    @Deprecated("Use `<notificationGroup>` extension point to register notification groups")
     fun createIdWithTitle(displayId: String, @NotificationTitle title: String): String {
       val oldTitle = registeredTitles.put(displayId, title)
       if (oldTitle != null && oldTitle != title) {

@@ -16,6 +16,7 @@ import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.internal.inspector.UiInspectorAction
 import com.intellij.notification.Notification
 import com.intellij.notification.NotificationGroup
+import com.intellij.notification.NotificationGroupManager
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.Application
@@ -261,7 +262,7 @@ private fun reportPluginErrors() {
   ApplicationManager.getApplication().invokeLater({
     val title = IdeBundle.message("title.plugin.error")
     val content = HtmlBuilder().appendWithSeparators(HtmlChunk.p(), pluginErrors).toString()
-    Notification(NotificationGroup.createIdWithTitle("Plugin Error", title), title, content, NotificationType.ERROR)
+    NotificationGroupManager.getInstance().getNotificationGroup("Plugin Error").createNotification(title, content, NotificationType.ERROR)
       .setListener { notification, event ->
         notification.expire()
         PluginManagerMain.onEvent(event.description)

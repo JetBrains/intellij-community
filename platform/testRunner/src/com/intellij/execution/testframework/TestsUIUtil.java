@@ -4,6 +4,7 @@ package com.intellij.execution.testframework;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.Location;
 import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationGroupManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -27,7 +28,7 @@ import java.awt.*;
 import java.util.List;
 
 public final class TestsUIUtil {
-  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.logOnlyGroup("Test Runner");
+  public static final NotificationGroup NOTIFICATION_GROUP = NotificationGroupManager.getInstance().getNotificationGroup("Test Runner");
 
   public static final Color PASSED_COLOR = new Color(0, 128, 0);
   private static final @NonNls String TESTS = "tests";

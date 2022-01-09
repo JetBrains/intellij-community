@@ -26,6 +26,10 @@ import java.util.concurrent.TimeUnit;
 public interface Notifications {
   Topic<Notifications> TOPIC = new Topic<>("Notifications", Notifications.class, Topic.BroadcastDirection.NONE);
 
+  /**
+   * @deprecated Please use dedicated notification groups for your notifications
+   */
+  @Deprecated
   String SYSTEM_MESSAGES_GROUP_ID = "System Messages";
 
   default void notify(@NotNull Notification notification) { }

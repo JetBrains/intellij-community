@@ -6,10 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationDisplayType;
-import com.intellij.notification.NotificationType;
-import com.intellij.notification.NotificationsConfiguration;
+import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,10 +37,8 @@ import java.util.function.Supplier;
 @Service
 public final class SystemShortcuts {
   private static final Logger LOG = Logger.getInstance(SystemShortcuts.class);
-  private static final @NotNull String ourNotificationGroupId = "System shortcuts conflicts";
+  private static final @NotNull NotificationGroup GROUP = NotificationGroupManager.getInstance().getNotificationGroup("System shortcuts conflicts");
   private static final @NotNull String ourUnknownSysAction = "Unknown action";
-
-  private static boolean ourIsNotificationRegistered = false;
 
   private @NotNull final Map<KeyStroke, AWTKeyStroke> myKeyStroke2SysShortcut = new HashMap<>();
   private @NotNull final Map<KeyStroke, String> myKeyStrokeCustomDescription = new HashMap<>();
@@ -251,14 +246,6 @@ public final class SystemShortcuts {
                         @NotNull KeyStroke sysKS,
                         @Nullable String macOsShortcutAction,
                         @NotNull KeyboardShortcut conflicted) {
-    if (!ourIsNotificationRegistered) {
-      ourIsNotificationRegistered = true;
-      NotificationsConfiguration.getNotificationsConfiguration().register(
-        ourNotificationGroupId,
-        NotificationDisplayType.STICKY_BALLOON,
-        true);
-    }
-
     updateKeymapConflicts(keymap);
     final int unmutedConflicts = getUnmutedConflictsCount();
     final boolean hasOtherConflicts = unmutedConflicts > 1;
@@ -275,7 +262,7 @@ public final class SystemShortcuts {
     }
 
     final Notification notification =
-      new Notification(ourNotificationGroupId, IdeBundle.message("notification.title.shortcuts.conflicts"), message, NotificationType.WARNING);
+      GROUP.createNotification(IdeBundle.message("notification.title.shortcuts.conflicts"), message, NotificationType.WARNING);
 
     if (hasOtherConflicts) {
       final AnAction showKeymapPanelAction = DumbAwareAction.create(IdeBundle.message("action.text.modify.shortcuts"), e -> {
