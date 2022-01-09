@@ -16,7 +16,7 @@ private const val ELEMENT_PROPERTY = "property"
 private const val ATTRIBUTE_NAME = "name"
 private const val ATTRIBUTE_VALUE = "value"
 
-open class PropertiesComponentImpl internal constructor() : PropertiesComponent(), PersistentStateComponent<Element?> {
+sealed class PropertiesComponentImpl : PropertiesComponent(), PersistentStateComponent<Element?> {
   private val keyToValue = ConcurrentHashMap<String, String>()
 
   val keys: Set<String>
