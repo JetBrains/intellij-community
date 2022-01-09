@@ -283,7 +283,9 @@
                        key="notification.group.title.jps.cannot.start.compiler" />
     <notificationGroup id="JDK resolve problems"
                        toolWindowId="Build"
-                       displayType="BALLOON" />
+                       displayType="BALLOON"
+                       bundle="messages.JavaBundle"
+                       key="notification.group.jdk.resolve.problems"/>
 
     <registryKey key="ide.jps.use.build.tool.window" defaultValue="true" description="Enables 'Build' toolwindow for JPS compilation messages"/>
     <applicationService serviceImplementation="com.intellij.compiler.server.BuildManager" preload="true"/>
@@ -2206,17 +2208,17 @@
     <notificationGroup id="Clean artifact" displayType="BALLOON" hideFromSettings="true"/>
     <notificationGroup id="Compiler" displayType="NONE" bundle="messages.JavaCompilerBundle" key="notification.group.compiler"/>
     <notificationGroup id="Build Profiler" displayType="STICKY_BALLOON" hideFromSettings="true"/>
-    <notificationGroup id="Analyze thread dump" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false"/>
-    <notificationGroup id="JSHELL_NOTIFICATIONS" displayType="BALLOON"/>
-    <notificationGroup id="Repository" displayType="BALLOON"/>
+    <notificationGroup id="Analyze thread dump" displayType="TOOL_WINDOW" toolWindowId="Run" isLogByDefault="false" hideFromSettings="true"/>
+    <notificationGroup id="JSHELL_NOTIFICATIONS" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.jshell"/>
+    <notificationGroup id="Repository" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.repository"/>
     <notificationGroup id="HotSwap" displayType="TOOL_WINDOW" toolWindowId="Debug" bundle="messages.JavaDebuggerBundle" key="notification.group.hotswap"/>
-    <notificationGroup id="Source searcher" displayType="BALLOON"/>
-    <notificationGroup id="Accepted language levels" displayType="STICKY_BALLOON"/>
-    <notificationGroup id="Quarantine Cleaner" displayType="BALLOON" bundle="messages.JavaUiBundle" key="quarantine.cleaner"/>
-    <notificationGroup id="Build Script Found" displayType="STICKY_BALLOON"/>
-    <notificationGroup id="Java Preview Features" displayType="BALLOON"/>
-    <notificationGroup id="Remove redundant exports/opens" displayType="BALLOON"/>
-    <notificationGroup id="Setup SDK" displayType="BALLOON"/>
+    <notificationGroup id="Source searcher" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.source.searcher"/>
+    <notificationGroup id="Accepted language levels" displayType="STICKY_BALLOON" bundle="messages.JavaBundle" key="notification.group.language.level"/>
+    <notificationGroup id="Quarantine Cleaner" displayType="BALLOON" hideFromSettings="true"/>
+    <notificationGroup id="Build Script Found" displayType="STICKY_BALLOON" bundle="messages.JavaUiBundle" key="notification.group.build.script.found"/>
+    <notificationGroup id="Java Preview Features" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.preview.features"/>
+    <notificationGroup id="Remove redundant exports/opens" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.redundant.exports"/>
+    <notificationGroup id="Setup SDK" displayType="BALLOON" bundle="messages.JavaBundle" key="notification.group.setup.sdk"/>
 
     <compiler.task implementation="com.intellij.execution.scratch.JavaScratchCompilationSupport"/>
     <registryKey key="load.maven.dependencies.timeout" defaultValue="120" description="How long (in minutes) idea will wait for results of synchronized maven dependencies resolution"/>
