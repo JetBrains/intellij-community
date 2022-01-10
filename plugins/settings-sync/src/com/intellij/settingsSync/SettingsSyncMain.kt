@@ -27,7 +27,7 @@ internal class SettingsSyncFacade {
   internal val updateChecker: SettingsSyncUpdateChecker get() = getMain().controls.updateChecker
 
   internal fun pushSettingsToServer() {
-    ApplicationManager.getApplication().messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.PushRequest())
+    ApplicationManager.getApplication().messageBus.syncPublisher(SETTINGS_CHANGED_TOPIC).settingChanged(SyncSettingsEvent.PushRequest)
   }
 
   internal fun getRemoteCommunicator(): SettingsSyncRemoteCommunicator = getMain().controls.remoteCommunicator
