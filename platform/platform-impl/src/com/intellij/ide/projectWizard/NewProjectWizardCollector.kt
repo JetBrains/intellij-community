@@ -14,7 +14,7 @@ class NewProjectWizardCollector : CounterUsagesCollector() {
   override fun getGroup() = GROUP
 
   companion object {
-    private val GROUP = EventLogGroup("new.project.wizard.interactions", 1)
+    private val GROUP = EventLogGroup("new.project.wizard.interactions", 2)
 
     private val sessionIdField = EventFields.Int("wizard_session_id")
     private val screenNumField = IntEventField("screen")
