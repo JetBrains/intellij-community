@@ -57,6 +57,8 @@ import javax.swing.JComponent
 import javax.swing.JTextField
 import javax.swing.SwingUtilities
 
+const val ARTIFACT_ID_PROPERTY = "artifactId"
+
 open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : ModuleWizardStep() {
   protected val moduleBuilder: WebStarterModuleBuilder = contextProvider.moduleBuilder
   protected val wizardContext: WizardContext = contextProvider.wizardContext
@@ -250,7 +252,8 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       row(JavaStartersBundle.message("title.project.artifact.label")) {
         textField(artifactIdProperty)
           .growPolicy(GrowPolicy.SHORT_TEXT)
-          .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_NO_WHITESPACES, CHECK_ARTIFACT_SIMPLE_FORMAT, CHECK_NO_RESERVED_WORDS)
+          .withSpecialValidation(CHECK_NOT_EMPTY, CHECK_NO_WHITESPACES, CHECK_ARTIFACT_SIMPLE_FORMAT, CHECK_NO_RESERVED_WORDS,
+                                 *getCustomValidationRules(ARTIFACT_ID_PROPERTY))
       }.largeGapAfter()
 
       if (starterSettings.isPackageNameEditable) {
@@ -597,6 +600,8 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
 
     contentPanel.revalidate()
   }
+
+  protected open fun getCustomValidationRules(propertyId: String): Array<TextValidationFunction> = emptyArray()
 
   @Suppress("SameParameterValue")
   private fun <T : JComponent> CellBuilder<T>.withSpecialValidation(vararg errorValidations: TextValidationFunction): CellBuilder<T> {
