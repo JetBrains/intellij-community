@@ -6,6 +6,8 @@ import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.impl.ExtensionComponentAdapter;
+import com.intellij.openapi.extensions.impl.ExtensionPointImpl;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
@@ -48,7 +50,6 @@ import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 final class FileTypeDetectionService implements Disposable {
   private static final Logger LOG = Logger.getInstance(FileTypeDetectionService.class);
@@ -310,10 +311,18 @@ final class FileTypeDetectionService implements Disposable {
   }
 
   private static @NotNull List<String> getDetectorsString() {
-    return FileTypeRegistry.FileTypeDetector.EP_NAME.extensions()
-      .map(detector -> detector.getClass().getName())
-      .sorted()
-      .collect(Collectors.toList());
+    ExtensionPointImpl<FileTypeRegistry.FileTypeDetector> ep =
+      (ExtensionPointImpl<FileTypeRegistry.FileTypeDetector>)FileTypeRegistry.FileTypeDetector.EP_NAME.getPoint();
+    int size = ep.size();
+    if (size == 0) {
+      return Collections.emptyList();
+    }
+
+    List<String> result = new ArrayList<>(size);
+    for (ExtensionComponentAdapter adapter : ep.getSortedAdapters()) {
+      result.add(adapter.getAssignableToClassName());
+    }
+    return result;
   }
 
   @Override
