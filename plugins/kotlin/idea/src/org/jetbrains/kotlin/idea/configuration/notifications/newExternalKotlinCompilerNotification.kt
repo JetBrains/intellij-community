@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.kotlin.idea.configuration.notifications
 
 import com.intellij.ide.util.PropertiesComponent
@@ -17,7 +17,8 @@ import org.jetbrains.kotlin.idea.KotlinIcons
 import org.jetbrains.kotlin.idea.KotlinVersionVerbose
 import org.jetbrains.kotlin.idea.configuration.findAnyExternalKotlinCompilerVersion
 
-private const val LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME = "kotlin.updates.whats.new.shown.for"
+@VisibleForTesting
+const val LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME = "kotlin.updates.whats.new.shown.for"
 
 fun checkExternalKotlinCompilerVersion(project: Project) {
     val bundledKotlinCompilerVersion = bundledKotlinCompilerVersionIfReleased() ?: return
