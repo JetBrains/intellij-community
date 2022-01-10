@@ -32,9 +32,14 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
       }
     }
 
+    val groups = EventsSchemeBuilder.buildEventsScheme(pluginId)
+    val errors = EventSchemeValidator.validateEventScheme(groups)
+    if (errors.isNotEmpty()) {
+      throw IllegalStateException(errors.joinToString("\n"))
+    }
     val eventsScheme = EventsScheme(System.getenv("INSTALLER_LAST_COMMIT_HASH"),
                                     System.getenv("IDEA_BUILD_NUMBER"),
-                                    EventsSchemeBuilder.buildEventsScheme(pluginId))
+                                    groups)
     val text = GsonBuilder()
       .registerTypeAdapter(FieldDataType::class.java, FieldDataTypeSerializer)
       .setPrettyPrinting()
