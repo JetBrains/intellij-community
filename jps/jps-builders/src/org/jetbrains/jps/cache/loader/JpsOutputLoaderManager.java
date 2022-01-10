@@ -88,6 +88,7 @@ public class JpsOutputLoaderManager {
     if (!canRunNewLoading()) return;
     if (isDownloadQuickerThanLocalBuild(buildRunner, myCommitsCountBetweenCompilation, scopes)) {
       // Drop JPS metadata to force plugin for downloading all compilation outputs
+      myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.fetching.cache.for.commit", myCommitHash));
       if (isForceUpdate) {
         myMetadataLoader.dropCurrentProjectMetadata();
         File outDir = new File(myBuildOutDir);
@@ -189,8 +190,6 @@ public class JpsOutputLoaderManager {
 
   private void startLoadingForCommit(@NotNull String commitId) {
     long startTime = System.nanoTime();
-    myNettyClient.sendDescriptionStatusMessage(JpsBuildBundle.message("progress.text.fetching.cache.for.commit", commitId));
-
     // Loading metadata for commit
     Map<String, Map<String, BuildTargetState>> commitSourcesState = myMetadataLoader.loadMetadataForCommit(myNettyClient, commitId);
     if (commitSourcesState == null) {
