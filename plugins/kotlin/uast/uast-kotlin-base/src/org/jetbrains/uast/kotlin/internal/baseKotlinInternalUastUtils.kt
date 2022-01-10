@@ -14,13 +14,13 @@ import org.jetbrains.kotlin.asJava.getAccessorLightMethods
 import org.jetbrains.kotlin.asJava.toLightClass
 import org.jetbrains.kotlin.asJava.toLightElements
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.references.readWriteAccess
+import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
-import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
-import org.jetbrains.kotlin.psi.psiUtil.parents
+import org.jetbrains.kotlin.psi.psiUtil.*
 import org.jetbrains.kotlin.resolve.ArrayFqNames
+import org.jetbrains.kotlin.resolve.references.ReferenceAccess
+import org.jetbrains.kotlin.utils.addToStdlib.constant
 import org.jetbrains.uast.*
 
 @Suppress("NOTHING_TO_INLINE")
@@ -55,6 +55,30 @@ fun KtExpression.unwrapBlockOrParenthesis(): KtExpression {
     return innerExpression
 }
 
+fun KtExpression.readWriteAccess(): ReferenceAccess {
+    var expression = getQualifiedExpressionForSelectorOrThis()
+    loop@ while (true) {
+        val parent = expression.parent
+        when (parent) {
+            is KtParenthesizedExpression, is KtAnnotatedExpression, is KtLabeledExpression -> expression = parent as KtExpression
+            else -> break@loop
+        }
+    }
+
+    val assignment = expression.getAssignmentByLHS()
+    if (assignment != null) {
+        return when (assignment.operationToken) {
+            KtTokens.EQ -> ReferenceAccess.WRITE
+            else -> ReferenceAccess.READ_WRITE
+        }
+    }
+
+    return if ((expression.parent as? KtUnaryExpression)?.operationToken in constant { setOf(KtTokens.PLUSPLUS, KtTokens.MINUSMINUS) })
+        ReferenceAccess.READ_WRITE
+    else
+        ReferenceAccess.READ
+}
+
 fun KtElement.canAnalyze(): Boolean {
     if (!isValid) return false
     val containingFile = containingFile as? KtFile ?: return false // EA-114080, EA-113475, EA-134193
@@ -79,7 +103,7 @@ fun KtClassOrObject.toPsiType(): PsiType {
 }
 
 fun PsiElement.getMaybeLightElement(sourcePsi: KtExpression? = null): PsiElement? {
-    if (this is KtProperty && sourcePsi?.readWriteAccess(useResolveForReadWrite = false)?.isWrite == true) {
+    if (this is KtProperty && sourcePsi?.readWriteAccess()?.isWrite == true) {
         with(getAccessorLightMethods()) {
             (setter ?: backingField)?.let { return it } // backingField is for val property assignments in init blocks
         }
