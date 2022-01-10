@@ -145,7 +145,8 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       myPanel.removeAll();
       myPanel.add(splitter, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH,
                                                 GridConstraints.FILL_BOTH,
-                                                GridConstraints.SIZEPOLICY_WANT_GROW, GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_CAN_GROW,
+                                                GridConstraints.SIZEPOLICY_WANT_GROW,
                                                 null, null, null));
 
       String emptyCard = "emptyCard";
