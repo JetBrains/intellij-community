@@ -5,7 +5,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
@@ -54,17 +53,7 @@ public class AnimatedIcon implements Icon {
       super(getDefaultFrames());
     }
 
-    private static Frame[] getDefaultFrames() {
-      if (Registry.is("ide.new.loading.icon", true)) {
-        return SpinningProgressIconKt.createFrames();
-      }
-      return AnimatedIcon.getFrames(DELAY, OLD_ICONS.toArray(new Icon[0]));
-    }
-
-    public static final int DELAY = 130;
-    public static final List<Icon> ICONS = ContainerUtil.map(getDefaultFrames(), frame -> frame.getIcon());
-
-    private static final List<Icon> OLD_ICONS = List.of(
+    private static final Icon[] OLD_ICONS = {
       AllIcons.Process.Step_1,
       AllIcons.Process.Step_2,
       AllIcons.Process.Step_3,
@@ -72,7 +61,17 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.Step_5,
       AllIcons.Process.Step_6,
       AllIcons.Process.Step_7,
-      AllIcons.Process.Step_8);
+      AllIcons.Process.Step_8};
+
+    private static Frame[] getDefaultFrames() {
+      if (Boolean.getBoolean("disable.new.spinning.icon")) {
+        return AnimatedIcon.getFrames(DELAY, OLD_ICONS);
+      }
+      return SpinningProgressIconKt.createFrames();
+    }
+
+    public static final int DELAY = 130;
+    public static final List<Icon> ICONS = ContainerUtil.map(getDefaultFrames(), frame -> frame.getIcon());
 
     public static final AnimatedIcon INSTANCE = new Default();
   }
