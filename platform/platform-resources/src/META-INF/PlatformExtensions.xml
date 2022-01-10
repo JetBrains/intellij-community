@@ -774,7 +774,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.lightEdit.LightEditFeatureUsagesUtil"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.collectors.fus.TypingEventsLogger"/>
 
-    <statistics.counterUsagesCollector groupId="ui.mnemonic" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.MnemonicUsageCollector"/>
 
     <statistics.counterUsagesCollector groupId="event.log" version="57"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.IdeHeartbeatEventReporter$UILatencyLogger"/>

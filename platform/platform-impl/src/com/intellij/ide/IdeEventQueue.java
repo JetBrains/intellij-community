@@ -876,24 +876,7 @@ public final class IdeEventQueue extends EventQueue {
       super.dispatchEvent(e);
       // collect mnemonics statistics only if key event was processed above
       if (!consumed && ke.isConsumed() && KeyEvent.KEY_PRESSED == ke.getID()) {
-        int code = ke.getKeyCode();
-        if (KeyEvent.VK_0 <= code && code <= KeyEvent.VK_Z) {
-          int modifiers = ke.getModifiersEx();
-          FeatureUsageData data = null;
-          if (modifiers == InputEvent.ALT_DOWN_MASK) {
-            if (IdeKeyEventDispatcher.hasMnemonicInWindow(ke.getComponent(), ke)) {
-              data = new FeatureUsageData().addData("type", SystemInfoRt.isMac ? "mac.alt.based" : "regular");
-            }
-          }
-          else if (SystemInfoRt.isMac && modifiers == (InputEvent.ALT_DOWN_MASK | InputEvent.CTRL_DOWN_MASK)) {
-            if (IdeKeyEventDispatcher.hasMnemonicInWindow(ke.getComponent(), ke)) {
-              data = new FeatureUsageData().addData("type", "mac.regular");
-            }
-          }
-          if (data != null) {
-            FUCounterUsageLogger.getInstance().logEvent("ui.mnemonic", "mnemonic.used", data);
-          }
-        }
+        MnemonicUsageCollector.logMnemonicUsed(ke);
       }
     }
     catch (Throwable t) {
