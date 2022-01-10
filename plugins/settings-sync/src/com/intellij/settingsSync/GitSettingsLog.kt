@@ -179,7 +179,7 @@ internal class GitSettingsLog(private val settingsSyncStorage: Path,
       .filter { it.isFile && it.name != ".gitignore" }
       .mapTo(HashSet()) {
         val relative = it.toPath().relativeTo(settingsSyncStorage)
-        FileState(relative.toString(), it.toPath().readBytes(), it.toPath().size().toInt())
+        FileState(relative.systemIndependentPath, it.toPath().readBytes(), it.toPath().size().toInt())
       }
     return SettingsSnapshot(files)
   }
