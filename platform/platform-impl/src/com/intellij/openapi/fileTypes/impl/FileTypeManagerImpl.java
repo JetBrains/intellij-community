@@ -53,7 +53,6 @@ import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @State(
   name = "FileTypeManager",
@@ -69,7 +68,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
   // must be sorted
   @SuppressWarnings("SpellCheckingInspection")
-  static final String DEFAULT_IGNORED = "*.pyc;*.pyo;*.rbc;*.yarb;*~;.DS_Store;.git;.hg;.svn;CVS;__pycache__;_svn;vssver.scc;vssver2.scc";
+  static final List<String> DEFAULT_IGNORED = List.of("*.pyc", "*.pyo", "*.rbc", "*.yarb", "*~", ".DS_Store", ".git", ".hg", ".svn", "CVS",
+                                                      "__pycache__", "_svn", "vssver.scc", "vssver2.scc");
 
   static final String FILE_SPEC = "filetypes";
   private static final String ELEMENT_EXTENSION_MAP = "extensionMap";
@@ -88,7 +88,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   private FileTypeIdentifiableByVirtualFile[] mySpecialFileTypes = FileTypeIdentifiableByVirtualFile.EMPTY_ARRAY;
 
   FileTypeAssocTable<FileTypeWithDescriptor> myPatternsTable = new FileTypeAssocTable<>();
-  private final IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet();
+  private final IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet(DEFAULT_IGNORED);
   private final IgnoredFileCache myIgnoredFileCache = new IgnoredFileCache(myIgnoredPatterns);
 
   private final FileTypeAssocTable<FileType> myInitialAssociations = new FileTypeAssocTable<>();
@@ -188,8 +188,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
     myDetectionService = new FileTypeDetectionService(this);
     Disposer.register(this, myDetectionService);
-
-    myIgnoredPatterns.setIgnoreMasks(DEFAULT_IGNORED);
 
     EP_NAME.addExtensionPointListener(new ExtensionPointListener<>() {
       @Override
@@ -1201,14 +1199,11 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   public @NotNull Element getState() {
     Element state = new Element("state");
 
-    String ignoreFiles = myIgnoredPatterns.getIgnoreMasks()
-      .stream()
-      .sorted()
-      .collect(Collectors.joining(";"));
-
-    if (!ignoreFiles.equalsIgnoreCase(DEFAULT_IGNORED)) {
+    List<String> ignoreFiles = new ArrayList<>(myIgnoredPatterns.getIgnoreMasks());
+    ignoreFiles.sort(null);
+    if (!isEqualToDefaultIgnoreMasks(ignoreFiles)) {
       // empty means empty list - we need to distinguish null and empty to apply or not to apply default value
-      state.addContent(new Element(ELEMENT_IGNORE_FILES).setAttribute(ATTRIBUTE_LIST, ignoreFiles));
+      state.addContent(new Element(ELEMENT_IGNORE_FILES).setAttribute(ATTRIBUTE_LIST, String.join(";", ignoreFiles)));
     }
 
     Element extensionMap = new Element(ELEMENT_EXTENSION_MAP);
@@ -1261,6 +1256,19 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
 
     return state;
+  }
+
+  private static boolean isEqualToDefaultIgnoreMasks(@NotNull List<String> newList) {
+    if (newList.size() != DEFAULT_IGNORED.size()) {
+      return false;
+    }
+
+    for (int i = 0, n = DEFAULT_IGNORED.size(); i < n; i++) {
+      if (!DEFAULT_IGNORED.get(i).equalsIgnoreCase(newList.get(i))) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private void writeExtensionsMap(@NotNull Element extensionMap, @NotNull FileTypeWithDescriptor ftd, boolean specifyTypeName) {
