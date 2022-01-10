@@ -84,6 +84,12 @@ public final class MacPythonSdkFlavor extends CPythonSdkFlavor {
     return new GeneralCommandLine("xcode-select", "-p");
   }
 
+  /**
+   * This method is used to check whether {@code /usr/bin/python3} is a real interpreter or a fake binary
+   * which execution leads to a dialog with dev tools installation.
+   *
+   * @return true if dev tools are installed and {@code /usr/bin/python3} can be used.
+   */
   public static boolean areCommandLineDeveloperToolsAvailable() {
     final GeneralCommandLine commandLine = getXCodeSelectPathCommand();
 
@@ -94,7 +100,7 @@ public final class MacPythonSdkFlavor extends CPythonSdkFlavor {
         LOGGER.debug("Result of '" + commandLine.getCommandLineString() + "':\n" + output);
       }
 
-      return output.getExitCode() != 2;
+      return output.getExitCode() == 0;
     }
     catch (ExecutionException e) {
       LOGGER.warn("Exception during '" + commandLine.getCommandLineString() + "'", e);
