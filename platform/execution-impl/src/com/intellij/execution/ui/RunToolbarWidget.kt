@@ -41,10 +41,7 @@ import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindowId
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarProjectWidgetFactory
 import com.intellij.openapi.wm.impl.headertoolbar.MainToolbarWidgetFactory
-import com.intellij.ui.AnimatedIcon
-import com.intellij.ui.ColorUtil
-import com.intellij.ui.ExperimentalUI
-import com.intellij.ui.JBColor
+import com.intellij.ui.*
 import com.intellij.ui.components.JBPanel
 import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
@@ -208,11 +205,11 @@ class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponen
 
   private fun iconFor(executorId: String): Icon {
     return when (executorId) {
-      DefaultRunExecutor.EXECUTOR_ID -> AllIcons.Actions.Execute
-      ToolWindowId.DEBUG -> AllIcons.Actions.StartDebugger
+      DefaultRunExecutor.EXECUTOR_ID -> IconManager.getInstance().getIcon("expui/run/widget/run.svg", AllIcons::class.java)
+      ToolWindowId.DEBUG -> IconManager.getInstance().getIcon("expui/run/widget/debug.svg", AllIcons::class.java)
       "Coverage" -> AllIcons.General.RunWithCoverage
       LOADING -> AnimatedIcon.Default()
-      RESTART -> AllIcons.Actions.Restart
+      RESTART -> IconManager.getInstance().getIcon("expui/run/widget/restart.svg", AllIcons::class.java)
       else -> AllIcons.Actions.Execute
     }
   }
@@ -348,7 +345,7 @@ class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponen
   }
 }
 
-class StopWithDropDownAction : AnAction(AllIcons.Actions.Suspend), CustomComponentAction, DumbAware, UpdateInBackground {
+class StopWithDropDownAction : AnAction(), CustomComponentAction, DumbAware, UpdateInBackground {
 
   override fun actionPerformed(e: AnActionEvent) {
     ExecutionManagerImpl.getInstance(e.project ?: return)
@@ -366,7 +363,7 @@ class StopWithDropDownAction : AnAction(AllIcons.Actions.Suspend), CustomCompone
     e.presentation.isEnabled = activeProcesses > 0
     // presentations should be visible because it has to take some fixed space
     //e.presentation.isVisible = activeProcesses > 0
-    e.presentation.icon = AllIcons.Actions.Suspend
+    e.presentation.icon = IconManager.getInstance().getIcon("expui/run/widget/stop.svg", AllIcons::class.java)
     if (activeProcesses == 1) {
       val first = running.first()
       getConfigurations(manger, first)
