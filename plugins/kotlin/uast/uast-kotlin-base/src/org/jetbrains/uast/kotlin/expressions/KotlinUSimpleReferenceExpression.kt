@@ -7,7 +7,6 @@ package org.jetbrains.uast.kotlin
 
 import com.intellij.openapi.util.Key
 import com.intellij.psi.*
-import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.findAssignment
 import org.jetbrains.uast.*
@@ -49,7 +48,7 @@ class KotlinUSimpleReferenceExpression(
     private fun visitAccessorCalls(visitor: UastVisitor) {
         // Visit Kotlin get-set synthetic Java property calls as function calls
         val resolvedMethod = baseResolveProviderService.resolveAccessorCall(sourcePsi) ?: return
-        val access = sourcePsi.readWriteAccess(useResolveForReadWrite = false)
+        val access = sourcePsi.readWriteAccess()
         val setterValue = if (access.isWrite) {
             findAssignment(sourcePsi)?.right ?: run {
                 visitor.afterVisitSimpleNameReferenceExpression(this)
