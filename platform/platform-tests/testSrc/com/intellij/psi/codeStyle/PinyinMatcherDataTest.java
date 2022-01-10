@@ -2,6 +2,9 @@
 package com.intellij.psi.codeStyle;
 
 import org.jetbrains.annotations.NotNull;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -10,6 +13,7 @@ import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.Normalizer;
 import java.util.*;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.zip.ZipEntry;
@@ -19,56 +23,63 @@ import java.util.zip.ZipInputStream;
  * Generates data arrays for {@link PinyinMatcher} using Unihan_Readings.txt file from unicode.org
  * Requires Internet connection.
  */
-class PinyinDataGenerator {
+@Ignore
+public class PinyinMatcherDataTest {
   private static final int LINE_LENGTH = 100;
   private static final String DATA_SOURCE = "https://unicode.org/Public/UNIDATA/Unihan.zip";
   private static final String READINGS_FILE = "Unihan_Readings.txt";
 
-  @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private static void generate() throws IOException {
+  @Test
+  public void ensurePinyinDataIsUpToDate() throws IOException {
     List<Mapping> mappings = readMappings();
     List<String> initials = generateInitials(mappings);
-    System.out.println(dumpInitialsEncoding(initials));
-    System.out.println(dumpData(mappings, initials));
+    String encodingStr = String.join(",", initials);
+    String data = getDataString(mappings, initials);
+
+    Supplier<String> message = () ->
+      "Pinyin data mismatch. Please update constants in " + PinyinMatcher.class.getName() + " to the following:\n" +
+      toJavaStringLiteral("ENCODING", encodingStr) + "\n" +
+      toJavaStringLiteral("DATA", data) + "\n";
+
+    Assertions.assertEquals(encodingStr, PinyinMatcher.ENCODING, message);
+    Assertions.assertEquals(data, PinyinMatcher.DATA, message);
   }
 
-  @NotNull
-  private static String dumpData(List<Mapping> mappings, List<String> initials) {
-    Map<String, Character> encoding = initials.stream()
-      .collect(Collectors.toMap(s -> s, s -> (char) (PinyinMatcher.BASE_CHAR + initials.indexOf(s))));
-
-    Map<Integer, Character> map = mappings.stream()
-      .collect(Collectors.toMap(mapping -> mapping.codePoint, m -> encoding.get(m.charString())));
-    StringBuilder result = new StringBuilder("DATA =\n\"");
-    int lastCodePoint = mappings.stream().mapToInt(m -> m.codePoint).max().orElseThrow(NoSuchElementException::new);
+  private static String toJavaStringLiteral(String varName, String input) {
+    StringBuilder result = new StringBuilder(varName + " =\n\"");
     int curLineLength = 0;
-    for (int i = PinyinMatcher.BASE_CODE_POINT; i <= lastCodePoint; i++) {
-      char ch = map.getOrDefault(i, ' ');
+    for (int i = 0; i < input.length(); i++) {
+      char ch = input.charAt(i);
       String charRepresentation;
       if (ch == '"' || ch == '\\') {
         charRepresentation = "\\" + ch;
-      } else if (ch < 127) {
+      }
+      else if (ch < 127) {
         charRepresentation = Character.toString(ch);
-      } else {
-        charRepresentation = String.format("\\u%04X", (int) ch);
+      }
+      else {
+        charRepresentation = String.format("\\u%04X", (int)ch);
       }
       result.append(charRepresentation);
       curLineLength += charRepresentation.length();
-      if (curLineLength > LINE_LENGTH) {
+      if (curLineLength > LINE_LENGTH && i < input.length() - 1) {
         curLineLength = 0;
         result.append("\" +\n\"");
       }
     }
-    result.append("\";");
-    return result.toString();
+    return result.append("\";").toString();
   }
 
-  private static String dumpInitialsEncoding(List<String> initials) {
-    String encodingStr = String.join(",", initials);
-    String formattedEncodingStr = IntStream.rangeClosed(0, encodingStr.length() / LINE_LENGTH)
-      .mapToObj(pos -> encodingStr.substring(pos * LINE_LENGTH, Math.min(pos * LINE_LENGTH + LINE_LENGTH, encodingStr.length())))
-      .collect(Collectors.joining("\" +\n\"", "\"", "\""));
-    return "ENCODING =\n(" + formattedEncodingStr + ").split(\",\");";
+  @NotNull
+  private static String getDataString(List<Mapping> mappings, List<String> initials) {
+    Map<String, Character> encoding = initials.stream()
+      .collect(Collectors.toMap(s -> s, s -> (char)(PinyinMatcher.BASE_CHAR + initials.indexOf(s))));
+
+    Map<Integer, Character> map = mappings.stream()
+      .collect(Collectors.toMap(mapping -> mapping.codePoint, m -> encoding.get(m.charString())));
+    int lastCodePoint = mappings.stream().mapToInt(m -> m.codePoint).max().orElseThrow(NoSuchElementException::new);
+    return IntStream.rangeClosed(PinyinMatcher.BASE_CODE_POINT, lastCodePoint)
+      .mapToObj(i -> map.getOrDefault(i, ' ').toString()).collect(Collectors.joining());
   }
 
   @NotNull
@@ -151,9 +162,5 @@ class PinyinDataGenerator {
     public String toString() {
       return String.format("%04X: %s", codePoint, charString());
     }
-  }
-
-  public static void main(String[] args) throws IOException {
-    generate();
   }
 }

@@ -9,33 +9,34 @@ import org.jetbrains.annotations.Nullable;
 public class PinyinMatcher extends MinusculeMatcher {
   static final int BASE_CODE_POINT = 0x3400;
   static final char BASE_CHAR = '!';
+
   /**
    * To generate {@code ENCODING} and {@code DATA}, see {@code PinyinDataGenerator} class in tests.
    */
-  private static final String[] ENCODING =
-    ("a,b,c,d,e,f,g,h,j,k,l,m,n,o,p,q,r,s,t,w,x,y,z,ab,ad,ae,ag,ah,aj,ak,al,an,ap,aq,at,aw,ax,ay,az,bc,bd," +
-     "be,bf,bg,bh,bj,bk,bl,bm,bn,bp,bq,bs,bt,bx,by,bz,cd,ce,cf,cg,ch,cj,ck,cl,cm,cn,cp,cq,cr,cs,ct,cw,cx,c" +
-     "y,cz,de,df,dg,dh,dj,dl,dm,dn,dq,dr,ds,dt,dw,dx,dy,dz,eg,eh,ej,ek,el,en,eo,ep,eq,er,es,et,ew,ex,ey,ez" +
-     ",fg,fh,fj,fk,fl,fm,fn,fp,fq,fr,fs,ft,fw,fx,fy,fz,gh,gj,gk,gl,gm,gn,gp,gq,gr,gs,gt,gw,gx,gy,gz,hj,hk," +
-     "hl,hm,hn,ho,hp,hq,hr,hs,ht,hw,hx,hy,hz,jk,jl,jm,jn,jp,jq,jr,js,jt,jw,jx,jy,jz,kl,km,kn,ko,kq,kr,ks,k" +
-     "t,kw,kx,ky,kz,lm,ln,lp,lq,lr,ls,lt,lw,lx,ly,lz,mn,mp,mr,ms,mt,mw,mx,my,mz,nq,nr,ns,nt,nw,nx,ny,nz,oq" +
-     ",os,ow,ox,oy,pq,ps,pt,pw,px,py,pz,qr,qs,qt,qw,qx,qy,qz,rs,rt,rw,rx,ry,rz,st,sw,sx,sy,sz,tw,tx,ty,tz," +
-     "wx,wy,wz,xy,xz,yz,abd,aek,aen,aex,aey,agh,agq,agw,agy,ahj,ahk,ahq,ajn,ajx,akz,any,aoy,aqy,ast,asx,aw" +
-     "y,bcp,bct,bfh,bfp,bfy,bgh,bhp,bjx,blp,bmp,bps,bpt,bpz,btx,cdj,cdq,cds,cdt,cdx,cdy,cdz,ceh,ceq,cez,cg" +
-     "h,cgl,cgq,cgz,chj,chx,chy,chz,cjq,cjr,cjs,cjt,cjw,cjx,cjz,clx,cnt,cnx,cnz,cox,cps,cqs,cqt,cqx,cqy,cq" +
-     "z,cst,csx,csy,csz,cty,ctz,cwz,cxy,cxz,cyz,dgj,dgk,dgz,dhk,djs,dkq,dlt,dlx,dly,dmt,dnq,dnr,dnt,dnx,dp" +
-     "s,dqx,dqz,dry,dst,dsw,dsy,dsz,dtw,dtx,dty,dtz,dwz,dxy,dxz,dyz,egh,egl,egw,ehw,ehz,ejq,ekq,emn,enr,eq" +
-     "w,ewy,exy,fgj,fgz,fjn,fmw,fmz,fpw,fsx,ghj,ghk,ghl,ghn,ghq,ghs,ghw,ghx,ghy,gjk,gjl,gjq,gjr,gjx,gkl,gk" +
-     "n,gkq,gkt,gkw,glw,glx,gly,gny,gqw,gqx,gqy,gqz,gst,gtx,gty,gwy,gxy,gyz,hjk,hjn,hjq,hjx,hjz,hko,hkq,hk" +
-     "t,hkx,hky,hly,hms,hmw,hnt,hpt,hpx,hqx,hqy,hrs,hry,hst,hsw,hxy,jkq,jkx,jky,jkz,jlm,jln,jlp,jlx,jnp,jn" +
-     "y,jpx,jqs,jqx,jqy,jqz,jst,jsx,jsy,jsz,jtz,jxy,jxz,jyz,klw,koq,kqs,kqx,kqy,ksz,kxy,lmp,lmy,lnx,lpx,lq" +
-     "s,lqx,lrs,lsx,lsy,ltx,ltz,lxz,mnw,mnx,mnz,mow,mqx,msy,mtx,nqx,nrs,nrw,nrx,nrz,nsz,ntx,nwz,nxy,psx,ps" +
-     "y,pyz,qst,qsx,qsy,qsz,qtx,qtz,qxy,rst,rsx,rtz,stx,sty,stz,swy,sxy,sxz,syz,twz,txy,tyz,wxy,xyz,achy,a" +
-     "csy,aghk,ajqy,bcpz,bdsz,bflp,cdnq,cdqz,cdst,cdtx,cdtz,chqz,cjnt,cjqz,cjsx,cjxz,cqtz,csty,dgkt,dgyz,d" +
-     "lsy,dqsx,dqty,dqtz,dsty,dstz,dsyz,dtxy,dtxz,dtyz,egqy,ehkw,ejwy,enyz,foqx,ghjk,gkoq,hjkq,hmtw,hswx,h" +
-     "sxy,hwxy,jlqy,jlqz,jlxy,jlyz,jsty,jsyz,klxy,ksyz,nsyz,qsyz,stxz,bcjxz,bjlmx,cdstz,djstz,dltyz,dqxyz," +
-     "ghkwx,cdjstyz,gjklqyz").split(",");
-  private static final String DATA =
+  static final String ENCODING =
+    "a,b,c,d,e,f,g,h,j,k,l,m,n,o,p,q,r,s,t,w,x,y,z,ab,ad,ae,ag,ah,aj,ak,al,an,ap,aq,at,aw,ax,ay,az,bc,bd,b" +
+    "e,bf,bg,bh,bj,bk,bl,bm,bn,bp,bq,bs,bt,bx,by,bz,cd,ce,cf,cg,ch,cj,ck,cl,cm,cn,cp,cq,cr,cs,ct,cw,cx,cy," +
+    "cz,de,df,dg,dh,dj,dl,dm,dn,dq,dr,ds,dt,dw,dx,dy,dz,eg,eh,ej,ek,el,en,eo,ep,eq,er,es,et,ew,ex,ey,ez,fg" +
+    ",fh,fj,fk,fl,fm,fn,fp,fq,fr,fs,ft,fw,fx,fy,fz,gh,gj,gk,gl,gm,gn,gp,gq,gr,gs,gt,gw,gx,gy,gz,hj,hk,hl,h" +
+    "m,hn,ho,hp,hq,hr,hs,ht,hw,hx,hy,hz,jk,jl,jm,jn,jp,jq,jr,js,jt,jw,jx,jy,jz,kl,km,kn,ko,kq,kr,ks,kt,kw," +
+    "kx,ky,kz,lm,ln,lp,lq,lr,ls,lt,lw,lx,ly,lz,mn,mp,mr,ms,mt,mw,mx,my,mz,nq,nr,ns,nt,nw,nx,ny,nz,oq,os,ow" +
+    ",ox,oy,pq,ps,pt,pw,px,py,pz,qr,qs,qt,qw,qx,qy,qz,rs,rt,rw,rx,ry,rz,st,sw,sx,sy,sz,tw,tx,ty,tz,wx,wy,w" +
+    "z,xy,xz,yz,abd,aek,aen,aex,aey,agh,agq,agw,agy,ahj,ahk,ahq,ajn,ajx,akz,any,aoy,aqy,ast,asx,awy,bcp,bc" +
+    "t,bfh,bfp,bfy,bgh,bhp,bjx,blp,bmp,bps,bpt,bpz,btx,cdj,cdq,cds,cdt,cdx,cdy,cdz,ceh,ceq,cez,cgh,cgl,cgq" +
+    ",cgz,chj,chx,chy,chz,cjq,cjr,cjs,cjt,cjw,cjx,cjz,clx,cnt,cnx,cnz,cox,cps,cqs,cqt,cqx,cqy,cqz,cst,csx," +
+    "csy,csz,cty,ctz,cwz,cxy,cxz,cyz,dgj,dgk,dgz,dhk,djs,dkq,dlt,dlx,dly,dmt,dnq,dnr,dnt,dnx,dps,dqx,dqz,d" +
+    "ry,dst,dsw,dsy,dsz,dtw,dtx,dty,dtz,dwz,dxy,dxz,dyz,egh,egl,egw,ehw,ehz,ejq,ekq,emn,enr,eqw,ewy,exy,fg" +
+    "j,fgz,fjn,fmw,fmz,fpw,fsx,ghj,ghk,ghl,ghn,ghq,ghs,ghw,ghx,ghy,gjk,gjl,gjq,gjr,gjx,gkl,gkn,gkq,gkt,gkw" +
+    ",glw,glx,gly,gny,gqw,gqx,gqy,gqz,gst,gtx,gty,gwy,gxy,gyz,hjk,hjn,hjq,hjx,hjz,hko,hkq,hkt,hkx,hky,hly," +
+    "hms,hmw,hnt,hpt,hpx,hqx,hqy,hrs,hry,hst,hsw,hxy,jkq,jkx,jky,jkz,jlm,jln,jlp,jlx,jnp,jny,jpx,jqs,jqx,j" +
+    "qy,jqz,jst,jsx,jsy,jsz,jtz,jxy,jxz,jyz,klw,koq,kqs,kqx,kqy,ksz,kxy,lmp,lmy,lnx,lpx,lqs,lqx,lrs,lsx,ls" +
+    "y,ltx,ltz,lxz,mnw,mnx,mnz,mow,mqx,msy,mtx,nqx,nrs,nrw,nrx,nrz,nsz,ntx,nwz,nxy,psx,psy,pyz,qst,qsx,qsy" +
+    ",qsz,qtx,qtz,qxy,rst,rsx,rtz,stx,sty,stz,swy,sxy,sxz,syz,twz,txy,tyz,wxy,xyz,achy,acsy,aghk,ajqy,bcpz" +
+    ",bdsz,bflp,cdnq,cdqz,cdst,cdtx,cdtz,chqz,cjnt,cjqz,cjsx,cjxz,cqtz,csty,dgkt,dgyz,dlsy,dqsx,dqty,dqtz," +
+    "dsty,dstz,dsyz,dtxy,dtxz,dtyz,egqy,ehkw,ejwy,enyz,foqx,ghjk,gkoq,hjkq,hmtw,hswx,hsxy,hwxy,jlqy,jlqz,j" +
+    "lxy,jlyz,jsty,jsyz,klxy,ksyz,nsyz,qsyz,stxz,bcjxz,bjlmx,cdstz,djstz,dltyz,dqxyz,ghkwx,cdjstyz,gjklqyz";
+
+  static final String DATA =
     "03  *46     6         5     #    -  u   55 5++5657$4/1 ,e6\u0117-#&   7&!47 7$260\u00D0+-72   5  2)$-" +
     "2k+6\"   +,6+)6+#   (5(1 7 (536(),+367767%10#4(3220+2  \u00AD/3\u017B6.3 ,\u0113$6\u00E4)-56  #&++ + " +
     ")    0 #+', '2  ,,02+ 4*$73  \"($'# 0)+5 -5 \")2 ' 650/$\u008D+\u00A403\"'#\u00C5+  2$+(\u0109/$1%06|" +
@@ -473,6 +474,7 @@ public class PinyinMatcher extends MinusculeMatcher {
     "6\u00F4%46#7$#)\u008B##(6)+\"37*6#04\u00D4/\u00A8\u00D66++'*$+$+'*\u01A50\"'6#()56                   " +
     "          2         '3,    '$                     !3-";
 
+  private static final String[] ENCODING_ARRAY = ENCODING.split(",");
 
   private final String myPattern;
 
@@ -503,7 +505,7 @@ public class PinyinMatcher extends MinusculeMatcher {
       char c = name.charAt(i);
       if (c < BASE_CODE_POINT || c >= BASE_CODE_POINT + DATA.length()) break;
       int code = DATA.charAt(c - BASE_CODE_POINT) - BASE_CHAR;
-      if (code < 0 || ENCODING[code].indexOf(myPattern.charAt(i - start)) == -1) break;
+      if (code < 0 || ENCODING_ARRAY[code].indexOf(myPattern.charAt(i - start)) == -1) break;
     }
     return i - start;
   }
