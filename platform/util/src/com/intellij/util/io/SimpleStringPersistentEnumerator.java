@@ -2,7 +2,9 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
+import it.unimi.dsi.fastutil.ints.Int2ObjectMaps;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import it.unimi.dsi.fastutil.objects.*;
 import org.jetbrains.annotations.ApiStatus;
@@ -43,10 +45,14 @@ public final class SimpleStringPersistentEnumerator implements DataEnumerator<St
       return id;
     }
 
+    if (value != null && StringUtil.containsLineBreak(value)) {
+      throw new RuntimeException("SimpleStringPersistentEnumerator doesn't support multi-line strings");
+    }
+
     int n = myInvertedState.size() + 1;
     myInvertedState.put(value, n);
     myForwardState.put(n, value);
-    writeStorageToDisk(myInvertedState, myFile);
+    writeStorageToDisk(myForwardState, myFile);
     return n;
   }
 
@@ -61,7 +67,7 @@ public final class SimpleStringPersistentEnumerator implements DataEnumerator<St
   }
 
   public synchronized void forceDiskSync() {
-    writeStorageToDisk(myInvertedState, myFile);
+    writeStorageToDisk(myForwardState, myFile);
   }
 
   public synchronized boolean isEmpty() {
@@ -90,17 +96,17 @@ public final class SimpleStringPersistentEnumerator implements DataEnumerator<St
       return Pair.create(nameToIdRegistry, idToNameRegistry);
     }
     catch (IOException e) {
-      writeStorageToDisk(Object2IntMaps.emptyMap(), file);
+      writeStorageToDisk(Int2ObjectMaps.emptyMap(), file);
       return Pair.create(new Object2IntOpenHashMap<>(), new Int2ObjectOpenHashMap<>());
     }
   }
 
-  private static void writeStorageToDisk(@NotNull Object2IntMap<String> state, @NotNull Path file) {
+  private static void writeStorageToDisk(@NotNull Int2ObjectMap<String> forwardIndex, @NotNull Path file) {
     try {
-      String[] names = new String[state.size()];
-      for (ObjectIterator<Object2IntMap.Entry<String>> iterator = Object2IntMaps.fastIterator(state); iterator.hasNext(); ) {
-        Object2IntMap.Entry<String> entry = iterator.next();
-        names[entry.getIntValue() - 1] = entry.getKey();
+      String[] names = new String[forwardIndex.size()];
+      for (ObjectIterator<Int2ObjectMap.Entry<String>> iterator = Int2ObjectMaps.fastIterator(forwardIndex); iterator.hasNext(); ) {
+        Int2ObjectMap.Entry<String> entry = iterator.next();
+        names[entry.getIntKey() - 1] = entry.getValue();
       }
 
       Files.createDirectories(file.getParent());
