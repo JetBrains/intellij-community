@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.descriptors.impl.EnumEntrySyntheticClassDescriptor
 import org.jetbrains.kotlin.descriptors.impl.TypeAliasConstructorDescriptor
 import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.idea.util.actionUnderSafeAnalyzeBlock
 import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaPackageFragment
 import org.jetbrains.kotlin.load.java.sam.SamAdapterDescriptor
@@ -304,7 +303,7 @@ fun resolveToDeclarationImpl(sourcePsi: KtExpression, declarationDescriptor: Dec
         declarationDescriptor = declarationDescriptor.callableFromObject
     }
     if (declarationDescriptor is SyntheticJavaPropertyDescriptor) {
-        declarationDescriptor = when (sourcePsi.readWriteAccess(useResolveForReadWrite = false)) {
+        declarationDescriptor = when (sourcePsi.readWriteAccess()) {
             ReferenceAccess.WRITE, ReferenceAccess.READ_WRITE ->
                 declarationDescriptor.setMethod ?: declarationDescriptor.getMethod
             ReferenceAccess.READ -> declarationDescriptor.getMethod
@@ -342,7 +341,7 @@ fun resolveToDeclarationImpl(sourcePsi: KtExpression, declarationDescriptor: Dec
             ?.let { return it }
     }
 
-    resolveDeserialized(sourcePsi, declarationDescriptor, sourcePsi.readWriteAccess(useResolveForReadWrite = false))?.let { return it }
+    resolveDeserialized(sourcePsi, declarationDescriptor, sourcePsi.readWriteAccess())?.let { return it }
 
     return null
 }

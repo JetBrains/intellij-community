@@ -24,8 +24,6 @@ import org.jetbrains.kotlin.cli.jvm.compiler.TopDownAnalyzerFacadeForJVM
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.idea.artifacts.KotlinArtifacts
-import org.jetbrains.kotlin.idea.references.ReadWriteAccessChecker
-import org.jetbrains.kotlin.idea.references.ReadWriteAccessCheckerDescriptorsImpl
 import org.jetbrains.kotlin.parsing.KotlinParserDefinition
 import org.jetbrains.kotlin.resolve.jvm.extensions.AnalysisHandlerExtension
 import org.jetbrains.kotlin.idea.test.ConfigurationKind
@@ -105,10 +103,6 @@ abstract class AbstractKotlinUastTest : AbstractUastTest() {
         application.registerService(
             BaseKotlinUastResolveProviderService::class.java,
             CliKotlinUastResolveProviderService::class.java
-        )
-        application.registerService(
-            ReadWriteAccessChecker::class.java,
-            ReadWriteAccessCheckerDescriptorsImpl::class.java
         )
         project.registerService(
             KotlinUastResolveProviderService::class.java,
