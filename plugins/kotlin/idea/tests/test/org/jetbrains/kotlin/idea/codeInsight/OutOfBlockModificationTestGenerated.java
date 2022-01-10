@@ -287,6 +287,16 @@ public abstract class OutOfBlockModificationTestGenerated extends AbstractOutOfB
             runTest("testData/codeInsight/outOfBlock/InPackage2.kt");
         }
 
+        @TestMetadata("InPackage3.kt")
+        public void testInPackage3() throws Exception {
+            runTest("testData/codeInsight/outOfBlock/InPackage3.kt");
+        }
+
+        @TestMetadata("InPackage4.kt")
+        public void testInPackage4() throws Exception {
+            runTest("testData/codeInsight/outOfBlock/InPackage4.kt");
+        }
+
         @TestMetadata("InPrimaryConstructor.kt")
         public void testInPrimaryConstructor() throws Exception {
             runTest("testData/codeInsight/outOfBlock/InPrimaryConstructor.kt");
@@ -331,6 +341,14 @@ public abstract class OutOfBlockModificationTestGenerated extends AbstractOutOfB
         public void testInPropertyWithInferencePureStringLiteralChange() throws Exception {
             runTest("testData/codeInsight/outOfBlock/InPropertyWithInferencePureStringLiteralChange.kt");
         }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/codeInsight/outOfBlock")
+    public static class TestBucket004 extends AbstractOutOfBlockModificationTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
         @TestMetadata("InPropertyWithoutInference.kt")
         public void testInPropertyWithoutInference() throws Exception {
@@ -340,14 +358,6 @@ public abstract class OutOfBlockModificationTestGenerated extends AbstractOutOfB
         @TestMetadata("InSecondaryConstructorBody.kt")
         public void testInSecondaryConstructorBody() throws Exception {
             runTest("testData/codeInsight/outOfBlock/InSecondaryConstructorBody.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/codeInsight/outOfBlock")
-    public static class TestBucket004 extends AbstractOutOfBlockModificationTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("InSecondaryConstructorParameter.kt")
@@ -439,6 +449,14 @@ public abstract class OutOfBlockModificationTestGenerated extends AbstractOutOfB
         public void testPropNullType_Initializer_If_Fun() throws Exception {
             runTest("testData/codeInsight/outOfBlock/PropNullType_Initializer_If_Fun.kt");
         }
+    }
+
+    @RunWith(JUnit3RunnerWithInners.class)
+    @TestMetadata("testData/codeInsight/outOfBlock")
+    public static class TestBucket005 extends AbstractOutOfBlockModificationTest {
+        private void runTest(String testDataFilePath) throws Exception {
+            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+        }
 
         @TestMetadata("PropNullType_Initializer_ObjectLiteral_Fun.kt")
         public void testPropNullType_Initializer_ObjectLiteral_Fun() throws Exception {
@@ -448,14 +466,6 @@ public abstract class OutOfBlockModificationTestGenerated extends AbstractOutOfB
         @TestMetadata("PropertyNoType_Initializer_String.kt")
         public void testPropertyNoType_Initializer_String() throws Exception {
             runTest("testData/codeInsight/outOfBlock/PropertyNoType_Initializer_String.kt");
-        }
-    }
-
-    @RunWith(JUnit3RunnerWithInners.class)
-    @TestMetadata("testData/codeInsight/outOfBlock")
-    public static class TestBucket005 extends AbstractOutOfBlockModificationTest {
-        private void runTest(String testDataFilePath) throws Exception {
-            KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
         }
 
         @TestMetadata("PropertyWithType_Initializer_String.kt")

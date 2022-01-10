@@ -15,10 +15,15 @@ import com.intellij.pom.event.PomModelListener
 import com.intellij.pom.tree.TreeAspect
 import com.intellij.pom.tree.events.TreeChangeEvent
 import com.intellij.pom.tree.events.impl.ChangeInfoImpl
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiJavaFile
 import com.intellij.psi.PsiPackageStatement
 import com.intellij.psi.util.findTopmostParentOfType
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
+import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtPackageDirective
+import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
@@ -29,7 +34,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  *
  * Tested in [OutOfBlockModificationTestGenerated]
  */
-class KotlinPackageModificationListener(private val project: Project): Disposable {
+class KotlinPackageModificationListener(project: Project): Disposable {
     private val trackerImpl = SimpleModificationTracker()
 
     val packageTracker: ModificationTracker = trackerImpl
@@ -54,20 +59,37 @@ class KotlinPackageModificationListener(private val project: Project): Disposabl
             object : PomModelListener {
                 override fun isAspectChangeInteresting(aspect: PomModelAspect): Boolean = aspect == treeAspect
 
+                private fun PsiElement.findPackageDirectiveFqName(): FqName? {
+                    findTopmostParentOfType<KtPackageDirective>(false)?.let {
+                        return it.fqName
+                    }
+
+                    return findTopmostParentOfType<PsiPackageStatement>(false)?.let {
+                        FqName(it.packageName)
+                    }
+                }
+
+                private inline fun ASTNode?.packageDirectiveChange() =
+                    this is PsiPackageStatement || this?.elementType == KtStubElementTypes.PACKAGE_DIRECTIVE
+
                 override fun modelChanged(event: PomModelEvent) {
-                    val changeSet = event.getChangeSet(treeAspect) as TreeChangeEvent? ?: return
+                    val changeSet = event.getChangeSet(treeAspect).safeAs<TreeChangeEvent>() ?: return
 
-                    val packageChange = isAnyInChange(changeSet) {
-                        val psi = it?.psi
-                        val packageDirective = psi.safeAs<KtPackageDirective>() ?: psi?.findTopmostParentOfType<KtPackageDirective>()
+                    // track only Kotlin and Java files
+                    changeSet.rootElement.psi.containingFile.takeIf { it is KtFile || it is PsiJavaFile } ?: return
 
-                        if (packageDirective != null) {
-                            // ignore implicit `package <root>`
-                            return@isAnyInChange !packageDirective.fqName.isRoot
+                    val packageChange = changeSet.changedElements.any { changedElement ->
+                        if (changedElement.packageDirectiveChange()) return@any true
+
+                        val changesByElement = changeSet.getChangesByElement(changedElement)
+                        changesByElement.affectedChildren.any child@ { affectedChild ->
+                            if (affectedChild.packageDirectiveChange()) return@child true
+                            val oldChildNode = changesByElement.getChangeByChild(affectedChild).safeAs<ChangeInfoImpl>()?.oldChildNode
+                            if (oldChildNode?.packageDirectiveChange() == true) return@child true
+
+                            affectedChild.psi.findPackageDirectiveFqName()?.let { return@child true }
+                            oldChildNode?.psi?.findPackageDirectiveFqName() != null
                         }
-                        val psiPackageStatement = psi.safeAs<PsiPackageStatement>() ?: psi?.findTopmostParentOfType<PsiPackageStatement>() ?: return@isAnyInChange false
-                        // ignore implicit `package <root>`
-                        psiPackageStatement.packageName.isNotEmpty()
                     }
                     if (packageChange) {
                         incModificationCount()
@@ -76,19 +98,6 @@ class KotlinPackageModificationListener(private val project: Project): Disposabl
             }
         )
     }
-
-    private fun isAnyInChange(changeSet: TreeChangeEvent, precondition: (ASTNode?) -> Boolean): Boolean =
-        changeSet.changedElements.any { changedElement ->
-            val changesByElement = changeSet.getChangesByElement(changedElement)
-            changesByElement.affectedChildren.any { affectedChild ->
-                precondition(affectedChild) || changesByElement.getChangeByChild(affectedChild).let { changeByChild ->
-                    if (changeByChild is ChangeInfoImpl) {
-                        val oldChild = changeByChild.oldChildNode
-                        precondition(oldChild)
-                    } else false
-                }
-            }
-        }
 
     fun incModificationCount() {
         trackerImpl.incModificationCount()

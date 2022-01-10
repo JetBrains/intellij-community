@@ -2,6 +2,8 @@
 
 package org.jetbrains.kotlin.idea.caches.trackers
 
+import com.intellij.ide.plugins.DynamicPluginListener
+import com.intellij.ide.plugins.IdeaPluginDescriptor
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
@@ -91,6 +93,16 @@ class KotlinCodeBlockModificationListener(project: Project) : PsiTreeChangePrepr
             }
 
             perModuleOutOfCodeBlockTrackerUpdater.onPsiModificationTrackerUpdate()
+        })
+
+        messageBusConnection.subscribe(DynamicPluginListener.TOPIC, object : DynamicPluginListener {
+            override fun beforePluginUnload(pluginDescriptor: IdeaPluginDescriptor, isUpdate: Boolean) {
+                incModificationCount()
+            }
+
+            override fun pluginLoaded(pluginDescriptor: IdeaPluginDescriptor) {
+                incModificationCount()
+            }
         })
     }
 
