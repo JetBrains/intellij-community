@@ -135,4 +135,8 @@ class FirUastResolveApiFixtureTest : KotlinLightCodeInsightFixtureTestCase(), Ua
     fun testDetailsOfDeprecatedHidden() {
         doCheck("DetailsOfDeprecatedHidden", ::checkDetailsOfDeprecatedHidden)
     }
+
+    fun testSyntheticEnumMethods() {
+        doCheck("SyntheticEnumMethods", ::checkSyntheticEnumMethods)
+    }
 }

@@ -8,6 +8,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.testFramework.fixtures.JavaCodeInsightTestFixture
 import junit.framework.TestCase
+import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUES
+import org.jetbrains.kotlin.builtins.StandardNames.ENUM_VALUE_OF
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseBase
 import org.jetbrains.kotlin.psi.KtConstructor
 import org.jetbrains.kotlin.utils.addToStdlib.cast
@@ -463,5 +465,87 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             }
         }
     }
+
+    fun checkSyntheticEnumMethods(myFixture: JavaCodeInsightTestFixture) {
+        myFixture.configureByText(
+            "MyClass.kt", """
+            enum class MyEnum  {
+                FOO,
+                BAR;
+            }
+            
+            fun testValueOf() {
+              MyEnum.valueOf("FOO")
+            }
+            
+            fun testValues() {
+              MyEnum.values()
+            }
+        """
+        )
+
+        val uFile = myFixture.file.toUElement()!!
+        val myEnum = uFile.findElementByTextFromPsi<UClass>("MyEnum")
+        TestCase.assertNotNull("can't convert enum class MyEnum", myEnum)
+
+        val syntheticMethods = setOf(ENUM_VALUES.identifier, ENUM_VALUE_OF.identifier)
+        var metValues = false
+        var metValueOf = false
+        myEnum.methods.forEach { mtd ->
+            if (!mtd.isConstructor) {
+                TestCase.assertNotNull("Null return type of $mtd", mtd.returnType)
+            }
+            if (mtd.name in syntheticMethods) {
+                when (mtd.name) {
+                    ENUM_VALUES.identifier -> metValues = true
+                    ENUM_VALUE_OF.identifier -> metValueOf = true
+                }
+                // TODO: KTIJ-17444
+                TestCase.assertTrue(
+                    "Missing nullness annotations on $mtd",
+                    mtd.uAnnotations.any { it.javaPsi?.isNullnessAnnotation == true }
+                )
+            }
+        }
+        // TODO: KTIJ-17414
+        TestCase.assertFalse("Expect to meet synthetic values() methods in an enum class", metValues)
+        TestCase.assertFalse("Expect to meet synthetic valueOf(String) methods in an enum class", metValueOf)
+
+        val testValueOf = uFile.findElementByTextFromPsi<UMethod>("testValueOf")
+        TestCase.assertNotNull("testValueOf should be successfully converted", testValueOf)
+        val valueOfCall = testValueOf.findElementByText<UElement>("valueOf").uastParent as KotlinUFunctionCallExpression
+        val resolvedValueOfCall = valueOfCall.resolve()
+        TestCase.assertNull("Unresolved MyEnum.valueOf(String)", resolvedValueOfCall)
+        // TODO: KTIJ-17414
+        TestCase.assertNull("Null return type of $resolvedValueOfCall", resolvedValueOfCall?.returnType)
+        // TODO: KTIJ-17444
+        /*
+        TestCase.assertTrue(
+            "Missing nullness annotations on $resolvedValueOfCall",
+            resolvedValueOfCall!!.annotations.any { it.isNullnessAnnotation }
+        )
+        */
+
+        val testValues = uFile.findElementByTextFromPsi<UMethod>("testValues")
+        TestCase.assertNotNull("testValues should be successfully converted", testValues)
+        val valuesCall = testValues.findElementByText<UElement>("values").uastParent as KotlinUFunctionCallExpression
+        val resolvedValuesCall = valuesCall.resolve()
+        TestCase.assertNull("Unresolved MyEnum.values()", resolvedValuesCall)
+        // TODO: KTIJ-17414
+        TestCase.assertNull("Null return type of $resolvedValuesCall", resolvedValuesCall?.returnType)
+        // TODO: KTIJ-17444
+        /*
+        TestCase.assertTrue(
+            "Missing nullness annotations on $resolvedValuesCall",
+            resolvedValuesCall!!.annotations.any { it.isNullnessAnnotation }
+        )
+        */
+    }
+
+    private val PsiAnnotation.isNullnessAnnotation: Boolean
+        get() {
+            val resolvedName = resolveAnnotationType()?.name ?: return false
+            return resolvedName.endsWith("NotNull") || resolvedName.endsWith("Nullable")
+        }
 
 }
