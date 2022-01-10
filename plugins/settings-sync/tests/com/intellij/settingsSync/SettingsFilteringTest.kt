@@ -31,10 +31,10 @@ class SettingsFilteringTest : LightPlatformTestCase() {
   }
 
   fun `test font sync enabled via subcategory` () {
-    assertTrue(isSyncEnabled("editor-font.xml", RoamingType.DISABLED))
+    assertTrue(isSyncEnabled("editor-font.xml", RoamingType.DEFAULT))
     SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.UI, SettingsSyncUiGroup.EDITOR_FONT_ID, false)
     try {
-      assertFalse(isSyncEnabled("editor-font.xml", RoamingType.DISABLED))
+      assertFalse(isSyncEnabled("editor-font.xml", RoamingType.DEFAULT))
     }
     finally {
       SettingsSyncSettings.getInstance().setSubcategoryEnabled(SettingsCategory.UI, SettingsSyncUiGroup.EDITOR_FONT_ID, true)
@@ -52,5 +52,9 @@ class SettingsFilteringTest : LightPlatformTestCase() {
     finally {
       SettingsSyncSettings.getInstance().setCategoryEnabled(SettingsCategory.KEYMAP, true)
     }
+  }
+
+  fun `test settings sync settings always synchronized` () {
+    assertTrue(isSyncEnabled("settingsSync.xml", RoamingType.DEFAULT))
   }
 }

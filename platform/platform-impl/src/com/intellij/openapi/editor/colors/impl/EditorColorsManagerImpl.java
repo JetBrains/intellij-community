@@ -76,7 +76,7 @@ public final class EditorColorsManagerImpl extends EditorColorsManager implement
   private final ComponentTreeEventDispatcher<EditorColorsListener> myTreeDispatcher = ComponentTreeEventDispatcher.create(EditorColorsListener.class);
 
   private final SchemeManager<EditorColorsScheme> mySchemeManager;
-  static final String FILE_SPEC = "colors";
+  public static final String FILE_SPEC = "colors";
 
   private State myState = new State();
   private boolean themeIsCustomized;
