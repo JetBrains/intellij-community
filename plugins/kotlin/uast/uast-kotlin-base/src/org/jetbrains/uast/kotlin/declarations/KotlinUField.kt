@@ -9,6 +9,7 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UField
 import org.jetbrains.uast.UFieldEx
 import org.jetbrains.uast.internal.acceptList
+import org.jetbrains.uast.renderModifiers
 import org.jetbrains.uast.visitor.UastVisitor
 
 open class KotlinUField(
@@ -57,5 +58,15 @@ open class KotlinUField(
         uastInitializer?.accept(visitor)
         delegateExpression?.accept(visitor)
         visitor.afterVisitField(this)
+    }
+
+    override fun asRenderString(): String = buildString {
+        if (uAnnotations.isNotEmpty()) {
+            uAnnotations.joinTo(this, separator = " ", postfix = " ") { it.asRenderString() }
+        }
+        append(javaPsi.renderModifiers())
+        // NB: use of (potentially delegated) `type`, instead of `javaPsiInternal.type`, is the only major difference.
+        append("var ").append(javaPsi.name).append(": ").append(type.getCanonicalText(false))
+        uastInitializer?.let { initializer -> append(" = " + initializer.asRenderString()) }
     }
 }
