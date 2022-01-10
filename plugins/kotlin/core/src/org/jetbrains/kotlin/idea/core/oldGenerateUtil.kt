@@ -33,6 +33,6 @@ fun <T : KtDeclaration> insertMembersAfterAndReformat(
     }
 }
 
-fun <T : KtDeclaration> insertMember(editor: Editor?, classOrObject: KtClassOrObject, declaration: T, anchor: PsiElement? = null): T {
+fun <T : KtDeclaration> insertMembersAfterAndReformat(editor: Editor?, classOrObject: KtClassOrObject, declaration: T, anchor: PsiElement? = null): T {
     return insertMembersAfterAndReformat(editor, classOrObject, listOf(declaration), anchor).single()
 }

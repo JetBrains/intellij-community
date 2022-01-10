@@ -1171,7 +1171,7 @@ internal fun <D : KtNamedDeclaration> placeDeclarationInContainer(
                 sibling = container.body?.lBrace
             }
 
-            insertMember(null, container, declaration, sibling)
+            insertMembersAfterAndReformat(null, container, declaration, sibling)
         }
         else -> throw KotlinExceptionWithAttachments("Invalid containing element: ${container::class.java}")
             .withPsiAttachment("container", container)
