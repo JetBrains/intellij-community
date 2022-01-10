@@ -3,22 +3,46 @@
 package org.jetbrains.kotlin.idea.references
 
 import com.intellij.openapi.components.service
-import org.jetbrains.kotlin.psi.KtBinaryExpression
-import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.psiUtil.getAssignmentByLHS
+import org.jetbrains.kotlin.psi.psiUtil.getQualifiedExpressionForSelectorOrThis
 import org.jetbrains.kotlin.resolve.references.ReferenceAccess
+import org.jetbrains.kotlin.utils.addToStdlib.constant
 
 interface ReadWriteAccessChecker {
     fun readWriteAccessWithFullExpressionByResolve(assignment: KtBinaryExpression): Pair<ReferenceAccess, KtExpression>?
 
-    @Suppress("DEPRECATION")
     fun readWriteAccessWithFullExpression(
         targetExpression: KtExpression,
         useResolveForReadWrite: Boolean
-    ): Pair<ReferenceAccess, KtExpression> =
-        if (useResolveForReadWrite)
-            targetExpression.readWriteAccessWithFullExpressionWithPossibleResolve(::readWriteAccessWithFullExpressionByResolve)
+    ): Pair<ReferenceAccess, KtExpression> {
+        var expression = targetExpression.getQualifiedExpressionForSelectorOrThis()
+        loop@ while (true) {
+            when (val parent = expression.parent) {
+                is KtParenthesizedExpression, is KtAnnotatedExpression, is KtLabeledExpression -> expression = parent as KtExpression
+                else -> break@loop
+            }
+        }
+
+        val assignment = expression.getAssignmentByLHS()
+        if (assignment != null) {
+            return when (assignment.operationToken) {
+                KtTokens.EQ -> ReferenceAccess.WRITE to assignment
+
+                else -> {
+                    (if (useResolveForReadWrite) readWriteAccessWithFullExpressionByResolve(assignment) else null)
+                        ?: (ReferenceAccess.READ_WRITE to assignment)
+                }
+            }
+        }
+
+        val unaryExpression = expression.parent as? KtUnaryExpression
+        return if (unaryExpression != null && unaryExpression.operationToken in constant { setOf(KtTokens.PLUSPLUS, KtTokens.MINUSMINUS) })
+            ReferenceAccess.READ_WRITE to unaryExpression
         else
-            targetExpression.readWriteAccessWithFullExpressionWithPossibleResolve(readWriteAccessWithFullExpressionByResolve = { null })
+            ReferenceAccess.READ to expression
+    }
 
     companion object {
         fun getInstance(): ReadWriteAccessChecker = service()
