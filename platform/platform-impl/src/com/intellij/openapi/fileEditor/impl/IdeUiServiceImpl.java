@@ -67,11 +67,8 @@ public class IdeUiServiceImpl extends IdeUiService {
   }
 
   @Override
-  public void logUsageEvent(Class<?> clazz, String groupId, String eventId) {
-    PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(clazz);
-    String factoryClass = pluginInfo.isSafeToReport() ? clazz.getName() : "third.party";
-    FeatureUsageData data = new FeatureUsageData().addData("factory", factoryClass).addPluginInfo(pluginInfo);
-    FUCounterUsageLogger.getInstance().logEvent(groupId, eventId, data);
+  public void logIdeScriptUsageEvent(Class<?> clazz) {
+    IdeScriptEngineUsageCollector.logUsageEvent(clazz);
   }
 
   @Override

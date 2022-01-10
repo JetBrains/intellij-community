@@ -127,7 +127,7 @@ final class IdeScriptEngineManagerImpl extends IdeScriptEngineManager {
     IdeScriptEngine engine = new EngineImpl(scriptEngineFactory, loader == null ? AllPluginsLoader.INSTANCE : loader);
     redirectOutputToLog(engine);
 
-    IdeUiService.getInstance().logUsageEvent(scriptEngineFactory.getClass(), "ide.script.engine", "used");
+    IdeUiService.getInstance().logIdeScriptUsageEvent(scriptEngineFactory.getClass());
 
     return engine;
   }
