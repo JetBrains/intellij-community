@@ -19,6 +19,14 @@ object EventsSchemeBuilder {
 
   data class EventsScheme(val commitHash: String?, val buildNumber: String?, val scheme: List<GroupDescriptor>)
 
+  val pluginInfoFields = hashSetOf(
+    FieldDescriptor("plugin", hashSetOf("{util#plugin}")),
+    FieldDescriptor("plugin_type", hashSetOf("{util#plugin_type}")),
+    FieldDescriptor("plugin_version", hashSetOf("{util#plugin_version}"))
+  )
+
+  private val classValidationRules = hashSetOf("{util#class_name}", "{util#dialog_class}", "{util#quick_fix_class_name}")
+
   private fun fieldSchema(field: EventField<*>, fieldName: String, eventName: String, groupId: String): Set<FieldDescriptor> {
     if (field.name.contains(".")) {
       throw IllegalStateException("Field name should not contains dots, because dots are used to express hierarchy. " +
@@ -29,19 +37,14 @@ object EventsSchemeBuilder {
       EventFields.PluginInfo,
       EventFields.PluginInfoFromInstance, // todo extract marker trait for delegates
       EventFields.PluginInfoByDescriptor,
-      ->
-        hashSetOf(
-          FieldDescriptor("plugin", hashSetOf("{util#plugin}")),
-          FieldDescriptor("plugin_type", hashSetOf("{util#plugin_type}")),
-          FieldDescriptor("plugin_version", hashSetOf("{util#plugin_version}"))
-        )
+      -> pluginInfoFields
       is ObjectEventField -> buildObjectEvenScheme(fieldName, field.fields, eventName, groupId)
       is ObjectListEventField -> buildObjectEvenScheme(fieldName, field.fields, eventName, groupId)
       is ListEventField<*> -> {
         if (field is StringListEventField.ValidatedByInlineRegexp) {
           validateRegexp(field.regexp)
         }
-        hashSetOf(FieldDescriptor(fieldName, field.validationRule.toHashSet(), FieldDataType.ARRAY))
+        buildFieldDescriptors(fieldName, field.validationRule, FieldDataType.ARRAY)
       }
       is PrimitiveEventField -> {
         if (field is StringEventField.ValidatedByInlineRegexp) {
@@ -51,9 +54,20 @@ object EventsSchemeBuilder {
           validateRegexp(field.regexp)
         }
 
-        hashSetOf(FieldDescriptor(fieldName, field.validationRule.toHashSet()))
+        buildFieldDescriptors(fieldName, field.validationRule, FieldDataType.PRIMITIVE)
       }
     }
+  }
+
+  private fun buildFieldDescriptors(fieldName: String,
+                                    validationRules: List<String>,
+                                    fieldDataType: FieldDataType): HashSet<FieldDescriptor> {
+
+    val fields = hashSetOf(FieldDescriptor(fieldName, validationRules.toHashSet(), fieldDataType))
+    if (validationRules.any { it in classValidationRules }) {
+      fields.addAll(pluginInfoFields)
+    }
+    return fields
   }
 
   private fun validateRegexp(regexp: String) {
@@ -119,6 +133,7 @@ object EventsSchemeBuilder {
   private fun validateGroupId(collector: FeatureUsagesCollector) {
     try {
       // get group id to check that either group or group id is overridden
+      @Suppress("DEPRECATION")
       collector.groupId
     }
     catch (e: IllegalStateException) {
