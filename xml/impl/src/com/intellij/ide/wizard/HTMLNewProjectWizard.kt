@@ -9,7 +9,7 @@ import com.intellij.util.io.systemIndependentPath
 
 class HTMLNewProjectWizard : LanguageNewProjectWizard {
   override val name: String = "HTML"
-  override val ordinal = 4
+  override val ordinal = 400
 
   override fun isEnabled(context: WizardContext) = PlatformUtils.isCommunityEdition()
 

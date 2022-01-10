@@ -22,7 +22,7 @@ interface NewProjectWizardMultiStepFactory<P : NewProjectWizardStep> {
    * The ordinal the steps are sorted by
    */
   val ordinal: Int
-    get() = -1
+    get() = Int.MAX_VALUE
 
   /**
    * Disabled steps will be excluded from multistep switcher.

@@ -25,12 +25,7 @@ abstract class AbstractNewProjectWizardMultiStep<S : NewProjectWizardStep, F : N
   }
 
   override fun initSteps() = epName.extensionList
-    .sortedBy {
-      if (it.ordinal == -1) {
-        return@sortedBy 100
-      }
-      it.ordinal
-    }
+    .sortedBy { it.ordinal }
     .filter { it.isEnabled(context) }
     .associateTo(LinkedHashMap()) { it.name to it.createStep(self) }
 

@@ -37,7 +37,7 @@ import javax.swing.SwingUtilities
 
 class GroovyNewProjectWizard : LanguageNewProjectWizard {
   override val name: String = "Groovy"
-  override val ordinal = 2
+  override val ordinal = 200
 
   override fun createStep(parent: NewProjectWizardLanguageStep) = Step(parent)
 
