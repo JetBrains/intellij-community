@@ -55,7 +55,7 @@ class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
         val counter = AtomicInteger(0)
         val myDisposable = Disposer.newDisposable()
         try {
-            val connection = myProject.messageBus.connect(testRootDisposable)
+            val connection = myProject.messageBus.connect(myDisposable)
             connection.subscribe(Notifications.TOPIC, object : Notifications {
                 override fun notify(notification: Notification) {
                     counter.incrementAndGet()
