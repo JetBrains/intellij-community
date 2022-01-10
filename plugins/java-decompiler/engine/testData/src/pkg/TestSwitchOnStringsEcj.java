@@ -96,54 +96,54 @@ public class TestSwitchOnStringsEcj {
         System.out.println(6);
     }
 
-
-    void combined() {
-        System.out.println("started");
-        if (s.length() > 0) {
-            System.out.println();
-            switch(s) {
-                case "b" -> System.out.println(1);
-                case "d" -> System.out.println(2);
-                case "a" -> System.out.println(3);
-                case "f" -> System.out.println(4);
-                default -> System.out.println(Math.random());
-            }
-            System.out.println(s);
-            combined();
-        } else {
-            try {
-                switch (getStr()) {
-                    case "h":
-                    case "i":
-                        while (s != null) {
-                            try {
-                                if (s.length() == 1) {
-                                    System.out.println(s);
-                                }
-                            } catch (NullPointerException e) {
-                                System.out.println(e.getMessage());
-                            }
-                        }
-                        System.out.println(5);
-                    case "j":
-                    case "f":
-                        System.out.println(6);
-                        return;
-                    default:
-                        System.out.println(7);
-                }
-            } catch (NullPointerException e) {
-                for (int i = 0; i < 10; i++) {
-                    switch (getStr()) {
-                        case S -> System.out.println(8);
-                        default -> System.out.println(e.getMessage());
-                    }
-                }
-                System.out.println(9);
-            }
-        }
-        System.out.println("finished");
-    }
+    // todo support cases with several case label elements
+    //void combined() {
+    //    System.out.println("started");
+    //    if (s.length() > 0) {
+    //        System.out.println();
+    //        switch(s) {
+    //            case "b" -> System.out.println(1);
+    //            case "d" -> System.out.println(2);
+    //            case "a" -> System.out.println(3);
+    //            case "f" -> System.out.println(4);
+    //            default -> System.out.println(Math.random());
+    //        }
+    //        System.out.println(s);
+    //        combined();
+    //    } else {
+    //        try {
+    //            switch (getStr()) {
+    //                case "h":
+    //                case "i":
+    //                    while (s != null) {
+    //                        try {
+    //                            if (s.length() == 1) {
+    //                                System.out.println(s);
+    //                            }
+    //                        } catch (NullPointerException e) {
+    //                            System.out.println(e.getMessage());
+    //                        }
+    //                    }
+    //                    System.out.println(5);
+    //                case "j":
+    //                case "f":
+    //                    System.out.println(6);
+    //                    return;
+    //                default:
+    //                    System.out.println(7);
+    //            }
+    //        } catch (NullPointerException e) {
+    //            for (int i = 0; i < 10; i++) {
+    //                switch (getStr()) {
+    //                    case S -> System.out.println(8);
+    //                    default -> System.out.println(e.getMessage());
+    //                }
+    //            }
+    //            System.out.println(9);
+    //        }
+    //    }
+    //    System.out.println("finished");
+    //}
 
     String getStr() {
         return "";
