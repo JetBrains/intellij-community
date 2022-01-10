@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -14,9 +14,9 @@ final class OpenedPackages implements Iterable<String> {
     '--add-opens=java.base/java.util.concurrent=ALL-UNNAMED',
     '--add-opens=java.base/java.io=ALL-UNNAMED',
     '--add-opens=java.base/java.net=ALL-UNNAMED',
+    '--add-opens=java.base/java.nio.charset=ALL-UNNAMED',
     '--add-opens=java.base/jdk.internal.vm=ALL-UNNAMED',
     '--add-opens=java.base/sun.nio.ch=ALL-UNNAMED',
-    '--add-opens=java.base/java.nio.charset=ALL-UNNAMED',
     '--add-opens=java.desktop/java.awt=ALL-UNNAMED',
     '--add-opens=java.desktop/java.awt.dnd.peer=ALL-UNNAMED',
     '--add-opens=java.desktop/java.awt.event=ALL-UNNAMED',
