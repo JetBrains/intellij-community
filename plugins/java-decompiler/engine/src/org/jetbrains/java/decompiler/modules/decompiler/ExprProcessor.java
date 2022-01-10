@@ -158,7 +158,7 @@ public class ExprProcessor implements CodeConstants {
 
       String currentEntrypoint = entryPoints.isEmpty() ? null : entryPoints.getLast();
 
-      for (DirectNode nd : node.succs) {
+      for (DirectNode nd : node.successors) {
         boolean isSuccessor = true;
 
         if (currentEntrypoint != null && dgraph.mapLongRangeFinallyPaths.containsKey(node.id)) {

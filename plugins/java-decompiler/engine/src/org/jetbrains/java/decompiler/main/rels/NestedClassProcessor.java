@@ -609,7 +609,7 @@ public class NestedClassProcessor {
 
     // no loop at the begin
     DirectNode firstNode = graph.first;
-    if (firstNode.preds.isEmpty()) {
+    if (firstNode.predecessors.isEmpty()) {
       // assignment to a synthetic field?
       for (Exprent exprent : firstNode.exprents) {
         if (exprent.type == Exprent.EXPRENT_ASSIGNMENT) {

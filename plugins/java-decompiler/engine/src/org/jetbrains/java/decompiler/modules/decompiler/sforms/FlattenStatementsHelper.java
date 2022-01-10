@@ -3,6 +3,7 @@ package org.jetbrains.java.decompiler.modules.decompiler.sforms;
 
 import org.jetbrains.java.decompiler.modules.decompiler.StatEdge;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.Exprent;
+import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode.DirectNodeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
 
 import java.util.*;
@@ -40,7 +41,7 @@ public class FlattenStatementsHelper {
 
     // dummy exit node
     Statement dummyexit = root.getDummyExit();
-    DirectNode node = new DirectNode(DirectNode.NODE_DIRECT, dummyexit, dummyexit.id.toString());
+    DirectNode node = new DirectNode(DirectNodeType.DIRECT, dummyexit, dummyexit.id.toString());
     node.exprents = new ArrayList<>();
     graph.nodes.addWithKey(node, node.id);
     mapDestinationNodes.put(dummyexit.id, new String[]{node.id, null});
@@ -93,7 +94,7 @@ public class FlattenStatementsHelper {
 
         switch (stat.type) {
           case Statement.TYPE_BASIC_BLOCK:
-            node = new DirectNode(DirectNode.NODE_DIRECT, stat, (BasicBlockStatement)stat);
+            node = new DirectNode(DirectNodeType.DIRECT, stat, (BasicBlockStatement)stat);
             if (stat.getExprents() != null) {
               node.exprents = stat.getExprents();
             }
@@ -106,7 +107,7 @@ public class FlattenStatementsHelper {
             List<Exprent> tailExprentList = statEntry.tailExprents;
 
             if (tailExprentList != null) {
-              DirectNode tail = new DirectNode(DirectNode.NODE_TAIL, stat, stat.id + "_tail");
+              DirectNode tail = new DirectNode(DirectNodeType.TAIL, stat, stat.id + "_tail");
               tail.exprents = tailExprentList;
               graph.nodes.putWithKey(tail, tail.id);
 
@@ -124,7 +125,7 @@ public class FlattenStatementsHelper {
             break;
           case Statement.TYPE_CATCH_ALL:
           case Statement.TYPE_TRY_CATCH:
-            DirectNode firstnd = new DirectNode(DirectNode.NODE_TRY, stat, stat.id + "_try");
+            DirectNode firstnd = new DirectNode(DirectNodeType.TRY, stat, stat.id + "_try");
 
             mapDestinationNodes.put(stat.id, new String[]{firstnd.id, null});
             graph.nodes.putWithKey(firstnd, firstnd.id);
@@ -175,7 +176,7 @@ public class FlattenStatementsHelper {
             switch (looptype) {
               case DoStatement.LOOP_WHILE:
               case DoStatement.LOOP_DOWHILE:
-                node = new DirectNode(DirectNode.NODE_CONDITION, stat, stat.id + "_cond");
+                node = new DirectNode(DirectNodeType.CONDITION, stat, stat.id + "_cond");
                 node.exprents = dostat.getConditionExprentList();
                 graph.nodes.putWithKey(node, node.id);
 
@@ -201,17 +202,17 @@ public class FlattenStatementsHelper {
                 sourcenode = node;
                 break;
               case DoStatement.LOOP_FOR:
-                DirectNode nodeinit = new DirectNode(DirectNode.NODE_INIT, stat, stat.id + "_init");
+                DirectNode nodeinit = new DirectNode(DirectNodeType.INIT, stat, stat.id + "_init");
                 if (dostat.getInitExprent() != null) {
                   nodeinit.exprents = dostat.getInitExprentList();
                 }
                 graph.nodes.putWithKey(nodeinit, nodeinit.id);
 
-                DirectNode nodecond = new DirectNode(DirectNode.NODE_CONDITION, stat, stat.id + "_cond");
+                DirectNode nodecond = new DirectNode(DirectNodeType.CONDITION, stat, stat.id + "_cond");
                 nodecond.exprents = dostat.getConditionExprentList();
                 graph.nodes.putWithKey(nodecond, nodecond.id);
 
-                DirectNode nodeinc = new DirectNode(DirectNode.NODE_INCREMENT, stat, stat.id + "_inc");
+                DirectNode nodeinc = new DirectNode(DirectNodeType.INCREMENT, stat, stat.id + "_inc");
                 nodeinc.exprents = dostat.getIncExprentList();
                 graph.nodes.putWithKey(nodeinc, nodeinc.id);
 
@@ -426,12 +427,12 @@ public class FlattenStatementsHelper {
 
       DirectNode dest = graph.nodes.getWithKey(mapDestinationNodes.get(statid)[edge.edgetype == StatEdge.TYPE_CONTINUE ? 1 : 0]);
 
-      if (!source.succs.contains(dest)) {
-        source.succs.add(dest);
+      if (!source.successors.contains(dest)) {
+        source.successors.add(dest);
       }
 
-      if (!dest.preds.contains(source)) {
-        dest.preds.add(source);
+      if (!dest.predecessors.contains(source)) {
+        dest.predecessors.add(source);
       }
 
       if (mapPosIfBranch.containsKey(sourceid) && !statid.equals(mapPosIfBranch.get(sourceid))) {

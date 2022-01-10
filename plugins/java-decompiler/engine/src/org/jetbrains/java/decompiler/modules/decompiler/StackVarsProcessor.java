@@ -4,6 +4,7 @@ package org.jetbrains.java.decompiler.modules.decompiler;
 import org.jetbrains.java.decompiler.code.CodeConstants;
 import org.jetbrains.java.decompiler.modules.decompiler.exps.*;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.*;
+import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode.DirectNodeType;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.DoStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.RootStatement;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.Statement;
@@ -119,10 +120,10 @@ public class StackVarsProcessor {
         lstLists.add(nd.exprents);
       }
 
-      if (nd.succs.size() == 1) {
-        DirectNode ndsucc = nd.succs.get(0);
-        if (ndsucc.type == DirectNode.NODE_TAIL && !ndsucc.exprents.isEmpty()) {
-          lstLists.add(nd.succs.get(0).exprents);
+      if (nd.successors.size() == 1) {
+        DirectNode ndsucc = nd.successors.get(0);
+        if (ndsucc.type == DirectNodeType.TAIL && !ndsucc.exprents.isEmpty()) {
+          lstLists.add(nd.successors.get(0).exprents);
           nd = ndsucc;
         }
       }
@@ -153,7 +154,7 @@ public class StackVarsProcessor {
         }
       }
 
-      for (DirectNode ndx : nd.succs) {
+      for (DirectNode ndx : nd.successors) {
         stack.add(ndx);
         stackMaps.add(new HashMap<>(mapVarValues));
       }
@@ -161,7 +162,7 @@ public class StackVarsProcessor {
       // make sure the 3 special exprent lists in a loop (init, condition, increment) are not empty
       // change loop type if necessary
       if (nd.exprents.isEmpty() &&
-          (nd.type == DirectNode.NODE_INIT || nd.type == DirectNode.NODE_CONDITION || nd.type == DirectNode.NODE_INCREMENT)) {
+          (nd.type == DirectNodeType.INIT || nd.type == DirectNodeType.CONDITION || nd.type == DirectNodeType.INCREMENT)) {
         nd.exprents.add(null);
 
         if (nd.statement.type == Statement.TYPE_DO) {

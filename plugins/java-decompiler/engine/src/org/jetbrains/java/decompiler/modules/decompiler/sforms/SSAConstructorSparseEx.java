@@ -121,7 +121,7 @@ public class SSAConstructorSparseEx {
           outNegVarVersions.put(node.id, varmaparr[1]);
         }
 
-        for (DirectNode nd : node.succs) {
+        for (DirectNode nd : node.successors) {
           updated.add(nd.id);
         }
       }
@@ -284,7 +284,7 @@ public class SSAConstructorSparseEx {
 
     SFormsFastMapDirect mapNew = new SFormsFastMapDirect();
 
-    for (DirectNode pred : node.preds) {
+    for (DirectNode pred : node.predecessors) {
       SFormsFastMapDirect mapOut = getFilteredOutMap(node.id, pred.id, dgraph, node.id);
       if (mapNew.isEmpty()) {
         mapNew = mapOut.getCopy();
