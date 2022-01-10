@@ -16,6 +16,7 @@ public interface EventLogUploaderOptions {
   String PRODUCT_OPTION = "--product";
   String PRODUCT_VERSION_OPTION = "--product-version";
   String USER_AGENT_OPTION = "--user-agent";
+  String EXTRA_HEADERS = "--extra-headers";
   String INTERNAL_OPTION = "--internal";
   String TEST_OPTION = "--test";
   String EAP_OPTION = "--eap";

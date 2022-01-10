@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.connection.EventLogSendListener;
 import com.intellij.internal.statistic.eventLog.connection.EventLogStatisticsService;
 import com.intellij.internal.statistic.eventLog.connection.StatisticsResult;
 import com.intellij.internal.statistic.uploader.events.ExternalEventsLogger;
+import com.intellij.internal.statistic.uploader.util.ExtraHTTPHeadersParser;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,12 +149,14 @@ public final class EventLogUploader {
     String productCode = options.get(EventLogUploaderOptions.PRODUCT_OPTION);
     String productVersion = options.get(EventLogUploaderOptions.PRODUCT_VERSION_OPTION);
     String userAgent = options.get(EventLogUploaderOptions.USER_AGENT_OPTION);
+    String headersString = options.get(EventLogUploaderOptions.EXTRA_HEADERS);
+    Map<String, String> extraHeaders = ExtraHTTPHeadersParser.parse(headersString);
     if (url != null && productCode != null) {
       boolean isInternal = options.containsKey(EventLogUploaderOptions.INTERNAL_OPTION);
       boolean isTest = options.containsKey(EventLogUploaderOptions.TEST_OPTION);
       boolean isEAP = options.containsKey(EventLogUploaderOptions.EAP_OPTION);
       return new EventLogExternalApplicationInfo(
-        url, productCode, productVersion, userAgent, isInternal, isTest, isEAP, logger, eventLogger
+        url, productCode, productVersion, userAgent, isInternal, isTest, isEAP, extraHeaders, logger, eventLogger
       );
     }
     return null;

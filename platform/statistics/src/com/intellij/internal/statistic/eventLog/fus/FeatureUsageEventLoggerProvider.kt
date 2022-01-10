@@ -15,7 +15,7 @@ internal class FeatureUsageEventLoggerProvider : StatisticsEventLoggerProvider("
   override fun isRecordEnabled(): Boolean {
     return !ApplicationManager.getApplication().isUnitTestMode &&
            StatisticsUploadAssistant.isCollectAllowed() &&
-           (ApplicationInfo.getInstance() == null || PlatformUtils.isJetBrainsProduct())
+           ((ApplicationInfo.getInstance() == null || PlatformUtils.isJetBrainsProduct()) || StatisticsUploadAssistant.getCollectAllowedOverride())
   }
 
   override fun isSendEnabled(): Boolean {

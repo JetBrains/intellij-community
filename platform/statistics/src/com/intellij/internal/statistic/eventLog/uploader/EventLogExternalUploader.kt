@@ -9,6 +9,7 @@ import com.intellij.internal.statistic.eventLog.uploader.EventLogUploadException
 import com.intellij.internal.statistic.uploader.EventLogUploaderOptions
 import com.intellij.internal.statistic.uploader.EventLogUploaderOptions.*
 import com.intellij.internal.statistic.uploader.events.*
+import com.intellij.internal.statistic.uploader.util.ExtraHTTPHeadersParser
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.SystemInfo
@@ -120,6 +121,7 @@ object EventLogExternalUploader {
     addArgument(args, PRODUCT_OPTION, applicationInfo.productCode)
     addArgument(args, PRODUCT_VERSION_OPTION, applicationInfo.productVersion)
     addArgument(args, USER_AGENT_OPTION, applicationInfo.connectionSettings.getUserAgent())
+    addArgument(args, EXTRA_HEADERS, ExtraHTTPHeadersParser.serialize(applicationInfo.connectionSettings.getExtraHeaders()))
 
     if (applicationInfo.isInternal) {
       args += INTERNAL_OPTION

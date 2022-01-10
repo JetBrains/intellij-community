@@ -6,6 +6,11 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * @deprecated use {@link ExternalEventLogSettings} instead
+ */
+@Deprecated
+@ApiStatus.ScheduledForRemoval(inVersion = "2022.2")
 @ApiStatus.Internal
 public interface EventLogEndpointSubstitutor {
    ExtensionPointName<EventLogEndpointSubstitutor> EP_NAME = new ExtensionPointName<>("com.intellij.statistic.eventLog.eventLogEndpointSubstitutor");

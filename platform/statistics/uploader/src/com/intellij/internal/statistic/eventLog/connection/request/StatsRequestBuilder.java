@@ -14,10 +14,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.Charset;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Objects;
+import java.util.*;
 import java.util.zip.GZIPOutputStream;
 
 public class StatsRequestBuilder {
@@ -39,6 +36,7 @@ public class StatsRequestBuilder {
   private final String myUserAgent;
   private final StatsProxyInfo myProxyInfo;
   private final SSLContext mySSLContext;
+  private final Map<String, String> myExtraHeaders;
 
   private final String myUrl;
   private final String myMethod;
@@ -55,6 +53,7 @@ public class StatsRequestBuilder {
     myUserAgent = settings.getUserAgent();
     myProxyInfo = settings.selectProxy(myUrl);
     mySSLContext = settings.getSSLContext();
+    myExtraHeaders = settings.getExtraHeaders();
   }
 
   @NotNull
@@ -189,6 +188,9 @@ public class StatsRequestBuilder {
     } else {
       throw new IllegalHttpRequestTypeException();
     }
+
+    myExtraHeaders
+      .forEach((k, v) -> builder.setHeader(k,v));
 
     return builder.build();
   }
