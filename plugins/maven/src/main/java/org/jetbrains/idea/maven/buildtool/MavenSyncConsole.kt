@@ -34,6 +34,7 @@ import org.jetbrains.idea.maven.execution.SyncBundle
 import org.jetbrains.idea.maven.externalSystemIntegration.output.importproject.quickfixes.DownloadArtifactBuildIssue
 import org.jetbrains.idea.maven.model.MavenProjectProblem
 import org.jetbrains.idea.maven.project.MavenProjectsManager
+import org.jetbrains.idea.maven.project.MavenResolveResultProcessor
 import org.jetbrains.idea.maven.project.MavenWorkspaceSettingsComponent
 import org.jetbrains.idea.maven.server.CannotStartServerException
 import org.jetbrains.idea.maven.server.MavenServerManager
@@ -543,6 +544,7 @@ class MavenSyncConsole(private val myProject: Project) {
     @JvmStatic
     fun finishTransaction(project: Project) {
       debugLog("Maven sync: finish sync transaction")
+      MavenResolveResultProcessor.notifyMavenProblems(project)
       val syncConsole = MavenProjectsManager.getInstance(project).syncConsole
       synchronized(syncConsole) {
         syncConsole.syncTransactionStarted = false

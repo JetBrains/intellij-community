@@ -897,9 +897,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
     console.startImport(myProgressListener);
     fireImportAndResolveScheduled();
     AsyncPromise<List<Module>> promise = scheduleResolve();
-    promise.onProcessed(m -> {
-      completeMavenSyncOnImportCompletion(console);
-    });
     return promise;
   }
 
@@ -909,13 +906,6 @@ public final class MavenProjectsManager extends MavenSimpleProjectComponent
 
   public void terminateImport(int exitCode) {
     getSyncConsole().terminated(exitCode);
-  }
-
-  private void completeMavenSyncOnImportCompletion(MavenSyncConsole console) {
-    waitForImportCompletion().onProcessed(o -> {
-      MavenResolveResultProcessor.notifyMavenProblems(myProject);
-      console.finishImport();
-    });
   }
 
   @ApiStatus.Internal

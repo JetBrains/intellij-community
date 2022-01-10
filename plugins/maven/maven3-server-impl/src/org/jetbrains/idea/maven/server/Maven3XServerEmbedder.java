@@ -15,6 +15,7 @@ import org.apache.maven.DefaultMaven;
 import org.apache.maven.Maven;
 import org.apache.maven.RepositoryUtils;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.artifact.InvalidRepositoryException;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
@@ -961,6 +962,10 @@ public abstract class Maven3XServerEmbedder extends Maven3ServerEmbedder {
       }
       catch (NoSuchMethodError ignore) {
       }
+      try {
+        String key = ArtifactUtils.key(project.getGroupId(), project.getArtifactId(), project.getVersion());
+        session.setProjectMap(Collections.singletonMap(key, project));
+      } catch (Exception ignore) {}
       session.setProjects(Collections.singletonList(project));
 
       for (AbstractMavenLifecycleParticipant listener : lifecycleParticipants) {
