@@ -5,10 +5,7 @@ import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.log4j.Level;
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.TestOnly;
+ import org.jetbrains.annotations.*;
 
 import java.lang.reflect.Constructor;
 import java.util.Collection;
@@ -227,7 +224,11 @@ public abstract class Logger {
     return value || assertTrue(false, null);
   }
 
+  /**
+   * @deprecated IntelliJ Platform no longer uses log4j as the logging framework; please use {@link #setLevel(LogLevel)} instead.
+   */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2023.1")
   public abstract void setLevel(@NotNull Level level);
 
   public void setLevel(@NotNull LogLevel level) {
