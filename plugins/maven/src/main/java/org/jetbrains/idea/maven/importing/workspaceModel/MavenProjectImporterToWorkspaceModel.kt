@@ -11,6 +11,7 @@ import com.intellij.workspaceModel.storage.WorkspaceEntityStorageBuilder
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleEntity
 import com.intellij.workspaceModel.storage.bridgeEntities.ModuleId
 import com.intellij.workspaceModel.storage.url.VirtualFileUrlManager
+import org.jetbrains.idea.maven.importing.MavenModuleNameMapper
 import org.jetbrains.idea.maven.importing.MavenProjectImporterBase
 import org.jetbrains.idea.maven.project.*
 import org.jetbrains.idea.maven.utils.MavenUtil
@@ -39,9 +40,12 @@ class MavenProjectImporterToWorkspaceModel(
     val allProjects = myProjectsTree.projects.toMutableSet()
     allProjects.addAll(projectsToImportWithChanges.keys)
     val moduleEntities = ArrayList<ModuleEntity>()
+    val mavenProjectToModuleName = HashMap<MavenProject, String>()
+    MavenModuleNameMapper.map(allProjects, emptyMap(), mavenProjectToModuleName, HashMap(), mavenImportingSettings.dedicatedModuleDir)
     for (mavenProject in allProjects) {
+      val moduleName = mavenProjectToModuleName.getValue(mavenProject)
       val moduleEntity = WorkspaceModuleImporter(mavenProject, virtualFileUrlManager, mavenProjectsTree, builder,
-                                                 mavenImportingSettings, project).importModule()
+                                                 mavenImportingSettings, mavenProjectToModuleName, project).importModule()
       moduleEntities.add(moduleEntity)
     }
     MavenUtil.invokeAndWaitWriteAction(project) {
