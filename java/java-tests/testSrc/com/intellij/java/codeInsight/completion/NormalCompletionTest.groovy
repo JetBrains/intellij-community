@@ -2644,8 +2644,10 @@ class Abc {
   }
 
   void testPinyinMatcher() {
-    myFixture.configureByText("Test.java", "class Test {void test() {int \u4F60\u597D = 1;nh<caret>}}")
+    myFixture.configureByText("Test.java", "class Test {int get\u4F60\u597D() {return 0;} void test() {int \u4F60\u597D = 1;nh<caret>}}")
     myFixture.completeBasic();
-    myFixture.checkResult("class Test {void test() {int \u4F60\u597D = 1;\u4F60\u597D}}")
+    assert myFixture.getLookupElementStrings() == ['\u4F60\u597D', 'get\u4F60\u597D']
+    myFixture.type('\n')
+    myFixture.checkResult("class Test {int get\u4F60\u597D() {return 0;} void test() {int \u4F60\u597D = 1;\u4F60\u597D}}")
   }
 }

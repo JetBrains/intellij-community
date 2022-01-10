@@ -268,18 +268,25 @@ public class PinyinMatcher extends MinusculeMatcher {
 
   @Override
   public FList<TextRange> matchingFragments(@NotNull String name) {
+    for (int start = 0; start < name.length() - 1; start++) {
+      int length = matchLengthAt(name, start);
+      if (length > 0) {
+        return FList.<TextRange>emptyList().prepend(TextRange.create(start, start + length));
+      }
+    }
+    return null;
+  }
+
+  private int matchLengthAt(@NotNull String name, int start) {
+    int len = Math.min(name.length(), myPattern.length() + start);
     int i;
-    int len = Math.min(name.length(), myPattern.length());
-    for (i = 0; i < len; i++) {
+    for (i = start; i < len; i++) {
       char c = name.charAt(i);
       if (c < BASE_CODE_POINT || c >= BASE_CODE_POINT + DATA.length()) break;
       int code = DATA.charAt(c - BASE_CODE_POINT) - BASE_CHAR;
-      if (code < 0 || ENCODING[code].indexOf(myPattern.charAt(i)) == -1) break;
+      if (code < 0 || ENCODING[code].indexOf(myPattern.charAt(i - start)) == -1) break;
     }
-    if (i > 0) {
-      return FList.<TextRange>emptyList().prepend(TextRange.create(0, i));
-    }
-    return null;
+    return i - start;
   }
 
   @Override
@@ -287,7 +294,15 @@ public class PinyinMatcher extends MinusculeMatcher {
                             boolean valueStartCaseMatch,
                             @Nullable FList<? extends TextRange> fragments) {
     if (fragments != null && fragments.size() == 1) {
-      return 500 + fragments.getHead().getLength();
+      TextRange range = fragments.getHead();
+      if (range.getStartOffset() == 0) {
+        return 500 + range.getLength();
+      }
+      String prefix = name.substring(0, range.getStartOffset());
+      if (prefix.equals("get") || prefix.equals("is") || prefix.equals("set")) {
+        return 200 + range.getLength();
+      }
+      return range.getLength();
     }
     return Integer.MIN_VALUE;
   }
@@ -297,6 +312,7 @@ public class PinyinMatcher extends MinusculeMatcher {
     if (pattern.startsWith("*")) {
       pattern = pattern.substring(1);
     }
+    if (pattern.isEmpty()) return delegate;
     for (int i = 0; i < pattern.length(); i++) {
       char c = pattern.charAt(i);
       if (c < 'a' || c > 'z' || c == 'i' || c == 'u' || c == 'v') return delegate;
