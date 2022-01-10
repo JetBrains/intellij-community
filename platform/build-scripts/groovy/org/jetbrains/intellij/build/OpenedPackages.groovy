@@ -5,6 +5,7 @@ import groovy.transform.CompileStatic
 
 @CompileStatic
 final class OpenedPackages implements Iterable<String> {
+  @SuppressWarnings('SpellCheckingInspection')
   private static final List<String> OPENED_PACKAGES = List.of(
     '--add-opens=java.base/java.lang=ALL-UNNAMED',
     '--add-opens=java.base/java.lang.reflect=ALL-UNNAMED',
