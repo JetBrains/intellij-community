@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -182,8 +182,9 @@ public final class JUnitUtil {
         return true;
       }
     }
-    else if (MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, Collections.singleton(CUSTOM_TESTABLE_ANNOTATION))
-    || hasTestableMetaAnnotation(psiClass)) {
+    else if (JavaPsiFacade.getInstance(psiClass.getProject()).findClass(CUSTOM_TESTABLE_ANNOTATION, psiClass.getResolveScope()) != null && 
+             MetaAnnotationUtil.isMetaAnnotatedInHierarchy(psiClass, Collections.singleton(CUSTOM_TESTABLE_ANNOTATION)) || 
+             hasTestableMetaAnnotation(psiClass)) {
       //no jupiter engine in the classpath
       return true;
     }

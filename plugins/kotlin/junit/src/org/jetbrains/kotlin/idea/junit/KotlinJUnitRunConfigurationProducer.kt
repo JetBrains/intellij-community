@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.junit
 
@@ -45,10 +45,10 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
         }
 
         val element = context.location?.psiElement ?: return false
-        val testEntity = JunitKotlinTestFrameworkProvider.getJavaTestEntity(element, checkMethod = true) ?: return false
+        val javaEntity = JunitKotlinTestFrameworkProvider.getJavaEntity(element) ?: return false
 
         val testObject = configuration.testObject
-        if (!testObject.isConfiguredByElement(configuration, testEntity.testClass, testEntity.testMethod, null, null)) {
+        if (!testObject.isConfiguredByElement(configuration, javaEntity.testClass, javaEntity.method, null, null)) {
             return false
         }
 
