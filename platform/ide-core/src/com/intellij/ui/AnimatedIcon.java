@@ -55,7 +55,7 @@ public class AnimatedIcon implements Icon {
     }
 
     private static Frame[] getDefaultFrames() {
-      if (Registry.is("ide.new.loading.icon")) {
+      if (Registry.is("ide.new.loading.icon", true)) {
         return SpinningProgressIconKt.createFrames();
       }
       return AnimatedIcon.getFrames(DELAY, OLD_ICONS.toArray(new Icon[0]));
