@@ -4,7 +4,7 @@ package com.intellij.internal.statistic.devkit.actions
 import com.google.gson.GsonBuilder
 import com.intellij.ide.scratch.ScratchRootType
 import com.intellij.internal.statistic.devkit.StatisticsDevKitUtil
-import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
+import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder
 import com.intellij.internal.statistic.utils.StatisticsRecorderUtil
 import com.intellij.json.JsonLanguage
 import com.intellij.notification.NotificationType

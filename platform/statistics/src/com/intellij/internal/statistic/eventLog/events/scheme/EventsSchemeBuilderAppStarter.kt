@@ -1,5 +1,5 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-package com.intellij.internal.statistic.eventLog.events
+package com.intellij.internal.statistic.eventLog.events.scheme
 
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonElement
@@ -32,11 +32,11 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
       }
     }
 
-    val eventsScheme = EventsSchemeBuilder.EventsScheme(System.getenv("INSTALLER_LAST_COMMIT_HASH"),
-      System.getenv("IDEA_BUILD_NUMBER"),
-      EventsSchemeBuilder.buildEventsScheme(pluginId))
+    val eventsScheme = EventsScheme(System.getenv("INSTALLER_LAST_COMMIT_HASH"),
+                                    System.getenv("IDEA_BUILD_NUMBER"),
+                                    EventsSchemeBuilder.buildEventsScheme(pluginId))
     val text = GsonBuilder()
-      .registerTypeAdapter(EventsSchemeBuilder.FieldDataType::class.java, FieldDataTypeSerializer)
+      .registerTypeAdapter(FieldDataType::class.java, FieldDataTypeSerializer)
       .setPrettyPrinting()
       .create()
       .toJson(eventsScheme)
@@ -73,9 +73,9 @@ internal class EventsSchemeBuilderAppStarter : ApplicationStarter {
     private const val pluginIdParameter = "--pluginId="
   }
 
-  object FieldDataTypeSerializer : JsonSerializer<EventsSchemeBuilder.FieldDataType> {
-    override fun serialize(src: EventsSchemeBuilder.FieldDataType?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
-      if (src == EventsSchemeBuilder.FieldDataType.PRIMITIVE || src == null) {
+  object FieldDataTypeSerializer : JsonSerializer<FieldDataType> {
+    override fun serialize(src: FieldDataType?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
+      if (src == FieldDataType.PRIMITIVE || src == null) {
         return context!!.serialize(null)
       }
       return context!!.serialize(src.name)

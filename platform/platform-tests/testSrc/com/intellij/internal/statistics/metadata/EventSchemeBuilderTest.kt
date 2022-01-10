@@ -4,8 +4,10 @@ package com.intellij.internal.statistics.metadata
 import com.intellij.internal.statistic.eventLog.EventLogGroup
 import com.intellij.internal.statistic.eventLog.events.EventField
 import com.intellij.internal.statistic.eventLog.events.EventFields
-import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
-import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder.pluginInfoFields
+import com.intellij.internal.statistic.eventLog.events.scheme.EventsScheme
+import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder
+import com.intellij.internal.statistic.eventLog.events.scheme.EventsSchemeBuilder.pluginInfoFields
+import com.intellij.internal.statistic.eventLog.events.scheme.FieldDescriptor
 import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 
@@ -56,7 +58,7 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
   }
 
   fun `test generate plugin info with class name`() {
-    val expectedValues = hashSetOf(EventsSchemeBuilder.FieldDescriptor("quickfix_name", hashSetOf("{util#class_name}"))) + pluginInfoFields
+    val expectedValues = hashSetOf(FieldDescriptor("quickfix_name", hashSetOf("{util#class_name}"))) + pluginInfoFields
     doCompositeFieldTest(EventFields.Class("quickfix_name"), expectedValues)
   }
 
@@ -71,7 +73,7 @@ class EventSchemeBuilderTest : BasePlatformTestCase() {
     assertSameElements(event.fields.first().value, expectedValues)
   }
 
-  private fun doCompositeFieldTest(eventField: EventField<*>, expectedValues: Set<EventsSchemeBuilder.FieldDescriptor>) {
+  private fun doCompositeFieldTest(eventField: EventField<*>, expectedValues: Set<FieldDescriptor>) {
     val eventLogGroup = EventLogGroup("test.group.id", 1)
     eventLogGroup.registerEvent("test_event", eventField)
     val groups = EventsSchemeBuilder.collectGroupsFromExtensions("count", listOf(TestCounterCollector(eventLogGroup)))

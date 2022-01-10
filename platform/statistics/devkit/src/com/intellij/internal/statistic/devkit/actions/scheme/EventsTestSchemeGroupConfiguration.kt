@@ -13,7 +13,7 @@ import com.intellij.codeInspection.InspectionEngine
 import com.intellij.codeInspection.ProblemDescriptor
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper
 import com.intellij.internal.statistic.StatisticsBundle
-import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
+import com.intellij.internal.statistic.eventLog.events.scheme.GroupDescriptor
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule.Companion.EMPTY_RULES
 import com.intellij.json.JsonLanguage
@@ -54,7 +54,7 @@ import javax.swing.JPanel
 class EventsTestSchemeGroupConfiguration(private val project: Project,
                                          productionGroups: EventGroupRemoteDescriptors,
                                          initialGroup: GroupValidationTestRule,
-                                         generatedScheme: List<EventsSchemeBuilder.GroupDescriptor>,
+                                         generatedScheme: List<GroupDescriptor>,
                                          groupIdChangeListener: ((GroupValidationTestRule) -> Unit)? = null) : Disposable {
 
   val panel: JPanel
@@ -244,7 +244,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     return validateTestSchemeGroup(project, currentGroup, groupIdTextField, tempFile)
   }
 
-  private fun createEventsScheme(generatedScheme: List<EventsSchemeBuilder.GroupDescriptor>): HashMap<String, String> {
+  private fun createEventsScheme(generatedScheme: List<GroupDescriptor>): HashMap<String, String> {
     val eventsScheme = HashMap<String, String>()
     val gson = GsonBuilder().setPrettyPrinting().create()
     for (group in generatedScheme) {
@@ -256,7 +256,7 @@ class EventsTestSchemeGroupConfiguration(private val project: Project,
     return eventsScheme
   }
 
-  private fun createValidationRules(group: EventsSchemeBuilder.GroupDescriptor): EventGroupRemoteDescriptors.GroupRemoteRule? {
+  private fun createValidationRules(group: GroupDescriptor): EventGroupRemoteDescriptors.GroupRemoteRule? {
     val eventIds = hashSetOf<String>()
     val eventData = hashMapOf<String, MutableSet<String>>()
     val events = group.schema

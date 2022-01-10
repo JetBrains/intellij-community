@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.devkit.actions.scheme
 
 import com.intellij.internal.statistic.StatisticsBundle
-import com.intellij.internal.statistic.eventLog.events.EventsSchemeBuilder
+import com.intellij.internal.statistic.eventLog.events.scheme.GroupDescriptor
 import com.intellij.internal.statistic.eventLog.validator.storage.GroupValidationTestRule
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionToolbarPosition
@@ -27,7 +27,7 @@ import javax.swing.SwingConstants
 class EditEventsTestSchemePanel(private val project: Project,
                                 testSchemeGroups: List<GroupValidationTestRule>,
                                 productionGroups: EventGroupRemoteDescriptors,
-                                generatedScheme: List<EventsSchemeBuilder.GroupDescriptor>) : JPanel(), Disposable {
+                                generatedScheme: List<GroupDescriptor>) : JPanel(), Disposable {
   private val groupsModel = CollectionListModel(testSchemeGroups)
   private val groupsList: JBList<GroupValidationTestRule> = JBList(groupsModel)
   private var groupConfiguration: EventsTestSchemeGroupConfiguration
