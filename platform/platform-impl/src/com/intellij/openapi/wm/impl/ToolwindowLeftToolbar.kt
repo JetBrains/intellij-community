@@ -15,6 +15,8 @@ class ToolwindowLeftToolbar : ToolwindowToolbar() {
   private val topPane = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
     override fun getAnchor(): ToolWindowAnchor = ToolWindowAnchor.LEFT
     override fun getButtonFor(toolWindowId: String): JComponent? = this@ToolwindowLeftToolbar.getButtonFor(toolWindowId)
+    override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) =
+      tryDroppingOnGap(data, gap, myDropRectangle) { layoutDragButton(data, gap) }
   }
 
   private val bottomPane = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
@@ -43,8 +45,10 @@ class ToolwindowLeftToolbar : ToolwindowToolbar() {
   }
 
   override fun getStripeFor(screenPoint: Point): AbstractDroppableStripe? = if (isVisible && moreButton.isVisible) {
-    if (Rectangle(topPane.locationOnScreen, topPane.size).contains(screenPoint)) topPane
-    else if (!Rectangle(moreButton.locationOnScreen, moreButton.size).contains(screenPoint) &&
+    val moreButtonRect = Rectangle(moreButton.locationOnScreen, moreButton.size)
+    if (Rectangle(topPane.locationOnScreen, topPane.size).contains(screenPoint) ||
+        topPane.buttons.isEmpty() && moreButtonRect.contains(screenPoint)) topPane
+    else if (!moreButtonRect.contains(screenPoint) &&
              Rectangle(locationOnScreen, size).also{ JBInsets.removeFrom(it, insets)}.contains(screenPoint)) bottomPane
     else null
   }

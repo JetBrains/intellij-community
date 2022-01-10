@@ -1,6 +1,4 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.wm.ToolWindowAnchor
@@ -71,7 +69,7 @@ abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : JPanel(la
       SwingUtilities.convertPointFromScreen(it, this)
       it.y = max(it.y, 0)
     }
-    myDropRectangle = Rectangle(dropPoint, buttonImage.size)
+    myDropRectangle = if (ExperimentalUI.isNewToolWindowsStripes()) Rectangle(dropPoint, button.preferredSize) else Rectangle(dropPoint, buttonImage.size)
 
     revalidate()
     repaint()
@@ -302,7 +300,12 @@ abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : JPanel(la
   protected fun layoutDragButton(data: LayoutData, gap: Int) {
     myDrawRectangle.x = data.eachX
     myDrawRectangle.y = data.eachY
-    myDragButtonImage?.let { layoutButton(data, it, false) }
+    if (ExperimentalUI.isNewToolWindowsStripes()) {
+      myDragButton?.let{ layoutButton(data, it, false) }
+    } else {
+      myDragButtonImage?.let { layoutButton(data, it, false) }
+    }
+
     if (data.horizontal) {
       myDrawRectangle.width = data.eachX - myDrawRectangle.x
       myDrawRectangle.height = data.fitSize.height

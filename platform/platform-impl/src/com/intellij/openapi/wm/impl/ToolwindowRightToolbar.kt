@@ -11,16 +11,8 @@ import javax.swing.JComponent
 class ToolwindowRightToolbar : ToolwindowToolbar() {
   val topPane = object : AbstractDroppableStripe(VerticalFlowLayout(0, 0)) {
     override fun getAnchor(): ToolWindowAnchor = ToolWindowAnchor.RIGHT
-    override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) {
-      val sideDistance = data.eachY + gap - myDropRectangle.y + myDropRectangle.height
-
-      if (sideDistance > 0) {
-        data.dragInsertPosition = -1
-        data.dragToSide = false
-        data.dragTargetChosen = true
-        layoutDragButton(data, gap)
-      }
-    }
+    override fun tryDroppingOnGap(data: LayoutData, gap: Int, insertOrder: Int) =
+      tryDroppingOnGap(data, gap, myDropRectangle) { layoutDragButton(data, gap) }
 
     override fun getButtonFor(toolWindowId: String): JComponent? = this@ToolwindowRightToolbar.getButtonFor(toolWindowId)
   }

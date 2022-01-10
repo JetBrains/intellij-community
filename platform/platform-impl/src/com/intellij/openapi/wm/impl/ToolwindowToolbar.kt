@@ -12,6 +12,7 @@ import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
 import java.awt.BorderLayout
 import java.awt.Point
+import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JPanel
 
@@ -69,6 +70,17 @@ abstract class ToolwindowToolbar : JPanel() {
       val button = SquareStripeButton(project, StripeButton(toolwindowPane, it).also { button -> button.updatePresentation() })
       panel.add(button)
       panel.buttons.add(button)
+    }
+  }
+
+  protected fun tryDroppingOnGap(data: LayoutData, gap: Int, dropRectangle: Rectangle, doLayout: () -> Unit) {
+    val sideDistance = data.eachY + gap - dropRectangle.y + dropRectangle.height
+
+    if (sideDistance > 0) {
+      data.dragInsertPosition = -1
+      data.dragToSide = false
+      data.dragTargetChosen = true
+      doLayout()
     }
   }
 
