@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.DiffContext
@@ -34,13 +34,17 @@ import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.wm.IdeFocusManager
 import com.intellij.ui.ListenerUtil
 import com.intellij.ui.components.JBScrollPane
+import com.intellij.util.EventDispatcher
 import com.intellij.util.ui.JBUI
 import org.jetbrains.annotations.NonNls
 import java.awt.event.FocusAdapter
 import java.awt.event.FocusEvent
+import java.util.*
 import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.ScrollPaneConstants
+import javax.swing.event.ChangeEvent
+import javax.swing.event.ChangeListener
 
 class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Boolean) : DiffViewer, DataProvider {
   private val project = context.project
@@ -54,6 +58,7 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
     DataManager.registerDataProvider(this, this@CombinedDiffViewer)
     border = JBUI.Borders.empty()
     viewportBorder = JBUI.Borders.empty()
+    viewport.addChangeListener(ViewportChangeListener())
   }
 
   internal val diffBlocks = mutableListOf<CombinedDiffBlock>()
@@ -62,10 +67,20 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
 
   private val focusListener = FocusListener(this)
 
+  private val blockListeners = EventDispatcher.create(BlockListener::class.java)
+
   private val diffInfo = object : DiffInfo() {
     override fun getContentTitles(): List<String?> {
       return (getCurrentBlockContent()?.viewer as? DiffViewerBase)?.request?.contentTitles ?: return emptyList()
     }
+  }
+
+  internal fun updateBlockContent(block: CombinedDiffBlock, newContent: CombinedDiffBlockContent) {
+    val oldViewer = block.content.viewer
+    val newViewer = newContent.viewer
+    block.updateBlockContent(newContent)
+    newViewer.init()
+    Disposer.dispose(oldViewer)
   }
 
   internal fun addChildBlock(content: CombinedDiffBlockContent, needBorder: Boolean) {
@@ -147,6 +162,39 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
     return if (DiffDataKeys.CURRENT_EDITOR.`is`(dataId)) getCurrentDiffViewer()?.editor else null
   }
 
+  private inner class ViewportChangeListener: ChangeListener {
+
+    override fun stateChanged(e: ChangeEvent) {
+      notifyVisibleBlocksChanged(false)
+    }
+  }
+
+  internal fun notifyVisibleBlocksChanged(takeFirst: Boolean) {
+    val viewRect = scrollPane.viewport.viewRect
+    var viewPortHeight = viewRect.height
+    val insideViewport: (CombinedDiffBlock) -> Boolean = { it.component.bounds.intersects(viewRect) }
+    val notInsideViewport: (CombinedDiffBlock) -> Boolean = { !insideViewport(it) }
+
+    val visibleBlocks =
+      if (takeFirst) {
+        diffBlocks.takeWhile {
+          viewPortHeight -= it.component.preferredSize.height
+          viewPortHeight > 0
+        }
+      }
+      else {
+        getAllBlocks().dropWhile(notInsideViewport).takeWhile(insideViewport).toList()
+      }
+
+    if (visibleBlocks.isNotEmpty()) {
+      blockListeners.multicaster.blocksVisible(visibleBlocks, null)
+    }
+  }
+
+  internal fun addBlockListener(listener: BlockListener) {
+    blockListeners.listeners.add(listener)
+  }
+
   fun getAllBlocks() = diffBlocks.asSequence()
 
   fun getCurrentBlockContent(): CombinedDiffBlockContent? {
@@ -184,7 +232,7 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
     }
   }
 
-  fun selectDiffBlock(block: CombinedDiffBlock, scrollPolicy: ScrollPolicy, onSelected: () -> Unit) {
+  fun selectDiffBlock(block: CombinedDiffBlock, scrollPolicy: ScrollPolicy, onSelected: () -> Unit = {}) {
     val index = diffBlocks.indexOf(block)
     if (index == -1) return
 
@@ -192,6 +240,16 @@ class CombinedDiffViewer(private val context: DiffContext, val unifiedDiff: Bool
   }
 
   private fun selectDiffBlock(index: Int, block: CombinedDiffBlock, scrollPolicy: ScrollPolicy, onSelected: () -> Unit) {
+    if (block.content.viewer is CombinedLazyDiffViewer) {
+      val visibleCount = scrollPane.viewport.viewRect.height / CombinedLazyDiffViewer.HEIGHT.get()
+      val startVisibleIndex = index - visibleCount
+
+      if (startVisibleIndex >= 0) {
+        val visibleBlocks = getAllBlocks().drop(startVisibleIndex + 1).take(visibleCount).toList()
+        blockListeners.multicaster.blocksVisible(visibleBlocks, block)
+        return
+      }
+    }
     val componentToFocus = with(block.content.viewer)
                            { if (isEditorBased) editor?.contentComponent else preferredFocusedComponent ?: component }
                            ?: return
@@ -290,3 +348,7 @@ internal val DiffViewer?.isEditorBased: Boolean
           this !is OnesideBinaryDiffViewer &&  //TODO simplify, introduce ability to distinguish editor and non-editor based DiffViewer
           this !is ThreesideBinaryDiffViewer &&
           this !is TwosideBinaryDiffViewer
+
+internal interface BlockListener : EventListener {
+  fun blocksVisible(blocks: Collection<CombinedDiffBlock>, blockToSelect: CombinedDiffBlock?)
+}

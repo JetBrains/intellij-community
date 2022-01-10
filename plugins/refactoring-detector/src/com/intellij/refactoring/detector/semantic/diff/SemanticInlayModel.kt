@@ -168,7 +168,7 @@ internal class SemanticInlayModel(private val combinedDiffViewerContext: UserDat
         semanticFragmentsBlocks.remove(fragmentId)
       })
       semanticFragmentsBlocks[fragmentId] = semanticFragmentBlock
-      combinedDiffViewer.selectDiffBlock(semanticFragmentBlock, ScrollPolicy.DIFF_BLOCK) {}
+      combinedDiffViewer.selectDiffBlock(semanticFragmentBlock, ScrollPolicy.DIFF_BLOCK)
     }
   }
 

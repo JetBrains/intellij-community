@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
 import com.intellij.diff.FrameDiffTool
@@ -32,6 +32,8 @@ interface CombinedDiffBlock : Disposable {
   val header: JComponent
   val body: JComponent
   val component: JComponent
+
+  fun updateBlockContent(newContent: CombinedDiffBlockContent) {}
 }
 
 class CombinedDiffBlockContent(val viewer: FrameDiffTool.DiffViewer, val path: FilePath, val fileStatus: FileStatus)
@@ -120,14 +122,23 @@ private class CombinedSimpleDiffHeader(block: CombinedDiffBlock, path: FilePath,
   }
 }
 
-private class CombinedSimpleDiffBlock(override val content: CombinedDiffBlockContent, withBorder: Boolean) :
+private class CombinedSimpleDiffBlock(initialContent: CombinedDiffBlockContent, withBorder: Boolean) :
   JPanel(VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, true)), CombinedDiffBlock {
 
+  override var content = initialContent
+    private set
+
   override val header = CombinedSimpleDiffHeader(this, content.path, withBorder)
-  override val body = content.viewer.component
+  override val body get() = content.viewer.component
 
   init {
     add(header)
+    add(body)
+  }
+
+  override fun updateBlockContent(newContent: CombinedDiffBlockContent) {
+    remove(body)
+    content = newContent
     add(body)
   }
 

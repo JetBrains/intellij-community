@@ -1,6 +1,7 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.diff.tools.combined
 
+import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.diff.requests.DiffRequest
 import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.vcs.FilePath
@@ -15,7 +16,7 @@ class CombinedDiffRequest(private val title: @Nls String?, requests: List<ChildD
     _requests = requests.toMutableList()
   }
 
-  class ChildDiffRequest(val request: DiffRequest, val path: FilePath, val fileStatus: FileStatus)
+  class ChildDiffRequest(val producer: DiffRequestProducer, val path: FilePath, val fileStatus: FileStatus)
 
   data class NewChildDiffRequestData(val path: FilePath, val fileStatus: FileStatus, val position: InsertPosition)
 
@@ -42,12 +43,6 @@ class CombinedDiffRequest(private val title: @Nls String?, requests: List<ChildD
 
   override fun getTitle(): @NlsContexts.DialogTitle String? {
     return title
-  }
-
-  override fun onAssigned(isAssigned: Boolean) {
-    for (request in _requests) {
-      request.request.onAssigned(isAssigned)
-    }
   }
 
   override fun toString(): String {
