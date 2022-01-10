@@ -58,4 +58,21 @@ open class KotlinUField(
         delegateExpression?.accept(visitor)
         visitor.afterVisitField(this)
     }
+
+    override fun asRenderString(): String = buildString {
+        if (uAnnotations.isNotEmpty()) {
+            uAnnotations.joinTo(this, separator = " ", postfix = " ") { it.asRenderString() }
+        }
+        append(javaPsi.renderModifiers())
+        // NB: use of (potentially delegated) `type`, instead of `javaPsiInternal.type`, is the only major difference.
+        append("var ").append(javaPsi.name).append(": ").append(type.getCanonicalText(false))
+        uastInitializer?.let { initializer -> append(" = " + initializer.asRenderString()) }
+    }
+}
+
+// copy of internal org.jetbrains.uast.InternalUastUtilsKt.renderModifiers
+// original function should be used instead as soon as becomes public
+private fun PsiModifierListOwner.renderModifiers(): String {
+    val modifiers = PsiModifier.MODIFIERS.filter { hasModifierProperty(it) }.joinToString(" ")
+    return if (modifiers.isEmpty()) "" else modifiers + " "
 }
