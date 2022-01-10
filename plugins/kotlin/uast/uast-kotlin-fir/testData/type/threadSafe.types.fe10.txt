@@ -44,7 +44,7 @@ UFile (package = ) [import kotlin.reflect.KProperty...]
                 USimpleNameReferenceExpression (identifier = <init>, resolvesTo = PsiClass: UnsafeClass) [<init>] : PsiType:UnsafeClass
         UField (name = message) [@org.jetbrains.annotations.NotNull private final var message: java.lang.String]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
-        UField (name = k$delegate) [@org.jetbrains.annotations.NotNull private final var k$delegate: kotlin.Lazy]
+        UField (name = k$delegate) [@org.jetbrains.annotations.NotNull private final var k$delegate: kotlin.Lazy<? extends SimpleSafeClass>]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [lazy({ ...})] : PsiType:Lazy<? extends SimpleSafeClass>
                 UIdentifier (Identifier (lazy)) [UIdentifier (Identifier (lazy))]
