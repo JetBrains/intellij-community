@@ -21,7 +21,7 @@ class RollingFileHandlerTest : BareTestFixtureTestCase() {
   @Test
   fun testRollingHandler() {
     val logPath = tempDir.newPath("RollingFileHandlerTest.log")
-    val handler = RollingFileHandler(logPath, 100, 2, false, null)
+    val handler = RollingFileHandler(logPath, 100, 2, false)
     handler.formatter = object : Formatter() {
       override fun format(record: LogRecord): String {
         return record.message

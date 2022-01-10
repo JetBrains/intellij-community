@@ -23,7 +23,7 @@ public class Log4jFileLoggerFactory implements com.intellij.openapi.diagnostic.L
 
   public Log4jFileLoggerFactory(File logFile, String categoriesWithDebugLevel) {
     myCategoriesWithDebugLevel = categoriesWithDebugLevel.isEmpty() ? Collections.emptyList() : Arrays.asList(categoriesWithDebugLevel.split(","));
-    myAppender = new RollingFileHandler(logFile.toPath(), 20_000_000L, 10, true, null);
+    myAppender = new RollingFileHandler(logFile.toPath(), 20_000_000L, 10, true);
     myAppender.setFormatter(new IdeaLogRecordFormatter());
   }
 

@@ -225,7 +225,7 @@ public final class VfsEventsMerger {
 
     MyLoggerFactory() throws IOException {
       Path logPath = IndexDiagnosticDumper.Companion.getIndexingDiagnosticDir().resolve("index-vfs-events.log");
-      myAppender = new RollingFileHandler(logPath, 20000000, 50, false, null);
+      myAppender = new RollingFileHandler(logPath, 20000000, 50, false);
     }
 
     @Override

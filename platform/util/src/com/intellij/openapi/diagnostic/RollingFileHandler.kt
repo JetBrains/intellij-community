@@ -13,12 +13,13 @@ import java.util.logging.Level
 import java.util.logging.LogRecord
 import java.util.logging.StreamHandler
 
-class RollingFileHandler(
+
+class RollingFileHandler @JvmOverloads constructor(
   private val logPath: Path,
   private val limit: Long,
   private val count: Int,
   append: Boolean,
-  private val onRotate: Runnable?
+  private val onRotate: Runnable? = null
 ) : StreamHandler() {
   private lateinit var meter: MeteredOutputStream
 
