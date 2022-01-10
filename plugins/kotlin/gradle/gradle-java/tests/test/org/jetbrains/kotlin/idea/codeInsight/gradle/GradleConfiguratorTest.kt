@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinVersionVerbose
 import org.jetbrains.kotlin.idea.configuration.*
+import org.jetbrains.kotlin.idea.configuration.notifications.LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME
 import org.jetbrains.kotlin.idea.configuration.notifications.checkExternalKotlinCompilerVersion
 import org.jetbrains.kotlin.idea.gradle.configuration.*
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinGradleModuleConfigurator
@@ -43,7 +44,7 @@ import java.util.concurrent.atomic.AtomicInteger
 class GradleConfiguratorTest : KotlinGradleImportingTestCase() {
     @Test
     fun testProjectWithModule() {
-        val propertyKey = "kotlin.updates.whats.new.shown.for"
+        val propertyKey = LAST_BUNDLED_KOTLIN_COMPILER_VERSION_PROPERTY_NAME
         val propertiesComponent = PropertiesComponent.getInstance()
 
         val kotlinVersionVerbose = KotlinVersionVerbose.parse(KotlinCompilerVersion.VERSION)
