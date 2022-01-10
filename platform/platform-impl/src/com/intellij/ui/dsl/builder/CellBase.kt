@@ -46,16 +46,20 @@ interface CellBase<out T : CellBase<T>> {
 
   /**
    * Sets horizontal alignment of content inside the cell, [HorizontalAlign.LEFT] by default.
-   * Note that content width is usually less than cell width, use [HorizontalAlign.FILL] to stretch the content on whole cell width.
+   * Use [HorizontalAlign.FILL] to stretch the content on whole cell width. In case the cell should occupy all
+   * available width in parent mark the column as [resizableColumn]
    *
+   * @see [resizableColumn]
    * @see [Constraints.horizontalAlign]
    */
   fun horizontalAlign(horizontalAlign: HorizontalAlign): CellBase<T>
 
   /**
    * Sets vertical alignment of content inside the cell, [VerticalAlign.CENTER] by default
-   * Note that content height is usually less than cell height, use [VerticalAlign.FILL] to stretch the content on whole cell height.
+   * Use [VerticalAlign.FILL] to stretch the content on whole cell height. In case the cell should occupy all
+   * available height in parent mark the row as [Row.resizableRow]
    *
+   * @see [Row.resizableRow]
    * @see [Constraints.verticalAlign]
    */
   fun verticalAlign(verticalAlign: VerticalAlign): CellBase<T>
