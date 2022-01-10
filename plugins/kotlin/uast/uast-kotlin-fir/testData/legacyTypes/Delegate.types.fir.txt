@@ -17,7 +17,7 @@ UFile (package = ) [public final class MyColor {...]
             UParameter (name = z) [@org.jetbrains.annotations.NotNull var z: int]
                 UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
     UClass (name = Some) [public final class Some {...}]
-        UField (name = delegate$delegate) [@org.jetbrains.annotations.NotNull private final var delegate$delegate: kotlin.Lazy<MyColor>]
+        UField (name = delegate$delegate) [@org.jetbrains.annotations.NotNull private final var delegate$delegate: kotlin.Lazy<? extends MyColor>]
             UAnnotation (fqName = org.jetbrains.annotations.NotNull) [@org.jetbrains.annotations.NotNull]
             UCallExpression (kind = UastCallKind(name='method_call'), argCount = 1)) [lazy({ ...})] : PsiType:Lazy<? extends MyColor>
                 UIdentifier (Identifier (lazy)) [UIdentifier (Identifier (lazy))]
