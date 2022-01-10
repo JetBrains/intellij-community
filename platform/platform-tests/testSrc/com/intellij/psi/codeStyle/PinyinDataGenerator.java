@@ -5,25 +5,24 @@ import org.jetbrains.annotations.NotNull;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.text.Normalizer;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
- * Generates data arrays for {@link PinyinMatcher} using uc-to-py.tbl as the input.
- * "uc-to-py.tbl" is "Unicode do Pinyin table" created by stolfi
- *
- * It contains unicode code point names and the respective pinyin readings, like "4F60 (ni3)"
- * If you have data in other formats, you should update the {@link #readMappings()} and {@link PinyinDataGenerator.Mapping#parse(String)}
- * methods correspondingly. Other parts of code are input-independent.
+ * Generates data arrays for {@link PinyinMatcher} using Unihan_Readings.txt file from unicode.org
+ * Requires Internet connection.
  */
 class PinyinDataGenerator {
   private static final int LINE_LENGTH = 100;
+  private static final String DATA_SOURCE = "https://unicode.org/Public/UNIDATA/Unihan.zip";
+  private static final String READINGS_FILE = "Unihan_Readings.txt";
 
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static void generate() throws IOException {
@@ -81,17 +80,22 @@ class PinyinDataGenerator {
 
   @NotNull
   private static List<Mapping> readMappings() throws IOException {
-    List<Mapping> mappings;
-    try (InputStream stream = PinyinDataGenerator.class.getResourceAsStream("uc-to-py.tbl")) {
-      if (stream == null) {
-        throw new IllegalStateException("Please put uc-to-py.tbl next to this class");
+    try (ZipInputStream zis = new ZipInputStream(new URL(DATA_SOURCE).openStream())) {
+      while (true) {
+        ZipEntry entry = zis.getNextEntry();
+        if (entry == null) {
+          throw new IllegalStateException(String.format("No %s found inside %s", READINGS_FILE, DATA_SOURCE));
+        }
+        if (entry.getName().equals(READINGS_FILE)) {
+          Collection<Mapping> mappings = new BufferedReader(new InputStreamReader(zis, StandardCharsets.UTF_8)).lines()
+            .map(Mapping::parseUniHan)
+            .filter(Objects::nonNull)
+            .collect(Collectors.toMap(m -> m.codePoint, m -> m, Mapping::merge, LinkedHashMap::new))
+            .values();
+          return new ArrayList<>(mappings);
+        }
       }
-      mappings = new BufferedReader(new InputStreamReader(stream, StandardCharsets.UTF_8)).lines()
-        .map(Mapping::parse)
-        .filter(Objects::nonNull)
-        .collect(Collectors.toList());
     }
-    return mappings;
   }
 
   private static final class Mapping {
@@ -108,34 +112,44 @@ class PinyinDataGenerator {
         .collect(Collectors.joining());
     }
 
-    static Mapping parse(String line) {
-      if (line.startsWith("#")) {
-        return null;
+    static Mapping merge(Mapping m1, Mapping m2) {
+      if (m1.codePoint != m2.codePoint) throw new IllegalArgumentException();
+      return new Mapping(m1.codePoint, m1.chars | m2.chars);
+    }
+
+    static Mapping parseUniHan(String line) {
+      if (line.startsWith("#")) return null;
+      String[] parts = line.split("\\s+");
+      if (parts.length != 3) return null;
+      if (!parts[0].startsWith("U+")) return null;
+      int codePoint = Integer.parseInt(parts[0].substring(2), 16);
+      if (codePoint < PinyinMatcher.BASE_CODE_POINT) return null;
+      // Codepoints outside BMP are not supported for now
+      if (codePoint > 0xA000) return null;
+      String[] readings;
+      switch (parts[1]) {
+        case "kMandarin":
+          readings = new String[]{parts[2]};
+          break;
+        case "kHanyuPinyin":
+          int colonPos = parts[2].indexOf(':');
+          if (colonPos == -1) return null;
+          readings = parts[2].substring(colonPos + 1).split(",");
+          break;
+        default:
+          return null;
       }
-      line = line.trim();
-      Pattern pattern = Pattern.compile("([0-9A-F]{4}) \\((.+\\))");
-      Matcher matcher = pattern.matcher(line);
-      if (!matcher.matches()) {
-        return null;
-      }
-      int codePoint = Integer.parseInt(matcher.group(1), 16);
-      if (codePoint < PinyinMatcher.BASE_CODE_POINT) {
-        return null;
-      }
-      String[] readings = matcher.group(2).split(",");
-      long chars = 0;
+      long encoded = 0;
       for (String reading : readings) {
-        reading = reading.replaceFirst("^\\d+:", "");
-        if (reading.isEmpty() || reading.equals("none0")) {
-          return null;
-        }
-        char firstChar = reading.charAt(0);
-        if (firstChar < 'a' || firstChar > 'z') {
-          return null;
-        }
-        chars |= (1L << (firstChar - 'a'));
+        char initial = Normalizer.normalize(reading, Normalizer.Form.NFKD).charAt(0);
+        encoded |= 1L << (initial - 'a');
       }
-      return new Mapping(codePoint, chars);
+      return new Mapping(codePoint, encoded);
+    }
+
+    @Override
+    public String toString() {
+      return String.format("%04X: %s", codePoint, charString());
     }
   }
 
