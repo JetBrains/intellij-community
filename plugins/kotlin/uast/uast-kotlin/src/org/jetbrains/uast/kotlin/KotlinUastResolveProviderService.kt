@@ -8,7 +8,6 @@ import org.jetbrains.kotlin.builtins.createFunctionType
 import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.idea.references.readWriteAccess
 import org.jetbrains.kotlin.name.FqNameUnsafe
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -171,7 +170,7 @@ interface KotlinUastResolveProviderService : BaseKotlinUastResolveProviderServic
     override fun resolveAccessorCall(ktSimpleNameExpression: KtSimpleNameExpression): PsiMethod? {
         val resolvedCall = ktSimpleNameExpression.getResolvedCall(ktSimpleNameExpression.analyze()) ?: return null
         val resultingDescriptor = resolvedCall.resultingDescriptor as? SyntheticJavaPropertyDescriptor ?: return null
-        val access = ktSimpleNameExpression.readWriteAccess(useResolveForReadWrite = false)
+        val access = ktSimpleNameExpression.readWriteAccess()
         val descriptor = (if (access.isWrite) resultingDescriptor.setMethod else resultingDescriptor.getMethod) ?: return null
         return resolveToPsiMethod(ktSimpleNameExpression, descriptor)
     }
