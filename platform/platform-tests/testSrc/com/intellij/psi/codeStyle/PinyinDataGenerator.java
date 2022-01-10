@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.codeStyle;
 
 import org.jetbrains.annotations.NotNull;
@@ -19,7 +19,7 @@ import java.util.stream.IntStream;
  * "uc-to-py.tbl" is "Unicode do Pinyin table" created by stolfi
  *
  * It contains unicode code point names and the respective pinyin readings, like "4F60 (ni3)"
- * If you have data in other formats, you should update the {@link #readMappings()} and {@link Mapping#parse(String)}
+ * If you have data in other formats, you should update the {@link #readMappings()} and {@link PinyinDataGenerator.Mapping#parse(String)}
  * methods correspondingly. Other parts of code are input-independent.
  */
 class PinyinDataGenerator {

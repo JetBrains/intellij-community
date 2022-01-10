@@ -10,7 +10,7 @@ public class PinyinMatcher extends MinusculeMatcher {
   static final int BASE_CODE_POINT = 0x4e00;
   static final char BASE_CHAR = '!';
   /**
-   * To generate {@code ENCODING} and {@code DATA}, see {@link PinyinDataGenerator} class.
+   * To generate {@code ENCODING} and {@code DATA}, see {@code PinyinDataGenerator} class in tests.
    */
   private static final String[] ENCODING =
     ("a,b,c,d,e,f,g,h,j,k,l,m,n,o,p,q,r,s,t,w,x,y,z,ac,ad,ae,ag,ah,as,aw,ax,ay,bf,bh,bk,bm,bn,bp,bs,bt,cd," +
@@ -315,6 +315,7 @@ public class PinyinMatcher extends MinusculeMatcher {
     if (pattern.isEmpty()) return delegate;
     for (int i = 0; i < pattern.length(); i++) {
       char c = pattern.charAt(i);
+      // Pinyin initials are always lowercase English letters and never include i, u, or v
       if (c < 'a' || c > 'z' || c == 'i' || c == 'u' || c == 'v') return delegate;
     }
     return new MatcherWithFallback(delegate, new PinyinMatcher(pattern));
