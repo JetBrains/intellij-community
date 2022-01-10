@@ -1,11 +1,13 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -49,11 +51,20 @@ public class AnimatedIcon implements Icon {
   public static class Default extends AnimatedIcon {
 
     public Default() {
-      super(DELAY, ICONS.toArray(new Icon[0]));
+      super(getDefaultFrames());
+    }
+
+    private static Frame[] getDefaultFrames() {
+      if (Registry.is("ide.new.loading.icon")) {
+        return SpinningProgressIconKt.createFrames();
+      }
+      return AnimatedIcon.getFrames(DELAY, OLD_ICONS.toArray(new Icon[0]));
     }
 
     public static final int DELAY = 130;
-    public static final List<Icon> ICONS = List.of(
+    public static final List<Icon> ICONS = ContainerUtil.map(getDefaultFrames(), frame -> frame.getIcon());
+
+    private static final List<Icon> OLD_ICONS = List.of(
       AllIcons.Process.Step_1,
       AllIcons.Process.Step_2,
       AllIcons.Process.Step_3,
