@@ -283,7 +283,6 @@ internal class XmlSerializerMapTest {
     val element = JDOMUtil.load("""
         <state>
 <![CDATA[{
-  }
 }]]>
         </state>
       """.trimIndent())
