@@ -9,6 +9,7 @@ import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import org.jdom.CDATA
 import org.jdom.Element
+import org.jdom.Text
 import java.lang.invoke.MethodHandles
 import java.lang.invoke.MethodType
 
@@ -50,7 +51,7 @@ internal class KotlinxSerializationBinding(aClass: Class<*>) : NotNullDeserializ
   }
 
   override fun deserialize(context: Any?, element: Element): Any {
-    val cdata = element.content.firstOrNull() as? CDATA
+    val cdata = element.content.firstOrNull() as? Text
     if (cdata == null) {
       LOG.debug("incorrect data (old format?) for $serializer")
       return json.decodeFromString(serializer, "{}")

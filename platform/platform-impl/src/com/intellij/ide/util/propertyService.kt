@@ -8,6 +8,7 @@ import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.StoragePathMacros
 import com.intellij.openapi.util.SimpleModificationTracker
+import kotlinx.serialization.Serializable
 import org.jetbrains.annotations.ApiStatus.Internal
 import org.jetbrains.annotations.NonNls
 import java.util.*
@@ -19,7 +20,7 @@ import java.util.function.Predicate
 sealed class BasePropertyService : PropertiesComponent(), PersistentStateComponentWithModificationTracker<BasePropertyService.MyState> {
   private val tracker = SimpleModificationTracker()
 
-  @kotlinx.serialization.Serializable
+  @Serializable
   data class MyState(
     val keyToString: Map<String, String> = emptyMap(),
     val keyToStringList: Map<String, List<String>> = emptyMap()
@@ -44,7 +45,7 @@ sealed class BasePropertyService : PropertiesComponent(), PersistentStateCompone
     }
   }
 
-  override fun getState() = if (keyToString.isEmpty()) MyState(emptyMap()) else MyState(TreeMap(keyToString))
+  override fun getState() = MyState(TreeMap(keyToString), TreeMap(keyToStringList))
 
   override fun loadState(state: MyState) {
     keyToString.clear()

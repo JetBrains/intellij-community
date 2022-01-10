@@ -10,10 +10,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.SmartList;
-import org.jdom.CDATA;
 import org.jdom.Content;
 import org.jdom.Element;
 import org.jdom.Parent;
+import org.jdom.Text;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,7 +49,7 @@ public final class FileStorageCoreUtil {
     for (Iterator<Element> iterator = children.iterator(); iterator.hasNext(); ) {
       Element element = iterator.next();
       String name = getComponentNameIfValid(element);
-      if (name == null || !(element.getAttributes().size() > 1 || !element.getChildren().isEmpty())) {
+      if (name == null || (element.getAttributes().size() <= 1 && element.getContent().isEmpty())) {
         continue;
       }
 
@@ -79,7 +79,7 @@ public final class FileStorageCoreUtil {
     }
 
     List<Content> content = element.getContent();
-    return content.size() == 1 && content.get(0) instanceof CDATA;
+    return content.size() == 1 && content.get(0) instanceof Text;
   }
 
   static @Nullable String getComponentNameIfValid(@NotNull Element element) {
