@@ -26,7 +26,6 @@ object GlobalStyleSheetHolder {
   /**
    * Returns a global style sheet that is dynamically updated when LAF changes
    */
-  @JvmStatic
   fun getGlobalStyleSheet(): StyleSheet {
     val result = StyleSheet()
     // return a linked sheet to avoid mutation of a global variable
@@ -37,7 +36,6 @@ object GlobalStyleSheetHolder {
   /**
    * Populate global stylesheet with LAF-based overrides
    */
-  @JvmStatic
   private fun updateGlobalStyleSheet() {
     if (!swingStyleSheetHandled) {
       // get the default JRE CSS and ...

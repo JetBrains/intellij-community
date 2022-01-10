@@ -1,6 +1,8 @@
 // Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:JvmName("ApplicationLoader")
 @file:ApiStatus.Internal
+@file:Suppress("ReplacePutWithAssignment")
+
 package com.intellij.idea
 
 import com.intellij.BundleBase
@@ -12,6 +14,7 @@ import com.intellij.ide.plugins.IdeaPluginDescriptorImpl
 import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.ide.plugins.PluginManagerMain
 import com.intellij.ide.plugins.StartupAbortedException
+import com.intellij.ide.ui.html.GlobalStyleSheetHolder
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.application.*
 import com.intellij.openapi.application.ex.ApplicationEx
@@ -54,6 +57,7 @@ import java.util.*
 import java.util.concurrent.*
 import java.util.function.BiFunction
 import javax.swing.LookAndFeel
+import javax.swing.UIManager
 import kotlin.system.exitProcess
 
 private val SAFE_JAVA_ENV_PARAMETERS = arrayOf(JetBrainsProtocolHandler.REQUIRED_PLUGINS_KEY)
@@ -87,11 +91,25 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
     { baseLaf ->
       prepareUiFutureWaitActivity.end()
 
-      ForkJoinPool.commonPool().execute {
-        initAppActivity.runChild("base laf passing") {
-          DarculaLaf.setPreInitializedBaseLaf(baseLaf as LookAndFeel)
-        }
+      val setBaseLafFuture = CompletableFuture.runAsync(
+        {
+          initAppActivity.runChild("base laf passing") {
+            DarculaLaf.setPreInitializedBaseLaf(baseLaf as LookAndFeel)
+          }
 
+          val patchingActivity = StartUpMeasurer.startActivity("html style patching")
+          // patch html styles
+          val uiDefaults = UIManager.getDefaults()
+          // create a separate copy for each case
+          uiDefaults.put("javax.swing.JLabel.userStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet())
+          uiDefaults.put("HTMLEditorKit.jbStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet())
+
+          patchingActivity.end()
+        },
+        ForkJoinPool.commonPool()
+      )
+
+      ForkJoinPool.commonPool().execute {
         if (!Main.isHeadless()) {
           EventQueue.invokeLater {
             WeakFocusStackManager.getInstance()
@@ -107,13 +125,13 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
       val pluginSetFutureWaitActivity = initAppActivity.startChild("plugin descriptor init waiting")
       PluginManagerCore.getInitPluginFuture().thenApply {
         pluginSetFutureWaitActivity.end()
-        it
+        Pair(it, setBaseLafFuture)
       }
     }, Executor {
     if (EDT.isCurrentThreadEdt()) ForkJoinPool.commonPool().execute(it) else it.run()
   }
   )
-    .thenCompose { pluginSet ->
+    .thenCompose { (pluginSet, setBaseLafFuture) ->
       val app = ApplicationManager.getApplication() as ApplicationImpl
       initAppActivity.runChild("app component registration") {
         app.registerComponents(modules = pluginSet.getEnabledModules(),
@@ -129,6 +147,9 @@ fun initApplication(rawArgs: List<String>, prepareUiFuture: CompletionStage<Any>
       // initSystemProperties or RegistryKeyBean.addKeysFromPlugins maybe not yet performed,
       // but it is OK, because registry is not and should not be used.
       initConfigurationStore(app)
+
+      // ensure that base laf is set before initialization of LafManagerImpl
+      setBaseLafFuture.join()
 
       val preloadSyncServiceFuture = preloadServices(pluginSet.getEnabledModules(), app, activityPrefix = "")
       prepareStart(app, initAppActivity, preloadSyncServiceFuture).thenApply {

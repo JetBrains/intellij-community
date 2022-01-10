@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.ui.laf;
 
 import com.intellij.CommonBundle;
@@ -655,7 +655,8 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     }
 
     // set L&F
-    if (DarculaLookAndFeelInfo.CLASS_NAME.equals(lookAndFeelInfo.getClassName())) {
+    String lafClassName = lookAndFeelInfo.getClassName();
+    if (DarculaLookAndFeelInfo.CLASS_NAME.equals(lafClassName)) {
       DarculaLaf laf = new DarculaLaf();
       try {
         UIManager.setLookAndFeel(laf);
@@ -682,11 +683,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
           laf = ((PluggableLafInfo)lookAndFeelInfo).createLookAndFeel();
         }
         else {
-          laf = (LookAndFeel)Class.forName(lookAndFeelInfo.getClassName()).getConstructor().newInstance();
-          if (laf instanceof MetalLookAndFeel) {
-            MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
-          }
-          else if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
+          laf = (LookAndFeel)LafManagerImpl.class.getClassLoader().loadClass(lafClassName).getConstructor().newInstance();
+          // avoid loading MetalLookAndFeel class here - check for UIThemeBasedLookAndFeelInfo first
+          if (lookAndFeelInfo instanceof UIThemeBasedLookAndFeelInfo) {
             if (laf instanceof UserDataHolder) {
               UserDataHolder userDataHolder = (UserDataHolder)laf;
               userDataHolder.putUserData(UIUtil.LAF_WITH_THEME_KEY, Boolean.TRUE);
@@ -694,6 +693,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
             //if (lafNameOrder.containsKey(lookAndFeelInfo.getName()) && lookAndFeelInfo.getName().endsWith("Light")) {
             //  updateIconsUnderSelection(false);
             //}
+          }
+          else if (laf instanceof MetalLookAndFeel) {
+            MetalLookAndFeel.setCurrentTheme(new DefaultMetalTheme());
           }
         }
 

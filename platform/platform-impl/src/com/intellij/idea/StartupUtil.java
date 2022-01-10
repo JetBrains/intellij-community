@@ -14,7 +14,6 @@ import com.intellij.ide.gdpr.EndUserAgreement;
 import com.intellij.ide.instrument.WriteIntentLockInstrumenter;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.StartupAbortedException;
-import com.intellij.ide.ui.html.GlobalStyleSheetHolder;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.jna.JnaLoader;
 import com.intellij.openapi.application.ApplicationInfo;
@@ -181,19 +180,12 @@ public final class StartupUtil {
         return euaDocumentFuture.thenComposeAsync(StartupUtil::showEuaIfNeeded, forkJoinPool);
       });
 
-      Executor edtExecutor = it -> EventQueue.invokeLater(it);
-      CompletableFuture<?> euaAndSplashFuture;
-      if (splashTaskFuture == null) {
-        euaAndSplashFuture = showEuaIfNeededFuture;
-      }
-      else {
-        // do not use method reference here
-        euaAndSplashFuture = showEuaIfNeededFuture.thenAcceptBothAsync(splashTaskFuture, (__, runnable) -> {
+      if (splashTaskFuture != null) {
+        // do not use method reference here for invokeLater
+        showEuaIfNeededFuture.thenAcceptBothAsync(splashTaskFuture, (__, runnable) -> {
           runnable.run();
-        }, edtExecutor);
+        }, it -> EventQueue.invokeLater(it));
       }
-      // not directly after splash showing - make a room for a more important EDT activities that maybe in the event queue
-      euaAndSplashFuture.thenRunAsync(StartupUtil::patchHtmlStyle, edtExecutor);
     }
 
     activity = activity.endAndStart("config path computing");
@@ -282,19 +274,6 @@ public final class StartupUtil {
     while (!future.isDone());
     log.info("notify that start-up thread is free");
     AWTAutoShutdown.getInstance().notifyThreadFree(busyThread);
-  }
-
-  private static void patchHtmlStyle() {
-    Activity patchingActivity = StartUpMeasurer.startActivity("html style patching");
-    // not important
-    // patch html styles
-    // create a separate copy for each case
-    UIDefaults uiDefaults = UIManager.getDefaults();
-
-    uiDefaults.put("javax.swing.JLabel.userStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet());
-    uiDefaults.put("HTMLEditorKit.jbStyleSheet", GlobalStyleSheetHolder.getGlobalStyleSheet());
-
-    patchingActivity.end();
   }
 
   // executed not in EDT

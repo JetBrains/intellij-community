@@ -1,8 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.ui;
 
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JreHiDpiUtil;
 import com.intellij.ui.scale.JBUIScale;
 import com.intellij.ui.scale.ScaleContext;
@@ -180,7 +179,7 @@ public final class StartupUiUtil {
       scale = hidpiImage.getScale();
 
       double delta = 0;
-      if (Registry.is("ide.icon.scale.useAccuracyDelta", true)) {
+      if (Boolean.parseBoolean(System.getProperty("ide.icon.scale.useAccuracyDelta", "true"))) {
         // Calculate the delta based on the image size. The bigger the size - the smaller the delta.
         int maxSize = Math.max(userWidth, userHeight);
         if (maxSize < Integer.MAX_VALUE / 2) { // sanity check
