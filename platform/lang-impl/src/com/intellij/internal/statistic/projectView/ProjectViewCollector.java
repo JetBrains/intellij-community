@@ -5,23 +5,32 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.scopeView.ScopeViewPane;
 import com.intellij.internal.statistic.beans.MetricEvent;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.ClassEventField;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventPair;
+import com.intellij.internal.statistic.eventLog.events.VarargEventId;
 import com.intellij.internal.statistic.service.fus.collectors.ProjectUsagesCollector;
-import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 import static com.intellij.internal.statistic.beans.MetricEventFactoryKt.newMetric;
 
 public final class ProjectViewCollector extends ProjectUsagesCollector {
+  private static final EventLogGroup GROUP = new EventLogGroup("project.view.pane", 2);
+  public static final ClassEventField CLASS_NAME = EventFields.Class("class_name");
+  public static final ClassEventField SCOPE_CLASS_NAME = EventFields.Class("scope_class_name");
+  private static final VarargEventId CURRENT = GROUP.registerVarargEvent("current", CLASS_NAME, SCOPE_CLASS_NAME);
+
   @Override
-  public @NonNls @NotNull String getGroupId() {
-    return "project.view.pane";
+  public EventLogGroup getGroup() {
+    return GROUP;
   }
 
   @Override
@@ -36,14 +45,13 @@ public final class ProjectViewCollector extends ProjectUsagesCollector {
       return Collections.emptySet();
     }
 
-    final FeatureUsageData data = new FeatureUsageData()
-      .addPluginInfo(PluginInfoDetectorKt.getPluginInfo(currentViewPane.getClass()))
-      .addData("class_name", currentViewPane.getClass().getName());
+    final List<EventPair<?>> data = new ArrayList<>();
+    data.add(CLASS_NAME.with(currentViewPane.getClass()));
     final NamedScope selectedScope = currentViewPane instanceof ScopeViewPane ? ((ScopeViewPane)currentViewPane).getSelectedScope() : null;
     if (selectedScope != null) {
-      data.addData("scope_class_name", selectedScope.getClass().getName());
+      data.add(SCOPE_CLASS_NAME.with(selectedScope.getClass()));
     }
 
-    return Collections.singleton(newMetric("current", data));
+    return Collections.singleton(CURRENT.metric(data));
   }
 }
