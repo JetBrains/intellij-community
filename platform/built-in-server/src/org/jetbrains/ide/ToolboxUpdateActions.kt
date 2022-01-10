@@ -5,7 +5,8 @@ import com.intellij.ide.actions.SettingsEntryPointAction
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DataContext
-import com.intellij.openapi.components.*
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.util.Disposer
 import com.intellij.util.Alarm
 import com.intellij.util.Consumer
@@ -15,7 +16,7 @@ import org.jetbrains.annotations.Nls
 import java.util.*
 
 @Service(Service.Level.APP)
-internal class ToolboxSettingsActionRegistry : Disposable {
+class ToolboxSettingsActionRegistry : Disposable {
   private val readActions = Collections.synchronizedSet(HashSet<String>())
   private val pendingActions = Collections.synchronizedList(LinkedList<ToolboxUpdateAction>())
 
@@ -37,7 +38,7 @@ internal class ToolboxSettingsActionRegistry : Disposable {
     })
   }
 
-  fun registerUpdateAction(action: ToolboxUpdateAction) {
+  internal fun registerUpdateAction(action: ToolboxUpdateAction) {
     action.registry = this
 
     val dispose = Disposable {
