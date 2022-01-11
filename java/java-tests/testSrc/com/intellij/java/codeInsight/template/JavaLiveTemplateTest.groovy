@@ -161,18 +161,21 @@ class Outer {
   void testElseIf() throws Throwable {
     configure()
     startTemplate("else-if", "Java")
+    WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
     checkResult()
   }
 
   void testElseIf2() throws Throwable {
     configure()
     startTemplate("else-if", "Java")
+    WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
     checkResult()
   }
 
   void testElseIf3() throws Throwable {
     configure()
     startTemplate("else-if", "Java")
+    WriteCommandAction.runWriteCommandAction(project) { state.gotoEnd(false) }
     checkResult()
   }
 

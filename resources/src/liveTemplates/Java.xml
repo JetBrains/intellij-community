@@ -7,7 +7,8 @@
       <option name="JAVA_STATEMENT" value="true" />
     </context>
   </template>
-  <template name="else-if" value="else if($END$){} " description="Add else-if branch" toReformat="true" toShortenFQNames="false">
+  <template name="else-if" value="else if($CONDITION$){&#10;$END$&#10;} " description="Add else-if branch" toReformat="true" toShortenFQNames="false">
+    <variable name="CONDITION" expression="" defaultValue="" alwaysStopAt="true" />
     <context>
       <option name="JAVA_ELSE_PLACE" value="true" />
     </context>
