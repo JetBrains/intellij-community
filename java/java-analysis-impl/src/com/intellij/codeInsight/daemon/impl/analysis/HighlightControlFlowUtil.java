@@ -594,7 +594,8 @@ public final class HighlightControlFlowUtil {
   }
 
   private static Collection<ControlFlowUtil.VariableInfo> addReassignedInLoopProblems(
-    Collection<ControlFlowUtil.VariableInfo> codeBlockProblems, ControlFlow controlFlow) {
+    @NotNull Collection<ControlFlowUtil.VariableInfo> codeBlockProblems,
+    @NotNull ControlFlow controlFlow) {
     List<Instruction> instructions = controlFlow.getInstructions();
     for (int index = 0; index < instructions.size(); index++) {
       Instruction instruction = instructions.get(index);
@@ -669,9 +670,7 @@ public final class HighlightControlFlowUtil {
     }
     if (variable instanceof PsiLocalVariable) {
       boolean isAccessedFromOtherClass = innerClass != null;
-      if (isAccessedFromOtherClass) {
-        return false;
-      }
+      return !isAccessedFromOtherClass;
     }
     return true;
   }
