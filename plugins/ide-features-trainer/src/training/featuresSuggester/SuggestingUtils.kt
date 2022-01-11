@@ -17,6 +17,7 @@ import com.intellij.psi.util.parents
 import com.intellij.xdebugger.XDebuggerManager
 import com.intellij.xdebugger.XSourcePosition
 import com.intellij.xdebugger.breakpoints.XBreakpoint
+import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import org.jetbrains.annotations.Nls
 import training.featuresSuggester.actions.Action
 import java.awt.datatransfer.DataFlavor
@@ -68,11 +69,8 @@ internal fun Transferable.asString(): String? {
 
 internal fun findBreakpointOnPosition(project: Project, position: XSourcePosition): XBreakpoint<*>? {
   val breakpointManager = XDebuggerManager.getInstance(project)?.breakpointManager ?: return null
-  return breakpointManager.allBreakpoints.find {
-    XSourcePosition.isOnTheSameLine(
-      it.sourcePosition,
-      position
-    )
+  return breakpointManager.allBreakpoints.find { b ->
+    b is XLineBreakpoint<*> && b.fileUrl == position.file.url && b.line == position.line
   }
 }
 
