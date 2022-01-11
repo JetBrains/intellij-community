@@ -143,6 +143,11 @@
       }
     },
 
+    "SegmentedButton": {
+      "selectedStartBorderColor": "Grey5",
+      "selectedEndBorderColor": "Grey5"
+    },
+
     "ComboBox": {
       "ArrowButton.background": "Grey2"
     },

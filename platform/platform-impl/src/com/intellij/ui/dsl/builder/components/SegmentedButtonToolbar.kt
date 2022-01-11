@@ -74,8 +74,7 @@ class SegmentedButtonToolbar(actionGroup: ActionGroup, private val spacingConfig
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
-      val color = getBorderColor(isEnabled, hasFocus())
-      g2.paint = color
+      g2.paint = getSegmentedButtonBorderPaint(this, true)
       for (component in components) {
         if ((component as? SegmentedButton)?.isSelected == true) {
           val r = component.bounds
@@ -183,15 +182,26 @@ private class SegmentedButton(
   }
 }
 
+/**
+ * @param subButton determines border target: true for button inside segmented button, false for segmented button
+ */
 @ApiStatus.Internal
-internal fun getBorderColor(enabled: Boolean, hasFocus: Boolean): Color {
-  return if (enabled) {
-    if (hasFocus) JBUI.CurrentTheme.Button.focusBorderColor(false)
-    else
-      JBUI.CurrentTheme.Button.buttonOutlineColorStart(false)
+internal fun getSegmentedButtonBorderPaint(segmentedButton: Component, subButton: Boolean): Paint {
+  if (!segmentedButton.isEnabled) {
+    return JBUI.CurrentTheme.Button.disabledOutlineColor()
+  }
+
+  if (segmentedButton.hasFocus()) {
+    return JBUI.CurrentTheme.Button.focusBorderColor(false)
   }
   else {
-    JBUI.CurrentTheme.Button.disabledOutlineColor()
+    if (subButton) {
+      return GradientPaint(0f, 0f, JBUI.CurrentTheme.SegmentedButton.selectedStartBorderColor(),
+                           0f, segmentedButton.height.toFloat(), JBUI.CurrentTheme.SegmentedButton.selectedEndBorderColor())
+    } else {
+      return GradientPaint(0f, 0f, JBUI.CurrentTheme.Button.buttonOutlineColorStart(false),
+                           0f, segmentedButton.height.toFloat(), JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false))
+    }
   }
 }
 
@@ -219,7 +229,7 @@ internal class SegmentedButtonBorder : Border {
       if (c.hasFocus()) {
         DarculaUIUtil.paintOutlineBorder(g2, r.width, r.height, arc, true, true, DarculaUIUtil.Outline.focus)
       }
-      g2.paint = getBorderColor(c.isEnabled, c.hasFocus())
+      g2.paint = getSegmentedButtonBorderPaint(c, false)
       JBInsets.removeFrom(r, JBUI.insets(DarculaUIUtil.BW.unscaled.toInt()))
       paintBorder(g2, r)
     }

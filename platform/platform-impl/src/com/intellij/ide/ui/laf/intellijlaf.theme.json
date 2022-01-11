@@ -140,6 +140,11 @@
       "UI": "com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI"
     },
 
+    "SegmentedButton": {
+      "selectedStartBorderColor": "componentBorder",
+      "selectedEndBorderColor": "componentBorder"
+    },
+
     "CellEditor.border.width": 2,
 
     "CheckBox": {

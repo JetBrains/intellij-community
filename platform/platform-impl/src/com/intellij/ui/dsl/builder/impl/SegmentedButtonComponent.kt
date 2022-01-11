@@ -16,7 +16,7 @@ import com.intellij.ui.dsl.builder.DslComponentProperty
 import com.intellij.ui.dsl.builder.SpacingConfiguration
 import com.intellij.ui.dsl.builder.components.SegmentedButtonBorder
 import com.intellij.ui.dsl.builder.components.SegmentedButtonLook
-import com.intellij.ui.dsl.builder.components.getBorderColor
+import com.intellij.ui.dsl.builder.components.getSegmentedButtonBorderPaint
 import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.GridLayout
 import com.intellij.ui.dsl.gridLayout.builders.RowsGridBuilder
@@ -119,8 +119,7 @@ internal class SegmentedButtonComponent<T>(options: Collection<T>, private val r
     try {
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
-      val color = getBorderColor(isEnabled, hasFocus())
-      g2.paint = color
+      g2.paint = getSegmentedButtonBorderPaint(this, true)
       val selectedButton = components.getOrNull(options.indexOf(selection))
       if (selectedButton != null) {
         val r = selectedButton.bounds

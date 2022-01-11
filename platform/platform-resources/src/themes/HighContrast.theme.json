@@ -62,6 +62,11 @@
       }
     },
 
+    "SegmentedButton": {
+      "selectedStartBorderColor": "#1AEBFF",
+      "selectedEndBorderColor": "#1AEBFF"
+    },
+
     "Borders": {
       "color": "#b3b3b3",
       "ContrastBorderColor": "#B3B3B3"

@@ -414,6 +414,15 @@ public final class JBUI {
       }
     }
 
+    public static final class SegmentedButton {
+      public static @NotNull Color selectedStartBorderColor() {
+        return JBColor.namedColor("SegmentedButton.selectedStartBorderColor", Gray.xBF);
+      }
+      public static @NotNull Color selectedEndBorderColor() {
+        return JBColor.namedColor("SegmentedButton.selectedEndBorderColor", Gray.xB8);
+      }
+    }
+
     public static final class CustomFrameDecorations {
       public static @NotNull Color separatorForeground() {
         return JBColor.namedColor("Separator.separatorColor", new JBColor(0xcdcdcd, 0x515151));
