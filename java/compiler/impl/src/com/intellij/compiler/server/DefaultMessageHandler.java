@@ -54,7 +54,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
       case CACHE_DOWNLOAD_MESSAGE:
         CmdlineRemoteProto.Message.BuilderMessage.CacheDownloadMessage cacheDownloadMessage = msg.getCacheDownloadMessage();
         ProgressIndicator progressIndicator = getProgressIndicator();
-        progressIndicator.setIndeterminate(true);
+        progressIndicator.setIndeterminate(false);
         progressIndicator.setText(cacheDownloadMessage.getDescriptionText());
         if (cacheDownloadMessage.hasDone()) {
           progressIndicator.setFraction(cacheDownloadMessage.getDone());
