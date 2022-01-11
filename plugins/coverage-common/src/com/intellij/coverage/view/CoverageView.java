@@ -12,7 +12,6 @@ import com.intellij.execution.configurations.RunConfigurationBase;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -49,7 +48,6 @@ import javax.swing.event.TreeModelListener;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableColumnModel;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -102,7 +100,6 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
         return component;
       }
     };
-    myTable.getTree().setCellRenderer(new NodeDescriptorTableCellRenderer());
     setUpShowRootNode();
 
     addEmptyCoverageText(project, suitesBundle);
@@ -354,29 +351,6 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     }
     return null;
   }
-
-  private class NodeDescriptorTableCellRenderer extends DefaultTreeCellRenderer {
-
-    @Override
-    public Component getTreeCellRendererComponent(JTree tree,
-                                                  Object value,
-                                                  boolean sel,
-                                                  boolean expanded,
-                                                  boolean leaf,
-                                                  int row,
-                                                  boolean hasFocus) {
-      final Component component = super.getTreeCellRendererComponent(tree, value, sel, expanded, leaf, row, hasFocus);
-      final CoverageListNode node = myModel.getCoverageNode(value);
-      if (node != null) {
-        final PresentationData presentation = node.getPresentation();
-        setText(presentation.getPresentableText());
-        setIcon(presentation.getIcon(false));
-        if (!sel) setForeground(presentation.getForcedTextForeground());
-      }
-      return component;
-    }
-  }
-
 
   public void resetView() {
     AppExecutorUtil.getAppExecutorService().execute(() -> {
