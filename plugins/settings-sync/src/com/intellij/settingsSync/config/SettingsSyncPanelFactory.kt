@@ -39,15 +39,16 @@ internal object SettingsSyncPanelFactory {
               else {
                 val topCheckBox = ThreeStateCheckBox(descriptor.name)
                 topCheckBox.isThirdStateEnabled = false
+                val subcategoryLink = configureLink(descriptor.secondaryGroup) {
+                  topCheckBox.state = getGroupState(descriptor)
+                  descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
+                }
                 topCheckBox.addActionListener {
                   descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
                   descriptor.secondaryGroup.getDescriptors().forEach {
                     it.isSelected = descriptor.isSynchronized
                   }
-                }
-                val updateTopCheckBox = {
-                  topCheckBox.state = getGroupState(descriptor)
-                  descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
+                  subcategoryLink.isEnabled = descriptor.secondaryGroup.isComplete() || descriptor.isSynchronized
                 }
                 component(topCheckBox)
                   .onReset {
@@ -60,7 +61,7 @@ internal object SettingsSyncPanelFactory {
                   }
                   .onIsModified { descriptor.isModified() }
                 commentNoWrap(descriptor.description)
-                component(configureLink(descriptor.secondaryGroup, updateTopCheckBox))
+                component(subcategoryLink)
               }
             }
           }
