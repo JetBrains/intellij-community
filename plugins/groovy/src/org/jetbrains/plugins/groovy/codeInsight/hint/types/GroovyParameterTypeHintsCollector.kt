@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInsight.hint.types
 
 import com.intellij.codeInsight.hints.FactoryInlayHintsCollector
@@ -9,6 +9,7 @@ import com.intellij.openapi.project.DumbService
 import com.intellij.psi.CommonClassNames
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiType
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.refactoring.suggested.endOffset
 import com.intellij.util.castSafelyTo
 import org.jetbrains.plugins.groovy.intentions.style.inference.MethodParameterAugmenter
@@ -32,9 +33,7 @@ class GroovyParameterTypeHintsCollector(editor: Editor,
     if (!settings.showInferredParameterTypes) {
       return false
     }
-    if (!element.isValid) {
-      return false
-    }
+    PsiUtilCore.ensureValid(element)
     if (element is GrParameter && element.typeElement == null && !element.isVarArgs) {
       val type: PsiType = getRepresentableType(element) ?: return true
       val typeRepresentation = with(factory) {
