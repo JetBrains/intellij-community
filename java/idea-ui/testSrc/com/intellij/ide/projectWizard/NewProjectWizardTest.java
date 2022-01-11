@@ -12,6 +12,8 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.search.FilenameIndex;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.ui.UIBundle;
 import com.intellij.util.SystemProperties;
@@ -126,6 +128,14 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
     Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
     JavaSdkVersion version = JavaSdk.getInstance().getVersion(sdk);
     assertEquals(version.getMaxLanguageLevel(), extension.getLanguageLevel());
+  }
+
+  public void testSampleCode() throws Exception {
+    Project project = createProjectFromTemplate(step -> {
+      IntelliJJavaNewProjectWizardData.setAddSampleCode(step, true);
+    });
+    final var mainSearch = FilenameIndex.getVirtualFilesByName("Main.java", GlobalSearchScope.projectScope(project));
+    assertFalse(mainSearch.isEmpty());
   }
 
   private static void setProjectSdk(final Project project, final Sdk jdk17) {
