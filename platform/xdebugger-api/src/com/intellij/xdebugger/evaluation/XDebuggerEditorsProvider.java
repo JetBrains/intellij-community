@@ -54,4 +54,11 @@ public abstract class XDebuggerEditorsProvider {
   public InlineDebuggerHelper getInlineDebuggerHelper() {
     return InlineDebuggerHelper.DEFAULT;
   }
+
+  /**
+   * Return false to disable evaluate expressions.
+   */
+  public boolean isEvaluateExpressionSupported() {
+    return true;
+  }
 }
