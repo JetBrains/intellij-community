@@ -95,7 +95,8 @@ open class HighlightingConfiguration(
 
         if (renderTextAttributesKey)
             highlightingCodeMetaInfo.highlightingInfo.forcedTextAttributesKey?.apply {
-                params.add("textAttributesKey='${this}'")
+                val keyName = this.externalName
+                params.add("textAttributesKey='$keyName'")
             }
 
         params.add(getAdditionalParams(highlightingCodeMetaInfo))
