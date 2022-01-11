@@ -56,9 +56,9 @@ public abstract class XDebuggerEditorsProvider {
   }
 
   /**
-   * Return false to disable evaluate expressions.
+   * Return false to disable evaluate expression field in the debugger tree.
    */
-  public boolean isEvaluateExpressionSupported() {
+  public boolean isEvaluateExpressionFieldEnabled() {
     return true;
   }
 }
