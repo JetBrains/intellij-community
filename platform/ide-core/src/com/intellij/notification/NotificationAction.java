@@ -96,10 +96,6 @@ public abstract class NotificationAction extends DumbAwareAction {
       myAction.accept(e, notification);
     }
 
-    public @NotNull Object getActionInstance() {
-      return myActionInstance;
-    }
-
     @Override
     public @NotNull Object getDelegate() {
       return myActionInstance;
