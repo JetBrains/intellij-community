@@ -35,18 +35,6 @@ public class NlsMessages {
   private static final int[] PADDED_FORMAT = {3, 3, 3, 2, 2, 2, 1, 1};
 
   /**
-   * Formats duration given in milliseconds as a sum of time units with at most two units
-   * (example: {@code formatDuration(123456) = "2 m, 3 s"}).
-   */
-  @Contract(pure = true)
-  public static @NotNull @Nls String formatDurationApproximate(long duration) {
-    return new NlsDurationFormatter()
-      .setMaxFragments(2)
-      .setNarrow(false)
-      .formatDuration(duration);
-  }
-
-  /**
    * @param list list of items
    * @return localized string representation of all items in the list with conjunction formatting.
    * E.g. formatAndList(List.of("X", "Y", "Z")) will produce "X, Y, and Z" in English locale.
@@ -100,6 +88,18 @@ public class NlsMessages {
 
   /**
    * Formats duration given in milliseconds as a sum of time units with at most two units
+   * (example: {@code formatDuration(123456) = "2 m, 3 s"}).
+   */
+  @Contract(pure = true)
+  public static @NotNull @Nls String formatDurationApproximate(long duration) {
+    return new NlsDurationFormatter()
+      .setMaxFragments(2)
+      .setNarrow(false)
+      .formatDuration(duration);
+  }
+
+  /**
+   * Formats duration given in milliseconds as a sum of time units with at most two units
    * (example: {@code formatDuration(123456) = "2 m 3 s"}).
    */
   @Contract(pure = true)
@@ -148,46 +148,13 @@ public class NlsMessages {
   }
 
   /**
-   * Formats duration given in some duration time unit (example: {@code formatDuration(123456, MILLISECONDS) = "2m 3s 456ms"})
-   *
-   * @param duration         duration in time unit
-   * @param durationTimeUnit the unit of time in which the number is given
-   * @return format string
-   */
-  public static @NotNull @Nls String formatDuration(long duration, @NotNull TimeUnit durationTimeUnit) {
-    return new NlsDurationFormatter()
-      .setNarrow(false)
-      .setDurationTimeUnit(durationTimeUnit)
-      .formatDuration(duration);
-  }
-
-  /**
-   * Format duration given in durationTimeUnit as a sum of time units
-   *
-   * @param duration     duration
-   * @param timeUnit     the unit of time in which the number is given
-   * @param maxFragments count of fragments (example: {@code for maxFragments = 1 formatDuration(61, 1, ....) = "1m"}
-   * @param narrow       is narrow on output
-   * @return format duration
-   */
-  public static @NotNull @Nls String formatDuration(long duration,
-                                                    @NotNull TimeUnit timeUnit,
-                                                    int maxFragments,
-                                                    boolean narrow) {
-    return new NlsDurationFormatter()
-      .setMaxFragments(maxFragments)
-      .setNarrow(narrow)
-      .setDurationTimeUnit(timeUnit).formatDuration(duration);
-  }
-
-  /**
    * Format duration given in durationTimeUnit as a sum of time units
    *
    * @param duration         duration
    * @param durationTimeUnit measure unit for duration
    * @param maxFragments     count of fragments (example: {@code for maxFragments = 1 formatDuration(61, 1, ....) = "1m"}
    * @param narrow           is narrow on output
-   * @return format duration
+   * @return formatted duration
    */
   private static @NotNull @Nls String formatDuration(long duration,
                                                      MeasureUnit durationTimeUnit, int maxFragments,
@@ -257,7 +224,7 @@ public class NlsMessages {
    * @param duration     duration
    * @param maxFragments count of fragments (example: {@code for maxFragments = 1 formatDuration(61, 1, ....) = "1m"}
    * @param narrow       is narrow on output
-   * @return format duration
+   * @return formatted duration
    */
   @Contract(pure = true)
   public static @NotNull @Nls String formatDuration(long duration, int maxFragments, boolean narrow) {
@@ -302,18 +269,6 @@ public class NlsMessages {
   }
 
   /**
-   * Formats duration given in some unit of time as a sum of padded time units, except the most significant unit
-   * E.g. {@code formatDurationPaddedTimeUnit(234523598, MILLISECONDS) = "2d 03h 11m 04s 004ms"}.
-   *
-   * @param duration         duration in time unit
-   * @param durationTimeUnit the unit of time in which the number is given
-   * @return format string
-   */
-  public static @NotNull @Nls String formatDurationPadded(long duration, @NotNull TimeUnit durationTimeUnit) {
-    return new NlsDurationFormatter().setPadded(true).setDurationTimeUnit(durationTimeUnit).formatDuration(duration);
-  }
-
-  /**
    * Formats duration given in milliseconds as a sum of padded time units, except the most significant unit
    * E.g. 234523598 padded as "2d 03h 11m 04s 004ms" accordingly with zeros except "days" here.
    *
@@ -329,7 +284,7 @@ public class NlsMessages {
    *
    * <p>Note: follows the builder pattern
    */
-  public static class NlsDurationFormatter {
+  public static final class NlsDurationFormatter {
     private boolean padded = false;
     private boolean narrow = true;
     private int maxFragments = Integer.MAX_VALUE;

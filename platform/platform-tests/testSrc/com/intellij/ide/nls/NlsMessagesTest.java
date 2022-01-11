@@ -117,31 +117,39 @@ public class NlsMessagesTest {
 
   @Test
   public void testFormatDurationTimeUnit() {
-    assertEquals("0 ms", NlsMessages.formatDuration(0, TimeUnit.MILLISECONDS));
-    assertEquals("1 ms", NlsMessages.formatDuration(1, TimeUnit.MILLISECONDS));
-    assertEquals("1 sec", NlsMessages.formatDuration(1000, TimeUnit.MILLISECONDS));
+    NlsMessages.NlsDurationFormatter formatter = new NlsMessages.NlsDurationFormatter()
+      .setNarrow(false).setDurationTimeUnit(TimeUnit.MILLISECONDS);
+    assertEquals("0 ms", formatter.formatDuration(0));
+    assertEquals("1 ms", formatter.formatDuration(1));
+    assertEquals("1 sec", formatter.formatDuration(1000));
     assertEquals("3 wks, 3 days, 20 hr, 31 min, 23 sec, 647 ms",
-                 NlsMessages.formatDuration(Integer.MAX_VALUE, TimeUnit.MILLISECONDS));
+                 formatter.formatDuration(Integer.MAX_VALUE));
     assertEquals("11 wks, 5 days, 17 hr, 24 min, 43 sec, 647 ms",
-                 NlsMessages.formatDuration(Integer.MAX_VALUE + 5000000000L, TimeUnit.MILLISECONDS));
+                 formatter.formatDuration(Integer.MAX_VALUE + 5000000000L));
 
-    assertEquals("1 day", NlsMessages.formatDuration(1, TimeUnit.DAYS));
+    formatter.setDurationTimeUnit(TimeUnit.DAYS);
+    assertEquals("1 day", formatter.formatDuration(1));
 
-    assertEquals("1 min, 0 sec, 100 ms", NlsMessages.formatDuration(60100, TimeUnit.MILLISECONDS));
+    formatter.setDurationTimeUnit(TimeUnit.MILLISECONDS);
+    assertEquals("1 min, 0 sec, 100 ms", formatter.formatDuration(60100));
   }
 
   @Test
   public void testFormatDurationPaddedTimeUnit() {
-    assertEquals("0ms", NlsMessages.formatDurationPadded(0, TimeUnit.MILLISECONDS));
-    assertEquals("1s 000ms", NlsMessages.formatDurationPadded(1000, TimeUnit.MILLISECONDS));
-    assertEquals("1s 001ms", NlsMessages.formatDurationPadded(1001, TimeUnit.MILLISECONDS));
-    assertEquals("2m 00s 000ms", NlsMessages.formatDurationPadded(TimeUnit.MINUTES.toMillis(2), TimeUnit.MILLISECONDS));
-    assertEquals("2h 00m 00s 000ms", NlsMessages.formatDurationPadded(TimeUnit.HOURS.toMillis(2), TimeUnit.MILLISECONDS));
-    assertEquals("2d 00h 00m 00s 000ms", NlsMessages.formatDurationPadded(TimeUnit.DAYS.toMillis(2), TimeUnit.MILLISECONDS));
-    assertEquals("204,978w 6d 16h 13m 50s 987ms", NlsMessages.formatDurationPadded(123971271230987L, TimeUnit.MILLISECONDS));
+    NlsMessages.NlsDurationFormatter formatter = new NlsMessages.NlsDurationFormatter()
+      .setNarrow(false).setDurationTimeUnit(TimeUnit.MILLISECONDS).setPadded(true);
+    assertEquals("0ms", formatter.formatDuration(0));
+    assertEquals("1s 000ms", formatter.formatDuration(1000));
+    assertEquals("1s 001ms", formatter.formatDuration(1001));
+    assertEquals("2m 00s 000ms", formatter.formatDuration(TimeUnit.MINUTES.toMillis(2)));
+    assertEquals("2h 00m 00s 000ms", formatter.formatDuration(TimeUnit.HOURS.toMillis(2)));
+    assertEquals("2d 00h 00m 00s 000ms", formatter.formatDuration(TimeUnit.DAYS.toMillis(2)));
+    assertEquals("204,978w 6d 16h 13m 50s 987ms", formatter.formatDuration(123971271230987L));
 
-    assertEquals("1d", NlsMessages.formatDurationPadded(1, TimeUnit.DAYS));
+    formatter.setDurationTimeUnit(TimeUnit.DAYS);
+    assertEquals("1d", formatter.formatDuration(1));
 
-    assertEquals("1m 00s 100ms", NlsMessages.formatDurationPadded(60100, TimeUnit.MILLISECONDS));
+    formatter.setDurationTimeUnit(TimeUnit.MILLISECONDS);
+    assertEquals("1m 00s 100ms", formatter.formatDuration(60100));
   }
 }
