@@ -62,7 +62,7 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
     Project project = createProjectFromTemplate(step -> {
       IntelliJJavaNewProjectWizardData.setSdk(step, defaultSdk);
     });
-    assertTrue(ProjectRootManager.getInstance(project).getProjectSdk().getName() == defaultSdk.getName());
+    assertEquals(ProjectRootManager.getInstance(project).getProjectSdk().getName(), defaultSdk.getName());
 
     // Module with custom JDK
     createModuleFromTemplate(project, step -> {
@@ -78,7 +78,7 @@ public class NewProjectWizardTest extends NewProjectWizardTestCase {
     final var module = manager.findModuleByName(moduleName);
     assertNotNull(module);
     assertFalse(ModuleRootManager.getInstance(module).isSdkInherited());
-    assertTrue(ModuleRootManager.getInstance(module).getSdk().getName() == otherSdk.getName());
+    assertEquals(ModuleRootManager.getInstance(module).getSdk().getName(), otherSdk.getName());
   }
 
   public void testDefaultLanguageLevel13() throws Exception {
