@@ -46,13 +46,13 @@ internal object SettingsSyncPanelFactory {
                   }
                 }
                 val updateTopCheckBox = {
-                  topCheckBox.state = getGroupState(descriptor.secondaryGroup)
+                  topCheckBox.state = getGroupState(descriptor)
                   descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
                 }
                 component(topCheckBox)
                   .onReset {
                     descriptor.reset()
-                    updateTopCheckBox()
+                    topCheckBox.state = getGroupState(descriptor)
                   }
                   .onApply {
                     descriptor.isSynchronized = topCheckBox.state != State.NOT_SELECTED
@@ -69,7 +69,12 @@ internal object SettingsSyncPanelFactory {
     }
   }
 
-  private fun getGroupState(group: SettingsSyncSubcategoryGroup): State {
+  private fun getGroupState(descriptor: SettingsCategoryDescriptor): State {
+    val group = descriptor.secondaryGroup
+    if (group == null) {
+      return if (descriptor.isSynchronized) State.SELECTED else State.NOT_SELECTED
+    }
+    if (!group.isComplete() && !descriptor.isSynchronized) return State.NOT_SELECTED
     val descriptors = group.getDescriptors()
     if (descriptors.isEmpty()) return State.NOT_SELECTED
     val isFirstSelected = descriptors.first().isSelected
