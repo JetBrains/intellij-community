@@ -71,12 +71,11 @@ public final class TestLoggerFactory implements Logger.Factory {
       Path logProperties = customConfigPath != null
                         ? Paths.get(customConfigPath)
                         : Paths.get(PathManager.getHomePath(), "test-log.properties");
-      if (!Files.exists(logProperties)) {
-        return false;
-      }
-      try (final InputStream in = Files.newInputStream(logProperties)) {
-        final BufferedInputStream bin = new BufferedInputStream(in);
-        LogManager.getLogManager().readConfiguration(bin);
+      if (Files.exists(logProperties)) {
+        try (final InputStream in = Files.newInputStream(logProperties)) {
+          final BufferedInputStream bin = new BufferedInputStream(in);
+          LogManager.getLogManager().readConfiguration(bin);
+        }
       }
 
       String logDir = getTestLogDir();
