@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 {
   generate = [
     psi = 'no'
@@ -261,7 +261,9 @@ private def_modifier ::= 'def' !'.' { consumeTokenMethod = 'consumeTokenFast' }
 private var_modifier ::= 'var' &(weak_keyword | IDENTIFIER | modifier | type_element | tuple_var_declaration_tuple)  { consumeTokenMethod = 'consumeTokenFast' }
 // endregion
 
-private weak_keyword ::= 'var' | 'yield' | 'permits' | 'record' | clear_variants_and_fail
+private weak_keyword_identifiers ::= 'var' | 'yield' | 'permits' | 'record' { consumeTokenMethod = 'consumeTokenFast' }
+
+private weak_keyword ::= weak_keyword_identifiers | clear_variants_and_fail
 
 // region Annotations
 annotation ::= '@' annotation_reference after_annotation_reference
@@ -1344,7 +1346,7 @@ left simple_reference_tail ::= code_reference_dot <<mb_nl_group code_reference_i
 private code_reference_dot ::= '.' !'*'
 private code_reference_part ::= code_reference_identifier [type_argument_list <<setRefHadTypeArguments>>]
 private code_reference_identifier ::= <<codeReferenceIdentifier code_reference_identifiers>>
-private code_reference_identifiers ::= IDENTIFIER | code_reference_identifiers_soft (<<isQualifiedName>> | &'.')
+private code_reference_identifiers ::= IDENTIFIER | weak_keyword_identifiers | code_reference_identifiers_soft (<<isQualifiedName>> | &'.')
 private code_reference_identifiers_soft ::= 'def' | 'as' | 'in' | 'trait' | 'var' { consumeTokenMethod = 'consumeTokenFast' }
 
 // for the sake of showing 'type expected' message
