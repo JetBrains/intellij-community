@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.concurrency.ConcurrentCollectionFactory;
@@ -39,7 +39,7 @@ import java.util.function.IntConsumer;
  * Implementation of {@link FileTypeIndexImpl} based on plain change log.
  * Does not support indexing unsaved changes (content-less indexes don't require them).
  */
-public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, FileContent>, FileTypeNameEnumerator {
+public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, FileContent, UpdatableIndex.EmptyData>, FileTypeNameEnumerator {
   private static final Logger LOG = Logger.getInstance(LogFileTypeIndex.class);
 
   private final @NotNull SLRUMap<Integer, Integer> myForwardIndexCache;
@@ -103,6 +103,20 @@ public final class LogFileTypeIndex implements UpdatableIndex<FileType, Void, Fi
       return Collections.emptyMap();
     }
     return Collections.singletonMap(getFileTypeById(foundData), null);
+  }
+
+  @Override
+  public @NotNull UpdatableIndex.EmptyData instantiateFileData() {
+    return UpdatableIndex.EmptyData.INSTANCE;
+  }
+
+  @Override
+  public void writeData(@NotNull UpdatableIndex.EmptyData unused, @NotNull IndexedFile file) {
+  }
+
+  @Override
+  public void setIndexedStateForFileOnCachedData(int fileId, @NotNull UpdatableIndex.EmptyData data) {
+    IndexingStamp.setFileIndexedStateCurrent(fileId, myIndexId);
   }
 
   @Override

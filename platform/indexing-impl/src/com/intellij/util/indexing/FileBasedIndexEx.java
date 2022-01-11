@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.indexing;
 
 import com.intellij.ide.lightEdit.LightEditCompatible;
@@ -100,7 +100,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
   @NotNull
   @ApiStatus.Internal
-  public abstract <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId);
+  public abstract <K, V> UpdatableIndex<K, V, FileContent, ?> getIndex(ID<K, V> indexId);
 
   @ApiStatus.Internal
   public abstract void waitUntilIndicesAreInitialized();
@@ -168,7 +168,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
                                     @Nullable IdFilter idFilter) {
     try {
       waitUntilIndicesAreInitialized();
-      UpdatableIndex<K, ?, FileContent> index = getIndex(indexId);
+      UpdatableIndex<K, ?, FileContent, ?> index = getIndex(indexId);
       if (!ensureUpToDate(indexId, scope.getProject(), scope, null)) {
         return true;
       }
@@ -281,7 +281,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @Override
   public <K, V> long getIndexModificationStamp(@NotNull ID<K, V> indexId, @NotNull Project project) {
     waitUntilIndicesAreInitialized();
-    UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
+    UpdatableIndex<K, V, FileContent, ?> index = getIndex(indexId);
     ensureUpToDate(indexId, project, GlobalSearchScope.allScope(project));
     return index.getModificationStamp();
   }
@@ -290,10 +290,10 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   private <K, V, R> R processExceptions(@NotNull final ID<K, V> indexId,
                                         @Nullable final VirtualFile restrictToFile,
                                         @NotNull final GlobalSearchScope filter,
-                                        @NotNull ThrowableConvertor<? super UpdatableIndex<K, V, FileContent>, ? extends R, StorageException> computable) {
+                                        @NotNull ThrowableConvertor<? super UpdatableIndex<K, V, FileContent, ?>, ? extends R, StorageException> computable) {
     try {
       waitUntilIndicesAreInitialized();
-      UpdatableIndex<K, V, FileContent> index = getIndex(indexId);
+      UpdatableIndex<K, V, FileContent, ?> index = getIndex(indexId);
       Project project = filter.getProject();
       //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
       if (!ensureUpToDate(indexId, project, filter, restrictToFile)) {
@@ -566,7 +566,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     IntPredicate idChecker = id -> (projectFilesFilter == null || projectFilesFilter.containsFileId(id)) &&
                                    accessibleFileFilter.test(id) &&
                                    (restrictedIds == null || restrictedIds.contains(id));
-    ThrowableConvertor<UpdatableIndex<K, V, FileContent>, IntSet, StorageException> convertor = index -> {
+    ThrowableConvertor<UpdatableIndex<K, V, FileContent, ?>, IntSet, StorageException> convertor = index -> {
       IndexDebugProperties.DEBUG_INDEX_ID.set(indexId);
       try {
         return InvertedIndexUtil.collectInputIdsContainingAllKeys(index, dataKeys, valueChecker, idChecker);

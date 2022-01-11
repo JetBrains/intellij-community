@@ -324,9 +324,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @ApiStatus.Internal
   public void resetSnapshotInputMappingStatistics() {
     for (ID<?, ?> id : getRegisteredIndexes().getState().getIndexIDs()) {
-      UpdatableIndex<?, ?, FileContent> index = getIndex(id);
+      UpdatableIndex<?, ?, FileContent, ?> index = getIndex(id);
       if (index instanceof VfsAwareMapReduceIndex) {
-        ((VfsAwareMapReduceIndex<?, ?>)index).resetSnapshotInputMappingsStatistics();
+        ((VfsAwareMapReduceIndex<?, ?, ?>)index).resetSnapshotInputMappingsStatistics();
       }
     }
   }
@@ -334,9 +334,9 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   @ApiStatus.Internal
   public @NotNull List<SnapshotInputMappingsStatistics> dumpSnapshotInputMappingStatistics() {
     return getRegisteredIndexes().getState().getIndexIDs().stream().map(id -> {
-      UpdatableIndex<?, ?, FileContent> index = getIndex(id);
+      UpdatableIndex<?, ?, FileContent, ?> index = getIndex(id);
       if (index instanceof VfsAwareMapReduceIndex) {
-        return ((VfsAwareMapReduceIndex<?, ?>)index).dumpSnapshotInputMappingsStatistics();
+        return ((VfsAwareMapReduceIndex<?, ?, ?>)index).dumpSnapshotInputMappingsStatistics();
       }
       return null;
     }).filter(Objects::nonNull).collect(Collectors.toList());
@@ -484,7 +484,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
       throw e;
     }
 
-    UpdatableIndex<K, V, FileContent> index = null;
+    UpdatableIndex<K, V, FileContent, ?> index = null;
 
     int attemptCount = 2;
     for (int attempt = 0; attempt < attemptCount; attempt++) {
@@ -493,7 +493,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         index = createIndex(extension, layout);
 
         for (FileBasedIndexInfrastructureExtension infrastructureExtension : FileBasedIndexInfrastructureExtension.EP_NAME.getExtensionList()) {
-          UpdatableIndex<K, V, FileContent> intermediateIndex = infrastructureExtension.combineIndex(extension, index);
+          UpdatableIndex<K, V, FileContent, ?> intermediateIndex = infrastructureExtension.combineIndex(extension, index);
           if (intermediateIndex != null) {
             index = intermediateIndex;
           }
@@ -563,16 +563,16 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @NotNull
-  private static <K, V> UpdatableIndex<K, V, FileContent> createIndex(@NotNull FileBasedIndexExtension<K, V> extension,
-                                                                      @NotNull VfsAwareIndexStorageLayout<K, V> layout)
+  private static <K, V> UpdatableIndex<K, V, FileContent, ?> createIndex(@NotNull FileBasedIndexExtension<K, V> extension,
+                                                                         @NotNull VfsAwareIndexStorageLayout<K, V> layout)
     throws StorageException, IOException {
     if (extension instanceof CustomImplementationFileBasedIndexExtension) {
-      @SuppressWarnings("unchecked") UpdatableIndex<K, V, FileContent> index =
+      @SuppressWarnings("unchecked") UpdatableIndex<K, V, FileContent, ?> index =
         ((CustomImplementationFileBasedIndexExtension<K, V>)extension).createIndexImplementation(extension, layout);
       return index;
     }
     else {
-      return new TransientFileContentIndex<>(extension, layout, null);
+      return TransientFileContentIndex.createIndex(extension, layout, null);
     }
   }
 
@@ -619,7 +619,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         IndexingStamp.flushCaches();
 
         if (myIsUnitTestMode) {
-          UpdatableIndex<Integer, SerializedStubTree, FileContent> index = getState().getIndex(StubUpdatingIndex.INDEX_ID);
+          UpdatableIndex<Integer, SerializedStubTree, FileContent, ?> index = getState().getIndex(StubUpdatingIndex.INDEX_ID);
           if (index != null) {
             StaleIndexesChecker.checkIndexForStaleRecords(index, false);
           }
@@ -629,7 +629,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         for (ID<?, ?> indexId : state.getIndexIDs()) {
           PingProgress.interactWithEdtProgress();
           try {
-            UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+            UpdatableIndex<?, ?, FileContent, ?> index = getIndex(indexId);
             if (!RebuildStatus.isOk(indexId)) {
               index.clear(); // if the index was scheduled for rebuild, only clean it
             }
@@ -734,7 +734,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
         return; // do not interfere with 'main' jobs
       }
       try {
-        final UpdatableIndex<?, ?, FileContent> index = state.getIndex(indexId);
+        final UpdatableIndex<?, ?, FileContent, ?> index = state.getIndex(indexId);
         if (index != null) {
           index.flush();
         }
@@ -848,7 +848,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
     myTransactionMap = SmartFMap.emptyMap();
     for (ID<?, ?> indexId : getState().getIndexIDs()) {
-      final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+      final UpdatableIndex<?, ?, FileContent, ?> index = getIndex(indexId);
       index.cleanupForNextTest();
     }
   }
@@ -1167,7 +1167,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   private final StorageBufferingHandler myStorageBufferingHandler = new StorageBufferingHandler() {
     @NotNull
     @Override
-    protected Stream<UpdatableIndex<?, ?, ?>> getIndexes() {
+    protected Stream<UpdatableIndex<?, ?, ?, ?>> getIndexes() {
       IndexConfiguration state = getState();
       return state.getIndexIDs().stream().map(id -> getIndex(id));
     }
@@ -1198,7 +1198,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     for (ID<?, ?> indexId : state.getIndexIDs()) {
       if (skipContentDependentIndexes && myRegisteredIndexes.isContentDependentIndex(indexId)) continue;
-      UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+      UpdatableIndex<?, ?, FileContent, ?> index = getIndex(indexId);
       index.cleanupMemoryStorage();
     }
   }
@@ -1251,8 +1251,8 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @NotNull
   @Override
-  public <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
-    UpdatableIndex<K, V, FileContent> index = getState().getIndex(indexId);
+  public <K, V> UpdatableIndex<K, V, FileContent, ?> getIndex(ID<K, V> indexId) {
+    UpdatableIndex<K, V, FileContent, ?> index = getState().getIndex(indexId);
     if (index == null) {
       Throwable initializationProblem = getState().getInitializationProblem(indexId);
       String message = "Index is not created for `" + indexId.getName() + "`";
@@ -1544,7 +1544,10 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
   }
 
   @Nullable("null in case index update is not necessary or the update has failed")
-  SingleIndexUpdateStats updateSingleIndex(@NotNull ID<?, ?> indexId, @Nullable VirtualFile file, int inputId, @Nullable FileContent currentFC) {
+  <FileData> SingleIndexUpdateStats updateSingleIndex(@NotNull ID<?, ?> indexId,
+                                                      @Nullable VirtualFile file,
+                                                      int inputId,
+                                                      @Nullable FileContent currentFC) {
     if (doTraceStubUpdates(indexId)) {
       String fileInfo = getFileInfo(inputId, file, currentFC);
       LOG.info("index " + indexId + " " + (currentFC == null ? "deletion" : "update") + " requested for " + fileInfo);
@@ -1555,7 +1558,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     }
     myLocalModCount.incrementAndGet();
 
-    UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+    UpdatableIndex<?, ?, FileContent, FileData> index = (UpdatableIndex<?, ?, FileContent, FileData>)getIndex(indexId);
 
     if (currentFC != null && file != null) {
       ensureFileBelongsToIndexableFilter(inputId, file);
@@ -1641,12 +1644,12 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
     });
   }
 
-  static void setIndexedState(UpdatableIndex<?, ?, FileContent> index,
+  static void setIndexedState(UpdatableIndex<?, ?, FileContent, ?> index,
                               @NotNull IndexedFile currentFC,
                               int inputId,
                               boolean indexWasProvided) {
     if (index instanceof FileBasedIndexInfrastructureExtensionUpdatableIndex) {
-      ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?>)index)
+      ((FileBasedIndexInfrastructureExtensionUpdatableIndex<?, ?, ?, ?>)index)
         .setIndexedStateForFile(inputId, currentFC, indexWasProvided);
     }
     else {
@@ -1737,7 +1740,7 @@ public final class FileBasedIndexImpl extends FileBasedIndexEx {
 
   @ApiStatus.Internal
   public void dropNontrivialIndexedStates(int inputId, ID<?, ?> indexId) {
-    UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
+    UpdatableIndex<?, ?, FileContent, ?> index = getIndex(indexId);
     index.invalidateIndexedStateForFile(inputId);
   }
 

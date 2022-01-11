@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.psi.search;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -7,6 +7,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.*;
 import com.intellij.util.indexing.impl.MapInputDataDiffBuilder;
 import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
+import com.intellij.util.indexing.impl.storage.VfsAwareMapReduceIndex;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.io.PersistentStringEnumerator;
@@ -17,7 +18,8 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Collection;
 
-class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void> implements FileTypeNameEnumerator {
+class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void, VfsAwareMapReduceIndex.IndexerIdHolder>
+  implements FileTypeNameEnumerator {
   private static final Logger LOG = Logger.getInstance(FileTypeIndexImpl.class);
   private PersistentStringEnumerator myFileTypeNameEnumerator;
 
@@ -74,6 +76,11 @@ class FileTypeMapReduceIndex extends TransientFileContentIndex<FileType, Void> i
   @Override
   public String getFileTypeName(int id) throws IOException {
     return myFileTypeNameEnumerator.valueOf(id);
+  }
+
+  @Override
+  public @NotNull VfsAwareMapReduceIndex.IndexerIdHolder instantiateFileData() {
+    return new IndexerIdHolder();
   }
 
   @NotNull
