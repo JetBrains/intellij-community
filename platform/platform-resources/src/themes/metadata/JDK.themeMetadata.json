@@ -134,14 +134,6 @@
       "description": "Gradient top color"
     },
     {
-      "key": "SegmentedButton.selectedStartBorderColor",
-      "description": "Gradient top color of a selected button border in segmented button"
-    },
-    {
-      "key": "SegmentedButton.selectedEndBorderColor",
-      "description": "Gradient bottom color of a selected button border in segmented button"
-    },
-    {
       "key": "CheckBox.background"
     },
     {

@@ -196,8 +196,8 @@ internal fun getSegmentedButtonBorderPaint(segmentedButton: Component, subButton
   }
   else {
     if (subButton) {
-      return GradientPaint(0f, 0f, JBUI.CurrentTheme.SegmentedButton.selectedStartBorderColor(),
-                           0f, segmentedButton.height.toFloat(), JBUI.CurrentTheme.SegmentedButton.selectedEndBorderColor())
+      return GradientPaint(0f, 0f, JBUI.CurrentTheme.SegmentedButton.SELECTED_START_BORDER_COLOR,
+                           0f, segmentedButton.height.toFloat(), JBUI.CurrentTheme.SegmentedButton.SELECTED_END_BORDER_COLOR)
     } else {
       return GradientPaint(0f, 0f, JBUI.CurrentTheme.Button.buttonOutlineColorStart(false),
                            0f, segmentedButton.height.toFloat(), JBUI.CurrentTheme.Button.buttonOutlineColorEnd(false))

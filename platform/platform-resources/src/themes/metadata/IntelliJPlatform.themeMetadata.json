@@ -967,6 +967,14 @@
       "key": "ToggleButton.onForeground"
     },
     {
+      "key": "SegmentedButton.selectedStartBorderColor",
+      "description": "Gradient top color of a selected button border in segmented button"
+    },
+    {
+      "key": "SegmentedButton.selectedEndBorderColor",
+      "description": "Gradient bottom color of a selected button border in segmented button"
+    },
+    {
       "key": "ToolBar.horizontalToolbarInsets",
       "description": "Default insets for horizontal action toolbars",
       "since": "2022.1"

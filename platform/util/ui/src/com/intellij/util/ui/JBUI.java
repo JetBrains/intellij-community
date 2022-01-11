@@ -414,13 +414,9 @@ public final class JBUI {
       }
     }
 
-    public static final class SegmentedButton {
-      public static @NotNull Color selectedStartBorderColor() {
-        return JBColor.namedColor("SegmentedButton.selectedStartBorderColor", Gray.xBF);
-      }
-      public static @NotNull Color selectedEndBorderColor() {
-        return JBColor.namedColor("SegmentedButton.selectedEndBorderColor", Gray.xB8);
-      }
+    public interface SegmentedButton {
+      Color SELECTED_START_BORDER_COLOR = JBColor.namedColor("SegmentedButton.selectedStartBorderColor", Gray.xBF);
+      Color SELECTED_END_BORDER_COLOR = JBColor.namedColor("SegmentedButton.selectedEndBorderColor", Gray.xB8);
     }
 
     public static final class CustomFrameDecorations {
