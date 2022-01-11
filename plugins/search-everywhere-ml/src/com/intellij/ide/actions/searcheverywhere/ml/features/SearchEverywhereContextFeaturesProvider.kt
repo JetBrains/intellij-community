@@ -25,13 +25,18 @@ internal class SearchEverywhereContextFeaturesProvider {
   fun getContextFeatures(project: Project?): Map<String, Any> {
     val data = hashMapOf<String, Any>()
     val localTotalStats = ApplicationManager.getApplication().getService(ActionsLocalSummary::class.java).getTotalStats()
+    val updatedGlobalStatsVersion = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java).updatedStatisticsVersion
+    val versionPattern = "V$updatedGlobalStatsVersion"
     val globalTotalStats = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java).totalSummary
+    val updatedGlobalTotalStats = ApplicationManager.getApplication().getService(ActionsGlobalSummaryManager::class.java).updatedTotalSummary
     data[LOCAL_MAX_USAGE_COUNT_KEY] = localTotalStats.maxUsageCount
     data[LOCAL_MIN_USAGE_COUNT_KEY] = localTotalStats.minUsageCount
     data[LOCAL_MAX_USAGE_SE_COUNT_KEY] = localTotalStats.maxUsageFromSearchEverywhere
     data[LOCAL_MIN_USAGE_SE_COUNT_KEY] = localTotalStats.minUsageFromSearchEverywhere
     data[GLOBAL_MAX_USAGE_COUNT_KEY] = globalTotalStats.maxUsageCount
     data[GLOBAL_MIN_USAGE_COUNT_KEY] = globalTotalStats.minUsageCount
+    data[GLOBAL_MAX_USAGE_COUNT_KEY + versionPattern] = updatedGlobalTotalStats.maxUsageCount
+    data[GLOBAL_MIN_USAGE_COUNT_KEY + versionPattern] = updatedGlobalTotalStats.minUsageCount
 
     project?.let {
       if (project.isDisposed) {

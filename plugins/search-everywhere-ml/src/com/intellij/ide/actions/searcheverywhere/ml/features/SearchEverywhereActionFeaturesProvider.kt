@@ -67,6 +67,8 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActi
 
     val actionId = ActionManager.getInstance().getId(action) ?: action.javaClass.name
     val globalSummary = service<ActionsGlobalSummaryManager>()
+    val versionPattern = "V" + globalSummary.updatedStatisticsVersion
+
     val maxUsageCount = globalSummary.totalSummary.maxUsageCount
     globalSummary.getActionStatistics(actionId)?.let {
       data[GLOBAL_USAGE_COUNT_KEY] = it.usagesCount
@@ -75,6 +77,16 @@ internal class SearchEverywhereActionFeaturesProvider : SearchEverywhereBaseActi
       }
       data[USERS_RATIO_DATA_KEY] = roundDouble(it.usersRatio)
       data[USAGES_PER_USER_RATIO_DATA_KEY] = roundDouble(it.usagesPerUserRatio)
+    }
+
+    val updatedMaxUsageCount = globalSummary.updatedTotalSummary.maxUsageCount
+    globalSummary.getUpdatedActionStatistics(actionId)?.let {
+      data[GLOBAL_USAGE_COUNT_KEY + versionPattern] = it.usagesCount
+      if (updatedMaxUsageCount != 0L) {
+        data[GLOBAL_USAGE_TO_MAX_KEY + versionPattern] = roundDouble(it.usagesCount.toDouble() / updatedMaxUsageCount)
+      }
+      data[USERS_RATIO_DATA_KEY + versionPattern] = roundDouble(it.usersRatio)
+      data[USAGES_PER_USER_RATIO_DATA_KEY + versionPattern] = roundDouble(it.usagesPerUserRatio)
     }
 
     val pluginInfo = getPluginInfo(action.javaClass)
