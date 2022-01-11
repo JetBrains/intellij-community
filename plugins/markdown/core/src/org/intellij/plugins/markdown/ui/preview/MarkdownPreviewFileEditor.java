@@ -8,6 +8,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.project.Project;
@@ -15,6 +16,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,8 +32,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseWheelEvent;
 import java.beans.PropertyChangeListener;
 import java.util.Objects;
+import java.util.function.Supplier;
 
 public class MarkdownPreviewFileEditor extends UserDataHolderBase implements FileEditor {
   private static final long PARSING_CALL_TIMEOUT_MS = 50L;
@@ -117,8 +122,24 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
     });
   }
 
+  private void setupScrollHelper() {
+    final var actualEditor = (mainEditor instanceof EditorImpl)? (EditorImpl)mainEditor : null;
+    if (actualEditor == null) {
+      return;
+    }
+    final var scrollPane = actualEditor.getScrollPane();
+    final var helper = new PreciseVerticalScrollHelper(
+      actualEditor,
+      () -> (myPanel instanceof MarkdownHtmlPanelEx)? (MarkdownHtmlPanelEx)myPanel : null
+    );
+    scrollPane.addMouseWheelListener(helper);
+  }
+
   public void setMainEditor(Editor editor) {
     this.mainEditor = editor;
+    if (Registry.is("markdown.experimental.boundary.precise.scroll.enable")) {
+      setupScrollHelper();
+    }
   }
 
   public void scrollToSrcOffset(final int offset) {
@@ -342,6 +363,39 @@ public class MarkdownPreviewFileEditor extends UserDataHolderBase implements Fil
           myPanel.reloadWithOffset(mainEditor.getCaretModel().getOffset());
         }
       }, 0, ModalityState.stateForComponent(getComponent()));
+    }
+  }
+
+  private static class PreciseVerticalScrollHelper extends MouseAdapter {
+    private final @NotNull EditorImpl editor;
+    private final @NotNull Supplier<MarkdownHtmlPanelEx> htmlPanelSupplier;
+    private int lastOffset = 0;
+
+    private PreciseVerticalScrollHelper(@NotNull EditorImpl editor, @NotNull Supplier<MarkdownHtmlPanelEx> htmlPanelSupplier) {
+      this.editor = editor;
+      this.htmlPanelSupplier = htmlPanelSupplier;
+    }
+
+    @Override
+    public void mouseWheelMoved(MouseWheelEvent event) {
+      final var currentOffset = editor.getScrollingModel().getVerticalScrollOffset();
+      if (lastOffset == currentOffset) {
+        boundaryReached(event);
+      } else {
+        lastOffset = currentOffset;
+      }
+    }
+
+    private void boundaryReached(MouseWheelEvent event) {
+      final var actualPanel = htmlPanelSupplier.get();
+      if (actualPanel == null) {
+        return;
+      }
+      if (event.getScrollType() == MouseWheelEvent.WHEEL_UNIT_SCROLL) {
+        final var multiplier = Registry.intValue("markdown.experimental.boundary.precise.scroll.multiplier", 1);
+        final var amount = event.getScrollAmount() * event.getWheelRotation() * multiplier;
+        actualPanel.scrollBy(0, amount);
+      }
     }
   }
 }

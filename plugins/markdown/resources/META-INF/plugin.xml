@@ -292,6 +292,13 @@ Includes the following features:</p>
     <registryKey key="markdown.tables.editing.support.enable"
                  defaultValue="true"
                  description="Enables Markdown tables editing support"/>
+
+    <registryKey key="markdown.experimental.boundary.precise.scroll.enable"
+                 defaultValue="false"
+                 description="Enables precise scrolling on the document boundaries (direct passing of scroll events from IDE to JCEF preview). Any opened Markdown editors should be manually reopened."/>
+    <registryKey key="markdown.experimental.boundary.precise.scroll.multiplier"
+                 defaultValue="8"
+                 description="A multiplier used in translation of awt scroll event to the browser one"/>
   </extensions>
 
   <applicationListeners>

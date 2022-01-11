@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.jcef.JBCefApp
 import com.intellij.ui.jcef.JCEFHtmlPanel
 import org.cef.browser.CefBrowser
 import org.cef.browser.CefFrame
@@ -14,10 +15,7 @@ import org.cef.network.CefRequest
 import org.intellij.markdown.html.HtmlGenerator
 import org.intellij.plugins.markdown.extensions.MarkdownBrowserPreviewExtension
 import org.intellij.plugins.markdown.extensions.MarkdownConfigurableExtension
-import org.intellij.plugins.markdown.ui.preview.BrowserPipe
-import org.intellij.plugins.markdown.ui.preview.MarkdownHtmlPanel
-import org.intellij.plugins.markdown.ui.preview.PreviewStaticServer
-import org.intellij.plugins.markdown.ui.preview.ResourceProvider
+import org.intellij.plugins.markdown.ui.preview.*
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.FileSchemeResourcesProcessor
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.IncrementalDOMBuilder
 import org.intellij.plugins.markdown.ui.preview.jcef.impl.JcefBrowserPipeImpl
@@ -27,7 +25,7 @@ import java.nio.file.Path
 class MarkdownJCEFHtmlPanel(
   private val _project: Project?,
   private val _virtualFile: VirtualFile?
-): JCEFHtmlPanel(isOffScreenRendering(), null, null), MarkdownHtmlPanel {
+): JCEFHtmlPanel(isOffScreenRendering(), null, null), MarkdownHtmlPanelEx {
   constructor(): this(null, null)
 
   private val pageBaseName = "markdown-preview-index-${hashCode()}.html"
@@ -187,6 +185,17 @@ class MarkdownJCEFHtmlPanel(
     cefBrowser.executeJavaScript(
       // language=JavaScript
       "if (window.scrollController) { window.scrollController.scrollTo($offset, $smooth); }",
+      null,
+      0
+    )
+  }
+
+  override fun scrollBy(horizontalUnits: Int, verticalUnits: Int) {
+    val horizontal = JBCefApp.normalizeScaledSize(horizontalUnits)
+    val vertical = JBCefApp.normalizeScaledSize(verticalUnits)
+    cefBrowser.executeJavaScript(
+      // language=JavaScript
+      "window.scrollBy($horizontal, $vertical)",
       null,
       0
     )
