@@ -12,11 +12,11 @@ import java.util.logging.StreamHandler
 
 
 class RollingFileHandler @JvmOverloads constructor(
-  private val logPath: Path,
-  private val limit: Long,
-  private val count: Int,
-  append: Boolean,
-  private val onRotate: Runnable? = null
+  val logPath: Path,
+  val limit: Long,
+  val count: Int,
+  val append: Boolean,
+  val onRotate: Runnable? = null
 ) : StreamHandler() {
   private lateinit var meter: MeteredOutputStream
 
