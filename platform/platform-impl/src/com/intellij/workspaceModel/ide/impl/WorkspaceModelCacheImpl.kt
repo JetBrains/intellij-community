@@ -37,8 +37,7 @@ import java.util.stream.Collectors
 
 @ApiStatus.Internal
 class WorkspaceModelCacheImpl(private val project: Project) : Disposable, WorkspaceModelCache {
-  override val enabled = forceEnableCaching || (!ApplicationManager.getApplication().isUnitTestMode &&
-                                                SystemProperties.getBooleanProperty("ide.new.project.model.cache", true))
+  override val enabled = forceEnableCaching || !ApplicationManager.getApplication().isUnitTestMode
 
   private val cacheFile by lazy { initCacheFile() }
   private val invalidateProjectCacheMarkerFile by lazy { project.getProjectDataPath(DATA_DIR_NAME).resolve(".invalidate").toFile() }
