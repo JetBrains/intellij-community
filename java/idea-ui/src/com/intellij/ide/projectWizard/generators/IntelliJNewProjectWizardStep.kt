@@ -50,11 +50,13 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
   private val moduleNameProperty = propertyGraph.graphProperty { parent.name }
   private val contentRootProperty = propertyGraph.graphProperty(pathFromParent)
   private val moduleFileLocationProperty = propertyGraph.graphProperty(pathFromParent)
+  private val addSampleCodeProperty = propertyGraph.graphProperty { false }
 
   final override var sdk by sdkProperty
   final override var moduleName by moduleNameProperty
   final override var contentRoot by contentRootProperty
   final override var moduleFileLocation by moduleFileLocationProperty
+  final override var addSampleCode by addSampleCodeProperty
 
   private var userDefinedContentRoot: Boolean = false
   private var userDefinedModuleFileLocation: Boolean = false
@@ -81,6 +83,10 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
         sdkComboBox(context, sdkProperty, StdModuleTypes.JAVA.id, sdkTypeFilter)
           .columns(COLUMNS_MEDIUM)
       }
+      row {
+        checkBox(UIBundle.message("label.project.wizard.new.project.add.sample.code"))
+          .bindSelected(addSampleCodeProperty)
+      }.topGap(TopGap.SMALL)
       customOptions()
       collapsibleGroup(UIBundle.message("label.project.wizard.new.project.advanced.settings")) {
         if (context.isCreatingNewProject) {
