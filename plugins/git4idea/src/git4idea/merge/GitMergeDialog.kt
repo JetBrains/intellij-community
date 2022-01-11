@@ -208,8 +208,14 @@ class GitMergeDialog(private val project: Project,
     try {
       result = Git.getInstance().runCommand(handler).getOutputOrThrow()
         .lines()
-        .filter { branch -> !LINK_REF_REGEX.matcher(branch).matches() }
-        .map { it.trim() }
+        .filter { line -> !LINK_REF_REGEX.matcher(line).matches() }
+        .mapNotNull { line ->
+          val matcher = BRANCH_NAME_REGEX.matcher(line)
+          when {
+            matcher.matches() -> matcher.group(1)
+            else -> null
+          }
+        }
     }
     catch (e: Exception) {
       LOG.warn("Failed to load unmerged branches for root: ${root}", e)
@@ -419,6 +425,7 @@ class GitMergeDialog(private val project: Project,
   companion object {
     private val LOG = logger<GitMergeDialog>()
     private val LINK_REF_REGEX = Pattern.compile(".+\\s->\\s.+")
+    private val BRANCH_NAME_REGEX = Pattern.compile(". (.+\\s*)")
 
     @NlsSafe
     private const val REMOTE_REF = "remotes/"
