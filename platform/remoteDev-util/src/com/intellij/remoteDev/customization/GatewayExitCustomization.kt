@@ -30,7 +30,7 @@ interface GatewayExitCustomization {
 
 open class DefaultGatewayExitCustomizationImpl : GatewayExitCustomization {
   override val rememberId = "DefaultGatewayExitMsg"
-  override val isEnabled = true
+  override val isEnabled = System.getProperty("gtw.disable.exit.dialog")?.toBoolean() != true
 
   override val title = RemoteDevUtilBundle.message("stop.the.ide.backend.or.keep.it.running")
   override val body = RemoteDevUtilBundle.message("you.are.about.to.close.the.jetbrains.client.do.you.also.want.to.stop.the.ide.backend.or.keep.it.running.on.the.host")
