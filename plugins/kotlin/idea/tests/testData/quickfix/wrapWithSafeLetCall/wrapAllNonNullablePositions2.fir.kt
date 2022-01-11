@@ -1,5 +1,5 @@
 // "Wrap with '?.let { ... }' call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun test(s: String?) {
     val s2 = notNull(notNull(<caret>s))

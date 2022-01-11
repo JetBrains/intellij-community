@@ -8,7 +8,7 @@
 // ACTION: Replace with safe (?.) call
 // ACTION: Surround with null check
 // ERROR: Operator call corresponds to a dot-qualified call 'a1.plus(a2)' which is not allowed on a nullable receiver 'a1'.
-// WITH_RUNTIME
+// WITH_STDLIB
 
 interface A {
     operator fun plus(a: A): A = this

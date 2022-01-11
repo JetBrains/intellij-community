@@ -1,6 +1,6 @@
 // "Opt-in for 'PropertyTypeMarker::class' on constructor" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
-// WITH_RUNTIME
+// WITH_STDLIB
 // ACTION: Opt-in for 'PropertyTypeMarker::class' on containing class 'PropertyTypeMarker'
 
 @RequiresOptIn

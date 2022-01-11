@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 // ERROR: Value classes without @JvmInline annotation are not supported yet
 // SKIP_ERRORS_AFTER

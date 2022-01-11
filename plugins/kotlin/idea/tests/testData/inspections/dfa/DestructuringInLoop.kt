@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 fun part1(input: List<String>): Int {
     var hp = 0
     var d = 0

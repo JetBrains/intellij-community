@@ -6,7 +6,7 @@
 // ACTION: Replace overloaded operator with function call
 // ACTION: Replace with safe (?.) call
 // ACTION: Surround with null check
-// WITH_RUNTIME
+// WITH_STDLIB
 
 interface A {
     operator fun plus(a: A): A = this

@@ -5,7 +5,7 @@
 // ACTION: Replace with safe (?.) call
 // ACTION: Surround with null check
 // ERROR: Only safe (?.) or non-null asserted (!!.) calls are allowed on a nullable receiver of type B?
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class A {
     fun foo() {}

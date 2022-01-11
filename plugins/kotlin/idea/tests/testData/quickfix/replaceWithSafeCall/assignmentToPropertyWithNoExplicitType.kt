@@ -1,5 +1,5 @@
 // "Replace with safe (?.) call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 class T(s: String?) {
     var i = s<caret>.length
 }

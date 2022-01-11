@@ -1,6 +1,6 @@
 // "Move '@SomeOptInAnnotation' annotation from getter to property" "true"
 // COMPILER_ARGUMENTS: -Xopt-in=kotlin.RequiresOptIn
-// WITH_RUNTIME
+// WITH_STDLIB
 
 @RequiresOptIn
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.PROPERTY_GETTER)

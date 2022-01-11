@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class A {
     constructor(<error descr="[VAL_OR_VAR_ON_SECONDARY_CONSTRUCTOR_PARAMETER] 'val' on secondary constructor parameter is not allowed">val</error> <warning descr="[UNUSED_PARAMETER] Parameter 'x' is never used">x</warning>: Int) {

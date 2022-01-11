@@ -1,5 +1,5 @@
 // "Replace with safe (?.) call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ERROR: Type mismatch: inferred type is Int? but Int was expected
 
 // Note: There should be no error in FIR but errors are not currently checked for FIR

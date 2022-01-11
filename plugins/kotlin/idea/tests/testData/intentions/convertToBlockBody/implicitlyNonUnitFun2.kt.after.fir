@@ -1,4 +1,4 @@
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(): Array<out String?>? {
     return java.io.File("x").list()

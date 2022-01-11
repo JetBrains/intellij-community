@@ -1,5 +1,5 @@
 // "Add remaining branches" "false"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ERROR: 'when' expression must be exhaustive, add necessary 'is B' branch or 'else' branch instead
 
 sealed class A

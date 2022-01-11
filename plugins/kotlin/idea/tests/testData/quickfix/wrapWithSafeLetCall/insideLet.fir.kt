@@ -1,5 +1,5 @@
 // "Wrap with '?.let { ... }' call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 fun foo(x: String?, y: String) {
     y.let { bar(<caret>x, it) }

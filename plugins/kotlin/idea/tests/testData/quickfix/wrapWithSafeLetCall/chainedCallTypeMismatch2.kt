@@ -1,5 +1,5 @@
 // "Wrap with '?.let { ... }' call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 // ERROR: Operator call corresponds to a dot-qualified call 'arg?.let { 24.hashCode().foo(it) }.plus(1)' which is not allowed on a nullable receiver 'arg?.let { 24.hashCode().foo(it) }'.
 
 fun Int.foo(x: Int) = this + x

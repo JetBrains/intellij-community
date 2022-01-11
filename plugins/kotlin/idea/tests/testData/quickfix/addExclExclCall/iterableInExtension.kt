@@ -1,5 +1,5 @@
 // "Add non-null asserted (!!) call" "true"
-// WITH_RUNTIME
+// WITH_STDLIB
 
 class C {
     val list: List<String>? = null
