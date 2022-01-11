@@ -89,7 +89,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
 
   private static void initLogging(MavenServerSettings settings) {
     try {
-      final Level rootLoggerLevel = toLog4JLevel(settings.getLoggingLevel());
+      final Level rootLoggerLevel = toJavaUtilLoggingLevel(settings.getLoggingLevel());
       Logger.getLogger("").setLevel(rootLoggerLevel);
       if (rootLoggerLevel.intValue() < Level.SEVERE.intValue()) {
         Logger.getLogger("org.apache.maven.wagon.providers.http.httpclient.wire").setLevel(Level.SEVERE);
@@ -100,7 +100,7 @@ public abstract class Maven3ServerEmbedder extends MavenRemoteObject implements 
     }
   }
 
-  private static Level toLog4JLevel(int level) {
+  private static Level toJavaUtilLoggingLevel(int level) {
     switch (level) {
       case MavenServerConsole.LEVEL_DEBUG:
         return Level.ALL;

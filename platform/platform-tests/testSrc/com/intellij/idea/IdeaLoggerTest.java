@@ -54,7 +54,7 @@ public class IdeaLoggerTest extends BareTestFixtureTestCase {
 
   @NotNull
   private static Logger getDelegate(@NotNull Map<? super Level, List<Pair<String, Throwable>>> diags) {
-    java.util.logging.Logger log4j = new java.util.logging.Logger("", null) {
+    java.util.logging.Logger julLogger = new java.util.logging.Logger("", null) {
       @Override
       public void log(java.util.logging.Level level, String msg, Throwable thrown) {
         if (thrown != null) {
@@ -62,8 +62,8 @@ public class IdeaLoggerTest extends BareTestFixtureTestCase {
         }
       }
     };
-    log4j.setLevel(Level.FINE);
-    IdeaLogger logger = new IdeaLogger(log4j);
+    julLogger.setLevel(Level.FINE);
+    IdeaLogger logger = new IdeaLogger(julLogger);
     assertTrue(IdeaLogger.isMutingFrequentExceptionsEnabled());
     return logger;
   }

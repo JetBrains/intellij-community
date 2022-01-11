@@ -48,10 +48,10 @@ class DebugLogManager {
     applyCategories(categories, DebugLogLevel.TRACE, Level.FINER)
   }
 
-  private fun applyCategories(categories: List<Category>, level: DebugLogLevel, log4jLevel: Level) {
+  private fun applyCategories(categories: List<Category>, level: DebugLogLevel, loggerLevel: Level) {
     val filtered = categories.asSequence().filter { it.level == level }.map { it.category }.toList()
     filtered.forEach {
-      Logger.getLogger(it)?.level = log4jLevel
+      Logger.getLogger(it)?.level = loggerLevel
     }
     if (filtered.isNotEmpty()) {
       LOG.info("Set ${level.name} for the following categories: ${filtered.joinToString()}")

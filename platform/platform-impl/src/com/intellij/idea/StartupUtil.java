@@ -169,8 +169,8 @@ public final class StartupUtil {
       return prepareSplash(args);
     }, forkJoinPool);
 
-    activity = activity.endAndStart("log4j configuration");
-    configureLog4j();
+    activity = activity.endAndStart("java.util.logging configuration");
+    configureJavaUtilLogging();
     activity = activity.endAndStart("eua and splash scheduling");
 
     CompletableFuture<Boolean> showEuaIfNeededFuture;
@@ -640,7 +640,7 @@ public final class StartupUtil {
     activity.end();
   }
 
-  private static void configureLog4j() {
+  private static void configureJavaUtilLogging() {
     Activity activity = StartUpMeasurer.startActivity("console logger configuration");
     java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
     if (rootLogger.getHandlers().length == 0) {
