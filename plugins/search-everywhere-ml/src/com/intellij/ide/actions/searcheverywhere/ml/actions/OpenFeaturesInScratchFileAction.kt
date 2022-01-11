@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
 
 class OpenFeaturesInScratchFileAction : AnAction() {
@@ -54,19 +55,24 @@ class OpenFeaturesInScratchFileAction : AnAction() {
     val searchSession = mlSessionService.getCurrentSession()!!
 
     val features = searchEverywhereUI.foundElementsInfo.map { info ->
-      val id = searchSession.itemIdProvider.getId(info.element)
+      val elementName = StringUtil.notNullize(info.element.toString(), "undefined")
+      if (searchSession.itemIdProvider.isElementSupported(info.element)) {
+        val id = searchSession.itemIdProvider.getId(info.element)
+        val mlWeight = if (isTabWithMl(searchEverywhereUI.selectedTabID)) {
+          mlSessionService.getMlWeight(info.contributor, info.element, info.priority)
+        } else {
+          null
+        }
 
-      val mlWeight = if (isTabWithMl(searchEverywhereUI.selectedTabID)) {
-        mlSessionService.getMlWeight(info.contributor, info.element, info.priority)
-      } else {
-        null
+        return@map ElementFeatures(
+          elementName,
+          mlWeight,
+          searchSession.getCurrentSearchState()!!.getElementFeatures(id, info.element, info.contributor, info.priority).features.toSortedMap()
+        )
       }
-
-      ElementFeatures(
-        info.element.toString(),
-        mlWeight,
-        searchSession.getCurrentSearchState()!!.getElementFeatures(id, info.element, info.contributor, info.priority).features.toSortedMap()
-      )
+      else {
+        return@map ElementFeatures(elementName, null, emptyMap())
+      }
     }
 
     return mapOf(
