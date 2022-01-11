@@ -9,7 +9,6 @@ import org.jetbrains.uast.UElement
 import org.jetbrains.uast.UField
 import org.jetbrains.uast.UFieldEx
 import org.jetbrains.uast.internal.acceptList
-import org.jetbrains.uast.renderModifiers
 import org.jetbrains.uast.visitor.UastVisitor
 
 open class KotlinUField(
@@ -69,4 +68,11 @@ open class KotlinUField(
         append("var ").append(javaPsi.name).append(": ").append(type.getCanonicalText(false))
         uastInitializer?.let { initializer -> append(" = " + initializer.asRenderString()) }
     }
+}
+
+// copy of internal org.jetbrains.uast.InternalUastUtilsKt.renderModifiers
+// original function should be used instead as soon as becomes public
+private fun PsiModifierListOwner.renderModifiers(): String {
+    val modifiers = PsiModifier.MODIFIERS.filter { hasModifierProperty(it) }.joinToString(" ")
+    return if (modifiers.isEmpty()) "" else modifiers + " "
 }

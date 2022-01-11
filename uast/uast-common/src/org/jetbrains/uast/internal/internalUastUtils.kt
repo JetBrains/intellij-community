@@ -38,7 +38,7 @@ internal fun <T> lz(f: () -> T) = lazy(LazyThreadSafetyMode.NONE, f)
 internal val PsiType.name: String
   get() = getCanonicalText(false)
 
-fun PsiModifierListOwner.renderModifiers(): String {
+internal fun PsiModifierListOwner.renderModifiers(): String {
   val modifiers = PsiModifier.MODIFIERS.filter { hasModifierProperty(it) }.joinToString(" ")
   return if (modifiers.isEmpty()) "" else modifiers + " "
 }
