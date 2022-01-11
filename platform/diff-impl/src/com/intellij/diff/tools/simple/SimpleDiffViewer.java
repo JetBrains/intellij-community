@@ -50,9 +50,9 @@ import static com.intellij.diff.util.DiffUtil.getLineCount;
 public class SimpleDiffViewer extends TwosideTextDiffViewer implements DifferencesLabel.DifferencesCounter {
   @NotNull private final SyncScrollSupport.SyncScrollable mySyncScrollable;
   @NotNull private final PrevNextDifferenceIterable myPrevNextDifferenceIterable;
-  @NotNull private final MyStatusPanel myStatusPanel;
+  @NotNull protected final StatusPanel myStatusPanel;
 
-  @NotNull private final SimpleDiffModel myModel = new SimpleDiffModel(this);
+  @NotNull protected final SimpleDiffModel myModel = new SimpleDiffModel(this);
 
   @NotNull private final MyFoldingModel myFoldingModel;
   @NotNull private final MyInitialScrollHelper myInitialScrollHelper = new MyInitialScrollHelper();
@@ -65,7 +65,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
 
     mySyncScrollable = new MySyncScrollable();
     myPrevNextDifferenceIterable = new MyPrevNextDifferenceIterable();
-    myStatusPanel = new MyStatusPanel();
+    myStatusPanel = loadStatusPanel();
     myFoldingModel = new MyFoldingModel(getProject(), getEditors(), this);
 
     myModifierProvider = new ModifierProvider();
@@ -758,6 +758,10 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
                                     ContainerUtil.count(allChanges, it -> it.isExcluded()),
                                     myModel.isContentsEqual());
     }
+  }
+
+  public StatusPanel loadStatusPanel() {
+    return new MyStatusPanel();
   }
 
   public class ModifierProvider extends KeyboardModifierListener {
