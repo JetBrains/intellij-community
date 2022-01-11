@@ -10,14 +10,14 @@ import org.jetbrains.annotations.NotNull;
 import java.nio.file.Path;
 import java.util.logging.Level;
 
-public final class JulLoggerFactory implements Logger.Factory {
+public final class LoggerFactory implements Logger.Factory {
   public static final String LOG_FILE_NAME = "idea.log";
 
   public static @NotNull Path getLogFilePath() {
     return Path.of(PathManager.getLogPath(), LOG_FILE_NAME);
   }
 
-  public JulLoggerFactory() {
+  public LoggerFactory() {
     JulLogger.clearHandlers();
     java.util.logging.Logger rootLogger = java.util.logging.Logger.getLogger("");
     rootLogger.setLevel(Level.INFO);
@@ -25,7 +25,7 @@ public final class JulLoggerFactory implements Logger.Factory {
     JulLogger.configureLogFileAndConsole(getLogFilePath(), true, true, () -> IdeaLogger.dropFrequentExceptionsCaches());
 
     DialogAppender dialogAppender = new DialogAppender();
-    dialogAppender.setLevel(Level.INFO);
+    dialogAppender.setLevel(Level.SEVERE);
     rootLogger.addHandler(dialogAppender);
   }
 

@@ -12,9 +12,9 @@ import java.util.logging.LogRecord;
 public class IdeaLogRecordFormatter extends Formatter {
   private static final String FORMAT_WITH_DATE_TIME = "%1$tF %1$tT,%1$tL [%2$7d] %3$6s - %4$30.30s - %5$s%6$s";
   private static final String FORMAT_WITHOUT_DATE_TIME = "[%2$7d] %3$6s - %4$30.30s - %5$s%6$s";
+  private static final String LINE_SEPARATOR = System.lineSeparator();
 
   private final long myLogCreation;
-  private static final String LINE_SEPARATOR = System.lineSeparator();
   private final boolean myWithDateTime;
 
   public IdeaLogRecordFormatter() {

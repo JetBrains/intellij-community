@@ -1,7 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.internal;
 
-import com.intellij.idea.JulLoggerFactory;
+import com.intellij.idea.LoggerFactory;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -25,13 +25,13 @@ public class OpenLogAction extends DumbAwareAction {
     Project project = e.getProject();
     if (project == null) return;
 
-    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(JulLoggerFactory.getLogFilePath());
+    VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByNioFile(LoggerFactory.getLogFilePath());
     if (file != null) {
       VfsUtil.markDirtyAndRefresh(true, false, false, file);
       FileEditorManager.getInstance(project).openFile(file, true);
     }
     else {
-      String title = "Cannot find '" + JulLoggerFactory.getLogFilePath() + "'";
+      String title = "Cannot find '" + LoggerFactory.getLogFilePath() + "'";
       Notifications.Bus.notify(new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, title, "", NotificationType.INFORMATION));
     }
   }

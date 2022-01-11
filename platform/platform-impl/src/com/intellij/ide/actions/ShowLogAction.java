@@ -2,7 +2,7 @@
 package com.intellij.ide.actions;
 
 import com.intellij.idea.ActionsBundle;
-import com.intellij.idea.JulLoggerFactory;
+import com.intellij.idea.LoggerFactory;
 import com.intellij.notification.NotificationAction;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -24,7 +24,7 @@ public class ShowLogAction extends AnAction implements DumbAware {
   }
 
   public static void showLog() {
-    RevealFileAction.openFile(JulLoggerFactory.getLogFilePath());
+    RevealFileAction.openFile(LoggerFactory.getLogFilePath());
   }
 
   public static @NotNull NotificationAction notificationAction() {

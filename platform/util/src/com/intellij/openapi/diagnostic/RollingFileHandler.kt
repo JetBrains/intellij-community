@@ -2,13 +2,10 @@
 package com.intellij.openapi.diagnostic
 
 import java.io.BufferedOutputStream
-import java.io.FileOutputStream
 import java.io.IOException
 import java.io.OutputStream
 import java.nio.charset.StandardCharsets
-import java.nio.file.Files
-import java.nio.file.Path
-import java.nio.file.Paths
+import java.nio.file.*
 import java.util.logging.Level
 import java.util.logging.LogRecord
 import java.util.logging.StreamHandler
@@ -57,7 +54,7 @@ class RollingFileHandler @JvmOverloads constructor(
   }
 
   private fun open(append: Boolean) {
-    val fout = FileOutputStream(logPath.toString(), append)
+    val fout = Files.newOutputStream(logPath, StandardOpenOption.CREATE, StandardOpenOption.APPEND)
     val bout = BufferedOutputStream(fout)
     meter = MeteredOutputStream(bout, if (append) Files.size(logPath) else 0)
     setOutputStream(meter)
@@ -73,12 +70,13 @@ class RollingFileHandler @JvmOverloads constructor(
   }
 
   private fun rotate() {
+    onRotate?.run()
     try {
-      Files.deleteIfExists(Paths.get("$logPath.$count"))
+      Files.deleteIfExists(logPathWithIndex(count))
       for (i in 1 until count) {
-        val path = Paths.get("$logPath.$i")
+        val path = logPathWithIndex(i)
         if (Files.exists(path)) {
-          Files.move(path, Paths.get("$logPath.${i + 1}"))
+          Files.move(path, logPathWithIndex(i+1), StandardCopyOption.ATOMIC_MOVE)
         }
       }
     }
@@ -89,12 +87,17 @@ class RollingFileHandler @JvmOverloads constructor(
     }
     close()
     try {
-      Files.move(logPath, Paths.get("$logPath.1"))
+      Files.move(logPath, logPathWithIndex(1))
     }
     catch (e: IOException) {
       // ignore?
     }
     open(false)
-    onRotate?.run()
+  }
+
+  private fun logPathWithIndex(index: Int): Path {
+    val pathString = logPath.toString()
+    val extIndex = pathString.lastIndexOf('.')
+    return Paths.get(pathString.substring(0, extIndex) + ".$index" + pathString.substring(extIndex))
   }
 }

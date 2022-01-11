@@ -811,7 +811,7 @@ public final class StartupUtil {
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private static Logger setupLogger() {
     try {
-      Logger.setFactory(new JulLoggerFactory());
+      Logger.setFactory(new LoggerFactory());
     }
     catch (Exception e) {
       //noinspection CallToPrintStackTrace

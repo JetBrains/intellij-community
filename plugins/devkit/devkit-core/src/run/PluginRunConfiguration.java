@@ -45,7 +45,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 
-import static com.intellij.idea.JulLoggerFactory.LOG_FILE_NAME;
+import static com.intellij.idea.LoggerFactory.LOG_FILE_NAME;
 
 public class PluginRunConfiguration extends RunConfigurationBase<Element> implements ModuleRunConfiguration {
   private static final String NAME = "name";
