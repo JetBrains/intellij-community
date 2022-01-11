@@ -20,6 +20,7 @@ import com.intellij.ide.ui.customization.CustomizeActionGroupPanel
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
@@ -47,6 +48,7 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.components.panels.Wrapper
 import com.intellij.ui.popup.PopupState
 import com.intellij.ui.scale.JBUIScale
+import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.ui.JBInsets
 import com.intellij.util.ui.JBUI
 import com.intellij.util.xmlb.annotations.*
@@ -82,22 +84,15 @@ class RunToolbarWidgetCustomizableActionGroupProvider : CustomizableActionGroupP
   }
 }
 
-internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget>(VerticalLayout(0)), Disposable {
-
+internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget>(VerticalLayout(0)) {
   init {
     isOpaque = false
     add(createRunActionToolbar().component.apply {
       isOpaque = false
     }, VerticalLayout.CENTER)
-    val history = ExecutionReasonableHistory(
-      project,
-      onHistoryChanged = createProcessHistoryListener(),
-      onAnyChange = createConfigurationHistoryStateUpdater()
-    )
-    Disposer.register(this, history)
-  }
 
-  override fun dispose() {}
+    ExecutionReasonableHistoryManager.register(project)
+  }
 
   private fun createRunActionToolbar(): ActionToolbar {
     val actionGroup = CustomActionsSchema.getInstance().getCorrectedAction(RUN_TOOLBAR_WIDGET_GROUP) as ActionGroup
@@ -109,37 +104,6 @@ internal class RunToolbarWidget(val project: Project) : JBPanel<RunToolbarWidget
       targetComponent = null
       setReservePlaceAutoPopupIcon(false)
       layoutPolicy = ActionToolbar.NOWRAP_LAYOUT_POLICY
-    }
-  }
-
-  private fun createProcessHistoryListener(): (ReasonableHistory.Elem<ExecutionEnvironment, RunState>?) -> Unit {
-    return { latest ->
-      if (latest != null) {
-        val (env, reason) = latest
-        val history = RunConfigurationStartHistory.getInstance(env.project)
-        getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
-          if (reason == RunState.SCHEDULED) {
-            history.register(conf, env.executor.id, reason)
-          }
-          if (reason.isRunningState()) {
-            RunManager.getInstance(env.project).selectedConfiguration = conf
-          }
-        } ?: logger<RunToolbarWidget>().error(java.lang.IllegalStateException("No setting for ${env.configurationSettings}"))
-        ActivityTracker.getInstance().inc()
-      }
-    }
-  }
-
-  private fun createConfigurationHistoryStateUpdater(): (ExecutionEnvironment, RunState) -> Unit {
-    return { env, reason ->
-      RunConfigurationStartHistory.getInstance(env.project).firstOrNull(
-        getPersistedConfiguration(env.runnerAndConfigurationSettings)
-      ) {
-        env.executor.id == it.executorId
-      }?.apply {
-        state = reason
-        ActivityTracker.getInstance().inc()
-      }
     }
   }
 
@@ -856,6 +820,68 @@ class RunConfigurationStartHistory(val project: Project) : PersistentStateCompon
   companion object {
     fun getInstance(project: Project): RunConfigurationStartHistory {
       return project.getService(RunConfigurationStartHistory::class.java)
+    }
+  }
+}
+
+/**
+ * Registers one [ExecutionReasonableHistory] per project and
+ * disposes it with the project.
+ */
+private object ExecutionReasonableHistoryManager {
+  private val registeredListeners = mutableMapOf<Project, ExecutionReasonableHistory>()
+
+  @RequiresEdt
+  fun register(project: Project) {
+    if (!registeredListeners.containsKey(project)) {
+      registeredListeners[project] = ExecutionReasonableHistory(
+        project,
+        onHistoryChanged = ::processHistoryChanged,
+        onAnyChange = ::configurationHistoryStateChanged
+      )
+      Disposer.register(project) {
+        ApplicationManager.getApplication().invokeLater {
+          unregister(project)
+        }
+      }
+    }
+  }
+
+  /**
+   * Unregister [ExecutionReasonableHistory] of the project and dispose it.
+   *
+   * Shouldn't be called directly because it clears runtime history,
+   * that isn't persisted in [RunConfigurationStartHistory].
+   */
+  @RequiresEdt
+  fun unregister(project: Project) {
+    registeredListeners.remove(project)?.let(Disposer::dispose)
+  }
+
+  private fun processHistoryChanged(latest: ReasonableHistory.Elem<ExecutionEnvironment, RunState>?) {
+    if (latest != null) {
+      val (env, reason) = latest
+      val history = RunConfigurationStartHistory.getInstance(env.project)
+      getPersistedConfiguration(env.runnerAndConfigurationSettings)?.let { conf ->
+        if (reason == RunState.SCHEDULED) {
+          history.register(conf, env.executor.id, reason)
+        }
+        if (reason.isRunningState()) {
+          RunManager.getInstance(env.project).selectedConfiguration = conf
+        }
+      } ?: logger<RunToolbarWidget>().error(java.lang.IllegalStateException("No setting for ${env.configurationSettings}"))
+      ActivityTracker.getInstance().inc()
+    }
+  }
+
+  private fun configurationHistoryStateChanged(env: ExecutionEnvironment, reason: RunState) {
+    RunConfigurationStartHistory.getInstance(env.project).firstOrNull(
+      getPersistedConfiguration(env.runnerAndConfigurationSettings)
+    ) {
+      env.executor.id == it.executorId
+    }?.apply {
+      state = reason
+      ActivityTracker.getInstance().inc()
     }
   }
 }
