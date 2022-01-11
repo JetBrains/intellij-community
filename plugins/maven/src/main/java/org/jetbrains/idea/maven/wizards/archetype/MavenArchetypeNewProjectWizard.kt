@@ -80,29 +80,38 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
     var archetypeVersion by archetypeVersionProperty
     var archetypeDescriptor by archetypeDescriptorProperty
 
+    private lateinit var catalogComboBox: ComboBox<MavenCatalog>
+    private lateinit var archetypeComboBox: ComboBox<ArchetypeItem>
+
     override fun setupSettingsUI(builder: Panel) {
       super.setupSettingsUI(builder)
       with(builder) {
         row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.label")) {
-          val comboBox = comboBox(CollectionComboBoxModel(), CatalogRenderer())
+          comboBox(CollectionComboBoxModel(), CatalogRenderer())
+            .apply { catalogComboBox = component }
             .applyToComponent { setSwingPopup(false) }
             .applyToComponent { reloadCatalogs() }
             .bindItem(catalogItemProperty)
             .columns(COLUMNS_MEDIUM)
-          button(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.add.button")) {
-            comboBox.component.addCatalog()
+          button(MavenWizardBundle.message("maven.new.project.wizard.archetype.add.button")) {
+            addCatalog()
           }
           link(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.manage.button")) {
-            comboBox.component.manageCatalogs()
+            manageCatalogs()
           }
         }.topGap(TopGap.SMALL)
         row(MavenWizardBundle.message("maven.new.project.wizard.archetype.label")) {
           comboBox(CollectionComboBoxModel(), ArchetypeRenderer())
+            .apply { archetypeComboBox = component }
             .applyToComponent { setSwingPopup(false) }
             .applyToComponent { reloadArchetypes() }
             .applyToComponent { catalogItemProperty.afterChange { reloadArchetypes() } }
             .bindItem(archetypeItemProperty)
             .horizontalAlign(HorizontalAlign.FILL)
+            .resizableColumn()
+          button(MavenWizardBundle.message("maven.new.project.wizard.archetype.add.button")) {
+            addArchetype()
+          }
         }.topGap(TopGap.SMALL)
         row(MavenWizardBundle.message("maven.new.project.wizard.archetype.version.label")) {
           comboBox(CollectionComboBoxModel(), ArchetypeVersionRenderer())
@@ -152,33 +161,38 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       }
     }
 
-    private fun ComboBox<MavenCatalog>.reloadCatalogs() {
-      val catalogManager = MavenCatalogManager.getInstance()
-      collectionModel.replaceAll(catalogManager.getCatalogs(context.projectOrDefault))
+    private fun Component.invokeWhenBackgroundTasksFinished(onUiThread: () -> Unit) {
+      /** [backgroundExecutor] has one worker, so we can schedule NOP task and call callback when it completed. */
+      executeBackgroundTask(onBackgroundThread = /*NOP*/{}, onUiThread = { onUiThread() })
     }
 
-    private fun ComboBox<MavenCatalog>.addCatalog() {
+    private fun reloadCatalogs() {
+      val catalogManager = MavenCatalogManager.getInstance()
+      catalogComboBox.collectionModel.replaceAll(catalogManager.getCatalogs(context.projectOrDefault))
+    }
+
+    private fun addCatalog() {
       val dialog = MavenAddCatalogDialog(context.projectOrDefault)
       if (dialog.showAndGet()) {
         val catalog = dialog.getCatalog() ?: return
-        collectionModel.add(catalog)
+        catalogComboBox.collectionModel.add(catalog)
         catalogItem = catalog
       }
     }
 
-    private fun ComboBox<MavenCatalog>.manageCatalogs() {
+    private fun manageCatalogs() {
       val dialog = MavenManageCatalogsDialog(context.projectOrDefault)
       if (dialog.showAndGet()) {
         reloadCatalogs()
       }
     }
 
-    private fun ComboBox<ArchetypeItem>.reloadArchetypes() {
+    private fun reloadArchetypes() {
       val archetypeManager = MavenArchetypeManager.getInstance(context.projectOrDefault)
 
-      collectionModel.removeAll()
+      archetypeComboBox.collectionModel.removeAll()
       archetypeItem = null
-      executeBackgroundTask(
+      archetypeComboBox.executeBackgroundTask(
         onBackgroundThread = {
           archetypeManager.getArchetypes(catalogItem)
             .groupBy { ArchetypeItem.Id(it) }
@@ -186,10 +200,27 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
             .naturalSorted()
         },
         onUiThread = { archetypes ->
-          collectionModel.replaceAll(archetypes)
+          archetypeComboBox.collectionModel.replaceAll(archetypes)
           archetypeItem = archetypes.firstOrNull()
         }
       )
+    }
+
+    private fun addArchetype() {
+      val dialog = MavenAddArchetypeDialog(context.projectOrDefault)
+      if (dialog.showAndGet()) {
+        val catalog = dialog.getCatalog()
+        val archetype = ArchetypeItem(dialog.archetypeGroupId, dialog.archetypeArtifactId, listOf(dialog.archetypeVersion))
+
+        if (catalog != null) {
+          catalogComboBox.collectionModel.add(catalog)
+        }
+        catalogItem = catalog ?: MavenCatalog.System.Internal
+        archetypeComboBox.invokeWhenBackgroundTasksFinished {
+          archetypeComboBox.collectionModel.add(archetype)
+          archetypeItem = archetype
+        }
+      }
     }
 
     private fun ComboBox<String>.reloadArchetypeVersions() {

@@ -9,20 +9,13 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.ui.emptyText
-import com.intellij.openapi.util.io.FileUtil
 import com.intellij.ui.dsl.builder.COLUMNS_MEDIUM
 import com.intellij.ui.dsl.builder.bindText
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.layout.*
-import com.intellij.util.io.exists
-import com.intellij.util.text.nullize
 import org.jetbrains.idea.maven.indices.arhetype.MavenCatalog
-import org.jetbrains.idea.maven.indices.arhetype.MavenCatalogManager
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
-import java.net.URL
-import kotlin.io.path.Path
-import kotlin.io.path.name
 
 abstract class AbstractMavenCatalogDialog(private val project: Project) : DialogWrapper(project, true) {
 
@@ -35,63 +28,9 @@ abstract class AbstractMavenCatalogDialog(private val project: Project) : Dialog
   protected var location by locationProperty
   protected var name by nameProperty
 
-  private fun getPathOrError() = runCatching { Path(FileUtil.expandUserHome(location)) }
-  private fun getUrlOrError() = runCatching { URL(location) }
-
-  private fun getPathOrNull() = getPathOrError().getOrNull()
-  private fun getUrlOrNull() = getUrlOrError().getOrNull()
-
   fun getCatalog(): MavenCatalog? {
-    if (MavenCatalogManager.isLocal(location)) {
-      val path = getPathOrNull() ?: return null
-      return MavenCatalog.Local(name, path)
-    }
-    else {
-      val url = getUrlOrNull() ?: return null
-      return MavenCatalog.Remote(name, url)
-    }
-  }
-
-  private fun suggestNameByLocation(): String {
-    if (MavenCatalogManager.isLocal(location)) {
-      return getPathOrNull()?.name?.nullize() ?: location
-    }
-    else {
-      return getUrlOrNull()?.host?.nullize() ?: location
-    }
-  }
-
-  private fun ValidationInfoBuilder.validateLocation(): ValidationInfo? {
-    if (location.isEmpty()) {
-      return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.error.empty"))
-    }
-    if (MavenCatalogManager.isLocal(location)) {
-      return validateLocalLocation()
-    }
-    else {
-      return validateRemoteLocation()
-    }
-  }
-
-  private fun ValidationInfoBuilder.validateLocalLocation(): ValidationInfo? {
-    val pathOrError = getPathOrError()
-    val exception = pathOrError.exceptionOrNull()
-    if (exception != null) {
-      val message = exception.message
-      return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.error.invalid", message))
-    }
-    val path = pathOrError.getOrThrow()
-    if (!path.exists()) {
-      return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.error.not.exists"))
-    }
-    return null
-  }
-
-  private fun ValidationInfoBuilder.validateRemoteLocation(): ValidationInfo? {
-    val exception = getUrlOrError().exceptionOrNull()
-    if (exception != null) {
-      val message = exception.message
-      return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.error.invalid", message))
+    if (location.isNotEmpty()) {
+      return createCatalog(name, location)
     }
     return null
   }
@@ -109,12 +48,10 @@ abstract class AbstractMavenCatalogDialog(private val project: Project) : Dialog
       val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
       textFieldWithBrowseButton(title, project, descriptor)
         .bindText(locationProperty.comap { it.trim() })
-        .applyToComponent {
-          emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint")
-        }
+        .applyToComponent { emptyText.text = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.hint") }
         .columns(COLUMNS_MEDIUM)
-        .validationOnInput { validateLocation() }
-        .validationOnApply { validateLocation() }
+        .validationOnInput { validateCatalogLocation(location) }
+        .validationOnApply { validateCatalogLocation(location) }
     }
     row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.name.label")) {
       textField()
@@ -127,6 +64,6 @@ abstract class AbstractMavenCatalogDialog(private val project: Project) : Dialog
   }
 
   init {
-    nameProperty.dependsOn(locationProperty, ::suggestNameByLocation)
+    nameProperty.dependsOn(locationProperty) { suggestCatalogNameByLocation(location) }
   }
 }
