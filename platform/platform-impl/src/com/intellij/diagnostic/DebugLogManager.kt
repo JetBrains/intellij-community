@@ -22,6 +22,10 @@ class DebugLogManager {
     fun getInstance() = service<DebugLogManager>()
   }
 
+  // java.util.logging keeps only weak references to loggers, so we need to store strong references to loggers we've customized to ensure
+  // that a logger can't get garbage-collected and then recreated with a default level instead of a customized one
+  private val customizedLoggers = mutableListOf<Logger>()
+
   init {
     val categories = mutableListOf<Category>()
     categories.addAll(getSavedCategories())
@@ -41,6 +45,7 @@ class DebugLogManager {
     categories.forEach {
       Logger.getLogger(it.category)?.level = null
     }
+    customizedLoggers.clear()
   }
 
   fun applyCategories(categories: List<Category>) {
@@ -51,7 +56,9 @@ class DebugLogManager {
   private fun applyCategories(categories: List<Category>, level: DebugLogLevel, loggerLevel: Level) {
     val filtered = categories.asSequence().filter { it.level == level }.map { it.category }.toList()
     filtered.forEach {
-      Logger.getLogger(it)?.level = loggerLevel
+      val logger = Logger.getLogger(it)
+      logger.level = loggerLevel
+      customizedLoggers.add(logger)
     }
     if (filtered.isNotEmpty()) {
       LOG.info("Set ${level.name} for the following categories: ${filtered.joinToString()}")
