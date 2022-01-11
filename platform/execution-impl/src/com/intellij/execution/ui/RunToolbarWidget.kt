@@ -187,7 +187,7 @@ class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponen
                                       else -> lastExecutorId
                                     })
       e.presentation.text = conf.shortenName()
-      e.presentation.description = RunToolbarWidgetRunAction.reword(getExecutorByIdOrDefault(lastExecutorId), canRestart, conf.name)
+      e.presentation.description = RunToolbarWidgetRunAction.reword(getExecutorByIdOrDefault(lastExecutorId), canRestart, conf.shortenName())
     } else {
       e.presentation.putClientProperty(COLOR, RunButtonColors.BLUE)
       e.presentation.icon = AllIcons.Actions.Execute
@@ -1006,7 +1006,7 @@ private fun getConfigurations(manager: ExecutionManagerImpl, descriptor: RunCont
 }
 
 @Nls
-private fun RunnerAndConfigurationSettings.shortenName() = shorten(name)
+private fun RunnerAndConfigurationSettings.shortenName() = Executor.shortenNameIfNeeded(name)
 
 @Nls
 private fun shorten(@Nls text: String): String = StringUtil.shortenTextWithEllipsis(text, 27, 8)
