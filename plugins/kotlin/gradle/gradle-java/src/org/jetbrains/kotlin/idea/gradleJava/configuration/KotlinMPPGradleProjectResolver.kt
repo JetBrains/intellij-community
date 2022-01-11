@@ -38,7 +38,10 @@ import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.createKotlinMppPop
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.getCompilations
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDependenciesByCompilations
 import org.jetbrains.kotlin.idea.gradleJava.configuration.mpp.populateModuleDependenciesBySourceSetVisibilityGraph
-import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.*
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.calculateRunTasks
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getGradleModuleQualifiedName
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.gradleTooling.KotlinMPPGradleModelBuilder
 import org.jetbrains.kotlin.idea.gradleTooling.arguments.CachedExtractedArgsInfo

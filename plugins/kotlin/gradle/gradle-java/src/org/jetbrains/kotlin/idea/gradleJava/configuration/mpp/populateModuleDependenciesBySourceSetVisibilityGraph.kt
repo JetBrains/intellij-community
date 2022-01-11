@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.idea.gradle.configuration.utils.createSourceSetVisib
 import org.jetbrains.kotlin.idea.gradle.configuration.utils.transitiveClosure
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver
 import org.jetbrains.kotlin.idea.gradleJava.configuration.KotlinMPPGradleProjectResolver.Companion.CompilationWithDependencies
-import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.fullName
-import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.getKotlinModuleId
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.fullName
+import org.jetbrains.kotlin.idea.gradleJava.configuration.utils.KotlinModuleUtils.getKotlinModuleId
 import org.jetbrains.kotlin.idea.gradleTooling.*
 import org.jetbrains.kotlin.idea.projectModel.KotlinCompilation
 import org.jetbrains.kotlin.idea.projectModel.KotlinPlatform

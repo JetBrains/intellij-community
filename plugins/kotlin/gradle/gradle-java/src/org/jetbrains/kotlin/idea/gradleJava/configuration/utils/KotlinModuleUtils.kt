@@ -15,69 +15,72 @@ import org.jetbrains.kotlin.idea.projectModel.KotlinTarget
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverUtil
 import org.jetbrains.plugins.gradle.service.project.ProjectResolverContext
 
-fun KotlinComponent.fullName(simpleName: String = name) = when (this) {
-    is KotlinCompilation -> compilationFullName(simpleName, disambiguationClassifier)
-    else -> simpleName
-}
+object KotlinModuleUtils {
 
-private fun KotlinTarget.testTasksFor(compilation: KotlinCompilation) = testRunTasks.filter { task ->
-    when (name) {
-        "android" -> task.taskName.endsWith(compilation.name, true)
-        else -> task.compilationName == compilation.name
+    fun KotlinComponent.fullName(simpleName: String = name) = when (this) {
+        is KotlinCompilation -> compilationFullName(simpleName, disambiguationClassifier)
+        else -> simpleName
     }
-}
 
-fun calculateRunTasks(
-    mppModel: KotlinMPPGradleModel,
-    gradleModule: IdeaModule,
-    resolverCtx: ProjectResolverContext
-): Map<KotlinSourceSet, Collection<ExternalSystemRunTask>> {
-    val sourceSetToRunTasks: MutableMap<KotlinSourceSet, MutableCollection<ExternalSystemRunTask>> = HashMap()
-    val dependsOnReverseGraph: MutableMap<String, MutableSet<KotlinSourceSet>> = HashMap()
-    mppModel.targets.forEach { target ->
-        target.compilations.forEach { compilation ->
-            val testRunTasks = target.testTasksFor(compilation)
-                .map {
-                    ExternalSystemTestRunTask(
-                        it.taskName,
-                        gradleModule.gradleProject.path,
-                        target.name
-                    )
-                }
-            val nativeMainRunTasks = target.nativeMainRunTasks
-                .filter { task -> task.compilationName == compilation.name }
-                .map {
-                    ExternalSystemNativeMainRunTask(
-                        it.taskName,
-                        getKotlinModuleId(gradleModule, compilation, resolverCtx),
-                        target.name,
-                        it.entryPoint,
-                        it.debuggable
-                    )
-                }
-            val allRunTasks = testRunTasks + nativeMainRunTasks
-            compilation.declaredSourceSets.forEach { sourceSet ->
-                sourceSetToRunTasks.getOrPut(sourceSet) { LinkedHashSet() } += allRunTasks
-                mppModel.resolveAllDependsOnSourceSets(sourceSet).forEach { dependentModule ->
-                    dependsOnReverseGraph.getOrPut(dependentModule.name) { LinkedHashSet() } += sourceSet
+    private fun KotlinTarget.testTasksFor(compilation: KotlinCompilation) = testRunTasks.filter { task ->
+        when (name) {
+            "android" -> task.taskName.endsWith(compilation.name, true)
+            else -> task.compilationName == compilation.name
+        }
+    }
+
+    fun calculateRunTasks(
+        mppModel: KotlinMPPGradleModel,
+        gradleModule: IdeaModule,
+        resolverCtx: ProjectResolverContext
+    ): Map<KotlinSourceSet, Collection<ExternalSystemRunTask>> {
+        val sourceSetToRunTasks: MutableMap<KotlinSourceSet, MutableCollection<ExternalSystemRunTask>> = HashMap()
+        val dependsOnReverseGraph: MutableMap<String, MutableSet<KotlinSourceSet>> = HashMap()
+        mppModel.targets.forEach { target ->
+            target.compilations.forEach { compilation ->
+                val testRunTasks = target.testTasksFor(compilation)
+                    .map {
+                        ExternalSystemTestRunTask(
+                            it.taskName,
+                            gradleModule.gradleProject.path,
+                            target.name
+                        )
+                    }
+                val nativeMainRunTasks = target.nativeMainRunTasks
+                    .filter { task -> task.compilationName == compilation.name }
+                    .map {
+                        ExternalSystemNativeMainRunTask(
+                            it.taskName,
+                            getKotlinModuleId(gradleModule, compilation, resolverCtx),
+                            target.name,
+                            it.entryPoint,
+                            it.debuggable
+                        )
+                    }
+                val allRunTasks = testRunTasks + nativeMainRunTasks
+                compilation.declaredSourceSets.forEach { sourceSet ->
+                    sourceSetToRunTasks.getOrPut(sourceSet) { LinkedHashSet() } += allRunTasks
+                    mppModel.resolveAllDependsOnSourceSets(sourceSet).forEach { dependentModule ->
+                        dependsOnReverseGraph.getOrPut(dependentModule.name) { LinkedHashSet() } += sourceSet
+                    }
                 }
             }
         }
-    }
-    mppModel.sourceSetsByName.forEach { (sourceSetName, sourceSet) ->
-        dependsOnReverseGraph[sourceSetName]?.forEach { dependingSourceSet ->
-            sourceSetToRunTasks.getOrPut(sourceSet) { LinkedHashSet() } += sourceSetToRunTasks[dependingSourceSet] ?: emptyList()
+        mppModel.sourceSetsByName.forEach { (sourceSetName, sourceSet) ->
+            dependsOnReverseGraph[sourceSetName]?.forEach { dependingSourceSet ->
+                sourceSetToRunTasks.getOrPut(sourceSet) { LinkedHashSet() } += sourceSetToRunTasks[dependingSourceSet] ?: emptyList()
+            }
         }
+        return sourceSetToRunTasks
     }
-    return sourceSetToRunTasks
+
+    fun getGradleModuleQualifiedName(
+        resolverCtx: ProjectResolverContext,
+        gradleModule: IdeaModule,
+        simpleName: String
+    ): String = GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule) + ":" + simpleName
+
+    fun getKotlinModuleId(
+        gradleModule: IdeaModule, kotlinComponent: KotlinComponent, resolverCtx: ProjectResolverContext
+    ) = getGradleModuleQualifiedName(resolverCtx, gradleModule, kotlinComponent.fullName())
 }
-
-fun getGradleModuleQualifiedName(
-    resolverCtx: ProjectResolverContext,
-    gradleModule: IdeaModule,
-    simpleName: String
-): String = GradleProjectResolverUtil.getModuleId(resolverCtx, gradleModule) + ":" + simpleName
-
-fun getKotlinModuleId(
-    gradleModule: IdeaModule, kotlinComponent: KotlinComponent, resolverCtx: ProjectResolverContext
-) = getGradleModuleQualifiedName(resolverCtx, gradleModule, kotlinComponent.fullName())
