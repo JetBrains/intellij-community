@@ -2,20 +2,26 @@
 package org.jetbrains.idea.maven.wizards.archetype
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.idea.maven.indices.arhetype.MavenCatalog
 import org.jetbrains.idea.maven.indices.arhetype.MavenCatalogManager
 import org.jetbrains.idea.maven.wizards.MavenWizardBundle
 
-class MavenAddCatalogDialog(project: Project) : AbstractMavenCatalogDialog(project) {
+class MavenEditCatalogDialog(project: Project, private val initialCatalog: MavenCatalog) : AbstractMavenCatalogDialog(project) {
 
   override fun onApply() {
     val catalog = getCatalog() ?: return
     val catalogManager = MavenCatalogManager.getInstance()
+    catalogManager.removeCatalog(initialCatalog)
     catalogManager.addCatalog(catalog)
   }
 
   init {
-    title = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.add.dialog.title")
-    setOKButtonText(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.add.dialog.add.button"))
+    name = initialCatalog.name
+    location = initialCatalog.location
+  }
+
+  init {
+    title = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.edit.dialog.title")
     init()
   }
 }

@@ -4,6 +4,7 @@ import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
 import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.intellij.util.io.systemIndependentPath
 import java.net.URL
 import java.util.concurrent.CopyOnWriteArrayList
@@ -15,16 +16,34 @@ class MavenCatalogManager : PersistentStateComponent<MavenCatalogManager.State> 
   private var localCatalogs = CopyOnWriteArrayList<MavenCatalog.Local>()
   private var remoteCatalogs = CopyOnWriteArrayList<MavenCatalog.Remote>()
 
-  fun getCatalogs(): List<MavenCatalog> {
-    return localCatalogs + remoteCatalogs
+  fun getCatalogs(project: Project): List<MavenCatalog> {
+    val systemCatalogs = listOf(
+      MavenCatalog.System.Internal,
+      MavenCatalog.System.DefaultLocal(project),
+      MavenCatalog.System.MavenCentral
+    )
+    return systemCatalogs + localCatalogs + remoteCatalogs
   }
 
-  fun addCatalog(catalog: MavenCatalog.Local) {
-    localCatalogs.add(catalog)
+  fun setCatalogs(catalogs: List<MavenCatalog>) {
+    localCatalogs = catalogs.filterIsInstanceTo(CopyOnWriteArrayList())
+    remoteCatalogs = catalogs.filterIsInstanceTo(CopyOnWriteArrayList())
   }
 
-  fun addCatalog(catalog: MavenCatalog.Remote) {
-    remoteCatalogs.add(catalog)
+  fun addCatalog(catalog: MavenCatalog) {
+    when (catalog) {
+      is MavenCatalog.Local -> localCatalogs.add(catalog)
+      is MavenCatalog.Remote -> remoteCatalogs.add(catalog)
+      is MavenCatalog.System -> throw UnsupportedOperationException("Cannot modify system catalog: $catalog")
+    }
+  }
+
+  fun removeCatalog(catalog: MavenCatalog) {
+    when (catalog) {
+      is MavenCatalog.Local -> localCatalogs.remove(catalog)
+      is MavenCatalog.Remote -> remoteCatalogs.remove(catalog)
+      is MavenCatalog.System -> throw UnsupportedOperationException("Cannot modify system catalog: $catalog")
+    }
   }
 
   override fun getState(): State {

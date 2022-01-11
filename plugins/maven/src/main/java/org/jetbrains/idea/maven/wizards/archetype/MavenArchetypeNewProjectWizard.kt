@@ -1,6 +1,8 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.wizards.archetype
 
+import com.intellij.execution.util.setEmptyState
+import com.intellij.execution.util.setVisibleRowCount
 import com.intellij.ide.projectWizard.generators.BuildSystemJavaNewProjectWizardData.Companion.buildSystem
 import com.intellij.ide.projectWizard.generators.JavaNewProjectWizard
 import com.intellij.ide.util.projectWizard.WizardContext
@@ -50,8 +52,7 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
   override val icon: Icon = OpenapiIcons.RepositoryLibraryLogo
 
   override fun createStep(context: WizardContext): NewProjectWizardStep {
-    return RootNewProjectWizardStep(context).chain(MavenArchetypeNewProjectWizard::CommentStep, ::NewProjectWizardBaseStep,
-      MavenArchetypeNewProjectWizard::Step)
+    return RootNewProjectWizardStep(context).chain(::CommentStep, ::NewProjectWizardBaseStep, ::Step)
   }
 
   private class CommentStep(parent: NewProjectWizardStep) : NewProjectLinkNewProjectWizardStep(parent) {
@@ -85,11 +86,14 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
         row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.label")) {
           val comboBox = comboBox(CollectionComboBoxModel(), CatalogRenderer())
             .applyToComponent { setSwingPopup(false) }
-            .applyToComponent { loadCatalogs() }
+            .applyToComponent { reloadCatalogs() }
             .bindItem(catalogItemProperty)
             .columns(COLUMNS_MEDIUM)
           button(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.add.button")) {
             comboBox.component.addCatalog()
+          }
+          link(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.manage.button")) {
+            comboBox.component.manageCatalogs()
           }
         }.topGap(TopGap.SMALL)
         row(MavenWizardBundle.message("maven.new.project.wizard.archetype.label")) {
@@ -148,13 +152,9 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       }
     }
 
-    private fun ComboBox<MavenCatalog>.loadCatalogs() {
+    private fun ComboBox<MavenCatalog>.reloadCatalogs() {
       val catalogManager = MavenCatalogManager.getInstance()
-
-      collectionModel.add(MavenCatalog.System.Internal)
-      collectionModel.add(MavenCatalog.System.DefaultLocal(context.projectOrDefault))
-      collectionModel.add(MavenCatalog.System.MavenCentral)
-      collectionModel.add(catalogManager.getCatalogs())
+      collectionModel.replaceAll(catalogManager.getCatalogs(context.projectOrDefault))
     }
 
     private fun ComboBox<MavenCatalog>.addCatalog() {
@@ -163,6 +163,13 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
         val catalog = dialog.getCatalog() ?: return
         collectionModel.add(catalog)
         catalogItem = catalog
+      }
+    }
+
+    private fun ComboBox<MavenCatalog>.manageCatalogs() {
+      val dialog = MavenManageCatalogsDialog(context.projectOrDefault)
+      if (dialog.showAndGet()) {
+        reloadCatalogs()
       }
     }
 

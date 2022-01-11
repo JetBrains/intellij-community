@@ -17,13 +17,13 @@ sealed interface MavenCatalog {
 
   val location: @NlsSafe String
 
-  interface System : MavenCatalog {
+  sealed interface System : MavenCatalog {
     object Internal : System {
       override val name: String = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.internal.name")
       override val location: String = ""
     }
 
-    class DefaultLocal(private val project: Project) : System {
+    data class DefaultLocal(private val project: Project) : System {
       val file: File
         get() {
           val generalSettings = MavenProjectsManager.getInstance(project).generalSettings
@@ -49,11 +49,11 @@ sealed interface MavenCatalog {
     }
   }
 
-  class Local(override val name: String, val path: Path) : MavenCatalog {
+  data class Local(override val name: String, val path: Path) : MavenCatalog {
     override val location: String = path.systemIndependentPath
   }
 
-  class Remote(override val name: String, val url: URL) : MavenCatalog {
+  data class Remote(override val name: String, val url: URL) : MavenCatalog {
     override val location: String = url.toExternalForm()
   }
 }

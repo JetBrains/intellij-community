@@ -6,7 +6,6 @@ import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable.Property
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.ui.whenTableModified
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TableSpeedSearch
@@ -19,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.DefaultCellEditor
 import javax.swing.JTable
 import javax.swing.JTextField
+import javax.swing.ListSelectionModel
 import kotlin.reflect.KMutableProperty1
 
 class PropertiesTable : ListTableWithButtons<Property>() {
@@ -48,15 +48,6 @@ class PropertiesTable : ListTableWithButtons<Property>() {
     }
   }
 
-  fun setEmptyState(text: @NlsContexts.StatusText String) = apply {
-    tableView.getAccessibleContext().accessibleName = text
-    tableView.emptyText.text = text
-  }
-
-  fun setVisibleRowCount(count: Int) = apply {
-    tableView.visibleRowCount = count
-  }
-
   init {
     val nameColumn = tableView.columnModel.getColumn(0)
     val descriptionColumn = tableView.columnModel.getColumn(1)
@@ -68,11 +59,12 @@ class PropertiesTable : ListTableWithButtons<Property>() {
     tableView.visibleRowCount = 8
     tableView.putClientProperty(JBViewport.FORCE_VISIBLE_ROW_COUNT_KEY, true)
     tableView.autoResizeMode = JTable.AUTO_RESIZE_ALL_COLUMNS
+    tableView.setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+    tableView.rowSelectionAllowed = true
+    tableView.columnSelectionAllowed = true
     tableView.setShowGrid(false)
     nameColumn.preferredWidth = JBUIScale.scale(225)
     descriptionColumn.preferredWidth = JBUIScale.scale(225)
-
-    nameColumn.cellEditor
   }
 
   override fun createListModel(): ListTableModel<Property> {
