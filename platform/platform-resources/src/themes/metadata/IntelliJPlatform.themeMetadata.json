@@ -968,11 +968,13 @@
     },
     {
       "key": "SegmentedButton.selectedStartBorderColor",
-      "description": "Gradient top color of a selected button border in segmented button"
+      "description": "Gradient top color of a selected button border in segmented button",
+      "since": "2022.1"
     },
     {
       "key": "SegmentedButton.selectedEndBorderColor",
-      "description": "Gradient bottom color of a selected button border in segmented button"
+      "description": "Gradient bottom color of a selected button border in segmented button",
+      "since": "2022.1"
     },
     {
       "key": "ToolBar.horizontalToolbarInsets",
