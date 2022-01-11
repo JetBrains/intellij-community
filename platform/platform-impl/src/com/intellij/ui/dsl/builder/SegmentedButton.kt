@@ -33,7 +33,7 @@ interface SegmentedButton<T> : CellBase<SegmentedButton<T>> {
 
   override fun customize(customGaps: Gaps): SegmentedButton<T>
 
-  fun options(options: Collection<T>): SegmentedButton<T>
+  fun items(items: Collection<T>): SegmentedButton<T>
 
   fun bind(property: GraphProperty<T>): SegmentedButton<T>
 

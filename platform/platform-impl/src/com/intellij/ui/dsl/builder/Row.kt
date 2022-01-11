@@ -221,7 +221,7 @@ interface Row {
   /**
    * @see [SegmentedButton]
    */
-  fun <T> segmentedButton(options: Collection<T>, renderer: (T) -> String): SegmentedButton<T>
+  fun <T> segmentedButton(items: Collection<T>, renderer: (T) -> String): SegmentedButton<T>
 
   fun slider(min: Int, max: Int, minorTickSpacing: Int, majorTickSpacing: Int): Cell<JSlider>
 

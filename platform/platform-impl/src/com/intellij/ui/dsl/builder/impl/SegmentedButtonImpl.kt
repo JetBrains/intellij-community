@@ -22,12 +22,12 @@ import javax.swing.DefaultComboBoxModel
 internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T) -> String) :
   PlaceholderBaseImpl<SegmentedButton<T>>(parent), SegmentedButton<T> {
 
-  private var options: Collection<T> = emptyList()
+  private var items: Collection<T> = emptyList()
   private var property: GraphProperty<T>? = null
   private var maxButtonsCount = SegmentedButton.DEFAULT_MAX_BUTTONS_COUNT
 
   private val comboBox = ComboBox<T>()
-  private val segmentedButtonComponent = SegmentedButtonComponent(options, renderer)
+  private val segmentedButtonComponent = SegmentedButtonComponent(items, renderer)
 
   init {
     comboBox.renderer = listCellRenderer { value, _, _ -> text = renderer(value) }
@@ -69,8 +69,8 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
     return this
   }
 
-  override fun options(options: Collection<T>): SegmentedButton<T> {
-    this.options = options
+  override fun items(items: Collection<T>): SegmentedButton<T> {
+    this.items = items
     rebuild()
     return this
   }
@@ -95,7 +95,7 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
   }
 
   private fun rebuild() {
-    if (ScreenReader.isActive() || options.size > maxButtonsCount) {
+    if (ScreenReader.isActive() || items.size > maxButtonsCount) {
       fillComboBox()
       component = comboBox
     }
@@ -108,18 +108,18 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
   private fun fillComboBox() {
     val selectedItem = getSelectedItem()
     val model = DefaultComboBoxModel<T>()
-    model.addAll(options)
+    model.addAll(items)
     comboBox.model = model
-    if (selectedItem != null && options.contains(selectedItem)) {
+    if (selectedItem != null && items.contains(selectedItem)) {
       comboBox.selectedItem = selectedItem
     }
   }
 
   private fun fillSegmentedButtonComponent() {
     val selectedItem = getSelectedItem()
-    segmentedButtonComponent.options = options
-    if (selectedItem != null && options.contains(selectedItem)) {
-      segmentedButtonComponent.selection = selectedItem
+    segmentedButtonComponent.items = items
+    if (selectedItem != null && items.contains(selectedItem)) {
+      segmentedButtonComponent.selectedItem = selectedItem
     }
   }
 
@@ -133,7 +133,7 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
     @Suppress("UNCHECKED_CAST")
     return when (c) {
       comboBox -> comboBox.selectedItem as? T
-      segmentedButtonComponent -> segmentedButtonComponent.selection
+      segmentedButtonComponent -> segmentedButtonComponent.selectedItem
       else -> null
     }
   }
@@ -142,11 +142,11 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
     val mutex = AtomicBoolean()
     property.afterChange {
       mutex.lockOrSkip {
-        segmentedButtonComponent.selection = it
+        segmentedButtonComponent.selectedItem = it
       }
     }
     segmentedButtonComponent.changeListener = {
-      segmentedButtonComponent.selection?.let {
+      segmentedButtonComponent.selectedItem?.let {
         mutex.lockOrSkip {
           property.set(it)
         }

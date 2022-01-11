@@ -34,59 +34,40 @@ import javax.swing.JPanel
 private const val PLACE = "SegmentedButton"
 
 @ApiStatus.Internal
-internal class SegmentedButtonComponent<T>(options: Collection<T>, private val renderer: (T) -> String) : JPanel(GridLayout()) {
+internal class SegmentedButtonComponent<T>(items: Collection<T>, private val renderer: (T) -> String) : JPanel(GridLayout()) {
 
   var changeListener: (() -> Unit)? = null
   var spacing = SpacingConfiguration.EMPTY
     set(value) {
       field = value
       // Rebuild buttons with correct spacing
-      options = _options
+      rebuild()
     }
 
-  var selection: T?
-    get() = _selection
+  var selectedItem: T? = null
     set(value) {
-      fun setSelectedState(option: T?, selectedState: Boolean) {
-        val componentIndex = options.indexOf(option)
-        val segmentedButton = components.getOrNull(componentIndex) as? SegmentedButton<*>
-        segmentedButton?.selectedState = selectedState
-      }
-
-      if (_selection != value) {
-        setSelectedState(_selection, false)
+      if (field != value) {
+        setSelectedState(field, false)
         setSelectedState(value, true)
-        _selection = value
+        field = value
         changeListener?.invoke()
 
         repaint()
       }
     }
 
-  private var _selection: T? = null
-
-  var options: Collection<T>
-    get() = _options
+  var items: Collection<T> = emptyList()
     set(value) {
-      removeAll()
-      val presentationFactory = PresentationFactory()
-      val builder = RowsGridBuilder(this)
-      for (option in value) {
-        val action = SegmentedButtonAction(this, option, renderer.invoke(option))
-        val button = SegmentedButton(action, presentationFactory.getPresentation(action), spacing)
-        builder.cell(button)
-      }
-      _options = value
+      field = value
+      rebuild()
     }
-
-  private var _options: Collection<T> = emptyList()
 
   init {
     isFocusable = true
     border = SegmentedButtonBorder()
     putClientProperty(DslComponentProperty.VISUAL_PADDINGS, Gaps(size = DarculaUIUtil.BW.get()))
 
-    this.options = options
+    this.items = items
     addFocusListener(object : FocusListener {
       override fun focusGained(e: FocusEvent?) {
         repaint()
@@ -120,7 +101,7 @@ internal class SegmentedButtonComponent<T>(options: Collection<T>, private val r
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
       g2.paint = getSegmentedButtonBorderPaint(this, true)
-      val selectedButton = components.getOrNull(options.indexOf(selection))
+      val selectedButton = components.getOrNull(items.indexOf(selectedItem))
       if (selectedButton != null) {
         val r = selectedButton.bounds
         JBInsets.addTo(r, JBUI.insets(DarculaUIUtil.LW.unscaled.toInt()))
@@ -132,27 +113,44 @@ internal class SegmentedButtonComponent<T>(options: Collection<T>, private val r
     }
   }
 
+  private fun rebuild() {
+    removeAll()
+    val presentationFactory = PresentationFactory()
+    val builder = RowsGridBuilder(this)
+    for (item in items) {
+      val action = SegmentedButtonAction(this, item, renderer.invoke(item))
+      val button = SegmentedButton(action, presentationFactory.getPresentation(action), spacing)
+      builder.cell(button)
+    }
+  }
+
+  private fun setSelectedState(item: T?, selectedState: Boolean) {
+    val componentIndex = items.indexOf(item)
+    val segmentedButton = components.getOrNull(componentIndex) as? SegmentedButton<*>
+    segmentedButton?.selectedState = selectedState
+  }
+
   private fun moveSelection(step: Int) {
-    if (options.isEmpty()) {
+    if (items.isEmpty()) {
       return
     }
 
-    val selectedIndex = options.indexOf(selection)
-    val newSelectedIndex = if (selectedIndex < 0) 0 else (selectedIndex + step).coerceIn(0, options.size - 1)
-    selection = options.elementAt(newSelectedIndex)
+    val selectedIndex = items.indexOf(selectedItem)
+    val newSelectedIndex = if (selectedIndex < 0) 0 else (selectedIndex + step).coerceIn(0, items.size - 1)
+    selectedItem = items.elementAt(newSelectedIndex)
   }
 }
 
-private class SegmentedButtonAction<T>(val parent: SegmentedButtonComponent<T>, val option: T, @NlsActions.ActionText optionText: String)
-  : ToggleAction(optionText, null, null), DumbAware {
+private class SegmentedButtonAction<T>(val parent: SegmentedButtonComponent<T>, val item: T, @NlsActions.ActionText itemText: String)
+  : ToggleAction(itemText, null, null), DumbAware {
 
   override fun isSelected(e: AnActionEvent): Boolean {
-    return parent.selection == option
+    return parent.selectedItem == item
   }
 
   override fun setSelected(e: AnActionEvent, state: Boolean) {
     if (state) {
-      parent.selection = option
+      parent.selectedItem = item
     }
   }
 }
@@ -183,6 +181,6 @@ private class SegmentedButton<T>(
     super.actionPerformed(event)
 
     // Restore toggle action if selected button pressed again
-    selectedState = action.parent.selection == action.option
+    selectedState = action.parent.selectedItem == action.item
   }
 }

@@ -38,7 +38,7 @@ internal class SegmentedButtonPanel {
         .component
       button("rebuild") {
         textField.text.toIntOrNull()?.let {
-          segmentedButton.options(generateItems(it))
+          segmentedButton.items(generateItems(it))
         }
       }
     }

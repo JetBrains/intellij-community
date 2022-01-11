@@ -33,7 +33,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
       val segmentedButton = segmentedButton(steps.keys) { it }
         .bind(stepProperty)
       stepsProperty.afterChange {
-        segmentedButton.options(steps.keys)
+        segmentedButton.items(steps.keys)
       }
     }
   }

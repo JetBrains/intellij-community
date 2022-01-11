@@ -566,7 +566,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       if (types.isNotEmpty() && types != this.projectTypes && ::projectTypesSelector.isInitialized) {
         val correspondingOption = types.find { it.id == projectTypeProperty.get()?.id }
         projectTypeProperty.set(correspondingOption ?: types.first())
-        projectTypesSelector.options(types)
+        projectTypesSelector.items(types)
         this.projectTypes = types
       }
     }
@@ -582,7 +582,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       if (types.isNotEmpty() && types != this.packagingTypes && ::packagingTypesSelector.isInitialized) {
         val correspondingOption = types.find { it.id == packagingProperty.get()?.id }
         packagingProperty.set(correspondingOption ?: types.first())
-        packagingTypesSelector.options(types)
+        packagingTypesSelector.items(types)
         this.packagingTypes = types
       }
     }
@@ -590,7 +590,7 @@ open class WebStarterInitialStep(contextProvider: WebStarterContextProvider) : M
       if (languages.isNotEmpty() && languages != this.languages && ::languagesSelector.isInitialized) {
         val correspondingOption = languages.find { it.id == languageProperty.get().id }
         languageProperty.set(correspondingOption ?: languages.first())
-        languagesSelector.options(languages)
+        languagesSelector.items(languages)
         this.languages = languages
       }
     }
