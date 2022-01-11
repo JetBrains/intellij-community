@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.testGenerator
 
@@ -1399,58 +1399,58 @@ private fun assembleWorkspace(): TWorkspace = workspace {
 
     testGroup("performance-tests", testDataPath = "../idea/tests/testData") {
         testClass<AbstractPerformanceJavaToKotlinCopyPasteConversionTest> {
-            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = """^([^.]+)\.java$""".toRegex(), splitToBuckets = false)
+            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = """^([^.]+)\.java$""".toRegex())
         }
 
         testClass<AbstractPerformanceNewJavaToKotlinCopyPasteConversionTest> {
-            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = """^([^.]+)\.java$""".toRegex(), splitToBuckets = false)
+            model("copyPaste/conversion", testMethodName = "doPerfTest", pattern = """^([^.]+)\.java$""".toRegex())
         }
 
         testClass<AbstractPerformanceLiteralKotlinToKotlinCopyPasteTest> {
-            model("copyPaste/literal", testMethodName = "doPerfTest", pattern = """^([^.]+)\.kt$""".toRegex(), splitToBuckets = false)
+            model("copyPaste/literal", testMethodName = "doPerfTest", pattern = """^([^.]+)\.kt$""".toRegex())
         }
 
         testClass<AbstractPerformanceHighlightingTest> {
-            model("highlighter", testMethodName = "doPerfTest", splitToBuckets = false)
+            model("highlighter", testMethodName = "doPerfTest")
         }
 
         testClass<AbstractPerformanceHighlightingStatNamesTest> {
-            model("highlighter", testMethodName = "doPerfTest", pattern = """^(InvokeCall)\.kt$""".toRegex(), splitToBuckets = false)
+            model("highlighter", testMethodName = "doPerfTest", pattern = """^(InvokeCall)\.kt$""".toRegex())
         }
 
         testClass<AbstractPerformanceAddImportTest> {
-            model("addImport", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS, splitToBuckets = false)
+            model("addImport", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractPerformanceTypingIndentationTest> {
-            model("editor/enterHandler", pattern = """^([^.]+)\.after\.kt.*$""".toRegex(), testMethodName = "doNewlineTest", testClassName = "DirectSettings", splitToBuckets = false)
-            model("editor/enterHandler", pattern = """^([^.]+)\.after\.inv\.kt.*$""".toRegex(), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings", splitToBuckets = false)
+            model("editor/enterHandler", pattern = """^([^.]+)\.after\.kt.*$""".toRegex(), testMethodName = "doNewlineTest", testClassName = "DirectSettings")
+            model("editor/enterHandler", pattern = """^([^.]+)\.after\.inv\.kt.*$""".toRegex(), testMethodName = "doNewlineTestWithInvert", testClassName = "InvertedSettings")
         }
     }
 
     testGroup("performance-tests", testDataPath = "../completion/tests/testData") {
         testClass<AbstractPerformanceCompletionIncrementalResolveTest> {
-            model("incrementalResolve", testMethodName = "doPerfTest", splitToBuckets = false)
+            model("incrementalResolve", testMethodName = "doPerfTest")
         }
 
         testClass<AbstractPerformanceBasicCompletionHandlerTest> {
-            model("handlers/basic", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS, splitToBuckets = false)
+            model("handlers/basic", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
         }
 
         testClass<AbstractPerformanceBasicCompletionHandlerStatNamesTest> {
-            model("handlers/basic", testMethodName = "doPerfTest", pattern = """^(GetOperator)\.kt$""".toRegex(), splitToBuckets = false)
+            model("handlers/basic", testMethodName = "doPerfTest", pattern = """^(GetOperator)\.kt$""".toRegex())
         }
 
         testClass<AbstractPerformanceSmartCompletionHandlerTest> {
-            model("handlers/smart", testMethodName = "doPerfTest", splitToBuckets = false)
+            model("handlers/smart", testMethodName = "doPerfTest")
         }
 
         testClass<AbstractPerformanceKeywordCompletionHandlerTest> {
-            model("handlers/keywords", testMethodName = "doPerfTest", splitToBuckets = false)
+            model("handlers/keywords", testMethodName = "doPerfTest")
         }
 
         testClass<AbstractPerformanceCompletionCharFilterTest> {
-            model("handlers/charFilter", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS, splitToBuckets = false)
+            model("handlers/charFilter", testMethodName = "doPerfTest", pattern = KT_WITHOUT_DOTS)
         }
     }
 }
