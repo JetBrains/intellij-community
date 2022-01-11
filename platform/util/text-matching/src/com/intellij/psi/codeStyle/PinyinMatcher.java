@@ -489,25 +489,26 @@ public class PinyinMatcher extends MinusculeMatcher {
 
   @Override
   public FList<TextRange> matchingFragments(@NotNull String name) {
-    for (int start = 0; start < name.length() - 1; start++) {
-      int length = matchLengthAt(name, start);
-      if (length > 0) {
-        return FList.<TextRange>emptyList().prepend(TextRange.create(start, start + length));
+    int maxOffset = name.length() - myPattern.length();
+    for (int start = 0; start <= maxOffset; start++) {
+      if (hasMatchAt(name, start)) {
+        return FList.<TextRange>emptyList().prepend(TextRange.create(start, start + myPattern.length()));
       }
     }
     return null;
   }
 
-  private int matchLengthAt(@NotNull String name, int start) {
-    int len = Math.min(name.length(), myPattern.length() + start);
+  private boolean hasMatchAt(@NotNull String name, int start) {
+    int end = myPattern.length() + start;
+    if (end > name.length()) return false;
     int i;
-    for (i = start; i < len; i++) {
+    for (i = start; i < end; i++) {
       char c = name.charAt(i);
-      if (c < BASE_CODE_POINT || c >= BASE_CODE_POINT + DATA.length()) break;
+      if (c < BASE_CODE_POINT || c >= BASE_CODE_POINT + DATA.length()) return false;
       int code = DATA.charAt(c - BASE_CODE_POINT) - BASE_CHAR;
-      if (code < 0 || ENCODING_ARRAY[code].indexOf(myPattern.charAt(i - start)) == -1) break;
+      if (code < 0 || ENCODING_ARRAY[code].indexOf(myPattern.charAt(i - start)) == -1) return false;
     }
-    return i - start;
+    return true;
   }
 
   @Override
