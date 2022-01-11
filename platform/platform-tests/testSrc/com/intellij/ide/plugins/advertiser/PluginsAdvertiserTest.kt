@@ -8,6 +8,7 @@ import com.intellij.openapi.fileTypes.FileType
 import com.intellij.openapi.fileTypes.PlainTextFileType
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserEditorNotificationProvider
 import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.PluginAdvertiserExtensionsStateService
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.isIgnoreIdeSuggestion
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.ProjectRule
 import org.junit.BeforeClass
@@ -61,6 +62,19 @@ class PluginsAdvertiserTest {
     preparePluginCache("*.js" to PluginData("JavaScript"))
     val suggestion = PluginAdvertiserEditorNotificationProvider.getSuggestionData(projectRule.project, "IC", "foo.js", PlainTextFileType.INSTANCE)
     assertEquals(listOf("WebStorm", "IntelliJ IDEA Ultimate"), suggestion!!.suggestedIdes.map { it.name })
+  }
+
+  @Test
+  fun suggestedIdeDismissed() {
+    preparePluginCache("*.js" to PluginData("JavaScript", isBundled = true))
+    isIgnoreIdeSuggestion = true
+    try {
+      val suggestion = PluginAdvertiserEditorNotificationProvider.getSuggestionData(projectRule.project, "IC", "foo.js", PlainTextFileType.INSTANCE)
+      assertEquals(0, suggestion!!.suggestedIdes.size)
+    }
+    finally {
+      isIgnoreIdeSuggestion = false
+    }
   }
 
   @Test

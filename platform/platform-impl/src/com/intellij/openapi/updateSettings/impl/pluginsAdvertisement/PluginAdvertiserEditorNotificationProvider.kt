@@ -215,7 +215,7 @@ class PluginAdvertiserEditorNotificationProvider : EditorNotificationProvider,
       val hasBundledPlugin = getBundledPluginToInstall(dataSet).isNotEmpty()
       val suggestedIdes = if (fileType is PlainTextLikeFileType || fileType is DetectedByContentFileType) {
         getSuggestedIdes(activeProductCode, extensionOrFileName, ideExtensions).ifEmpty {
-          if (hasBundledPlugin) listOf(ideaUltimate) else emptyList()
+          if (hasBundledPlugin && !isIgnoreIdeSuggestion) listOf(ideaUltimate) else emptyList()
         }
       }
       else
