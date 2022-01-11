@@ -3,6 +3,7 @@ package org.jetbrains.idea.kpmsearch;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
@@ -23,25 +24,29 @@ import java.util.Set;
 import java.util.function.Consumer;
 
 public final class PackageSearchService implements DependencySearchProvider {
-  private final PackageSearchEndpointConfig myPackageServiceConfig;
+  private final PackageSearchEndpointConfig packageServiceConfig;
 
   public PackageSearchService() {
-    this(new DefaultPackageServiceConfig());
+    packageServiceConfig = ApplicationManager.getApplication().getService(DefaultPackageServiceConfig.class);
   }
 
   public PackageSearchService(PackageSearchEndpointConfig config) {
-    myPackageServiceConfig = config;
+    packageServiceConfig = config;
   }
 
   @Override
   public void fulltextSearch(@NotNull String searchString, @NotNull Consumer<RepositoryArtifactData> consumer) {
     searchString = normalize(searchString);
     ProgressManager.checkCanceled();
-    doRequest(consumer, createUrlFullTextSearch(searchString));
+    if (searchString != null) {
+      doRequest(consumer, createUrlFullTextSearch(searchString));
+    }
   }
 
-  private static String normalize(@Nullable String string) {
-    if (StringUtil.isEmpty(string)) return null;
+  private static @Nullable String normalize(@Nullable String string) {
+    if (Strings.isEmpty(string)) {
+      return null;
+    }
     StringBuilder builder = new StringBuilder();
     for (char c : string.toCharArray()) {
       if (isAcceptable(c)) {
@@ -78,10 +83,10 @@ public final class PackageSearchService implements DependencySearchProvider {
 
     try {
       HttpRequests.request(url)
-        .userAgent(myPackageServiceConfig.getUserAgent())
-        .forceHttps(myPackageServiceConfig.forceHttps())
-        .connectTimeout(myPackageServiceConfig.getReadTimeout())
-        .readTimeout(myPackageServiceConfig.getConnectTimeout())
+        .userAgent(packageServiceConfig.getUserAgent())
+        .forceHttps(packageServiceConfig.forceHttps())
+        .connectTimeout(packageServiceConfig.getReadTimeout())
+        .readTimeout(packageServiceConfig.getConnectTimeout())
         .connect(request -> process(consumer, request));
     }
     catch (IOException ignore) {
@@ -109,35 +114,38 @@ public final class PackageSearchService implements DependencySearchProvider {
   }
 
   private String createUrlFullTextSearch(@NotNull String coord) {
-    String url = myPackageServiceConfig.getFullTextUrl();
-    if (StringUtil.isEmpty(url)) {
+    String url = packageServiceConfig.getFullTextUrl();
+    if (Strings.isEmpty(url)) {
       return null;
     }
-    if (StringUtil.isEmpty(coord)) {
+    else if (Strings.isEmpty(coord)) {
       return url;
     }
-
-    return url + "?query=" + encode(coord.trim());
+    else {
+      return url + "?query=" + encode(coord.trim());
+    }
   }
 
   private String createUrlSuggestPrefix(@Nullable String groupId, @Nullable String artifactId) {
-    String url = myPackageServiceConfig.getSuggestUrl();
-    if (StringUtil.isEmpty(url)) {
+    String url = packageServiceConfig.getSuggestUrl();
+    if (Strings.isEmpty(url)) {
       return null;
     }
 
-    String groupParam = StringUtil.isEmpty(groupId) ? "" : "groupId=" + encode(groupId.trim());
-    String artifactParam = StringUtil.isEmpty(artifactId) ? "" : "artifactId=" + encode(artifactId.trim());
+    String groupParam = Strings.isEmpty(groupId) ? "" : "groupId=" + encode(groupId.trim());
+    String artifactParam = Strings.isEmpty(artifactId) ? "" : "artifactId=" + encode(artifactId.trim());
 
     final StringBuilder sb = new StringBuilder(url);
-    if (StringUtil.isNotEmpty(groupParam)) {
+    if (Strings.isNotEmpty(groupParam)) {
       sb.append('?');
       sb.append(groupParam);
-      if (StringUtil.isNotEmpty(artifactParam)) sb.append('&');
+      if (Strings.isNotEmpty(artifactParam)) sb.append('&');
     }
 
-    if (StringUtil.isNotEmpty(artifactParam)) {
-      if (StringUtil.isEmpty(groupParam)) sb.append('?');
+    if (Strings.isNotEmpty(artifactParam)) {
+      if (Strings.isEmpty(groupParam)) {
+        sb.append('?');
+      }
       sb.append(artifactParam);
     }
 

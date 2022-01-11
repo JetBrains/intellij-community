@@ -1,7 +1,8 @@
 package org.jetbrains.idea.kpmsearch;
 
+import com.intellij.application.options.RegistryManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.registry.Registry;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.reposearch.DependencySearchProvider;
 import org.jetbrains.idea.reposearch.DependencySearchProvidersFactory;
 
@@ -10,12 +11,10 @@ import java.util.Collections;
 
 final class KpmSearchFactoryProvider implements DependencySearchProvidersFactory {
   @Override
-  public boolean isApplicable(Project project) {
-    return Registry.is("maven.packagesearch.enabled");
-  }
-
-  @Override
-  public Collection<DependencySearchProvider> getProviders(Project project) {
+  public Collection<DependencySearchProvider> getProviders(@NotNull Project project) {
+    if (!RegistryManager.getInstance().is("maven.packagesearch.enabled")) {
+      return Collections.emptyList();
+    }
     return Collections.singleton(new PackageSearchService());
   }
 }

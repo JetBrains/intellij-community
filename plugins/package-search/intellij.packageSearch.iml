@@ -60,8 +60,8 @@
     <orderEntry type="module" module-name="intellij.gradle" />
     <orderEntry type="module" module-name="intellij.maven" />
     <orderEntry type="module" module-name="intellij.platform.analysis" />
-    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="library" name="kotlinx-serialization-core" level="project" />
+    <orderEntry type="library" name="kotlinx-serialization-json" level="project" />
     <orderEntry type="module-library">
       <library name="package-search-version-utils">
         <CLASSES>
@@ -86,6 +86,5 @@
     </orderEntry>
     <orderEntry type="library" scope="TEST" name="JUnit5" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit5Params" level="project" />
-    <orderEntry type="library" name="commons-codec" level="project" />
   </component>
 </module>

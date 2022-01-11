@@ -64,10 +64,6 @@ class DependencySearchService(private val project: Project) : Disposable {
 
     if (project.isDisposed) return
     for (f in EP_NAME.extensionList) {
-      if (!f.isApplicable(project)) {
-        continue
-      }
-
       for (provider in f.getProviders(project)) {
         if (provider.isLocal) {
           newLocalProviders.add(provider)

@@ -6,15 +6,11 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.function.Consumer;
 
-
 @ApiStatus.Experimental
 public interface DependencySearchProvider {
+  void fulltextSearch(@NotNull String searchString, @NotNull Consumer<RepositoryArtifactData> consumer);
 
-  void fulltextSearch(@NotNull String searchString,
-                      @NotNull Consumer<RepositoryArtifactData> consumer);
-
-  void suggestPrefix(@Nullable String groupId, @Nullable String artifactId,
-                     @NotNull Consumer<RepositoryArtifactData> consumer);
+  void suggestPrefix(@Nullable String groupId, @Nullable String artifactId, @NotNull Consumer<RepositoryArtifactData> consumer);
 
   boolean isLocal();
 }
