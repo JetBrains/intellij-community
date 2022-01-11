@@ -299,7 +299,7 @@ internal class GitFetchSupportImpl(private val project: Project) : GitFetchSuppo
       val type = if (!isFailed) NotificationType.INFORMATION else NotificationType.ERROR
       val message = buildMessage(failureTitle)
       val notification = STANDARD_NOTIFICATION.createNotification(message, type)
-      notification.setDisplayId(if (isFailed) GitNotificationIdsHolder.FETCH_RESULT else GitNotificationIdsHolder.FETCH_RESULT_ERROR)
+      notification.setDisplayId(if (!isFailed) GitNotificationIdsHolder.FETCH_RESULT else GitNotificationIdsHolder.FETCH_RESULT_ERROR)
       vcsNotifier.notify(notification)
     }
 
