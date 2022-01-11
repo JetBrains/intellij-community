@@ -14,6 +14,7 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.components.RoamingType
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.SchemeManagerFactory
@@ -36,12 +37,20 @@ internal class SettingsSyncIdeUpdater(application: Application,
   fun settingsLogged(snapshot: SettingsSnapshot) {
     // todo race between this code and SettingsSyncStreamProvider.write which can write other user settings at the same time
 
+    updateSyncSettings(snapshot)
+
+    val changedFileSpecs = ArrayList<String>()
     // todo update only that has really changed
     for (fileState in snapshot.fileStates) {
-      rootConfig.resolve(fileState.file).write(fileState.content, 0, fileState.size)
+      val fileSpec = fileState.file.removePrefix("$OPTIONS_DIRECTORY/")
+      if (fileSpec == SettingsSyncSettings.FILE_SPEC) continue // Already handled in updateSyncSettings()
+      if (isSyncEnabled(fileSpec, RoamingType.DEFAULT)) {
+        rootConfig.resolve(fileState.file).write(fileState.content, 0, fileState.size)
+        changedFileSpecs.add(fileSpec)
+      }
     }
 
-    invokeAndWaitIfNeeded { reloadComponents(snapshot.fileStates.map { it.file.removePrefix("$OPTIONS_DIRECTORY/") }) }
+    invokeAndWaitIfNeeded { reloadComponents(changedFileSpecs) }
   }
 
   private fun reloadComponents(changedFileSpecs: List<String>) {
@@ -100,5 +109,17 @@ internal class SettingsSyncIdeUpdater(application: Application,
     }
   }
 
+
+  private fun updateSyncSettings(snapshot: SettingsSnapshot) {
+    val settingsPath = "$OPTIONS_DIRECTORY/" + SettingsSyncSettings.FILE_SPEC
+    snapshot.fileStates.forEach {
+      if (it.file == settingsPath) {
+        rootConfig.resolve(it.file).write(it.content, 0, it.size)
+        invokeAndWaitIfNeeded {
+          componentStore.reloadState(SettingsSyncSettings.getInstance().javaClass)
+        }
+      }
+    }
+  }
 
 }
