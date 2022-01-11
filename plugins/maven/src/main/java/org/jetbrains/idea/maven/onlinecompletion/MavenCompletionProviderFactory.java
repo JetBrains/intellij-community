@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.onlinecompletion;
 
 import com.intellij.openapi.project.Project;
@@ -13,15 +13,13 @@ import java.util.List;
 import java.util.Locale;
 
 public class MavenCompletionProviderFactory implements DependencySearchProvidersFactory {
-
   @Override
   public boolean isApplicable(Project project) {
     return MavenIndicesManager.getInstance(project).isInit();
   }
 
-  @NotNull
   @Override
-  public List<DependencySearchProvider> getProviders(Project project) {
+  public @NotNull List<DependencySearchProvider> getProviders(Project project) {
     List<DependencySearchProvider> result = new ArrayList<>();
     result.add(new ProjectModulesCompletionProvider(project));
 

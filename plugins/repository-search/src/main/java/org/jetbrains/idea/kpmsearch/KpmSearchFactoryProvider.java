@@ -8,7 +8,7 @@ import org.jetbrains.idea.reposearch.DependencySearchProvidersFactory;
 import java.util.Collection;
 import java.util.Collections;
 
-public class KpmSearchFactoryProvider implements DependencySearchProvidersFactory {
+final class KpmSearchFactoryProvider implements DependencySearchProvidersFactory {
   @Override
   public boolean isApplicable(Project project) {
     return Registry.is("maven.packagesearch.enabled");
