@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.testframework;
 
 import com.intellij.codeInsight.TestFrameworks;
@@ -86,6 +86,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     if (isMultipleElementsSelected(context)) {
       return false;
     }
+    if (!isApplicableTestType(configuration.getTestType(), context)) return false;
     final RunConfiguration predefinedConfiguration = context.getOriginalConfiguration(getConfigurationType());
     final Location contextLocation = context.getLocation();
     if (contextLocation == null) {
@@ -111,12 +112,9 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     if (!Comparing.strEqual(vmParameters, configuration.getVMParameters())) return false;
     if (differentParamSet(configuration, contextLocation)) return false;
 
-    if (!isApplicableTestType(configuration.getTestType(), context)) return false;
+    PsiElement psiElement = getElement(element);
 
-    PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    if (psiClass != null && getCurrentFramework(psiClass) == null) return false;
-
-    if (configuration.isConfiguredByElement(element)) {
+    if (psiElement != null && configuration.isConfiguredByElement(psiElement)) {
       final Module configurationModule = configuration.getConfigurationModule().getModule();
       final Module locationModule = location.getModule();
       if (Comparing.equal(locationModule, configurationModule)) return true;
@@ -124,6 +122,14 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     }
 
     return false;
+  }
+
+  protected PsiElement getElement(PsiElement element) {
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    if (psiClass != null && getCurrentFramework(psiClass) == null) {
+      return null;
+    }
+    return element;
   }
 
   protected boolean differentParamSet(T configuration, Location contextLocation) {

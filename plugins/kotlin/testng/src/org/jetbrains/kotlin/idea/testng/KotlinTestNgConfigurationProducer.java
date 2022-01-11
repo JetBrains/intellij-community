@@ -2,15 +2,16 @@
 
 package org.jetbrains.kotlin.idea.testng;
 
-import com.intellij.execution.*;
+import com.intellij.execution.JavaRunConfigurationExtensionManager;
+import com.intellij.execution.Location;
+import com.intellij.execution.PsiLocation;
+import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.actions.ConfigurationFromContext;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.testframework.AbstractInClassConfigurationProducer;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -35,42 +36,10 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
     }
 
     @Override
-    public boolean isConfigurationFromContext(@NotNull TestNGConfiguration configuration, @NotNull ConfigurationContext context) {
-        if (isMultipleElementsSelected(context)) {
-            return false;
-        }
-        final RunConfiguration predefinedConfiguration = context.getOriginalConfiguration(getConfigurationType());
-        final Location contextLocation = context.getLocation();
-        if (contextLocation == null) {
-            return false;
-        }
-        Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
-        if (location == null) {
-            return false;
-        }
-        final PsiElement element = location.getPsiElement();
-
-        RunnerAndConfigurationSettings template =
-                RunManager.getInstance(location.getProject()).getConfigurationTemplate(getConfigurationFactory());
-        final Module predefinedModule = ((TestNGConfiguration) template.getConfiguration()).getConfigurationModule().getModule();
-        final String vmParameters =
-                predefinedConfiguration instanceof CommonJavaRunConfigurationParameters
-                ? ((CommonJavaRunConfigurationParameters) predefinedConfiguration).getVMParameters()
-                : null;
-        if (vmParameters != null && !Comparing.strEqual(vmParameters, configuration.getVMParameters())) return false;
-        if (differentParamSet(configuration, contextLocation)) return false;
-
-        KotlinTestFrameworkProvider.JavaEntity testEntity = TestNgKotlinTestFrameworkProvider.INSTANCE.getJavaEntity(element);
-        if (testEntity == null) return false;
-        PsiNamedElement lightElement = testEntity.getMethod() != null ? testEntity.getMethod() 
-                                                                      : testEntity.getTestClass();
-        if (lightElement != null && configuration.isConfiguredByElement(lightElement)) {
-            final Module configurationModule = configuration.getConfigurationModule().getModule();
-            if (Comparing.equal(location.getModule(), configurationModule)) return true;
-            if (Comparing.equal(predefinedModule, configurationModule)) return true;
-        }
-
-        return false;
+    protected PsiElement getElement(PsiElement element) {
+         KotlinTestFrameworkProvider.JavaEntity testEntity = TestNgKotlinTestFrameworkProvider.INSTANCE.getJavaEntity(element);
+        if (testEntity == null) return null;
+        return testEntity.getMethod() != null ? testEntity.getMethod() : testEntity.getTestClass();
     }
 
     @Override
