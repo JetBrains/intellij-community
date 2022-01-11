@@ -281,7 +281,7 @@ public class ClassWriter {
   }
 
   public static void packageInfoToJava(StructClass cl, TextBuffer buffer) {
-    appendAnnotations(buffer, 0, 0, cl, -1);
+    appendAnnotations(buffer, 0, cl);
 
     int index = cl.qualifiedName.lastIndexOf('/');
     String packageName = cl.qualifiedName.substring(0, index).replace('/', '.');
@@ -289,7 +289,7 @@ public class ClassWriter {
   }
 
   public static void moduleInfoToJava(StructClass cl, TextBuffer buffer) {
-    appendAnnotations(buffer, 0, 0, cl, -1);
+    appendAnnotations(buffer, 0, cl);
 
     StructModuleAttribute moduleAttribute = cl.getAttribute(StructGeneralAttribute.ATTRIBUTE_MODULE);
 
@@ -411,7 +411,7 @@ public class ClassWriter {
       appendComment(buffer, "synthetic class", indent);
     }
 
-    appendAnnotations(buffer, 0, indent, cl, -1);
+    appendAnnotations(buffer, indent, cl);
 
     buffer.appendIndent(indent);
 
@@ -455,11 +455,11 @@ public class ClassWriter {
     }
     buffer.append(node.simpleName);
 
-    List<TypePathWriteProgress> typeAnnWriteProgress = createTypeAnnWriteProgress(cl);
+    List<TypeAnnotationWriteHelper> typeAnnwriteHelper = createTypeAnnWriteHelper(cl);
 
     GenericClassDescriptor descriptor = getGenericClassDescriptor(cl);
     if (descriptor != null && !descriptor.fparameters.isEmpty()) {
-      appendTypeParameters(buffer, descriptor.fparameters, descriptor.fbounds, typeAnnWriteProgress);
+      appendTypeParameters(buffer, descriptor.fparameters, descriptor.fbounds, typeAnnwriteHelper);
     }
 
     if (components != null) {
@@ -476,22 +476,22 @@ public class ClassWriter {
     }
 
     buffer.append(' ');
-    List<TypePathWriteProgress> supertypeAnnotations = typeAnnWriteProgress.stream()
-      .filter(typePathWriteProgress -> typePathWriteProgress.getAnnotation().getTargetInfo() instanceof SupertypeTarget)
+    List<TypeAnnotationWriteHelper> supertypeAnnotations = typeAnnwriteHelper.stream()
+      .filter(typeAnnotationWriteHelper -> typeAnnotationWriteHelper.getAnnotation().getTargetInfo() instanceof SupertypeTarget)
       .collect(Collectors.toList());
     if (!isEnum && !isInterface && components == null && cl.superClass != null) {
       VarType supertype = new VarType(cl.superClass.getString(), true);
-      List<TypePathWriteProgress> extendsupertypeAnnotations = supertypeAnnotations.stream()
-        .filter(typePathWriteProgress ->
-          ((SupertypeTarget)typePathWriteProgress.getAnnotation().getTargetInfo()).getSupertypeIndex() == 0xFFFF
+      List<TypeAnnotationWriteHelper> extendSupertypeAnnotations = supertypeAnnotations.stream()
+        .filter(typeAnnotationWriteHelper ->
+          ((SupertypeTarget) typeAnnotationWriteHelper.getAnnotation().getTargetInfo()).getSupertypeIndex() == 0xFFFF
         ).collect(Collectors.toList());
       if (!VarType.VARTYPE_OBJECT.equals(supertype)) {
         buffer.append("extends ");
         if (descriptor != null) {
-          buffer.append(GenericMain.getGenericCastTypeName(descriptor.superclass, extendsupertypeAnnotations));
+          buffer.append(GenericMain.getGenericCastTypeName(descriptor.superclass, extendSupertypeAnnotations));
         }
         else {
-          buffer.append(ExprProcessor.getCastTypeName(supertype, extendsupertypeAnnotations));
+          buffer.append(ExprProcessor.getCastTypeName(supertype, extendSupertypeAnnotations));
         }
         buffer.append(' ');
       }
@@ -506,9 +506,9 @@ public class ClassWriter {
             buffer.append(", ");
           }
           final int it = i;
-          List<TypePathWriteProgress> curSuperTypeAnnotations = supertypeAnnotations.stream()
-            .filter(typePathWriteProgress ->
-              ((SupertypeTarget)typePathWriteProgress.getAnnotation().getTargetInfo()).getSupertypeIndex() == it
+          List<TypeAnnotationWriteHelper> curSuperTypeAnnotations = supertypeAnnotations.stream()
+            .filter(typeAnnotationWriteHelper ->
+              ((SupertypeTarget) typeAnnotationWriteHelper.getAnnotation().getTargetInfo()).getSupertypeIndex() == it
             ).collect(Collectors.toList());
           if (descriptor != null) {
             buffer.append(GenericMain.getGenericCastTypeName(descriptor.superinterfaces.get(i), curSuperTypeAnnotations));
@@ -548,7 +548,7 @@ public class ClassWriter {
 
   private static boolean isVarArgRecord(StructClass cl) {
     String canonicalConstructorDescriptor =
-      cl.getRecordComponents().stream().map(c -> c.getDescriptor()).collect(Collectors.joining("", "(", ")V"));
+      cl.getRecordComponents().stream().map(StructField::getDescriptor).collect(Collectors.joining("", "(", ")V"));
     StructMethod init = cl.getMethod(CodeConstants.INIT_NAME, canonicalConstructorDescriptor);
     return init != null && init.hasModifier(CodeConstants.ACC_VARARGS);
   }
@@ -575,7 +575,7 @@ public class ClassWriter {
     Map.Entry<VarType, GenericFieldDescriptor> fieldTypeData = getFieldTypeData(fd);
     VarType fieldType = fieldTypeData.getKey();
 
-    appendAnnotations(buffer, fieldType.arrayDim, indent, fd, TypeAnnotation.FIELD);
+    appendAnnotations(buffer, indent, fd);
 
     buffer.appendIndent(indent);
 
@@ -585,14 +585,14 @@ public class ClassWriter {
 
     GenericFieldDescriptor descriptor = fieldTypeData.getValue();
 
-    final List<TypePathWriteProgress> typeAnnWriteProgress = createTypeAnnWriteProgress(fd);
+    final List<TypeAnnotationWriteHelper> typeAnnwriteHelper = createTypeAnnWriteHelper(fd);
 
     if (!isEnum) {
       if (descriptor != null) {
-        buffer.append(GenericMain.getGenericCastTypeName(descriptor.type, typeAnnWriteProgress));
+        buffer.append(GenericMain.getGenericCastTypeName(descriptor.type, typeAnnwriteHelper));
       }
       else {
-        buffer.append(ExprProcessor.getCastTypeName(fieldType, typeAnnWriteProgress));
+        buffer.append(ExprProcessor.getCastTypeName(fieldType, typeAnnwriteHelper));
       }
       buffer.append(' ');
     }
@@ -641,19 +641,19 @@ public class ClassWriter {
   }
 
   private static void recordComponentToJava(StructRecordComponent cd, TextBuffer buffer, boolean varArgComponent) {
-    appendAnnotations(buffer, 0, -1, cd, TypeAnnotation.FIELD);
+    appendAnnotations(buffer, -1, cd);
 
     Map.Entry<VarType, GenericFieldDescriptor> fieldTypeData = getFieldTypeData(cd);
     VarType fieldType = fieldTypeData.getKey();
     GenericFieldDescriptor descriptor = fieldTypeData.getValue();
 
-    final List<TypePathWriteProgress> typeAnnWriteProgress = createTypeAnnWriteProgress(cd);
+    final List<TypeAnnotationWriteHelper> typeAnnwriteHelper = createTypeAnnWriteHelper(cd);
 
     if (descriptor != null) {
-      buffer.append(GenericMain.getGenericCastTypeName(varArgComponent ? descriptor.type.decreaseArrayDim() : descriptor.type, typeAnnWriteProgress));
+      buffer.append(GenericMain.getGenericCastTypeName(varArgComponent ? descriptor.type.decreaseArrayDim() : descriptor.type, typeAnnwriteHelper));
     }
     else {
-      buffer.append(ExprProcessor.getCastTypeName(varArgComponent ? fieldType.decreaseArrayDim() : fieldType, typeAnnWriteProgress));
+      buffer.append(ExprProcessor.getCastTypeName(varArgComponent ? fieldType.decreaseArrayDim() : fieldType, typeAnnwriteHelper));
     }
     if (varArgComponent) {
       buffer.append("...");
@@ -820,7 +820,7 @@ public class ClassWriter {
         appendComment(buffer, "bridge method", indent);
       }
 
-      appendAnnotations(buffer, 0, indent, mt, TypeAnnotation.METHOD_RETURN_TYPE);
+      appendAnnotations(buffer, indent, mt);
 
       buffer.appendIndent(indent);
 
@@ -872,26 +872,26 @@ public class ClassWriter {
 
       boolean throwsExceptions = false;
       int paramCount = 0;
-      final List<TypePathWriteProgress> typeAnnWriteProgress = createTypeAnnWriteProgress(mt);
+      final List<TypeAnnotationWriteHelper> typeAnnwriteHelper = createTypeAnnWriteHelper(mt);
       if (!clInit && !dInit) {
         if (descriptor != null && !descriptor.typeParameters.isEmpty()) {
-          appendTypeParameters(buffer, descriptor.typeParameters, descriptor.typeParameterBounds, typeAnnWriteProgress);
+          appendTypeParameters(buffer, descriptor.typeParameters, descriptor.typeParameterBounds, typeAnnwriteHelper);
           buffer.append(' ');
         }
 
         if (init) {
-          typeAnnWriteProgress.stream().filter(typePathWriteProgress ->
-            typePathWriteProgress.getAnnotation().getTargetInfo() instanceof EmptyTarget
-          ).forEach(typePathWriteProgress -> typePathWriteProgress.writeTypeAnnotation(buffer));
+          typeAnnwriteHelper.stream().filter(typeAnnotationWriteHelper ->
+            typeAnnotationWriteHelper.getAnnotation().getTargetInfo() instanceof EmptyTarget
+          ).forEach(typeAnnotationWriteHelper -> typeAnnotationWriteHelper.writeTo(buffer));
         } else {
-          final List<TypePathWriteProgress> emptyTargetTypeAnnWriteProgress = typeAnnWriteProgress.stream().filter(typePathWriteProgress ->
-            typePathWriteProgress.getAnnotation().getTargetInfo() instanceof EmptyTarget
+          final List<TypeAnnotationWriteHelper> emptyTargetTypeAnnwriteHelper = typeAnnwriteHelper.stream().filter(typeAnnotationWriteHelper ->
+            typeAnnotationWriteHelper.getAnnotation().getTargetInfo() instanceof EmptyTarget
           ).collect(Collectors.toList());
           if (descriptor != null) {
-            buffer.append(GenericMain.getGenericCastTypeName(descriptor.returnType, emptyTargetTypeAnnWriteProgress));
+            buffer.append(GenericMain.getGenericCastTypeName(descriptor.returnType, emptyTargetTypeAnnwriteHelper));
           }
           else {
-            buffer.append(ExprProcessor.getCastTypeName(md.ret, emptyTargetTypeAnnWriteProgress));
+            buffer.append(ExprProcessor.getCastTypeName(md.ret, emptyTargetTypeAnnwriteHelper));
           }
           buffer.append(' ');
         }
@@ -926,9 +926,9 @@ public class ClassWriter {
             String typeName;
             boolean isVarArg = i == lastVisibleParameterIndex && mt.hasModifier(CodeConstants.ACC_VARARGS);
             final int it = i;
-            List<TypePathWriteProgress> parameterProgresses = typeAnnWriteProgress.stream().filter(typePathWriteProgress ->
-              typePathWriteProgress.getAnnotation().getTargetType() == TypeAnnotation.METHOD_PARAMETER &&
-                ((FormalParameterTarget) typePathWriteProgress.getAnnotation().getTargetInfo()).getFormalParameterIndex() == it
+            List<TypeAnnotationWriteHelper> parameterProgresses = typeAnnwriteHelper.stream().filter(typeAnnotationWriteHelper ->
+              typeAnnotationWriteHelper.getAnnotation().getTargetType() == TypeAnnotation.METHOD_PARAMETER &&
+                ((FormalParameterTarget) typeAnnotationWriteHelper.getAnnotation().getTargetInfo()).getFormalParameterIndex() == it
             ).collect(Collectors.toList());
 
             if (descriptor != null) {
@@ -975,17 +975,17 @@ public class ClassWriter {
           throwsExceptions = true;
           buffer.append(" throws ");
 
-          List<TypePathWriteProgress> throwsTypeAnnWriteProgress = typeAnnWriteProgress.stream()
-            .filter(typePathWriteProgress -> typePathWriteProgress.getAnnotation().getTargetInfo() instanceof ThrowsTarget)
+          List<TypeAnnotationWriteHelper> throwsTypeAnnwriteHelper = typeAnnwriteHelper.stream()
+            .filter(typeAnnotationWriteHelper -> typeAnnotationWriteHelper.getAnnotation().getTargetInfo() instanceof ThrowsTarget)
             .collect(Collectors.toList());
           for (int i = 0; i < attr.getThrowsExceptions().size(); i++) {
             if (i > 0) {
               buffer.append(", ");
             }
             final int it = i;
-            throwsTypeAnnWriteProgress.removeIf(typePathWriteProgress -> {
-              if(((ThrowsTarget)typePathWriteProgress.getAnnotation().getTargetInfo()).getThrowsTypeIndex() == it) {
-                typePathWriteProgress.writeTypeAnnotation(buffer);
+            throwsTypeAnnwriteHelper.removeIf(typeAnnotationWriteHelper -> {
+              if(((ThrowsTarget) typeAnnotationWriteHelper.getAnnotation().getTargetInfo()).getThrowsTypeIndex() == it) {
+                typeAnnotationWriteHelper.writeTo(buffer);
                 return true;
               }
               return false;
@@ -1034,7 +1034,7 @@ public class ClassWriter {
             TextBuffer code = root.toJava(indent + 1, codeTracer);
 
             hideMethod = code.length() == 0 &&
-              (clInit || dInit || hideConstructor(node, !typeAnnWriteProgress.isEmpty(), init, throwsExceptions, paramCount, flags)) ||
+              (clInit || dInit || hideConstructor(node, !typeAnnwriteHelper.isEmpty(), init, throwsExceptions, paramCount, flags)) ||
               isSyntheticRecordMethod(cl, mt, code);
 
             buffer.append(code);
@@ -1178,15 +1178,8 @@ public class ClassWriter {
     buffer.appendIndent(indent).append("// $FF: ").append(comment).appendLineSeparator();
   }
 
-  private static final StructGeneralAttribute.Key<?>[] ANNOTATION_ATTRIBUTES = {
-    StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_ANNOTATIONS, StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_ANNOTATIONS};
-  private static final StructGeneralAttribute.Key<?>[] PARAMETER_ANNOTATION_ATTRIBUTES = {
-    StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_PARAMETER_ANNOTATIONS, StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_PARAMETER_ANNOTATIONS};
-  private static final StructGeneralAttribute.Key<?>[] TYPE_ANNOTATION_ATTRIBUTES = {
-    StructGeneralAttribute.ATTRIBUTE_RUNTIME_VISIBLE_TYPE_ANNOTATIONS, StructGeneralAttribute.ATTRIBUTE_RUNTIME_INVISIBLE_TYPE_ANNOTATIONS};
-
-  private static List<TypePathWriteProgress> createTypeAnnWriteProgress(StructMember md) {
-    return Arrays.stream(TYPE_ANNOTATION_ATTRIBUTES)
+  private static List<TypeAnnotationWriteHelper> createTypeAnnWriteHelper(StructMember md) {
+    return Arrays.stream(StructGeneralAttribute.TYPE_ANNOTATION_ATTRIBUTES)
       .flatMap(attrKey -> {
         StructTypeAnnotationAttribute attribute = (StructTypeAnnotationAttribute)md.getAttribute(attrKey);
         if (attribute == null) {
@@ -1195,12 +1188,12 @@ public class ClassWriter {
           return attribute.getAnnotations().stream();
         }
       })
-      .map(annotation -> new TypePathWriteProgress(annotation, new ArrayDeque<>(annotation.getPaths())))
+      .map(TypeAnnotationWriteHelper::new)
       .collect(Collectors.toList());
   }
 
-  private static void appendAnnotations(TextBuffer buffer, int dims, int indent, StructMember mb, int targetType) {
-    for (StructGeneralAttribute.Key<?> key : ANNOTATION_ATTRIBUTES) {
+  private static void appendAnnotations(TextBuffer buffer, int indent, StructMember mb) {
+    for (StructGeneralAttribute.Key<?> key : StructGeneralAttribute.ANNOTATION_ATTRIBUTES) {
       StructAnnotationAttribute attribute = (StructAnnotationAttribute)mb.getAttribute(key);
       if (attribute != null) {
         for (AnnotationExprent annotation : attribute.getAnnotations()) {
@@ -1218,7 +1211,7 @@ public class ClassWriter {
   }
 
   private static void appendParameterAnnotations(TextBuffer buffer, StructMethod mt, int param) {
-    for (StructGeneralAttribute.Key<?> key : PARAMETER_ANNOTATION_ATTRIBUTES) {
+    for (StructGeneralAttribute.Key<?> key : StructGeneralAttribute.PARAMETER_ANNOTATION_ATTRIBUTES) {
       StructAnnotationParameterAttribute attribute = (StructAnnotationParameterAttribute)mt.getAttribute(key);
       if (attribute != null) {
         List<List<AnnotationExprent>> annotations = attribute.getParamAnnotations();
@@ -1289,10 +1282,10 @@ public class ClassWriter {
     TextBuffer buffer,
     List<String> parameters,
     List<? extends List<GenericType>> bounds,
-    final List<TypePathWriteProgress> typeAnnWriteProgress
+    final List<TypeAnnotationWriteHelper> typeAnnWriteHelper
   ) {
-    final List<TypePathWriteProgress> typeParamTypeAnnWriteProgress = typeAnnWriteProgress.stream().filter(typePathWriteProgress -> {
-      TargetInfo targetInfo = typePathWriteProgress.getAnnotation().getTargetInfo();
+    final List<TypeAnnotationWriteHelper> typeParamTypeAnnWriteHelper = typeAnnWriteHelper.stream().filter(typeAnnotationWriteHelper -> {
+      TargetInfo targetInfo = typeAnnotationWriteHelper.getAnnotation().getTargetInfo();
       return targetInfo instanceof TypeParameterTarget || targetInfo instanceof TypeParameterBoundTarget;
     }).collect(Collectors.toList());
 
@@ -1303,10 +1296,10 @@ public class ClassWriter {
         buffer.append(", ");
       }
       final int it = i;
-      typeParamTypeAnnWriteProgress.removeIf(typePathWriteProgress -> {
-        TargetInfo targetInfo = typePathWriteProgress.getAnnotation().getTargetInfo();
+      typeParamTypeAnnWriteHelper.removeIf(typeAnnotationWriteHelper -> {
+        TargetInfo targetInfo = typeAnnotationWriteHelper.getAnnotation().getTargetInfo();
         if (targetInfo instanceof TypeParameterTarget && ((TypeParameterTarget)targetInfo).getTypeParameterIndex() == it) {
-          typePathWriteProgress.writeTypeAnnotation(buffer);
+          typeAnnotationWriteHelper.writeTo(buffer);
           return true;
         }
         return false;
@@ -1317,12 +1310,12 @@ public class ClassWriter {
       List<GenericType> parameterBounds = bounds.get(i);
       if (parameterBounds.size() > 1 || !"java/lang/Object".equals(parameterBounds.get(0).value)) {
         buffer.append(" extends ");
-        typeParamTypeAnnWriteProgress.removeIf(typePathWriteProgress -> {
-          TargetInfo targetInfo = typePathWriteProgress.getAnnotation().getTargetInfo();
+        typeParamTypeAnnWriteHelper.removeIf(typeAnnotationWriteHelper -> {
+          TargetInfo targetInfo = typeAnnotationWriteHelper.getAnnotation().getTargetInfo();
           if (targetInfo instanceof TypeParameterBoundTarget &&
             ((TypeParameterBoundTarget)targetInfo).getTypeParameterIndex() == it &&
             ((TypeParameterBoundTarget)targetInfo).getBoundIndex() == 0) {
-            typePathWriteProgress.writeTypeAnnotation(buffer);
+            typeAnnotationWriteHelper.writeTo(buffer);
             return true;
           }
           return false;
@@ -1331,12 +1324,12 @@ public class ClassWriter {
         for (int j = 1; j < parameterBounds.size(); j++) {
           buffer.append(" & ");
           final int jt = j;
-          typeParamTypeAnnWriteProgress.removeIf(typePathWriteProgress -> {
-            TargetInfo targetInfo = typePathWriteProgress.getAnnotation().getTargetInfo();
+          typeParamTypeAnnWriteHelper.removeIf(typeAnnotationWriteHelper -> {
+            TargetInfo targetInfo = typeAnnotationWriteHelper.getAnnotation().getTargetInfo();
             if (targetInfo instanceof TypeParameterBoundTarget &&
               ((TypeParameterBoundTarget)targetInfo).getTypeParameterIndex() == it &&
               ((TypeParameterBoundTarget)targetInfo).getBoundIndex() == jt) {
-              typePathWriteProgress.writeTypeAnnotation(buffer);
+              typeAnnotationWriteHelper.writeTo(buffer);
               return true;
             }
             return false;

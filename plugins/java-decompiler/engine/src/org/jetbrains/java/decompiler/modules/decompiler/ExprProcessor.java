@@ -13,7 +13,7 @@ import org.jetbrains.java.decompiler.modules.decompiler.sforms.DirectNode;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.sforms.FlattenStatementsHelper.FinallyPathWrapper;
 import org.jetbrains.java.decompiler.modules.decompiler.stats.*;
-import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypePathWriteProgress;
+import org.jetbrains.java.decompiler.modules.decompiler.typeann.TypeAnnotationWriteHelper;
 import org.jetbrains.java.decompiler.modules.decompiler.vars.VarProcessor;
 import org.jetbrains.java.decompiler.struct.StructClass;
 import org.jetbrains.java.decompiler.struct.StructTypePath;
@@ -646,23 +646,23 @@ public class ExprProcessor implements CodeConstants {
     }
   }
 
-  public static String getTypeName(VarType type, List<TypePathWriteProgress> typePathWriteStack) {
+  public static String getTypeName(VarType type, List<TypeAnnotationWriteHelper> typePathWriteStack) {
     return getTypeName(type, true, typePathWriteStack);
   }
 
-  public static String getTypeName(VarType type, boolean getShort, List<TypePathWriteProgress> typePathWriteStack) {
+  public static String getTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typePathWriteStack) {
     int tp = type.type;
     StringBuilder sb = new StringBuilder();
-    typePathWriteStack.removeIf(typePathWriteProgress -> {
-      StructTypePath path = typePathWriteProgress.getPaths().peek();
+    typePathWriteStack.removeIf(typeAnnotationWriteHelper -> {
+      StructTypePath path = typeAnnotationWriteHelper.getPaths().peek();
       if (path == null && type.arrayDim == 0) { // nested type
-        typePathWriteProgress.writeTypeAnnotation(sb);
+        typeAnnotationWriteHelper.writeTo(sb);
         return true;
       }
       if (path != null && path.getTypePathKind() == StructTypePath.Kind.ARRAY.getOpcode() &&
-        typePathWriteProgress.getPaths().size() == type.arrayDim
+        typeAnnotationWriteHelper.getPaths().size() == type.arrayDim
       ) {
-        typePathWriteProgress.writeTypeAnnotation(sb);
+        typeAnnotationWriteHelper.writeTo(sb);
         return true;
       }
       return false;
@@ -713,13 +713,13 @@ public class ExprProcessor implements CodeConstants {
     throw new RuntimeException("invalid type");
   }
 
-  public static void checkNestedTypeAnnotation(StringBuilder sb, List<TypePathWriteProgress> typePathWriteStack) {
-    typePathWriteStack.removeIf(typePathWriteProgress -> {
-      StructTypePath path = typePathWriteProgress.getPaths().peek();
+  public static void checkNestedTypeAnnotation(StringBuilder sb, List<TypeAnnotationWriteHelper> typePathWriteStack) {
+    typePathWriteStack.removeIf(typeAnnotationWriteHelper -> {
+      StructTypePath path = typeAnnotationWriteHelper.getPaths().peek();
       if (path != null && path.getTypePathKind() == StructTypePath.Kind.NESTED.getOpcode()) {
-        typePathWriteProgress.getPaths().pop();
-        if (typePathWriteProgress.getPaths().isEmpty()) {
-          typePathWriteProgress.writeTypeAnnotation(sb);
+        typeAnnotationWriteHelper.getPaths().pop();
+        if (typeAnnotationWriteHelper.getPaths().isEmpty()) {
+          typeAnnotationWriteHelper.writeTo(sb);
           return true;
         }
       }
@@ -727,13 +727,13 @@ public class ExprProcessor implements CodeConstants {
     });
   }
 
-  public static String getCastTypeName(VarType type, List<TypePathWriteProgress> typePathWriteStack) {
+  public static String getCastTypeName(VarType type, List<TypeAnnotationWriteHelper> typePathWriteStack) {
     return getCastTypeName(type, true, typePathWriteStack);
   }
 
-  public static String getCastTypeName(VarType type, boolean getShort, List<TypePathWriteProgress> typePathWriteStack) {
-    List<TypePathWriteProgress> arrayPaths = new ArrayList<>();
-    List<TypePathWriteProgress> notArrayPath = typePathWriteStack.stream().filter(stack -> {
+  public static String getCastTypeName(VarType type, boolean getShort, List<TypeAnnotationWriteHelper> typePathWriteStack) {
+    List<TypeAnnotationWriteHelper> arrayPaths = new ArrayList<>();
+    List<TypeAnnotationWriteHelper> notArrayPath = typePathWriteStack.stream().filter(stack -> {
       boolean isArrayPath = stack.getPaths().size() < type.arrayDim;
       if (stack.getPaths().size() > type.arrayDim) {
         for (int i = 0; i < type.arrayDim; i++) {
@@ -750,19 +750,19 @@ public class ExprProcessor implements CodeConstants {
     return sb.toString();
   }
 
-  public static void writeArray(StringBuilder sb, int arrayDim, List<TypePathWriteProgress> typePathWriteStack) {
+  public static void writeArray(StringBuilder sb, int arrayDim, List<TypeAnnotationWriteHelper> typePathWriteStack) {
     for (int i = 0; i < arrayDim; i++) {
       var ref = new Object() {
         boolean firstIteration = true;
       };
       final int it = i;
-      typePathWriteStack.removeIf(writeProgress -> {
-        if (it == writeProgress.getPaths().size()) {
+      typePathWriteStack.removeIf(writeHelper -> {
+        if (it == writeHelper.getPaths().size()) {
           if (ref.firstIteration) {
             sb.append(' ');
             ref.firstIteration = false;
           }
-          writeProgress.writeTypeAnnotation(sb);
+          writeHelper.writeTo(sb);
           return true;
         }
         return false;

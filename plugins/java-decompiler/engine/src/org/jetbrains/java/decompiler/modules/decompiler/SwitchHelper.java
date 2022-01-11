@@ -181,8 +181,8 @@ public final class SwitchHelper {
         // null value represents default branch and no temp variable is assigned there.
         // Also, the bucket with null value may also contain fictive case values,
         // generated for tableswitch instruction (see com.sun.tools.javac.jvm.Gen.visitSwitch)
-        .filter(values -> values.stream().noneMatch(Objects::isNull)).flatMap(values -> values.stream())
-        .map(value -> ((ConstExprent)value)).map(value -> value.getValue())
+        .filter(values -> values.stream().noneMatch(Objects::isNull)).flatMap(Collection::stream)
+        .map(value -> ((ConstExprent)value)).map(ConstExprent::getValue)
         .collect(Collectors.toSet());
     }
 
@@ -313,7 +313,7 @@ public final class SwitchHelper {
               .filter(exprent -> exprent instanceof AssignmentExprent)
               .map(exprent -> (AssignmentExprent)exprent)
               .filter(exprent -> exprent.getRight().equals(finalSwitchSelectorQualifier))
-              .map(exprent -> exprent.getLeft())
+              .map(AssignmentExprent::getLeft)
               .findFirst()
               .orElse(null);
             if (tempSwitchSelectorQualifier == null) return null;
