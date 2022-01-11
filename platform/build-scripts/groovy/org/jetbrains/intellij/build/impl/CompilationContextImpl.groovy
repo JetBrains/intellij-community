@@ -69,6 +69,8 @@ final class CompilationContextImpl implements CompilationContext {
       messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
     }
 
+    printEnvironmentDebugInfo()
+
     def dependenciesProjectDir = new File(communityHome, 'build/dependencies')
     logFreeDiskSpace(messages, projectHome, "before downloading dependencies")
     def kotlinBinaries = new KotlinBinaries(communityHome, options, messages)
@@ -440,6 +442,20 @@ final class CompilationContextImpl implements CompilationContext {
   static void logFreeDiskSpace(BuildMessages buildMessages, String directoryPath, String phase) {
     Path dir = Path.of(directoryPath)
     buildMessages.debug("Free disk space $phase: ${Formats.formatFileSize(Files.getFileStore(dir).getUsableSpace())} (on disk containing $dir)")
+  }
+
+  static void printEnvironmentDebugInfo() {
+    // print it to the stdout since TeamCity will remove any sensitive fields from build log automatically
+    // don't write it to debug log file!
+    def env = System.getenv()
+    for (String key : env.keySet().toSorted()) {
+      println("ENV $key = ${env.get(key)}")
+    }
+
+    def properties = System.getProperties()
+    for (String propertyName : properties.keySet().toSorted()) {
+      println("PROPERTY $propertyName = ${properties.get(propertyName)}")
+    }
   }
 }
 
