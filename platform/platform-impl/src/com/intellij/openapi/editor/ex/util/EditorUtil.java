@@ -27,7 +27,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.SelectionEvent;
 import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorInlayFoldingMapper;
 import com.intellij.openapi.editor.impl.*;
 import com.intellij.openapi.editor.impl.view.VisualLinesIterator;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -703,27 +702,11 @@ public final class EditorUtil {
       int lineStartOffset = document.getLineStartOffset(logicalLine);
       int lineEndOffset = document.getLineEndOffset(logicalLine);
       FoldRegion foldRegion = editor.getFoldingModel().getCollapsedRegionAtOffset(lineStartOffset);
-      if (foldRegion != null) {
-        if (foldRegion instanceof CustomFoldRegion) {
-          int startY = editor.visualLineToY(editor.offsetToVisualLine(foldRegion.getStartOffset(), false));
-          OurInterval interval = new OurInterval(startY, startY + ((CustomFoldRegion)foldRegion).getHeightInPixels());
-          return Pair.create(interval, foldRegion.getStartOffset() == document.getLineStartOffset(logicalLine) &&
-                                       foldRegion.getEndOffset() == document.getLineEndOffset(logicalLine) ? interval : null);
-        }
-        Inlay<?> inlay = EditorInlayFoldingMapper.getInstance().getAssociatedInlay(foldRegion);
-        if (inlay != null) {
-          // special case of rendered doc comment
-          Rectangle bounds = inlay.getBounds();
-          if (bounds != null) {
-            OurInterval interval = new OurInterval(bounds.y, bounds.y + bounds.height);
-            return Pair.create(interval,
-                               foldRegion.getStartOffset() == lineStartOffset &&
-                               foldRegion.getEndOffset() == (logicalLine + 1 < document.getLineCount()
-                                                             ? document.getLineStartOffset(logicalLine + 1)
-                                                             : document.getTextLength())
-                               ? interval : null);
-          }
-        }
+      if (foldRegion instanceof CustomFoldRegion) {
+        int startY = editor.visualLineToY(editor.offsetToVisualLine(foldRegion.getStartOffset(), false));
+        OurInterval interval = new OurInterval(startY, startY + ((CustomFoldRegion)foldRegion).getHeightInPixels());
+        return Pair.create(interval, foldRegion.getStartOffset() == document.getLineStartOffset(logicalLine) &&
+                                     foldRegion.getEndOffset() == document.getLineEndOffset(logicalLine) ? interval : null);
       }
       startVisualLine = editor.offsetToVisualLine(lineStartOffset, false);
       endVisualLine = startVisualLine + editor.getSoftWrapModel().getSoftWrapsForRange(lineStartOffset + 1, lineEndOffset - 1).size();
@@ -751,41 +734,6 @@ public final class EditorUtil {
   @NotNull
   public static Interval yToLogicalLineRange(@NotNull Editor editor, int y) {
     int visualLine = editor.yToVisualLine(y);
-    int[] visualLineYRange = editor.visualLineToYRange(visualLine);
-    Inlay<?> blockInlay = null;
-    if (y < visualLineYRange[0]) {
-      List<Inlay<?>> inlays = editor.getInlayModel().getBlockElementsForVisualLine(visualLine, true);
-      int yDiff = visualLineYRange[0] - y;
-      for (int i = inlays.size() - 1; i >= 0; i--) {
-        Inlay<?> inlay = inlays.get(i);
-        int height = inlay.getHeightInPixels();
-        if (yDiff <= height) {
-          blockInlay = inlay;
-          break;
-        }
-        yDiff -= height;
-      }
-    }
-    else if (y >= visualLineYRange[1]) {
-      List<Inlay<?>> inlays = editor.getInlayModel().getBlockElementsForVisualLine(visualLine, false);
-      int yDiff = y - visualLineYRange[1];
-      for (Inlay<?> inlay : inlays) {
-        int height = inlay.getHeightInPixels();
-        if (yDiff < height) {
-          blockInlay = inlay;
-          break;
-        }
-        yDiff -= height;
-      }
-    }
-    if (blockInlay != null) {
-      FoldRegion foldRegion = EditorInlayFoldingMapper.getInstance().getAssociatedFoldRegion(blockInlay);
-      if (foldRegion != null) {
-        // special case of rendered doc comment
-        Document document = editor.getDocument();
-        return new OurInterval(document.getLineNumber(foldRegion.getStartOffset()), document.getLineNumber(foldRegion.getEndOffset() - 1));
-      }
-    }
     if (editor instanceof EditorImpl) {
       VisualLinesIterator iterator = new VisualLinesIterator((EditorImpl)editor, visualLine);
       if (!iterator.atEnd()) {
