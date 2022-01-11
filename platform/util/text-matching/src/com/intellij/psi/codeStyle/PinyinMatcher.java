@@ -11,7 +11,7 @@ public class PinyinMatcher extends MinusculeMatcher {
   static final char BASE_CHAR = '!';
 
   /**
-   * To generate {@code ENCODING} and {@code DATA}, see {@code PinyinDataGenerator} class in tests.
+   * To generate {@code ENCODING} and {@code DATA}, see {@code PinyinMatcherDataTest} class in tests.
    */
   static final String ENCODING =
     "a,b,c,d,e,f,g,h,j,k,l,m,n,o,p,q,r,s,t,w,x,y,z,ab,ad,ae,ag,ah,aj,ak,al,an,ap,aq,at,aw,ax,ay,az,bc,bd,b" +
