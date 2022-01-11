@@ -44,6 +44,11 @@ class KotlinJUnitRunConfigurationProducer : RunConfigurationProducer<JUnitConfig
             return false
         }
 
+        if (JUnitConfiguration.TEST_CLASS != configuration.testType && 
+            JUnitConfiguration.TEST_METHOD != configuration.testType) {
+            return false
+        }
+
         val element = context.location?.psiElement ?: return false
         val javaEntity = JunitKotlinTestFrameworkProvider.getJavaEntity(element) ?: return false
 
