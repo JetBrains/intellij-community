@@ -161,7 +161,7 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
       XDebuggerTree tree = getTree();
       Ref<AnAction> addToWatchesActionRef = new Ref<>();
       XDebuggerEditorsProvider provider = tree.getEditorsProvider();
-      if (!provider.isEvaluateExpressionSupported()) {
+      if (!provider.isEvaluateExpressionFieldEnabled()) {
         return null;
       }
       myEvaluateComboBox =
