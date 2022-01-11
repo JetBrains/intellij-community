@@ -3,6 +3,7 @@ package training.featuresSuggester
 
 import com.intellij.lang.Language
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx
@@ -26,15 +27,22 @@ class FeatureSuggestersManager(val project: Project) : Disposable {
   }
 
   fun actionPerformed(action: Action) {
+    try {
+      handleAction(action)
+    }
+    catch (t: Throwable) {
+      thisLogger().error("An error occurred during action processing: $action", t)
+    }
+  }
+
+  private fun handleAction(action: Action) {
     if (project.isDisposed || DumbService.isDumb(project)) return
     val language = action.language ?: return
     val suggesters = FeatureSuggester.suggesters
       .filter { it.languages.find { id -> id == Language.ANY.id || id == language.id } != null }
-    if (suggesters.isNotEmpty()) {
-      for (suggester in suggesters) {
-        if (suggester.isEnabled()) {
-          processSuggester(suggester, action)
-        }
+    for (suggester in suggesters) {
+      if (suggester.isEnabled()) {
+        processSuggester(suggester, action)
       }
     }
   }
