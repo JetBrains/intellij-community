@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.junit;
 
 import com.intellij.execution.actions.ConfigurationContext;
@@ -37,6 +37,13 @@ public class UniqueIdConfigurationProducer extends JUnitConfigurationProducer {
     }
     setupConfigurationModule(context, configuration);
     return true;
+  }
+
+  @Override
+  protected boolean isConfiguredByElement(@NotNull JUnitConfiguration configuration,
+                                          @NotNull ConfigurationContext context,
+                                          @NotNull PsiElement element) {
+    return Arrays.equals(configuration.getPersistentData().getUniqueIds(), getNodeIds(context));
   }
 
   public static String[] getNodeIds(ConfigurationContext context) {

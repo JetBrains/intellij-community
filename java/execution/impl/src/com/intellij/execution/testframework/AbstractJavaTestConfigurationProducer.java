@@ -76,6 +76,10 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     }
     return null;
   }
+  
+  protected boolean hasDetectedTestFramework(PsiClass psiClass) {
+    return getCurrentFramework(psiClass) != null;
+  }
 
   protected boolean isApplicableTestType(String type, ConfigurationContext context) {
     return true;
@@ -88,15 +92,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     }
     if (!isApplicableTestType(configuration.getTestType(), context)) return false;
     final RunConfiguration predefinedConfiguration = context.getOriginalConfiguration(getConfigurationType());
-    final Location contextLocation = context.getLocation();
-    if (contextLocation == null) {
-      return false;
-    }
-    Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
-    if (location == null) {
-      return false;
-    }
-    final PsiElement element = location.getPsiElement();
+    
     RunnerAndConfigurationSettings template = context.getRunManager().getConfigurationTemplate(getConfigurationFactory());
     T templateConfiguration = (T)template.getConfiguration();
     final Module predefinedModule = templateConfiguration.getConfigurationModule().getModule();
@@ -110,11 +106,19 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       vmParameters = templateConfiguration.getVMParameters();
     }
     if (!Comparing.strEqual(vmParameters, configuration.getVMParameters())) return false;
+
+    final Location contextLocation = context.getLocation();
+    if (contextLocation == null) {
+      return false;
+    }
     if (differentParamSet(configuration, contextLocation)) return false;
 
-    PsiElement psiElement = getElement(element);
-
-    if (psiElement != null && configuration.isConfiguredByElement(psiElement)) {
+    Location location = JavaExecutionUtil.stepIntoSingleClass(contextLocation);
+    if (location == null) {
+      return false;
+    }
+    
+    if (isConfiguredByElement(configuration, context, location.getPsiElement())) {
       final Module configurationModule = configuration.getConfigurationModule().getModule();
       final Module locationModule = location.getModule();
       if (Comparing.equal(locationModule, configurationModule)) return true;
@@ -124,12 +128,15 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     return false;
   }
 
-  protected PsiElement getElement(PsiElement element) {
+  protected boolean isConfiguredByElement(@NotNull T configuration,
+                                          @NotNull ConfigurationContext context,
+                                          @NotNull PsiElement element) {
     PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
-    if (psiClass != null && getCurrentFramework(psiClass) == null) {
-      return null;
+    if (psiClass != null && !hasDetectedTestFramework(psiClass)) {
+      return false;
     }
-    return element;
+
+    return configuration.isConfiguredByElement(element);
   }
 
   protected boolean differentParamSet(T configuration, Location contextLocation) {

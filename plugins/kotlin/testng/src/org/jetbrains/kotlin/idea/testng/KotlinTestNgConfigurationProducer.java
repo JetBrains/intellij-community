@@ -36,10 +36,15 @@ public class KotlinTestNgConfigurationProducer extends TestNGConfigurationProduc
     }
 
     @Override
-    protected PsiElement getElement(PsiElement element) {
-         KotlinTestFrameworkProvider.JavaEntity testEntity = TestNgKotlinTestFrameworkProvider.INSTANCE.getJavaEntity(element);
-        if (testEntity == null) return null;
-        return testEntity.getMethod() != null ? testEntity.getMethod() : testEntity.getTestClass();
+    protected boolean isConfiguredByElement(
+            @NotNull TestNGConfiguration configuration,
+            @NotNull ConfigurationContext context, @NotNull PsiElement element
+    ) {
+        KotlinTestFrameworkProvider.JavaEntity javaEntity = TestNgKotlinTestFrameworkProvider.INSTANCE.getJavaEntity(element);
+        if (javaEntity == null || !hasDetectedTestFramework(javaEntity.getTestClass())) {
+            return false;
+        }
+        return configuration.isConfiguredByElement(javaEntity.getMethod() != null ? javaEntity.getMethod() : javaEntity.getTestClass());
     }
 
     @Override
