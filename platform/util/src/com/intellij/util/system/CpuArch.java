@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.util.system;
 
 import com.intellij.jna.JnaLoader;
@@ -8,6 +8,7 @@ import com.sun.jna.platform.mac.SystemB;
 import com.sun.jna.platform.win32.Kernel32;
 import com.sun.jna.platform.win32.WinBase;
 import com.sun.jna.ptr.IntByReference;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public enum CpuArch {
@@ -33,24 +34,13 @@ public enum CpuArch {
    *
    * <p><b>Note</b>: may not correspond to the actual hardware if a JVM is "virtualized" (e.g. WoW64 or Rosetta 2).</p>
    */
-  public static final CpuArch CURRENT;
-  static {
-    String arch = System.getProperty("os.arch");
-    if ("x86_64".equals(arch) || "amd64".equals(arch)) {
-      CURRENT = X86_64;
-    }
-    else if ("i386".equals(arch) || "x86".equals(arch)) {
-      CURRENT = X86;
-    }
-    else if ("aarch64".equals(arch) || "arm64".equals(arch)) {
-      CURRENT = ARM64;
-    }
-    else if (arch == null || arch.trim().isEmpty()) {
-      CURRENT = UNKNOWN;
-    }
-    else {
-      CURRENT = OTHER;
-    }
+  public static final CpuArch CURRENT = fromString(System.getProperty("os.arch"));
+
+  public static @NotNull CpuArch fromString(@Nullable String arch) {
+    if ("x86_64".equals(arch) || "amd64".equals(arch)) return X86_64;
+    if ("i386".equals(arch) || "x86".equals(arch)) return X86;
+    if ("aarch64".equals(arch) || "arm64".equals(arch)) return ARM64;
+    return arch == null || arch.trim().isEmpty() ? UNKNOWN : OTHER;
   }
 
   public static boolean isIntel32() { return CURRENT == X86; }
