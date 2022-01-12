@@ -35,6 +35,7 @@ fun generateKotlincLibraries(kotlincArtifactsMode: KotlincArtifactsMode, version
         kotlincForIdeWithStandardNaming("kotlinc.noarg-compiler-plugin", version),
         kotlincForIdeWithStandardNaming("kotlinc.parcelize-compiler-plugin", version),
         kotlincForIdeWithStandardNaming("kotlinc.sam-with-receiver-compiler-plugin", version),
+        kotlincForIdeWithStandardNaming("kotlinc.kotlin-jps-common", version),
         singleJarMvnLib("kotlinc.compiler-components-for-jps", "$ktGroup:compiler-components-for-jps:$version", transitive = false),
         singleJarMvnLib("kotlinc.kotlin-scripting-common", "$ktGroup:kotlin-scripting-common:$version", transitive = false),
         singleJarMvnLib("kotlinc.kotlin-scripting-compiler-impl", "$ktGroup:kotlin-scripting-compiler-impl:$version", transitive = false),
