@@ -11,7 +11,7 @@ import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TableSpeedSearch
 import com.intellij.ui.components.JBViewport
 import com.intellij.ui.scale.JBUIScale
-import com.intellij.util.lockOrSkip
+import com.intellij.openapi.observable.util.lockOrSkip
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
 import java.util.concurrent.atomic.AtomicBoolean

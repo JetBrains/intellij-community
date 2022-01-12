@@ -11,6 +11,7 @@ import com.intellij.openapi.externalSystem.autoimport.ProjectRefreshAction
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.*
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView.Companion.ACTION_PLACE
 import com.intellij.openapi.externalSystem.dependency.analyzer.util.*
+import com.intellij.openapi.externalSystem.dependency.analyzer.util.bind
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
@@ -19,6 +20,7 @@ import com.intellij.openapi.observable.operations.asProperty
 import com.intellij.openapi.observable.properties.AtomicObservableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.and
+import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.asSequence
@@ -26,7 +28,6 @@ import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SearchTextField
 import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.ui.layout.*
 import com.intellij.util.concurrency.AppExecutorUtil
 import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
@@ -54,12 +55,12 @@ class DependencyAnalyzerViewImpl(
   private val dependencyScopeFilterProperty = AtomicObservableProperty(emptyList<ScopeItem>())
   private val showDependencyWarningsProperty = AtomicObservableProperty(false)
   private val showDependencyGroupIdProperty = AtomicObservableProperty(false)
-    .bindWithBooleanStorage(SHOW_GROUP_ID_PROPERTY)
+    .bindBooleanStorage(SHOW_GROUP_ID_PROPERTY)
 
   private val dependencyModelProperty = AtomicObservableProperty(emptyList<Dependency>())
   private val dependencyProperty = AtomicObservableProperty<Dependency?>(null)
   private val showDependencyTreeProperty = AtomicObservableProperty(false)
-    .bindWithBooleanStorage(SHOW_AS_TREE_PROPERTY)
+    .bindBooleanStorage(SHOW_AS_TREE_PROPERTY)
   private val dependencyEmptyTextProperty = AtomicObservableProperty("")
   private val usagesTitleProperty = AtomicObservableProperty("")
 

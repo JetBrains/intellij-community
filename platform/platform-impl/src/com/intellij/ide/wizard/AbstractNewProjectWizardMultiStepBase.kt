@@ -3,6 +3,7 @@ package com.intellij.ide.wizard
 
 import com.intellij.openapi.observable.properties.AtomicObservableProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
+import com.intellij.openapi.observable.util.bindStorage
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.DialogPanel
 import com.intellij.openapi.util.Disposer
@@ -11,7 +12,6 @@ import com.intellij.ui.dsl.builder.BottomGap
 import com.intellij.ui.dsl.builder.Panel
 import com.intellij.ui.dsl.builder.Row
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
-import com.intellij.ui.layout.*
 
 
 abstract class AbstractNewProjectWizardMultiStepBase(
@@ -23,7 +23,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
   internal val stepsProperty = AtomicObservableProperty<Map<String, NewProjectWizardStep>>(emptyMap())
   var steps: Map<String, NewProjectWizardStep> by stepsProperty
 
-  val stepProperty = propertyGraph.graphProperty { "" }.bindWithStorage("${javaClass.name}.selectedStep")
+  val stepProperty = propertyGraph.graphProperty { "" }.bindStorage("${javaClass.name}.selectedStep")
   var step by stepProperty
 
   protected open fun initSteps() = emptyMap<String, NewProjectWizardStep>()

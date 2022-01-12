@@ -9,6 +9,7 @@ import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.GraphPropertyImpl.Companion.graphProperty
 import com.intellij.openapi.observable.properties.ObservableClearableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
+import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.observable.util.whenItemSelected
@@ -17,7 +18,6 @@ import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ListUtil
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBList
-import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.ThreeStateCheckBox
 import org.apache.commons.lang.StringUtils

@@ -11,7 +11,7 @@ import com.intellij.openapi.roots.ui.distribution.DistributionComboBox.Item
 import com.intellij.openapi.ui.*
 import com.intellij.ui.*
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.util.lockOrSkip
+import com.intellij.openapi.observable.util.lockOrSkip
 import com.intellij.util.ui.JBInsets
 import java.awt.event.ActionEvent
 import java.util.*

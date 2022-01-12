@@ -9,12 +9,12 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.operations.ObservableOperationTrace
 import com.intellij.openapi.observable.properties.ObservableClearableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
+import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.ui.SimpleToolWindowPanel
 import com.intellij.ui.CardLayoutPanel
 import com.intellij.ui.OnePixelSplitter
 import com.intellij.ui.components.JBLoadingPanel
-import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.util.ui.tree.TreeUtil

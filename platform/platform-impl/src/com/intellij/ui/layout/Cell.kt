@@ -4,20 +4,16 @@ package com.intellij.ui.layout
 import com.intellij.BundleBase
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UINumericRange
-import com.intellij.ide.util.PropertiesComponent
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.ex.ActionUtil
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.*
-import com.intellij.openapi.observable.util.whenItemSelected
-import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.util.NlsContexts
 import com.intellij.openapi.util.NlsContexts.*
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vfs.VirtualFile
@@ -27,9 +23,8 @@ import com.intellij.ui.components.fields.ExpandableTextField
 import com.intellij.util.Function
 import com.intellij.util.MathUtil
 import com.intellij.util.execution.ParametersListUtil
-import com.intellij.util.lockOrSkip
+import com.intellij.openapi.observable.util.bind
 import com.intellij.util.ui.*
-import com.intellij.util.ui.StatusText
 import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -37,10 +32,8 @@ import java.awt.Component
 import java.awt.Dimension
 import java.awt.event.*
 import java.util.*
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.*
 import javax.swing.text.JTextComponent
-import javax.swing.tree.DefaultMutableTreeNode
 import kotlin.jvm.internal.CallableReference
 import kotlin.reflect.KMutableProperty0
 
@@ -712,165 +705,6 @@ fun <T> listCellRenderer(renderer: SimpleListCellRenderer<T?>.(value: T, index: 
       if (value != null) {
         renderer(this, value, index, selected)
       }
-    }
-  }
-}
-
-fun <P : ObservableClearableProperty<Boolean>> P.bindWithBooleanStorage(propertyName: String): P = apply {
-  transform({ it.toString() }, { it.toBoolean() })
-    .bindWithStorage(propertyName)
-}
-
-fun <P : ObservableClearableProperty<String>> P.bindWithStorage(propertyName: String): P = apply {
-  val properties = PropertiesComponent.getInstance()
-  val value = properties.getValue(propertyName)
-  if (value != null) {
-    set(value)
-  }
-  afterChange {
-    properties.setValue(propertyName, it)
-  }
-}
-
-fun <T, C : ComboBox<T>> C.bind(property: ObservableClearableProperty<T>): C = apply {
-  val mutex = AtomicBoolean()
-  property.afterChange {
-    mutex.lockOrSkip {
-      selectedItem = it
-    }
-  }
-  whenItemSelected {
-    mutex.lockOrSkip {
-      property.set(it)
-    }
-  }
-}
-
-fun <T, C : DropDownLink<T>> C.bind(property: ObservableClearableProperty<T>): C = apply {
-  val mutex = AtomicBoolean()
-  property.afterChange {
-    mutex.lockOrSkip {
-      selectedItem = property.get()
-    }
-  }
-  whenItemSelected {
-    mutex.lockOrSkip {
-      property.set(it)
-    }
-  }
-}
-
-fun <T, C : JList<T>> C.bind(property: ObservableClearableProperty<T?>): C = apply {
-  val mutex = AtomicBoolean()
-  property.afterChange {
-    mutex.lockOrSkip {
-      setSelectedValue(it, true)
-    }
-  }
-  addListSelectionListener {
-    mutex.lockOrSkip {
-      if (!it.valueIsAdjusting) {
-        property.set(selectedValue)
-      }
-    }
-  }
-}
-
-fun <T, C : JTree> C.bind(property: ObservableClearableProperty<T?>) = apply {
-  val mutex = AtomicBoolean()
-  property.afterChange {
-    mutex.lockOrSkip {
-      selectionPath = model.getTreePath(property.get())
-    }
-  }
-  addTreeSelectionListener {
-    mutex.lockOrSkip {
-      val node = lastSelectedPathComponent as? DefaultMutableTreeNode
-      @Suppress("UNCHECKED_CAST")
-      property.set(node?.userObject as T?)
-    }
-  }
-}
-
-fun <C : Component> C.bindEnabled(property: ObservableProperty<Boolean>): C = apply {
-  UIUtil.setEnabledRecursively(this, property.get())
-  property.afterChange { UIUtil.setEnabledRecursively(this, it) }
-}
-
-fun <C : Component> C.bindVisible(property: ObservableProperty<Boolean>): C = apply {
-  isVisible = property.get()
-  property.afterChange { isVisible = it }
-}
-
-fun <C : ComponentWithEmptyText> C.bindEmptyText(property: ObservableClearableProperty<@NlsContexts.StatusText String>): C = apply {
-  emptyText.bind(property)
-}
-
-fun <C : StatusText> C.bind(property: ObservableClearableProperty<@NlsContexts.StatusText String>): C = apply {
-  property.afterChange {
-    text = it
-  }
-  property.afterReset {
-    text = property.get()
-  }
-}
-
-fun <C : JLabel> C.bind(property: ObservableClearableProperty<@Label String>): C = apply {
-  property.afterChange {
-    text = it
-  }
-  property.afterReset {
-    text = property.get()
-  }
-}
-
-fun <C : JCheckBox> C.bind(property: ObservableClearableProperty<Boolean>): C = apply {
-  val mutex = AtomicBoolean()
-  property.afterChange {
-    mutex.lockOrSkip {
-      isSelected = it
-    }
-  }
-  addItemListener {
-    mutex.lockOrSkip {
-      property.set(isSelected)
-    }
-  }
-}
-
-fun <C : ThreeStateCheckBox> C.bind(property: ObservableClearableProperty<ThreeStateCheckBox.State>): C = apply {
-  val mutex = AtomicBoolean()
-  property.afterChange {
-    mutex.lockOrSkip {
-      state = it
-    }
-  }
-  property.afterReset {
-    mutex.lockOrSkip {
-      state = property.get()
-    }
-  }
-  addItemListener {
-    mutex.lockOrSkip {
-      property.set(state)
-    }
-  }
-}
-
-fun <C : TextFieldWithBrowseButton> C.bind(property: ObservableClearableProperty<String>): C = apply {
-  textField.bind(property)
-}
-
-fun <C : JTextComponent> C.bind(property: ObservableClearableProperty<String>): C = apply {
-  val mutex = AtomicBoolean()
-  property.afterChange {
-    mutex.lockOrSkip {
-      text = it
-    }
-  }
-  whenTextChanged {
-    mutex.lockOrSkip {
-      property.set(text)
     }
   }
 }

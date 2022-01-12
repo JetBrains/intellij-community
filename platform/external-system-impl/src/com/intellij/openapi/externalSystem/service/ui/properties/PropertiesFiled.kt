@@ -8,11 +8,11 @@ import com.intellij.openapi.keymap.KeymapUtil
 import com.intellij.openapi.observable.properties.AtomicLazyProperty
 import com.intellij.openapi.observable.properties.comap
 import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.ui.components.fields.ExtendableTextComponent
 import com.intellij.ui.components.fields.ExtendableTextField
-import com.intellij.ui.layout.*
 import com.intellij.util.execution.ParametersListUtil
 import java.awt.event.InputEvent
 import java.awt.event.KeyEvent

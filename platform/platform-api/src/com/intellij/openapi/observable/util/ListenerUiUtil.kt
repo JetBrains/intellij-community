@@ -3,13 +3,13 @@
 
 package com.intellij.openapi.observable.util
 
-import com.intellij.openapi.ui.ComboBox
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.tree.TreeModelAdapter
 import java.awt.ItemSelectable
 import java.awt.event.*
+import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JTree
 import javax.swing.event.DocumentEvent
@@ -18,7 +18,7 @@ import javax.swing.event.TreeModelEvent
 import javax.swing.text.JTextComponent
 import javax.swing.tree.TreeModel
 
-fun <E> ComboBox<E>.whenItemSelected(listener: (E) -> Unit) {
+fun <E> JComboBox<E>.whenItemSelected(listener: (E) -> Unit) {
   (this as ItemSelectable).whenItemSelected(listener)
 }
 

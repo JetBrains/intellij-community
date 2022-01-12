@@ -10,7 +10,7 @@ import com.intellij.ui.dsl.catchValidationException
 import com.intellij.ui.dsl.stringToInt
 import com.intellij.ui.dsl.validateIntInRange
 import com.intellij.ui.layout.*
-import com.intellij.util.lockOrSkip
+import com.intellij.openapi.observable.util.lockOrSkip
 import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JTextField
 import javax.swing.text.JTextComponent

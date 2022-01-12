@@ -34,7 +34,7 @@ import com.intellij.ui.components.ActionLink
 import com.intellij.ui.components.JBTextField
 import com.intellij.ui.dsl.builder.columns
 import com.intellij.ui.dsl.builder.impl.CollapsibleTitledSeparator
-import com.intellij.util.lockOrSkip
+import com.intellij.openapi.observable.util.lockOrSkip
 import com.intellij.util.ui.UIUtil
 import org.jetbrains.annotations.Nls
 import org.jetbrains.idea.maven.execution.MavenRunConfiguration

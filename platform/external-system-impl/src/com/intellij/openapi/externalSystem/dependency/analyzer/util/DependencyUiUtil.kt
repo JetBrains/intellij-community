@@ -8,10 +8,8 @@ import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyze
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Status
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
-import com.intellij.openapi.observable.properties.AtomicObservableProperty
-import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.observable.properties.ObservableProperty
-import com.intellij.openapi.observable.properties.transform
+import com.intellij.openapi.observable.properties.*
+import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.asSequence
 import com.intellij.openapi.observable.util.whenTreeChanged
 import com.intellij.openapi.util.NlsSafe
@@ -19,31 +17,14 @@ import com.intellij.ui.*
 import com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES
 import com.intellij.ui.SimpleTextAttributes.REGULAR_ATTRIBUTES
 import com.intellij.ui.components.JBList
-import com.intellij.ui.layout.*
 import com.intellij.ui.treeStructure.SimpleTree
-import com.intellij.util.lockOrSkip
 import com.intellij.util.ui.tree.TreeUtil
-import java.util.concurrent.atomic.AtomicBoolean
 import javax.swing.JList
 import javax.swing.JTree
 import javax.swing.ListModel
 import javax.swing.tree.DefaultMutableTreeNode
 import javax.swing.tree.TreeModel
 
-
-private fun <T> ObservableMutableProperty<T>.bind(property: ObservableMutableProperty<T>) {
-  val mutex = AtomicBoolean()
-  property.afterChange {
-    mutex.lockOrSkip {
-      set(it)
-    }
-  }
-  afterChange {
-    mutex.lockOrSkip {
-      property.set(it)
-    }
-  }
-}
 
 internal fun Dependency.Data.getDisplayText(showGroupId: Boolean): @NlsSafe String =
   when (this) {

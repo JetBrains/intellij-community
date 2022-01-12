@@ -6,6 +6,7 @@ import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyze
 import com.intellij.openapi.externalSystem.ui.ExternalSystemIconProvider
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
 import com.intellij.openapi.observable.properties.ObservableClearableProperty
+import com.intellij.openapi.observable.util.bind
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.observable.util.whenItemSelected
@@ -13,7 +14,6 @@ import com.intellij.openapi.observable.util.whenMousePressed
 import com.intellij.ui.ListUtil
 import com.intellij.ui.components.DropDownLink
 import com.intellij.ui.components.JBList
-import com.intellij.ui.layout.*
 import com.intellij.util.ui.JBUI
 import java.awt.Component
 import javax.swing.*

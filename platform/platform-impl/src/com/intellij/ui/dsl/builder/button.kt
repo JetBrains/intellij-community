@@ -2,6 +2,7 @@
 package com.intellij.ui.dsl.builder
 
 import com.intellij.openapi.observable.properties.GraphProperty
+import com.intellij.openapi.observable.util.bind
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.layout.*
 import com.intellij.util.ui.ThreeStateCheckBox

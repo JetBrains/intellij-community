@@ -12,7 +12,8 @@ import com.intellij.ui.dsl.gridLayout.Gaps
 import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.dsl.gridLayout.VerticalAlign
 import com.intellij.ui.layout.*
-import com.intellij.util.lockOrSkip
+import com.intellij.openapi.observable.util.lockOrSkip
+import com.intellij.openapi.observable.util.bind
 import com.intellij.util.ui.accessibility.ScreenReader
 import org.jetbrains.annotations.ApiStatus
 import java.util.concurrent.atomic.AtomicBoolean
