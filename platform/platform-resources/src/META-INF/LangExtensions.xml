@@ -1077,7 +1077,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.projectView.impl.ProjectViewImpl$ProjectViewPaneChangesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.IntentionsCollector"/>
-    <statistics.counterUsagesCollector groupId="completion.postfix" version="57"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.codeInsight.template.postfix.templates.PostfixTemplateLogger"/>
 
     <statistics.collectorExtension implementation="com.intellij.execution.impl.statistics.RunConfigurationUsageLanguageExtension"/>
     <statistics.collectorExtension implementation="com.intellij.execution.impl.statistics.RunConfigurationTypeLanguageExtension"/>
