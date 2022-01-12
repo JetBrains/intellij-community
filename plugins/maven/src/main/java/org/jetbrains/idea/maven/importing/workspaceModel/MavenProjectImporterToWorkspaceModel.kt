@@ -1,6 +1,7 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.idea.maven.importing.workspaceModel
 
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry
@@ -27,12 +28,14 @@ class MavenProjectImporterToWorkspaceModel(
   private val createdModulesList = ArrayList<Module>()
 
   override fun importProject(): List<MavenProjectsProcessorTask> {
+    val startTime = System.currentTimeMillis()
     val postTasks = ArrayList<MavenProjectsProcessorTask>()
     if (projectsToImportHaveChanges()) {
       val builder = WorkspaceEntityStorageBuilder.create()
       importModules(builder)
       scheduleRefreshResolvedArtifacts(postTasks)
     }
+    LOG.info("[maven import] applying models to workspace model took ${System.currentTimeMillis() - startTime}ms")
     return postTasks
   }
 
@@ -59,4 +62,8 @@ class MavenProjectImporterToWorkspaceModel(
 
   override val createdModules: List<Module>
     get() = createdModulesList
+
+  companion object {
+    private val LOG = logger<MavenProjectImporterToWorkspaceModel>()
+  }
 }
