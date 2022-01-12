@@ -130,15 +130,6 @@ public final class UIUtil {
     }
   }
 
-  // Here we setup window to be checked in IdeEventQueue and reset typeahead state when the window finally appears and gets focus
-  public static void markAsTypeAheadAware(Window window) {
-    ClientProperty.put(window, "TypeAheadAwareWindow", Boolean.TRUE);
-  }
-
-  public static boolean isTypeAheadAware(Window window) {
-    return ClientProperty.isTrue(window, "TypeAheadAwareWindow");
-  }
-
   // Here we setup dialog to be suggested in OwnerOptional as owner even if the dialog is not modal
   public static void markAsPossibleOwner(Dialog dialog) {
     ClientProperty.put(dialog, "PossibleOwner", Boolean.TRUE);

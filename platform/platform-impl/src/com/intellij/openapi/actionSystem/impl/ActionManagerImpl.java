@@ -1427,16 +1427,6 @@ public class ActionManagerImpl extends ActionManagerEx implements Disposable {
     }
   }
 
-  public boolean isToolWindowContextMenuVisible() {
-    for (Object popup : myPopups) {
-      if (popup instanceof ActionPopupMenuImpl &&
-          ((ActionPopupMenuImpl)popup).isToolWindowContextMenu()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   @Override
   public boolean isActionPopupStackEmpty() {
     return myPopups.isEmpty();

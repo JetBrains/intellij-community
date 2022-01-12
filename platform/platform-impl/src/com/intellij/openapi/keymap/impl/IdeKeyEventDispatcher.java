@@ -584,13 +584,8 @@ public final class IdeKeyEventDispatcher {
   };
 
   public boolean processAction(@NotNull InputEvent e, @NotNull ActionProcessor processor) {
-    boolean result = processAction(
-      e, ActionPlaces.KEYBOARD_SHORTCUT, myContext.getDataContext(),
-      new ArrayList<>(myContext.getActions()), processor, myPresentationFactory, myContext.getShortcut());
-    if (!result) {
-      IdeEventQueue.getInstance().flushDelayedKeyEvents();
-    }
-    return result;
+    return processAction(e, ActionPlaces.KEYBOARD_SHORTCUT, myContext.getDataContext(),
+                         new ArrayList<>(myContext.getActions()), processor, myPresentationFactory, myContext.getShortcut());
   }
 
   boolean processAction(@NotNull InputEvent e,
@@ -651,7 +646,6 @@ public final class IdeKeyEventDispatcher {
       waitSecondStroke(chosen.first, chosen.second.getPresentation());
     }
     else if (!wouldBeEnabledIfNotDumb.isEmpty()) {
-      IdeEventQueue.getInstance().flushDelayedKeyEvents();
       showDumbModeBalloonLater(project, getActionUnavailableMessage(wouldBeEnabledIfNotDumb), () -> {
         //invokeLater to make sure correct dataContext is taken from focus
         ApplicationManager.getApplication().invokeLater(() ->
