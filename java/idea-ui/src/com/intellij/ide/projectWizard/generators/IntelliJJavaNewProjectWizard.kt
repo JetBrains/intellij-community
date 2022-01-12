@@ -38,21 +38,20 @@ class IntelliJJavaNewProjectWizard : BuildSystemJavaNewProjectWizard {
           builder.moduleJdk = if (sameSDK) null else sdk
         }
 
-        builder.commit(project)
-
         if (addSampleCode) {
           val sourceCode = FileTemplateManager
             .getInstance(project)
             .getInternalTemplate("java-sample-code.java")
             .text
-          val fileDirectory = VfsUtil.createDirectoryIfMissing("$contentRoot/src")
-                              ?: throw IllegalStateException("Unable to create src directory.")
-
           WriteAction.run<IOException> {
+            val fileDirectory = VfsUtil.createDirectoryIfMissing("$contentRoot/src")
+                                ?: throw IllegalStateException("Unable to create src directory.")
             val file = fileDirectory.findOrCreateChildData(this, "Main.java")
             VfsUtil.saveText(file, sourceCode)
           }
         }
+
+        builder.commit(project)
       }
 
       init {
