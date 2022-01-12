@@ -47,21 +47,21 @@ object PackageIndexUtil {
     }
 
     /**
-     * Fast check if a [packageFqName] available for specified [searchScope].
-     * It uses only some part of [packageFqName] and therefore could be a false-positive results.
+     * Fast check if a [partialFqName] available for specified [searchScope].
+     * As [partialFqName] is only some part of entire fqName and therefore could be a false-positive results.
      *
      * But never provides a false-negative results
-     * therefore it could be used to define that [packageFqName] is NOT in a [searchScope].
+     * therefore it could be used to define that [partialFqName] is NOT in a [searchScope].
      */
     @JvmStatic
     fun containsFilesWithPartialPackage(
-        packageFqName: FqName,
+        partialFqName: FqName,
         searchScope: GlobalSearchScope,
         project: Project
     ): Boolean {
         return StubIndex.getInstance().getContainingFiles(
             KotlinPartialPackageNamesIndex.getInstance().key,
-            KotlinPartialPackageNamesIndex.toPartialFqName(packageFqName).asString(),
+            partialFqName.asString(),
             project,
             searchScope
         ).hasNext()

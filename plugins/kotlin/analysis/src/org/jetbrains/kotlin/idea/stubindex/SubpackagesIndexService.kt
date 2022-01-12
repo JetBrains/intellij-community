@@ -16,22 +16,28 @@ import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiModificationTracker
 import com.intellij.util.containers.MultiMap
+import org.jetbrains.kotlin.caches.project.cacheByProvider
 import org.jetbrains.kotlin.idea.KotlinLanguage
+import org.jetbrains.kotlin.idea.caches.project.ModuleSourceScope
 import org.jetbrains.kotlin.idea.caches.trackers.KotlinPackageModificationListener
 import org.jetbrains.kotlin.idea.util.application.getServiceSafe
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.util.*
 
 class SubpackagesIndexService(private val project: Project): Disposable {
 
     private val cachedValue = CachedValuesManager.getManager(project).createCachedValue(
         {
-            CachedValueProvider.Result(
-                SubpackagesIndex(KotlinExactPackagesIndex.getInstance().getAllKeys(project)),
+            val dependencies = arrayOf(
                 ProjectRootModificationTracker.getInstance(project),
                 otherLanguagesModificationTracker(),
-                KotlinPackageModificationListener.getInstance(project).packageTracker,
+                KotlinPackageModificationListener.getInstance(project).packageTracker
+            )
+            CachedValueProvider.Result(
+                SubpackagesIndex(KotlinExactPackagesIndex.getInstance().getAllKeys(project), dependencies),
+                *dependencies,
             )
         },
         false
@@ -71,7 +77,7 @@ class SubpackagesIndexService(private val project: Project): Disposable {
                 otherLanguagesModificationTracker = it
             }
 
-    inner class SubpackagesIndex(allPackageFqNames: Collection<String>) {
+    inner class SubpackagesIndex(allPackageFqNames: Collection<String>, val dependencies: Array<ModificationTracker>) {
         // a map from any existing package (in kotlin) to a set of subpackages (not necessarily direct) containing files
         private val allPackageFqNames = hashSetOf<FqName>()
         private val fqNameByPrefix = MultiMap.createSet<FqName, FqName>()
@@ -108,7 +114,18 @@ class SubpackagesIndexService(private val project: Project): Disposable {
         private fun Collection<FqName>.isKnownNotContains(fqName: FqName, scope: GlobalSearchScope): Boolean {
             return !fqName.isRoot && (isEmpty() ||
                     // fast check is reasonable when fqNames has more than 1 element
-                    size > 1 && !PackageIndexUtil.containsFilesWithPartialPackage(fqName, scope, project))
+                    size > 1 && run {
+                val partialFqName = KotlinPartialPackageNamesIndex.toPartialFqName(fqName)
+
+                val cachedPartialFqNames =
+                    scope.safeAs<ModuleSourceScope>()?.module?.cacheByProvider(dependencies) {
+                        Collections.synchronizedMap(mutableMapOf<FqName, Boolean>())
+                    }
+                cachedPartialFqNames?.get(partialFqName)?.let { return@run it }
+                val notContains = !PackageIndexUtil.containsFilesWithPartialPackage(partialFqName, scope, project)
+                cachedPartialFqNames?.put(partialFqName, notContains)
+                notContains
+            })
         }
 
         fun packageExists(fqName: FqName): Boolean = fqName in allPackageFqNames || fqNameByPrefix.containsKey(fqName)
