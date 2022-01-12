@@ -8,7 +8,7 @@ import com.intellij.debugger.streams.lib.impl.StreamExLibrarySupportProvider
 /**
  * @author Vitaliy.Bibaev
  */
-abstract class StreamExTestCase : LibraryTraceExecutionTestCase("streamex-0.6.5.jar") {
+abstract class StreamExTestCase : LibraryTraceExecutionTestCase("one.util:streamex:0.8.0") {
   private companion object {
     const val STREAM_EX_REFLECTION_WARNING_MESSAGE =
       "WARNING: An illegal reflective access operation has occurred\n" +

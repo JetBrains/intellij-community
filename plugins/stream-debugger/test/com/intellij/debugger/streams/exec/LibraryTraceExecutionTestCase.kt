@@ -3,22 +3,21 @@ package com.intellij.debugger.streams.exec
 
 import com.intellij.debugger.streams.test.TraceExecutionTestCase
 import com.intellij.execution.configurations.JavaParameters
-import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
+import com.intellij.openapi.roots.ModuleRootModificationUtil
+import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
-import com.intellij.testFramework.PsiTestUtil
+import com.intellij.testFramework.fixtures.MavenDependencyUtil
+import junit.framework.TestCase
 import java.io.File
-import java.nio.file.Paths
 
 /**
  * @author Vitaliy.Bibaev
  */
-abstract class LibraryTraceExecutionTestCase(jarName: String) : TraceExecutionTestCase() {
-  private val libraryDirectory = File(PluginPathManager.getPluginHomePath("stream-debugger") + "/lib").absolutePath
-  private val jarPath = Paths.get(libraryDirectory, jarName).toAbsolutePath().toString()
+abstract class LibraryTraceExecutionTestCase(private val coordinates: String) : TraceExecutionTestCase() {
+  lateinit var jarPath: String
 
   private companion object {
     fun String.replaceLibraryPath(libraryPath: String): String {
@@ -30,9 +29,12 @@ abstract class LibraryTraceExecutionTestCase(jarName: String) : TraceExecutionTe
 
   override fun setUpModule() {
     super.setUpModule()
-    ApplicationManager.getApplication().runWriteAction {
-      VfsRootAccess.allowRootAccess(testRootDisposable, libraryDirectory)
-      PsiTestUtil.addLibrary(myModule, jarPath)
+    ModuleRootModificationUtil.updateModel(myModule) { model ->
+      MavenDependencyUtil.addFromMaven(model, coordinates)
+      val libraryJar = model.moduleLibraryTable.getLibraryByName(coordinates)!!.rootProvider.getFiles(OrderRootType.CLASSES)[0]
+      val jarPathWithSuffix = libraryJar.path
+      TestCase.assertTrue(jarPathWithSuffix.endsWith("!/"))
+      jarPath = jarPathWithSuffix.substring(0, jarPathWithSuffix.length - "!/".length)
     }
   }
 
