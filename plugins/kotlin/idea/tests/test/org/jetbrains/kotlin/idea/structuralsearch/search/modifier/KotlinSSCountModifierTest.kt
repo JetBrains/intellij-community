@@ -1,11 +1,11 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.structuralsearch.search.filters
+package org.jetbrains.kotlin.idea.structuralsearch.search.modifier
 
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
 
-class KotlinSSCountFilterTest : KotlinSSResourceInspectionTest() {
-    override fun getBasePath(): String = "countFilter"
+class KotlinSSCountModifierTest : KotlinSSResourceInspectionTest() {
+    override fun getBasePath(): String = "countModifier"
 
     // isApplicableMinCount
 

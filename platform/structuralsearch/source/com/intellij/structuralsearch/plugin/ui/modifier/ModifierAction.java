@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.structuralsearch.plugin.ui.filters;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.structuralsearch.plugin.ui.modifier;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.ExtensionPointName;
@@ -21,30 +21,30 @@ import java.util.function.Supplier;
  *
  * @author Bas Leijdekkers
  */
-public abstract class FilterAction extends DumbAwareAction implements Filter {
+public abstract class ModifierAction extends DumbAwareAction implements Modifier {
 
   /**
    * This extension points causes memory leaks and other problems, because FilterActions have state.
-   * @deprecated Please use {@link FilterProvider} instead.
+   * @deprecated Please use {@link ModifierProvider} instead.
    */
   @Deprecated(forRemoval = true)
-  public static final ExtensionPointName<FilterAction> EP_NAME = ExtensionPointName.create("com.intellij.structuralsearch.filter");
+  public static final ExtensionPointName<ModifierAction> EP_NAME = ExtensionPointName.create("com.intellij.structuralsearch.filter");
 
   private static final AtomicInteger myFilterCount = new AtomicInteger();
 
   protected final SimpleColoredComponent myLabel = new SimpleColoredComponent();
-  protected FilterTable myTable;
+  protected ModifierTable myTable;
   private final int myPosition;
 
   private boolean myApplicable = true;
   private boolean myActive = false;
 
-  protected FilterAction(@NotNull Supplier<String> text) {
+  protected ModifierAction(@NotNull Supplier<String> text) {
     super(text);
     myPosition = myFilterCount.incrementAndGet();
   }
 
-  public void setTable(@NotNull FilterTable table) {
+  public void setTable(@NotNull ModifierTable table) {
     myTable = table;
   }
 
@@ -65,10 +65,10 @@ public abstract class FilterAction extends DumbAwareAction implements Filter {
 
   @Override
   public final void actionPerformed(@NotNull AnActionEvent e) {
-    initFilter();
+    initModifier();
     myApplicable = false;
     myActive = true;
-    myTable.addFilter(this);
+    myTable.addModifier(this);
   }
 
   @Override
@@ -80,18 +80,18 @@ public abstract class FilterAction extends DumbAwareAction implements Filter {
 
   protected abstract void setLabel(SimpleColoredComponent component);
 
-  public abstract boolean hasFilter();
+  public abstract boolean hasModifier();
 
   final boolean isActive() {
-    if (hasFilter()) {
+    if (hasModifier()) {
       myActive = true;
     }
     return myActive;
   }
 
-  protected void initFilter() {}
+  protected void initModifier() {}
 
-  public abstract void clearFilter();
+  public abstract void clearModifier();
 
   final void reset() {
     myApplicable = true;

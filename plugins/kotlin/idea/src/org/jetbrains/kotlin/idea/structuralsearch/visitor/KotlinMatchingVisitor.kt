@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.structuralsearch.visitor
 
@@ -793,7 +793,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         val other = getTreeElementDepar<KtSuperTypeList>() ?: return
 
         val withinHierarchyEntries = list.entries.filter {
-            val type = it.typeReference; type is KtTypeReference && getHandler(type).withinHierarchyTextFilterSet
+            val type = it.typeReference; type is KtTypeReference && getHandler(type).withinHierarchyTextModifierSet
         }
         (other.parent as? KtClassOrObject)?.let { klass ->
             val supertypes = (klass.descriptor as ClassDescriptor).toSimpleType().supertypes()
@@ -826,7 +826,7 @@ class KotlinMatchingVisitor(private val myMatchingVisitor: GlobalMatchingVisitor
         // Possible match if "within hierarchy" is set
         if (!matchNameIdentifiers && identifier != null && otherIdentifier != null) {
             val identifierHandler = getHandler(identifier)
-            val checkHierarchyDown = identifierHandler.withinHierarchyTextFilterSet
+            val checkHierarchyDown = identifierHandler.withinHierarchyTextModifierSet
 
             if (checkHierarchyDown) {
                 // Check hierarchy down (down of pattern element = supertypes of code element)

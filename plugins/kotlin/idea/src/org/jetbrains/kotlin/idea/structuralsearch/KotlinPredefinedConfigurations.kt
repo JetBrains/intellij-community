@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.structuralsearch
 
@@ -9,9 +9,9 @@ import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.idea.KotlinBundle
 import org.jetbrains.kotlin.idea.KotlinFileType
-import org.jetbrains.kotlin.idea.structuralsearch.filters.OneStateFilter
-import org.jetbrains.kotlin.idea.structuralsearch.filters.ValOnlyFilter
-import org.jetbrains.kotlin.idea.structuralsearch.filters.VarOnlyFilter
+import org.jetbrains.kotlin.idea.structuralsearch.modifiers.OneStateModifier
+import org.jetbrains.kotlin.idea.structuralsearch.modifiers.ValOnlyModifier
+import org.jetbrains.kotlin.idea.structuralsearch.modifiers.VarOnlyModifier
 
 object KotlinPredefinedConfigurations {
     private val CLASS_TYPE get() = KotlinBundle.message("category.class")
@@ -141,13 +141,13 @@ object KotlinPredefinedConfigurations {
         searchTemplate(
             KotlinBundle.message("predefined.configuration.vars.only"),
             "vars only",
-            """var '_Variable:[_${VarOnlyFilter.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]""",
+            """var '_Variable:[_${VarOnlyModifier.CONSTRAINT_NAME}(${OneStateModifier.ENABLED})]""",
             EXPRESSION_TYPE
         ),
         searchTemplate(
             KotlinBundle.message("predefined.configuration.vals.only"),
             "vals only",
-            """val '_Value:[_${ValOnlyFilter.CONSTRAINT_NAME}(${OneStateFilter.ENABLED})]""",
+            """val '_Value:[_${ValOnlyModifier.CONSTRAINT_NAME}(${OneStateModifier.ENABLED})]""",
             EXPRESSION_TYPE
         ),
         searchTemplate(

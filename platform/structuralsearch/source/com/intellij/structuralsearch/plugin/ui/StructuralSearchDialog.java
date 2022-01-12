@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.highlighting.HighlightHandlerBase;
@@ -72,9 +72,12 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceCommand;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
-import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
+import com.intellij.structuralsearch.plugin.ui.modifier.ModifierPanel;
 import com.intellij.structuralsearch.plugin.util.CollectingMatchResultSink;
-import com.intellij.ui.*;
+import com.intellij.ui.ComponentUtil;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
@@ -164,7 +167,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
   private OnePixelSplitter mySearchEditorPanel;
   private MigLayout myCenterPanelLayout;
 
-  private FilterPanel myFilterPanel;
+  private ModifierPanel myFilterPanel;
   private LinkComboBox myTargetComboBox;
   private ScopePanel myScopePanel;
   private JCheckBox myOpenInNewTab;
@@ -429,7 +432,7 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     searchPanel.add(injected, "grow 0, gapright 10");
     searchPanel.add(matchCase, "grow 0");
 
-    myFilterPanel = new FilterPanel(getProject(), myFileType, getDisposable());
+    myFilterPanel = new ModifierPanel(getProject(), myFileType, getDisposable());
     myFilterPanel.setConstraintChangedCallback(() -> initValidation());
     myFilterPanel.getComponent().setMinimumSize(new Dimension(300, 50));
     mySearchEditorPanel.setSecondComponent(myFilterPanel.getComponent());
@@ -643,8 +646,8 @@ public class StructuralSearchDialog extends DialogWrapper implements DocumentLis
     presentation.setText(SSRBundle.message("tools.button"));
 
     final Icon filterModifiedIcon = ExecutionUtil.getLiveIndicator(AllIcons.General.Filter);
-    final AnAction filterAction = new DumbAwareToggleAction(SSRBundle.message("filter.button"),
-                                                            SSRBundle.message("filter.button.description"),
+    final AnAction filterAction = new DumbAwareToggleAction(SSRBundle.message("modifier.button"),
+                                                            SSRBundle.message("modifier.button.description"),
                                                             filterModifiedIcon) {
 
       @Override

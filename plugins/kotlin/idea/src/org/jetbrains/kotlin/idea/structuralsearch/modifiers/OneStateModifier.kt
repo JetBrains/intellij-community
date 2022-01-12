@@ -1,12 +1,12 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.structuralsearch.filters
+package org.jetbrains.kotlin.idea.structuralsearch.modifiers
 
 import com.intellij.psi.PsiElement
 import com.intellij.structuralsearch.MatchVariableConstraint
 import com.intellij.structuralsearch.NamedScriptableDefinition
-import com.intellij.structuralsearch.plugin.ui.filters.FilterAction
-import com.intellij.structuralsearch.plugin.ui.filters.FilterEditor
+import com.intellij.structuralsearch.plugin.ui.modifier.ModifierAction
+import com.intellij.structuralsearch.plugin.ui.modifier.ModifierEditor
 import com.intellij.ui.SimpleColoredComponent
 import org.jetbrains.annotations.Nls
 import org.jetbrains.annotations.NonNls
@@ -16,11 +16,11 @@ import javax.swing.JComponent
 import javax.swing.JLabel
 
 /**
- * Simple one state [FilterAction] with a minimal UI – one label.
+ * Simple one state [ModifierAction] with a minimal UI – one label.
  * Used to add a boolean constraint.
  */
-abstract class OneStateFilter(@Nls val name: Supplier<String>, @Nls val label: String, @NonNls val constraintName: String) :
-    FilterAction(name) {
+abstract class OneStateModifier(@Nls val name: Supplier<String>, @Nls val label: String, @NonNls val constraintName: String) :
+    ModifierAction(name) {
 
     companion object {
         const val ENABLED: String = "enabled"
@@ -30,12 +30,12 @@ abstract class OneStateFilter(@Nls val name: Supplier<String>, @Nls val label: S
         myLabel.append(label)
     }
 
-    override fun hasFilter(): Boolean {
+    override fun hasModifier(): Boolean {
         val variable = myTable.matchVariable ?: return false
         return variable.getAdditionalConstraint(constraintName) == ENABLED
     }
 
-    override fun clearFilter() {
+    override fun clearModifier() {
         myTable.matchVariable?.putAdditionalConstraint(constraintName, null)
     }
 
@@ -43,8 +43,8 @@ abstract class OneStateFilter(@Nls val name: Supplier<String>, @Nls val label: S
         myTable.variable is MatchVariableConstraint
                 && myTable.profile!!.isApplicableConstraint(constraintName, nodes, completePattern, target)
 
-    override fun getEditor(): FilterEditor<out NamedScriptableDefinition> =
-        object : FilterEditor<MatchVariableConstraint>(myTable.matchVariable, myTable.constraintChangedCallback) {
+    override fun getEditor(): ModifierEditor<out NamedScriptableDefinition> =
+        object : ModifierEditor<MatchVariableConstraint>(myTable.matchVariable, myTable.constraintChangedCallback) {
 
             val myLabel = JLabel(label)
 

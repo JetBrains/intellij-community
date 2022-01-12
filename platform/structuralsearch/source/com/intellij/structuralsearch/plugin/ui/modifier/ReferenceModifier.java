@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.structuralsearch.plugin.ui.filters;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.structuralsearch.plugin.ui.modifier;
 
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.text.StringUtil;
@@ -25,10 +25,10 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("ComponentNotRegistered")
-public class ReferenceFilter extends FilterAction {
+public class ReferenceModifier extends ModifierAction {
 
-  public ReferenceFilter() {
-    super(SSRBundle.messagePointer("reference.filter.name"));
+  public ReferenceModifier() {
+    super(SSRBundle.messagePointer("reference.filter.modifier.name"));
   }
 
   @Override
@@ -45,13 +45,13 @@ public class ReferenceFilter extends FilterAction {
   }
 
   @Override
-  public boolean hasFilter() {
+  public boolean hasModifier() {
     final MatchVariableConstraint variable = myTable.getMatchVariable();
     return variable != null && !StringUtil.isEmpty(variable.getReferenceConstraint());
   }
 
   @Override
-  public void clearFilter() {
+  public void clearModifier() {
     final MatchVariableConstraint variable = myTable.getMatchVariable();
     if (variable == null) {
       return;
@@ -82,8 +82,8 @@ public class ReferenceFilter extends FilterAction {
   }
 
   @Override
-  public FilterEditor<MatchVariableConstraint> getEditor() {
-    return new FilterEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
+  public ModifierEditor<MatchVariableConstraint> getEditor() {
+    return new ModifierEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
 
       private final JLabel myLabel = new JLabel(SSRBundle.message("reference.label"));
       private final @NotNull ComboBox<Configuration> myComboBox =
@@ -95,8 +95,8 @@ public class ReferenceFilter extends FilterAction {
           setText(value.getName());
         }
       };
-      private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("reference.filter.help.text"));
-      private final CheckBox myCheckBox = new CheckBox(SSRBundle.message("invert.filter"), this, "inverseTemplate");
+      private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("reference.filter.modifier.help.text"));
+      private final CheckBox myCheckBox = new CheckBox(SSRBundle.message("invert.modifier"), this, "inverseTemplate");
       private final Component myGlue = Box.createGlue();
       public boolean inverseTemplate = myConstraint.isInvertReference();
 

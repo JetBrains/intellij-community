@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.structuralsearch.plugin.ui.filters;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.structuralsearch.plugin.ui.modifier;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.structuralsearch.MatchVariableConstraint;
@@ -11,11 +11,11 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Bas Leijdekkers
  */
-public interface FilterTable {
+public interface ModifierTable {
 
-  void addFilter(FilterAction filter);
+  void addModifier(ModifierAction filter);
 
-  void removeFilter(FilterAction filter);
+  void removeModifier(ModifierAction filter);
 
   NamedScriptableDefinition getVariable();
 

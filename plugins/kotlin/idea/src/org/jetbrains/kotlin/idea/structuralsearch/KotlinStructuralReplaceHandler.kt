@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.kotlin.idea.structuralsearch
 
@@ -211,7 +211,7 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
     }
 
     private fun KtDeclaration.replaceDeclaration(searchTemplate: KtDeclaration, match: KtDeclaration): KtDeclaration {
-        if (modifierList?.annotationEntries?.isEmpty() == true) { // remove @ symbol for when annotation count filter is equal to 0
+        if (modifierList?.annotationEntries?.isEmpty() == true) { // remove @ symbol for when annotation count modifier is equal to 0
             val atElement = modifierList?.children?.find { it is PsiErrorElement }
             atElement?.delete()
         }
@@ -267,7 +267,7 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
         if (getSuperTypeList()?.findDescendantOfType<PsiErrorElement>() != null) {
             getSuperTypeList()?.delete()
         }
-        if (typeParameters.isEmpty()) typeParameterList?.delete() // for count filter equals to 0 inside <>
+        if (typeParameters.isEmpty()) typeParameterList?.delete() // for count modifier equals to 0 inside <>
 
         CLASS_MODIFIERS.forEach { replaceModifier(searchTemplate, match, it) }
         fixModifierListFormatting(match)
@@ -336,7 +336,7 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
     }
 
     private fun KtProperty.replaceProperty(searchTemplate: KtProperty, match: KtProperty): KtProperty {
-        if (initializer == null) equalsToken?.let {  // when count filter = 0 on the initializer
+        if (initializer == null) equalsToken?.let {  // when count modifier = 0 on the initializer
             it.deleteSurroundingWhitespace()
             it.delete()
         }
@@ -360,7 +360,7 @@ class KotlinStructuralReplaceHandler(private val project: Project) : StructuralR
         parameters.forEachIndexed { i, param ->
             val searchParam = searchTemplate.parameters.getOrNull(i)
             val matchParam = match.parameters.getOrNull(i) ?: return@forEachIndexed
-            if (searchParam == null) { // count filter
+            if (searchParam == null) { // count modifier
                 addSurroundingWhiteSpace(param, matchParam)
             }
             if (param.valOrVarKeyword == null && searchParam?.valOrVarKeyword == null) {

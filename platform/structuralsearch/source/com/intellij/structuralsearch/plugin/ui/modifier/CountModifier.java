@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.structuralsearch.plugin.ui.filters;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.structuralsearch.plugin.ui.modifier;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.structuralsearch.MatchVariableConstraint;
@@ -18,13 +18,13 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("ComponentNotRegistered")
-public class CountFilter extends FilterAction {
+public class CountModifier extends ModifierAction {
 
   boolean myMinZero;
   boolean myMaxUnlimited;
 
-  public CountFilter() {
-    super(SSRBundle.messagePointer("count.filter.name"));
+  public CountModifier() {
+    super(SSRBundle.messagePointer("count.modifier.name"));
   }
 
   @Override
@@ -42,7 +42,7 @@ public class CountFilter extends FilterAction {
   }
 
   @Override
-  public boolean hasFilter() {
+  public boolean hasModifier() {
     final MatchVariableConstraint variable = myTable.getMatchVariable();
     if (variable == null) {
       return false;
@@ -51,7 +51,7 @@ public class CountFilter extends FilterAction {
   }
 
   @Override
-  public void clearFilter() {
+  public void clearModifier() {
     final MatchVariableConstraint variable = myTable.getMatchVariable();
     if (variable == null) {
       return;
@@ -61,7 +61,7 @@ public class CountFilter extends FilterAction {
   }
 
   @Override
-  public void initFilter() {
+  public void initModifier() {
     final MatchVariableConstraint constraint = myTable.getMatchVariable();
     if (constraint == null) {
       return;
@@ -95,8 +95,8 @@ public class CountFilter extends FilterAction {
   }
 
   @Override
-  public FilterEditor<MatchVariableConstraint> getEditor() {
-    return new FilterEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
+  public ModifierEditor<MatchVariableConstraint> getEditor() {
+    return new ModifierEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
 
       private final IntegerField myMinField = new IntegerField();
       private final IntegerField myMaxField = new IntegerField();

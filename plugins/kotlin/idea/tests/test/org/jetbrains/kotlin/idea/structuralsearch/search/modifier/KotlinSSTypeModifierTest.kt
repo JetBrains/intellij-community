@@ -1,21 +1,21 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
-package org.jetbrains.kotlin.idea.structuralsearch.search.filters
+package org.jetbrains.kotlin.idea.structuralsearch.search.modifier
 
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinSSResourceInspectionTest
 import org.jetbrains.kotlin.idea.structuralsearch.KotlinStructuralSearchProfile
 
-class KotlinSSTypeFilterTest : KotlinSSResourceInspectionTest() {
+class KotlinSSTypeModifierTest : KotlinSSResourceInspectionTest() {
 
-    override fun getBasePath(): String = "typeFilter"
+    override fun getBasePath(): String = "typeModifier"
 
     // Behavior
 
-    fun testShortNameTypeFilter() { doTest("val '_x:[exprtype(Int)]") }
+    fun testShortNameTypeModifier() { doTest("val '_x:[exprtype(Int)]") }
 
-    fun testFqNameTypeFilter() { doTest("val '_x:[exprtype(A.B.Foo)]") }
+    fun testFqNameTypeModifier() { doTest("val '_x:[exprtype(A.B.Foo)]") }
 
-    fun testWithinHierarchyTypeFilter() { doTest("val '_x:[exprtype(*Number)]") }
+    fun testWithinHierarchyTypeModifier() { doTest("val '_x:[exprtype(*Number)]") }
 
     fun testNullableType() { doTest("'_('_:[exprtype(Int?)])") }
 
@@ -45,7 +45,7 @@ class KotlinSSTypeFilterTest : KotlinSSResourceInspectionTest() {
 
     fun testStarProjection() { doTest("fun '_('_ : Foo<*>)") }
     
-    // Elements where type filter is enabled
+    // Elements where type modifier is enabled
 
     fun testTypeValueArgument() { doTest("'_('_:[exprtype(String)])") }
 

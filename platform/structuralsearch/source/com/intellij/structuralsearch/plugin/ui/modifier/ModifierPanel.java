@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.structuralsearch.plugin.ui.filters;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.structuralsearch.plugin.ui.modifier;
 
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
@@ -41,11 +41,11 @@ import java.util.List;
 /**
  * @author Bas Leijdekkers
  */
-public class FilterPanel implements FilterTable, ShortFilterTextProvider {
+public class ModifierPanel implements ModifierTable, ShortModifierTextProvider {
 
   private final JPanel myFilterPanel;
   final JBListTable myFilterTable;
-  final ListTableModel<Filter> myTableModel;
+  final ListTableModel<Modifier> myTableModel;
 
   @NotNull final Project myProject;
   private CompiledPattern myCompiledPattern;
@@ -53,28 +53,28 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
   LanguageFileType myFileType;
 
   final Header myHeader = new Header();
-  private final ScriptFilter myScriptFilter;
-  private final List<FilterAction> myFilters;
+  private final ScriptModifier myScriptModifier;
+  private final List<ModifierAction> myFilters;
   private Runnable myConstraintChangedCallback;
 
-  public FilterPanel(@NotNull Project project, LanguageFileType fileType, Disposable parent) {
+  public ModifierPanel(@NotNull Project project, LanguageFileType fileType, Disposable parent) {
     myProject = project;
     myFileType = fileType;
     myFilters = new SmartList<>();
-    for (FilterProvider provider : FilterProvider.EP_NAME.getExtensionList()) {
-      for (FilterAction filter : provider.getFilters()) {
+    for (ModifierProvider provider : ModifierProvider.EP_NAME.getExtensionList()) {
+      for (ModifierAction filter : provider.getModifiers()) {
         myFilters.add(filter);
         filter.setTable(this);
       }
     }
-    myScriptFilter = new ScriptFilter(); // initialize last
-    myFilters.add(myScriptFilter);
-    myScriptFilter.setTable(this);
+    myScriptModifier = new ScriptModifier(); // initialize last
+    myFilters.add(myScriptModifier);
+    myScriptModifier.setTable(this);
 
-    myTableModel = new ListTableModel<>(new ColumnInfo[]{new ColumnInfo<Filter, Filter>("") {
+    myTableModel = new ListTableModel<>(new ColumnInfo[]{new ColumnInfo<Modifier, Modifier>("") {
       @Nullable
       @Override
-      public Filter valueOf(Filter s) {
+      public Modifier valueOf(Modifier s) {
         return s;
       }
     }}, new SmartList<>());
@@ -107,9 +107,9 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
       .setRemoveAction(button -> {
         myFilterTable.stopEditing();
         final int selectedRow = myFilterTable.getTable().getSelectedRow();
-        final Filter filter = myTableModel.getRowValue(selectedRow);
-        if (filter instanceof FilterAction) {
-          removeFilter((FilterAction)filter);
+        final Modifier modifier = myTableModel.getRowValue(selectedRow);
+        if (modifier instanceof ModifierAction) {
+          removeModifier((ModifierAction)modifier);
         }
       })
       .setRemoveActionUpdater(e -> isValid() && myFilterTable.getTable().getSelectedRow() != 0)
@@ -120,7 +120,7 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
   }
 
   @Override
-  public void addFilter(FilterAction filter) {
+  public void addModifier(ModifierAction filter) {
     final JBTable table = myFilterTable.getTable();
     TableUtil.stopEditing(table);
     table.setRowHeight(table.getRowHeight()); // reset
@@ -147,7 +147,7 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
     }
   }
 
-  final void initFilter(FilterAction filter, List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
+  final void initFilter(ModifierAction filter, List<? extends PsiElement> nodes, boolean completePattern, boolean target) {
     if (filter.checkApplicable(nodes, completePattern, target)) {
       if (filter.isActive() && !myTableModel.getItems().contains(filter)) {
         if (myTableModel.getRowCount() == 0) {
@@ -156,18 +156,18 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
         myTableModel.addRow(filter);
       }
     }
-    else if (filter.hasFilter()) {
-      filter.clearFilter();
+    else if (filter.hasModifier()) {
+      filter.clearModifier();
       myConstraintChangedCallback.run();
     }
   }
 
   @Override
-  public final void removeFilter(FilterAction filter) {
+  public final void removeModifier(ModifierAction filter) {
     final int index = myTableModel.indexOf(filter);
     if (index >= 0) myTableModel.removeRow(index);
     if (myTableModel.getRowCount() == 1) myTableModel.removeRow(0); // remove header
-    filter.clearFilter();
+    filter.clearModifier();
     filter.reset();
     myConstraintChangedCallback.run();
   }
@@ -178,12 +178,12 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
   }
 
   @Override
-  public String getShortFilterText(NamedScriptableDefinition variable) {
+  public String getShortModifierText(NamedScriptableDefinition variable) {
     if (variable == null) {
       return "";
     }
     final StringBuilder builder = new StringBuilder();
-    for (FilterAction filter : myFilters) {
+    for (ModifierAction filter : myFilters) {
       final String text = filter.getShortText(variable);
       if (text.length() > 0) {
         if (builder.length() > 0) builder.append(", ");
@@ -210,14 +210,14 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
     if (myConstraint instanceof MatchVariableConstraint) {
       final DefaultActionGroup group = new DefaultActionGroup(myFilters);
       final DataContext context = DataManager.getInstance().getDataContext(component);
-      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(SSRBundle.message("add.filter.title"), group, context,
+      final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(SSRBundle.message("add.modifier.title"), group, context,
                                                                                   JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, false,
                                                                                   ActionPlaces.getPopupPlace("StructuralSearchFilterPanel"));
       popup.show(point);
     }
     else {
-      final AnActionEvent event = AnActionEvent.createFromAnAction(myScriptFilter, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT);
-      myScriptFilter.actionPerformed(event);
+      final AnActionEvent event = AnActionEvent.createFromAnAction(myScriptModifier, null, ActionPlaces.UNKNOWN, DataContext.EMPTY_CONTEXT);
+      myScriptModifier.actionPerformed(event);
     }
   }
 
@@ -252,7 +252,7 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
   }
 
   private void resetFilters() {
-    for (FilterAction filter : myFilters) {
+    for (ModifierAction filter : myFilters) {
       filter.reset();
     }
   }
@@ -272,7 +272,7 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
                            ((MatchVariableConstraint)myConstraint).isPartOfSearchResults();
     myTableModel.setItems(new SmartList<>());
     ReadAction.run(() -> {
-      for (FilterAction filter : myFilters) {
+      for (ModifierAction filter : myFilters) {
         initFilter(filter, nodes, completePattern, target);
       }
     });
@@ -280,8 +280,8 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
     final String message;
     if (myConstraint instanceof MatchVariableConstraint) {
       message = Configuration.CONTEXT_VAR_NAME.equals(varName)
-                ? SSRBundle.message("no.filters.whole.template.label")
-                : SSRBundle.message("no.filters.for.0.label", varName);
+                ? SSRBundle.message("no.modifiers.whole.template.label")
+                : SSRBundle.message("no.modifiers.for.0.label", varName);
     }
     else {
       message = SSRBundle.message("no.script.for.0.label", varName);
@@ -290,7 +290,7 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
     statusText.setText(message);
     if (isValid()) {
       statusText.appendSecondaryText(myConstraint instanceof MatchVariableConstraint
-                                     ? SSRBundle.message("add.filter.label")
+                                     ? SSRBundle.message("add.modifier.label")
                                      : SSRBundle.message("add.script.label"),
                                      SimpleTextAttributes.LINK_ATTRIBUTES,
                                      e -> showAddFilterPopup(myFilterTable.getTable(),
@@ -311,7 +311,7 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
     return myFilterTable.getTable();
   }
 
-  private class Header implements Filter {
+  private class Header implements Modifier {
 
     private final SimpleColoredComponent myLabel = new SimpleColoredComponent();
 
@@ -327,8 +327,8 @@ public class FilterPanel implements FilterTable, ShortFilterTextProvider {
       myLabel.clear();
       final String varName = myConstraint.getName();
       myLabel.append(Configuration.CONTEXT_VAR_NAME.equals(varName)
-                     ? SSRBundle.message("filters.for.whole.template.title")
-                     : SSRBundle.message("filters.for.0.title", varName),
+                     ? SSRBundle.message("modifiers.for.whole.template.title")
+                     : SSRBundle.message("modifiers.for.0.title", varName),
                      SimpleTextAttributes.GRAYED_ATTRIBUTES);
       return myLabel;
     }

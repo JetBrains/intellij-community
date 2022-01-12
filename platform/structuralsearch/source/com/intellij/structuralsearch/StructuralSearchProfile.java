@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch;
 
 import com.intellij.codeInsight.template.TemplateContextType;
@@ -44,7 +44,7 @@ public abstract class StructuralSearchProfile {
 
   /**
    * Creates the pattern PSI tree which is stored inside CompiledPattern.
-   * Uses compiling visitor to visit the query PsiElements, sets the correct Filters and Handlers.
+   * Uses compiling visitor to visit the query PsiElements, sets the correct Modifiers and Handlers.
    * @see #createCompiledPattern()
    */
   public abstract void compile(PsiElement @NotNull [] elements, @NotNull GlobalCompilingVisitor globalVisitor);

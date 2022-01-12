@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.template.Template;
@@ -16,7 +16,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.structuralsearch.NamedScriptableDefinition;
 import com.intellij.structuralsearch.ReplacementVariableDefinition;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
-import com.intellij.structuralsearch.plugin.ui.filters.ShortFilterTextProvider;
+import com.intellij.structuralsearch.plugin.ui.modifier.ShortModifierTextProvider;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.GraphicsUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,13 +35,13 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
   private long modificationTimeStamp;
   private final List<String> variables = new SmartList<>();
   private final Editor editor;
-  private final ShortFilterTextProvider myShortFilterTextProvider;
+  private final ShortModifierTextProvider myShortFilterTextProvider;
   private final boolean myCanBeReplace;
   @Nullable private final Consumer<? super String> myCurrentVariableCallback;
   public static final Key<Configuration> CURRENT_CONFIGURATION_KEY = Key.create("SS.CurrentConfiguration");
   private final Map<String, Inlay<FilterRenderer>> inlays = new HashMap<>();
 
-  private SubstitutionShortInfoHandler(@NotNull Editor _editor, ShortFilterTextProvider provider, boolean canBeReplace,
+  private SubstitutionShortInfoHandler(@NotNull Editor _editor, ShortModifierTextProvider provider, boolean canBeReplace,
                                        @Nullable Consumer<? super String> currentVariableCallback) {
     editor = _editor;
     myShortFilterTextProvider = provider;
@@ -125,25 +125,6 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
     return editor == null ? null : editor.getUserData(LISTENER_KEY);
   }
 
-  static void install(Editor editor, ShortFilterTextProvider provider, Disposable disposable) {
-    install(editor, provider, null, disposable, false);
-  }
-
-  static void install(Editor editor, ShortFilterTextProvider provider, @Nullable Consumer<? super String> currentVariableCallback, Disposable disposable, boolean replace) {
-    final SubstitutionShortInfoHandler handler = new SubstitutionShortInfoHandler(editor, provider, replace, currentVariableCallback);
-    editor.addEditorMouseMotionListener(handler, disposable);
-    editor.getDocument().addDocumentListener(handler, disposable);
-    editor.getCaretModel().addCaretListener(handler, disposable);
-    editor.putUserData(LISTENER_KEY, handler);
-  }
-
-  static void updateEditorInlays(Editor editor) {
-    final SubstitutionShortInfoHandler handler = retrieve(editor);
-    if (handler != null) {
-      handler.updateEditorInlays();
-    }
-  }
-
   void updateEditorInlays() {
     final Project project = editor.getProject();
     if (project == null) {
@@ -162,7 +143,7 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
       final String name = template.getSegmentName(i);
       variableNameLength += name.length() + 2;
       final NamedScriptableDefinition variable = configuration.findVariable(name);
-      final String labelText = myShortFilterTextProvider.getShortFilterText(variable);
+      final String labelText = myShortFilterTextProvider.getShortModifierText(variable);
       if (labelText.isEmpty()) {
         continue;
       }
@@ -178,7 +159,7 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
       }
     }
     final NamedScriptableDefinition contextVariable = configuration.findVariable(Configuration.CONTEXT_VAR_NAME);
-    final String labelText = myShortFilterTextProvider.getShortFilterText(contextVariable);
+    final String labelText = myShortFilterTextProvider.getShortModifierText(contextVariable);
     if (!labelText.isEmpty()) {
       variables.remove(Configuration.CONTEXT_VAR_NAME);
       final Inlay<FilterRenderer> inlay = inlays.get(Configuration.CONTEXT_VAR_NAME);
@@ -196,6 +177,25 @@ public final class SubstitutionShortInfoHandler implements DocumentListener, Edi
     for (String variable : variables) {
       Disposer.dispose(inlays.remove(variable));
     }
+  }
+
+  static void install(Editor editor, ShortModifierTextProvider provider, Disposable disposable) {
+    install(editor, provider, null, disposable, false);
+  }
+
+  static void updateEditorInlays(Editor editor) {
+    final SubstitutionShortInfoHandler handler = retrieve(editor);
+    if (handler != null) {
+      handler.updateEditorInlays();
+    }
+  }
+
+  static void install(Editor editor, ShortModifierTextProvider provider, @Nullable Consumer<? super String> currentVariableCallback, Disposable disposable, boolean replace) {
+    final SubstitutionShortInfoHandler handler = new SubstitutionShortInfoHandler(editor, provider, replace, currentVariableCallback);
+    editor.addEditorMouseMotionListener(handler, disposable);
+    editor.getDocument().addDocumentListener(handler, disposable);
+    editor.getCaretModel().addCaretListener(handler, disposable);
+    editor.putUserData(LISTENER_KEY, handler);
   }
 
   private static class FilterRenderer implements EditorCustomElementRenderer {

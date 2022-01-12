@@ -1,5 +1,5 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.structuralsearch.plugin.ui.filters;
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+package com.intellij.structuralsearch.plugin.ui.modifier;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
@@ -20,12 +20,12 @@ import java.util.List;
  * @author Bas Leijdekkers
  */
 @SuppressWarnings("ComponentNotRegistered")
-public class TextFilter extends FilterAction {
+public class TextModifier extends ModifierAction {
 
   boolean myShowHierarchy;
 
-  public TextFilter() {
-    super(SSRBundle.messagePointer("text.filter.name"));
+  public TextModifier() {
+    super(SSRBundle.messagePointer("text.filter.modifier.name"));
   }
 
   @Override
@@ -46,13 +46,13 @@ public class TextFilter extends FilterAction {
   }
 
   @Override
-  public boolean hasFilter() {
+  public boolean hasModifier() {
     final MatchVariableConstraint variable = myTable.getMatchVariable();
     return variable != null && (!StringUtil.isEmpty(variable.getRegExp()) || variable.isWithinHierarchy());
   }
 
   @Override
-  public void clearFilter() {
+  public void clearModifier() {
     final MatchVariableConstraint variable = myTable.getMatchVariable();
     if (variable == null) {
       return;
@@ -84,13 +84,13 @@ public class TextFilter extends FilterAction {
   }
 
   @Override
-  public FilterEditor<MatchVariableConstraint> getEditor() {
-    return new FilterEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
+  public ModifierEditor<MatchVariableConstraint> getEditor() {
+    return new ModifierEditor<>(myTable.getMatchVariable(), myTable.getConstraintChangedCallback()) {
 
       private final EditorTextField myTextField = UIUtil.createRegexComponent("", myTable.getProject());
       private final JCheckBox myHierarchyCheckBox = new JCheckBox(SSRBundle.message("within.type.hierarchy.check.box"), false);
       private final JLabel myTextLabel = new JLabel(SSRBundle.message("text.label"));
-      private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("text.filter.help.text"));
+      private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(SSRBundle.message("text.filter.modifier.help.text"));
 
       @Override
       protected void layoutComponents() {
