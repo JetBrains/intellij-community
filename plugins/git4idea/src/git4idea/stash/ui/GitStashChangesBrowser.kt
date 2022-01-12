@@ -4,45 +4,34 @@ package git4idea.stash.ui
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.actionSystem.AnAction
-import com.intellij.openapi.components.service
+import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
-import com.intellij.openapi.util.text.StringUtil
+import com.intellij.openapi.vcs.FilePath
+import com.intellij.openapi.vcs.VcsDataKeys
 import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vcs.changes.ChangesUtil
 import com.intellij.openapi.vcs.changes.DiffPreview
 import com.intellij.openapi.vcs.changes.EditorTabPreview
-import com.intellij.openapi.vcs.changes.actions.ShowDiffWithLocalAction
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
-import com.intellij.openapi.vcs.changes.ui.ChangeDiffRequestChain
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
-import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder
+import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider
+import com.intellij.openapi.vcs.changes.ui.*
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.ui.StatusText
-import com.intellij.vcs.log.Hash
-import git4idea.GitCommit
 import git4idea.i18n.GitBundle
-import git4idea.stash.GitStashCache
-import git4idea.ui.StashInfo
-import it.unimi.dsi.fastutil.objects.ReferenceOpenHashSet
-import org.jetbrains.annotations.Nls
 import java.awt.Component
 import java.util.concurrent.CompletableFuture
+import java.util.stream.Stream
 import javax.swing.tree.DefaultTreeModel
+import kotlin.streams.toList
 
 class GitStashChangesBrowser(project: Project, private val focusMainUi: (Component?) -> Unit,
                              parentDisposable: Disposable) : ChangesBrowserBase(project, false, false), Disposable {
-  private val stashCache: GitStashCache get() = myProject.service()
+  var changes: Collection<SavedPatchesProvider.ChangeObject> = emptyList()
+    private set
 
-  private var stashedChanges: Collection<Change> = emptyList()
-  private var otherChanges: Map<ChangesBrowserNode.Tag, Set<Change>> = emptyMap()
-
-  val changes get() = stashedChanges
-
-  private var currentStash: StashInfo? = null
-  private var currentChangesFuture: CompletableFuture<GitStashCache.StashData>? = null
+  private var currentPatchObject: SavedPatchesProvider.PatchObject<*>? = null
+  private var currentChangesFuture: CompletableFuture<SavedPatchesProvider.LoadingResult>? = null
 
   var diffPreviewProcessor: GitStashDiffPreview? = null
     private set
@@ -57,30 +46,30 @@ class GitStashChangesBrowser(project: Project, private val focusMainUi: (Compone
     Disposer.register(parentDisposable, this)
   }
 
-  fun selectStash(stash: StashInfo?) {
-    if (stash == currentStash) return
-    currentStash = stash
+  fun <S> selectPatchObject(patchObject: SavedPatchesProvider.PatchObject<S>?) {
+    if (patchObject == currentPatchObject) return
+    currentPatchObject = patchObject
     currentChangesFuture?.cancel(false)
     currentChangesFuture = null
 
-    if (stash == null) {
+    if (patchObject == null) {
       setEmpty { statusText -> statusText.text = GitBundle.message("stash.changes.empty") }
       return
     }
 
     setEmpty { statusText -> statusText.text = GitBundle.message("stash.changes.loading") }
 
-    val futureChanges = stashCache.loadStashData(stash) ?: return
+    val futureChanges = patchObject.loadChanges() ?: return
     currentChangesFuture = futureChanges
     futureChanges.thenRunAsync(Runnable {
-      if (currentStash != stash) return@Runnable
+      if (currentPatchObject != patchObject) return@Runnable
 
-      when (val stashData = currentChangesFuture?.get()) {
-        is GitStashCache.StashData.Changes -> {
-          setData(stashData.changes, stashData.parentCommits)
+      when (val data = currentChangesFuture?.get()) {
+        is SavedPatchesProvider.LoadingResult.Changes -> {
+          setData(data.changes)
         }
-        is GitStashCache.StashData.Error -> {
-          setEmpty { statusText -> statusText.setText(stashData.error.localizedMessage, SimpleTextAttributes.ERROR_ATTRIBUTES) }
+        is SavedPatchesProvider.LoadingResult.Error -> {
+          setEmpty { statusText -> statusText.setText(data.error.localizedMessage, SimpleTextAttributes.ERROR_ATTRIBUTES) }
         }
       }
       currentChangesFuture = null
@@ -93,28 +82,26 @@ class GitStashChangesBrowser(project: Project, private val focusMainUi: (Compone
 
   override fun buildTreeModel(): DefaultTreeModel {
     val builder = TreeModelBuilder(myProject, grouping)
-    builder.setChanges(stashedChanges, null)
-    for ((tag, changes) in otherChanges) {
+    val groupedChanges = changes.groupBy { it.tag }
+    for ((tag, changes) in groupedChanges) {
       if (changes.isEmpty()) continue
-      builder.insertChanges(changes, builder.createTagNode(tag, SimpleTextAttributes.REGULAR_ATTRIBUTES, false))
+      val root = if (tag == null) builder.myRoot else builder.createTagNode(tag, SimpleTextAttributes.REGULAR_ATTRIBUTES, false)
+      changes.forEach { change ->
+        builder.insertChangeNode(change.filePath, root, ChangeObjectNode(change))
+      }
     }
     return builder.build()
   }
 
-  private fun setEmpty(updateEmptyText: (StatusText) -> Unit) = setData(emptyList(), emptyList(), updateEmptyText)
+  private fun setEmpty(updateEmptyText: (StatusText) -> Unit) = setData(emptyList(), updateEmptyText)
 
-  private fun setData(stash: Collection<Change>, parents: Collection<GitCommit>) {
-    setData(stash, parents) { statusText -> statusText.text = "" }
+  private fun setData(changeObjects: Collection<SavedPatchesProvider.ChangeObject>) {
+    setData(changeObjects) { statusText -> statusText.text = "" }
   }
 
-  private fun setData(stash: Collection<Change>,
-                      parents: Collection<GitCommit>,
+  private fun setData(changeObjects: Collection<SavedPatchesProvider.ChangeObject>,
                       updateEmptyText: (StatusText) -> Unit) {
-    stashedChanges = stash
-    otherChanges = parents.associate { parent ->
-      val tag = MyTag(StringUtil.capitalize(parent.subject.substringBefore(":")), parent.id)
-      Pair(tag, ReferenceOpenHashSet(parent.changes))
-    }
+    changes = changeObjects
     updateEmptyText(viewer.emptyText)
     viewer.rebuildTree()
   }
@@ -124,40 +111,25 @@ class GitStashChangesBrowser(project: Project, private val focusMainUi: (Compone
   }
 
   public override fun getDiffRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
-    if (userObject !is Change) return null
-    return ChangeDiffRequestProducer.create(myProject, userObject, prepareChangeContext(userObject))
+    if (userObject !is SavedPatchesProvider.ChangeObject) return null
+    return userObject.createDiffRequestProducer(myProject)
   }
 
   fun getDiffWithLocalRequestProducer(userObject: Any): ChangeDiffRequestChain.Producer? {
-    if (userObject !is Change) return null
-    val changeWithLocal = ShowDiffWithLocalAction.getChangeWithLocal(userObject, false) ?: return null
-    return ChangeDiffRequestProducer.create(myProject, changeWithLocal, prepareChangeContext(userObject))
-  }
-
-  private fun prepareChangeContext(userObject: Change): Map<Key<*>, Any> {
-    val context = mutableMapOf<Key<*>, Any>()
-    getTag(userObject)?.let { context[ChangeDiffRequestProducer.TAG_KEY] = it }
-    return context
-  }
-
-  private fun getTag(change: Change): ChangesBrowserNode.Tag? {
-    return otherChanges.asSequence().firstOrNull { it.value.contains(change) }?.key
+    if (userObject !is SavedPatchesProvider.ChangeObject) return null
+    return userObject.createDiffWithLocalRequestProducer(myProject, false)
   }
 
   fun setDiffPreviewInEditor(isInEditor: Boolean): GitStashDiffPreview {
     if (diffPreviewProcessor != null) Disposer.dispose(diffPreviewProcessor!!)
-    val newProcessor = object: GitStashDiffPreview(myProject, viewer, isInEditor, this) {
-      override fun getTag(change: Change) = this@GitStashChangesBrowser.getTag(change)
-    }
+    val newProcessor = GitStashDiffPreview(myProject, viewer, isInEditor, this)
     diffPreviewProcessor = newProcessor
 
     if (isInEditor) {
       editorTabPreview = object : GitStashEditorDiffPreview(newProcessor, viewer, this@GitStashChangesBrowser, focusMainUi) {
         override fun getCurrentName(): String {
-          return changeViewProcessor.currentChangeName?.let { changeName ->
-            val stashId = currentStash?.stash?.capitalize() ?: GitBundle.message("stash.editor.diff.preview.empty.title")
-            GitBundle.message("stash.editor.diff.preview.id.change.title", stashId, changeName)
-          } ?: GitBundle.message("stash.editor.diff.preview.empty.title")
+          return currentPatchObject?.getDiffPreviewTitle(changeViewProcessor.currentChangeName) ?: GitBundle.message(
+            "stash.editor.diff.preview.empty.title")
         }
       }
     }
@@ -168,10 +140,50 @@ class GitStashChangesBrowser(project: Project, private val focusMainUi: (Compone
     return newProcessor
   }
 
+  private fun VcsTreeModelData.mapToChange(): Stream<Change> {
+    return userObjectsStream(SavedPatchesProvider.ChangeObject::class.java).map { it.asChange() }.filter { it != null } as Stream<Change>
+  }
+
+  override fun getData(dataId: String): Any? {
+    if (VcsDataKeys.CHANGES.`is`(dataId)) {
+      val selected = VcsTreeModelData.selected(myViewer).mapToChange().toList().toTypedArray()
+      if (selected.isNotEmpty()) return selected
+      return VcsTreeModelData.all(myViewer).mapToChange().toList().toTypedArray()
+    }
+    else if (VcsDataKeys.SELECTED_CHANGES.`is`(dataId) ||
+             VcsDataKeys.SELECTED_CHANGES_IN_DETAILS.`is`(dataId)) {
+      return VcsTreeModelData.selected(myViewer).mapToChange().toList().toTypedArray()
+    }
+    else if (VcsDataKeys.CHANGES_SELECTION.`is`(dataId)) {
+      return VcsTreeModelData.getListSelectionOrAll(myViewer).map { (it as? SavedPatchesProvider.ChangeObject)?.asChange() }
+    }
+    else if (VcsDataKeys.CHANGE_LEAD_SELECTION.`is`(dataId)) {
+      return VcsTreeModelData.exactlySelected(myViewer).mapToChange().limit(1).toList().toTypedArray()
+    }
+    else if (CommonDataKeys.VIRTUAL_FILE_ARRAY.`is`(dataId)) {
+      return VcsTreeModelData.selected(myViewer).userObjectsStream(SavedPatchesProvider.ChangeObject::class.java)
+        .map { it.filePath.virtualFile }
+        .filter { it != null }.toList().toTypedArray()
+    }
+    else if (VcsDataKeys.IO_FILE_ARRAY.`is`(dataId)) {
+      return VcsTreeModelData.selected(myViewer).userObjectsStream(SavedPatchesProvider.ChangeObject::class.java)
+        .map { it.filePath.ioFile }
+        .toList().toTypedArray()
+    }
+    else if (CommonDataKeys.NAVIGATABLE_ARRAY.`is`(dataId)) {
+      return ChangesUtil.getNavigatableArray(myProject, VcsTreeModelData.selected(myViewer)
+        .userObjectsStream(SavedPatchesProvider.ChangeObject::class.java)
+        .map { it.filePath.virtualFile }
+        .filter { it != null })
+    }
+    return super.getData(dataId)
+  }
+
   override fun dispose() {
   }
 
-  private data class MyTag(@Nls private val text: String, private val hash: Hash): ChangesBrowserNode.Tag {
-    override fun toString(): String = text
+  private class ChangeObjectNode(change: SavedPatchesProvider.ChangeObject) :
+    AbstractChangesBrowserFilePathNode<SavedPatchesProvider.ChangeObject>(change, change.fileStatus) {
+    override fun filePath(userObject: SavedPatchesProvider.ChangeObject): FilePath = userObject.filePath
   }
 }

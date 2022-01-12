@@ -6,25 +6,23 @@ import com.intellij.diff.chains.DiffRequestProducer
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeViewDiffRequestProcessor
-import com.intellij.openapi.vcs.changes.actions.diff.ChangeDiffRequestProducer
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowserChangeNode
+import com.intellij.openapi.vcs.changes.savedPatches.SavedPatchesProvider
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode
 import com.intellij.openapi.vcs.changes.ui.ChangesTree
+import com.intellij.openapi.vcs.changes.ui.PresentableChange
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData
 import com.intellij.vcs.log.runInEdtAsync
 import com.intellij.vcs.log.ui.frame.VcsLogChangesBrowser
 import git4idea.stash.ui.GitStashUi.Companion.GIT_STASH_UI_PLACE
-import one.util.streamex.StreamEx
 import java.beans.PropertyChangeListener
 import java.util.stream.Stream
 import javax.swing.JTree
 
-abstract class GitStashDiffPreview(project: Project,
-                                   private val tree: ChangesTree,
-                                   private val isInEditor: Boolean,
-                                   parentDisposable: Disposable)
+class GitStashDiffPreview(project: Project,
+                          private val tree: ChangesTree,
+                          private val isInEditor: Boolean,
+                          parentDisposable: Disposable)
   : ChangeViewDiffRequestProcessor(project, GIT_STASH_UI_PLACE) {
   private val disposableFlag = Disposer.newCheckedDisposable()
 
@@ -58,21 +56,18 @@ abstract class GitStashDiffPreview(project: Project,
     return wrap(VcsTreeModelData.all(tree))
   }
 
-  protected abstract fun getTag(change: Change): ChangesBrowserNode.Tag?
-
   override fun selectChange(change: Wrapper) {
     VcsLogChangesBrowser.selectObjectWithTag(tree, change.userObject, change.tag)
   }
 
   private fun wrap(treeModelData: VcsTreeModelData): Stream<Wrapper> {
-    return StreamEx.of(treeModelData.nodesStream()).select(ChangesBrowserChangeNode::class.java).map {
-      MyChangeWrapper(it.userObject, getTag(it.userObject))
-    }
+    return treeModelData.userObjectsStream(SavedPatchesProvider.ChangeObject::class.java).map { MyChangeWrapper(it) }
   }
 
-  private class MyChangeWrapper(change: Change, tag: ChangesBrowserNode.Tag?) : ChangeWrapper(change, tag) {
-    override fun createProducer(project: Project?): DiffRequestProducer? {
-      return ChangeDiffRequestProducer.create(project, change, mapOf(Pair(ChangeDiffRequestProducer.TAG_KEY, tag)))
-    }
+  private inner class MyChangeWrapper(private val change: SavedPatchesProvider.ChangeObject) : Wrapper(), PresentableChange by change {
+    override fun getUserObject(): Any = change
+    override fun getPresentableName(): String = change.filePath.name
+    override fun createProducer(project: Project?): DiffRequestProducer? = change.createDiffRequestProducer(project)
+    override fun getTag(): ChangesBrowserNode.Tag? = change.tag
   }
 }

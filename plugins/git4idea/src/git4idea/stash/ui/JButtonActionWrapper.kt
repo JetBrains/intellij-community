@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.stash.ui
 
 import com.intellij.openapi.actionSystem.ActionWithDelegate
@@ -6,18 +6,15 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.Presentation
 import com.intellij.openapi.ui.addKeyboardAction
+import com.intellij.openapi.util.NlsActions
 import com.intellij.util.ui.JButtonAction
 import java.awt.event.KeyEvent
 import javax.swing.JButton
 import javax.swing.JComponent
 import javax.swing.KeyStroke
 
-internal class JButtonActionWrapper(private val actionDelegate: AnAction,
-                                    private val isDefault: Boolean = false) : JButtonAction(null), ActionWithDelegate<AnAction> {
-
-  init {
-    copyFrom(actionDelegate)
-  }
+internal abstract class JButtonActionWrapper(text: @NlsActions.ActionText String, private val isDefault: Boolean = false) :
+  JButtonAction(text), ActionWithDelegate<AnAction> {
 
   override fun createButton(): JButton = object : JButton() {
     override fun isDefaultButton(): Boolean = isDefault
@@ -31,7 +28,9 @@ internal class JButtonActionWrapper(private val actionDelegate: AnAction,
     return button
   }
 
-  override fun update(e: AnActionEvent) = actionDelegate.update(e)
-  override fun actionPerformed(e: AnActionEvent) = actionDelegate.actionPerformed(e)
-  override fun getDelegate(): AnAction = actionDelegate
+  override fun update(e: AnActionEvent) {
+    delegate.update(e)
+  }
+
+  override fun actionPerformed(e: AnActionEvent) = delegate.actionPerformed(e)
 }
