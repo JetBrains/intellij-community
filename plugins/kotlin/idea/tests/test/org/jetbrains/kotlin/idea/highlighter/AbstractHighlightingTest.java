@@ -10,6 +10,7 @@ import com.intellij.testFramework.ExpectedHighlightingData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCase;
 import org.jetbrains.kotlin.idea.test.InTextDirectivesUtils;
+import org.jetbrains.kotlin.idea.test.KotlinLightCodeInsightFixtureTestCaseKt;
 import org.jetbrains.kotlin.idea.test.TagsTestDataUtil;
 
 import java.io.File;
@@ -27,7 +28,8 @@ public abstract class AbstractHighlightingTest extends KotlinLightCodeInsightFix
         boolean checkWeakWarnings = !InTextDirectivesUtils.isDirectiveDefined(fileText, NO_CHECK_WEAK_WARNINGS_PREFIX);
         boolean checkWarnings = !InTextDirectivesUtils.isDirectiveDefined(fileText, NO_CHECK_WARNINGS_PREFIX);
 
-        myFixture.checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings);
+        KotlinLightCodeInsightFixtureTestCaseKt.withCustomCompilerOptions(fileText, getProject(), getModule(), () ->
+                myFixture.checkHighlighting(checkWarnings, checkInfos, checkWeakWarnings));
     }
 
     protected void doTest(String unused) throws Exception {
