@@ -42,6 +42,8 @@ abstract class AbstractNewProjectWizardMultiStepBase(
     steps = initSteps()
     step = step.ifBlank { steps.keys.first() }
 
+    textToSearch.append(" ").append(steps.keys.joinToString(" "))
+
     with(builder) {
       row(label) {
         setupSwitcherUi(this@row)

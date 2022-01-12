@@ -151,7 +151,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
       String emptyCard = "emptyCard";
       ProjectTypeListWithSearch<TemplatesGroup> listWithFilter = new ProjectTypeListWithSearch<>(
-        myContext, myProjectTypeList, new JBScrollPane(myProjectTypeList), group -> group.getName(), () -> {
+        myContext, myProjectTypeList, new JBScrollPane(myProjectTypeList), getNamer(), () -> {
           showCard(emptyCard);
           wizard.updateButtons(true, false, true);
       });
@@ -223,6 +223,20 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       myProjectTypeList.setSelectedIndex(0);
     }
     myTemplatesList.restoreSelection();
+  }
+
+  @NotNull
+  private Function<TemplatesGroup, String> getNamer() {
+    return group -> {
+      ModuleBuilder builder = group.getModuleBuilder();
+      String name = group.getName();
+      if (builder == null) return name;
+
+      ModuleWizardStep step = myCustomSteps.get(builder.getBuilderId());
+      if (!(step instanceof NewProjectWizardStep)) return name;
+
+      return name + (" " + ((NewProjectWizardStep)step).getTextToSearch());
+    };
   }
 
   private static ModuleType getModuleType(TemplatesGroup group) {

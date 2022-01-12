@@ -31,6 +31,11 @@ interface NewProjectWizardStep {
   val propertyGraph: PropertyGraph
 
   /**
+   * The text that is used for search field input pattern matching
+   */
+  val textToSearch: StringBuilder
+
+  /**
    * Data holder that needed to share step data.
    *
    * Convention:
