@@ -1177,7 +1177,7 @@
     <editorNotificationProvider implementation="com.intellij.ide.lightEdit.LightEditNonExistentFileNotificationProvider"/>
 
     <postStartupActivity implementation="com.intellij.ide.cds.CDSStartupActivity" order="last"/>
-    <statistics.counterUsagesCollector groupId="intellij.cds" version="2"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.cds.CDSFUSCollector"/>
 
     <statistics.counterUsagesCollector implementationClass="com.intellij.diagnostic.startUpPerformanceReporter.StartupPerformanceCollector"/>
     <backgroundPostStartupActivity implementation="com.intellij.diagnostic.startUpPerformanceReporter.StartupMetricCollector"/>
