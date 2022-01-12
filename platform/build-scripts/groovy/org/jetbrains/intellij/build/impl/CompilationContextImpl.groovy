@@ -67,7 +67,7 @@ final class CompilationContextImpl implements CompilationContext {
     AntBuilder ant = new AntBuilder()
     def messages = BuildMessagesImpl.create(ant.project)
     communityHome = toCanonicalPath(communityHome)
-    if (["platform/build-scripts", "bin/log.xml", "build.txt"].any { !new File(communityHome, it).exists() }) {
+    if (["platform/build-scripts", "bin/idea.properties", "build.txt"].any { !new File(communityHome, it).exists() }) {
       messages.error("communityHome ($communityHome) doesn't point to a directory containing IntelliJ Community sources")
     }
 
