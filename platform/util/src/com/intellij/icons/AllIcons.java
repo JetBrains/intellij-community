@@ -1124,6 +1124,7 @@ public class AllIcons {
     /** 13x13 */ public static final @NotNull Icon ToolWindowStructure = load("toolwindows/toolWindowStructure.svg", 1275982556, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowTodo = load("toolwindows/toolWindowTodo.svg", -1371075097, 2);
     /** 13x13 */ public static final @NotNull Icon ToolWindowUIDesigner = load("toolwindows/toolWindowUIDesigner.svg", -151942562, 2);
+    /** 13x13 */ public static final @NotNull Icon ToolWindowVariableView = load("toolwindows/toolWindowVariableView.svg", 1680878393, 2);
     /** 13x13 */ public static final @NotNull Icon WarningEvents = load("toolwindows/warningEvents.svg", -1480999657, 2);
     /** 13x13 */ public static final @NotNull Icon WebToolWindow = load("toolwindows/webToolWindow.svg", 1415711858, 2);
   }
