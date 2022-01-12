@@ -14,12 +14,15 @@ import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl
 import com.intellij.openapi.application.Application
 import com.intellij.openapi.application.PathManager.OPTIONS_DIRECTORY
 import com.intellij.openapi.application.invokeAndWaitIfNeeded
+import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.RoamingType
+import com.intellij.openapi.components.SettingsCategory
 import com.intellij.openapi.components.StateStorage
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.options.SchemeManagerFactory
 import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.util.IconLoader
+import com.intellij.settingsSync.plugins.SettingsSyncPluginManager
 import com.intellij.ui.JBColor
 import com.intellij.util.SmartList
 import com.intellij.util.io.write
@@ -37,13 +40,21 @@ internal class SettingsSyncIdeUpdater(application: Application,
   fun settingsLogged(snapshot: SettingsSnapshot) {
     // todo race between this code and SettingsSyncStreamProvider.write which can write other user settings at the same time
 
-    updateSyncSettings(snapshot)
+    updateComponent(snapshot, SettingsSyncSettings.FILE_SPEC, SettingsSyncSettings.getInstance().javaClass)
+    if (SettingsSyncSettings.getInstance().isCategoryEnabled(SettingsCategory.PLUGINS)) {
+      val pluginManager = SettingsSyncPluginManager.getInstance()
+      pluginManager.doWithNoUpdateFromIde {
+        updateComponent(snapshot, SettingsSyncPluginManager.FILE_SPEC, pluginManager.javaClass)
+        pluginManager.pushChangesToIDE()
+      }
+    }
 
     val changedFileSpecs = ArrayList<String>()
     // todo update only that has really changed
     for (fileState in snapshot.fileStates) {
       val fileSpec = fileState.file.removePrefix("$OPTIONS_DIRECTORY/")
-      if (fileSpec == SettingsSyncSettings.FILE_SPEC) continue // Already handled in updateSyncSettings()
+      if (fileSpec == SettingsSyncSettings.FILE_SPEC ||
+          fileSpec == SettingsSyncPluginManager.FILE_SPEC) continue // Already handled in updateSyncSettings()
       if (isSyncEnabled(fileSpec, RoamingType.DEFAULT)) {
         rootConfig.resolve(fileState.file).write(fileState.content, 0, fileState.size)
         changedFileSpecs.add(fileSpec)
@@ -110,13 +121,15 @@ internal class SettingsSyncIdeUpdater(application: Application,
   }
 
 
-  private fun updateSyncSettings(snapshot: SettingsSnapshot) {
-    val settingsPath = "$OPTIONS_DIRECTORY/" + SettingsSyncSettings.FILE_SPEC
+  private fun updateComponent(snapshot: SettingsSnapshot,
+                              fileSpec: String,
+                              componentClass: Class<out PersistentStateComponent<*>>) {
+    val settingsPath = "$OPTIONS_DIRECTORY/" + fileSpec
     snapshot.fileStates.find { it.file == settingsPath }
       ?.let {
         rootConfig.resolve(it.file).write(it.content, 0, it.size)
         invokeAndWaitIfNeeded {
-          componentStore.reloadState(SettingsSyncSettings.getInstance().javaClass)
+          componentStore.reloadState(componentClass)
         }
       }
   }

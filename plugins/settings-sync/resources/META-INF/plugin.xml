@@ -13,6 +13,8 @@
     <ApplicationLoadListener implementation="com.intellij.settingsSync.SettingsSyncMain"/>
 
     <applicationService serviceImplementation="com.intellij.settingsSync.SettingsSyncSettings"/>
+    <applicationService serviceImplementation="com.intellij.settingsSync.plugins.SettingsSyncPluginManager"/>
+    <applicationInitializedListener implementation="com.intellij.settingsSync.plugins.SettingsSyncPluginManager$StartupInitializer"/>
     <applicationConfigurable id="settings.sync"
                              key="title.settings.sync"
                              bundle="messages.SettingsSyncBundle"
