@@ -7,8 +7,8 @@
           <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions -Xjvm-default=enable -Xopt-in=kotlin.RequiresOptIn -Xskip-prerelease-check" />
         </compilerSettings>
         <compilerArguments>
-          <option name="languageVersion" value="1.4" />
-          <option name="apiVersion" value="1.4" />
+          <option name="languageVersion" value="1.5" />
+          <option name="apiVersion" value="1.5" />
         </compilerArguments>
       </configuration>
     </facet>
@@ -23,11 +23,17 @@
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
     <orderEntry type="library" name="kotlinc.kotlin-stdlib" level="project" />
+    <orderEntry type="library" name="kotlin-reflect" level="project" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension" />
     <orderEntry type="module" module-name="intellij.gradle.toolingExtension.impl" />
     <orderEntry type="library" scope="TEST" name="kotlin-test" level="project" />
     <orderEntry type="module" module-name="kotlin.tests-common" scope="TEST" />
     <orderEntry type="module" module-name="kotlin.resources-fe10" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="kotlin-test-junit" level="project" />
+    <orderEntry type="library" scope="TEST" name="Log4J" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin.gradle.plugin" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin.gradle.plugin.api" level="project" />
+    <orderEntry type="library" scope="TEST" name="kotlin.project.model" level="project" />
   </component>
 </module>

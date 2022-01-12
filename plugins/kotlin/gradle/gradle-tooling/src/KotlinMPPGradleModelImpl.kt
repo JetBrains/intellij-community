@@ -66,13 +66,13 @@ class KotlinSourceSetImpl(
         allDependsOnSourceSets = HashSet(kotlinSourceSet.allDependsOnSourceSets),
         defaultActualPlatforms = KotlinPlatformContainerImpl(kotlinSourceSet.actualPlatforms)
     ) {
-        this.isTestModule = kotlinSourceSet.isTestModule
+        this.isTestComponent = kotlinSourceSet.isTestComponent
     }
 
     override var actualPlatforms: KotlinPlatformContainer = defaultActualPlatforms
         internal set
 
-    override var isTestModule: Boolean = defaultIsTestModule
+    override var isTestComponent: Boolean = defaultIsTestModule
         internal set
 
     override fun toString() = name
@@ -169,7 +169,7 @@ data class KotlinCompilationImpl(
         internal set
 
     // TODO: Logic like this is duplicated *and different*
-    override val isTestModule: Boolean
+    override val isTestComponent: Boolean
         get() = name == KotlinCompilation.TEST_COMPILATION_NAME
                 || platform == KotlinPlatform.ANDROID && name.contains("Test")
 
@@ -302,6 +302,7 @@ class KotlinPlatformContainerImpl() : KotlinPlatformContainer {
     override val platforms: Set<KotlinPlatform>
         get() = myPlatforms ?: defaultCommonPlatform
 
+    @Suppress("OverridingDeprecatedMember")
     override fun supports(simplePlatform: KotlinPlatform): Boolean = platforms.contains(simplePlatform)
 
     override fun pushPlatforms(platforms: Iterable<KotlinPlatform>) {

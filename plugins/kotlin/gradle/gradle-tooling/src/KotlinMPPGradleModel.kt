@@ -42,13 +42,13 @@ fun KotlinDependency.deepCopy(cache: MutableMap<Any, Any>): KotlinDependency {
     }
 }
 
-interface KotlinModule : Serializable {
+interface KotlinComponent : Serializable {
     val name: String
     val dependencies: Array<KotlinDependencyId>
-    val isTestModule: Boolean
+    val isTestComponent: Boolean
 }
 
-interface KotlinSourceSet : KotlinModule {
+interface KotlinSourceSet : KotlinComponent {
     val languageSettings: KotlinLanguageSettings
     val sourceDirs: Set<File>
     val resourceDirs: Set<File>
@@ -146,7 +146,7 @@ interface KotlinNativeCompilationExtensions : Serializable {
     val konanTarget: String // represents org.jetbrains.kotlin.konan.target.KonanTarget
 }
 
-interface KotlinCompilation : KotlinModule {
+interface KotlinCompilation : KotlinComponent {
 
     @Deprecated("Use allSourceSets or declaredSourceSets instead")
     val sourceSets: Collection<KotlinSourceSet>

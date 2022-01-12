@@ -58,7 +58,7 @@ fun createKotlinMppPopulateModuleDependenciesContext(
     )
 }
 
-fun KotlinMppPopulateModuleDependenciesContext.getDependencies(module: KotlinModule): List<KotlinDependency> {
+fun KotlinMppPopulateModuleDependenciesContext.getDependencies(module: KotlinComponent): List<KotlinDependency> {
     return dependenciesPreprocessor(module.dependencies.mapNotNull { id -> mppModel.dependencyMap[id] })
 }
 

@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.KotlinModuleKind
 import org.jetbrains.kotlin.gradle.KotlinCompilation
-import org.jetbrains.kotlin.gradle.KotlinModule
+import org.jetbrains.kotlin.gradle.KotlinComponent
 import org.jetbrains.kotlin.gradle.KotlinPlatform
 import org.jetbrains.kotlin.gradle.KotlinSourceSet
 import org.jetbrains.kotlin.idea.facet.*
@@ -105,7 +105,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
     }
 
     companion object {
-        private val KotlinModule.kind
+        private val KotlinComponent.kind
             get() = when (this) {
                 is KotlinCompilation -> KotlinModuleKind.COMPILATION_AND_SOURCE_SET_HOLDER
                 is KotlinSourceSet -> KotlinModuleKind.SOURCE_SET_HOLDER
@@ -209,7 +209,7 @@ class KotlinSourceSetDataService : AbstractProjectDataService<GradleSourceSetDat
             kotlinFacet.noVersionAutoAdvance()
 
             with(kotlinFacet.configuration.settings) {
-                kind = kotlinSourceSet.kotlinModule.kind
+                kind = kotlinSourceSet.kotlinComponent.kind
 
                 isTestModule = kotlinSourceSet.isTestModule
                 externalSystemRunTasks = ArrayList(kotlinSourceSet.externalSystemRunTasks)

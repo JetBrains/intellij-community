@@ -133,20 +133,30 @@ public class KotlinTestUtils {
     @NotNull
     public static File findAndroidSdk() {
         String androidSdkProp = System.getProperty("android.sdk");
-        File androidSdkDir = androidSdkProp == null ? null : new File(androidSdkProp);
-        String androidSdkEnv = System.getenv("ANDROID_HOME");
-        File androidSdkEnvDir = androidSdkEnv == null ? null : new File(androidSdkEnv);
+        File androidSdkPropDir = androidSdkProp == null ? null : new File(androidSdkProp);
 
-        if ((androidSdkDir == null || !androidSdkDir.isDirectory()) && (androidSdkEnvDir == null || !androidSdkEnvDir.isDirectory())) {
-            throw new RuntimeException(
-                    "Unable to get a valid path from 'android.sdk' property (" + androidSdkProp + "), " +
-                    "please point it to the android SDK location");
+        String androidHomeEnv = System.getenv("ANDROID_HOME");
+        File androidHomeEnvDir = androidHomeEnv == null ? null : new File(androidHomeEnv);
+
+        String androidSdkRootEnv = System.getenv("ANDROID_SDK_ROOT");
+        File androidSdkRootEnvDir = androidSdkRootEnv == null ? null : new File(androidSdkRootEnv);
+
+        if (androidSdkPropDir != null) {
+            return androidSdkPropDir;
         }
 
-        if (androidSdkDir != null) {
-            return androidSdkDir;
+        if (androidHomeEnvDir != null) {
+            return androidHomeEnvDir;
         }
-        return androidSdkEnvDir;
+
+        if (androidSdkRootEnvDir != null) {
+            return androidSdkRootEnvDir;
+        }
+
+        throw new RuntimeException(
+                "Unable to get a valid path from 'android.sdk' property (" + androidSdkProp + "), " +
+                "please point it to the android SDK location"
+        );
     }
 
     public static String getAndroidSdkSystemIndependentPath() {
@@ -613,7 +623,7 @@ public class KotlinTestUtils {
             if (testRoot == null) {
                 throw new IllegalStateException("@TestRoot annotation was not found on " + testCase.getName());
             }
-            absoluteTestDataFilePath  = new File(testRoot, testDataFilePath).getAbsolutePath();
+            absoluteTestDataFilePath = new File(testRoot, testDataFilePath).getAbsolutePath();
         }
 
         test.invoke(absoluteTestDataFilePath);
@@ -686,7 +696,8 @@ public class KotlinTestUtils {
                     }
                 }
 
-                throw new AssertionError(String.format("Looks like this test can be unmuted. Remove \"%s%s\" directive.", ignoreDirective, targetBackend));
+                throw new AssertionError(
+                        String.format("Looks like this test can be unmuted. Remove \"%s%s\" directive.", ignoreDirective, targetBackend));
             }
         };
     }

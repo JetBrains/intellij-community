@@ -3,9 +3,17 @@
 package org.jetbrains.kotlin.gradle
 
 import org.gradle.api.Project
+import org.jetbrains.plugins.gradle.tooling.ModelBuilderContext
+import org.jetbrains.plugins.gradle.tooling.util.DependencyResolver
+import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
+import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
+interface HasDependencyResolver {
+    val dependencyResolver: DependencyResolver
+    val dependencyMapper: KotlinDependencyMapper
+}
 
-internal interface MultiplatformModelImportingContext: KotlinSourceSetContainer {
+interface MultiplatformModelImportingContext: KotlinSourceSetContainer, HasDependencyResolver {
     val project: Project
 
     val targets: Collection<KotlinTarget>
@@ -68,10 +76,13 @@ internal enum class GradleImportProperties(val id: String, val defaultValue: Boo
 }
 
 
-internal class MultiplatformModelImportingContextImpl(override val project: Project) : MultiplatformModelImportingContext {
+internal class MultiplatformModelImportingContextImpl(override val project: Project,    modelBuilderContext: ModelBuilderContext) : MultiplatformModelImportingContext {
     /** see [initializeSourceSets] */
     override lateinit var sourceSetsByName: Map<String, KotlinSourceSetImpl>
         private set
+
+    override val dependencyResolver = DependencyResolverImpl(project, false, true, SourceSetCachedFinder(modelBuilderContext))
+    override val dependencyMapper = KotlinDependencyMapper()
 
     /** see [initializeCompilations] */
     override lateinit var compilations: Collection<KotlinCompilation>
