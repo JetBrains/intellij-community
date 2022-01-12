@@ -74,7 +74,7 @@ open class FirUastResolveApiTest : AbstractFirUastTest() {
         }
     }
 
-    @TestMetadata("../uast-kotlin/tests/testData")
+    @TestMetadata("plugins/uast-kotlin-fir/testData/type")
     @TestDataPath("\$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners::class)
     class Legacy : FirUastResolveApiTest(), UastResolveApiTestBase {

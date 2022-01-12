@@ -16,9 +16,9 @@ class FE1UastResolveApiTest : AbstractFE1UastTest() {
     override fun check(testName: String, file: UFile) {
         // Bogus
     }
-
-    @TestMetadata("uast-kotlin-fir/testData/declaration")
-    @TestDataPath("/")
+    @TestMetadata("plugins/uast-kotlin-fir/testData/declaration")
+    @TestDataPath("\$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners::class)
     class Declaration : AbstractFE1UastTest(), UastResolveApiTestBase {
         override var testDataDir = KotlinRoot.DIR.resolve("uast/uast-kotlin-fir/testData/declaration")
 
@@ -44,8 +44,8 @@ class FE1UastResolveApiTest : AbstractFE1UastTest() {
         }
     }
 
-    @TestMetadata("uast-kotlin-fir/testData/type")
-    @TestDataPath("/")
+    @TestMetadata("plugins/uast-kotlin-fir/testData/type")
+    @TestDataPath("\$PROJECT_ROOT")
     @RunWith(JUnit3RunnerWithInners::class)
     class Type : AbstractFE1UastTest(), UastResolveApiTestBase {
         override var testDataDir = KotlinRoot.DIR_PATH.resolve("uast/uast-kotlin-fir/testData/type").toFile()
@@ -62,8 +62,9 @@ class FE1UastResolveApiTest : AbstractFE1UastTest() {
         }
     }
 
-    @TestMetadata("uast-kotlin/tests/testData")
-    @TestDataPath("/")
+    @TestMetadata("plugins/uast-kotlin-fir/testData/type")
+    @TestDataPath("\$PROJECT_ROOT")
+    @RunWith(JUnit3RunnerWithInners::class)
     class Legacy : AbstractFE1UastTest(), UastResolveApiTestBase {
         override var testDataDir = KotlinRoot.DIR.resolve("uast/uast-kotlin/tests/testData")
 

@@ -354,7 +354,7 @@ interface UastApiTestBase : UastPluginSelection {
 
     fun checkCallbackForResolve(uFilePath: String, uFile: UFile) {
         fun UElement.assertResolveCall(callText: String, methodName: String = callText.substringBefore("(")) {
-            this.findElementByTextFromPsi<UCallExpression>(callText).let {
+            this.findElementByTextFromPsi<UCallExpression>(callText, strict = false).let {
                 val resolve = it.resolve().sure { "resolving '$callText'" }
                 TestCase.assertEquals(methodName, resolve.name)
             }

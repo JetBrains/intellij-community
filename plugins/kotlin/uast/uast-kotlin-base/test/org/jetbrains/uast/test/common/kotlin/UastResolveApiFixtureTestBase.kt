@@ -26,7 +26,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
             ""${'"'}"""
         )
 
-        val refs = file.findUElementByTextFromPsi<UQualifiedReferenceExpression>("s.toUpperCase()")
+        val refs = file.findUElementByTextFromPsi<UQualifiedReferenceExpression>("s.toUpperCase()", strict = false  )
         val receiver = refs.receiver
         TestCase.assertEquals(CommonClassNames.JAVA_LANG_STRING, (receiver.getExpressionType() as PsiClassType).resolve()!!.qualifiedName!!)
         val resolve = receiver.cast<UReferenceExpression>().resolve()
@@ -467,7 +467,7 @@ interface UastResolveApiFixtureTestBase : UastPluginSelection {
         TestCase.assertTrue("Hidden level, isDeprecated", test2.javaPsi.isDeprecated)
         TestCase.assertTrue("Hidden level, public", test2.javaPsi.hasModifierProperty(PsiModifier.PUBLIC))
 
-        val testClass = uFile.findElementByTextFromPsi<UClass>("Test")
+        val testClass = uFile.findElementByTextFromPsi<UClass>("Test", strict = false)
         TestCase.assertNotNull("can't convert class Test", testClass)
         testClass.methods.forEach { mtd ->
             if (mtd.sourcePsi is KtConstructor<*>) {
