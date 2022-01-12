@@ -7,6 +7,7 @@ import com.intellij.diff.DiffExtension;
 import com.intellij.diff.FrameDiffTool.DiffViewer;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.contents.FileContent;
+import com.intellij.diff.merge.MergeThreesideViewer;
 import com.intellij.diff.merge.TextMergeViewer;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.DiffRequest;
@@ -527,7 +528,7 @@ public class AnnotateDiffViewerAction {
     @Override
     @NotNull
     public Class<? extends ThreesideTextDiffViewerEx> getViewerClass() {
-      return TextMergeViewer.MyThreesideViewer.class;
+      return MergeThreesideViewer.class;
     }
 
     @Nullable
