@@ -1074,7 +1074,7 @@
     <statistics.counterUsagesCollector implementationClass="com.intellij.find.FindUsagesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.ide.actions.CreateDirectoryUsageCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.refactoring.ui.RefactoringDialogUsageCollector"/>
-    <statistics.counterUsagesCollector groupId="project.view.pane.changes" version="1"/>
+    <statistics.counterUsagesCollector implementationClass="com.intellij.ide.projectView.impl.ProjectViewImpl$ProjectViewPaneChangesCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.execution.impl.statistics.RunConfigurationUsageTriggerCollector"/>
     <statistics.counterUsagesCollector implementationClass="com.intellij.internal.statistic.IntentionsCollector"/>
     <statistics.counterUsagesCollector groupId="completion.postfix" version="57"/>
