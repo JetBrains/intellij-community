@@ -40,19 +40,19 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
 
   private fun createDependencyList(mavenProject: MavenProject): List<DependencyAnalyzerContributor.Dependency> {
     val root = DependencyAnalyzerContributor.Dependency.Data.Module(mavenProject.displayName)
-    val rootDependency = DependencyAnalyzerContributor.Dependency(root, scope("compile"), null, emptyList())
+    val rootDependency = DependencyAnalyzerContributor.Dependency(root, scope(MavenConstants.SCOPE_COMPILE), null, emptyList())
     val result = mutableListOf<DependencyAnalyzerContributor.Dependency>()
     collectDependency(mavenProject.dependencyTree, rootDependency, result)
     return result;
   }
 
   private fun collectDependency(nodes: List<MavenArtifactNode>,
-                                rootDependency: DependencyAnalyzerContributor.Dependency,
+                                parentDependency: DependencyAnalyzerContributor.Dependency,
                                 result: MutableList<DependencyAnalyzerContributor.Dependency>) {
     for (mavenArtifactNode in nodes) {
       val dependency = DependencyAnalyzerContributor.Dependency(
         getDependencyData(mavenArtifactNode),
-        scope(mavenArtifactNode.originalScope ?: "compile"), rootDependency,
+        scope(mavenArtifactNode.originalScope ?: MavenConstants.SCOPE_COMPILE), parentDependency,
         getStatus(mavenArtifactNode))
       result.add(dependency)
       if (mavenArtifactNode.dependencies != null) {
