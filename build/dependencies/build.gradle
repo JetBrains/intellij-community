@@ -37,7 +37,8 @@ apply from: 'setupBundledMaven.gradle'
 apply from: 'setupCidr.gradle'
 apply from: 'setupRpluginDeps.gradle'
 apply from: 'setupAndroidStudio.gradle'
-apply from: 'setupVulnerabilitySearchPlugin.gradle'
+//Temporary unbundle VulnerabilitySearch
+//apply from: 'setupVulnerabilitySearchPlugin.gradle'
 
 task setupDependencies(dependsOn: ['setupJdks', 'setupJbre', 'setupKotlinCompiler', 'setupBundledMaven'], group: 'dependencies')
 clean.dependsOn('cleanSetupJdks', 'cleanSetupJbre', 'cleanSetupKotlinCompiler', 'cleanSetupBundledMaven')
