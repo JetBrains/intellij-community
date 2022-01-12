@@ -760,7 +760,7 @@ public class SimpleDiffViewer extends TwosideTextDiffViewer implements Differenc
     }
   }
 
-  public StatusPanel loadStatusPanel() {
+  protected StatusPanel loadStatusPanel() {
     return new MyStatusPanel();
   }
 
