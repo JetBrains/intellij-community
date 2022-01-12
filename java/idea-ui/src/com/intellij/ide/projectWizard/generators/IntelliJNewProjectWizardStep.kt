@@ -133,10 +133,13 @@ abstract class IntelliJNewProjectWizardStep<ParentStep>(val parent: ParentStep) 
             }
         }.bottomGap(BottomGap.SMALL)
       }.topGap(TopGap.MEDIUM)
+      customAdditionalOptions()
     }
   }
 
   open fun Panel.customOptions() {}
+
+  open fun Panel.customAdditionalOptions() {}
 
   private fun ValidationInfoBuilder.validateModuleName(): ValidationInfo? {
     if (moduleName.isEmpty()) return error(JavaUiBundle.message("module.name.location.dialog.message.enter.module.name"))
