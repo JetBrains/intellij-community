@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.notification.impl
 
 import com.intellij.UtilBundle
@@ -66,11 +66,7 @@ import javax.swing.*
 import javax.swing.event.DocumentEvent
 import javax.swing.text.JTextComponent
 
-/**
- * @author Alexander Lobas
- */
-
-class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
+internal class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
   companion object {
     const val ID = "Notifications"
 
@@ -95,9 +91,7 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
     fun getNotifications(project: Project?) = myModel.getNotifications(project)
   }
 
-  override fun isApplicable(project: Project): Boolean {
-    return ActionCenter.isEnabled()
-  }
+  override fun isApplicable(project: Project) = ActionCenter.isEnabled()
 
   override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
     NotificationContent(project, toolWindow)
@@ -105,7 +99,7 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
 }
 
 internal class NotificationContent(val project: Project,
-                                   val toolWindow: ToolWindow) : Disposable, ToolWindowManagerListener, LafManagerListener {
+                                   private val toolWindow: ToolWindow) : Disposable, ToolWindowManagerListener, LafManagerListener {
   private val myMainPanel = JBPanelWithEmptyText(BorderLayout())
 
   private val myNotifications = ArrayList<Notification>()
