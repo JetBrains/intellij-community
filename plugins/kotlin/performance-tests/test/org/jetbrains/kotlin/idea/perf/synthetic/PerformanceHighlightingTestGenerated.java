@@ -124,6 +124,11 @@ public abstract class PerformanceHighlightingTestGenerated extends AbstractPerfo
             runTest("../idea/tests/testData/highlighter/AutoCreatedItParameter.kt");
         }
 
+        @TestMetadata("DefinitelyNonNullableType.kt")
+        public void testDefinitelyNonNullableType() throws Exception {
+            runTest("../idea/tests/testData/highlighter/DefinitelyNonNullableType.kt");
+        }
+
         @TestMetadata("DelegatingCtor.kt")
         public void testDelegatingCtor() throws Exception {
             runTest("../idea/tests/testData/highlighter/DelegatingCtor.kt");
