@@ -42,7 +42,6 @@ public class JpsBuild {
     System.setProperty(PathManager.PROPERTY_HOME_PATH, ideaHomePath.toString());
 
     System.setProperty("kotlin.incremental.compilation", "true");
-    System.setProperty("kotlin.daemon.enabled", "false");
     System.setProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "true");
 
     System.setProperty(JpsGroovycRunner.GROOVYC_IN_PROCESS, "true");
