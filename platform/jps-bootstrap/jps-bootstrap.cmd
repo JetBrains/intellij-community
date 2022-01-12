@@ -25,7 +25,7 @@ if not exist "%JVM_TARGET_DIR%" MD "%JVM_TARGET_DIR%"
 if not exist "%JVM_TARGET_DIR%.flag" goto downloadAndExtractJvm
 
 set JAVA_HOME=
-for /d %%d in ("%_JVM_TARGET_DIR%"*) do if exist "%%d\bin\java.exe" set JAVA_HOME=%%d
+for /d %%d in ("%JVM_TARGET_DIR%"*) do if exist "%%d\bin\java.exe" set JAVA_HOME=%%d
 if not exist "%JAVA_HOME%\bin\java.exe" (
   echo WARN Unable to find java.exe under %JVM_TARGET_DIR%
   goto downloadAndExtractJvm
@@ -70,7 +70,7 @@ endlocal & set _JVM_TARGET_DIR=%JVM_TARGET_DIR%
 set JAVA_HOME=
 for /d %%d in ("%_JVM_TARGET_DIR%"*) do if exist "%%d\bin\java.exe" set JAVA_HOME=%%d
 if not exist "%JAVA_HOME%\bin\java.exe" (
-  echo Unable to find java.exe under %JVM_TARGET_DIR%
+  echo Unable to find java.exe under %_JVM_TARGET_DIR%
   goto fail
 )
 
