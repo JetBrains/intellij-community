@@ -12,6 +12,7 @@ import java.net.URI
 import java.net.URISyntaxException
 import java.net.URLEncoder
 import java.nio.file.Path
+import java.nio.file.Paths
 
 @ApiStatus.Internal
 class IncrementalDOMBuilder(
@@ -98,13 +99,12 @@ class IncrementalDOMBuilder(
   }
 
   private fun preprocessNode(node: Node): Node {
-    if (node.nodeName() != "img" || fileSchemeResourceProcessor == null ||
-        node.hasAttr(IntelliJImageGeneratingProvider.ignorePathProcessingAttributeName)) {
+    if (fileSchemeResourceProcessor == null || basePath == null || !shouldPreprocessImageNode(node)) {
       return node
     }
     val originalUrlValue = node.attr("src")
-    val uri = createUri(originalUrlValue) ?: return node
-    if ((uri.scheme == null || uri.scheme == "file") && basePath != null) {
+    val uri = createUri(originalUrlValue) ?: createFileUri(originalUrlValue)
+    if (uri != null && (uri.scheme == null || uri.scheme == "file")) {
       val processed = fileSchemeResourceProcessor.processFileSchemeResource(basePath, uri) ?: return node
       node.attr("data-original-src", originalUrlValue)
       node.attr("src", processed)
@@ -112,12 +112,8 @@ class IncrementalDOMBuilder(
     return node
   }
 
-  private fun createUri(string: String): URI? {
-    try {
-      return URI(string)
-    } catch (exception: URISyntaxException) {
-      return null
-    }
+  private fun shouldPreprocessImageNode(node: Node): Boolean {
+    return node.nodeName() == "img" && !node.hasAttr(IntelliJImageGeneratingProvider.ignorePathProcessingAttributeName)
   }
 
   private fun traverse(node: Node) {
@@ -132,6 +128,24 @@ class IncrementalDOMBuilder(
           traverse(child)
         }
         closeTag(preprocessed)
+      }
+    }
+  }
+
+  companion object {
+    private fun createUri(string: String): URI? {
+      try {
+        return URI(string)
+      } catch (exception: URISyntaxException) {
+        return null
+      }
+    }
+
+    private fun createFileUri(string: String): URI? {
+      try {
+        return Paths.get(string).toUri()
+      } catch(ignored: Throwable) {
+        return null
       }
     }
   }
