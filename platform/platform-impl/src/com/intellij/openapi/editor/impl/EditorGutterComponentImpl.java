@@ -16,10 +16,13 @@ import com.intellij.ide.dnd.DnDNativeTarget;
 import com.intellij.ide.dnd.DnDSupport;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
-import com.intellij.internal.statistic.eventLog.FeatureUsageData;
-import com.intellij.internal.statistic.service.fus.collectors.FUCounterUsageLogger;
+import com.intellij.internal.statistic.eventLog.EventLogGroup;
+import com.intellij.internal.statistic.eventLog.events.EventFields;
+import com.intellij.internal.statistic.eventLog.events.EventId3;
+import com.intellij.internal.statistic.service.fus.collectors.CounterUsagesCollector;
 import com.intellij.internal.statistic.utils.PluginInfo;
 import com.intellij.internal.statistic.utils.PluginInfoDetectorKt;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -2058,19 +2061,16 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
 
   private void logGutterIconClick(@NotNull GutterIconRenderer renderer) {
     PluginInfo pluginInfo = PluginInfoDetectorKt.getPluginInfo(renderer.getClass());
-    FeatureUsageData usageData = new FeatureUsageData();
-    usageData.addPluginInfo(pluginInfo);
     Project project = myEditor.getProject();
+    Language language = null;
     if (project != null) {
-      usageData.addProject(project);
       PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
       if (file != null) {
-        usageData.addCurrentFile(file.getLanguage());
+        language = file.getLanguage();
       }
     }
-    usageData.addData("icon_id", renderer.getFeatureId());
 
-    FUCounterUsageLogger.getInstance().logEvent("gutter.icon.click", "clicked", usageData);
+    GutterIconClickCollectors.CLICKED.log(project, language, renderer.getFeatureId(), pluginInfo);
   }
 
   private boolean isDumbMode() {
@@ -2570,4 +2570,18 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
       }
     }
   };
+
+  private static final class GutterIconClickCollectors extends CounterUsagesCollector {
+    private static final EventLogGroup GROUP = new EventLogGroup("gutter.icon.click", 3);
+    private static final EventId3<Language, String, PluginInfo> CLICKED =
+      GROUP.registerEvent("clicked",
+                          EventFields.Language,
+                          EventFields.StringValidatedByCustomRule("icon_id", "gutter_icon"),
+                          EventFields.PluginInfo);
+
+    @Override
+    public EventLogGroup getGroup() {
+      return GROUP;
+    }
+  }
 }
