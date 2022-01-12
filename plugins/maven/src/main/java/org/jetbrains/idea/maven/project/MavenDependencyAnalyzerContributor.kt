@@ -62,15 +62,9 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
   }
 
   private fun getDependencyData(mavenArtifactNode: MavenArtifactNode): DependencyAnalyzerContributor.Dependency.Data {
-    val mavenProject = MavenProjectsManager.getInstance(project).findProject(mavenArtifactNode.artifact)
-    if (mavenProject != null) {
-      return DependencyAnalyzerContributor.Dependency.Data.Module(mavenProject.displayName)
-    }
-    else {
-      return DependencyAnalyzerContributor.Dependency.Data.Artifact(
-        mavenArtifactNode.artifact.groupId, mavenArtifactNode.artifact.artifactId, mavenArtifactNode.artifact.version
-      )
-    }
+    return DependencyAnalyzerContributor.Dependency.Data.Artifact(
+      mavenArtifactNode.artifact.groupId, mavenArtifactNode.artifact.artifactId, mavenArtifactNode.artifact.version
+    )
   }
 
   private fun getStatus(mavenArtifactNode: MavenArtifactNode): List<DependencyAnalyzerContributor.Status> {

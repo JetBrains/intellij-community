@@ -23,7 +23,6 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenArtifactUtil;
 
-import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Objects;
@@ -64,6 +63,13 @@ public final class MavenNavigationUtil {
   public static @NotNull Navigatable createNavigatableForDependency(@NotNull Project project,
                                                                     @NotNull VirtualFile file,
                                                                     @NotNull MavenArtifact artifact) {
+    return createNavigatableForDependency(project, file, artifact.getGroupId(), artifact.getArtifactId());
+  }
+
+  public static @NotNull Navigatable createNavigatableForDependency(@NotNull Project project,
+                                                                    @NotNull VirtualFile file,
+                                                                    @NotNull String groupId,
+                                                                    @NotNull String artifactId) {
     return new NavigatableAdapter() {
       @Override
       public void navigate(boolean requestFocus) {
@@ -72,7 +78,7 @@ public final class MavenNavigationUtil {
         MavenDomProjectModel projectModel = MavenDomUtil.getMavenDomProjectModel(project, file);
         if (projectModel == null) return;
 
-        MavenDomDependency dependency = findDependency(projectModel, artifact.getGroupId(), artifact.getArtifactId());
+        MavenDomDependency dependency = findDependency(projectModel, groupId, artifactId);
         if (dependency == null) return;
 
         XmlTag artifactId = dependency.getArtifactId().getXmlTag();

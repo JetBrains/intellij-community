@@ -3,23 +3,48 @@ package org.jetbrains.idea.maven.project.actions
 
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerContributor.Dependency
 import com.intellij.openapi.externalSystem.dependency.analyzer.DependencyAnalyzerView
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle
+import com.intellij.openapi.project.Project
+import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.idea.maven.model.MavenId
+import org.jetbrains.idea.maven.navigator.MavenNavigationUtil
+import org.jetbrains.idea.maven.project.MavenProjectsManager
 import org.jetbrains.idea.maven.utils.MavenUtil
 
 class MavenDependencyAnalyzerGoToAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
-    logger<MavenDependencyAnalyzerGoToAction>().error("TODO: MavenGoToPomAction")
+    val dependency = e.getData(DependencyAnalyzerView.DEPENDENCY) ?: return
+    val project = e.getData(DependencyAnalyzerView.PROJECT) ?: return
+    val parent = dependency.parent ?: return
+    val artifactParent = parent.data as Dependency.Data.Artifact
+    val artifact = dependency.data as Dependency.Data.Artifact
+
+    val artifactFile = getArtifactFile(project, artifactParent) ?: return
+    val navigatable = MavenNavigationUtil.createNavigatableForDependency(project, artifactFile, artifact.groupId, artifact.artifactId)
+    if (navigatable.canNavigate()) {
+      navigatable.navigate(true)
+    }
   }
 
   override fun update(e: AnActionEvent) {
     val systemId = e.getData(DependencyAnalyzerView.EXTERNAL_SYSTEM_ID)
     val dependency = e.getData(DependencyAnalyzerView.DEPENDENCY)
+    val project = e.getData(DependencyAnalyzerView.PROJECT)
     e.presentation.isEnabledAndVisible =
       systemId == MavenUtil.SYSTEM_ID &&
-      dependency?.data is Dependency.Data.Artifact
+      project != null &&
+      dependency?.data is Dependency.Data.Artifact &&
+      dependency.parent?.data is Dependency.Data.Artifact &&
+      getArtifactFile(project, dependency.parent?.data as Dependency.Data.Artifact) != null
+
+  }
+
+  private fun getArtifactFile(project: Project, artifactParent: Dependency.Data.Artifact): VirtualFile? {
+    val mavenId = MavenId(artifactParent.groupId, artifactParent.artifactId, artifactParent.version)
+    val mavenProject = MavenProjectsManager.getInstance(project).findProject(mavenId)
+    return mavenProject?.file ?: MavenNavigationUtil.getArtifactFile(project, mavenId)
   }
 
   init {

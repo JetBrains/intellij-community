@@ -33,7 +33,7 @@ interface DependencyAnalyzerView : DataProvider {
     val VIEW = DataKey.create<DependencyAnalyzerView>("ExternalSystem.DependencyAnalyzerView.View")
     val PROJECT = CommonDataKeys.PROJECT
     val EXTERNAL_SYSTEM_ID = DataKey.create<ProjectSystemId>("external.system.id")
-    val EXTERNAL_PROJECT_PATH = DataKey.create<ProjectSystemId>("ExternalSystem.DependencyAnalyzerView.ProjectPath")
+    val EXTERNAL_PROJECT_PATH = DataKey.create<String>("ExternalSystem.DependencyAnalyzerView.ProjectPath")
     val DEPENDENCY = DataKey.create<Dependency>("ExternalSystem.DependencyAnalyzerView.Dependency")
     val DEPENDENCIES = DataKey.create<Dependency>("ExternalSystem.DependencyAnalyzerView.Dependencies")
   }
