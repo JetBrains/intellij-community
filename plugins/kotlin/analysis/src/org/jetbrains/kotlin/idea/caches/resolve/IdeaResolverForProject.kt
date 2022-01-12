@@ -47,6 +47,10 @@ class IdeaResolverForProject(
     private val syntheticFilesByModule: Map<IdeaModuleInfo, Collection<KtFile>>,
     delegateResolver: ResolverForProject<IdeaModuleInfo>,
     fallbackModificationTracker: ModificationTracker? = null,
+
+    // Note that 'projectContext.project.useCompositeAnalysis == true' doesn't necessarily imply
+    // that 'settings is CompositeAnalysisSettings'. We create "old" settings for some exceptional
+    // cases sometimes even when CompositeMode is enabled, see KotlinCacheService.getResolutionFacadeWithForcedPlatform
     private val settings: PlatformAnalysisSettings
 ) : AbstractResolverForProject<IdeaModuleInfo>(
     debugName,
@@ -100,7 +104,7 @@ class IdeaResolverForProject(
     }
 
     override fun sdkDependency(module: IdeaModuleInfo): SdkInfo? {
-        if (projectContext.project.useCompositeAnalysis) {
+        if (settings is CompositeAnalysisSettings) {
             require(constantSdkDependencyIfAny == null) { "Shouldn't pass SDK dependency manually for composite analysis mode" }
         }
         return constantSdkDependencyIfAny ?: module.findSdkAcrossDependencies()
@@ -162,7 +166,7 @@ class IdeaResolverForProject(
             metadataPartProviderFactory = { IDEPackagePartProvider(it.moduleContentScope) }
         )
 
-        return if (!projectContext.project.useCompositeAnalysis) {
+        return if (settings !is CompositeAnalysisSettings) {
             val parameters = when {
                 platform.isJvm() -> jvmPlatformParameters
                 platform.isCommon() -> commonPlatformParameters

@@ -538,6 +538,10 @@ data class PlatformModuleInfo(
         get() = platform.findAnalyzerServices(platformModule.module.project)
 
     override fun dependencies() = platformModule.dependencies()
+        // This is needed for cases when we create PlatformModuleInfo in Kotlin Multiplatform Analysis Mode is set to COMPOSITE, see
+        // KotlinCacheService.getResolutionFacadeWithForcedPlatform.
+        // For SEPARATE-mode, this filter will be executed in getSourceModuleDependencies.kt anyways, so it's essentially a no-op
+        .filter { NonHmppSourceModuleDependenciesFilter(platformModule.platform).isSupportedDependency(it) }
 
     override val expectedBy: List<ModuleInfo>
         get() = platformModule.expectedBy
