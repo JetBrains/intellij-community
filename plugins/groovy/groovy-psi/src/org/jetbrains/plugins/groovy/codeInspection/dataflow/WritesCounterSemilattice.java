@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.dataflow;
 
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
@@ -20,15 +20,16 @@ public final class WritesCounterSemilattice implements Semilattice<Object2IntMap
     }
   }
 
-  @NotNull
-  @Override
-  public Object2IntMap<GrVariable> initial() {
-    return NEUTRAL;
-  }
 
   @NotNull
   @Override
   public Object2IntMap<GrVariable> join(@NotNull List<? extends Object2IntMap<GrVariable>> ins) {
+    if (ins.isEmpty()) {
+      return NEUTRAL;
+    }
+    if (ins.size() == 1) {
+      return ins.get(0);
+    }
     final Object2IntMap<GrVariable> result = new Object2IntOpenHashMap<>();
     for (Object2IntMap<GrVariable> i : ins) {
       merge(result, i);

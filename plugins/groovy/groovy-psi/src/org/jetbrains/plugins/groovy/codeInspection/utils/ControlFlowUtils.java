@@ -860,7 +860,7 @@ public final class ControlFlowUtils {
   }
 
   @NotNull
-  public static List<BitSet> inferWriteAccessMap(final Instruction[] flow, final GrVariable var) {
+  public static List<@NotNull BitSet> inferWriteAccessMap(final Instruction[] flow, final GrVariable var) {
 
     BitSet neutral = new BitSet(flow.length);
 
@@ -868,13 +868,13 @@ public final class ControlFlowUtils {
 
       @NotNull
       @Override
-      public BitSet initial() {
-        return neutral;
-      }
-
-      @NotNull
-      @Override
       public BitSet join(@NotNull List<? extends BitSet> ins) {
+        if (ins.size() == 0) {
+          return neutral;
+        }
+        if (ins.size() == 1) {
+          return ins.get(0);
+        }
         BitSet result = new BitSet(flow.length);
         for (BitSet set : ins) {
           result.or(set);
@@ -906,7 +906,7 @@ public final class ControlFlowUtils {
       }
     };
 
-    return new DFAEngine<>(flow, dfa, sem).performForceDFA();
+    return ContainerUtil.map(new DFAEngine<>(flow, dfa, sem).performForceDFA(), set -> set == null ? neutral : set);
   }
 
 }

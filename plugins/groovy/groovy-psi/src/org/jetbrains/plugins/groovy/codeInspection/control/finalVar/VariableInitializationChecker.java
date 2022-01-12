@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import com.intellij.psi.util.CachedValueProvider.Result;
@@ -27,8 +27,8 @@ public final class VariableInitializationChecker {
     DFAEngine<Boolean> engine = new DFAEngine<>(controlFlow, new MyDfaInstance(VariableDescriptorFactory.createDescriptor(var)), new MySemilattice());
     final List<Boolean> result = engine.performDFAWithTimeout();
     if (result == null) return false;
-
-    return result.get(controlFlow.length - 1);
+    Boolean last = result.get(controlFlow.length - 1);
+    return last == null ? false : last;
   }
 
   public static boolean isVariableDefinitelyInitializedCached(@NotNull GrVariable var,
@@ -66,13 +66,10 @@ public final class VariableInitializationChecker {
 
     @NotNull
     @Override
-    public Boolean initial() {
-      return false;
-    }
-
-    @NotNull
-    @Override
     public Boolean join(@NotNull List<? extends Boolean> ins) {
+      if (ins.isEmpty()) {
+        return false;
+      }
       boolean b = true;
       for (boolean candidate : ins) {
         b &= candidate;

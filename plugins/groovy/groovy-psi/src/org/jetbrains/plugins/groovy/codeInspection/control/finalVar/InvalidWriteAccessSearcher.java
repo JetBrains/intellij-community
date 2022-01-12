@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import org.jetbrains.annotations.NotNull;
@@ -13,10 +13,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -28,17 +25,19 @@ public final class InvalidWriteAccessSearcher {
                                                                           @NotNull Set<? extends GrVariable> variables,
                                                                           @NotNull Set<? extends GrVariable> alreadyInitialized) {
     DFAEngine<MyData> engine = new DFAEngine<>(flow, new MyDFAInstance(), new MySemilattice());
-    final List<MyData> dfaResult = engine.performDFAWithTimeout();
+    final List<@Nullable MyData> dfaResult = engine.performDFAWithTimeout();
     if (dfaResult == null) return null;
 
 
     List<ReadWriteVariableInstruction> result = new ArrayList<>();
 
     Set<VariableDescriptor> descriptors = variables.stream()
+      .filter(Objects::nonNull)
       .map(VariableDescriptorFactory::createDescriptor)
       .collect(Collectors.toSet());
 
     Set<VariableDescriptor> initializedDescriptors = alreadyInitialized.stream()
+      .filter(Objects::nonNull)
       .map(VariableDescriptorFactory::createDescriptor)
       .collect(Collectors.toSet());
 
@@ -78,13 +77,6 @@ public final class InvalidWriteAccessSearcher {
 
   private static class MySemilattice implements Semilattice<MyData> {
     private static final MyData NEUTRAL = new MyData();
-
-    @NotNull
-    @Override
-    public MyData initial() {
-      return NEUTRAL;
-    }
-
     @NotNull
     @Override
     public MyData join(@NotNull List<? extends MyData> ins) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.codeInspection.unusedDef;
 
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -81,6 +81,9 @@ public final class UnusedDefInspection extends GroovyLocalInspectionBase {
         if (!varInst.isWrite()) {
           final VariableDescriptor descriptor = varInst.getDescriptor();
           DefinitionMap e = dfaResult.get(i);
+          if (e == null) {
+            continue;
+          }
           e.forEachValue(reaching -> {
             reaching.forEach((IntConsumer)defNum -> {
               final VariableDescriptor defDescriptor = ((ReadWriteVariableInstruction) flow[defNum]).getDescriptor();

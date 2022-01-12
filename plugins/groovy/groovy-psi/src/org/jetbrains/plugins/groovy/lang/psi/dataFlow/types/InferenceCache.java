@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.util.Pair;
@@ -114,9 +114,9 @@ final class InferenceCache {
   }
 
   @Nullable
-  private List<TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
-                                            Instruction @NotNull [] flow,
-                                            @NotNull DFAFlowInfo flowInfo) {
+  private List<@Nullable TypeDfaState> performTypeDfa(@NotNull GrControlFlowOwner owner,
+                                                      Instruction @NotNull [] flow,
+                                                      @NotNull DFAFlowInfo flowInfo) {
     final TypeDfaInstance dfaInstance = new TypeDfaInstance(flow, flowInfo, this, owner.getManager(), new InitialTypeProvider(owner));
     final TypesSemilattice semilattice = new TypesSemilattice(owner.getManager());
     return new DFAEngine<>(flow, dfaInstance, semilattice).performDFAWithTimeout();
@@ -197,7 +197,7 @@ final class InferenceCache {
     return pairs;
   }
 
-  private void cacheDfaResult(@NotNull List<TypeDfaState> dfaResult,
+  private void cacheDfaResult(@NotNull List<@Nullable TypeDfaState> dfaResult,
                               Set<Instruction> storingInstructions) {
     for (var instruction : storingInstructions) {
       int index = instruction.num();

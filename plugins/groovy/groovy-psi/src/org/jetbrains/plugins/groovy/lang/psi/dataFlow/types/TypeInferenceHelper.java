@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,6 +8,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.util.containers.ContainerUtil;
 import it.unimi.dsi.fastutil.objects.Object2IntMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -155,7 +156,11 @@ public final class TypeInferenceHelper {
     final ReachingDefinitionsDfaInstance dfaInstance = new TypesReachingDefinitionsInstance(flow, varIndexes);
     final ReachingDefinitionsSemilattice lattice = new ReachingDefinitionsSemilattice();
     final DFAEngine<DefinitionMap> engine = new DFAEngine<>(flow, dfaInstance, lattice);
-    return engine.performDFAWithTimeout();
+    List<@Nullable DefinitionMap> maps = engine.performDFAWithTimeout();
+    if (maps == null) {
+      return null;
+    }
+    return ContainerUtil.map(maps, it -> it == null ? DefinitionMap.NEUTRAL : it);
   }
 
   @Nullable

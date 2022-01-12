@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -9,6 +9,7 @@ import it.unimi.dsi.fastutil.ints.Int2ObjectMap;
 import it.unimi.dsi.fastutil.ints.Int2ObjectOpenHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAType;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
 
@@ -25,20 +26,22 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
   public TypesSemilattice(@NotNull PsiManager manager) {
     myManager = manager;
   }
-
-  @Override
-  @NotNull
-  public TypeDfaState initial() {
-    return TypeDfaState.EMPTY_STATE;
-  }
-
   @NotNull
   @Override
   public TypeDfaState join(@NotNull List<? extends TypeDfaState> ins) {
+    if (ins.size() == 0) {
+      return TypeDfaState.EMPTY_STATE;
+    }
+    if (ins.size() == 1) {
+      return ins.get(0);
+    }
+
     TypeDfaState result = ins.get(0);
 
     for (int i = 1; i < ins.size(); i++) {
-      result = TypeDfaState.merge(result, ins.get(i), myManager);
+      if (ins.get(i) != TypeDfaState.EMPTY_STATE) {
+        result = TypeDfaState.merge(result, ins.get(i), myManager);
+      }
     }
     return result;
   }
@@ -50,8 +53,8 @@ public class TypesSemilattice implements Semilattice<TypeDfaState> {
 
   @Contract(pure = true)
   public static Int2ObjectMap<DFAType> mergeForCaching(@NotNull Int2ObjectMap<DFAType> cached,
-                                                       @NotNull TypeDfaState candidate) {
-    if (candidate.getRawVarTypes().isEmpty()) {
+                                                       @Nullable TypeDfaState candidate) {
+    if (candidate == null || candidate.getRawVarTypes().isEmpty()) {
       return cached;
     }
 
