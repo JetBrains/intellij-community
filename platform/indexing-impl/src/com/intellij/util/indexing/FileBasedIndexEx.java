@@ -1,24 +1,28 @@
 // Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.indexing;
 
-import com.intellij.ide.lightEdit.LightEdit;
+import com.intellij.ide.lightEdit.LightEditCompatible;
 import com.intellij.model.ModelBranch;
 import com.intellij.model.ModelBranchImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.ContentIterator;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
-import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
+import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.search.EverythingGlobalScope;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.impl.VirtualFileEnumeration;
@@ -29,9 +33,11 @@ import com.intellij.util.containers.Stack;
 import com.intellij.util.indexing.diagnostic.IndexAccessValidator;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.InvertedIndexValueIterator;
+import com.intellij.util.indexing.impl.MapReduceIndexMappingException;
 import com.intellij.util.indexing.roots.IndexableFilesContributor;
 import com.intellij.util.indexing.roots.IndexableFilesDeduplicateFilter;
 import com.intellij.util.indexing.roots.IndexableFilesIterator;
+import com.intellij.util.indexing.snapshot.SnapshotInputMappingException;
 import it.unimi.dsi.fastutil.ints.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
@@ -40,10 +46,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.util.*;
 import java.util.function.IntPredicate;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
-
-import static com.intellij.util.indexing.FileBasedIndexImpl.LOG;
-import static com.intellij.util.indexing.FileBasedIndexImpl.getCauseToRebuildIndex;
 
 @ApiStatus.Internal
 public abstract class FileBasedIndexEx extends FileBasedIndex {
@@ -170,7 +174,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
 
         if ((IndexDebugProperties.DEBUG && !ApplicationManager.getApplication().isUnitTestMode()) &&
             !((FileBasedIndexExtension<K, V>)index.getExtension()).needsForwardIndexWhenSharing()) {
-          LOG.error("Index extension " + id + " doesn't require forward index but accesses it");
+          getLogger().error("Index extension " + id + " doesn't require forward index but accesses it");
         }
 
         return index.getIndexedFileData(fileId);
@@ -198,7 +202,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public <K, V> Collection<VirtualFile> getContainingFiles(@NotNull ID<K, V> indexId,
                                                            @NotNull K dataKey,
                                                            @NotNull GlobalSearchScope filter) {
-    if (LightEdit.owns(filter.getProject())) return Collections.emptyList();
+    if (filter.getProject() instanceof LightEditCompatible) return Collections.emptyList();
     VirtualFile restrictToFile = getTheOnlyFileInScope(filter);
     if (restrictToFile != null) {
       return !processValuesInOneFile(indexId, dataKey, restrictToFile, filter, (f, v) -> false) ?
@@ -320,7 +324,6 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       return false;
     }
 
-    PersistentFS fs = PersistentFS.getInstance();
     IdFilter filter = idFilter != null ? idFilter : extractIdFilter(scope, project);
     IntPredicate accessibleFileFilter = getAccessibleFileIdFilter(project);
 
@@ -330,7 +333,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
         for (final ValueContainer.IntIterator inputIdsIterator = valueIt.getInputIdsIterator(); inputIdsIterator.hasNext(); ) {
           final int id = inputIdsIterator.next();
           if (!accessibleFileFilter.test(id) || (filter != null && !filter.containsFileId(id))) continue;
-          VirtualFile file = fs.findFileByIdIfCached(id);
+          VirtualFile file = findFileById(id);
           if (file != null) {
             for (VirtualFile eachFile : filesInScopeWithBranches(scope, file)) {
               if (!processor.process(eachFile, value)) {
@@ -479,7 +482,7 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   @NotNull
   public List<IndexableFilesIterator> getIndexableFilesProviders(@NotNull Project project) {
     List<String> allowedIteratorPatterns = StringUtil.split(System.getProperty("idea.test.files.allowed.iterators", ""), ";");
-    if (LightEdit.owns(project)) {
+    if (project instanceof LightEditCompatible) {
       return Collections.emptyList();
     }
     List<IndexableFilesIterator> providers = IndexableFilesContributor.EP_NAME
@@ -521,18 +524,17 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     return processExceptions(indexId, null, filter, convertor);
   }
 
-  private static boolean processVirtualFiles(@NotNull IntCollection ids,
-                                             @NotNull GlobalSearchScope filter,
-                                             @NotNull Processor<? super VirtualFile> processor) {
+  private boolean processVirtualFiles(@NotNull IntCollection ids,
+                                      @NotNull GlobalSearchScope filter,
+                                      @NotNull Processor<? super VirtualFile> processor) {
     // ensure predictable order because result might be cached by consumer
     IntList sortedIds = new IntArrayList(ids);
     sortedIds.sort(null);
 
-    PersistentFS fs = PersistentFS.getInstance();
     for (IntIterator iterator = sortedIds.iterator(); iterator.hasNext(); ) {
       ProgressManager.checkCanceled();
       int id = iterator.nextInt();
-      VirtualFile file = fs.findFileByIdIfCached(id);
+      VirtualFile file = findFileById(id);
       if (file != null) {
         for (VirtualFile fileInBranch : filesInScopeWithBranches(filter, file)) {
           boolean processNext = processor.process(fileInBranch);
@@ -550,8 +552,8 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
   public @Nullable DumbModeAccessType getCurrentDumbModeAccessType() {
     DumbModeAccessType result = getCurrentDumbModeAccessType_NoDumbChecks();
     if (result != null) {
-      LOG.assertTrue(ContainerUtil.exists(ProjectManager.getInstance().getOpenProjects(), p -> DumbService.isDumb(p)),
-                     "getCurrentDumbModeAccessType may only be called during indexing");
+      getLogger().assertTrue(ContainerUtil.exists(ProjectManager.getInstance().getOpenProjects(), p -> DumbService.isDumb(p)),
+                             "getCurrentDumbModeAccessType may only be called during indexing");
     }
     return result;
   }
@@ -609,6 +611,14 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
     }
   }
 
+  @Nullable
+  @ApiStatus.Internal
+  public abstract VirtualFile findFileById(int id);
+
+  @NotNull
+  @ApiStatus.Internal
+  public abstract Logger getLogger();
+
   @NotNull
   @ApiStatus.Internal
   public static List<VirtualFile> filesInScopeWithBranches(@NotNull GlobalSearchScope scope, @NotNull VirtualFile file) {
@@ -624,5 +634,69 @@ public abstract class FileBasedIndexEx extends FileBasedIndex {
       ProgressManager.checkCanceled();
     }
     return filesInScope;
+  }
+
+  @Nullable
+  public static Throwable getCauseToRebuildIndex(@NotNull RuntimeException e) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // avoid rebuilding index in tests since we do it synchronously in requestRebuild and we can have readAction at hand
+      return null;
+    }
+    if (e instanceof ProcessCanceledException) {
+      return null;
+    }
+    if (e instanceof MapReduceIndexMappingException) {
+      if (e.getCause() instanceof SnapshotInputMappingException) {
+        // IDEA-258515: corrupted snapshot index storage must be rebuilt.
+        return e.getCause();
+      }
+      // If exception has happened on input mapping (DataIndexer.map),
+      // it is handled as the indexer exception and must not lead to index rebuild.
+      return null;
+    }
+    if (e instanceof IndexOutOfBoundsException) return e; // something wrong with direct byte buffer
+    Throwable cause = e.getCause();
+    if (cause instanceof StorageException
+        || cause instanceof IOException
+        || cause instanceof IllegalArgumentException
+    ) {
+      return cause;
+    }
+    return null;
+  }
+
+  @ApiStatus.Internal
+  public static boolean isTooLarge(@NotNull VirtualFile file,
+                                   @Nullable("if content size should be retrieved from a file") Long contentSize,
+                                   @NotNull Set<FileType> noLimitFileTypes) {
+    if (SingleRootFileViewProvider.isTooLargeForIntelligence(file, contentSize)) {
+      return !noLimitFileTypes.contains(file.getFileType()) || SingleRootFileViewProvider.isTooLargeForContentLoading(file, contentSize);
+    }
+    return false;
+  }
+
+  public static final boolean DO_TRACE_STUB_INDEX_UPDATE = Boolean.getBoolean("idea.trace.stub.index.update");
+
+  public static boolean acceptsInput(@NotNull InputFilter filter, @NotNull IndexedFile indexedFile) {
+    if (filter instanceof ProjectSpecificInputFilter) {
+      if (indexedFile.getProject() == null) {
+        Project project = ProjectLocator.getInstance().guessProjectForFile(indexedFile.getFile());
+        ((IndexedFileImpl)indexedFile).setProject(project);
+      }
+      return ((ProjectSpecificInputFilter)filter).acceptInput(indexedFile);
+    }
+    return filter.acceptInput(indexedFile.getFile());
+  }
+
+  @NotNull
+  public static InputFilter composeInputFilter(@NotNull InputFilter filter, @NotNull Predicate<? super VirtualFile> condition) {
+    return filter instanceof ProjectSpecificInputFilter
+           ? new ProjectSpecificInputFilter() {
+      @Override
+      public boolean acceptInput(@NotNull IndexedFile file) {
+        return ((ProjectSpecificInputFilter)filter).acceptInput(file) && condition.test(file.getFile());
+      }
+    }
+           : file -> filter.acceptInput(file) && condition.test(file);
   }
 }

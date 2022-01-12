@@ -6,13 +6,12 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.DirectInputDataDiffBuilder;
 import com.intellij.util.indexing.impl.IndexDebugProperties;
 import com.intellij.util.indexing.impl.KeyValueUpdateProcessor;
 import com.intellij.util.indexing.impl.RemovedKeyProcessor;
-import one.util.streamex.IntStreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -87,12 +86,12 @@ class StubCumulativeInputDiffBuilder extends DirectInputDataDiffBuilder<Integer,
       Collection<StubIndexKey<?, ?>> affectedIndexes =
         ContainerUtil.union(oldForwardIndex.keySet(), newForwardIndex.keySet());
 
-      if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
-        StubIndexImpl.LOG
+      StubIndexEx stubIndex = (StubIndexEx)StubIndex.getInstance();
+      if (FileBasedIndexEx.DO_TRACE_STUB_INDEX_UPDATE) {
+        stubIndex.getLogger()
           .info("stub indexes " + (newTree == null ? "deletion" : "update") + ": file = " + myInputId + " indexes " + affectedIndexes);
       }
 
-      StubIndexImpl stubIndex = (StubIndexImpl)StubIndex.getInstance();
       //noinspection rawtypes
       for (StubIndexKey key : affectedIndexes) {
         // StubIdList-s are ignored.

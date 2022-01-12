@@ -94,7 +94,7 @@ public final class FileBasedIndexScanUtil {
       InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
       if (!FilesScanExecutor.processFilesInScope(scope, false, file -> {
         if (idFilter != null && !idFilter.containsFileId(getFileId(file))) return true;
-        if (!FileBasedIndexImpl.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
+        if (!FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
         Document document = fileDocumentManager.getCachedDocument(file);
         CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(file, -1);
         Map<K, ?> map = indexer.map(FileContentImpl.createByText(file, s, project));
@@ -159,7 +159,7 @@ public final class FileBasedIndexScanUtil {
       ConcurrentHashMap<V, Boolean> visitedValues = ensureValueProcessedOnce ? new ConcurrentHashMap<>() : null;
       if (!FilesScanExecutor.processFilesInScope(scope, false, file -> {
         if (idFilter != null && !idFilter.containsFileId(getFileId(file))) return true;
-        if (!FileBasedIndexImpl.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
+        if (!FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
         Document document = fileDocumentManager.getCachedDocument(file);
         CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(file, -1);
         Map<K, V> map = indexer.map(FileContentImpl.createByText(file, s, project));
@@ -191,7 +191,7 @@ public final class FileBasedIndexScanUtil {
       FileBasedIndexExtension<K, V> indexExtension = Objects.requireNonNull(findIndexExtension(indexId));
       FileBasedIndex.InputFilter inputFilter = indexExtension.getInputFilter();
       DataIndexer<K, V, FileContent> indexer = indexExtension.getIndexer();
-      if (!FileBasedIndexImpl.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
+      if (!FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
       FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
       Document document = fileDocumentManager.getCachedDocument(file);
       CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(file, -1);
@@ -218,7 +218,7 @@ public final class FileBasedIndexScanUtil {
       DataIndexer<K, V, FileContent> indexer = indexExtension.getIndexer();
       InThisThreadProcessor threadProcessor = new InThisThreadProcessor();
       if (!FilesScanExecutor.processFilesInScope(scope, false, file -> {
-        if (!FileBasedIndexImpl.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
+        if (!FileBasedIndexEx.acceptsInput(inputFilter, new IndexedFileImpl(file, project))) return true;
         Document document = fileDocumentManager.getCachedDocument(file);
         CharSequence s = document != null ? document.getCharsSequence() : LoadTextUtil.loadText(file, -1);
         Map<K, V> map = indexer.map(FileContentImpl.createByText(file, s, project));

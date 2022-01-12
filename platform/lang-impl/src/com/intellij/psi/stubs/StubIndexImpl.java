@@ -34,10 +34,7 @@ import com.intellij.util.indexing.impl.storage.TransientFileContentIndex;
 import com.intellij.util.indexing.impl.storage.VfsAwareMapIndexStorage;
 import com.intellij.util.indexing.memory.InMemoryIndexStorage;
 import com.intellij.util.indexing.storage.VfsAwareIndexStorageLayout;
-import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.VoidDataExternalizer;
 import it.unimi.dsi.fastutil.ints.IntIterator;
 import it.unimi.dsi.fastutil.ints.IntLinkedOpenHashSet;
 import it.unimi.dsi.fastutil.ints.IntSet;
@@ -122,60 +119,6 @@ public final class StubIndexImpl extends StubIndexEx {
     myStateFuture.completeExceptionally(error);
   }
 
-  public static @NotNull <K> FileBasedIndexExtension<K, Void> wrapStubIndexExtension(StubIndexExtension<K, ?> extension) {
-    return new FileBasedIndexExtension<>() {
-      @Override
-      public @NotNull ID<K, Void> getName() {
-        @SuppressWarnings("unchecked") ID<K, Void> key = (ID<K, Void>)extension.getKey();
-        return key;
-      }
-
-      @Override
-      public @NotNull FileBasedIndex.InputFilter getInputFilter() {
-        return f -> {
-          throw new UnsupportedOperationException();
-        };
-      }
-
-      @Override
-      public boolean dependsOnFileContent() {
-        return true;
-      }
-
-      @Override
-      public boolean needsForwardIndexWhenSharing() {
-        return false;
-      }
-
-      @Override
-      public @NotNull DataIndexer<K, Void, FileContent> getIndexer() {
-        return i -> {
-          throw new AssertionError();
-        };
-      }
-
-      @Override
-      public @NotNull KeyDescriptor<K> getKeyDescriptor() {
-        return extension.getKeyDescriptor();
-      }
-
-      @Override
-      public @NotNull DataExternalizer<Void> getValueExternalizer() {
-        return VoidDataExternalizer.INSTANCE;
-      }
-
-      @Override
-      public int getVersion() {
-        return extension.getVersion();
-      }
-
-      @Override
-      public boolean traceKeyHashToVirtualFileMapping() {
-        return extension instanceof StringStubIndexExtension && ((StringStubIndexExtension<?>)extension).traceKeyHashToVirtualFileMapping();
-      }
-    };
-  }
-
   @SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")
   private static <K> void registerIndexer(final @NotNull StubIndexExtension<K, ?> extension, final boolean forceClean,
                                           @NotNull AsyncState state, @NotNull IndexVersionRegistrationSink registrationResultSink)
@@ -241,7 +184,7 @@ public final class StubIndexImpl extends StubIndexEx {
         onExceptionInstantiatingIndex(indexKey, version, indexRootDir, e);
       }
       catch (RuntimeException e) {
-        Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);
+        Throwable cause = FileBasedIndexEx.getCauseToRebuildIndex(e);
         if (cause == null) {
           throw e;
         }
@@ -349,7 +292,7 @@ public final class StubIndexImpl extends StubIndexEx {
       }
     }
     catch (RuntimeException e) {
-      final Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);
+      final Throwable cause = FileBasedIndexEx.getCauseToRebuildIndex(e);
       if (cause != null) {
         forceRebuild(cause);
       }
@@ -382,8 +325,10 @@ public final class StubIndexImpl extends StubIndexEx {
     return true;
   }
 
+  @ApiStatus.Internal
+  @Override
   @SuppressWarnings("unchecked")
-  private <Key> UpdatableIndex<Key, Void, FileContent> getIndex(@NotNull StubIndexKey<Key, ?> indexKey) {
+  protected <Key> UpdatableIndex<Key, Void, FileContent> getIndex(@NotNull StubIndexKey<Key, ?> indexKey) {
     return (UpdatableIndex<Key, Void, FileContent>)getAsyncState().myIndices.get(indexKey);
   }
 
@@ -417,10 +362,6 @@ public final class StubIndexImpl extends StubIndexEx {
   @Override
   public void forceRebuild(@NotNull Throwable e) {
     FileBasedIndex.getInstance().scheduleRebuild(StubUpdatingIndex.INDEX_ID, e);
-  }
-
-  private static void requestRebuild() {
-    FileBasedIndex.getInstance().requestRebuild(StubUpdatingIndex.INDEX_ID);
   }
 
   @Override
@@ -549,7 +490,7 @@ public final class StubIndexImpl extends StubIndexEx {
       forceRebuild(e);
     }
     catch (RuntimeException e) {
-      final Throwable cause = FileBasedIndexImpl.getCauseToRebuildIndex(e);
+      final Throwable cause = FileBasedIndexEx.getCauseToRebuildIndex(e);
       if (cause != null) {
         forceRebuild(cause);
       }
@@ -646,55 +587,9 @@ public final class StubIndexImpl extends StubIndexEx {
     index.removeTransientDataForKeys(inputId, new MapInputDataDiffBuilder(inputId, keys));
   }
 
-  public <K> void updateIndex(@NotNull StubIndexKey<K, ?> stubIndexKey,
-                              int fileId,
-                              @NotNull Set<? extends K> oldKeys,
-                              @NotNull Set<? extends K> newKeys) {
-    ProgressManager.getInstance().executeNonCancelableSection(() -> {
-      try {
-        if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
-          LOG.info("stub index '" + stubIndexKey + "' update: " + fileId +
-                   " old = " + Arrays.toString(oldKeys.toArray()) +
-                   " new  = " + Arrays.toString(newKeys.toArray()) +
-                   " updated_id = " + System.identityHashCode(newKeys));
-        }
-        final UpdatableIndex<K, Void, FileContent> index = getIndex(stubIndexKey);
-        if (index == null) return;
-        index.updateWithMap(new AbstractUpdateData<>(fileId) {
-          @Override
-          protected boolean iterateKeys(@NotNull KeyValueUpdateProcessor<? super K, ? super Void> addProcessor,
-                                        @NotNull KeyValueUpdateProcessor<? super K, ? super Void> updateProcessor,
-                                        @NotNull RemovedKeyProcessor<? super K> removeProcessor) throws StorageException {
-            boolean modified = false;
-
-            for (K oldKey : oldKeys) {
-              if (!newKeys.contains(oldKey)) {
-                removeProcessor.process(oldKey, fileId);
-                if (!modified) modified = true;
-              }
-            }
-
-            for (K oldKey : newKeys) {
-              if (!oldKeys.contains(oldKey)) {
-                addProcessor.process(oldKey, null, fileId);
-                if (!modified) modified = true;
-              }
-            }
-
-            if (FileBasedIndexImpl.DO_TRACE_STUB_INDEX_UPDATE) {
-              LOG.info("keys iteration finished updated_id = " + System.identityHashCode(newKeys) + "; modified = " + modified);
-            }
-
-            return modified;
-          }
-        });
-      }
-      catch (StorageException e) {
-        LOG.info(e);
-        requestRebuild();
-      }
-    });
-
+  @Override
+  public @NotNull Logger getLogger() {
+    return LOG;
   }
 
   private static class StubIndexStorageLayout<K> implements VfsAwareIndexStorageLayout<K, Void> {

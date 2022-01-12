@@ -3,10 +3,10 @@ package com.intellij.util.indexing.diagnostic;
 
 import com.intellij.diagnostic.PluginException;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.ThrowableComputable;
-import com.intellij.util.indexing.FileBasedIndexImpl;
+import com.intellij.util.indexing.FileBasedIndex;
+import com.intellij.util.indexing.FileBasedIndexEx;
 import com.intellij.util.indexing.ID;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +32,7 @@ public final class IndexAccessValidator {
       throw exception;
     }
 
-    Logger.getInstance(FileBasedIndexImpl.class).error(exception); // RuntimeException to skip rebuild
+    ((FileBasedIndexEx)FileBasedIndex.getInstance()).getLogger().error(exception); // RuntimeException to skip rebuild
   }
 
   public <T, E extends Throwable> T validate(@NotNull ID<?, ?> indexKey, @NotNull ThrowableComputable<T, E> runnable) throws E {

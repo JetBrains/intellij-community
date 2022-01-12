@@ -27,7 +27,7 @@ public class SingleEntryIndexForwardIndexAccessor<V> extends AbstractMapForwardI
     super(VoidDataExternalizer.INSTANCE);
     LOG.assertTrue(extension instanceof SingleEntryFileBasedIndexExtension);
     IndexId<?, ?> name = extension.getName();
-    FileBasedIndexImpl fileBasedIndex = (FileBasedIndexImpl)FileBasedIndex.getInstance();
+    FileBasedIndexEx fileBasedIndex = (FileBasedIndexEx)FileBasedIndex.getInstance();
     myIndex = NotNullLazyValue.volatileLazy(() -> fileBasedIndex.getIndex((ID<Integer, V>)name));
   }
 
