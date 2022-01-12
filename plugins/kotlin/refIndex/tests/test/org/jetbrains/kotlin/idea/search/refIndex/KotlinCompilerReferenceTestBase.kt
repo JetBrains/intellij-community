@@ -21,6 +21,7 @@ abstract class KotlinCompilerReferenceTestBase : CompilerReferencesTestBase() {
     private var defaultEnableState by Delegates.notNull<Boolean>()
 
     override fun tuneFixture(moduleBuilder: JavaModuleFixtureBuilder<*>) {
+        super.tuneFixture(moduleBuilder)
         moduleBuilder.addLibrary(KotlinArtifactNames.KOTLIN_STDLIB, KotlinArtifacts.instance.kotlinStdlib.path)
     }
 
