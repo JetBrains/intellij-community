@@ -23,19 +23,15 @@ import javax.swing.Icon
 @Internal
 class SpinningProgressIcon: AnimatedIcon(*createFrames())
 
-val opacities = arrayOf(1.0, 0.915, 0.83, 0.745, 0.66, 0.575, 0.49, 0.405, 0.32, 0.235, 0.15, 0.065)
-val paths = arrayOf("M8 2V4",
-                    "M5 2.80383L6 4.53588",
-                    "M2.80396 5L4.53601 6",
-                    "M2.00024 8L4.00024 8",
-                    "M2.80396 11L4.53601 10",
-                    "M5.00024 13.1962L6.00024 11.4641",
-                    "M8.00024 14L8.00024 12",
-                    "M11.0002 13.1962L10.0002 11.4641",
-                    "M13.1965 11L11.4645 10",
-                    "M14.0002 8L12.0002 8",
-                    "M13.1965 5L11.4645 6",
-                    "M11.0002 2.80383L10.0002 4.53588")
+val opacities = arrayOf(1.0, 0.875, 0.75, 0.625, 0.5, 0.375, 0.25, 0.125)
+val paths = arrayOf("M8 2V4.5",
+                    "M3.75739 3.75739L5.52515 5.52515",
+                    "M2.0011 7.99738H4.5011",
+                    "M3.75848 12.2401L5.52625 10.4723",
+                    "M8.00214 13.998V11.498",
+                    "M12.2414 12.2404L10.4736 10.4727",
+                    "M13.9981 7.99921H11.4981",
+                    "M12.2426 3.75739L10.4748 5.52515")
 val iconCache = arrayOfNulls<Icon>(paths.size)
 var iconCacheKey = ""
 
@@ -79,7 +75,7 @@ private fun generateSvgIcon(index: Int): String {
   var s = """<svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">""".plus("\n")
   for (n in paths.indices) {
     val opacity = opacities[(n + index) % opacities.size]
-    s += """  <path opacity="$opacity" d="${paths[n]}" stroke="#$stroke" stroke-linecap="round"/>""".plus("\n")
+    s += """  <path opacity="$opacity" d="${paths[n]}" stroke="#$stroke" stroke-width="1.6" stroke-linecap="round"/>""".plus("\n")
   }
   s += "</svg>"
   return s
