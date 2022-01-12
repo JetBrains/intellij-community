@@ -29,6 +29,7 @@ import java.awt.Graphics2D
 import java.awt.RenderingHints
 import java.awt.event.FocusEvent
 import java.awt.event.FocusListener
+import java.util.*
 import javax.swing.JPanel
 
 private const val PLACE = "SegmentedButton"
@@ -36,7 +37,14 @@ private const val PLACE = "SegmentedButton"
 @ApiStatus.Internal
 internal class SegmentedButtonComponent<T>(items: Collection<T>, private val renderer: (T) -> String) : JPanel(GridLayout()) {
 
-  var changeListener: (() -> Unit)? = null
+
+  companion object {
+    @ApiStatus.Internal
+    internal fun interface SelectedItemListener: EventListener {
+      fun onChanged()
+    }
+  }
+
   var spacing = SpacingConfiguration.EMPTY
     set(value) {
       field = value
@@ -50,7 +58,9 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>, private val ren
         setSelectedState(field, false)
         setSelectedState(value, true)
         field = value
-        changeListener?.invoke()
+        for (listener in listenerList.getListeners(SelectedItemListener::class.java)) {
+          listener.onChanged()
+        }
 
         repaint()
       }
@@ -82,6 +92,14 @@ internal class SegmentedButtonComponent<T>(items: Collection<T>, private val ren
     actionLeft.registerCustomShortcutSet(ActionUtil.getShortcutSet("SegmentedButton-left"), this)
     val actionRight = DumbAwareAction.create { moveSelection(1) }
     actionRight.registerCustomShortcutSet(ActionUtil.getShortcutSet("SegmentedButton-right"), this)
+  }
+
+  fun addSelectedItemListener(l: SelectedItemListener) {
+    listenerList.add(SelectedItemListener::class.java, l)
+  }
+
+  fun removeSelectedItemListener(l: SelectedItemListener) {
+    listenerList.remove(SelectedItemListener::class.java, l)
   }
 
   override fun setEnabled(enabled: Boolean) {

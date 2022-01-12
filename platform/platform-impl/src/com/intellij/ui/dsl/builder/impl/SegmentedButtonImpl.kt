@@ -145,7 +145,7 @@ internal class SegmentedButtonImpl<T>(parent: RowImpl, private val renderer: (T)
         segmentedButtonComponent.selectedItem = it
       }
     }
-    segmentedButtonComponent.changeListener = {
+    segmentedButtonComponent.addSelectedItemListener {
       segmentedButtonComponent.selectedItem?.let {
         mutex.lockOrSkip {
           property.set(it)
