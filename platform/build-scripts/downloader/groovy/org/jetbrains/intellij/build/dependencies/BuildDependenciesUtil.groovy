@@ -7,6 +7,7 @@ import org.apache.commons.compress.archivers.tar.TarArchiveInputStream
 import org.apache.commons.compress.archivers.zip.ZipArchiveEntry
 import org.apache.commons.compress.archivers.zip.ZipFile
 import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.Nullable
 import org.w3c.dom.Element
 import org.w3c.dom.Node
@@ -18,6 +19,7 @@ import java.nio.file.attribute.BasicFileAttributes
 import java.nio.file.attribute.PosixFilePermissions
 
 @CompileStatic
+@ApiStatus.Internal
 final class BuildDependenciesUtil {
   static boolean isPosix = FileSystems.getDefault().supportedFileAttributeViews().contains("posix")
 

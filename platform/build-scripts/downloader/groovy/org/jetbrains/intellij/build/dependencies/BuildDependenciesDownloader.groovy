@@ -7,6 +7,7 @@ import io.opentelemetry.api.common.AttributeKey
 import io.opentelemetry.api.common.Attributes
 import io.opentelemetry.api.trace.Span
 import io.opentelemetry.api.trace.StatusCode
+import org.jetbrains.annotations.ApiStatus
 import org.jetbrains.annotations.TestOnly
 
 import java.net.http.HttpClient
@@ -22,6 +23,7 @@ import java.time.Instant
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.stream.Collectors
 
+@ApiStatus.Internal
 @CompileStatic
 final class BuildDependenciesDownloader {
   private static final String HTTP_HEADER_CONTENT_LENGTH = "Content-Length"
