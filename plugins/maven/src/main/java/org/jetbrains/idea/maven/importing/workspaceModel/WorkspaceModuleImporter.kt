@@ -251,7 +251,10 @@ class WorkspaceModuleImporter(
   private fun addGeneratedJavaSourceFolder(path: String, type: JavaSourceRootType, contentRootEntity: ContentRootEntity) {
     if (File(path).list().isNullOrEmpty()) return
 
-    val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity, virtualFileUrlManager.fromPath(path),
+    val url = virtualFileUrlManager.fromPath(path)
+    if (contentRootEntity.sourceRoots.any { it.url == url }) return
+
+    val sourceRootEntity = builder.addSourceRootEntity(contentRootEntity, url,
                                                        SourceRootPropertiesHelper.findSerializer(type)?.typeId!!,
                                                        contentRootEntity.entitySource)
     builder.addJavaSourceRootEntity(sourceRootEntity, true, "")
