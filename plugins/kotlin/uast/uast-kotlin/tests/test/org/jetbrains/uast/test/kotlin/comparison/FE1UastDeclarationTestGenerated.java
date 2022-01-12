@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.uast.test.kotlin.comparison;
 
@@ -26,6 +26,11 @@ public class FE1UastDeclarationTestGenerated extends AbstractFE1UastDeclarationT
     @TestMetadata("annotationOnElvis.kt")
     public void testAnnotationOnElvis() throws Exception {
         runTest("../../uast-kotlin-fir/testData/declaration/annotationOnElvis.kt");
+    }
+
+    @TestMetadata("commentsOnProperties.kt")
+    public void testCommentsOnProperties() throws Exception {
+        runTest("../../uast-kotlin-fir/testData/declaration/commentsOnProperties.kt");
     }
 
     @TestMetadata("doWhile.kt")
