@@ -89,7 +89,7 @@ class KtSymbolBasedKotlinCacheServiceImpl(val project: Project) : KotlinCacheSer
         KtSymbolBasedResolutionFacade(project, FE10BindingContextImpl(project, elements.first()))
 
     // todo: platform are ignored
-    override fun getResolutionFacade(elements: List<KtElement>, platform: TargetPlatform): ResolutionFacade =
+    override fun getResolutionFacadeWithForcedPlatform(elements: List<KtElement>, platform: TargetPlatform): ResolutionFacade =
         KtSymbolBasedResolutionFacade(project, FE10BindingContextImpl(project, elements.first()))
 
     override fun getResolutionFacadeByFile(file: PsiFile, platform: TargetPlatform): ResolutionFacade? =

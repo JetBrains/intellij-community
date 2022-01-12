@@ -99,9 +99,74 @@ class KotlinCacheServiceImpl(val project: Project) : KotlinCacheService {
         return getFacadeToAnalyzeFiles(files, TargetPlatformDetector.getPlatform(files.first()))
     }
 
-    override fun getResolutionFacade(elements: List<KtElement>, platform: TargetPlatform): ResolutionFacade {
+    // Implementation note: currently, it provides platform-specific view on common sources via plain creation of
+    // separate GlobalFacade even when CompositeAnalysis is enabled.
+    //
+    // Because GlobalFacade retains a lot of memory and is cached per-platform, calling this function with non-simple TargetPlatforms
+    // (e.g. with {JVM, Android}, {JVM_1.6, JVM_1.8}, etc.) might lead to explosive growth of memory consumption, so such calls are
+    // logged as errors currently and require immediate attention.
+    override fun getResolutionFacadeWithForcedPlatform(elements: List<KtElement>, platform: TargetPlatform): ResolutionFacade {
         val files = getFilesForElements(elements)
-        return getFacadeToAnalyzeFiles(files, platform)
+        val moduleInfo = files.first().getModuleInfo()
+
+        if (!project.useCompositeAnalysis || moduleInfo.platform == platform) {
+            // No need to force platform, just get facade as usual
+            return getFacadeToAnalyzeFiles(files, platform)
+        }
+
+        if (!canGetFacadeWithForcedPlatform(elements, files, moduleInfo, platform)) {
+            // Fallback to facade without forced platform
+            return getResolutionFacade(elements)
+        }
+
+        val settings = PlatformAnalysisSettingsImpl(platform, moduleInfo.sdk, moduleInfo.supportsAdditionalBuiltInsMembers(project))
+        val projectFacade = facadeForModules(settings)
+        return ModuleResolutionFacadeImpl(projectFacade, moduleInfo)
+    }
+
+    private fun canGetFacadeWithForcedPlatform(
+        elements: List<KtElement>,
+        files: List<KtFile>,
+        moduleInfo: IdeaModuleInfo,
+        platform: TargetPlatform
+    ): Boolean {
+        val specialFiles = files.filterNotInProjectSource(moduleInfo)
+        val scripts = specialFiles.filterScripts()
+
+        return when {
+            platform.size > 1 -> {
+                LOG.error(
+                    "Getting resolution facade with non-trivial platform $platform is strongly discouraged,\n" +
+                            "as it can lead to heavy memory consumption. Facade with non-forced platform will be used instead."
+                )
+                false
+            }
+
+            moduleInfo is ScriptDependenciesInfo || moduleInfo is ScriptDependenciesSourceInfo -> {
+                LOG.error(
+                    "Getting resolution facade for ScriptDependencies is not supported\n" +
+                            "Requested elements: $elements\n" +
+                            "Files for requested elements: $files\n" +
+                            "Module info for the first file: $moduleInfo"
+                )
+                false
+            }
+
+            scripts.isNotEmpty() || specialFiles.isNotEmpty() -> {
+                val typeOfUnsupportedFiles = if (scripts.isNotEmpty()) "scripts" else "special files"
+                val unsupportedFiles = scripts.ifEmpty { specialFiles }
+
+                LOG.error(
+                    "Getting resolution facade with forced platform is not supported for $typeOfUnsupportedFiles\n" +
+                            "Requested elements: $elements\n" +
+                            "Files for requested elements: $files\n" +
+                            "Among them, following are $typeOfUnsupportedFiles: $unsupportedFiles"
+                )
+                false
+            }
+
+            else -> true
+        }
     }
 
     private fun getFilesForElements(elements: List<KtElement>): List<KtFile> {
