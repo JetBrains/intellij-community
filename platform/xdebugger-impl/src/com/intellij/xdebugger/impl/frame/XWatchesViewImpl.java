@@ -135,7 +135,9 @@ public class XWatchesViewImpl extends XVariablesView implements DnDNativeTarget,
     }
     installEditListeners();
 
-    fixEditorNotReleasedFalsePositiveException(session);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      fixEditorNotReleasedFalsePositiveException(session);
+    }
   }
 
   // Workaround for IDEA-273987, IDEA-278153.
