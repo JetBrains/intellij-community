@@ -19,7 +19,7 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
   override fun getExternalProjects(): List<DependencyAnalyzerContributor.ExternalProject> {
     return MavenProjectsManager.getInstance(project)
       .projects
-      .map { DependencyAnalyzerContributor.ExternalProject(it.directory, it.displayName) }
+      .map { DependencyAnalyzerContributor.ExternalProject(it.path, it.displayName) }
   }
 
   override fun getDependencyScopes(externalProjectPath: String): List<DependencyAnalyzerContributor.Scope> {
@@ -33,7 +33,7 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
 
   override fun getDependencies(externalProjectPath: String): List<DependencyAnalyzerContributor.Dependency> {
     return LocalFileSystem.getInstance().findFileByPath(externalProjectPath)
-             ?.let { MavenProjectsManager.getInstance(project).findContainingProject(it) }
+             ?.let { MavenProjectsManager.getInstance(project).findProject(it) }
              ?.let { createDependencyList(it) }
            ?: emptyList()
   }
@@ -85,7 +85,8 @@ class MavenDependencyAnalyzerContributor(private val project: Project) : Depende
     return status;
   }
 
-  @Suppress("HardCodedStringLiteral")
-  private fun scope(id: String) =
-    DependencyAnalyzerContributor.Scope(id, StringUtil.toLowerCase(id), StringUtil.toTitleCase(id))
+  companion object {
+    @Suppress("HardCodedStringLiteral")
+    fun scope(id: String) = DependencyAnalyzerContributor.Scope(id, StringUtil.toLowerCase(id), StringUtil.toTitleCase(id))
+  }
 }

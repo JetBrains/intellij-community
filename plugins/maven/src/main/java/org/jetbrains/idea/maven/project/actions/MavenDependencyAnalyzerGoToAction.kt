@@ -16,7 +16,7 @@ import org.jetbrains.idea.maven.utils.MavenUtil
 class MavenDependencyAnalyzerGoToAction : AnAction() {
   override fun actionPerformed(e: AnActionEvent) {
     val dependency = e.getData(DependencyAnalyzerView.DEPENDENCY) ?: return
-    val project = e.getData(DependencyAnalyzerView.PROJECT) ?: return
+    val project = e.project ?: return
     val parent = dependency.parent ?: return
     val artifactParent = parent.data as Dependency.Data.Artifact
     val artifact = dependency.data as Dependency.Data.Artifact
@@ -31,14 +31,12 @@ class MavenDependencyAnalyzerGoToAction : AnAction() {
   override fun update(e: AnActionEvent) {
     val systemId = e.getData(DependencyAnalyzerView.EXTERNAL_SYSTEM_ID)
     val dependency = e.getData(DependencyAnalyzerView.DEPENDENCY)
-    val project = e.getData(DependencyAnalyzerView.PROJECT)
     e.presentation.isEnabledAndVisible =
       systemId == MavenUtil.SYSTEM_ID &&
-      project != null &&
+      e.project != null &&
       dependency?.data is Dependency.Data.Artifact &&
       dependency.parent?.data is Dependency.Data.Artifact &&
-      getArtifactFile(project, dependency.parent?.data as Dependency.Data.Artifact) != null
-
+      getArtifactFile(e.project!!, dependency.parent?.data as Dependency.Data.Artifact) != null
   }
 
   private fun getArtifactFile(project: Project, artifactParent: Dependency.Data.Artifact): VirtualFile? {
