@@ -28,7 +28,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Predicate;
 
 /**
@@ -229,12 +228,15 @@ public final class VcsLogStorageImpl implements Disposable, VcsLogStorage {
 
     @Override
     public int getHashCode(CommitId value) {
-      return value.hashCode();
+      int result = value.getHash().hashCode();
+      result = 31 * result + myRootsReversed.getInt(value);
+      return result;
     }
 
     @Override
     public boolean isEqual(CommitId val1, CommitId val2) {
-      return Objects.equals(val1, val2);
+      return val1.getHash().equals(val2.getHash()) &&
+             myRootsReversed.getInt(val1.getRoot()) == myRootsReversed.getInt(val2.getRoot());
     }
   }
 
