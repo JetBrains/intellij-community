@@ -64,7 +64,7 @@ class StorageId(@NonNls private val projectName: String,
                 private val logId: String,
                 val version: Int) {
   private val safeProjectName = PathUtilRt.suggestFileName("${projectName.take(7)}.$logId", false, false)
-  val projectStorageDir by lazy { File(File(LOG_CACHE, subdirName), safeProjectName) }
+  val projectStorageDir by lazy { File(File(LOG_CACHE, safeProjectName), subdirName) }
 
   @JvmOverloads
   fun getStorageFile(kind: String, forMapIndexStorage: Boolean = false): Path {
