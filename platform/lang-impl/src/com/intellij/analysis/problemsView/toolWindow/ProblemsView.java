@@ -1,9 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow;
 
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.ex.ActionUtil;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.project.DumbAware;
@@ -104,13 +101,8 @@ public final class ProblemsView implements DumbAware, ToolWindowFactory {
     return type.isInstance(component) ? (T)component : null;
   }
 
-  static boolean isProjectErrorsEnabled() {
-    return true; // TODO: use this method to disable Project Errors tab in other IDEs
-  }
-
   @Override
   public void init(@NotNull ToolWindow window) {
-    if (!isProjectErrorsEnabled()) return;
     Project project = ((ToolWindowEx)window).getProject();
     HighlightingErrorsProviderBase.getInstance(project);
   }

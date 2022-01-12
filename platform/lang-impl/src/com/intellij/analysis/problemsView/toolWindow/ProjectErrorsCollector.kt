@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.analysis.problemsView.toolWindow
 
 import com.intellij.analysis.problemsView.FileProblem
@@ -121,7 +121,6 @@ private class ProjectErrorsCollector(val project: Project) : ProblemsCollector {
   }
 
   private fun updateToolWindowIcon() {
-    if (!ProblemsView.isProjectErrorsEnabled()) return
     AppUIUtil.invokeLaterIfProjectAlive(project) { ProblemsView.getToolWindow(project)?.setIcon(getToolWindowIcon()) }
   }
 
