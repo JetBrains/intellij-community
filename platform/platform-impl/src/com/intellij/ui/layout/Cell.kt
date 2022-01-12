@@ -11,6 +11,8 @@ import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.fileChooser.FileChooserDescriptor
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.observable.properties.*
+import com.intellij.openapi.observable.util.whenItemSelected
+import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.*
 import com.intellij.openapi.ui.panel.ComponentPanelBuilder
@@ -866,7 +868,7 @@ fun <C : JTextComponent> C.bind(property: ObservableClearableProperty<String>): 
       text = it
     }
   }
-  whenTextModified {
+  whenTextChanged {
     mutex.lockOrSkip {
       property.set(text)
     }

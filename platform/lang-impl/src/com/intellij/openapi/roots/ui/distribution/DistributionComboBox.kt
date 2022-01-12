@@ -3,6 +3,8 @@ package com.intellij.openapi.roots.ui.distribution
 
 import com.intellij.openapi.application.ex.ClipboardUtil
 import com.intellij.openapi.fileChooser.FileChooserFactory
+import com.intellij.openapi.observable.util.whenItemSelected
+import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
 import com.intellij.openapi.roots.ui.distribution.DistributionComboBox.Item
@@ -198,7 +200,7 @@ class DistributionComboBox(project: Project?, info: FileChooserInfo) : ComboBox<
         component.setEditor(object : BasicComboBoxEditor() {
           override fun createEditorComponent(): JTextField {
             return ComboBoxEditor(project, info, component).apply {
-              whenTextModified {
+              whenTextChanged {
                 mutex.lockOrSkip {
                   val distribution = component.selectedDistribution
                   if (distribution is LocalDistributionInfo) {

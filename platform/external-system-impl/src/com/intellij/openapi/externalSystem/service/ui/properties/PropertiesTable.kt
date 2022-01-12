@@ -5,7 +5,7 @@ import com.intellij.execution.util.ListTableWithButtons
 import com.intellij.ide.ui.search.SearchUtil
 import com.intellij.openapi.externalSystem.service.ui.properties.PropertiesTable.Property
 import com.intellij.openapi.observable.properties.ObservableMutableProperty
-import com.intellij.openapi.ui.whenTableModified
+import com.intellij.openapi.observable.util.whenTableChanged
 import com.intellij.ui.ColoredTableCellRenderer
 import com.intellij.ui.SimpleTextAttributes
 import com.intellij.ui.TableSpeedSearch
@@ -36,7 +36,7 @@ class PropertiesTable : ListTableWithButtons<Property>() {
     mutex.lockOrSkip {
       properties = property.get()
     }
-    tableView.whenTableModified {
+    tableView.whenTableChanged {
       mutex.lockOrSkip {
         property.set(properties)
       }

@@ -13,7 +13,7 @@ import com.intellij.openapi.observable.properties.ObservableMutableProperty
 import com.intellij.openapi.observable.properties.ObservableProperty
 import com.intellij.openapi.observable.properties.transform
 import com.intellij.openapi.ui.asSequence
-import com.intellij.openapi.ui.whenStructureChanged
+import com.intellij.openapi.observable.util.whenTreeChanged
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.*
 import com.intellij.ui.SimpleTextAttributes.GRAYED_ATTRIBUTES
@@ -166,7 +166,7 @@ internal class UsagesTree(
   init {
     PopupHandler.installPopupMenu(this, "ExternalSystem.DependencyAnalyzer.UsagesTreeGroup", DependencyAnalyzerView.ACTION_PLACE)
     setCellRenderer(UsagesTreeRenderer(showGroupIdProperty))
-    whenStructureChanged {
+    whenTreeChanged {
       invokeLater {
         TreeUtil.expandAll(this)
       }

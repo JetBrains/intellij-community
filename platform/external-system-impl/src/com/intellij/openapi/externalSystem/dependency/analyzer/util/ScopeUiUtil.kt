@@ -11,8 +11,8 @@ import com.intellij.openapi.observable.properties.ObservableClearableProperty
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.whenItemSelected
-import com.intellij.openapi.ui.whenMousePressed
+import com.intellij.openapi.observable.util.whenItemSelected
+import com.intellij.openapi.observable.util.whenMousePressed
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.ui.ListUtil
 import com.intellij.ui.components.DropDownLink

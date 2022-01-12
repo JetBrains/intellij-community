@@ -4,7 +4,7 @@ package com.intellij.ui.dsl.builder
 import com.intellij.openapi.observable.properties.GraphProperty
 import com.intellij.openapi.observable.properties.ObservableClearableProperty
 import com.intellij.openapi.observable.properties.transform
-import com.intellij.openapi.ui.whenTextModified
+import com.intellij.openapi.observable.util.whenTextChanged
 import com.intellij.ui.dsl.ValidationException
 import com.intellij.ui.dsl.catchValidationException
 import com.intellij.ui.dsl.stringToInt
@@ -109,7 +109,7 @@ private fun JTextComponent.bind(property: ObservableClearableProperty<String>) {
       text = it
     }
   }
-  whenTextModified {
+  whenTextChanged {
     mutex.lockOrSkip {
       // Catch transformed GraphProperties, e.g. for intTextField
       catchValidationException {
