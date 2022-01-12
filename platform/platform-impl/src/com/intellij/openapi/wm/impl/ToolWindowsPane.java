@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.RemoteDesktopService;
@@ -330,23 +330,23 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
 
   private void setComponent(@Nullable JComponent component, @NotNull ToolWindowAnchor anchor, float weight) {
     Dimension size = getRootPane().getSize();
-    if (ToolWindowAnchor.TOP == anchor) {
+    if (anchor == ToolWindowAnchor.TOP) {
       verticalSplitter.setFirstComponent(component);
       verticalSplitter.setFirstSize((int)(size.getHeight() * weight));
     }
-    else if (ToolWindowAnchor.LEFT == anchor) {
+    else if (anchor == ToolWindowAnchor.LEFT) {
       horizontalSplitter.setFirstComponent(component);
       horizontalSplitter.setFirstSize((int)(size.getWidth() * weight));
     }
-    else if (ToolWindowAnchor.BOTTOM == anchor) {
+    else if (anchor == ToolWindowAnchor.BOTTOM) {
       verticalSplitter.setLastComponent(component);
       verticalSplitter.setLastSize((int)(size.getHeight() * weight));
     }
-    else if (ToolWindowAnchor.RIGHT == anchor) {
+    else if (anchor == ToolWindowAnchor.RIGHT) {
       horizontalSplitter.setLastComponent(component);
       horizontalSplitter.setLastSize((int)(size.getWidth() * weight));
     }
-    else {
+    else if (anchor != ToolWindowAnchor.NONE) {
       LOG.error("unknown anchor: " + anchor);
     }
   }
