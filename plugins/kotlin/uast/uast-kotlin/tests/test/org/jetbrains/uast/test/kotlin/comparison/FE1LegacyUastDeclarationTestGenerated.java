@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package org.jetbrains.uast.test.kotlin.comparison;
 
@@ -63,6 +63,11 @@ public class FE1LegacyUastDeclarationTestGenerated extends AbstractFE1LegacyUast
         runTest("testData/BrokenDataClass.kt");
     }
 
+    @TestMetadata("BrokenGeneric.kt")
+    public void testBrokenGeneric() throws Exception {
+        runTest("testData/BrokenGeneric.kt");
+    }
+
     @TestMetadata("BrokenMethod.kt")
     public void testBrokenMethod() throws Exception {
         runTest("testData/BrokenMethod.kt");
@@ -81,6 +86,11 @@ public class FE1LegacyUastDeclarationTestGenerated extends AbstractFE1LegacyUast
     @TestMetadata("Comments.kt")
     public void testComments() throws Exception {
         runTest("testData/Comments.kt");
+    }
+
+    @TestMetadata("ComplicatedTypes.kt")
+    public void testComplicatedTypes() throws Exception {
+        runTest("testData/ComplicatedTypes.kt");
     }
 
     @TestMetadata("ConstructorDelegate.kt")

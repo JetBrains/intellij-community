@@ -228,6 +228,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
             runTest("testData/handlers/basic/highOrderFunctions/HigherOrderSuspendFunctionWithArgs.kt");
         }
 
+        @TestMetadata("InsertFunctionLiteralForLocalFunction.kt")
+        public void testInsertFunctionLiteralForLocalFunction() throws Exception {
+            runTest("testData/handlers/basic/highOrderFunctions/InsertFunctionLiteralForLocalFunction.kt");
+        }
+
         @TestMetadata("InsertFunctionWithSingleParameterWithBrace.kt")
         public void testInsertFunctionWithSingleParameterWithBrace() throws Exception {
             runTest("testData/handlers/basic/highOrderFunctions/InsertFunctionWithSingleParameterWithBrace.kt");
@@ -927,7 +932,7 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
 
         @TestMetadata("ExtensionPropertyFromSameFile.kt")
         public void testExtensionPropertyFromSameFile() throws Exception {
-            runTest("idea/idea-completion/testData/handlers/basic/ExtensionPropertyFromSameFile.kt");
+            runTest("testData/handlers/basic/ExtensionPropertyFromSameFile.kt");
         }
 
         @TestMetadata("ExtensionReceiverTypeArg.kt")
@@ -1023,6 +1028,11 @@ public abstract class BasicCompletionHandlerTestGenerated extends AbstractBasicC
         @TestMetadata("KT36306.kt")
         public void testKT36306() throws Exception {
             runTest("testData/handlers/basic/KT36306.kt");
+        }
+
+        @TestMetadata("LocalFunction.kt")
+        public void testLocalFunction() throws Exception {
+            runTest("testData/handlers/basic/LocalFunction.kt");
         }
 
         @TestMetadata("NestedClassNameWithFileLevelConflict.kt")

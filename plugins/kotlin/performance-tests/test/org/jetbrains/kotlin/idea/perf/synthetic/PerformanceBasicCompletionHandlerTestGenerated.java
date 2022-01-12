@@ -228,6 +228,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/tests/testData/handlers/basic/highOrderFunctions/HigherOrderSuspendFunctionWithArgs.kt");
         }
 
+        @TestMetadata("InsertFunctionLiteralForLocalFunction.kt")
+        public void testInsertFunctionLiteralForLocalFunction() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/highOrderFunctions/InsertFunctionLiteralForLocalFunction.kt");
+        }
+
         @TestMetadata("InsertFunctionWithSingleParameterWithBrace.kt")
         public void testInsertFunctionWithSingleParameterWithBrace() throws Exception {
             runTest("../completion/tests/testData/handlers/basic/highOrderFunctions/InsertFunctionWithSingleParameterWithBrace.kt");
@@ -925,6 +930,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
             runTest("../completion/tests/testData/handlers/basic/ExtensionFunctionTypeVariable2.kt");
         }
 
+        @TestMetadata("ExtensionPropertyFromSameFile.kt")
+        public void testExtensionPropertyFromSameFile() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/ExtensionPropertyFromSameFile.kt");
+        }
+
         @TestMetadata("ExtensionReceiverTypeArg.kt")
         public void testExtensionReceiverTypeArg() throws Exception {
             runTest("../completion/tests/testData/handlers/basic/ExtensionReceiverTypeArg.kt");
@@ -1018,6 +1028,11 @@ public abstract class PerformanceBasicCompletionHandlerTestGenerated extends Abs
         @TestMetadata("KT36306.kt")
         public void testKT36306() throws Exception {
             runTest("../completion/tests/testData/handlers/basic/KT36306.kt");
+        }
+
+        @TestMetadata("LocalFunction.kt")
+        public void testLocalFunction() throws Exception {
+            runTest("../completion/tests/testData/handlers/basic/LocalFunction.kt");
         }
 
         @TestMetadata("NestedClassNameWithFileLevelConflict.kt")
