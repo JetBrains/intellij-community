@@ -425,7 +425,7 @@ class GitMergeDialog(private val project: Project,
   companion object {
     private val LOG = logger<GitMergeDialog>()
     private val LINK_REF_REGEX = Pattern.compile(".+\\s->\\s.+")
-    private val BRANCH_NAME_REGEX = Pattern.compile(". (.+\\s*)")
+    private val BRANCH_NAME_REGEX = Pattern.compile(". (\\S+)\\s*")
 
     @NlsSafe
     private const val REMOTE_REF = "remotes/"
