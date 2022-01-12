@@ -278,8 +278,6 @@ idea.fatal.error.notification=disabled
     buildContext.messages.block("copy files shared among all distributions", new Supplier<Void>() {
       @Override
       Void get() {
-        copyLogXml(buildContext)
-
         Path licenseOutDir = buildContext.paths.distAllDir.resolve("license")
         BuildHelper buildHelper = BuildHelper.getInstance(buildContext)
         buildHelper.copyDir(buildContext.paths.communityHomeDir.resolve("license"), licenseOutDir)
@@ -323,17 +321,6 @@ idea.fatal.error.notification=disabled
       "Cannot find '$normalizedRelativePath' neither in sources of '$buildContext.productProperties.applicationInfoModule'" +
       " nor in $buildContext.productProperties.brandingResourcePaths")
     return null
-  }
-
-  private static void copyLogXml(BuildContext buildContext) {
-    Path src = buildContext.paths.communityHomeDir.resolve("bin/log.xml")
-    Path dst = buildContext.paths.distAllDir.resolve("bin/log.xml")
-    Files.createDirectories(dst.parent)
-
-    String text = Files.readAllLines(src)
-      .findAll { String line -> !line.contains('appender-ref ref="CONSOLE-WARN"') }
-      .join("\n")
-    Files.writeString(dst, text)
   }
 
   @NotNull
