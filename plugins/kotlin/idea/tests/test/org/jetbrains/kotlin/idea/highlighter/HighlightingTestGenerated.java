@@ -33,6 +33,11 @@ public class HighlightingTestGenerated extends AbstractHighlightingTest {
         runTest("testData/highlighter/AutoCreatedItParameter.kt");
     }
 
+    @TestMetadata("DefinitelyNonNullableType.kt")
+    public void testDefinitelyNonNullableType() throws Exception {
+        runTest("testData/highlighter/DefinitelyNonNullableType.kt");
+    }
+
     @TestMetadata("DelegatingCtor.kt")
     public void testDelegatingCtor() throws Exception {
         runTest("testData/highlighter/DelegatingCtor.kt");
