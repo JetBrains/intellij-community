@@ -1240,7 +1240,6 @@
     <notificationGroup id="Project Settings" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.project.settings"/>
     <notificationGroup id="Settings Error" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.settings.error"/>
     <notificationGroup id="Heap Dump Analysis" displayType="STICKY_BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.heap.dump.analysis"/>
-    <notificationGroup id="External Executable Critical Failures" displayType="STICKY_BALLOON"/>
     <notificationGroup id="Dynamic plugin installation" displayType="BALLOON" isLogByDefault="false"/>
     <notificationGroup id="Keymap" displayType="STICKY_BALLOON"/>
     <notificationGroup id="IDE and Plugin Updates" displayType="STICKY_BALLOON"
