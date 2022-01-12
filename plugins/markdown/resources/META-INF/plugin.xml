@@ -532,5 +532,9 @@ Includes the following features:</p>
     <action id="Markdown.Extensions.CleanupExternalFiles"
             class="org.intellij.plugins.markdown.extensions.CleanupExtensionsExternalFilesAction"
             icon="AllIcons.Actions.GC"/>
+
+    <action id="Markdown.Layout.EditorOnly" class="org.intellij.plugins.markdown.ui.actions.ChangePreviewLayoutAction$EditorOnly"/>
+    <action id="Markdown.Layout.EditorAndPreview" class="org.intellij.plugins.markdown.ui.actions.ChangePreviewLayoutAction$EditorAndPreview"/>
+    <action id="Markdown.Layout.PreviewOnly" class="org.intellij.plugins.markdown.ui.actions.ChangePreviewLayoutAction$PreviewOnly"/>
   </actions>
 </idea-plugin>

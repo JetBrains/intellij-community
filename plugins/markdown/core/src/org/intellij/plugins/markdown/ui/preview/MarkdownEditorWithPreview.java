@@ -2,6 +2,8 @@
 package org.intellij.plugins.markdown.ui.preview;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.VisibleAreaEvent;
 import com.intellij.openapi.editor.event.VisibleAreaListener;
@@ -19,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.EventListener;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Konstantin Bulenkov
@@ -81,6 +84,26 @@ public class MarkdownEditorWithPreview extends TextEditorWithPreview {
 
   public void setAutoScrollPreview(boolean autoScrollPreview) {
     myAutoScrollPreview = autoScrollPreview;
+  }
+
+  @Override
+  public void setLayout(@NotNull Layout layout) {
+    super.setLayout(layout);
+  }
+
+  @Override
+  protected @NotNull ToggleAction getShowEditorAction() {
+    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("Markdown.Layout.EditorOnly"));
+  }
+
+  @Override
+  protected @NotNull ToggleAction getShowEditorAndPreviewAction() {
+    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("Markdown.Layout.EditorAndPreview"));
+  }
+
+  @Override
+  protected @NotNull ToggleAction getShowPreviewAction() {
+    return (ToggleAction)Objects.requireNonNull(ActionUtil.getAction("Markdown.Layout.PreviewOnly"));
   }
 
   @Override
