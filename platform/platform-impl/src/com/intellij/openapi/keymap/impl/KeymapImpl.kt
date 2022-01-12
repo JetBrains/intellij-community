@@ -732,7 +732,7 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
                           KeymapManagerEx.getInstanceEx().activeKeymap = keymap
                           IdeBundle.message("notification.content.keymap.successfully.activated", keymapName)
                         }
-                        Notification("Keymap", successMessage,
+                        Notification("KeymapInstalled", successMessage,
                                                                                   NotificationType.INFORMATION).notify(e.project)
                       }
                     }
@@ -754,7 +754,7 @@ internal fun notifyAboutMissingKeymap(keymapName: String, @NlsContexts.Notificat
             }
           }
 
-          Notification("Keymap", IdeBundle.message("notification.group.missing.keymap"),
+          Notification("KeymapMissing", IdeBundle.message("notification.group.missing.keymap"),
                                                                     message, NotificationType.ERROR)
             .addAction(action)
             .notify(project)

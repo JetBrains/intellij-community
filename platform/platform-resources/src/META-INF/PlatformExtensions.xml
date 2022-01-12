@@ -1241,7 +1241,8 @@
     <notificationGroup id="Settings Error" displayType="BALLOON" bundle="messages.IdeBundle" key="notification.group.settings.error"/>
     <notificationGroup id="Heap Dump Analysis" displayType="STICKY_BALLOON" bundle="messages.DiagnosticBundle" key="notification.group.heap.dump.analysis"/>
     <notificationGroup id="Dynamic plugin installation" displayType="BALLOON" isLogByDefault="false"/>
-    <notificationGroup id="Keymap" displayType="STICKY_BALLOON"/>
+    <notificationGroup id="KeymapMissing" displayType="STICKY_BALLOON" bundle="messages.KeyMapBundle" key="notification.group.keymap.missing"/>
+    <notificationGroup id="KeymapInstalled" displayType="BALLOON" bundle="messages.KeyMapBundle" key="notification.group.keymap.installed"/>
     <notificationGroup id="IDE and Plugin Updates" displayType="STICKY_BALLOON"
                        bundle="messages.IdeBundle" key="notification.group.ide.and.plugin.updates"
                        notificationIds="plugins.updated.suggest.restart;ide.update.installed;ide.update.channel.switched;
