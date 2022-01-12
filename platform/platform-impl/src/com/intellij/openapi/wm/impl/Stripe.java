@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.UISettings;
@@ -28,7 +28,7 @@ import java.util.Comparator;
 /**
  * @author Eugene Belyaev
  */
-class Stripe extends AbstractDroppableStripe implements UISettingsListener {
+final class Stripe extends AbstractDroppableStripe implements UISettingsListener {
   static final Key<Rectangle> VIRTUAL_BOUNDS = Key.create("Virtual stripe bounds");
 
   @MagicConstant(intValues = {SwingConstants.CENTER, SwingConstants.TOP, SwingConstants.LEFT, SwingConstants.BOTTOM, SwingConstants.RIGHT})

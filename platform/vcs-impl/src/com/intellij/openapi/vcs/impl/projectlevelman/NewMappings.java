@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.vcs.impl.projectlevelman;
 
 import com.intellij.ide.impl.TrustedProjects;
@@ -222,7 +222,7 @@ public final class NewMappings implements Disposable {
   private void refreshMainMenu() {
     ApplicationManager.getApplication().invokeLater(() -> {
       ProjectFrameHelper frame = WindowManagerEx.getInstanceEx().getFrameHelper(myProject);
-      if (frame != null && !Disposer.isDisposed(frame)) {
+      if (frame != null && frame.getRootPane() != null) {
         frame.updateView();
       }
     }, myProject.getDisposed());

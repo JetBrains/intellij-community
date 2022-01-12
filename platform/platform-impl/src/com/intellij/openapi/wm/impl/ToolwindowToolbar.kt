@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.actionSystem.ActionPlaces.TOOLWINDOW_TOOLBAR_BAR
@@ -16,8 +16,7 @@ import java.awt.Rectangle
 import javax.swing.JComponent
 import javax.swing.JPanel
 
-abstract class ToolwindowToolbar : JPanel() {
-  lateinit var toolwindowPane: ToolWindowsPane
+internal abstract class ToolwindowToolbar : JPanel() {
   lateinit var defaults: List<String>
 
   init {
@@ -50,24 +49,28 @@ abstract class ToolwindowToolbar : JPanel() {
   fun stopDrag() = startDrag()
 
   fun rebuildStripe(project: Project, panel: AbstractDroppableStripe, toolWindow: ToolWindow) {
-    if (toolWindow !is ToolWindowImpl) return
+    if (toolWindow !is ToolWindowImpl) {
+      return
+    }
 
     if (toolWindow.orderOnLargeStripe == -1) {
-        toolWindow.orderOnLargeStripe = panel.components.filterIsInstance(SquareStripeButton::class.java).count()
+      toolWindow.orderOnLargeStripe = panel.components.filterIsInstance(SquareStripeButton::class.java).count()
     }
 
-    //temporary add new button
+    // temporary add new button
     if (panel.buttons.filterIsInstance(SquareStripeButton::class.java).find { it.button.id == toolWindow.id } == null) {
-      panel.add(SquareStripeButton(project, StripeButton(toolwindowPane, toolWindow).also { it.updatePresentation() }))
+      panel.add(SquareStripeButton(project, StripeButton(toolWindow).also(StripeButton::updatePresentation)))
     }
 
-    val sortedSquareButtons = panel.components.filterIsInstance(SquareStripeButton::class.java)
+    val sortedSquareButtons = panel.components.asSequence()
+      .filterIsInstance(SquareStripeButton::class.java)
       .map { it.button.toolWindow }
       .sortedWith(Comparator.comparingInt<ToolWindow> { (it as? ToolWindowImpl)?.windowInfo?.orderOnLargeStripe ?: -1 })
+      .toList()
     panel.removeAll()
     panel.buttons.clear()
     sortedSquareButtons.forEach {
-      val button = SquareStripeButton(project, StripeButton(toolwindowPane, it).also { button -> button.updatePresentation() })
+      val button = SquareStripeButton(project, StripeButton(it).also(StripeButton::updatePresentation))
       panel.add(button)
       panel.buttons.add(button)
     }

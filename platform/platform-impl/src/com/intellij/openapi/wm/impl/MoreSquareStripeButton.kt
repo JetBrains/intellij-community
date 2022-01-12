@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.icons.AllIcons
@@ -17,7 +17,7 @@ import java.awt.Dimension
 import java.awt.Point
 import java.util.function.Predicate
 
-class MoreSquareStripeButton(toolwindowSideBar: ToolwindowToolbar, val stripe: AbstractDroppableStripe) :
+internal class MoreSquareStripeButton(toolwindowSideBar: ToolwindowToolbar, val stripe: AbstractDroppableStripe) :
   ActionButton(createAction(toolwindowSideBar), createPresentation(), ActionPlaces.TOOLWINDOW_TOOLBAR_BAR, Dimension(40, 40)) {
 
   init {

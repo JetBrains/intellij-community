@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.project.impl
 
 import com.intellij.configurationStore.saveSettings
@@ -163,8 +163,8 @@ internal class ProjectUiFrameAllocator(val options: OpenProjectTask, val project
   }
 
   override fun projectLoaded(project: Project) {
-    ApplicationManager.getApplication().invokeLater(Runnable {
-      val frameHelper = frameManager?.frameHelper ?: return@Runnable
+    ApplicationManager.getApplication().invokeLater({
+      val frameHelper = frameManager?.frameHelper ?: return@invokeLater
 
       val windowManager = WindowManager.getInstance() as WindowManagerImpl
       runActivity("project frame assigning") {

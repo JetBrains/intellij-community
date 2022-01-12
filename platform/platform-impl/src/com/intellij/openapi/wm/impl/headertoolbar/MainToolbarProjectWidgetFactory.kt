@@ -5,6 +5,9 @@ import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import javax.swing.JComponent
 
+/**
+ * Extension point: com.intellij.projectToolbarWidget
+ */
 interface MainToolbarProjectWidgetFactory : MainToolbarWidgetFactory {
 
   companion object {

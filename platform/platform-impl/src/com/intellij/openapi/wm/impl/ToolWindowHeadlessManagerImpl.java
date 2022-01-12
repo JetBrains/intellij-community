@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
@@ -129,7 +129,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
   }
 
   @Override
-  public ToolWindowsPane init(ProjectFrameHelper frameHelper) {
+  public ToolWindowsPane init(@NotNull ProjectFrameHelper frameHelper) {
     throw new UnsupportedOperationException();
   }
 

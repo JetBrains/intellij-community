@@ -233,7 +233,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       }
       else {
         message += " (adapter=" + adapter + ")";
-        throw componentManager.createError(message, null, adapter.getPluginDescriptor().getPluginId(),
+        throw componentManager.createError(message, null, adapter.pluginDescriptor.getPluginId(),
                                            Collections.singletonMap("threadDump", ThreadDumper.dumpThreadsToString()));
       }
     }
@@ -298,7 +298,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     for (ExtensionComponentAdapter adapter : shouldBeSorted ? getSortedAdapters() : adapters) {
       T extension = processAdapter(adapter);
       if (extension != null) {
-        consumer.accept(extension, adapter.getPluginDescriptor());
+        consumer.accept(extension, adapter.pluginDescriptor);
       }
     }
   }
@@ -313,7 +313,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
     // do not use getThreadSafeAdapterList - no need to check that no listeners, because processImplementations is not a generic-purpose method
     for (ExtensionComponentAdapter adapter : shouldBeSorted ? getSortedAdapters() : adapters) {
-      consumer.accept((Supplier<T>)() -> adapter.createInstance(componentManager), adapter.getPluginDescriptor());
+      consumer.accept((Supplier<T>)() -> adapter.createInstance(componentManager), adapter.pluginDescriptor);
     }
   }
 
@@ -469,7 +469,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
         return null;
       }
 
-      boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated() && !isDynamic;
+      boolean isNotifyThatAdded = listeners != null && listeners.length != 0 && !adapter.isInstanceCreated$intellij_platform_extensions() && !isDynamic;
       // do not call CHECK_CANCELED here in loop because it is called by createInstance()
       T extension = adapter.createInstance(componentManager);
       if (extension == null) {
@@ -510,7 +510,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
   }
 
   private static boolean checkThatClassloaderIsActive(@NotNull ExtensionComponentAdapter adapter) {
-    ClassLoader classLoader = adapter.getPluginDescriptor().getPluginClassLoader();
+    ClassLoader classLoader = adapter.pluginDescriptor.getPluginClassLoader();
     if (classLoader instanceof PluginAwareClassLoader &&
         ((PluginAwareClassLoader)classLoader).getState() != PluginAwareClassLoader.ACTIVE) {
       LOG.warn(adapter + " not loaded because classloader is being unloaded");
@@ -632,7 +632,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
 
   @Override
   public final synchronized void unregisterExtension(@NotNull T extension) {
-    if (!unregisterExtensions((__, adapter) -> !adapter.isInstanceCreated() || adapter.createInstance(componentManager) != extension, true)) {
+    if (!unregisterExtensions((__, adapter) -> {
+      return !adapter.isInstanceCreated$intellij_platform_extensions() ||
+             adapter.createInstance(componentManager) != extension;
+    }, true)) {
       // there is a possible case that particular extension was replaced in particular environment, e.g. Upsource
       // replaces some IntelliJ extensions (important for CoreApplicationEnvironment), so, just log as error instead of throw error
       LOG.warn("Extension to be removed not found: " + extension);
@@ -748,7 +751,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
       }
       else {
         for (ExtensionComponentAdapter adapter : adapters) {
-          if (isRemoved && !adapter.isInstanceCreated()) {
+          if (isRemoved && !adapter.isInstanceCreated$intellij_platform_extensions()) {
             continue;
           }
 
@@ -756,10 +759,10 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
             T extension = adapter.createInstance(componentManager);
             if (extension != null) {
               if (isRemoved) {
-                listener.extensionRemoved(extension, adapter.getPluginDescriptor());
+                listener.extensionRemoved(extension, adapter.pluginDescriptor);
               }
               else {
-                listener.extensionAdded(extension, adapter.getPluginDescriptor());
+                listener.extensionAdded(extension, adapter.pluginDescriptor);
               }
             }
           }
@@ -998,7 +1001,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
           }
         }
         catch (ClassNotFoundException e) {
-          componentManager.logError(e, adapter.getPluginDescriptor().getPluginId());
+          componentManager.logError(e, adapter.pluginDescriptor.getPluginId());
         }
       }
     }
@@ -1059,7 +1062,7 @@ public abstract class ExtensionPointImpl<@NotNull T> implements ExtensionPoint<T
     }
 
     @Override
-    boolean isInstanceCreated() {
+    public boolean isInstanceCreated$intellij_platform_extensions() {
       return true;
     }
 

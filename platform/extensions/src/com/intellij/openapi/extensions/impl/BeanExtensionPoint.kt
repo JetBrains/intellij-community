@@ -30,6 +30,6 @@ internal class BeanExtensionPoint<T>(name: String,
                                     elements: List<ExtensionDescriptor>,
                                     priorityListenerCallbacks: List<Runnable>,
                                     listenerCallbacks: List<Runnable>) {
-    unregisterExtensions(false, priorityListenerCallbacks, listenerCallbacks) { it.getPluginDescriptor() !== pluginDescriptor }
+    unregisterExtensions(false, priorityListenerCallbacks, listenerCallbacks) { it.pluginDescriptor !== pluginDescriptor }
   }
 }

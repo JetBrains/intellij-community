@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar.experimental
 
 import com.intellij.ide.ui.ToolbarSettings
@@ -7,15 +7,14 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.ide.ui.experimental.toolbar.RunWidgetAvailabilityManager
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.*
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.diagnostic.thisLogger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.SimpleModificationTracker
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension
 import com.intellij.util.concurrency.AppExecutorUtil
-import com.intellij.util.concurrency.EdtExecutorService
 import com.intellij.util.concurrency.annotations.RequiresBackgroundThread
 import com.intellij.util.concurrency.annotations.RequiresEdt
 import com.intellij.util.messages.Topic
@@ -24,7 +23,7 @@ import com.intellij.util.ui.JBUI
 import java.awt.BorderLayout
 import java.awt.Graphics
 import java.util.concurrent.CompletableFuture
-import java.util.function.Consumer
+import java.util.concurrent.Executor
 import javax.swing.BorderFactory
 import javax.swing.JComponent
 import javax.swing.JPanel
@@ -48,15 +47,16 @@ fun interface ExperimentalToolbarStateListener {
 }
 
 @Service
-class NewToolbarRootPaneManager(private val project: Project) : SimpleModificationTracker(), Disposable {
+internal class NewToolbarRootPaneManager(private val project: Project) : SimpleModificationTracker(), Disposable {
   companion object {
-    private val logger = logger<NewToolbarRootPaneManager>()
+    private val LOG = logger<NewToolbarRootPaneManager>()
+
     fun getInstance(project: Project): NewToolbarRootPaneManager = project.service()
   }
 
   init {
     RunWidgetAvailabilityManager.getInstance(project).addListener(this) {
-      logger.info("New toolbar: run widget availability changed $it")
+      LOG.info("New toolbar: run widget availability changed $it")
       IdeRootPaneNorthExtension.EP_NAME.findExtension(NewToolbarRootPaneExtension::class.java, project)?.let { extension ->
         startUpdateActionGroups(extension)
       }
@@ -72,11 +72,15 @@ class NewToolbarRootPaneManager(private val project: Project) : SimpleModificati
     val panel = extension.panel
     if (panel.isEnabled && panel.isVisible && ToolbarSettings.getInstance().isEnabled) {
       CompletableFuture.supplyAsync(::correctedToolbarActions, AppExecutorUtil.getAppExecutorService())
-        .thenAcceptAsync(Consumer {
-          applyTo(it, panel, extension.layout)
-        }, EdtExecutorService.getInstance())
+        .thenAcceptAsync(
+          {
+            applyTo(it, panel, extension.layout)
+          },
+          Executor {
+            ApplicationManager.getApplication().invokeLater(it, project.disposed)
+          })
         .exceptionally {
-          thisLogger().error(it)
+          LOG.error(it)
           null
         }
     }
@@ -178,11 +182,6 @@ internal class NewToolbarRootPaneExtension(private val project: Project) : IdeRo
   override fun copy() = NewToolbarRootPaneExtension(project)
 
   override fun revalidate() {
-    if (project.isDisposed) {
-      logger.warn("New toolbar: Project '$project' disposal has already been initiated.")
-      return
-    }
-
     NewToolbarRootPaneManager.getInstance(project).startUpdateActionGroups(this)
   }
 }

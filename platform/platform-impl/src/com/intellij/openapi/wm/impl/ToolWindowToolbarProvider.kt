@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl
 
 import com.intellij.openapi.application.ApplicationManager
@@ -12,13 +12,14 @@ open class ToolWindowToolbarProvider {
    *
    * Please ensure that registered toolwindow anchor matches [anchor].
    */
-  open fun defaultToolWindows(project: Project, anchor: ToolWindowAnchor) =
-    when (anchor) {
+  open fun defaultToolWindows(project: Project, anchor: ToolWindowAnchor): List<String> {
+    return when (anchor) {
       LEFT -> listOf("Project", "Commit", "Structure")
       BOTTOM -> listOf("Version Control", "Problems View", "Terminal", "Event Log")
       RIGHT -> listOf("Database", "Gradle", "Maven")
       else -> emptyList()
     }
+  }
 
   companion object {
     @JvmStatic

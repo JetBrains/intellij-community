@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 @file:Suppress("ReplaceNegatedIsEmptyWithIsNotEmpty")
 package com.intellij.openapi.project.impl
 
@@ -50,7 +50,6 @@ import java.io.IOException
 import java.nio.file.*
 import java.util.concurrent.CompletableFuture
 import java.util.concurrent.TimeUnit
-import java.util.function.BiFunction
 
 @ApiStatus.Internal
 open class ProjectManagerExImpl : ProjectManagerImpl() {
@@ -113,8 +112,12 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
   private fun doOpenAsync(options: OpenProjectTask,
                           projectStoreBaseDir: Path,
                           activity: Activity): CompletableFuture<Project?> {
-    val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) ProjectFrameAllocator(options)
-    else ProjectUiFrameAllocator(options, projectStoreBaseDir)
+    val frameAllocator = if (ApplicationManager.getApplication().isHeadlessEnvironment) {
+      ProjectFrameAllocator(options)
+    }
+    else {
+      ProjectUiFrameAllocator(options, projectStoreBaseDir)
+    }
     val disableAutoSaveToken = SaveAndSyncHandler.getInstance().disableAutoSave()
     return frameAllocator.run { indicator ->
       activity.end()
@@ -148,7 +151,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
       frameAllocator.projectOpened(project)
       result
     }
-      .handle(BiFunction { result, error ->
+      .handle { result, error ->
         disableAutoSaveToken.finish()
 
         if (error != null) {
@@ -160,7 +163,7 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
           if (options.showWelcomeScreen) {
             WelcomeFrame.showIfNoProjectOpened()
           }
-          return@BiFunction null
+          return@handle null
         }
 
         val project = result.project
@@ -168,14 +171,15 @@ open class ProjectManagerExImpl : ProjectManagerImpl() {
           options.callback!!.projectOpened(project, result.module ?: ModuleManager.getInstance(project).modules[0])
         }
         project
-      })
+      }
   }
 
   private fun handleProjectOpenCancelOrFailure(project: Project) {
-    ApplicationManager.getApplication().invokeAndWait {
+    val app = ApplicationManager.getApplication()
+    app.invokeAndWait {
       closeProject(project, /* saveProject = */false, /* dispose = */true, /* checkCanClose = */false)
     }
-    ApplicationManager.getApplication().messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
+    app.messageBus.syncPublisher(AppLifecycleListener.TOPIC).projectOpenFailed()
   }
 
   /**

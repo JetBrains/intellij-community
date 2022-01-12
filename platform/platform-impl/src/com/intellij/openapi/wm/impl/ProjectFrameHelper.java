@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.notification.ActionCenter;
@@ -59,7 +59,7 @@ import java.util.Objects;
  * @author Vladimir Kondratyev
  */
 public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor, DataProvider, Disposable {
-  private static final Logger LOG = Logger.getInstance(IdeFrameImpl.class);
+  private static final Logger LOG = Logger.getInstance(ProjectFrameHelper.class);
 
   private boolean isUpdatingTitle;
 
@@ -141,11 +141,6 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
         }
 
         Disposer.dispose(ProjectFrameHelper.this);
-      }
-
-      @Override
-      public void updateView() {
-        ProjectFrameHelper.this.updateView();
       }
 
       @Override
@@ -323,9 +318,10 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   public void updateView() {
-    myRootPane.updateToolbar();
-    myRootPane.updateMainMenuActions();
-    myRootPane.updateNorthComponents();
+    IdeRootPane rootPane = myRootPane;
+    rootPane.updateToolbar();
+    rootPane.updateMainMenuActions();
+    rootPane.updateNorthComponents();
   }
 
   @Override
@@ -437,7 +433,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   private static boolean isTemporaryDisposed(@Nullable RootPaneContainer frame) {
-    return UIUtil.isClientPropertyTrue(frame == null ? null : frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY);
+    return ClientProperty.isTrue(frame == null ? null : frame.getRootPane(), ScreenUtil.DISPOSE_TEMPORARY);
   }
 
   public @Nullable IdeFrameImpl getFrame() {
@@ -467,7 +463,7 @@ public class ProjectFrameHelper implements IdeFrameEx, AccessibleContextAccessor
   }
 
   @ApiStatus.Internal
-  @Nullable IdeRootPane getRootPane() {
+  public @Nullable IdeRootPane getRootPane() {
     return myRootPane;
   }
 

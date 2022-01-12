@@ -20,7 +20,7 @@ internal class InterfaceExtensionImplementationClassResolver private constructor
       return className as Class<*>
     }
 
-    val pluginDescriptor = adapter.getPluginDescriptor()
+    val pluginDescriptor = adapter.pluginDescriptor
     val result = componentManager.loadClass<Any>(className, pluginDescriptor)
     @Suppress("SpellCheckingInspection")
     if (result.classLoader !== pluginDescriptor.pluginClassLoader && pluginDescriptor.pluginClassLoader != null &&
