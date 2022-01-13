@@ -24,6 +24,9 @@
         <packagesearch.moduleChangesSignalProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.maven.MavenSyncSignalProvider"/>
 
+        <packagesearch.flowModuleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.maven.GlobalMavenSettingsChangedSignalProvider"/>
+
         <packagesearch.configurableContributor
                 implementation="com.jetbrains.packagesearch.intellij.plugin.maven.configuration.ui.MavenConfigurableContributor"/>
 
