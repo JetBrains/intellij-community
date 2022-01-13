@@ -32,7 +32,8 @@ internal class LibraryUsageStatisticsProvider(
 
   private fun processFile(vFile: VirtualFile) {
     if (storageService.isVisited(vFile)) return
-    if (!ProjectFileIndex.getInstance(project).isInSource(vFile)) return
+    val fileIndex = ProjectFileIndex.getInstance(project)
+    if (!fileIndex.isInSource(vFile) || fileIndex.isInLibrary(vFile)) return
 
     val psiFile = PsiManager.getInstance(project).findFile(vFile) ?: return
 
