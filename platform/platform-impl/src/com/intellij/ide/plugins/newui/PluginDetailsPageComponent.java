@@ -716,7 +716,13 @@ public final class PluginDetailsPageComponent extends MultiPanel {
       }
     }
     else if (myMarketplace) {
-      myLicensePanel.setText(IdeBundle.message("label.use.the.trial.for.up.to.30.days.or"), false, false);
+      String message;
+      if (myPlugin instanceof PluginNode && ((PluginNode)myPlugin).getTags().contains(Tags.Freemium.name())) {
+        message = IdeBundle.message("label.install.a.limited.functionality.for.free");
+      } else {
+        message = IdeBundle.message("label.use.the.trial.for.up.to.30.days.or");
+      }
+      myLicensePanel.setText(message, false, false);
       myLicensePanel.showBuyPlugin(() -> myPlugin);
       myLicensePanel.setVisible(true);
     }
