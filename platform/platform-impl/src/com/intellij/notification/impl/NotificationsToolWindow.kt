@@ -6,7 +6,6 @@ import com.intellij.codeInsight.hint.HintUtil
 import com.intellij.icons.AllIcons
 import com.intellij.ide.DataManager
 import com.intellij.ide.IdeBundle
-import com.intellij.ide.impl.ProjectUtilCore
 import com.intellij.ide.ui.LafManager
 import com.intellij.ide.ui.LafManagerListener
 import com.intellij.ide.util.PropertiesComponent
@@ -35,7 +34,6 @@ import com.intellij.openapi.ui.popup.JBPopupListener
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
 import com.intellij.openapi.util.Clock
 import com.intellij.openapi.util.Disposer
-import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.NlsSafe
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.wm.ToolWindow
@@ -56,7 +54,6 @@ import com.intellij.ui.components.panels.VerticalLayout
 import com.intellij.ui.content.ContentFactory
 import com.intellij.ui.scale.JBUIScale
 import com.intellij.util.Alarm
-import com.intellij.util.ModalityUiUtil
 import com.intellij.util.text.DateFormatUtil
 import com.intellij.util.ui.*
 import org.jetbrains.annotations.Nls
@@ -64,7 +61,6 @@ import java.awt.*
 import java.awt.event.*
 import java.util.*
 import java.util.function.Consumer
-import java.util.function.Supplier
 import javax.accessibility.AccessibleContext
 import javax.swing.*
 import javax.swing.event.DocumentEvent
@@ -78,67 +74,25 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
   companion object {
     const val ID = "Notifications"
 
-    internal val myNotificationList = ArrayList<Notification>()
-    internal val myToolWindowList = ArrayList<ToolWindow>()
-    internal val myLock = Object()
-    internal val ADD_KEY = Key.create<Consumer<Notification>>("addCallbackInterface")
-    internal val EXPIRE_KEY = Key.create<Consumer<Notification?>>("expireCallbackInterface")
-    internal val STATE_KEY = Key.create<Supplier<List<Notification>>>("stateCallbackInterface")
-    internal val LIST_KEY = Key.create<Supplier<List<Notification>>>("listCallbackInterface")
+    internal val myModel = ApplicationNotificationModel()
 
-    fun expire(notification: Notification?) {
-      iterateExpire { it.accept(notification) }
-
-      if (notification == null) {
-        val notifications = ArrayList<Notification>()
-        synchronized(myLock) {
-          notifications.addAll(myNotificationList)
-          myNotificationList.clear()
-        }
-        for (n in notifications) {
-          n.expire()
-        }
-      }
-      else {
-        synchronized(myLock) {
-          myNotificationList.remove(notification)
-        }
+    fun addNotification(project: Project?, notification: Notification) {
+      if (ActionCenter.isEnabled() && notification.canShowFor(project)) {
+        myModel.addNotification(project, notification)
       }
     }
 
-    fun getStateNotifications(project: Project): List<Notification> {
-      return getNotifications(project, STATE_KEY) ?: Collections.emptyList()
+    fun expire(notification: Notification) {
+      myModel.expire(notification)
     }
 
-    fun getNotifications(project: Project?): List<Notification> {
-      val notifications = getNotifications(project, LIST_KEY)
-      if (notifications == null) {
-        synchronized(myLock) {
-          return ArrayList(myNotificationList)
-        }
-      }
-      return notifications
+    fun expireAll() {
+      myModel.expireAll()
     }
 
-    private fun getNotifications(project: Project?, stateKey: Key<Supplier<List<Notification>>>): List<Notification>? {
-      if (project == null) {
-        return null
-      }
-      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ID)
-      if (toolWindow != null && toolWindow.contentManagerIfCreated != null) {
-        return ArrayList(toolWindow.contentManager.getContent(0)!!.getUserData(stateKey)!!.get())
-      }
-      return null
-    }
+    fun getStateNotifications(project: Project) = myModel.getStateNotifications(project)
 
-    private fun iterateExpire(callback: (Consumer<Notification?>) -> Unit) {
-      for (project in ProjectUtilCore.getOpenProjects()) {
-        val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ID)
-        if (toolWindow != null && toolWindow.contentManagerIfCreated != null) {
-          callback.invoke(toolWindow.contentManager.getContent(0)!!.getUserData(EXPIRE_KEY)!!)
-        }
-      }
-    }
+    fun getNotifications(project: Project?) = myModel.getNotifications(project)
   }
 
   override fun isApplicable(project: Project): Boolean {
@@ -150,8 +104,8 @@ class NotificationsToolWindowFactory : ToolWindowFactory, DumbAware {
   }
 }
 
-private class NotificationContent(val project: Project,
-                                  val toolWindow: ToolWindow) : Disposable, ToolWindowManagerListener, LafManagerListener {
+internal class NotificationContent(val project: Project,
+                                   val toolWindow: ToolWindow) : Disposable, ToolWindowManagerListener, LafManagerListener {
   private val myMainPanel = JBPanelWithEmptyText(BorderLayout())
 
   private val myNotifications = ArrayList<Notification>()
@@ -183,29 +137,13 @@ private class NotificationContent(val project: Project,
     splitter.secondComponent = timeline
     myMainPanel.add(splitter)
 
-    val content = ContentFactory.SERVICE.getInstance().createContent(myMainPanel, "", false)
-    content.preferredFocusableComponent = myMainPanel
-
-    content.putUserData(NotificationsToolWindowFactory.ADD_KEY, Consumer(::add))
-    content.putUserData(NotificationsToolWindowFactory.EXPIRE_KEY, Consumer(::expire))
-    content.putUserData(NotificationsToolWindowFactory.STATE_KEY, Supplier { myIconNotifications })
-    content.putUserData(NotificationsToolWindowFactory.LIST_KEY, Supplier { myNotifications })
-
     suggestions.setRemoveCallback(Consumer(::remove))
     timeline.setClearCallback(::clear)
 
     Disposer.register(toolWindow.disposable, this)
 
-    val newNotifications = ArrayList<Notification>()
-
-    synchronized(NotificationsToolWindowFactory.myLock) {
-      NotificationsToolWindowFactory.myToolWindowList.add(toolWindow)
-      newNotifications.addAll(NotificationsToolWindowFactory.myNotificationList)
-      NotificationsToolWindowFactory.myNotificationList.clear()
-    }
-    for (notification in newNotifications) {
-      add(notification)
-    }
+    val content = ContentFactory.SERVICE.getInstance().createContent(myMainPanel, "", false)
+    content.preferredFocusableComponent = myMainPanel
 
     val contentManager = toolWindow.contentManager
     contentManager.addContent(content)
@@ -214,6 +152,12 @@ private class NotificationContent(val project: Project,
     project.messageBus.connect(toolWindow.disposable).subscribe(ToolWindowManagerListener.TOPIC, this)
 
     ApplicationManager.getApplication().messageBus.connect(toolWindow.disposable).subscribe(LafManagerListener.TOPIC, this)
+
+    val newNotifications = ArrayList<Notification>()
+    NotificationsToolWindowFactory.myModel.registerAndGetInitNotifications(this, newNotifications)
+    for (notification in newNotifications) {
+      add(notification)
+    }
   }
 
   private fun createSearchComponent(toolWindow: ToolWindow): SearchTextField {
@@ -290,7 +234,7 @@ private class NotificationContent(val project: Project,
     })
   }
 
-  private fun add(notification: Notification) {
+  fun add(notification: Notification) {
     if (!NotificationsConfigurationImpl.getSettings(notification.groupId).isShouldLog) {
       return
     }
@@ -307,7 +251,11 @@ private class NotificationContent(val project: Project,
     updateIcon()
   }
 
-  private fun expire(notification: Notification?) {
+  fun getStateNotifications() = ArrayList(myIconNotifications)
+
+  fun getNotifications() = ArrayList(myNotifications)
+
+  fun expire(notification: Notification?) {
     if (notification == null) {
       val notifications = ArrayList(myNotifications)
 
@@ -392,9 +340,7 @@ private class NotificationContent(val project: Project,
   }
 
   override fun dispose() {
-    synchronized(NotificationsToolWindowFactory.myLock) {
-      NotificationsToolWindowFactory.myToolWindowList.remove(toolWindow)
-    }
+    NotificationsToolWindowFactory.myModel.unregister(this)
     Disposer.dispose(mySearchUpdateAlarm)
   }
 
@@ -1307,54 +1253,158 @@ private class ComponentEventHandler {
   }
 }
 
-fun addNotification(project: Project?, notification: Notification) {
-  if (project == null) {
-    addToCache(notification)
+internal class ApplicationNotificationModel {
+  private val myNotifications = ArrayList<Notification>()
+  private val myProjectToModel = HashMap<Project, ProjectNotificationModel>()
+  private val myLock = Object()
+
+  internal fun registerAndGetInitNotifications(content: NotificationContent, notifications: MutableList<Notification>) {
+    synchronized(myLock) {
+      notifications.addAll(myNotifications)
+      myNotifications.clear()
+
+      val model = myProjectToModel.getOrPut(content.project) { ProjectNotificationModel() }
+      model.registerAndGetInitNotifications(content, notifications)
+    }
   }
-  else {
-    val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
-    if (toolWindow == null || toolWindow.contentManagerIfCreated == null) {
-      val notifications = if (toolWindow == null) null else ArrayList<Notification>()
-      synchronized(NotificationsToolWindowFactory.myLock) {
-        NotificationsToolWindowFactory.myNotificationList.add(notification)
-        notifications?.addAll(NotificationsToolWindowFactory.myNotificationList)
+
+  internal fun unregister(content: NotificationContent) {
+    synchronized(myLock) {
+      myProjectToModel.remove(content.project)
+    }
+  }
+
+  fun addNotification(project: Project?, notification: Notification) {
+    synchronized(myLock) {
+      if (project == null) {
+        if (myProjectToModel.isEmpty()) {
+          myNotifications.add(notification)
+        }
+        else {
+          for ((_project, model) in myProjectToModel.entries) {
+            model.addNotification(_project, notification, myNotifications)
+          }
+        }
       }
+      else {
+        val model = myProjectToModel.getOrPut(project) {
+          Disposer.register(project) {
+            synchronized(myLock) {
+              myProjectToModel.remove(project)
+            }
+          }
+          ProjectNotificationModel()
+        }
+        model.addNotification(project, notification, myNotifications)
+      }
+    }
+  }
+
+  fun getStateNotifications(project: Project): List<Notification> {
+    synchronized(myLock) {
+      val model = myProjectToModel[project]
+      if (model != null) {
+        return model.getStateNotifications()
+      }
+    }
+    return emptyList()
+  }
+
+  fun getNotifications(project: Project?): List<Notification> {
+    synchronized(myLock) {
+      if (project == null) {
+        return ArrayList(myNotifications)
+      }
+      val model = myProjectToModel[project]
+      if (model == null) {
+        return ArrayList(myNotifications)
+      }
+      return model.getNotifications(myNotifications)
+    }
+  }
+
+  fun expire(notification: Notification) {
+    synchronized(myLock) {
+      myNotifications.remove(notification)
+      for (model in myProjectToModel.values) {
+        model.expire(notification)
+      }
+    }
+  }
+
+  fun expireAll() {
+    val notifications = ArrayList<Notification>()
+
+    synchronized(myLock) {
+      notifications.addAll(myNotifications)
+      myNotifications.clear()
+      for (model in myProjectToModel.values) {
+        model.expireAll(notifications)
+      }
+    }
+
+    for (notification in notifications) {
+      notification.expire()
+    }
+  }
+}
+
+private class ProjectNotificationModel {
+  private val myNotifications = ArrayList<Notification>()
+  private var myContent: NotificationContent? = null
+
+  fun registerAndGetInitNotifications(content: NotificationContent, notifications: MutableList<Notification>) {
+    notifications.addAll(myNotifications)
+    myNotifications.clear()
+    myContent = content
+  }
+
+  fun addNotification(project: Project, notification: Notification, appNotifications: List<Notification>) {
+    if (myContent == null) {
+      myNotifications.add(notification)
+
       EventLog.getLogModel(project).setStatusMessage(notification)
-      if (notifications != null) {
-        ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed, Runnable {
-          toolWindow!!.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(notifications))
-        })
+
+      val toolWindow = ToolWindowManager.getInstance(project).getToolWindow(NotificationsToolWindowFactory.ID)
+      if (toolWindow != null) {
+        val notifications = ArrayList(appNotifications)
+        notifications.addAll(myNotifications)
+        UIUtil.invokeLaterIfNeeded { toolWindow.setIcon(IdeNotificationArea.getActionCenterNotificationIcon(notifications)) }
       }
     }
     else {
-      ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, project.disposed, Runnable {
-        send(toolWindow, notification)
-      })
+      UIUtil.invokeLaterIfNeeded { myContent!!.add(notification) }
     }
   }
-}
 
-private fun addToCache(notification: Notification) {
-  val toolWindows = ArrayList<ToolWindow>()
-
-  synchronized(NotificationsToolWindowFactory.myLock) {
-    toolWindows.addAll(NotificationsToolWindowFactory.myToolWindowList)
+  fun getStateNotifications(): List<Notification> {
+    if (myContent == null) {
+      return emptyList()
+    }
+    return myContent!!.getStateNotifications()
   }
 
-  if (toolWindows.isNotEmpty()) {
-    ModalityUiUtil.invokeLaterIfNeeded(ModalityState.NON_MODAL, Runnable {
-      for (toolWindow in toolWindows) {
-        send(toolWindow, notification)
-      }
-    })
-    return
+  fun getNotifications(appNotifications: List<Notification>): List<Notification> {
+    if (myContent == null) {
+      val notifications = ArrayList(appNotifications)
+      notifications.addAll(myNotifications)
+      return notifications
+    }
+    return myContent!!.getNotifications()
   }
 
-  synchronized(NotificationsToolWindowFactory.myLock) {
-    NotificationsToolWindowFactory.myNotificationList.add(notification)
+  fun expire(notification: Notification) {
+    myNotifications.remove(notification)
+    if (myContent != null) {
+      UIUtil.invokeLaterIfNeeded { myContent!!.expire(notification) }
+    }
   }
-}
 
-private fun send(toolWindow: ToolWindow, notification: Notification) {
-  toolWindow.contentManager.getContent(0)!!.getUserData(NotificationsToolWindowFactory.ADD_KEY)!!.accept(notification)
+  fun expireAll(notifications: MutableList<Notification>) {
+    notifications.addAll(myNotifications)
+    myNotifications.clear()
+    if (myContent != null) {
+      UIUtil.invokeLaterIfNeeded { myContent!!.expire(null) }
+    }
+  }
 }

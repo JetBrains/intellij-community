@@ -103,7 +103,7 @@ public final class NotificationsManagerImpl extends NotificationsManager {
 
   public void expireAll() {
     if (ActionCenter.isEnabled()) {
-      NotificationsToolWindowFactory.Companion.expire(null);
+      NotificationsToolWindowFactory.Companion.expireAll();
     }
     else {
       EventLog.expireNotifications();
