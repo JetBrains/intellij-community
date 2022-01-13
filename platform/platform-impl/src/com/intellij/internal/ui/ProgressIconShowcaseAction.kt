@@ -7,23 +7,18 @@ import com.intellij.ui.ColorPicker
 import com.intellij.ui.SpinningProgressIcon
 import com.intellij.ui.components.dialog
 import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.getIconColor
-import javax.swing.UIManager
 
 /**
  * @author Konstantin Bulenkov
  */
 class ProgressIconShowcaseAction: DumbAwareAction() {
   override fun actionPerformed(e: AnActionEvent) {
+    val icon = SpinningProgressIcon()
     val panel = panel {
       row {
-        icon(SpinningProgressIcon())
+        icon(icon)
         link("Change color") {
-          ColorPicker.showColorPickerPopup(null, getIconColor()) { color, _ ->
-            if (color != null) {
-              UIManager.put("ProgressIcon.color", color)
-            }
-          }
+          ColorPicker.showColorPickerPopup(null, icon.getIconColor()) { color, _ -> color?.let { icon.setIconColor(it) }}
         }
       }
     }
