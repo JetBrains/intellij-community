@@ -64,6 +64,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.net.URL;
 import java.util.List;
@@ -139,7 +140,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       layout.setHGap(0);
       myPanel.setLayout(layout);
 
-      JBSplitter splitter = new JBSplitter(false, 0.25f);
+      JBSplitter splitter = new OnePixelSplitter(false, 0.25f);
       splitter.setFirstComponent(myProjectTypePanel);
       splitter.setSecondComponent(mySettingsPanel);
       myPanel.removeAll();
@@ -160,8 +161,9 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
       myOptionsPanel.add(new JBPanelWithEmptyText().withEmptyText(JavaUiBundle.message("label.select.project.type.to.configure")), emptyCard);
 
-      listWithFilter.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 1));
-      mySettingsPanel.setBorder(JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0));
+      Border border = JBUI.Borders.customLine(JBColor.border(), 1, 0, 1, 0);
+      listWithFilter.setBorder(border);
+      mySettingsPanel.setBorder(border);
     } else {
       myProjectTypePanel.add(BorderLayout.CENTER, new JBScrollPane(myProjectTypeList));
     }
