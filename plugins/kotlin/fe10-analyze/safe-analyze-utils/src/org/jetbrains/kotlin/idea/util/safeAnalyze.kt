@@ -21,13 +21,15 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-
 /**
  * Best effort to analyze element:
  * - Best effort for file that is out of source root scope: NoDescriptorForDeclarationException could be swallowed
  * - Do not swallow NoDescriptorForDeclarationException during analysis for in source scope files
  */
-inline fun <T> PsiElement.actionUnderSafeAnalyzeBlock(crossinline action: () -> T, crossinline fallback: () -> T): T = try {
+inline fun <T> PsiElement.actionUnderSafeAnalyzeBlock(
+    crossinline action: () -> T,
+    crossinline fallback: () -> T
+): T = try {
     action()
 } catch (e: Exception) {
     e.returnIfNoDescriptorForDeclarationException(condition = {
