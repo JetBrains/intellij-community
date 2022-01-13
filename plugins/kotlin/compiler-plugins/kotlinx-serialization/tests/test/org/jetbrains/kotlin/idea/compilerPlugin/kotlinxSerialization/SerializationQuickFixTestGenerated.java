@@ -14,17 +14,22 @@ import org.junit.runner.RunWith;
  * DO NOT MODIFY MANUALLY.
  */
 @SuppressWarnings("all")
-@TestRoot("compiler-plugins/kotlinx-serialization/common")
+@TestRoot("compiler-plugins/kotlinx-serialization/tests")
 @TestDataPath("$CONTENT_ROOT")
 @RunWith(JUnit3RunnerWithInners.class)
-@TestMetadata("testData/diagnostics")
-public class SerializationPluginIdeDiagnosticTestGenerated extends AbstractSerializationPluginIdeDiagnosticTest {
+@TestMetadata("testData/quickfix")
+public class SerializationQuickFixTestGenerated extends AbstractSerializationQuickFixTest {
     private void runTest(String testDataFilePath) throws Exception {
         KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
     }
 
-    @TestMetadata("JsonRedundantFormat.kt")
-    public void testJsonRedundantFormat() throws Exception {
-        runTest("testData/diagnostics/JsonRedundantFormat.kt");
+    @TestMetadata("DefaultFormat.kt")
+    public void testDefaultFormat() throws Exception {
+        runTest("testData/quickfix/DefaultFormat.kt");
+    }
+
+    @TestMetadata("DefaultFormatWithAlias.kt")
+    public void testDefaultFormatWithAlias() throws Exception {
+        runTest("testData/quickfix/DefaultFormatWithAlias.kt");
     }
 }
