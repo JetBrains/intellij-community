@@ -30,14 +30,6 @@ class ReactJsClientTemplate : JsClientTemplate() {
     @NonNls
     override val id: String = "reactJsClient"
 
-    val useStyledComponents by booleanSetting(
-        KotlinNewProjectWizardBundle.message("module.template.react.use.styled.components"),
-        GenerationPhase.PROJECT_GENERATION
-    ) {
-        defaultValue = value(false)
-        description = KotlinNewProjectWizardBundle.message("module.template.react.use.styled.components.description")
-    }
-
     val useReactRouterDom by booleanSetting(
         KotlinNewProjectWizardBundle.message("module.template.react.use.react.router.dom"),
         GenerationPhase.PROJECT_GENERATION
@@ -56,7 +48,6 @@ class ReactJsClientTemplate : JsClientTemplate() {
 
     override val settings: List<TemplateSetting<*, *>> =
         listOf(
-            useStyledComponents,
             useReactRouterDom,
             useReactRedux
         )
@@ -66,9 +57,7 @@ class ReactJsClientTemplate : JsClientTemplate() {
             val kotlinVersion = KotlinPlugin.version.propertyValue
             +Dependencies.KOTLIN_REACT
             +Dependencies.KOTLIN_REACT_DOM
-            if (useStyledComponents.reference.settingValue) {
-                +Dependencies.KOTLIN_STYLED
-            }
+            +Dependencies.KOTLIN_REACT_CSS
             if (useReactRouterDom.reference.settingValue) {
                 +Dependencies.KOTLIN_REACT_ROUTER_DOM
             }
@@ -88,15 +77,11 @@ class ReactJsClientTemplate : JsClientTemplate() {
                 }
                 +(FileTemplateDescriptor("$id/reactClient.kt.vm", "Client.kt".asPath()) asSrcOf SourcesetType.main)
                 +(FileTemplateDescriptor("$id/reactComponent.kt.vm", "Welcome.kt".asPath()) asSrcOf SourcesetType.main)
-
-                if (useStyledComponents.reference.settingValue) {
-                    +(FileTemplateDescriptor("$id/WelcomeStyles.kt.vm") asSrcOf SourcesetType.main)
-                }
             }
         }
 
     override fun Reader.getAdditionalSettings(module: Module): Map<String, Any> = withSettingsOf(module) {
-        jsSettings(module) + mapOf("useStyledComponents" to (useStyledComponents.reference.settingValue))
+        jsSettings(module)
     }
 
     private object Dependencies {
@@ -110,9 +95,9 @@ class ReactJsClientTemplate : JsClientTemplate() {
             Versions.JS_WRAPPERS.KOTLIN_REACT_DOM
         )
 
-        val KOTLIN_STYLED = wrapperDependency(
-            "kotlin-styled",
-            Versions.JS_WRAPPERS.KOTLIN_STYLED
+        val KOTLIN_REACT_CSS = wrapperDependency(
+            "kotlin-react-css",
+            Versions.JS_WRAPPERS.KOTLIN_REACT_CSS
         )
 
         val KOTLIN_REACT_ROUTER_DOM = wrapperDependency(
