@@ -386,7 +386,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
   }
 
   void setRefreshVisible(boolean visible) {
-    if (!ExperimentalUI.isNewUI()){
+    if (!ExperimentalUI.isNewUI() && myRefreshIcon != null) {
       UIUtil.invokeLaterIfNeeded(() -> myRefreshIcon.setVisible(visible));
     }
   }
