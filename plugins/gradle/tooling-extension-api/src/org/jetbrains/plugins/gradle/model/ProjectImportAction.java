@@ -105,12 +105,14 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   @Nullable
   @Override
   public AllModels execute(final BuildController controller) {
-    myConverterExecutor =  Executors.newSingleThreadExecutor(new ThreadFactory() {
-      @Override
-      public Thread newThread(@NotNull Runnable runnable) {
-        return new Thread(runnable, "idea-tooling-model-converter");
-      }
-    });
+    if (Boolean.getBoolean("idea.background.convert")) {
+      myConverterExecutor =  Executors.newSingleThreadExecutor(new ThreadFactory() {
+        @Override
+        public Thread newThread(@NotNull Runnable runnable) {
+          return new Thread(runnable, "idea-tooling-model-converter");
+        }
+      });
+    }
     configureAdditionalTypes(controller);
     final boolean isProjectsLoadedAction = myAllModels == null && myUseProjectsLoadedPhase;
     if (isProjectsLoadedAction || !myUseProjectsLoadedPhase) {
@@ -148,12 +150,14 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     if (isProjectsLoadedAction) {
       wrappedController.getModel(TurnOffDefaultTasks.class);
     }
-    myConverterExecutor.shutdown();
-    try {
-      myConverterExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
-    }
-    catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
+    if (myConverterExecutor != null) {
+      myConverterExecutor.shutdown();
+      try {
+        myConverterExecutor.awaitTermination(Long.MAX_VALUE, TimeUnit.SECONDS);
+      }
+      catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
     }
     return isProjectsLoadedAction && !myAllModels.hasModels() ? null : myAllModels;
   }
@@ -211,26 +215,33 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
   private void fetchProjectBuildModels(BuildController controller, final boolean isProjectsLoadedAction, GradleBuild build) {
     // Prepare nested build actions.
-    List<BuildAction<Void>> buildActions = new ArrayList<BuildAction<Void>>();
+    List<BuildAction<List<Runnable>>> buildActions = new ArrayList<BuildAction<List<Runnable>>>();
     for (final BasicGradleProject gradleProject : build.getProjects()) {
       buildActions.add(
-        new BuildAction<Void>() {
+        new BuildAction<List<Runnable>>() {
           @Override
-          public Void execute(BuildController controller) {
-            getProjectModels(controller, myAllModels, gradleProject, isProjectsLoadedAction);
-            return null;
+          public List<Runnable> execute(BuildController controller) {
+            return getProjectModels(controller, myAllModels, gradleProject, isProjectsLoadedAction);
           }
         }
       );
     }
 
     // Execute nested build actions.
+    List<List<Runnable>> addFetchedModelActions = new ArrayList<List<Runnable>>(buildActions.size());
     if (myParallelModelsFetch) {
-      controller.run(buildActions);
+      addFetchedModelActions.addAll(controller.run(buildActions));
     }
     else {
-      for (BuildAction<Void> buildAction : buildActions) {
-        buildAction.execute(controller);
+      for (BuildAction<List<Runnable>> buildAction : buildActions) {
+        addFetchedModelActions.add(buildAction.execute(controller));
+      }
+    }
+
+    // Execute returned actions sequentially in one thread to populate myAllModels.
+    for (List<Runnable> actions : addFetchedModelActions) {
+      for (Runnable action : actions) {
+        action.run();
       }
     }
   }
@@ -265,11 +276,18 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
     }
   }
 
-  private void getProjectModels(@NotNull BuildController controller,
+  /**
+   * Gets project level models for a given {@code project} and returns a collection of actions,
+   * which when executed add these models to {@code allModels}.
+   *
+   * <p>The actions returned by this method are supposed to be executed on a single thread.
+   */
+  private List<Runnable> getProjectModels(@NotNull BuildController controller,
                                           @NotNull final AllModels allModels,
                                           @NotNull final BasicGradleProject project,
                                           boolean isProjectsLoadedAction) {
     try {
+      final List<Runnable> result = new ArrayList<Runnable>();
       Set<ProjectImportModelProvider> modelProviders = getModelProviders(isProjectsLoadedAction);
       for (ProjectImportModelProvider extension : modelProviders) {
         final Set<String> obtainedModels = new HashSet<String>();
@@ -277,13 +295,18 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         ProjectModelConsumer modelConsumer = new ProjectModelConsumer() {
           @Override
           public void consume(final @NotNull Object object, final @NotNull Class clazz) {
-            myConverterExecutor.execute(new Runnable() {
+            Runnable convert = new Runnable() {
               @Override
               public void run() {
                 Object o = myModelConverter.convert(object);
                 allModels.addModel(o, clazz, project);
               }
-            });
+            };
+            if (myConverterExecutor != null) {
+              myConverterExecutor.execute(convert);
+            } else {
+              result.add(convert);
+            }
             obtainedModels.add(clazz.getName());
           }
         };
@@ -294,6 +317,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
           " obtained " + obtainedModels.size() + " model(s): " + joinClassNamesToString(obtainedModels),
           System.currentTimeMillis() - startTime);
       }
+      return result;
     }
     catch (Exception e) {
       // do not fail project import in a preview mode
@@ -301,6 +325,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
         throw new ExternalSystemException(e);
       }
     }
+    return Collections.emptyList();
   }
 
   private void addBuildModels(@NotNull BuildController controller,
@@ -316,25 +341,35 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
           @Override
           public void consumeProjectModel(@NotNull final ProjectModel projectModel, @NotNull final Object object, @NotNull final Class clazz) {
             obtainedModels.add(clazz.getName());
-            myConverterExecutor.execute(new Runnable() {
+            Runnable convert = new Runnable() {
               @Override
               public void run() {
                 Object converted = myModelConverter.convert(object);
                 allModels.addModel(converted, clazz, projectModel);
               }
-            });
+            };
+            if (myConverterExecutor != null) {
+              myConverterExecutor.execute(convert);
+            } else {
+              convert.run();
+            }
           }
 
           @Override
           public void consume(@NotNull final BuildModel buildModel, @NotNull final Object object, @NotNull final Class clazz) {
             obtainedModels.add(clazz.getName());
-            myConverterExecutor.execute(new Runnable() {
+            Runnable convert = new Runnable() {
               @Override
               public void run() {
                 Object converted = myModelConverter.convert(object);
                 allModels.addModel(converted, clazz, buildModel);
               }
-            });
+            };
+            if (myConverterExecutor != null) {
+              myConverterExecutor.execute(convert);
+            } else {
+              convert.run();
+            }
           }
         };
         extension.populateBuildModels(controller, buildModel, modelConsumer);
