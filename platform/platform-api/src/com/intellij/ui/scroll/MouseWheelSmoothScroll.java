@@ -12,7 +12,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseWheelEvent;
-import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -245,40 +244,24 @@ public final class MouseWheelSmoothScroll {
 
   static class CubicBezierEasing implements Easing {
 
-    private final double[] xs;
-    private final double[] ys;
+    private final com.intellij.util.animation.CubicBezierEasing delegate;
 
-   CubicBezierEasing(double c1x, double c1y, double c2x, double c2y, int size) {
-      xs = new double[size];
-      ys = new double[size];
-      update(c1x, c1y, c2x, c2y);
+    CubicBezierEasing(double c1x, double c1y, double c2x, double c2y, int size) {
+      delegate = new com.intellij.util.animation.CubicBezierEasing(c1x, c1y, c2x, c2y, size);
     }
 
     public void update(double c1x, double c1y, double c2x, double c2y) {
-      for (int i = 0; i < xs.length; i++) {
-        xs[i] = bezier(i * 1. / xs.length, c1x, c2x);
-        ys[i] = bezier(i * 1. / xs.length, c1y, c2y);
-      }
+      delegate.update(c1x, c1y, c2x, c2y);
     }
 
     public int getSize() {
-      assert xs.length == ys.length;
-      return xs.length;
+      return delegate.getSize();
     }
 
     @Override
     public double calc(double t, double b, double c, double d) {
       double x = t / d;
-      int res = Arrays.binarySearch(xs, x);
-      if (res < 0) {
-        res = -res - 1;
-      }
-      return c * ys[min(res, ys.length - 1)] + b;
-    }
-
-    private static double bezier(double t, double u1, double u2) {
-      double v = 1 - t;
-      return 3 * u1 * v * v * t + 3 * u2 * v * t * t + t * t * t;
+      return c * delegate.calc(x) + b;
     }
   }
 
