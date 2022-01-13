@@ -42,6 +42,7 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
   @Suppress("MissingDeprecatedAnnotationOnScheduledForRemovalApi")
   private val TIMEZONE = GROUP.registerEvent("os.timezone", StringValidatedByRegexp("value", "time_zone"))  // backward compatibility
   private val LINUX = GROUP.registerEvent("linux", String("distro", DISTROS), StringValidatedByRegexp("release", "version"), EventFields.Boolean("wsl"))
+  private val WINDOWS = GROUP.registerEvent("windows", EventFields.Int("release"))
 
   override fun getGroup(): EventLogGroup = GROUP
 
@@ -54,6 +55,9 @@ internal class OsDataCollector : ApplicationUsagesCollector(), AllowedDuringStar
       val (distro, release) = getReleaseData()
       val isUnderWsl = detectIsUnderWsl()
       metrics += LINUX.metric(distro, release, isUnderWsl)
+    }
+    SystemInfo.getWinRelease()?.toInt()?.let { win10Release ->
+      metrics += WINDOWS.metric(win10Release)
     }
     return metrics
   }
