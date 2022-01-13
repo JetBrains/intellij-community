@@ -859,4 +859,17 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
       "    }\n" +
       "}\n");
   }
+
+  public void testSnippet() {
+    doTextTest(
+      "/**\n" +
+      " * {@snippet lang=java}\n" +
+      " **/\n" +
+      "class {}",
+
+      "/**\n" +
+      " * {@snippet lang = java}\n" +
+      " **/\n" +
+      "class {}");
+  }
 }

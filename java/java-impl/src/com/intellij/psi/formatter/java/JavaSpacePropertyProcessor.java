@@ -26,8 +26,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspCodeBlock;
 import com.intellij.psi.impl.source.jsp.jspJava.JspJavaComment;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.impl.source.tree.java.EnumConstantElement;
-import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.javadoc.PsiDocTag;
+import com.intellij.psi.javadoc.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -1880,6 +1879,19 @@ public final class JavaSpacePropertyProcessor extends JavaElementVisitor {
       createSpaceInCode(true);
     }
   }
+
+  @Override
+  public void visitSnippetAttribute(PsiSnippetAttribute attribute) {
+    createSpaceInCode(true);
+  }
+
+  @Override
+  public void visitSnippetTag(PsiSnippetDocTag snippetDocTag) {
+    if (myType1 == JavaDocTokenType.DOC_TAG_NAME && myType2 == JavaDocElementType.DOC_SNIPPET_TAG_VALUE) {
+      createSpaceInCode(true);
+    }
+  }
+
 
   public static Spacing getSpacing(Block node, CommonCodeStyleSettings settings, JavaCodeStyleSettings javaSettings) {
     return new JavaSpacePropertyProcessor(node, settings, javaSettings).myResult;
