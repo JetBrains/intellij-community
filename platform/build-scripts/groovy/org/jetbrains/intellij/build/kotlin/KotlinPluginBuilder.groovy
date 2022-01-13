@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.intellij.build.kotlin
 
 import com.intellij.util.io.Decompressor
@@ -162,7 +162,6 @@ final class KotlinPluginBuilder {
       if (isUltimate && kind == KotlinPluginKind.IJ) {
         withModule("kotlin-ultimate.common-native")
         //noinspection SpellCheckingInspection
-        withModule("kotlin-ultimate.common-noncidr-native")
         withModule("kotlin-ultimate.javascript.debugger")
         withModule("kotlin-ultimate.javascript.nodeJs")
         withModule("kotlin-ultimate.ultimate-plugin")
