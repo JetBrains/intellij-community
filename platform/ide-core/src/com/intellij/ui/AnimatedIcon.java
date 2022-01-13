@@ -20,6 +20,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
+import static com.intellij.ui.AnimatedIcon.Default.DELAY;
+import static com.intellij.ui.AnimatedIcon.Default.ICONS;
+
 public class AnimatedIcon implements Icon {
   private static final Logger LOG = Logger.getInstance(AnimatedIcon.class);
   /**
@@ -50,7 +53,7 @@ public class AnimatedIcon implements Icon {
   public static class Default extends AnimatedIcon {
 
     public Default() {
-      super(getDefaultFrames());
+      super(DEFAULT_FRAMES);
     }
 
     private static final Icon[] OLD_ICONS = {
@@ -62,15 +65,16 @@ public class AnimatedIcon implements Icon {
       AllIcons.Process.Step_6,
       AllIcons.Process.Step_7,
       AllIcons.Process.Step_8};
+    private static final Frame[] DEFAULT_FRAMES = getDefaultFrames();
 
     private static Frame[] getDefaultFrames() {
       if (Boolean.getBoolean("disable.new.spinning.icon")) {
         return AnimatedIcon.getFrames(DELAY, OLD_ICONS);
       }
-      return SpinningProgressIconKt.createFrames();
+      return new SpinningProgressIcon().frames;
     }
 
-    public static final int DELAY = 130;
+    public static final int DELAY = 125;
     public static final List<Icon> ICONS = ContainerUtil.map(getDefaultFrames(), frame -> frame.getIcon());
 
     public static final AnimatedIcon INSTANCE = new Default();
@@ -81,7 +85,7 @@ public class AnimatedIcon implements Icon {
       super(DELAY, ICONS.toArray(new Icon[0]));
     }
 
-    public static final int DELAY = 130;
+    public static final int DELAY = 125;
     public static final List<Icon> ICONS = List.of(
       AllIcons.Process.Big.Step_1,
       AllIcons.Process.Big.Step_2,
@@ -193,7 +197,7 @@ public class AnimatedIcon implements Icon {
   }
 
 
-  private final Frame[] frames;
+  Frame[] frames;
   private final Set<Component> requested = Collections.newSetFromMap(new IdentityHashMap<>());
   private long time;
   private int index;
@@ -207,6 +211,15 @@ public class AnimatedIcon implements Icon {
     assert frames.length > 0 : "empty array";
     for (Frame frame : frames) assert frame != null : "null animation frame";
     time = System.currentTimeMillis();
+  }
+
+  AnimatedIcon() {
+    frames = createFrames();
+    time = System.currentTimeMillis();
+  }
+
+  protected Frame[] createFrames() {
+    return getFrames(DELAY, ICONS.toArray(new Icon[0]));
   }
 
   private static Frame[] getFrames(int delay, Icon @NotNull ... icons) {
@@ -238,15 +251,19 @@ public class AnimatedIcon implements Icon {
     time = current;
   }
 
+  protected Frame[] getFrames() {
+    return frames;
+  }
+
   @NotNull
   private Icon getUpdatedIcon() {
     int index = getCurrentIndex();
-    return frames[index].getIcon();
+    return getFrames()[index].getIcon();
   }
 
   private int getCurrentIndex() {
     long current = System.currentTimeMillis();
-    Frame frame = frames[index];
+    Frame frame = getFrames()[index];
     if (frame.getDelay() <= (current - time)) updateFrameAt(current);
     return index;
   }
@@ -256,7 +273,7 @@ public class AnimatedIcon implements Icon {
       return;
     }
 
-    Frame frame = frames[index];
+    Frame frame = getFrames()[index];
     int delay = frame.getDelay();
     if (delay > 0) {
       requested.add(c);
