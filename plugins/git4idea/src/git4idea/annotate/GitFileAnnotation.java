@@ -3,6 +3,7 @@ package git4idea.annotate;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
@@ -47,6 +48,8 @@ import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 public final class GitFileAnnotation extends FileAnnotation {
+  private static final Logger LOG = Logger.getInstance(GitFileAnnotation.class);
+
   private final Project myProject;
   @NotNull private final VirtualFile myFile;
   @NotNull private final FilePath myFilePath;
@@ -276,8 +279,11 @@ public final class GitFileAnnotation extends FileAnnotation {
         else {
           shownInLog = CompletableFuture.completedFuture(false); // can't use log tabs in modal dialogs (ex: commit, merge)
         }
-        shownInLog.thenAcceptAsync(success -> {
-          if (!success) {
+        shownInLog.whenCompleteAsync((success, ex) -> {
+          if (ex != null) {
+            LOG.error(ex);
+          }
+          else if (!success) {
             AbstractVcsHelperImpl.loadAndShowCommittedChangesDetails(myProject, info.getRevisionNumber(), myFilePath, false,
                                                                      () -> getRevisionsChangesProvider().getChangesIn(lineNum));
           }
@@ -298,14 +304,14 @@ public final class GitFileAnnotation extends FileAnnotation {
     @NotNull private final String mySubject;
 
     CommitInfo(@NotNull Project project,
-             @NotNull GitRevisionNumber revision,
-             @NotNull FilePath path,
-             @NotNull Date committerDate,
-             @NotNull Date authorDate,
-             @NotNull VcsUser author,
-             @NotNull String subject,
-             @Nullable GitRevisionNumber previousRevision,
-             @Nullable FilePath previousPath) {
+               @NotNull GitRevisionNumber revision,
+               @NotNull FilePath path,
+               @NotNull Date committerDate,
+               @NotNull Date authorDate,
+               @NotNull VcsUser author,
+               @NotNull String subject,
+               @Nullable GitRevisionNumber previousRevision,
+               @Nullable FilePath previousPath) {
       myProject = project;
       myRevision = revision;
       myFilePath = path;
@@ -451,7 +457,7 @@ public final class GitFileAnnotation extends FileAnnotation {
   public boolean isBaseRevisionChanged(@NotNull VcsRevisionNumber number) {
     if (!myFile.isInLocalFileSystem()) return false;
     final VcsRevisionNumber currentCurrentRevision = myVcs.getDiffProvider().getCurrentRevision(myFile);
-    return myBaseRevision != null && ! myBaseRevision.equals(currentCurrentRevision);
+    return myBaseRevision != null && !myBaseRevision.equals(currentCurrentRevision);
   }
 
 
