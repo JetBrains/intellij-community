@@ -11,7 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.project.guessProjectForContentFile
+import com.intellij.openapi.project.guessProjectForFile
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.MessageType
 import com.intellij.openapi.ui.Messages
@@ -156,7 +156,7 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
       val anchor = uri.fragment
       val path = uri.path
       val targetFile = LocalFileSystem.getInstance().findFileByPath(path) ?: return false
-      val project = guessProjectForContentFile(targetFile) ?: return false
+      val project = guessProjectForFile(targetFile) ?: return false
       if (anchor == null) {
         invokeLater {
           OpenFileAction.openFile(targetFile, project)
