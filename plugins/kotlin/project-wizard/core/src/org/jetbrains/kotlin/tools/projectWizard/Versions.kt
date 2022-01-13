@@ -38,13 +38,13 @@ object Versions {
     object JS_WRAPPERS {
         val KOTLIN_REACT = wrapperVersion("17.0.2")
         val KOTLIN_REACT_DOM = KOTLIN_REACT
-        val KOTLIN_STYLED = wrapperVersion("5.3.1")
+        val KOTLIN_REACT_CSS = KOTLIN_REACT
         val KOTLIN_REACT_ROUTER_DOM = wrapperVersion("5.2.0")
         val KOTLIN_REDUX = wrapperVersion("4.1.0")
         val KOTLIN_REACT_REDUX = wrapperVersion("7.2.4")
 
         private fun wrapperVersion(version: String): Version =
-            version("$version-pre.240-kotlin-1.5.30")
+            version("$version-pre.290-kotlin-1.6.10")
     }
 
     object GRADLE_PLUGINS {
