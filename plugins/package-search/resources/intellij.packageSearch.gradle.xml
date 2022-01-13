@@ -29,6 +29,15 @@
         <packagesearch.moduleChangesSignalProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleModuleLinkSignalProvider"/>
 
+        <packagesearch.flowModuleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradlePropertiesChangedSignalProvider"/>
+
+        <packagesearch.flowModuleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.LocalPropertiesChangedSignalProvider"/>
+
+        <packagesearch.flowModuleChangesSignalProvider
+                implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GlobalGradlePropertiesChangedSignalProvider"/>
+
         <packagesearch.configurableContributor
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.configuration.ui.GradleConfigurableContributor"/>
 
