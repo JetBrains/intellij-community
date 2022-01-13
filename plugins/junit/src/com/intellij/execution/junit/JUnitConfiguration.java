@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 
 package com.intellij.execution.junit;
 
@@ -187,7 +187,7 @@ public class JUnitConfiguration extends JavaTestConfigurationWithDiscoverySuppor
 
   @Override
   public RefactoringElementListener getRefactoringElementListener(final PsiElement element) {
-    final RefactoringElementListener listener = getTestObject().getListener(element, this);
+    final RefactoringElementListener listener = getTestObject().getListener(element);
     return RunConfigurationExtension.wrapRefactoringElementListener(element, this, listener);
   }
 

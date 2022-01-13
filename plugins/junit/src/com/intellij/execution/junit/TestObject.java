@@ -206,7 +206,7 @@ public abstract class TestObject extends JavaTestFrameworkRunnableState<JUnitCon
 
   public abstract @NlsActions.ActionText String suggestActionName();
 
-  public abstract RefactoringElementListener getListener(PsiElement element, JUnitConfiguration configuration);
+  public abstract RefactoringElementListener getListener(PsiElement element);
 
   public abstract boolean isConfiguredByElement(JUnitConfiguration configuration,
                                                 PsiClass testClass,
