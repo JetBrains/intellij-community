@@ -10,7 +10,7 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.testFramework.fixtures.MavenDependencyUtil
-import junit.framework.TestCase
+import com.intellij.util.PathUtil
 import java.io.File
 
 /**
@@ -32,9 +32,7 @@ abstract class LibraryTraceExecutionTestCase(private val coordinates: String) : 
     ModuleRootModificationUtil.updateModel(myModule) { model ->
       MavenDependencyUtil.addFromMaven(model, coordinates)
       val libraryJar = model.moduleLibraryTable.getLibraryByName(coordinates)!!.rootProvider.getFiles(OrderRootType.CLASSES)[0]
-      val jarPathWithSuffix = libraryJar.path
-      TestCase.assertTrue(jarPathWithSuffix.endsWith("!/"))
-      jarPath = jarPathWithSuffix.substring(0, jarPathWithSuffix.length - "!/".length)
+      jarPath = PathUtil.getLocalPath(libraryJar)!!
     }
   }
 
