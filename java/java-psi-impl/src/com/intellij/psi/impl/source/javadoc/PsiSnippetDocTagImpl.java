@@ -5,8 +5,10 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.LiteralTextEscaper;
+import com.intellij.psi.JavaElementVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.JavaDocElementType;
@@ -54,6 +56,17 @@ public class PsiSnippetDocTagImpl extends CompositePsiElement implements PsiSnip
   @Override
   public @Nullable PsiSnippetDocTagValue getValueElement() {
     return (PsiSnippetDocTagValue)findPsiChildByType(JavaDocElementType.DOC_SNIPPET_TAG_VALUE);
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    super.accept(visitor);
+    if (visitor instanceof JavaElementVisitor) {
+      ((JavaElementVisitor)visitor).visitSnippetTag(this);
+    }
+    else {
+      visitor.visitElement(this);
+    }
   }
 
   @Override
