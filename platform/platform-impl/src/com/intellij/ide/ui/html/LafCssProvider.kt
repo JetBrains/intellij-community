@@ -166,7 +166,7 @@ internal object LafCssProvider {
     }
     
     .editor-background {
-        color: ${EDITOR_BACKGROUND_STUB};
+        background-color: ${EDITOR_BACKGROUND_STUB};
     }
       
     """.trimIndent()
