@@ -717,4 +717,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testStringBuilderLengthReturn() { doTest(); }
   public void testEqualsTwoFields() { doTest();}
   public void testPureMethodReadsMutableArray() { doTest(); }
+  public void testBoxingInConstructorArguments() { doTest(); }
 }
