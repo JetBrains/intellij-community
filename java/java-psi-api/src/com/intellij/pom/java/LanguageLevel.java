@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.pom.java;
 
 import com.intellij.core.JavaPsiBundle;
@@ -44,7 +44,7 @@ public enum LanguageLevel {
   JDK_18_PREVIEW(JavaPsiBundle.messagePointer("jdk.18.preview.language.level.description"), 18),
   JDK_X(JavaPsiBundle.messagePointer("jdk.X.language.level.description"), 19);
 
-  public static final LanguageLevel HIGHEST = JDK_18;
+  public static final LanguageLevel HIGHEST = JDK_17;
   public static final Key<LanguageLevel> KEY = Key.create("LANGUAGE_LEVEL");
 
   private final Supplier<@Nls String> myPresentableText;
