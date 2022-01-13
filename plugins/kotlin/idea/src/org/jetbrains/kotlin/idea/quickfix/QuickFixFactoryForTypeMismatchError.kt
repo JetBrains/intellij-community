@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.backend.jvm.ir.psiElement
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isKFunctionType
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.CallableDescriptor
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptorWithSource
 import org.jetbrains.kotlin.diagnostics.Diagnostic
 import org.jetbrains.kotlin.diagnostics.Errors
@@ -21,7 +22,6 @@ import org.jetbrains.kotlin.idea.intentions.reflectToRegularFunctionType
 import org.jetbrains.kotlin.idea.project.languageVersionSettings
 import org.jetbrains.kotlin.idea.util.approximateWithResolvableType
 import org.jetbrains.kotlin.idea.util.getResolutionScope
-import org.jetbrains.kotlin.idea.util.module
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getParentOfType
@@ -148,33 +148,10 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
             return qualifiedOrThis
         }
 
-        // Check if the type is a definitely non-nullable type (`T & Any`)
-        // or contains a definitely non-nullable type as a type argument (e.g., `Collection<T & Any>`)
-        fun KotlinType.containsDefinitelyNotNullComponent(): Boolean {
-            if (isDefinitelyNotNullType) return true
-            return arguments.any { it.type.containsDefinitelyNotNullComponent() }
-        }
-
-        // Suggest replacing type argument `T` with its expected definitely non-nullable subtype `T & Any`.
-        // Types that contain DNN types as arguments (like `(Mutable)Collection<T & Any>`) are currently not supported.
-        if (diagnosticElement is KtReferenceExpression &&
-            expectedType.isDefinitelyNotNullType &&
-            diagnosticElement.module?.languageVersionSettings?.supportsFeature(LanguageFeature.DefinitelyNonNullableTypes) == true
-        ) {
-            val descriptor = context[BindingContext.REFERENCE_TARGET, diagnosticElement]?.safeAs<DeclarationDescriptorWithSource>()
-            val parameter = descriptor?.psiElement?.safeAs<KtParameter>()
-            val parentParameterList = parameter?.parent as? KtParameterList
-            if (parameter != null && parentParameterList != null) {
-                actions.add(ChangeParameterTypeFix(parameter, expectedType))
-            }
-        }
-
         // We don't want to cast a cast or type-asserted expression.
-        // We also don't want to cast a potentially nullable type `T` to its definitely non-nullable subtype `T & Any` as it is unsafe.
         if (diagnostic.factory != Errors.SIGNED_CONSTANT_CONVERTED_TO_UNSIGNED &&
             diagnosticElement !is KtBinaryExpressionWithTypeRHS &&
-            diagnosticElement.parent !is KtBinaryExpressionWithTypeRHS &&
-            !expectedType.containsDefinitelyNotNullComponent()
+            diagnosticElement.parent !is KtBinaryExpressionWithTypeRHS
         ) {
             actions.add(CastExpressionFix(diagnosticElement.getTopMostQualifiedForSelectorIfAny(), expectedType))
         }
@@ -201,6 +178,23 @@ class QuickFixFactoryForTypeMismatchError : KotlinIntentionActionsFactory() {
                 actions.add(createFix(callable, typeToInsert.reflectToRegularFunctionType()))
             }
             actions.add(createFix(callable, typeToInsert))
+        }
+
+        // Suggest replacing the parameter type `T` with its expected definitely non-nullable subtype `T & Any`.
+        // Types that contain DNN types as arguments (like `(Mutable)Collection<T & Any>`) are currently not supported.
+        if (diagnosticElement is KtReferenceExpression && expectedType.isDefinitelyNotNullType) {
+            val descriptor = context[BindingContext.REFERENCE_TARGET, diagnosticElement]?.safeAs<CallableDescriptor>()
+            when (val declaration = QuickFixUtil.safeGetDeclaration(descriptor)) {
+                is KtParameter -> {
+                    // Check the parent parameter list to avoid creating actions for loop iterators
+                    if (declaration.parent is KtParameterList) {
+                        actions.add(ChangeParameterTypeFix(declaration, expectedType))
+                    }
+                }
+                is KtProperty -> {
+                    addChangeTypeFix(declaration, expectedType, ::ChangeVariableTypeFix)
+                }
+            }
         }
 
         // Property initializer type mismatch property type:
