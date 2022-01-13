@@ -28,7 +28,7 @@ open class KotlinConstructorUMethod(
 
     override val javaPsi = psi
 
-    val isPrimary: Boolean
+    internal val isPrimary: Boolean
         get() = sourcePsi is KtPrimaryConstructor || sourcePsi is KtClassOrObject
 
     override val uastBody: UExpression? by lz {
