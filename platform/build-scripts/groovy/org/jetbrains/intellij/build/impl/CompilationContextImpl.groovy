@@ -11,6 +11,7 @@ import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.intellij.build.*
+import org.jetbrains.intellij.build.dependencies.BuildDependenciesDownloader
 import org.jetbrains.intellij.build.impl.logging.BuildMessagesImpl
 import org.jetbrains.intellij.build.kotlin.KotlinBinaries
 import org.jetbrains.jps.model.JpsElementFactory
@@ -59,8 +60,9 @@ final class CompilationContextImpl implements CompilationContext {
 
   static CompilationContextImpl create(String communityHome, String projectHome,
                                        BiFunction<JpsProject, BuildMessages, String> buildOutputRootEvaluator, BuildOptions options) {
-    // ensure TracerManager is initialized before all other thing since only it can configure GlobalOpenTelemetry correctly
-    TracerManager.spanBuilder("x")
+    // This is not a proper place to initialize tracker for downloader
+    // but this is the only place which is called in most build scripts
+    BuildDependenciesDownloader.TRACER = BuildDependenciesOpenTelemetryTracer.INSTANCE
 
     AntBuilder ant = new AntBuilder()
     def messages = BuildMessagesImpl.create(ant.project)
