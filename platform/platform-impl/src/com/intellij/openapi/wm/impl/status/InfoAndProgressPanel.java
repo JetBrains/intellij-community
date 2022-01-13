@@ -392,7 +392,7 @@ public final class InfoAndProgressPanel extends JPanel implements CustomStatusBa
   }
 
   void setRefreshToolTipText(@NlsContexts.Tooltip String tooltip) {
-    if (!ExperimentalUI.isNewUI()) {
+    if (!ExperimentalUI.isNewUI() && myRefreshIcon != null) {
       myRefreshIcon.setToolTipText(tooltip);
     }
   }
