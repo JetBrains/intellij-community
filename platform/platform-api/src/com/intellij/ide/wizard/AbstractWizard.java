@@ -505,11 +505,11 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
     return ObjectUtils.chooseNotNull(component, myNextButton);
   }
 
-  public void requestFocusToPreferredFocusedComponent() {
+  private void requestFocusToPreferredFocusedComponent() {
     requestFocusTo(this::getPreferredFocusedComponent);
   }
 
-  public void requestFocusTo(@NotNull Supplier<? extends @Nullable JComponent> supplier) {
+  private void requestFocusTo(@NotNull Supplier<? extends @Nullable JComponent> supplier) {
     UiNotifyConnector.doWhenFirstShown(myContentPanel, () -> {
       var component = supplier.get();
       if (component != null) {

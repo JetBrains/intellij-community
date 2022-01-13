@@ -554,8 +554,6 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
 
     showCard(card);
 
-    myWizard.requestFocusToPreferredFocusedComponent();
-
     return true;
   }
 
