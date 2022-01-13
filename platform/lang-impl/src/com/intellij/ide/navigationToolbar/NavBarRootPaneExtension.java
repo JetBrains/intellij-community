@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.navigationToolbar.ui.NavBarUIManager;
@@ -32,6 +32,9 @@ import java.awt.*;
  */
 public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension implements StatusBarCentralWidget {
   private static final Logger LOG = Logger.getInstance(NavBarRootPaneExtension.class);
+
+  static final String PANEL_KEY = "NavBarPanel";
+
   private final Project myProject;
   private JComponent myWrapperPanel;
   private NavBarPanel myNavigationBar;
@@ -95,9 +98,7 @@ public final class NavBarRootPaneExtension extends IdeRootPaneNorthExtension imp
         myWrapperPanel.add(buildNavBarPanel(), BorderLayout.CENTER);
       }
 
-      if (!ExperimentalUI.isNewToolbar()) {
-        myWrapperPanel.putClientProperty("NavBarPanel", myNavigationBar);
-      }
+      myWrapperPanel.putClientProperty(PANEL_KEY, myNavigationBar);
 
       revalidate();
     }
