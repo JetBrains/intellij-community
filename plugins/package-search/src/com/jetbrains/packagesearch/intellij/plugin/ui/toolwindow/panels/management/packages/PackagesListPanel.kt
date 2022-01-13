@@ -41,7 +41,6 @@ import com.jetbrains.packagesearch.intellij.plugin.ui.util.emptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onOpacityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.onVisibilityChanged
 import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaled
-import com.jetbrains.packagesearch.intellij.plugin.ui.util.scaledEmptyBorder
 import com.jetbrains.packagesearch.intellij.plugin.util.CoroutineLRUCache
 import com.jetbrains.packagesearch.intellij.plugin.util.lifecycleScope
 import com.jetbrains.packagesearch.intellij.plugin.util.logDebug
@@ -152,14 +151,14 @@ internal class PackagesListPanel(
     private val onlyStableCheckBox = PackageSearchUI.checkBox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyStable"))
         .apply {
             isOpaque = false
-            border = scaledEmptyBorder(left = 6)
+            border = emptyBorder(left = 6)
             isSelected = true
         }
 
     private val onlyMultiplatformCheckBox =
         PackageSearchUI.checkBox(PackageSearchBundle.message("packagesearch.ui.toolwindow.packages.filter.onlyMpp")) {
             isOpaque = false
-            border = scaledEmptyBorder(left = 6)
+            border = emptyBorder(left = 6)
             isSelected = false
         }
 
@@ -482,7 +481,7 @@ internal class PackagesListPanel(
         with(searchTextField) {
             textEditor.putClientProperty("JTextField.Search.Gap", 6.scaled())
             textEditor.putClientProperty("JTextField.Search.GapEmptyText", (-1).scaled())
-            textEditor.border = scaledEmptyBorder(left = 6)
+            textEditor.border = emptyBorder(left = 6)
             textEditor.isOpaque = true
             textEditor.background = PackageSearchUI.HeaderBackgroundColor
         }
