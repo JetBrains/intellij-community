@@ -50,6 +50,7 @@ class DevIdeaBuildServer {
   companion object {
     const val SERVER_PORT = 20854
     private val buildQueueLock = Semaphore(1, true)
+    private val doneSignal = CountDownLatch(1)
 
     // <product / DevIdeaBuildServerStatus>
     private var productBuildStatus = mutableMapOf<String, DevIdeaBuildServerStatus>()
@@ -84,8 +85,6 @@ class DevIdeaBuildServer {
         "Run IDE on module intellij.platform.bootstrap with VM properties -Didea.use.dev.build.server=true -Djava.system.class.loader=com.intellij.util.lang.PathClassLoader")
       httpServer.start()
 
-      val doneSignal = CountDownLatch(1)
-
       // wait for ctrl-c
       Runtime.getRuntime().addShutdownHook(Thread {
         doneSignal.countDown()
@@ -99,6 +98,7 @@ class DevIdeaBuildServer {
 
       LOG.info("Server stopping...")
       httpServer.stop(10)
+      exitProcess(0)
     }
 
     private fun HttpExchange.getPlatformPrefix() = parseQuery(this.requestURI).get("platformPrefix")?.first() ?: "idea"
@@ -165,14 +165,31 @@ class DevIdeaBuildServer {
       }
     }
 
+    private fun createStopEndpoint(httpServer: HttpServer): HttpContext? {
+      return httpServer.createContext("/stop") { exchange ->
+
+        exchange.responseHeaders.add("Content-Type", "text/plain")
+        val response = "".encodeToByteArray()
+        exchange.sendResponseHeaders(HttpURLConnection.HTTP_OK, response.size.toLong())
+        exchange.responseBody.apply {
+          this.write(response)
+          this.flush()
+          this.close()
+        }
+
+        doneSignal.countDown()
+      }
+    }
+
     private fun createHttpServer(buildServer: BuildServer): HttpServer {
       val httpServer = HttpServer.create()
       httpServer.bind(InetSocketAddress(InetAddress.getLoopbackAddress(), SERVER_PORT), 2)
 
       createBuildEndpoint(httpServer, buildServer)
       createStatusEndpoint(httpServer)
+      createStopEndpoint(httpServer)
 
-      // Serve requests in parallel. Though, there is no guarantee, that 2 requests will be for different endpoints
+      // Serve requests in parallel. Though, there is no guarantee, that 2 requests will be served for different endpoints
       httpServer.executor = Executors.newFixedThreadPool(2)
       return httpServer
     }
