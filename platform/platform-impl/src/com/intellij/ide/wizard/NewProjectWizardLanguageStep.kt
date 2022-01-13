@@ -6,6 +6,7 @@ import com.intellij.ide.projectWizard.NewProjectWizardCollector.Companion.logLan
 import com.intellij.ide.wizard.NewProjectWizardBaseData.Companion.baseData
 import com.intellij.openapi.project.Project
 import com.intellij.ui.UIBundle
+import com.intellij.util.PlatformUtils
 
 class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
   AbstractNewProjectWizardMultiStepWithAddButton<NewProjectWizardLanguageStep, LanguageNewProjectWizard>(parent, LanguageNewProjectWizard.EP_NAME),
@@ -19,7 +20,7 @@ class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
   override val languageProperty by ::stepProperty
   override var language by ::step
 
-  override var additionalStepPlugins = defaultLanguages
+  override var additionalStepPlugins = if (PlatformUtils.isIdeaCommunity()) communityLanguages else defaultLanguages + communityLanguages
 
   init {
     data.putUserData(LanguageNewProjectWizardData.KEY, this)
@@ -38,8 +39,9 @@ class NewProjectWizardLanguageStep(parent: NewProjectWizardStep) :
       "Go" to "org.jetbrains.plugins.go",
       "Ruby" to "org.jetbrains.plugins.ruby",
       "PHP" to "com.jetbrains.php",
-      "Python" to "com.intellij.python",
-      "Scala" to "org.intellij.scala"
+      "Python" to "com.intellij.python"
     )
+
+    val communityLanguages = mapOf("Scala" to "org.intellij.scala")
   }
 }
