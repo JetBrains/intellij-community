@@ -246,15 +246,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     if (parent != null) Disposer.register(parent, () -> removeTreeSelectionListener(listener));
   }
 
-  /**
-   * @deprecated Use {@link #setDoubleClickAndEnterKeyHandler(Runnable)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public void setDoubleClickHandler(@NotNull Runnable doubleClickHandler) {
-    setDoubleClickAndEnterKeyHandler(doubleClickHandler);
-  }
-
   public void setDoubleClickAndEnterKeyHandler(@NotNull Runnable handler) {
     setDoubleClickHandler(e -> {
       handler.run();
