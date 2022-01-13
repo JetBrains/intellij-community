@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.ui.ClientProperty;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBSwingUtilities;
@@ -168,13 +169,13 @@ final class Stripe extends AbstractDroppableStripe implements UISettingsListener
     return ContainerUtil.find(getButtons(), c -> ((StripeButton)c).getId().equals(toolWindowId));
   }
 
-  public void setOverlayed(boolean overlayed) {
+  public void setOverlaid(boolean overlaid) {
     if (Registry.is("disable.toolwindow.overlay")) {
       return;
     }
 
-    Color bg = UIUtil.getPanelBackground();
-    if (overlayed) {
+    Color bg = JBColor.PanelBackground;
+    if (overlaid) {
       setBackground(ColorUtil.toAlpha(bg, 190));
     }
     else {

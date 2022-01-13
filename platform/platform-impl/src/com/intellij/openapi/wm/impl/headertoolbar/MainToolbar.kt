@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.ui.UISettings
@@ -6,6 +6,7 @@ import com.intellij.ide.ui.customization.CustomActionsSchema
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.actionSystem.ActionGroup
 import com.intellij.openapi.actionSystem.IdeActions
+import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.SystemInfoRt
@@ -17,7 +18,9 @@ import javax.swing.JComponent
 import javax.swing.JPanel
 import javax.swing.UIManager
 
-internal class MainToolbar(val project: Project?): JPanel(HorizontalLayout(10)) {
+private val EP_NAME = ExtensionPointName<MainToolbarProjectWidgetFactory>("com.intellij.projectToolbarWidget")
+
+internal class MainToolbar: JPanel(HorizontalLayout(10)) {
   private val layoutMap = mapOf(
     Position.Left to HorizontalLayout.LEFT,
     Position.Right to HorizontalLayout.RIGHT,
@@ -29,13 +32,19 @@ internal class MainToolbar(val project: Project?): JPanel(HorizontalLayout(10)) 
   init {
     background = UIManager.getColor("MainToolbar.background")
     isOpaque = true
+  }
+
+  // Separate init because first, as part of IdeRootPane creation, we add bare component to allocate space and then,
+  // as part of EDT task scheduled in a start-up activity, do fill it.
+  // That's to avoid flickering due to resizing
+  fun init(project: Project?) {
     for (factory in MainToolbarAppWidgetFactory.EP_NAME.extensionList) {
       addWidget(factory.createWidget(), factory.getPosition())
     }
 
-    project?.let { prj ->
-      for (factory in MainToolbarProjectWidgetFactory.EP_NAME.extensionList) {
-        addWidget(factory.createWidget(prj), factory.getPosition())
+    project?.let {
+      for (factory in EP_NAME.extensionList) {
+        addWidget(factory.createWidget(project), factory.getPosition())
       }
     }
 
@@ -47,8 +56,7 @@ internal class MainToolbar(val project: Project?): JPanel(HorizontalLayout(10)) 
     Disposer.dispose(disposable)
   }
 
-  private fun addWidget(widget: JComponent,
-                        position: Position) {
+  private fun addWidget(widget: JComponent, position: Position) {
     add(layoutMap[position], widget)
     visibleComponentsPool.addElement(widget, position)
     (widget as? Disposable)?.let { Disposer.register(disposable, it) }
@@ -117,6 +125,6 @@ private class VisibleComponentsPool {
   }
 }
 
-internal fun isToolbarInHeader(settings : UISettings) : Boolean {
-  return SystemInfoRt.isWindows && !settings.separateMainMenu
+internal fun isToolbarInHeader(settings: UISettings? = null) : Boolean {
+  return SystemInfoRt.isWindows && !(settings ?: UISettings.shadowInstance).separateMainMenu
 }

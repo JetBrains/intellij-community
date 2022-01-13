@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.customFrameDecorations.header.toolbar
 
 import com.intellij.icons.AllIcons
@@ -14,7 +14,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.util.ScalableIcon
 import com.intellij.openapi.wm.IdeFrame
-import com.intellij.openapi.wm.impl.IdeFrameImpl
 import com.intellij.openapi.wm.impl.IdeMenuBar
 import com.intellij.openapi.wm.impl.ToolbarHolder
 import com.intellij.openapi.wm.impl.customFrameDecorations.header.AbstractMenuFrameHeader
@@ -37,14 +36,13 @@ private enum class ShowMode {
 }
 
 internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : AbstractMenuFrameHeader(frame), UISettingsListener, ToolbarHolder {
-
   private val myMenuBar = ideMenu
   private val myMenuButton = createMenuButton()
   private var myToolbar : MainToolbar? = null
   private val myToolbarPlaceholder = NonOpaquePanel()
   private val myHeaderContent = createHeaderContent()
 
-  private var myMode = ShowMode.MENU
+  private var mode = ShowMode.MENU
 
   init {
     layout = GridBagLayout()
@@ -62,7 +60,12 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
 
   override fun updateToolbar() {
     removeToolbar()
-    myToolbar = createToolbar()
+
+    val toolbar = MainToolbar()
+    toolbar.init((frame as? IdeFrame)?.project)
+    toolbar.isOpaque = false
+    myToolbar = toolbar
+
     myToolbarPlaceholder.add(myToolbar)
     myToolbarPlaceholder.revalidate()
   }
@@ -76,18 +79,18 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
 
   override fun uiSettingsChanged(uiSettings: UISettings) {
     updateLayout(uiSettings)
-    when (myMode) {
+    when (mode) {
       ShowMode.TOOLBAR -> updateToolbar()
       ShowMode.MENU -> removeToolbar()
     }
   }
 
   override fun getHitTestSpots(): List<RelativeRectangle> {
-    val res = super.getHitTestSpots().toMutableList()
+    val result = super.getHitTestSpots().toMutableList()
 
-    when (myMode) {
+    when (mode) {
       ShowMode.MENU -> {
-        res.add(getElementRect(myMenuBar) { rect ->
+        result.add(getElementRect(myMenuBar) { rect ->
           val state = frame.extendedState
           if (state != Frame.MAXIMIZED_VERT && state != Frame.MAXIMIZED_BOTH) {
             val topGap = (rect.height / 3).toFloat().roundToInt()
@@ -97,19 +100,19 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
         })
       }
       ShowMode.TOOLBAR -> {
-        res.add(getElementRect(myMenuButton))
-        myToolbar?.components?.filter { it.isVisible }?.forEach { res.add(getElementRect(it)) }
+        result.add(getElementRect(myMenuButton))
+        myToolbar?.components?.filter { it.isVisible }?.forEach { result.add(getElementRect(it)) }
       }
     }
 
-    return res
+    return result
   }
 
   override fun getHeaderBackground(active: Boolean) = CustomFrameDecorations.mainWindowTitlePaneBackground(active)
 
-  private fun getElementRect(comp: Component, rectProcessor: (Rectangle) -> Unit = {}): RelativeRectangle {
+  private fun getElementRect(comp: Component, rectProcessor: ((Rectangle) -> Unit)? = null): RelativeRectangle {
     val rect = Rectangle(comp.size)
-    rectProcessor(rect)
+    rectProcessor?.invoke(rect)
     return RelativeRectangle(comp, rect)
   }
 
@@ -135,16 +138,9 @@ internal class ToolbarFrameHeader(frame: JFrame, ideMenu: IdeMenuBar) : Abstract
   }
 
   private fun updateLayout(settings: UISettings) {
-    myMode = if (isToolbarInHeader(settings)) ShowMode.TOOLBAR else ShowMode.MENU
+    mode = if (isToolbarInHeader(settings)) ShowMode.TOOLBAR else ShowMode.MENU
     val layout = myHeaderContent.layout as CardLayout
-    layout.show(myHeaderContent, myMode.name)
-  }
-
-  private fun createToolbar(): MainToolbar {
-    val project = (frame as? IdeFrame)?.project
-    val toolbar = MainToolbar(project)
-    toolbar.isOpaque = false
-    return toolbar
+    layout.show(myHeaderContent, mode.name)
   }
 
   private fun createMenuButton(): AbstractButton {

@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.openapi.wm.impl.headertoolbar
 
 import com.intellij.ide.IdeBundle
@@ -37,8 +37,7 @@ import kotlin.properties.Delegates
 
 private const val MAX_RECENT_COUNT = 100
 
-object ProjectWidgetFactory : MainToolbarProjectWidgetFactory {
-
+internal class ProjectWidgetFactory : MainToolbarProjectWidgetFactory {
   override fun createWidget(project: Project): JComponent {
     val widget = ProjectWidget(project)
     ProjectWidgetUpdater(project, widget).subscribe()
@@ -49,7 +48,6 @@ object ProjectWidgetFactory : MainToolbarProjectWidgetFactory {
 }
 
 private class ProjectWidgetUpdater(val proj: Project, val widget: ProjectWidget) : FileEditorManagerListener, UISettingsListener, ProjectManagerListener {
-
   private var file: VirtualFile? by Delegates.observable(null) { _, _, _ -> updateText() }
   private var settings: UISettings by Delegates.observable(UISettings.instance) { _, _, _ -> updateText() }
 
@@ -102,20 +100,23 @@ private class ProjectWidgetUpdater(val proj: Project, val widget: ProjectWidget)
   }
 }
 
-private class ProjectWidget(val project: Project): ToolbarComboWidget(), Disposable {
-
+private class ProjectWidget(private val project: Project): ToolbarComboWidget(), Disposable {
   override fun doExpand(e: InputEvent) {
-    val myStep = MyStep(createActionsList())
-    val myRenderer = ProjectWidgetRenderer(myStep::getSeparatorAbove)
+    val step = MyStep(createActionsList())
+    val widgetRenderer = ProjectWidgetRenderer(step::getSeparatorAbove)
 
     val renderer = Function<ListCellRenderer<Any>, ListCellRenderer<Any>> { base ->
       ListCellRenderer<Any> { list, value, index, isSelected, cellHasFocus ->
-        if (value is ReopenProjectAction) myRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
-        else base.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        if (value is ReopenProjectAction) {
+          widgetRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        }
+        else {
+          base.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus)
+        }
       }
     }
 
-    JBPopupFactory.getInstance().createListPopup(project, myStep, renderer).showUnderneathOf(this)
+    JBPopupFactory.getInstance().createListPopup(project, step, renderer).showUnderneathOf(this)
   }
 
   override fun removeNotify() {
@@ -138,7 +139,7 @@ private class ProjectWidget(val project: Project): ToolbarComboWidget(), Disposa
     return res
   }
 
-  private class MyStep(val actions: List<AnAction>): ListPopupStep<AnAction> {
+  private class MyStep(private val actions: List<AnAction>): ListPopupStep<AnAction> {
     override fun getTitle(): String? = null
 
     override fun onChosen(selectedValue: AnAction?, finalChoice: Boolean): PopupStep<*>? {

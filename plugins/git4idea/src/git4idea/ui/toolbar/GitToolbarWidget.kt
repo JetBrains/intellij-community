@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package git4idea.ui.toolbar
 
 import com.intellij.dvcs.DvcsUtil
@@ -27,8 +27,7 @@ import javax.swing.SwingUtilities
 
 internal data class Changes(val incoming: Boolean, val outgoing: Boolean)
 
-class GitToolbarWidgetFactory : MainToolbarProjectWidgetFactory, Disposable {
-
+internal class GitToolbarWidgetFactory : MainToolbarProjectWidgetFactory, Disposable {
   override fun createWidget(project: Project): JComponent {
     val widget = GitToolbarWidget()
     GitWidgetUpdater(project, widget).subscribe()
@@ -41,7 +40,6 @@ class GitToolbarWidgetFactory : MainToolbarProjectWidgetFactory, Disposable {
 }
 
 private class GitWidgetUpdater(val project: Project, val widget: GitToolbarWidget) : GitRepositoryChangeListener, GitIncomingOutgoingListener, ProjectManagerListener {
-
   private val swingExecutor: Executor = Executor { run -> SwingUtilities.invokeLater(run) }
 
   private var repository: GitRepository? = null
