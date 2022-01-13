@@ -1,10 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,14 +75,4 @@ public interface AppUIExecutor extends BaseExpirableExecutor<AppUIExecutor> {
   @NotNull
   @Contract(pure=true)
   AppUIExecutor inSmartMode(@NotNull Project project);
-
-  /**
-   * @deprecated replace with {@code later()} or just remove it if you're in a write-safe context
-   * @see TransactionGuard
-   */
-  @NotNull
-  @Contract(pure=true)
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  AppUIExecutor inTransaction(@NotNull Disposable parentDisposable);
 }

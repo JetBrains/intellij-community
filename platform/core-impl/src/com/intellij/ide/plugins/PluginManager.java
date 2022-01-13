@@ -39,24 +39,6 @@ public final class PluginManager {
   private PluginManager() {}
 
   /**
-   * @deprecated Use {@link DisabledPluginsState#addDisablePluginListener} directly
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public void addDisablePluginListener(@NotNull Runnable listener) {
-    DisabledPluginsState.addDisablePluginListener(listener);
-  }
-
-  /**
-   * @deprecated Use {@link DisabledPluginsState#removeDisablePluginListener} directly
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public void removeDisablePluginListener(@NotNull Runnable listener) {
-    DisabledPluginsState.removeDisablePluginListener(listener);
-  }
-
-  /**
    * @return file with list of once installed plugins if it exists, null otherwise
    */
   public static @Nullable Path getOnceInstalledIfExists() {

@@ -148,9 +148,6 @@ class AppUIExecutorTest : LightPlatformTestCase() {
     val executor = AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
       .withDocumentsCommitted(project)
 
-    val transactionExecutor = AppUIExecutor.onUiThread(ModalityState.NON_MODAL)
-      .inTransaction(project)
-
     GlobalScope.async(SwingDispatcher) {
       val pdm = PsiDocumentManager.getInstance(project)
       val commitChannel = Channel<Unit>()
@@ -179,17 +176,6 @@ class AppUIExecutorTest : LightPlatformTestCase() {
         assertEquals("ab", document.text)
 
         commitChannel.close()
-      }
-      withContext(transactionExecutor.coroutineDispatchingContext() + job) {
-        while (true) {
-          runWriteAction { pdm.commitAllDocuments() }
-          if (!commitChannel.isClosedForSend) {
-            commitChannel.send(Unit)
-          }
-          else {
-            return@withContext
-          }
-        }
       }
       coroutineContext.cancelChildren()
 

@@ -125,15 +125,6 @@ public class JBScrollPane extends JScrollPane {
     return view.getBackground();
   }
 
-  /**
-   * @deprecated use {@link ComponentUtil#getScrollPane} instead
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static JScrollPane findScrollPane(Component c) {
-    return ComponentUtil.getScrollPane(c);
-  }
-
   private void init() {
     init(true);
   }

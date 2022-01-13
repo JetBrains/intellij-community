@@ -1,7 +1,6 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
-import com.intellij.diagnostic.PluginException;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -31,7 +30,6 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.concurrency.EdtScheduledExecutorService;
 import com.intellij.util.messages.Topic;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -189,16 +187,6 @@ public class ProgressWindow extends ProgressIndicatorBase implements BlockingPro
       myModalityEntered = false;
       LaterInvocator.leaveModal(this);
     }
-  }
-
-  /** @deprecated Do not use, it's too low level and dangerous. Instead, consider using run* methods in {@link ProgressManager} */
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  @Deprecated(forRemoval = true)
-  public void startBlocking(@NotNull Runnable init) {
-    PluginException.reportDeprecatedUsage("ProgressWindow#startBlocking(Runnable)", "Use `ProgressManager.run*()` instead");
-    CompletableFuture<Object> future = new CompletableFuture<>();
-    Disposer.register(this, () -> future.complete(null));
-    startBlocking(init, future);
   }
 
   @Override

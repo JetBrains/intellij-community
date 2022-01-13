@@ -2086,14 +2086,6 @@ public class JBTabsImpl extends JComponent
     return myPosition;
   }
 
-  /**
-   * @deprecated You should implement {@link JBTabsBorder} interface
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  protected void doPaintBackground(Graphics2D g2d, Rectangle clip) {
-  }
-
   @Override
   protected void paintComponent(final Graphics g) {
     super.paintComponent(g);
@@ -3777,15 +3769,6 @@ public class JBTabsImpl extends JComponent
       select(getTabInfo(), true);
       return true;
     }
-  }
-
-  /**
-   * @deprecated unused. You should move the painting logic to an implementation of {@link JBTabPainter} interface }
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public int getActiveTabUnderlineHeight() {
-    return 0;
   }
 
   /**
