@@ -51,7 +51,7 @@ internal class HeaderPanel(
 
     init {
         PackageSearchUI.setHeight(this, PackageSearchUI.SmallHeaderHeight)
-        border = emptyBorder(top = 5.scaled(), left = 5.scaled(), right = 1.scaled() + scrollbarWidth())
+        border = emptyBorder(top = 5, left = 5, right = 1 + scrollbarWidth())
         background = PackageSearchUI.SectionHeaderBackgroundColor
 
         add(
@@ -116,7 +116,7 @@ internal class HeaderPanel(
         val includeScrollbar = scrollbarVisible && (isAlwaysOpaque || scrollbarOpaque)
 
         @ScaledPixels val rightBorder = if (includeScrollbar) scrollbarWidth() else 1.scaled()
-        border = emptyBorder(top = 5.scaled(), left = 5.scaled(), right = rightBorder)
+        border = emptyBorder(top = 5, left = 5, right = rightBorder)
         updateAndRepaint()
     }
 }
