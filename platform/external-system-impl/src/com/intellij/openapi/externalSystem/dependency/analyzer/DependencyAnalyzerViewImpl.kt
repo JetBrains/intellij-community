@@ -23,7 +23,6 @@ import com.intellij.openapi.observable.properties.and
 import com.intellij.openapi.observable.util.*
 import com.intellij.openapi.progress.util.BackgroundTaskUtil
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.ui.asSequence
 import com.intellij.ui.CollectionListModel
 import com.intellij.ui.ScrollPaneFactory
 import com.intellij.ui.SearchTextField
@@ -57,7 +56,7 @@ class DependencyAnalyzerViewImpl(
   private val showDependencyGroupIdProperty = AtomicObservableProperty(false)
     .bindBooleanStorage(SHOW_GROUP_ID_PROPERTY)
 
-  private val dependencyModelProperty = AtomicObservableProperty(emptyList<Dependency>())
+  private val dependencyModelProperty = AtomicObservableProperty(emptyList<DependencyGroup>())
   private val dependencyProperty = AtomicObservableProperty<Dependency?>(null)
   private val showDependencyTreeProperty = AtomicObservableProperty(false)
     .bindBooleanStorage(SHOW_AS_TREE_PROPERTY)
@@ -155,14 +154,15 @@ class DependencyAnalyzerViewImpl(
       },
       onUiThread = {
         dependencyModel = it
+          .createDependencyGroups()
       }
     )
   }
 
   private fun updateFilteredDependencyModel() {
     val filteredDependencyGroups = dependencyModel
-      .filterDependencies()
-      .createDependencyGroups()
+      .map { DependencyGroup(it.variances.filterDependencies()) }
+      .filter { it.variances.isNotEmpty() }
     dependencyListModel.replaceAll(filteredDependencyGroups)
 
     val filteredDependencies = filteredDependencyGroups.flatMap { it.variances }
@@ -185,8 +185,8 @@ class DependencyAnalyzerViewImpl(
   }
 
   private fun updateUsagesModel() {
-    val dependencies = dependencyListModel.asSequence()
-      .filter { it.data == dependency?.data }
+    val dependencies = dependencyModel.asSequence()
+      .filter { group -> dependency?.data in group.variances.map { it.data } }
       .flatMap { it.variances }
       .asIterable()
     usagesTreeModel.setRoot(buildTree(dependencies))
