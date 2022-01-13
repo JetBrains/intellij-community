@@ -46,5 +46,6 @@
     <orderEntry type="module" module-name="intellij.platform.core.ui" />
     <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.java.manifest" />
+    <orderEntry type="module" module-name="fe10-analyze.safe-analyze-utils" />
   </component>
 </module>
