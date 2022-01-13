@@ -8,6 +8,7 @@ import com.intellij.ui.Gray
 import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.JBValue
 import com.intellij.util.ui.StartupUiUtil
 import com.intellij.util.ui.UIUtil
 import com.intellij.util.ui.components.BorderLayoutPanel
@@ -46,8 +47,8 @@ internal object PackageSearchUI {
     internal val ListRowHighlightBackground = JBColor(0xF2F5F9, 0x4C5052)
     internal val InfoBannerBackground = JBColor(0xE6EEF7, 0x1C3956)
 
-    internal const val MediumHeaderHeight = 30
-    internal const val SmallHeaderHeight = 24
+    internal val MediumHeaderHeight = JBValue.Float(30f)
+    internal val SmallHeaderHeight = JBValue.Float(24f)
 
     @Suppress("MagicNumber") // Thanks, Swing
     internal fun headerPanel(init: BorderLayoutPanel.() -> Unit) = object : BorderLayoutPanel() {
@@ -130,8 +131,8 @@ internal object PackageSearchUI {
     }
 
     internal fun getTextColorPrimary(isSelected: Boolean = false): Color = when {
-        isSelected -> JBColor { UIUtil.getListSelectionForeground(true) }
-        else -> JBColor { UIUtil.getListForeground() }
+        isSelected -> JBColor.lazy { UIUtil.getListSelectionForeground(true) }
+        else -> JBColor.lazy { UIUtil.getListForeground() }
     }
 
     internal fun getTextColorSecondary(isSelected: Boolean = false): Color = when {
