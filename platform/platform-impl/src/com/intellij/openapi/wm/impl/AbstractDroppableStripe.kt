@@ -58,8 +58,8 @@ abstract class AbstractDroppableStripe(layoutManager: LayoutManager) : JPanel(la
 
   fun processDropButton(button: JComponent, buttonImage: JComponent, screenPoint: Point) {
     if (!isDroppingButton()) {
-      val image = button.createDragImage()
-      buttonImage.paint(image.graphics)
+      button.createDragImage()?.let { buttonImage.paint(it.graphics) }
+
       myDragButton = button
       myDragButtonImage = buttonImage
       myPreferredSize = null

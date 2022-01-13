@@ -30,7 +30,9 @@ import javax.swing.JDialog
 import javax.swing.JLabel
 import javax.swing.SwingUtilities
 
-fun Component.createDragImage(): BufferedImage {
+fun Dimension.isNotEmpty():Boolean = width > 0 && height > 0
+
+fun Component.createDragImage(): BufferedImage? {
   val initialBounds = bounds
   return try {
     if (initialBounds.isEmpty) {
@@ -52,20 +54,22 @@ fun Component.createDragImage(): BufferedImage {
       else -> JBUI.emptySize()
     }
 
-    val image = UIUtil.createImage(this, areaSize.width, areaSize.height, BufferedImage.TYPE_INT_RGB)
-    val graphics = image.graphics
-    graphics.color = if (ExperimentalUI.isNewToolWindowsStripes()) JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
-                      else UIUtil.getBgFillColor(parent)
+    if (areaSize.isNotEmpty())
+      UIUtil.createImage(this, areaSize.width, areaSize.height, BufferedImage.TYPE_INT_RGB).also { image->
+        val graphics = image.graphics
+        graphics.color = if (ExperimentalUI.isNewToolWindowsStripes()) JBUI.CurrentTheme.ToolWindow.DragAndDrop.BUTTON_FLOATING_BACKGROUND
+        else UIUtil.getBgFillColor(parent)
 
-    graphics.fillRect(0, 0, areaSize.width, areaSize.height)
+        graphics.fillRect(0, 0, areaSize.width, areaSize.height)
 
-    when (this) {
-      is StripeButton -> paint(graphics)
-      is SquareStripeButton -> paintDraggingButton(graphics)
-    }
+        when (this) {
+          is StripeButton -> paint(graphics)
+          is SquareStripeButton -> paintDraggingButton(graphics)
+        }
 
-    graphics.dispose()
-    image
+        graphics.dispose()
+      }
+    else null
   }
   finally {
     bounds = initialBounds

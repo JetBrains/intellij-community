@@ -200,6 +200,8 @@ public class StripeButton extends AnchoredButton implements DataProvider {
       }
 
       BufferedImage image = createDragImage(this);
+      if(image == null) return;
+
       myDragButtonImage = new JLabel(IconUtil.createImageIcon((Image)image)) {
         @Override
         public String toString() {
