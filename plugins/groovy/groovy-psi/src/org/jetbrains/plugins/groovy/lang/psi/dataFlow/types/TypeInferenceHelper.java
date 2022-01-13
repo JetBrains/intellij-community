@@ -3,7 +3,6 @@ package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.CachedValueProvider.Result;
@@ -36,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.PartialContext;
 
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 
 import static com.intellij.psi.util.PsiModificationTracker.MODIFICATION_COUNT;
 import static org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.FunctionalExpressionFlowUtil.isFlatDFAAllowed;
@@ -54,18 +54,18 @@ public final class TypeInferenceHelper {
 
   private static final ThreadLocal<InferenceContext> ourInferenceContext = new ThreadLocal<>();
 
-  static <T> T doInference(@NotNull Map<VariableDescriptor, DFAType> bindings, @NotNull Computable<? extends T> computation) {
+  static <T> T doInference(@NotNull Map<VariableDescriptor, DFAType> bindings, @NotNull Supplier<? extends T> computation) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       checkNestedContext();
     }
     return withContext(new PartialContext(bindings), computation);
   }
 
-  private static <T> T withContext(@NotNull InferenceContext context, @NotNull Computable<? extends T> computation) {
+  private static <T> T withContext(@NotNull InferenceContext context, @NotNull Supplier<? extends T> computation) {
     InferenceContext previous = ourInferenceContext.get();
     ourInferenceContext.set(context);
     try {
-      return computation.compute();
+      return computation.get();
     }
     finally {
       ourInferenceContext.set(previous);
@@ -79,7 +79,7 @@ public final class TypeInferenceHelper {
     return context != null ? context : getTopContext();
   }
 
-  public static <T> T inTopContext(@NotNull Computable<? extends T> computation) {
+  public static <T> T inTopContext(@NotNull Supplier<? extends T> computation) {
     return withContext(getTopContext(), computation);
   }
 

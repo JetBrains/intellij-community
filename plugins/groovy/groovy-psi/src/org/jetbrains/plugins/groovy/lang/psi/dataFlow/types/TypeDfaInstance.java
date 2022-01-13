@@ -1,7 +1,6 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
-import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiType;
@@ -21,8 +20,10 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.DefinitionMap
 import org.jetbrains.plugins.groovy.lang.resolve.api.Argument;
 import org.jetbrains.plugins.groovy.lang.resolve.api.ArgumentMapping;
 import org.jetbrains.plugins.groovy.lang.resolve.api.GroovyMethodCandidate;
+import org.jetbrains.plugins.groovy.lang.resolve.api.PsiCallParameter;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 class TypeDfaInstance implements DfaInstance<TypeDfaState> {
 
@@ -194,7 +195,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
         GroovyMethodCandidate candidate = ((GroovyMethodResult)variant).getCandidate();
         if (candidate == null) continue;
 
-        ArgumentMapping mapping = candidate.getArgumentMapping();
+        ArgumentMapping<PsiCallParameter> mapping = candidate.getArgumentMapping();
         if (mapping == null) continue;
 
         for (Argument argument : arguments) {
@@ -212,7 +213,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
   private TypeDfaState updateVariableType(@NotNull TypeDfaState state,
                                           @NotNull Instruction instruction,
                                           @NotNull VariableDescriptor descriptor,
-                                          @NotNull Computable<DFAType> computation) {
+                                          @NotNull Supplier<DFAType> computation) {
     int index = ((Object2IntMap<VariableDescriptor>)myFlowInfo.getVarIndexes()).getInt(descriptor);
     if (index == 0) {
       return state;
@@ -224,7 +225,7 @@ class TypeDfaInstance implements DfaInstance<TypeDfaState> {
     DFAType type = myCache.getCachedInferredType(descriptor, instruction);
     if (type == null) {
       if (myFlowInfo.getAcyclicInstructions().contains(instruction)) {
-        type = computation.compute();
+        type = computation.get();
       }
       else {
         Map<VariableDescriptor, DFAType> unwrappedVariables = new HashMap<>();
