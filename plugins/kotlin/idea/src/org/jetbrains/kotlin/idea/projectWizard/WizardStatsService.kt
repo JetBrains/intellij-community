@@ -170,10 +170,6 @@ class WizardStatsService : CounterUsagesCollector() {
                 idToLog = "js.cssSupport"
             ),
             SettingIdWithPossibleValues.Boolean(
-                id = "useStyledComponents",
-                idToLog = "js.useStyledComponents"
-            ),
-            SettingIdWithPossibleValues.Boolean(
                 id = "useReactRouterDom",
                 idToLog = "js.useReactRouterDom"
             ),

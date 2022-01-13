@@ -6,6 +6,5 @@
 </head>
 <body>
 <script src="${indexFile}.js"></script>
-<div id="root"></div>
 </body>
 </html>
