@@ -160,9 +160,9 @@ class KotlinPluginBuilder {
         withModule("kotlin-ultimate.common-noncidr-native")
         withModule("kotlin-ultimate.ultimate-plugin")
         withModule("kotlin-ultimate.ultimate-native")
+        withModule("kotlin-ultimate.javascript.debugger")
 
-        // Temporary disabled the JS-ultimate part till KTIJ-20799 is fixed
-        //withModule("kotlin-ultimate.javascript.debugger")
+        // Disabled the nodeJs module till KTIJ-21036 is investigated
         //withModule("kotlin-ultimate.javascript.nodeJs")
       }
 
