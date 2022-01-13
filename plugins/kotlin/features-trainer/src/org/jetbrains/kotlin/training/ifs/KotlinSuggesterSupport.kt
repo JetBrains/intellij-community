@@ -7,11 +7,11 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.descendantsOfType
 import com.intellij.psi.util.parentsOfType
 import org.jetbrains.kotlin.psi.*
-import training.featuresSuggester.LanguageSupport
+import training.featuresSuggester.SuggesterSupport
 import training.featuresSuggester.getParentByPredicate
 import training.featuresSuggester.getParentOfType
 
-class KotlinLanguageSupport : LanguageSupport {
+class KotlinSuggesterSupport : SuggesterSupport {
     override fun isLoadedSourceFile(file: PsiFile): Boolean {
         return file is KtFile && !file.isCompiled && file.isContentsLoaded
     }

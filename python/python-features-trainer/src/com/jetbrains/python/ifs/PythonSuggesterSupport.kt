@@ -6,11 +6,11 @@ import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.descendantsOfType
 import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.impl.PyFileImpl
-import training.featuresSuggester.LanguageSupport
+import training.featuresSuggester.SuggesterSupport
 import training.featuresSuggester.getParentByPredicate
 import training.featuresSuggester.getParentOfType
 
-class PythonLanguageSupport : LanguageSupport {
+class PythonSuggesterSupport : SuggesterSupport {
   override fun isLoadedSourceFile(file: PsiFile): Boolean {
     return file is PyFileImpl && file.isContentsLoaded
   }

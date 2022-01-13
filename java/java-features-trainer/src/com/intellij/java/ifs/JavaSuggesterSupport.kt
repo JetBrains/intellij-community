@@ -4,11 +4,11 @@ package com.intellij.java.ifs
 import com.intellij.psi.*
 import com.intellij.psi.impl.source.PsiJavaFileImpl
 import com.intellij.psi.util.descendantsOfType
-import training.featuresSuggester.LanguageSupport
+import training.featuresSuggester.SuggesterSupport
 import training.featuresSuggester.getParentByPredicate
 import training.featuresSuggester.getParentOfType
 
-class JavaLanguageSupport : LanguageSupport {
+class JavaSuggesterSupport : SuggesterSupport {
   override fun isLoadedSourceFile(file: PsiFile): Boolean {
     return file is PsiJavaFileImpl && file.isContentsLoaded
   }

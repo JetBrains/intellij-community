@@ -53,7 +53,7 @@ class CompletionPopupSuggester : AbstractFeatureSuggester() {
 
   override fun getSuggestion(action: Action): Suggestion {
     val language = action.language ?: return NoSuggestion
-    val langSupport = LanguageSupport.getForLanguage(language) ?: return NoSuggestion
+    val langSupport = SuggesterSupport.getForLanguage(language) ?: return NoSuggestion
     when (action) {
       is BeforeEditorTextRemovedAction -> {
         if (action.textFragment.text == ".") {
@@ -98,7 +98,7 @@ class CompletionPopupSuggester : AbstractFeatureSuggester() {
     return NoSuggestion
   }
 
-  private fun LanguageSupport.isInsideCommentOrLiteral(psiFile: PsiFile, offset: Int): Boolean {
+  private fun SuggesterSupport.isInsideCommentOrLiteral(psiFile: PsiFile, offset: Int): Boolean {
     val curElement = psiFile.findElementAt(offset) ?: return false
     return curElement.getParentByPredicate(::isLiteralExpression) != null ||
            curElement.getParentOfType<PsiComment>() != null

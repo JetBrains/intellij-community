@@ -8,15 +8,15 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 
 @Suppress("TooManyFunctions")
-interface LanguageSupport {
+interface SuggesterSupport {
   companion object {
-    private val EP_NAME: ExtensionPointName<LanguageExtensionPoint<LanguageSupport>> =
-      ExtensionPointName.create("training.ifs.languageSupport")
+    private val EP_NAME: ExtensionPointName<LanguageExtensionPoint<SuggesterSupport>> =
+      ExtensionPointName.create("training.ifs.suggesterSupport")
 
-    private val extensions: List<LanguageExtensionPoint<LanguageSupport>>
+    private val extensions: List<LanguageExtensionPoint<SuggesterSupport>>
       get() = EP_NAME.extensionList
 
-    fun getForLanguage(language: Language): LanguageSupport? {
+    fun getForLanguage(language: Language): SuggesterSupport? {
       return if (language == Language.ANY) {
         extensions.firstOrNull()?.instance
       }
