@@ -545,12 +545,6 @@ public class AllIcons {
     /** 16x16 */ public static final @NotNull Icon SnapToGrid = load("graph/snapToGrid.svg", -2048322498, 2);
     /** 16x16 */ public static final @NotNull Icon ZoomIn = load("graph/zoomIn.svg", 97508505, 2);
     /** 16x16 */ public static final @NotNull Icon ZoomOut = load("graph/zoomOut.svg", -1574578211, 2);
-
-    /** @deprecated to be removed in IDEA 2021.1 - use AllIcons.General.FitContent */
-    @SuppressWarnings("unused")
-    @Deprecated
-    @ScheduledForRemoval(inVersion = "2021.1")
-    /** 16x16 */ public static final @NotNull Icon FitContent = load("general/fitContent.svg", -952079922, 0);
   }
 
   public static final class Gutter {
