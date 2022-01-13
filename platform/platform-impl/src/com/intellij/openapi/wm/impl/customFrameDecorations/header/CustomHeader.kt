@@ -5,14 +5,13 @@ import com.intellij.CommonBundle
 import com.intellij.icons.AllIcons
 import com.intellij.ide.ui.UISettings
 import com.intellij.jdkEx.JdkEx
-import com.intellij.jna.JnaLoader
 import com.intellij.openapi.Disposable
 import com.intellij.openapi.MnemonicHelper
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.ui.JBPopupMenu
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.NlsActions
-import com.intellij.openapi.util.io.WindowsRegistryUtil
+import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.wm.impl.customFrameDecorations.CustomFrameTitleButtons
 import com.intellij.ui.AppUIUtil
 import com.intellij.ui.Gray
@@ -25,8 +24,6 @@ import com.intellij.util.ui.JBEmptyBorder
 import com.intellij.util.ui.JBFont
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.UIUtil
-import com.sun.jna.platform.win32.Advapi32Util
-import com.sun.jna.platform.win32.WinReg
 import java.awt.*
 import java.awt.event.*
 import java.beans.PropertyChangeListener
@@ -49,21 +46,7 @@ internal abstract class CustomHeader(private val window: Window) : JPanel(), Dis
     val LABEL_BORDER: JBEmptyBorder
       get() = JBUI.Borders.empty(V, 0)
 
-    val WINDOWS_VERSION = getWindowsReleaseId()
-
-    private fun getWindowsReleaseId(): String? {
-      try {
-        if (JnaLoader.isLoaded()) {
-          return Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE,
-                                                     "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
-                                                     "ReleaseId")
-        }
-      }
-      catch (e: Throwable) {
-        LOGGER.warn(e)
-      }
-      return WindowsRegistryUtil.readRegistryValue("HKLM\\SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion", "ReleaseId")
-    }
+    val WINDOWS_VERSION = SystemInfo.getWinRelease()
 
     fun create(window: Window): CustomHeader {
       return if (window is JFrame) {

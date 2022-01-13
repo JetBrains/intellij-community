@@ -6,8 +6,11 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.Strings;
 import com.intellij.util.lang.JavaVersion;
 import com.intellij.util.system.CpuArch;
+import com.sun.jna.platform.win32.Advapi32Util;
+import com.sun.jna.platform.win32.WinReg;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.List;
@@ -87,6 +90,18 @@ public final class SystemInfo {
   }
 
   private static final NotNullLazyValue<Boolean> ourHasXdgMime = PathExecLazyValue.create("xdg-mime");
+  private static final NullableLazyValue<String> ourWindowsRelease = new NullableLazyValue<String>() {
+    @Override
+    protected @Nullable String compute() {
+      if (!isWin10OrNewer) {
+        return null;
+      }
+      return Advapi32Util.registryGetStringValue(WinReg.HKEY_LOCAL_MACHINE,
+                                                 "SOFTWARE\\Microsoft\\Windows NT\\CurrentVersion",
+                                                 "ReleaseId");
+    }
+  };
+
   public static boolean hasXdgMime() {
     return isXWindow && ourHasXdgMime.getValue();
   }
@@ -99,6 +114,14 @@ public final class SystemInfo {
   public static final boolean isMacOSCatalina = isMac && isOsVersionAtLeast("10.15");
   public static final boolean isMacOSBigSur = isMac && isOsVersionAtLeast("10.16");
   public static final boolean isMacOSMonterey = isMac && isOsVersionAtLeast("12.0");
+
+  /**
+   * <a href="https://en.wikipedia.org/wiki/Windows_10_version_history#Channels">See "Version" column in wiki</a>
+   * @return release or null of OS != Win10+
+   */
+  public static @Nullable String getWinRelease() {
+    return ourWindowsRelease.getValue();
+  }
 
   public static @NotNull String getMacOSMajorVersion() {
     return getMacOSMajorVersion(OS_VERSION);
