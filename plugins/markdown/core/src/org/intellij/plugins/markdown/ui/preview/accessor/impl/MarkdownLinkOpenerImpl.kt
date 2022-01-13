@@ -35,6 +35,7 @@ import org.intellij.plugins.markdown.lang.references.MarkdownAnchorReference
 import org.intellij.plugins.markdown.settings.DocumentLinksSafeState
 import org.intellij.plugins.markdown.ui.preview.MarkdownEditorWithPreview
 import org.intellij.plugins.markdown.ui.preview.accessor.MarkdownLinkOpener
+import org.intellij.plugins.markdown.util.MarkdownDisposable
 import java.net.URI
 import java.net.URISyntaxException
 
@@ -190,7 +191,7 @@ internal class MarkdownLinkOpenerImpl: MarkdownLinkOpener {
         null
       )
       val balloon = balloonBuilder.createBalloon()
-      Disposer.register(project, balloon)
+      Disposer.register(MarkdownDisposable.getInstance(project), balloon)
       balloon.show(point, Balloon.Position.below)
     }
 
