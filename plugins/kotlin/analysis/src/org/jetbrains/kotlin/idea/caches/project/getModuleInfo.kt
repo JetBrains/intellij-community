@@ -154,7 +154,7 @@ private fun <T> PsiElement.collectInfos(c: ModuleInfoCollector<T>): T {
     val containingFile =
         containingFile ?: return c.onFailure("Analyzing element of type ${this::class.java} with no containing file\nText:\n$text")
 
-    val containingKtFile = (this as? KtElement)?.containingFile as? KtFile
+    val containingKtFile = containingFile as? KtFile
     containingKtFile?.analysisContext?.let {
         return it.collectInfos(c)
     }
