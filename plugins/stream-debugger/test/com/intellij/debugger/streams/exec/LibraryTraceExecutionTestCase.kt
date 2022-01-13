@@ -3,22 +3,21 @@ package com.intellij.debugger.streams.exec
 
 import com.intellij.debugger.streams.test.TraceExecutionTestCase
 import com.intellij.execution.configurations.JavaParameters
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PluginPathManager
-import com.intellij.openapi.roots.ModuleRootModificationUtil
-import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.fixtures.MavenDependencyUtil
-import com.intellij.util.PathUtil
+import com.intellij.openapi.vfs.newvfs.impl.VfsRootAccess
+import com.intellij.testFramework.PsiTestUtil
 import java.io.File
+import kotlin.io.path.Path
+import kotlin.io.path.pathString
 
 /**
  * @author Vitaliy.Bibaev
  */
-abstract class LibraryTraceExecutionTestCase(private val coordinates: String) : TraceExecutionTestCase() {
-  lateinit var jarPath: String
-
+abstract class LibraryTraceExecutionTestCase(private val jarPath: String) : TraceExecutionTestCase() {
   private companion object {
     fun String.replaceLibraryPath(libraryPath: String): String {
       val caseSensitive = SystemInfo.isFileSystemCaseSensitive
@@ -29,10 +28,9 @@ abstract class LibraryTraceExecutionTestCase(private val coordinates: String) : 
 
   override fun setUpModule() {
     super.setUpModule()
-    ModuleRootModificationUtil.updateModel(myModule) { model ->
-      MavenDependencyUtil.addFromMaven(model, coordinates)
-      val libraryJar = model.moduleLibraryTable.getLibraryByName(coordinates)!!.rootProvider.getFiles(OrderRootType.CLASSES)[0]
-      jarPath = PathUtil.getLocalPath(libraryJar)!!
+    ApplicationManager.getApplication().runWriteAction {
+      VfsRootAccess.allowRootAccess(testRootDisposable, Path(jarPath).parent.pathString)
+      PsiTestUtil.addLibrary(myModule, jarPath)
     }
   }
 
