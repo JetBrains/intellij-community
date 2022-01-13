@@ -30,6 +30,7 @@ import java.io.PrintStream;
 import java.lang.annotation.RetentionPolicy;
 import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.function.Supplier;
 
@@ -572,9 +573,25 @@ public final class Mappings {
     }
 
     private Iterable<MethodRepr> allMethodsRecursively(ClassRepr cls) {
-      return Iterators.flat(cls.getMethods(), Iterators.flat(Iterators.map(cls.getSuperTypes(), st -> {
+      return Iterators.flat(collectRecursively(cls, c-> c.getMethods()));
+    }
+
+    private Iterable<OverloadDescriptor> findAllOverloads(final ClassRepr cls, Function<MethodRepr, Integer> correspondenceFinder) {
+      Function<ClassRepr, Iterable<OverloadDescriptor>> converter = c -> c == null? Collections.emptyList() : Iterators.filter(Iterators.map(c.getMethods(), m -> {
+        Integer accessScope = correspondenceFinder.apply(m);
+        return accessScope != null? new OverloadDescriptor(accessScope, m, c) : null;
+      }), Objects::nonNull);
+
+      return Iterators.flat(Iterators.flat(
+        collectRecursively(cls, converter),
+        Iterators.map(getAllSubclasses(cls.name), subName -> converter.apply(subName != cls.name? classReprByName(subName) : null))
+      ));
+    }
+
+    private <T> Iterable<T> collectRecursively(ClassRepr cls, Function<ClassRepr, T> mapper) {
+      return Iterators.flat(Iterators.asIterable(mapper.apply(cls)), Iterators.flat(Iterators.map(cls.getSuperTypes(), st -> {
         final ClassRepr cr = classReprByName(st.className);
-        return cr != null ? allMethodsRecursively(cr) : Collections.emptyList();
+        return cr != null ? collectRecursively(cr, mapper) : Collections.emptyList();
       })));
     }
 
@@ -886,7 +903,8 @@ public final class Mappings {
 
       @Override
       public boolean checkResidence(final int residence) {
-        return !ClassRepr.getPackageName(myContext.getValue(residence)).equals(packageName);
+        final String className = myContext.getValue(residence);
+        return className == null || !ClassRepr.getPackageName(className).equals(packageName);
       }
     }
 
@@ -1434,6 +1452,8 @@ public final class Mappings {
         }
       }
 
+      final List<Pair<MethodRepr, MethodRepr.Diff>> moreAccessible = new ArrayList<>();
+
       for (final Pair<MethodRepr, MethodRepr.Diff> mr : changed) {
         final MethodRepr m = mr.first;
         final MethodRepr.Diff d = mr.second;
@@ -1441,6 +1461,10 @@ public final class Mappings {
 
         debug("Method: ", m.name);
 
+        if (d.accessExpanded()) {
+          moreAccessible.add(mr);
+        }
+        
         if (it.isAnnotation()) {
           if (d.defaultRemoved()) {
             debug("Class is annotation, default value is removed => adding annotation query");
@@ -1530,9 +1554,7 @@ public final class Mappings {
               }
             }
             else {
-              if ((d.addedModifiers() & Opcodes.ACC_FINAL) != 0 ||
-                  (d.addedModifiers() & Opcodes.ACC_PUBLIC) != 0 ||
-                  (d.addedModifiers() & Opcodes.ACC_ABSTRACT) != 0) {
+              if ((d.addedModifiers() & (Opcodes.ACC_FINAL | Opcodes.ACC_PUBLIC | Opcodes.ACC_ABSTRACT)) != 0) {
                 debug("Added final, public or abstract specifier --- affecting subclasses");
                 myFuture.affectSubclasses(it.name, myAffectedFiles, state.myAffectedUsages, state.myDependants, false, myCompiledFiles, null);
                 if (it.isInterface() && (d.addedModifiers() & Opcodes.ACC_ABSTRACT) != 0) {
@@ -1591,6 +1613,41 @@ public final class Mappings {
           }
         }
       }
+
+      if (!moreAccessible.isEmpty()) {
+        final Iterable<OverloadDescriptor> allOverloads = myFuture.findAllOverloads(it, mr -> {
+          Integer result = null;
+          for (Pair<MethodRepr, MethodRepr.Diff> pair : moreAccessible) {
+            MethodRepr m = pair.first;
+            MethodRepr.Diff d = pair.second;
+            if (mr.name == m.name && !m.equals(mr)) {
+              int newAccess = m.access & (~d.removedModifiers()) | d.addedModifiers();
+              if (result == null || Difference.weakerAccess(result, newAccess)) {
+                result = newAccess;
+              }
+            }
+          }
+          return result;
+        });
+        for (OverloadDescriptor descr : allOverloads) {
+
+          debug("Method became more accessible --- affect usages of overloading methods: ", descr.overloadMethod.name);
+
+          final Set<UsageRepr.Usage> overloadsUsages = new HashSet<>();
+          myFuture.affectMethodUsages(
+            descr.overloadMethod, myFuture.propagateMethodAccess(descr.overloadMethod, descr.overloadMethodOwner.name), descr.overloadMethod.createUsage(myContext, descr.overloadMethodOwner.name), overloadsUsages, state.myDependants
+          );
+          state.myAffectedUsages.addAll(overloadsUsages);
+          final UsageConstraint constr = Difference.isPackageLocal(descr.accessScope)? myFuture.new PackageConstraint(it.getPackageName()).negate() :
+                                         Difference.isProtected(descr.accessScope)? myFuture.new InheritanceConstraint(it).negate() : null;
+          if (constr != null) {
+            for (final UsageRepr.Usage usage : overloadsUsages) {
+              state.myUsageConstraints.put(usage, constr);
+            }
+          }
+        }
+      }
+      
       debug("End of changed methods processing");
     }
 
@@ -1739,11 +1796,9 @@ public final class Mappings {
         if (!field.isPrivate() && (field.access & INLINABLE_FIELD_MODIFIERS_MASK) == INLINABLE_FIELD_MODIFIERS_MASK && d.hadValue()) {
           final int changedModifiers = d.addedModifiers() | d.removedModifiers();
           final boolean harmful = (changedModifiers & (Opcodes.ACC_STATIC | Opcodes.ACC_FINAL)) != 0;
-          final boolean accessChanged = (changedModifiers & (Opcodes.ACC_PUBLIC | Opcodes.ACC_PRIVATE | Opcodes.ACC_PROTECTED)) != 0;
-          final boolean becameLessAccessible = accessChanged && d.accessRestricted();
           final boolean valueChanged = (d.base() & Difference.VALUE) != 0;
 
-          if (harmful || valueChanged || becameLessAccessible) {
+          if (harmful || valueChanged || d.accessRestricted()) {
             if (myProcessConstantsIncrementally) {
               debug("Potentially inlined field changed its access or value => affecting field usages and static member import usages");
               myFuture.affectFieldUsages(field, propagated.get(), field.createUsage(myContext, it.name), state.myAffectedUsages, state.myDependants);
@@ -3053,6 +3108,18 @@ public final class Mappings {
 
   private Set<File> getChangedFiles() {
     return myChangedFiles;
+  }
+
+  private static class OverloadDescriptor {
+    final int accessScope;
+    final MethodRepr overloadMethod;
+    final ClassRepr overloadMethodOwner;
+
+    OverloadDescriptor(int accessScope, MethodRepr overloadMethod, ClassRepr overloadMethodOwner) {
+      this.accessScope = accessScope;
+      this.overloadMethod = overloadMethod;
+      this.overloadMethodOwner = overloadMethodOwner;
+    }
   }
 
   private static void debug(final String s) {

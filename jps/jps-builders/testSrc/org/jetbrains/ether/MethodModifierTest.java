@@ -31,6 +31,30 @@ public class MethodModifierTest extends IncrementalTestCase {
     doTest();
   }
 
+  public void testChangePrivateToPackagePrivate() {
+    doTest().assertFailed();
+  }
+  
+  public void testChangePrivateToProtected() {
+    doTest().assertFailed();
+  }
+
+  public void testChangePrivateToPublic() {
+    doTest().assertFailed();
+  }
+
+  public void testChangePackagePrivateToProtected() {
+    doTest().assertFailed();
+  }
+
+  public void testChangePackagePrivateToPublic() {
+    doTest().assertFailed();
+  }
+
+  public void testChangeProtectedToPublic() {
+    doTest().assertFailed();
+  }
+
   public void testSetAbstract() {
     doTest();
   }
