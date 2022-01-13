@@ -6,11 +6,12 @@ import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.PlatformCoreDataKeys.CONTEXT_COMPONENT
 import com.intellij.openapi.actionSystem.impl.ActionButton
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook
+import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.extensions.ExtensionPointName
 import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.InstallAndEnablePluginTask
+import com.intellij.openapi.updateSettings.impl.pluginsAdvertisement.InstallPluginTask
 import com.intellij.ui.UIBundle
 import com.intellij.ui.awt.RelativePoint
 import com.intellij.ui.dsl.builder.Row
@@ -54,11 +55,7 @@ abstract class AbstractNewProjectWizardMultiStepWithAddButton<S : NewProjectWiza
     override fun actionPerformed(e: AnActionEvent) {
       val pluginId = PluginId.getId(additionalStepPlugins[language]!!)
       val component = e.dataContext.getData(CONTEXT_COMPONENT)!!
-      val pluginDownloader = ProgressManager.getInstance().run(InstallAndEnablePluginTask(pluginId))
-
-      if (pluginDownloader != null) {
-        InstallAndEnablePluginTask.doInstallPlugins(component, pluginDownloader)
-      }
+      ProgressManager.getInstance().run(InstallPluginTask(setOf(pluginId), ModalityState.stateForComponent(component)))
     }
   }
 }
