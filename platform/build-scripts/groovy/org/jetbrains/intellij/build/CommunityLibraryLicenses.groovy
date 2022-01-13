@@ -581,6 +581,7 @@ final class CommunityLibraryLicenses {
     new LibraryLicense(name: "OkHttp", libraryName: "okhttp", url: "https://square.github.io/okhttp/").apache(),
     new LibraryLicense(name: "Okio", libraryName: "okio", url: "https://github.com/square/okio").apache(),
     new LibraryLicense(libraryName: "opentelemetry", url: "https://opentelemetry.io/").apache(),
+    new LibraryLicense(libraryName: "opentest4j", url: "https://github.com/ota4j-team/opentest4j").apache(),
     new LibraryLicense(name: "Package Search API Models", libraryName: "package-search-api-models",
                        url: "https://package-search.jetbrains.com", version: "2.2.3").apache(),
     new LibraryLicense(name: "Package Search Version Utils", libraryName: "package-search-version-utils",
