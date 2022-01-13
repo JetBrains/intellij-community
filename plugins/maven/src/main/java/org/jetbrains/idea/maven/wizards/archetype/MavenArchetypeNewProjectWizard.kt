@@ -107,9 +107,6 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
             .applyToComponent { setSwingPopup(false) }
             .bindItem(catalogItemProperty)
             .columns(COLUMNS_MEDIUM)
-          button(MavenWizardBundle.message("maven.new.project.wizard.archetype.add.button")) {
-            addCatalog()
-          }
           link(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.manage.button")) {
             manageCatalogs()
           }
@@ -205,15 +202,6 @@ class MavenArchetypeNewProjectWizard : GeneratorNewProjectWizard {
       val catalogs = catalogManager.getCatalogs(context.projectOrDefault)
       catalogComboBox.collectionModel.replaceAll(catalogs)
       catalogItem = catalogs.firstOrNull() ?: MavenCatalog.System.Internal
-    }
-
-    private fun addCatalog() {
-      val dialog = MavenAddCatalogDialog(context.projectOrDefault)
-      if (dialog.showAndGet()) {
-        val catalog = dialog.getCatalog() ?: return
-        catalogComboBox.collectionModel.add(catalog)
-        catalogItem = catalog
-      }
     }
 
     private fun manageCatalogs() {
