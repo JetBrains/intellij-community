@@ -218,7 +218,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     });
 
     UIThemeProvider.EP_NAME.forEachExtensionSafe(provider -> {
-      if (!DEFAULT_LIGHT_THEME_ID.equals(provider.id)) {
+      if (shouldCreateTheme(provider)) {
         UITheme theme = provider.createTheme();
         if (theme != null) {
           lafList.add(new UIThemeBasedLookAndFeelInfo(theme));
@@ -227,6 +227,13 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
     });
     sortThemes(lafList);
     return lafList;
+  }
+
+  private static boolean shouldCreateTheme(UIThemeProvider provider) {
+    if (DEFAULT_LIGHT_THEME_ID.equals(provider.id)) return false;
+    if (!ExperimentalUI.isNewUI() && "ExperimentalLight".equals(provider.id)) return false;
+    if (!ExperimentalUI.isNewUI() && "ExperimentalDark".equals(provider.id)) return false;
+    return true;
   }
 
   private static void sortThemes(@NotNull List<? extends UIManager.LookAndFeelInfo> list) {
