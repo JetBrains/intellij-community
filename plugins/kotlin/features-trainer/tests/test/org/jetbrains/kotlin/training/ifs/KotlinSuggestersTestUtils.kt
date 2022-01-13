@@ -6,5 +6,5 @@ import java.io.File
 
 object KotlinSuggestersTestUtils {
     val testDataPath: String
-        get() = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/plugins/kotlin/features-trainer/testData"
+        get() = PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/plugins/kotlin/features-trainer/tests/testData"
 }
