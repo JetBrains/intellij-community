@@ -299,6 +299,8 @@ Includes the following features:</p>
     <registryKey key="markdown.experimental.boundary.precise.scroll.multiplier"
                  defaultValue="8"
                  description="A multiplier used in translation of awt scroll event to the browser one"/>
+
+    <advancedSetting id="markdown.hide.floating.toolbar" default="false" groupKey="markdown.settings.name"/>
   </extensions>
 
   <applicationListeners>

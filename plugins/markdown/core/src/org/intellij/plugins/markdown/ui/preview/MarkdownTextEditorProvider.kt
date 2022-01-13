@@ -7,6 +7,7 @@ import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.fileEditor.TextEditor
 import com.intellij.openapi.fileEditor.impl.text.PsiAwareTextEditorProvider
 import com.intellij.openapi.fileTypes.FileTypeRegistry
+import com.intellij.openapi.options.advanced.AdvancedSettings
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
@@ -36,7 +37,7 @@ class MarkdownTextEditorProvider: PsiAwareTextEditorProvider() {
 
   override fun createEditor(project: Project, file: VirtualFile): FileEditor {
     val actualEditor = super.createEditor(project, file)
-    if (actualEditor is TextEditor) {
+    if (actualEditor is TextEditor && !AdvancedSettings.getBoolean("markdown.hide.floating.toolbar")) {
       val toolbar = FloatingToolbar(actualEditor.editor, "Markdown.Toolbar.Floating")
       Disposer.register(actualEditor, toolbar)
     }
