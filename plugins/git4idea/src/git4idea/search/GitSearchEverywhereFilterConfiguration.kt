@@ -11,14 +11,16 @@ import com.intellij.openapi.project.Project
 @Service
 @State(name = "GitSEFilterConfiguration", storages = [Storage(StoragePathMacros.WORKSPACE_FILE)])
 class GitSearchEverywhereFilterConfiguration(@Suppress("unused") private val project: Project)
-  : ChooseByNameFilterConfiguration<GitSearchEverywhereItemType>() {
-
-  init {
-    setVisible(GitSearchEverywhereItemType.LOCAL_BRANCH, false)
-    setVisible(GitSearchEverywhereItemType.REMOTE_BRANCH, false)
-    setVisible(GitSearchEverywhereItemType.TAG, false)
-    setVisible(GitSearchEverywhereItemType.COMMIT_BY_MESSAGE, false)
-  }
+  : ChooseByNameFilterConfiguration<GitSearchEverywhereItemType>(defaultItems) {
 
   override fun nameForElement(type: GitSearchEverywhereItemType) = type.name
+
+  companion object {
+    private val defaultItems = Items(setOf(
+      GitSearchEverywhereItemType.LOCAL_BRANCH.name,
+      GitSearchEverywhereItemType.REMOTE_BRANCH.name,
+      GitSearchEverywhereItemType.TAG.name,
+      GitSearchEverywhereItemType.COMMIT_BY_MESSAGE.name
+    ))
+  }
 }

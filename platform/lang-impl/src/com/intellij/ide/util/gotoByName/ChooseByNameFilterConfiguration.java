@@ -10,10 +10,19 @@ import java.util.Set;
 
 
 public abstract class ChooseByNameFilterConfiguration<T> implements PersistentStateComponent<ChooseByNameFilterConfiguration.Items>  {
+
   /**
    * state object for the configuration
    */
-  private Items items = new Items();
+  private Items items;
+
+  public ChooseByNameFilterConfiguration() {
+    this(new Items());
+  }
+
+  protected ChooseByNameFilterConfiguration(@NotNull Items items) {
+    this.items = items;
+  }
 
   /**
    * {@inheritDoc}
@@ -62,10 +71,19 @@ public abstract class ChooseByNameFilterConfiguration<T> implements PersistentSt
    * A state for this configuration
    */
   public static class Items {
+
     /**
      * a set of file types
      */
-    private Set<String> filteredOutFileTypeNames = new LinkedHashSet<>();
+    private Set<String> filteredOutFileTypeNames;
+
+    public Items() {
+      this(new LinkedHashSet<>());
+    }
+
+    public Items(@NotNull Set<String> filteredOutFileTypeNames) {
+      this.filteredOutFileTypeNames = filteredOutFileTypeNames;
+    }
 
     /**
      * @return names for file types
