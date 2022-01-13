@@ -19,12 +19,11 @@ class KotlinUMethodWithFakeLightDelegate(
     constructor(original: KtFunction, containingLightClass: PsiClass, givenParent: UElement?)
             : this(original, UastFakeLightMethod(original, containingLightClass), givenParent)
 
-    private val _annotations: List<UAnnotation> by lz {
-        original.annotationEntries.mapNotNull { it.toUElementOfType() }
+    override val uAnnotations: List<UAnnotation> by lz {
+        original.annotationEntries.map {
+            baseResolveProviderService.baseKotlinConverter.convertAnnotation(it, this)
+        }
     }
-
-    override val uAnnotations: List<UAnnotation>
-        get() = _annotations
 
     override fun getTextRange(): TextRange {
         return original.textRange
