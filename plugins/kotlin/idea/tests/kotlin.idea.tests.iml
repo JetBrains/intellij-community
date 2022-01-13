@@ -79,7 +79,7 @@
     <orderEntry type="module" module-name="intellij.jvm.analysis.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.copyright" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
     <orderEntry type="module" module-name="intellij.junit" scope="TEST" />
     <orderEntry type="module" module-name="intellij.groovy.psi" scope="TEST" />
     <orderEntry type="module" module-name="intellij.statsCollector.tests" scope="TEST" />
@@ -89,6 +89,5 @@
     <orderEntry type="module" module-name="kotlin.jvm-run-configurations" scope="TEST" />
     <orderEntry type="library" name="kotlin-script-runtime" level="project" />
     <orderEntry type="module" module-name="intellij.java.tests" scope="TEST" />
-    <orderEntry type="module" module-name="intellij.platform.codeStyle.impl" />
   </component>
 </module>
