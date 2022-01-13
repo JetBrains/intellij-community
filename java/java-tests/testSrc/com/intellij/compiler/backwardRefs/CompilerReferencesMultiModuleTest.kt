@@ -8,9 +8,11 @@ import com.intellij.openapi.module.JavaModuleType
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.roots.ModuleRootModificationUtil
 import com.intellij.openapi.util.registry.Registry
+import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.PsiClassOwner
 import com.intellij.psi.PsiManager
 import com.intellij.psi.search.searches.ClassInheritorsSearch
+import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import org.intellij.lang.annotations.Language
 
@@ -89,6 +91,9 @@ class CompilerReferencesMultiModuleTest : CompilerReferencesTestBase() {
   private fun addTwoModules() {
     moduleA = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "A", myFixture.tempDirFixture.findOrCreateDir("A"))
     moduleB = PsiTestUtil.addModule(project, JavaModuleType.getModuleType(), "B", myFixture.tempDirFixture.findOrCreateDir("B"))
+
+    IdeaTestUtil.setModuleLanguageLevel(moduleA!!, LanguageLevel.JDK_11)
+    IdeaTestUtil.setModuleLanguageLevel(moduleB!!, LanguageLevel.JDK_11)
     ModuleRootModificationUtil.addDependency(moduleA!!, module)
     ModuleRootModificationUtil.addDependency(moduleB!!, module)
   }
