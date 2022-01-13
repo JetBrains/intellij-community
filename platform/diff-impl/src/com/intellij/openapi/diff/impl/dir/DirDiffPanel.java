@@ -191,7 +191,8 @@ public class DirDiffPanel implements Disposable, DataProvider {
       }
     }
 
-    final DirDiffToolbarActions actions = new DirDiffToolbarActions(myModel, myDiffPanel);
+    final DirDiffToolbarActions actions = new DirDiffToolbarActions(myModel);
+    actions.setUp(myModel, myDiffPanel);
     final ActionManager actionManager = ActionManager.getInstance();
     final ActionToolbar toolbar = actionManager.createActionToolbar("DirDiff", actions, true);
     toolbar.setTargetComponent(myTable);
@@ -358,7 +359,7 @@ public class DirDiffPanel implements Disposable, DataProvider {
   }
 
   public AnAction[] getActions() {
-    return new DirDiffToolbarActions(myModel, myDiffPanel).getChildren(null);
+    return new DirDiffToolbarActions(myModel).getChildren(null);
   }
 
   public JComponent extractFilterPanel() {
