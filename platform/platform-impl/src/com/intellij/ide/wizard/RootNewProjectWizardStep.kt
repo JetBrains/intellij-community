@@ -4,7 +4,6 @@ package com.intellij.ide.wizard
 import com.intellij.ide.util.projectWizard.WizardContext
 import com.intellij.openapi.observable.properties.PropertyGraph
 import com.intellij.openapi.util.UserDataHolderBase
-import java.lang.StringBuilder
 
 class RootNewProjectWizardStep(override val context: WizardContext) : NewProjectWizardStep {
 
@@ -12,5 +11,5 @@ class RootNewProjectWizardStep(override val context: WizardContext) : NewProject
 
   override val propertyGraph = PropertyGraph("New project wizard")
 
-  override var textToSearch = StringBuilder()
+  override var keywords = NewProjectWizardStep.Keywords()
 }

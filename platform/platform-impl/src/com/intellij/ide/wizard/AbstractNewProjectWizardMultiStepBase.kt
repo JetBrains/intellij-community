@@ -42,7 +42,7 @@ abstract class AbstractNewProjectWizardMultiStepBase(
     steps = initSteps()
     step = step.ifBlank { steps.keys.first() }
 
-    textToSearch.append(" ").append(steps.keys.joinToString(" "))
+    keywords.add(steps.keys)
 
     with(builder) {
       row(label) {

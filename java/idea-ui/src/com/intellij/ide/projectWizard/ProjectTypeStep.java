@@ -235,7 +235,7 @@ public final class ProjectTypeStep extends ModuleWizardStep implements SettingsS
       ModuleWizardStep step = myCustomSteps.get(builder.getBuilderId());
       if (!(step instanceof NewProjectWizardStep)) return name;
 
-      return name + (" " + ((NewProjectWizardStep)step).getTextToSearch());
+      return String.join(" ", ContainerUtil.addAll(((NewProjectWizardStep)step).getKeywords().toSet(), name));
     };
   }
 

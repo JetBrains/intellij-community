@@ -18,5 +18,5 @@ abstract class AbstractNewProjectWizardStep(parentStep: NewProjectWizardStep) : 
 
   final override val data by parentStep::data
 
-  final override val textToSearch by parentStep::textToSearch
+  final override val keywords by parentStep::keywords
 }

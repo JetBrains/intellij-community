@@ -31,9 +31,9 @@ interface NewProjectWizardStep {
   val propertyGraph: PropertyGraph
 
   /**
-   * The text that is used for search field input pattern matching
+   * The keywords that are used for search field input pattern matching
    */
-  val textToSearch: StringBuilder
+  val keywords: Keywords
 
   /**
    * Data holder that needed to share step data.
@@ -69,4 +69,17 @@ interface NewProjectWizardStep {
    */
   @JvmDefault
   fun setupProject(project: Project) {}
+
+  /**
+   * See related doc for [NewProjectWizardStep.keywords].
+   */
+  class Keywords {
+    private val keywords = HashSet<String>()
+
+    fun toSet() = keywords.toSet()
+
+    fun add(keywords: Iterable<String>) {
+      this.keywords.addAll(keywords)
+    }
+  }
 }
