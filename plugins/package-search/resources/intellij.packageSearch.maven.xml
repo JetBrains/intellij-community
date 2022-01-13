@@ -14,7 +14,7 @@
                 key="packagesearch.inspection.upgrade.key.maven"
                 hasStaticDescription="true"
                 language="XML"
-                level="WARNING"/>
+                level="WEAK WARNING"/>
 
         <packagesearch.projectModuleOperationProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.maven.MavenProjectModuleOperationProvider"/>

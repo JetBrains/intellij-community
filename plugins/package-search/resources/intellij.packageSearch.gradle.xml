@@ -13,7 +13,7 @@
                 implementationClass="com.jetbrains.packagesearch.intellij.plugin.gradle.GradlePackageUpdateInspection"
                 key="packagesearch.inspection.upgrade.key.gradle"
                 hasStaticDescription="true"
-                level="WARNING"/>
+                level="WEAK WARNING"/>
 
         <packagesearch.projectModuleOperationProvider
                 implementation="com.jetbrains.packagesearch.intellij.plugin.gradle.GradleProjectModuleOperationProvider"/>
