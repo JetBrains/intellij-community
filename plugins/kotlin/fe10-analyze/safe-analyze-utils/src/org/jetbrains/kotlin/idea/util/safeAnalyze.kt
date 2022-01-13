@@ -1,5 +1,7 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
+/*
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
 package org.jetbrains.kotlin.idea.util
 
 import com.intellij.injected.editor.VirtualFileWindow
@@ -22,13 +24,15 @@ import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-
 /**
  * Best effort to analyze element:
  * - Best effort for file that is out of source root scope: NoDescriptorForDeclarationException could be swallowed
  * - Do not swallow NoDescriptorForDeclarationException during analysis for in source scope files
  */
-inline fun <T> PsiElement.actionUnderSafeAnalyzeBlock(crossinline action: () -> T, crossinline fallback: () -> T): T = try {
+inline fun <T> PsiElement.actionUnderSafeAnalyzeBlock(
+    crossinline action: () -> T,
+    crossinline fallback: () -> T
+): T = try {
     action()
 } catch (e: Exception) {
     e.returnIfNoDescriptorForDeclarationException(condition = {

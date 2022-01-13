@@ -4,7 +4,6 @@ package org.jetbrains.kotlin.idea
 
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter
 import com.intellij.psi.PsiDocCommentBase
-import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.kdoc.psi.api.KDoc
