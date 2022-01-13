@@ -1,26 +1,36 @@
 // Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.annotate;
 
+import com.intellij.diff.comparison.ComparisonManager;
+import com.intellij.diff.comparison.ComparisonPolicy;
+import com.intellij.diff.fragments.DiffFragment;
+import com.intellij.diff.fragments.LineFragment;
+import com.intellij.diff.tools.util.text.LineOffsets;
+import com.intellij.diff.tools.util.text.LineOffsetsUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.DumbProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NlsContexts;
 import com.intellij.openapi.util.NlsSafe;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.annotate.AnnotationTooltipBuilder;
-import com.intellij.openapi.vcs.annotate.FileAnnotation;
-import com.intellij.openapi.vcs.annotate.LineAnnotationAspect;
-import com.intellij.openapi.vcs.annotate.LineAnnotationAspectAdapter;
+import com.intellij.openapi.vcs.annotate.*;
+import com.intellij.openapi.vcs.annotate.AnnotatedLineModificationDetails.InnerChange;
+import com.intellij.openapi.vcs.annotate.AnnotatedLineModificationDetails.InnerChangeType;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.impl.AbstractVcsHelperImpl;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
@@ -28,6 +38,7 @@ import com.intellij.vcs.log.Hash;
 import com.intellij.vcs.log.VcsUser;
 import com.intellij.vcs.log.impl.*;
 import com.intellij.vcs.log.util.VcsUserUtil;
+import com.intellij.vcsUtil.VcsImplUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitFileRevision;
@@ -45,8 +56,11 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+
+import static java.util.Collections.singletonList;
 
 public final class GitFileAnnotation extends FileAnnotation {
   private static final Logger LOG = Logger.getInstance(GitFileAnnotation.class);
@@ -492,6 +506,12 @@ public final class GitFileAnnotation extends FileAnnotation {
     return new GitRevisionChangesProvider();
   }
 
+  @NotNull
+  @Override
+  public LineModificationDetailsProvider getLineModificationDetailsProvider() {
+    return new GitLineModificationDetailsProvider();
+  }
+
 
   private class GitCurrentFileRevisionProvider implements CurrentFileRevisionProvider {
     @Override
@@ -597,6 +617,95 @@ public final class GitFileAnnotation extends FileAnnotation {
       GitCommittedChangeList changeList =
         GitCommittedChangeListProvider.getCommittedChangeList(myProject, repository.getRoot(), lineInfo.getRevisionNumber());
       return Pair.create(changeList, lineInfo.getFilePath());
+    }
+  }
+
+  private class GitLineModificationDetailsProvider implements LineModificationDetailsProvider {
+    @Override
+    public @Nullable AnnotatedLineModificationDetails getDetails(int lineNumber) throws VcsException {
+      LineInfo lineInfo = getLineInfo(lineNumber);
+      if (lineInfo == null) return null;
+
+      String afterContent = loadRevision(lineInfo.getFileRevision());
+      if (afterContent == null) return null;
+
+      int originalLineNumber = lineInfo.getOriginalLineNumber() - 1; // in 'afterContent'
+      LineOffsets afterLineOffsets = LineOffsetsUtil.create(afterContent);
+      int lineStart = afterLineOffsets.getLineStart(originalLineNumber);
+      int lineEnd = afterLineOffsets.getLineEnd(originalLineNumber);
+      String lineContentAfter = afterContent.substring(lineStart, lineEnd);
+
+      if (StringUtil.isEmptyOrSpaces(lineContentAfter)) {
+        return createNewLineDetails(lineContentAfter); // empty lines are always new, for simplicity
+      }
+
+      String beforeContent = loadRevision(lineInfo.getPreviousFileRevision());
+      if (beforeContent == null) {
+        return createNewLineDetails(lineContentAfter); // whole file is new
+      }
+
+      ProgressIndicator indicator = ObjectUtils.chooseNotNull(ProgressIndicatorProvider.getGlobalProgressIndicator(),
+                                                              DumbProgressIndicator.INSTANCE);
+      List<LineFragment> fragments = ComparisonManager.getInstance().compareLinesInner(beforeContent, afterContent,
+                                                                                       ComparisonPolicy.DEFAULT, indicator);
+
+      LineFragment lineFragment = ContainerUtil.find(fragments.iterator(), fragment -> {
+        return fragment.getStartLine2() <= originalLineNumber && originalLineNumber < fragment.getEndLine2();
+      });
+      if (lineFragment == null) return null; // line unmodified
+
+
+      if (lineFragment.getStartLine1() == lineFragment.getEndLine1()) {
+        return createNewLineDetails(lineContentAfter); // whole line is new
+      }
+
+      List<DiffFragment> innerFragments = lineFragment.getInnerFragments();
+      if (innerFragments == null) {
+        return createModifiedLineDetails(lineContentAfter); // whole line is modified
+      }
+
+      int windowStart = lineStart - lineFragment.getStartOffset2();
+      int windowEnd = lineEnd - lineFragment.getStartOffset2();
+      int lineLength = lineEnd - lineStart;
+
+      List<InnerChange> changes = new ArrayList<>();
+      for (DiffFragment innerFragment : innerFragments) {
+        if (innerFragment.getEndOffset2() < windowStart || innerFragment.getStartOffset2() > windowEnd) continue;
+        int start = Math.max(0, innerFragment.getStartOffset2() - windowStart);
+        int end = Math.min(lineLength, innerFragment.getEndOffset2() - windowStart);
+        InnerChangeType type = start == end ? InnerChangeType.DELETED
+                                            : innerFragment.getStartOffset1() != innerFragment.getEndOffset1() ? InnerChangeType.MODIFIED
+                                                                                                               : InnerChangeType.INSERTED;
+        changes.add(new InnerChange(start, end, type));
+      }
+
+      return new AnnotatedLineModificationDetails(lineContentAfter, changes);
+    }
+
+    @NotNull
+    private AnnotatedLineModificationDetails createNewLineDetails(@NotNull String lineContentAfter) {
+      InnerChange innerChange = new InnerChange(0, lineContentAfter.length(), InnerChangeType.INSERTED);
+      return new AnnotatedLineModificationDetails(lineContentAfter, singletonList(innerChange));
+    }
+
+    @NotNull
+    private AnnotatedLineModificationDetails createModifiedLineDetails(@NotNull String lineContentAfter) {
+      InnerChange innerChange = new InnerChange(0, lineContentAfter.length(), InnerChangeType.MODIFIED);
+      return new AnnotatedLineModificationDetails(lineContentAfter, singletonList(innerChange));
+    }
+
+    @Nullable
+    private String loadRevision(@Nullable VcsFileRevision revision) throws VcsException {
+      try {
+        if (revision == null) return null;
+        byte[] bytes = revision.loadContent();
+        if (bytes == null) return null;
+        String content = VcsImplUtil.loadTextFromBytes(myProject, bytes, myFilePath);
+        return StringUtil.convertLineSeparators(content);
+      }
+      catch (IOException e) {
+        throw new VcsException(e);
+      }
     }
   }
 }

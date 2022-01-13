@@ -242,6 +242,8 @@ public final class AnnotateToggleAction extends ToggleAction implements DumbAwar
         editor.getGutter().registerTextAnnotation(proxy);
       }
     }
+
+    InlineDiffFromAnnotation.startShowingDiff(editor, fileAnnotation, presentation, disposable);
   }
 
   @NotNull

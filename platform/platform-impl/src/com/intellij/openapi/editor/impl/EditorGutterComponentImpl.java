@@ -1836,7 +1836,7 @@ final class EditorGutterComponentImpl extends EditorGutterComponentEx implements
           }
         }
       }
-      showToolTip(toolTip, point, Balloon.Position.atRight);
+      showToolTip(toolTip, point, Balloon.Position.below);
     }
     else {
       computeTooltipInBackground(pointInfo);
