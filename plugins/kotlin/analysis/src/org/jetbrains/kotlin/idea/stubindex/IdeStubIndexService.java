@@ -30,9 +30,6 @@ public class IdeStubIndexService extends StubIndexService {
     public void indexFile(@NotNull KotlinFileStub stub, @NotNull IndexSink sink) {
         FqName packageFqName = stub.getPackageFqName();
 
-        FqName partialPackageFqName = KotlinPartialPackageNamesIndex.toPartialFqName(packageFqName);
-        sink.occurrence(KotlinPartialPackageNamesIndex.getInstance().getKey(), partialPackageFqName.asString());
-
         sink.occurrence(KotlinExactPackagesIndex.getInstance().getKey(), packageFqName.asString());
 
         if (stub.isScript()) return;
