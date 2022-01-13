@@ -221,30 +221,15 @@ public final class SystemInfo {
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static final boolean is64Bit = CpuArch.CURRENT.width == 64;
 
-  /** @deprecated moved; please use {@link CpuArch#isIntel64()} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final boolean isIntel64 = CpuArch.isIntel64();
-
   /** @deprecated trivial and mostly outdated */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2021.2")
-  public static final boolean isMacIntel64 = isMac && isIntel64;
+  public static final boolean isMacIntel64 = isMac && CpuArch.isIntel64();
 
   /** @deprecated always false */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static final boolean isAppleJvm = false;
-
-  /** @deprecated always false */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public static final boolean isSunJvm = false;
-
-  /** @deprecated always true (Java 8 requires macOS 10.9+) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public static final boolean isMacOSTiger = isMac;
 
   /** @deprecated always true (Java 8 requires macOS 10.9+) */
   @Deprecated
@@ -254,27 +239,7 @@ public final class SystemInfo {
   /** @deprecated always true (Java 8 requires macOS 10.9+) */
   @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public static final boolean isMacOSSnowLeopard = isMac;
-
-  /** @deprecated always true (Java 8 requires macOS 10.9+) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public static final boolean isMacOSLion = isMac;
-
-  /** @deprecated always true (Java 8 requires macOS 10.9+) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
   public static final boolean isMacOSMountainLion = isMac;
-
-  /** @deprecated always true (Java 8 requires macOS 10.9+) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public static final boolean isMacOSMavericks = isMac;
-
-  /** @deprecated always true (Java 8 requires Windows Vista / Server 2008) */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-  public static final boolean isWin2kOrNewer = isWindows;
 
   /** @deprecated always true (Java 8 requires Windows Vista / Server 2008) */
   @Deprecated

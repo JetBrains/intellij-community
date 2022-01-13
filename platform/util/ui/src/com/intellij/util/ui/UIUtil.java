@@ -2524,15 +2524,6 @@ public final class UIUtil {
     return c instanceof JFrame || c instanceof JDialog || c instanceof JWindow || c instanceof JRootPane || isFocusProxy(c);
   }
 
-  /**
-   * @deprecated Use {@link TimerUtil#createNamedTimer(String, int, ActionListener)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull Timer createNamedTimer(@NonNls @NotNull String name, int delay, @NotNull ActionListener listener) {
-    return TimerUtil.createNamedTimer(name, delay, listener);
-  }
-
   public static boolean isDialogRootPane(JRootPane rootPane) {
     if (rootPane != null) {
       final Object isDialog = rootPane.getClientProperty("DIALOG_ROOT_PANE");

@@ -1143,17 +1143,4 @@ public class FileUtilRt {
       return path1.equalsIgnoreCase(path2);
     }
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated please use {@code FileFilters#EVERYTHING} instead */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.1")
-  public static final FileFilter ALL_FILES = new FileFilter() {
-    @Override
-    public boolean accept(File file) {
-      return true;
-    }
-  };
-
-  //</editor-fold>
 }

@@ -1604,24 +1604,6 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * @deprecated use #capitalize(String)
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  @Contract(value = "null -> null; !null -> !null", pure = true)
-  public static String firstLetterToUpperCase(final @Nullable String displayString) {
-    if (displayString == null || displayString.isEmpty()) return displayString;
-    char firstChar = displayString.charAt(0);
-    char uppedFirstChar = toUpperCase(firstChar);
-
-    if (uppedFirstChar == firstChar) return displayString;
-
-    char[] buffer = displayString.toCharArray();
-    buffer[0] = uppedFirstChar;
-    return new String(buffer);
-  }
-
-  /**
    * Strip out all characters not accepted by given filter
    *
    * @param s      e.g. "/n    my string "

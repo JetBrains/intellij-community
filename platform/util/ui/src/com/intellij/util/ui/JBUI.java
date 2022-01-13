@@ -1008,15 +1008,6 @@ public final class JBUI {
       public static @NotNull Color linkVisitedColor() {
         return Foreground.VISITED;
       }
-
-      /**
-       * @deprecated use {@link Foreground#SECONDARY} instead
-       */
-      @ApiStatus.ScheduledForRemoval(inVersion = "2022.1")
-      @Deprecated
-      public static @NotNull Color linkSecondaryColor() {
-        return Foreground.SECONDARY;
-      }
     }
 
     public static final class Tooltip {

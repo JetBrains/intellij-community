@@ -217,15 +217,6 @@ public final class ContainerUtil {
   }
 
   /**
-   * @deprecated Use {@link SmartList(T)}
-   */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2021.3")
-  public static @NotNull <T> List<T> newSmartList(T element) {
-    return new SmartList<>(element);
-  }
-
-  /**
    * @deprecated Use {@link HashSet#HashSet()}
    */
   @Contract(pure = true)
