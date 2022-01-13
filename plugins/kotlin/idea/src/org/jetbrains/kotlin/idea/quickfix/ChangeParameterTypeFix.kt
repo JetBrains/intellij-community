@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.lazy.BodyResolveMode
 import org.jetbrains.kotlin.types.KotlinType
-import org.jetbrains.kotlin.types.isDefinitelyNotNullType
 
 class ChangeParameterTypeFix(element: KtParameter, type: KotlinType) : KotlinQuickFixAction<KtParameter>(element) {
     private val typePresentation = IdeDescriptorRenderers.SOURCE_CODE_SHORT_NAMES_NO_ANNOTATIONS.renderType(type)

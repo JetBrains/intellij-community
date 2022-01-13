@@ -14044,16 +14044,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
                 runTest("testData/quickfix/typeMismatch/casts/typeMismatch4.kt");
             }
 
-            @TestMetadata("typeMismatchDefNonNullable1.kt")
-            public void testTypeMismatchDefNonNullable1() throws Exception {
-                runTest("testData/quickfix/typeMismatch/casts/typeMismatchDefNonNullable1.kt");
-            }
-
-            @TestMetadata("typeMismatchDefNonNullable2.kt")
-            public void testTypeMismatchDefNonNullable2() throws Exception {
-                runTest("testData/quickfix/typeMismatch/casts/typeMismatchDefNonNullable2.kt");
-            }
-
             @TestMetadata("typeMismatchLongNameRuntime.kt")
             public void testTypeMismatchLongNameRuntime() throws Exception {
                 runTest("testData/quickfix/typeMismatch/casts/typeMismatchLongNameRuntime.kt");
@@ -14167,6 +14157,49 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
         }
 
         @RunWith(JUnit3RunnerWithInners.class)
+        @TestMetadata("testData/quickfix/typeMismatch/definitelyNonNullableTypes")
+        public static class DefinitelyNonNullableTypes extends AbstractQuickFixTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("changeFunctionParameterType1.kt")
+            public void testChangeFunctionParameterType1() throws Exception {
+                runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeFunctionParameterType1.kt");
+            }
+
+            @TestMetadata("changeFunctionParameterType2.kt")
+            public void testChangeFunctionParameterType2() throws Exception {
+                runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeFunctionParameterType2.kt");
+            }
+
+            @TestMetadata("changePrimaryConstructorParameterType.kt")
+            public void testChangePrimaryConstructorParameterType() throws Exception {
+                runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changePrimaryConstructorParameterType.kt");
+            }
+
+            @TestMetadata("changeVariableType1.kt")
+            public void testChangeVariableType1() throws Exception {
+                runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeVariableType1.kt");
+            }
+
+            @TestMetadata("changeVariableType2.kt")
+            public void testChangeVariableType2() throws Exception {
+                runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/changeVariableType2.kt");
+            }
+
+            @TestMetadata("explicitCast1.kt")
+            public void testExplicitCast1() throws Exception {
+                runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/explicitCast1.kt");
+            }
+
+            @TestMetadata("explicitCast2.kt")
+            public void testExplicitCast2() throws Exception {
+                runTest("testData/quickfix/typeMismatch/definitelyNonNullableTypes/explicitCast2.kt");
+            }
+        }
+
+        @RunWith(JUnit3RunnerWithInners.class)
         @TestMetadata("testData/quickfix/typeMismatch/fixOverloadedOperator")
         public static class FixOverloadedOperator extends AbstractQuickFixTest {
             private void runTest(String testDataFilePath) throws Exception {
@@ -14242,16 +14275,6 @@ public abstract class QuickFixTestGenerated extends AbstractQuickFixTest {
             @TestMetadata("changeFunctionParameterType4.kt")
             public void testChangeFunctionParameterType4() throws Exception {
                 runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterType4.kt");
-            }
-
-            @TestMetadata("changeFunctionParameterTypeDefNonNullable1.kt")
-            public void testChangeFunctionParameterTypeDefNonNullable1() throws Exception {
-                runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterTypeDefNonNullable1.kt");
-            }
-
-            @TestMetadata("changeFunctionParameterTypeDefNonNullable2.kt")
-            public void testChangeFunctionParameterTypeDefNonNullable2() throws Exception {
-                runTest("testData/quickfix/typeMismatch/parameterTypeMismatch/changeFunctionParameterTypeDefNonNullable2.kt");
             }
 
             @TestMetadata("changeFunctionParameterTypeWithComment.kt")
