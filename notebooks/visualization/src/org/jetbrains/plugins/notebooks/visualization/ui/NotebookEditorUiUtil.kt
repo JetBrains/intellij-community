@@ -11,6 +11,7 @@ import java.awt.event.HierarchyEvent
 import java.lang.ref.WeakReference
 import javax.swing.JComponent
 import javax.swing.JPanel
+import javax.swing.JScrollPane
 import javax.swing.SwingUtilities
 import javax.swing.plaf.PanelUI
 
@@ -83,6 +84,7 @@ fun registerEditorSizeWatcher(
   updateHandler: () -> Unit,
 ) {
   var editorComponent: EditorComponentImpl? = null
+  var scrollComponent: JScrollPane? = null
 
   updateHandler()
 
@@ -97,9 +99,13 @@ fun registerEditorSizeWatcher(
         .filterIsInstance<EditorComponentImpl>()
         .firstOrNull()
       if (editorComponent !== newEditor) {
-        editorComponent?.removeComponentListener(editorResizeListener)
+        (scrollComponent ?: editorComponent)?.removeComponentListener(editorResizeListener)
         editorComponent = newEditor
-        editorComponent?.addComponentListener(editorResizeListener)
+        // if editor is located inside a scroll pane, we should listen to its size instead of editor component
+        scrollComponent = generateSequence(editorComponent?.parent) { it.parent }
+          .filterIsInstance<JScrollPane>()
+          .firstOrNull()
+        (scrollComponent ?: editorComponent)?.addComponentListener(editorResizeListener)
         updateHandler()
       }
     }
