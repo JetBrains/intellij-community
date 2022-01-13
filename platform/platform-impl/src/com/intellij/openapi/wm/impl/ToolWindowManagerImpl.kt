@@ -1250,8 +1250,15 @@ open class ToolWindowManagerImpl(val project: Project) : ToolWindowManagerEx(), 
         updateStateAndRemoveDecorator(item.new, item.entry, dirtyMode = true)
       }
 
-      if (item.old.anchor != item.new.anchor || item.old.order != item.new.order) {
-        setToolWindowAnchorImpl(item.entry, item.old, item.new, item.new.anchor, item.new.order)
+      if (ExperimentalUI.isNewToolWindowsStripes()) {
+        if (item.old.largeStripeAnchor != item.new.largeStripeAnchor || item.old.orderOnLargeStripe != item.new.orderOnLargeStripe) {
+          setToolWindowLargeAnchorImpl(item.entry, item.old, item.new, item.new.largeStripeAnchor, item.new.orderOnLargeStripe)
+        }
+      }
+      else {
+        if (item.old.anchor != item.new.anchor || item.old.order != item.new.order) {
+          setToolWindowAnchorImpl(item.entry, item.old, item.new, item.new.anchor, item.new.order)
+        }
       }
 
       var toShowWindow = false
