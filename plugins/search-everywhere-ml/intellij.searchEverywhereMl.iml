@@ -42,9 +42,9 @@
     </orderEntry>
     <orderEntry type="module-library">
       <library name="find-file-model" type="repository">
-        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:0.0.2" />
+        <properties maven-id="org.jetbrains.intellij.deps.searchEverywhere.model:find-file-model:0.1.1" />
         <CLASSES>
-          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/0.0.2/find-file-model-0.0.2.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/jetbrains/intellij/deps/searchEverywhere/model/find-file-model/0.1.1/find-file-model-0.1.1.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
