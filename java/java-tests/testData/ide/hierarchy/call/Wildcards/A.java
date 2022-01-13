@@ -8,8 +8,10 @@ class BoardImpl implements Board {
     public int getCount() {return 0;}
 }
 class King<B extends Board> {
-    B board;
-    boolean isLast() {
-        return board.getCount() == 1;
-    }
+  boolean isLast1(B board) {
+    return board.getCount() == 1;
+  }
+  boolean isLast2(java.util.List<? extends Board> list) {
+      return list.get(0).getCount() == 1;
+  }
 }
