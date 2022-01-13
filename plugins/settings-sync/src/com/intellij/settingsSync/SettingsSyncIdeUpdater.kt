@@ -112,14 +112,14 @@ internal class SettingsSyncIdeUpdater(application: Application,
 
   private fun updateSyncSettings(snapshot: SettingsSnapshot) {
     val settingsPath = "$OPTIONS_DIRECTORY/" + SettingsSyncSettings.FILE_SPEC
-    snapshot.fileStates.forEach {
-      if (it.file == settingsPath) {
+    snapshot.fileStates.find { it.file == settingsPath }
+      ?.let {
         rootConfig.resolve(it.file).write(it.content, 0, it.size)
         invokeAndWaitIfNeeded {
           componentStore.reloadState(SettingsSyncSettings.getInstance().javaClass)
         }
       }
-    }
   }
+
 
 }
