@@ -47,14 +47,14 @@ class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(proj
 
   private fun ValidationInfoBuilder.validateGroupId(): ValidationInfo? {
     if (archetypeGroupId.isEmpty()) {
-      return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.dialog.group.id.error.empty"))
+      return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.group.id.error.empty"))
     }
     return null
   }
 
   private fun ValidationInfoBuilder.validateArtifactId(): ValidationInfo? {
     if (archetypeArtifactId.isEmpty()) {
-      return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.dialog.artifact.id.error.empty"))
+      return error(MavenWizardBundle.message("maven.new.project.wizard.archetype.artifact.id.error.empty"))
     }
     return null
   }
@@ -67,14 +67,14 @@ class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(proj
   }
 
   override fun createCenterPanel() = panel {
-    row(MavenWizardBundle.message("maven.new.project.wizard.archetype.dialog.group.id.label")) {
+    row(MavenWizardBundle.message("maven.new.project.wizard.archetype.group.id.label")) {
       textField()
         .bindText(archetypeGroupIdProperty.comap { it.trim() })
         .columns(COLUMNS_MEDIUM)
         .validationOnInput { validateGroupId() }
         .validationOnApply { validateGroupId() }
     }
-    row(MavenWizardBundle.message("maven.new.project.wizard.archetype.dialog.artifact.id.label")) {
+    row(MavenWizardBundle.message("maven.new.project.wizard.archetype.artifact.id.label")) {
       textField()
         .bindText(archetypeArtifactIdProperty.comap { it.trim() })
         .columns(COLUMNS_MEDIUM)
@@ -88,7 +88,7 @@ class MavenAddArchetypeDialog(private val project: Project) : DialogWrapper(proj
         .validationOnInput { validateVersion() }
         .validationOnApply { validateVersion() }
     }
-    row(MavenWizardBundle.message("maven.new.project.wizard.archetype.dialog.catalog.label")) {
+    row(MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.label")) {
       val title = MavenWizardBundle.message("maven.new.project.wizard.archetype.catalog.dialog.location.title")
       val descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor()
       textFieldWithBrowseButton(title, project, descriptor)

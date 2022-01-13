@@ -85,6 +85,11 @@ fun <C : ComponentWithEmptyText> C.bindEmptyText(property: ObservableProperty<@N
   emptyText.bind(property)
 }
 
+/**
+ * Binds selected item of [this] combobox and [property] value.
+ * Note: Ignores proportion of selected item for deselected event.
+ * @see java.awt.event.ItemEvent.DESELECTED
+ */
 fun <T, C : JComboBox<T>> C.bind(property: ObservableClearableProperty<T>): C = apply {
   val mutex = AtomicBoolean()
   property.afterChange {

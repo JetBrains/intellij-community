@@ -12,9 +12,8 @@ import java.awt.event.*
 import javax.swing.JComboBox
 import javax.swing.JComponent
 import javax.swing.JTree
-import javax.swing.event.DocumentEvent
-import javax.swing.event.TableModelEvent
-import javax.swing.event.TreeModelEvent
+import javax.swing.ListModel
+import javax.swing.event.*
 import javax.swing.text.JTextComponent
 import javax.swing.tree.TreeModel
 
@@ -33,6 +32,14 @@ fun <T> ItemSelectable.whenItemSelected(listener: (T) -> Unit) {
       listener(event.item as T)
     }
   }
+}
+
+fun ListModel<*>.whenListChanged(listener: (ListDataEvent) -> Unit) {
+  addListDataListener(object : ListDataListener {
+    override fun intervalAdded(e: ListDataEvent) = listener(e)
+    override fun intervalRemoved(e: ListDataEvent) = listener(e)
+    override fun contentsChanged(e: ListDataEvent) = listener(e)
+  })
 }
 
 fun JTree.whenTreeChanged(listener: (TreeModelEvent) -> Unit) {

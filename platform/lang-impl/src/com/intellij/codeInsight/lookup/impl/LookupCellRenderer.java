@@ -77,6 +77,8 @@ public final class LookupCellRenderer implements ListCellRenderer<LookupElement>
   public static final Color SELECTED_NON_FOCUSED_BACKGROUND_COLOR = JBColor.namedColor("CompletionPopup.selectionInactiveBackground", new JBColor(0xE0E0E0, 0x515457));
   private static final Color NON_FOCUSED_MASK_COLOR = JBColor.namedColor("CompletionPopup.nonFocusedMask", Gray._0.withAlpha(0));
 
+  public static final SimpleTextAttributes REGULAR_MATCHED_ATTRIBUTES = new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, MATCHED_FOREGROUND_COLOR);
+
   private final LookupImpl myLookup;
 
   private final SimpleColoredComponent myNameComponent;
