@@ -223,11 +223,11 @@ public final class JavadocHighlightUtil {
 
   private static void checkSnippetTag(@NotNull ProblemHolder holder, PsiElement element, PsiInlineDocTag tag) {
     if (element instanceof PsiSnippetDocTag) {
-      if (!PsiUtil.getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_X)) {
+      if (!PsiUtil.getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_18)) {
         PsiElement nameElement = tag.getNameElement();
         if (nameElement != null) {
           String message = JavaBundle.message("inspection.javadoc.problem.snippet.tag.is.not.available");
-          holder.problem(nameElement, message, new IncreaseLanguageLevelFix(LanguageLevel.JDK_X));
+          holder.problem(nameElement, message, new IncreaseLanguageLevelFix(LanguageLevel.JDK_18));
         }
       }
     }
