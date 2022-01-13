@@ -1,4 +1,4 @@
-// Copyright 2000-2021 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2022 JetBrains s.r.o. and contributors. Use of this source code is governed by the Apache 2.0 license.
 package com.intellij.execution.ui
 
 import com.intellij.execution.*
@@ -172,7 +172,7 @@ class RunWithDropDownAction : AnAction(AllIcons.Actions.Execute), CustomComponen
       DefaultRunExecutor.EXECUTOR_ID -> IconManager.getInstance().getIcon("expui/run/widget/run.svg", AllIcons::class.java)
       ToolWindowId.DEBUG -> IconManager.getInstance().getIcon("expui/run/widget/debug.svg", AllIcons::class.java)
       "Coverage" -> AllIcons.General.RunWithCoverage
-      LOADING -> AnimatedIcon.Default()
+      LOADING -> AnimatedIcon.Default.INSTANCE
       RESTART -> IconManager.getInstance().getIcon("expui/run/widget/restart.svg", AllIcons::class.java)
       else -> AllIcons.Actions.Execute
     }
